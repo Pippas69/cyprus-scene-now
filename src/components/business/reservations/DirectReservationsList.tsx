@@ -600,11 +600,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               <TableBody>
                 {filteredReservations.map((reservation) => {
                   const minAge = getMinAge(reservation.id);
-                  // Use prepaid_min_charge_cents first (set for reservation+event),
-                  // then calculate from seating tiers (correct min charge for party size),
-                  // then fall back to ticket_credit_cents
+                  // Primary value = reservation minimum charge from seating tiers (party-size based).
+                  // Secondary fallback = stored prepaid minimum charge.
+                  // Parentheses value uses ticket_credit_cents (actual prepaid ticket amount).
                   const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
-                  const minChargeCents = reservation.prepaid_min_charge_cents ?? tierMinCharge ?? reservation.ticket_credit_cents ?? 0;
+                  const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
                   const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                   const minChargeDisplay = minChargeCents > 0 
                     ? ticketPaidCents > 0 
@@ -647,7 +647,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           reservationId={reservation.id}
                           field="ticket_credit_cents"
                           displayValue={minChargeDisplay}
-                          rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'}
+                          rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'}
                         />
                       </TableCell>
                       <TableCell>

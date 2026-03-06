@@ -215,12 +215,13 @@ Deno.serve(async (req) => {
               .order("min_people", { ascending: true });
             if (fallbackTiers) {
               const matchedTier = fallbackTiers.find((t: any) => fallbackResData.party_size >= t.min_people && fallbackResData.party_size <= t.max_people);
-              if (matchedTier) fallbackTierMinCharge = matchedTier.prepaid_min_charge_cents;
+              const fallbackTier = matchedTier ?? [...fallbackTiers].reverse().find((t: any) => fallbackResData.party_size >= t.min_people) ?? fallbackTiers[0];
+              if (fallbackTier) fallbackTierMinCharge = fallbackTier.prepaid_min_charge_cents;
             }
 
             linkedReservation = {
               partySize: fallbackResData.party_size,
-              minimumChargeCents: fallbackResData.prepaid_min_charge_cents ?? fallbackTierMinCharge ?? 0,
+              minimumChargeCents: fallbackTierMinCharge ?? fallbackResData.prepaid_min_charge_cents ?? fallbackResData.ticket_credit_cents ?? 0,
               ticketCreditCents: fallbackResData.ticket_credit_cents,
             };
           }
