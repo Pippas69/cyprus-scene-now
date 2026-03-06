@@ -405,15 +405,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const newSize = parseInt(editValue);
         if (isNaN(newSize) || newSize < 1) return;
         updateData.party_size = newSize;
-
-        // Auto-recalculate min charge
-        const reservation = reservations.find(r => r.id === id);
-        if (reservation?.seating_type_id) {
-          const newMinCharge = getMinChargeForPartySize(reservation.seating_type_id, newSize);
-          if (newMinCharge !== null) {
-            updateData.ticket_credit_cents = newMinCharge;
-          }
-        }
+        // Min charge display auto-recalculates from seating tiers based on party size
+        // Do NOT overwrite ticket_credit_cents — that represents the actual amount paid for tickets
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
