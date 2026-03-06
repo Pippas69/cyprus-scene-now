@@ -610,7 +610,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 <TableRow>
                   <TableHead className="text-xs">{t.name}</TableHead>
                   <TableHead className="text-xs">{t.details}</TableHead>
-                  <TableHead className="text-xs">{t.ages}</TableHead>
                   <TableHead className="text-xs">Minimum Charge</TableHead>
                   <TableHead className="text-xs">{t.status}</TableHead>
                 </TableRow>
@@ -633,12 +632,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 return (
                   <TableRow key={reservation.id} className="group">
                       <TableCell className="font-medium">
-                        <EditableCell
-                        reservationId={reservation.id}
-                        field="reservation_name"
-                        displayValue={reservation.reservation_name}
-                        rawValue={reservation.reservation_name} />
-                      
+                        <div className="flex flex-col gap-0.5">
+                          <EditableCell
+                          reservationId={reservation.id}
+                          field="reservation_name"
+                          displayValue={reservation.reservation_name}
+                          rawValue={reservation.reservation_name} />
+                          {reservation.phone_number &&
+                            <span className="text-sm text-muted-foreground">
+                              {reservation.phone_number}
+                            </span>
+                          }
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
@@ -648,17 +653,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             field="party_size"
                             displayValue={`${reservation.party_size} ${t.people}`}
                             rawValue={String(reservation.party_size)} />
-                          
                           </span>
-                          {reservation.phone_number &&
-                        <span className="text-sm text-muted-foreground">
-                              {reservation.phone_number}
-                            </span>
-                        }
+                          <span className="text-sm font-semibold ml-2">{minAge}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-semibold">{minAge}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-start">
