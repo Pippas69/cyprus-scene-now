@@ -238,6 +238,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         setReservations(enrichedData);
         // Fetch ages for Kaliva
         fetchAgesForReservations(reservationIds);
+        // Fetch check-in counts (used tickets per reservation)
+        fetchCheckInCounts(reservationIds);
         // Fetch seating tiers
         const seatingTypeIds = [...new Set(enrichedData.map(r => r.seating_type_id).filter(Boolean))] as string[];
         if (seatingTypeIds.length > 0) {
