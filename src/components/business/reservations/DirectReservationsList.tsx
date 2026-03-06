@@ -64,6 +64,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
   // Kaliva: seating tiers for min charge calculation
   const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
+  // Kaliva: check-in counts per reservation (used tickets count)
+  const [checkInCounts, setCheckInCounts] = useState<Record<string, { used: number; total: number }>>({});
   // Editing state
   const [editingField, setEditingField] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
@@ -142,7 +144,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'reservations' },
-      () => fetchReservations()
+      () => fetchReservations(true)
     ).
     subscribe();
 
@@ -153,7 +155,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   useEffect(() => {
     if (refreshNonce === undefined) return;
-    fetchReservations();
+    fetchReservations(true);
   }, [refreshNonce]);
 
   const checkBusinessFlags = async () => {
@@ -167,8 +169,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return linked;
   };
 
-  const fetchReservations = async () => {
-    setLoading(true);
+  const fetchReservations = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data: bizData } = await supabase
         .from('businesses')
@@ -236,6 +238,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         setReservations(enrichedData);
         // Fetch ages for Kaliva
         fetchAgesForReservations(reservationIds);
+        // Fetch check-in counts (used tickets per reservation)
+        fetchCheckInCounts(reservationIds);
         // Fetch seating tiers
         const seatingTypeIds = [...new Set(enrichedData.map(r => r.seating_type_id).filter(Boolean))] as string[];
         if (seatingTypeIds.length > 0) {
@@ -322,6 +326,45 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (data) tiersMap[stId] = data;
     }
     setSeatingTiers(tiersMap);
+  };
+
+  const fetchCheckInCounts = async (reservationIds: string[]) => {
+    if (reservationIds.length === 0) return;
+    // Get ticket orders linked to these reservations
+    const { data: orders } = await supabase
+      .from('ticket_orders')
+      .select('id, linked_reservation_id')
+      .in('linked_reservation_id', reservationIds);
+
+    if (!orders || orders.length === 0) return;
+
+    const orderIds = orders.map(o => o.id);
+    const orderToReservation: Record<string, string> = {};
+    orders.forEach(o => {
+      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
+    });
+
+    // Get all tickets for these orders
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('order_id, status')
+      .in('order_id', orderIds);
+
+    if (!tickets) return;
+
+    const countsMap: Record<string, { used: number; total: number }> = {};
+    tickets.forEach(ticket => {
+      const resId = orderToReservation[ticket.order_id];
+      if (resId) {
+        if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
+        countsMap[resId].total++;
+        if (ticket.status === 'used') {
+          countsMap[resId].used++;
+        }
+      }
+    });
+
+    setCheckInCounts(countsMap);
   };
 
   const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
@@ -419,7 +462,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const getStatusBadge = (reservation: DirectReservation) => {
     if (reservation.checked_in_at) {
+      // For clubs/events with ticket-linked flow, show check-in count
+      if (isTicketLinked) {
+        const counts = checkInCounts[reservation.id];
+        if (counts && counts.total > 0) {
+          const allCheckedIn = counts.used >= counts.total;
+          return (
+            <Badge className={`${allCheckedIn ? 'bg-green-500' : 'bg-emerald-600'} text-white whitespace-nowrap`}>
+              {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+            </Badge>
+          );
+        }
+      }
       return <Badge className="bg-green-500 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
+    }
+    // For clubs/events: show partial check-in count even before checked_in_at is set
+    if (isTicketLinked) {
+      const counts = checkInCounts[reservation.id];
+      if (counts && counts.used > 0) {
+        return (
+          <Badge className="bg-emerald-600 text-white whitespace-nowrap">
+            {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+          </Badge>
+        );
+      }
     }
     if (reservation.status === 'cancelled') {
       return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
