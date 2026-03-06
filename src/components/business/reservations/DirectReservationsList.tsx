@@ -669,8 +669,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'} />
                         
                           {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
-                        <span className="capitalize font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm -ml-2">
-                              {seatingTypeNames[reservation.seating_type_id]}
+                        <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                              {(() => {
+                                const raw = seatingTypeNames[reservation.seating_type_id!];
+                                const lower = raw.toLowerCase();
+                                if (lower === 'table') return 'Τραπέζι';
+                                if (lower === 'sofa') return 'Καναπές';
+                                if (lower === 'vip') return 'VIP';
+                                if (lower === 'bar') return 'Bar';
+                                return raw;
+                              })()}
                             </span>
                         }
                         </div>
