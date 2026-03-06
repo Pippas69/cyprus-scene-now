@@ -137,6 +137,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const t = text[language];
 
+  const initialLoadDone = useState(false)[0];
+  const initialLoadRef = { current: false };
+
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
     const channel = supabase.
@@ -144,7 +147,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'reservations' },
-      () => fetchReservations()
+      () => fetchReservations(true)
     ).
     subscribe();
 
@@ -155,7 +158,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   useEffect(() => {
     if (refreshNonce === undefined) return;
-    fetchReservations();
+    fetchReservations(true);
   }, [refreshNonce]);
 
   const checkBusinessFlags = async () => {
