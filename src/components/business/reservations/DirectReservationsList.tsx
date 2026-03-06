@@ -661,12 +661,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <span className="text-sm font-semibold">{minAge}</span>
                       </TableCell>
                       <TableCell>
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="ticket_credit_cents"
-                          displayValue={minChargeDisplay}
-                          rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'}
-                        />
+                        <div className="flex flex-col">
+                          <EditableCell
+                            reservationId={reservation.id}
+                            field="ticket_credit_cents"
+                            displayValue={minChargeDisplay}
+                            rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'}
+                          />
+                          {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] && (
+                            <span className="text-[10px] text-muted-foreground capitalize">
+                              {seatingTypeNames[reservation.seating_type_id]}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(reservation)}
