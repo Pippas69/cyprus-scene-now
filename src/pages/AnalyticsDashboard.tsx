@@ -21,7 +21,7 @@ import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
 
 const translations = {
   el: {
-    title: 'Τα Αναλυτικά σου',
+    title: 'Αναλυτικά',
     overview: 'Επισκόπηση',
     performance: 'Απόδοση',
     boostValue: 'Αξία Προώθησης',
