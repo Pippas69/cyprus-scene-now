@@ -587,11 +587,6 @@ const EventCreationForm = ({
       for (const type of formData.selectedSeatingTypes) {
         const config = formData.seatingConfigs[type];
         if (config.tiers.length === 0) return t.addAtLeastOneRange;
-        if (isHybrid && !config.ticketCategoryName.trim()) {
-          return language === 'el'
-            ? 'Συμπληρώστε όνομα κατηγορίας εισιτηρίου για κάθε τύπο θέσης'
-            : 'Add a ticket category name for each seating type';
-        }
       }
 
       if (isHybrid && walkInEnabled) {
@@ -707,9 +702,10 @@ const EventCreationForm = ({
           ? formData.selectedSeatingTypes.map((seatingType, index) => {
               const config = formData.seatingConfigs[seatingType];
               const maxPartySize = Math.max(...config.tiers.map((tier) => tier.maxPeople), 1);
+              const autoName = seatingType === 'bar' ? 'Bar' : seatingType === 'table' ? 'Table' : seatingType === 'vip' ? 'VIP' : 'Sofa';
               return {
                 event_id: createdEvent.id,
-                name: config.ticketCategoryName.trim(),
+                name: autoName,
                 description: null,
                 price_cents: config.ticketPriceCents,
                 currency: 'EUR',
@@ -1016,17 +1012,8 @@ const EventCreationForm = ({
                             <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
                           </div>
                           
-                          {isTicketSelected && isReservationSelected && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                              <div className="space-y-1.5 sm:space-y-2">
-                                <Label className="text-xs sm:text-sm">{t.ticketNameLabel} *</Label>
-                                <Input
-                                  value={config.ticketCategoryName}
-                                  onChange={(e) => updateSeatingConfig(type, { ticketCategoryName: e.target.value })}
-                                  placeholder={t[type]}
-                                  className="h-8 sm:h-10 text-xs sm:text-sm"
-                                />
-                              </div>
-
+                          {isTicketSelected && isReservationSelected && (
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
                               <div className="space-y-1.5 sm:space-y-2">
                                 <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
                                 <Input
@@ -1044,19 +1031,32 @@ const EventCreationForm = ({
                                   className="h-8 sm:h-10 text-xs sm:text-sm"
                                 />
                               </div>
-                            </div>}
+                              <div className="space-y-1.5 sm:space-y-2">
+                                <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
+                                <NumberInput
+                                  value={config.availableSlots}
+                                  onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
+                                  min={1}
+                                  max={999}
+                                  className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                                />
+                              </div>
+                            </div>
+                          )}
 
-                          {/* Available Slots */}
+                          {/* Available Slots - only show separately for non-hybrid */}
+                          {!(isTicketSelected && isReservationSelected) && (
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
                             <NumberInput
-                        value={config.availableSlots}
-                        onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
-                        min={1}
-                        max={999}
-                        className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm" />
-                      
+                              value={config.availableSlots}
+                              onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
+                              min={1}
+                              max={999}
+                              className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                            />
                           </div>
+                          )}
                           
                           {/* Person Tiers */}
                           <div className="space-y-2 sm:space-y-3">

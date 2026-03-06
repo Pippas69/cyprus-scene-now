@@ -621,12 +621,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           toast.error(t.addAtLeastOneRange);
           return;
         }
-        if (isHybrid && !formData.seatingConfigs[type].ticketCategoryName.trim()) {
-          toast.error(language === 'el'
-            ? 'Συμπληρώστε όνομα κατηγορίας εισιτηρίου για κάθε τύπο θέσης'
-            : 'Add a ticket category name for each seating type');
-          return;
-        }
+        // ticketCategoryName auto-derived from seating type, no validation needed
       }
     }
 
@@ -763,9 +758,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           const reservationLinked = formData.selectedSeatingTypes.map((seatingType, index) => {
             const config = formData.seatingConfigs[seatingType];
             const maxPartySize = Math.max(...config.tiers.map(t => t.maxPeople), 1);
+            const autoName = seatingType === 'bar' ? 'Bar' : seatingType === 'table' ? 'Table' : seatingType === 'vip' ? 'VIP' : 'Sofa';
             return {
               event_id: event.id,
-              name: config.ticketCategoryName.trim(),
+              name: autoName,
               description: null,
               price_cents: config.ticketPriceCents,
               currency: 'EUR',
@@ -1246,18 +1242,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                               <h5 className="font-medium capitalize text-xs sm:text-base">{t[type]}</h5>
                             </div>
 
-                            {/* Ticket category name & price - only for hybrid events */}
+                            {/* Price & Available Slots - compact for hybrid events */}
                             {isTicketSelected && isReservationSelected && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-1.5 sm:space-y-2">
-                                  <Label className="text-xs sm:text-sm">{t.ticketNameLabel} *</Label>
-                                  <Input
-                                    value={config.ticketCategoryName}
-                                    onChange={(e) => updateSeatingConfig(type, { ticketCategoryName: e.target.value })}
-                                    placeholder={t[type]}
-                                    className="h-8 sm:h-10 text-xs sm:text-sm"
-                                  />
-                                </div>
+                              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-1.5 sm:space-y-2">
                                   <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
                                   <Input
@@ -1275,10 +1262,21 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                     className="h-8 sm:h-10 text-xs sm:text-sm"
                                   />
                                 </div>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                  <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
+                                  <NumberInput
+                                    value={config.availableSlots}
+                                    onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
+                                    min={1}
+                                    max={999}
+                                    className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                                  />
+                                </div>
                               </div>
                             )}
 
-                            {/* Available Slots */}
+                            {/* Available Slots - only show separately for non-hybrid */}
+                            {!(isTicketSelected && isReservationSelected) && (
                             <div className="space-y-1.5 sm:space-y-2">
                               <Label className="text-xs sm:text-sm">{t.availableBookings}</Label>
                               <NumberInput
@@ -1289,6 +1287,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                 className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                               />
                             </div>
+                            )}
 
                             {/* Person Tiers */}
                             <div className="space-y-2 sm:space-y-3">
