@@ -669,7 +669,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'} />
                         
                           {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
-                        <span className="capitalize font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                        <span className="capitalize font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm -ml-2">
                               {seatingTypeNames[reservation.seating_type_id]}
                             </span>
                         }
