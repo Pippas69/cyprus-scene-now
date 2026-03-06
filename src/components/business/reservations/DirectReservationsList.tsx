@@ -55,6 +55,9 @@ interface SeatingTier {
   prepaid_min_charge_cents: number;
 }
 
+// Cache for seating type names (seating_type_id -> seating_type string)
+
+
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
@@ -64,6 +67,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
   // Kaliva: seating tiers for min charge calculation
   const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
+  // Seating type names by seating_type_id
+  const [seatingTypeNames, setSeatingTypeNames] = useState<Record<string, string>>({});
   // Kaliva: check-in counts per reservation (used tickets count)
   const [checkInCounts, setCheckInCounts] = useState<Record<string, { used: number; total: number }>>({});
   // Editing state
@@ -244,6 +249,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const seatingTypeIds = [...new Set(enrichedData.map(r => r.seating_type_id).filter(Boolean))] as string[];
         if (seatingTypeIds.length > 0) {
           fetchSeatingTiers(seatingTypeIds);
+          fetchSeatingTypeNames(seatingTypeIds);
         }
       } else {
         const isCompleted = (r: DirectReservation) => {
@@ -326,6 +332,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (data) tiersMap[stId] = data;
     }
     setSeatingTiers(tiersMap);
+  };
+
+  const fetchSeatingTypeNames = async (seatingTypeIds: string[]) => {
+    const { data } = await supabase
+      .from('reservation_seating_types')
+      .select('id, seating_type')
+      .in('id', seatingTypeIds);
+    if (data) {
+      const namesMap: Record<string, string> = {};
+      data.forEach(st => { namesMap[st.id] = st.seating_type; });
+      setSeatingTypeNames(namesMap);
+    }
   };
 
   const fetchCheckInCounts = async (reservationIds: string[]) => {
