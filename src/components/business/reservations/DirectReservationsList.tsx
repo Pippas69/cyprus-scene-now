@@ -661,7 +661,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <span className="text-sm font-semibold">{minAge}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-center">
                           <EditableCell
                           reservationId={reservation.id}
                           field="ticket_credit_cents"
