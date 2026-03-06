@@ -64,6 +64,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
   // Kaliva: seating tiers for min charge calculation
   const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
+  // Kaliva: check-in counts per reservation (used tickets count)
+  const [checkInCounts, setCheckInCounts] = useState<Record<string, { used: number; total: number }>>({});
   // Editing state
   const [editingField, setEditingField] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
