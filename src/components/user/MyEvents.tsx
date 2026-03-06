@@ -59,13 +59,13 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     },
   });
 
-  // Categorize tickets
+  // Categorize tickets - use end_at so events that started but haven't ended yet still show as upcoming
   const now = new Date();
   const upcomingTickets = tickets?.filter(t => 
-    t.events && new Date(t.events.start_at) >= now && t.status === 'valid'
+    t.events && new Date(t.events.end_at) >= now && t.status === 'valid'
   ) || [];
   const pastTickets = tickets?.filter(t => 
-    !t.events || new Date(t.events.start_at) < now || t.status !== 'valid'
+    !t.events || new Date(t.events.end_at) < now || t.status !== 'valid'
   ) || [];
 
   const text = {
