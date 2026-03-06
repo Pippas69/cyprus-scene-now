@@ -376,10 +376,26 @@ async function handleTicketQR(
         // Only show reservation info if it's a real table reservation (has seating_type_id)
         // Walk-in tickets don't have table reservations, so skip the reservation UI
         if (linkedResForUi.seating_type_id) {
+          // Look up correct min charge from seating tiers based on party size
+          let tierMinChargeCents: number | null = null;
+          try {
+            const { data: tiers } = await supabaseAdmin
+              .from("seating_type_tiers")
+              .select("min_people, max_people, prepaid_min_charge_cents")
+              .eq("seating_type_id", linkedResForUi.seating_type_id)
+              .order("min_people", { ascending: true });
+            if (tiers) {
+              const matchedTier = tiers.find((t: any) => linkedResForUi.party_size >= t.min_people && linkedResForUi.party_size <= t.max_people);
+              if (matchedTier) tierMinChargeCents = matchedTier.prepaid_min_charge_cents;
+            }
+          } catch (tierErr) {
+            logStep("Tier lookup error (non-fatal)", { error: tierErr instanceof Error ? tierErr.message : String(tierErr) });
+          }
+
           linkedReservationInfo = {
             reservationId: linkedResForUi.id,
             partySize: linkedResForUi.party_size,
-            minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents,
+            minimumChargeCents: linkedResForUi.prepaid_min_charge_cents ?? tierMinChargeCents ?? 0,
             ticketCreditCents: linkedResForUi.ticket_credit_cents,
             reservationName: linkedResForUi.reservation_name,
           };
