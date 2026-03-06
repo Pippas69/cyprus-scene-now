@@ -78,7 +78,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
     { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
-    { title: t.analytics, url: "/dashboard-business", icon: TrendingUp },
+    { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
   ];
 
   const businessItems = [

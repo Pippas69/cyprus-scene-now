@@ -1,4 +1,4 @@
-import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
+import { useNavigate, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -316,7 +316,8 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             <Routes>
-              <Route index element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
+              <Route index element={<Navigate to="/dashboard-business/events" replace />} />
+              <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostsList businessId={businessId} language={language} /></div> : null} />
               <Route path="posts/new" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /></div> : null} />
