@@ -100,6 +100,7 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
+                      end={item.url === "/dashboard-business"}
                       className="flex items-center gap-3"
                       activeClassName="bg-accent text-accent-foreground font-medium"
                       onClick={handleLinkClick}
