@@ -466,22 +466,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (isTicketLinked) {
         const counts = checkInCounts[reservation.id];
         if (counts && counts.total > 0) {
-          const allCheckedIn = counts.used >= counts.total;
           return (
-            <Badge className={`${allCheckedIn ? 'bg-green-500' : 'bg-emerald-600'} text-white whitespace-nowrap`}>
+            <Badge className="bg-green-600 text-white whitespace-nowrap">
               {counts.used} check-in{counts.used !== 1 ? 's' : ''}
             </Badge>
           );
         }
       }
-      return <Badge className="bg-green-500 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
+      return <Badge className="bg-green-600 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
     }
     // For clubs/events: show partial check-in count even before checked_in_at is set
     if (isTicketLinked) {
       const counts = checkInCounts[reservation.id];
       if (counts && counts.used > 0) {
         return (
-          <Badge className="bg-emerald-600 text-white whitespace-nowrap">
+          <Badge className="bg-green-600 text-white whitespace-nowrap">
             {counts.used} check-in{counts.used !== 1 ? 's' : ''}
           </Badge>
         );
@@ -609,7 +608,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   // then fall back to ticket_credit_cents
                   const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                   const minChargeCents = reservation.prepaid_min_charge_cents ?? tierMinCharge ?? reservation.ticket_credit_cents ?? 0;
-                  const minChargeDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
+                  const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
+                  const minChargeDisplay = minChargeCents > 0 
+                    ? ticketPaidCents > 0 
+                      ? `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})`
+                      : `€${(minChargeCents / 100).toFixed(2)}`
+                    : '-';
 
                   return (
                     <TableRow key={reservation.id} className="group">
