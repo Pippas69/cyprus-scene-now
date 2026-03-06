@@ -237,6 +237,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                     <span>{(ticket as any).seat_zone}</span>
                     {(ticket as any).seat_row && <><span className="text-[10px]">•</span><span>{language === 'el' ? 'Σειρά' : 'Row'} {(ticket as any).seat_row}</span></>}
                     {(ticket as any).seat_number && <><span className="text-[10px]">•</span><span>{language === 'el' ? 'Θέση' : 'Seat'} {(ticket as any).seat_number}</span></>}
+                    <span className="text-[10px]">•</span>
+                    <span className={`font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
+                      {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5">
