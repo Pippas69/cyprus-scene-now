@@ -232,20 +232,19 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   <p className="text-xs text-muted-foreground line-clamp-1">{businessName}</p>
                 )}
                 
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">{ticket.ticket_tiers?.name}</span>
-                  <span className="text-[10px] text-muted-foreground">•</span>
-                  <span className={`text-xs font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
-                    {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
-                  </span>
-                </div>
-                
-                {/* Seat info for seated events */}
-                {(ticket as any).seat_zone && (
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                    <span className="font-medium">{(ticket as any).seat_zone}</span>
-                    {(ticket as any).seat_row && <span>• {language === 'el' ? 'Σειρά' : 'Row'} {(ticket as any).seat_row}</span>}
-                    {(ticket as any).seat_number && <span>• {language === 'el' ? 'Θέση' : 'Seat'} {(ticket as any).seat_number}</span>}
+                {(ticket as any).seat_zone ? (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{(ticket as any).seat_zone}</span>
+                    {(ticket as any).seat_row && <><span className="text-[10px]">•</span><span>{language === 'el' ? 'Σειρά' : 'Row'} {(ticket as any).seat_row}</span></>}
+                    {(ticket as any).seat_number && <><span className="text-[10px]">•</span><span>{language === 'el' ? 'Θέση' : 'Seat'} {(ticket as any).seat_number}</span></>}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">{ticket.ticket_tiers?.name}</span>
+                    <span className="text-[10px] text-muted-foreground">•</span>
+                    <span className={`text-xs font-medium ${ticket.ticket_tiers?.price_cents === 0 ? 'text-emerald-600' : 'text-primary'}`}>
+                      {ticket.ticket_tiers?.price_cents === 0 ? t.free : formatPrice(ticket.ticket_tiers?.price_cents)}
+                    </span>
                   </div>
                 )}
 
