@@ -576,7 +576,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
     return (
       <span
-        className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1"
+        className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap"
         onClick={() => startEdit(reservationId, field, rawValue)}>
         
         {displayValue}
