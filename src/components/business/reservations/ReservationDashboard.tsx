@@ -18,6 +18,7 @@ interface EventOption {
   id: string;
   title: string;
   start_at: string;
+  event_type: string | null;
   reservationCount: number;
 }
 
