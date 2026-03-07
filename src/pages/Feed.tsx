@@ -168,70 +168,32 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       if (ticketTiers && ticketTiers.length > 0) {
         const finiteWalkInTiers = ticketTiers.filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
 
-        const soldMap: Record<string, number> = {};
         if (finiteWalkInTiers.length > 0) {
-          const tierIds = finiteWalkInTiers.map((tier) => tier.id);
-          const { data: tickets } = await supabase
-            .from('tickets')
-            .select('tier_id, order_id')
-            .in('tier_id', tierIds)
-            .in('status', ['valid', 'used']);
+          const { data: soldCounts, error: soldCountsError } = await supabase.rpc(
+            'get_event_walk_in_ticket_sold_counts',
+            { p_event_ids: ticketEventIds }
+          );
+          if (soldCountsError) throw soldCountsError;
 
-          const orderIds = [...new Set((tickets || []).map((ticket) => ticket.order_id).filter(Boolean))] as string[];
-          let walkInOrderIds = new Set<string>();
-          if (orderIds.length > 0) {
-            const { data: orders } = await supabase
-              .from('ticket_orders')
-              .select('id, linked_reservation_id')
-              .in('id', orderIds);
-
-            const linkedReservationIds = (orders || [])
-              .map((order) => order.linked_reservation_id)
-              .filter((id): id is string => !!id);
-
-            let legacyWalkInReservationIds = new Set<string>();
-            if (linkedReservationIds.length > 0) {
-              const { data: linkedReservations } = await supabase
-                .from('reservations')
-                .select('id, auto_created_from_tickets, seating_type_id')
-                .in('id', linkedReservationIds);
-
-              legacyWalkInReservationIds = new Set(
-                (linkedReservations || [])
-                  .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
-                  .map((reservation) => reservation.id)
-              );
-            }
-
-            walkInOrderIds = new Set(
-              (orders || [])
-                .filter(
-                  (order) =>
-                    !order.linked_reservation_id ||
-                    legacyWalkInReservationIds.has(order.linked_reservation_id)
-                )
-                .map((order) => order.id)
-            );
-          }
-
-          (tickets || []).forEach((ticket) => {
-            if (!ticket.order_id || walkInOrderIds.has(ticket.order_id)) {
-              soldMap[ticket.tier_id] = (soldMap[ticket.tier_id] || 0) + 1;
+          const soldMap: Record<string, number> = {};
+          (soldCounts || []).forEach((row: { tier_id: string; tickets_sold: number | string }) => {
+            if (row.tier_id) {
+              soldMap[row.tier_id] = Number(row.tickets_sold) || 0;
             }
           });
+
+          const tiersPerEvent = new Map<string, typeof finiteWalkInTiers>();
+          finiteWalkInTiers.forEach((tier) => {
+            const existing = tiersPerEvent.get(tier.event_id) || [];
+            existing.push(tier);
+            tiersPerEvent.set(tier.event_id, existing);
+          });
+
+          tiersPerEvent.forEach((tiers, eventId) => {
+            const allSoldOut = tiers.length > 0 && tiers.every((tier) => (soldMap[tier.id] || 0) >= tier.quantity_total);
+            if (allSoldOut) soldOutSet.add(eventId);
+          });
         }
-
-        const tiersPerEvent = new Map<string, typeof finiteWalkInTiers>();
-        finiteWalkInTiers.forEach((tier) => {
-          const existing = tiersPerEvent.get(tier.event_id) || [];
-          existing.push(tier);
-          tiersPerEvent.set(tier.event_id, existing);
-        });
-
-        tiersPerEvent.forEach((tiers, eventId) => {
-          const allSoldOut = tiers.length > 0 && tiers.every((tier) => (soldMap[tier.id] || 0) >= tier.quantity_total);
-          if (allSoldOut) soldOutSet.add(eventId);
-        });
       }
       
       // Filter out sold-out ticket events

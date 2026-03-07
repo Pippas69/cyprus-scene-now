@@ -5577,6 +5577,14 @@ export type Database = {
           slots_booked: number
         }[]
       }
+      get_event_walk_in_ticket_sold_counts: {
+        Args: { p_event_ids: string[] }
+        Returns: {
+          event_id: string
+          tickets_sold: number
+          tier_id: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
