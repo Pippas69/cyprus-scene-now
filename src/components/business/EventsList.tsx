@@ -180,11 +180,25 @@ const EventsList = ({ businessId }: EventsListProps) => {
         });
       }
 
-      // Fetch ticket tiers to determine sold-out status
-      const { data: ticketTiers } = await supabase.
-      from('ticket_tiers').
-      select('event_id, quantity_total, quantity_sold').
-      in('event_id', eventIds);
+      // Fetch active ticket tiers and live sold counts to determine sold-out status consistently
+      const { data: ticketTiers, error: ticketTiersError } = await supabase
+        .from('ticket_tiers')
+        .select('id, event_id, quantity_total, active')
+        .in('event_id', eventIds)
+        .eq('active', true);
+
+      if (ticketTiersError) throw ticketTiersError;
+
+      const { data: soldCounts, error: soldCountsError } = eventIds.length > 0
+        ? await supabase.rpc('get_event_walk_in_ticket_sold_counts', { p_event_ids: eventIds })
+        : { data: [], error: null };
+
+      if (soldCountsError) throw soldCountsError;
+
+      const soldByTierId = new Map<string, number>();
+      for (const row of (soldCounts || []) as { tier_id: string; tickets_sold: number | string }[]) {
+        if (row.tier_id) soldByTierId.set(row.tier_id, Number(row.tickets_sold) || 0);
+      }
 
       // Build a map of sold-out status per event (for ticket events)
       const soldOutMap = new Map<string, boolean>();
@@ -197,11 +211,12 @@ const EventsList = ({ businessId }: EventsListProps) => {
           tiersPerEvent.set(tier.event_id, existing);
         });
 
-        // Check if all tiers are sold out for each event
+        // Check if all finite active tiers are sold out for each event
         tiersPerEvent.forEach((tiers, eventId) => {
-          const allSoldOut = tiers.length > 0 && tiers.every((tier) =>
-          tier.quantity_total > 0 && (tier.quantity_sold || 0) >= tier.quantity_total
-          );
+          const finiteTiers = tiers.filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+          const allSoldOut =
+            finiteTiers.length > 0 &&
+            finiteTiers.every((tier) => (soldByTierId.get(tier.id) || 0) >= tier.quantity_total);
           soldOutMap.set(eventId, allSoldOut);
         });
       }
