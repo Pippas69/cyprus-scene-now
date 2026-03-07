@@ -425,7 +425,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('order_id, status, tier_id')
+        .select('order_id, status, tier_id, guest_age')
         .in('order_id', orderIds);
 
       const tierIds = [...new Set((tickets || []).map(t => t.tier_id).filter(Boolean))];
@@ -438,28 +438,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
-      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string }> = {};
+      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string; ages: number[] }> = {};
       (tickets || []).forEach(t => {
         if (!ticketsByOrder[t.order_id]) {
-          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '' };
+          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '', ages: [] };
         }
         ticketsByOrder[t.order_id].total++;
         if (t.status === 'used') ticketsByOrder[t.order_id].used++;
+        if (t.guest_age) ticketsByOrder[t.order_id].ages.push(t.guest_age);
       });
 
-      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => ({
-        id: o.id,
-        buyer_name: o.customer_name || '',
-        buyer_email: o.customer_email,
-        buyer_phone: o.customer_phone,
-        ticket_count: ticketsByOrder[o.id]?.total || 0,
-        subtotal_cents: o.subtotal_cents || 0,
-        status: o.status,
-        created_at: o.created_at,
-        tier_name: ticketsByOrder[o.id]?.tierName || '',
-        tickets_used: ticketsByOrder[o.id]?.used || 0,
-        tickets_total: ticketsByOrder[o.id]?.total || 0,
-      }));
+      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => {
+        const info = ticketsByOrder[o.id];
+        const ages = info?.ages || [];
+        const minAge = ages.length > 0 ? `${Math.min(...ages)}+` : '-';
+        return {
+          id: o.id,
+          buyer_name: o.customer_name || '',
+          buyer_email: o.customer_email,
+          buyer_phone: o.customer_phone,
+          ticket_count: info?.total || 0,
+          subtotal_cents: o.subtotal_cents || 0,
+          status: o.status,
+          created_at: o.created_at,
+          tier_name: info?.tierName || '',
+          tickets_used: info?.used || 0,
+          tickets_total: info?.total || 0,
+          min_age: minAge,
+        };
+      });
 
       setTicketOnlyOrders(enrichedOrders);
     } catch (error) {
