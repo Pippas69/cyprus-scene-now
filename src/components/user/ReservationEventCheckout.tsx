@@ -224,6 +224,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Selection state
   const [selectedSeating, setSelectedSeating] = useState<SeatingTypeOption | null>(null);
   const [partySize, setPartySize] = useState(minPartySize);
+  const [guests, setGuests] = useState<{ name: string; age: string }[]>(
+    Array.from({ length: minPartySize }, () => ({ name: '', age: '' }))
+  );
   const [reservationName, setReservationName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
