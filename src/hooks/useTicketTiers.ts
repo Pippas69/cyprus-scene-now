@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useTicketTiers = (eventId: string | undefined) => {
   return useQuery({
-    queryKey: ["ticket-tiers", eventId],
+    queryKey: ["ticket-tiers", eventId, "availability-unified-v2"],
     queryFn: async () => {
       if (!eventId) return [];
 
@@ -11,6 +11,7 @@ export const useTicketTiers = (eventId: string | undefined) => {
         .from("ticket_tiers")
         .select("*")
         .eq("event_id", eventId)
+        .eq("active", true)
         .order("sort_order");
 
       if (error) throw error;
