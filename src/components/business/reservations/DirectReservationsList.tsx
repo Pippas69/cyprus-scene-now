@@ -209,19 +209,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           auto_created_from_tickets, ticket_credit_cents, seating_type_id,
           prepaid_min_charge_cents, event_id,
           profiles(name, email)
-        `).
-      eq('business_id', businessId);
+        `);
 
       if (linked) {
-        query = query.
-        not('event_id', 'is', null).
-        or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
-        // Filter by specific event if selectedEventId is provided
+        // For event-linked reservations, filter by event_id (business_id may be NULL on these rows)
+        query = query.not('event_id', 'is', null);
         if (selectedEventId) {
           query = query.eq('event_id', selectedEventId);
         }
+        query = query.or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
       } else {
-        query = query.is('event_id', null);
+        query = query.eq('business_id', businessId).is('event_id', null);
       }
 
       if (linked) {
