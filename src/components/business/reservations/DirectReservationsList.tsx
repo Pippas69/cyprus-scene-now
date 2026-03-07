@@ -59,7 +59,7 @@ interface SeatingTier {
 // Cache for seating type names (seating_type_id -> seating_type string)
 
 
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
