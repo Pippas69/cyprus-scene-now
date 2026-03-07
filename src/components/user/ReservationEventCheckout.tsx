@@ -582,7 +582,37 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
 
-            {/* Prepaid Amount */}
+            {/* Guest Details */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                {t.guestDetails} ({partySize} {t.people})
+              </Label>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                {guests.map((guest, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                    <Input
+                      placeholder={t.guestName}
+                      value={guest.name}
+                      onChange={(e) => updateGuest(idx, 'name', e.target.value)}
+                      className="h-9 text-sm flex-1"
+                    />
+                    <Input
+                      placeholder={t.guestAge}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={guest.age}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        updateGuest(idx, 'age', val);
+                      }}
+                      className="h-9 text-sm w-20"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
             {price ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary">
                 <span className="text-sm font-medium">{t.prepaidAmount}</span>
