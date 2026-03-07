@@ -171,7 +171,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [businessId, selectedEventId]);
+  }, [businessId, selectedEventId, selectedEventType]);
 
   useEffect(() => {
     if (refreshNonce === undefined) return;
