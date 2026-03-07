@@ -5570,6 +5570,13 @@ export type Database = {
           slots_booked: number
         }[]
       }
+      get_event_seating_booked_counts: {
+        Args: { p_event_id: string }
+        Returns: {
+          seating_type_id: string
+          slots_booked: number
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
