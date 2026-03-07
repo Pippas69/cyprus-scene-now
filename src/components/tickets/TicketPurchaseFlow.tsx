@@ -340,7 +340,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       toast.error(t.noTicketsSelected);
       return;
     }
-    if (!allNamesFilled) {
+    if (!allGuestDetailsFilled) {
       toast.error(t.fillAllNames);
       return;
     }
@@ -389,9 +389,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         items,
         customerName: guestNames[0].trim(),
         customerEmail: customerEmail.trim() || user.email,
-        guests: guestNames.map(name => ({
+        customerPhone: customerPhone.trim() || null,
+        guests: guestNames.map((name, idx) => ({
           name: name.trim(),
-          age: 0,
+          age: parseInt(guestAges[idx]) || 0,
         })),
       };
 
