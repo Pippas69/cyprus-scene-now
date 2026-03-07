@@ -571,11 +571,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (isTicketLinked) {
         const counts = checkInCounts[reservation.id];
         if (counts && counts.total > 0) {
+          if (counts.total === 1) {
+            return (
+              <Badge className="bg-green-600 text-white whitespace-nowrap">
+                {counts.used > 0 ? 'check in' : (language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed')}
+              </Badge>);
+          }
           return (
             <Badge className="bg-green-600 text-white whitespace-nowrap">
-              {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+              {counts.used}/{counts.total} check in{counts.used !== 1 ? 's' : ''}
             </Badge>);
-
         }
       }
       return <Badge className="bg-green-600 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
@@ -584,11 +589,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketLinked) {
       const counts = checkInCounts[reservation.id];
       if (counts && counts.used > 0) {
+        if (counts.total === 1) {
+          return (
+            <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>);
+        }
         return (
           <Badge className="bg-green-600 text-white whitespace-nowrap">
-            {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+            {counts.used}/{counts.total} check in{counts.used !== 1 ? 's' : ''}
           </Badge>);
-
+      }
+      // If no check-ins yet but has ticket counts, show confirmed
+      if (counts && counts.total > 0) {
+        return <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>;
       }
     }
     if (reservation.status === 'cancelled') {
