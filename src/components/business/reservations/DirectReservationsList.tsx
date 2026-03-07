@@ -412,7 +412,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     try {
       const { data: orders } = await supabase
         .from('ticket_orders')
-        .select('id, buyer_name, buyer_email, buyer_phone, subtotal_cents, status, created_at')
+        .select('id, customer_name, customer_email, customer_phone, subtotal_cents, status, created_at')
         .eq('event_id', eventId)
         .eq('status', 'completed')
         .order('created_at', { ascending: false });
@@ -450,9 +450,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       const enrichedOrders: TicketOnlyOrder[] = orders.map(o => ({
         id: o.id,
-        buyer_name: o.buyer_name || '',
-        buyer_email: o.buyer_email,
-        buyer_phone: o.buyer_phone,
+        buyer_name: o.customer_name || '',
+        buyer_email: o.customer_email,
+        buyer_phone: o.customer_phone,
         ticket_count: ticketsByOrder[o.id]?.total || 0,
         subtotal_cents: o.subtotal_cents || 0,
         status: o.status,
