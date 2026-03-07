@@ -186,6 +186,71 @@ serve(async (req) => {
         }
       }
 
+      // Create individual guest tickets for QR check-in
+      try {
+        // Reconstruct guests from metadata (may be split across multiple keys)
+        let guestsJson = metadata?.guests || '';
+        if (!guestsJson) {
+          // Check for chunked guests_0, guests_1, ...
+          const chunks: string[] = [];
+          for (let i = 0; ; i++) {
+            const chunk = metadata?.[`guests_${i}`];
+            if (!chunk) break;
+            chunks.push(chunk);
+          }
+          if (chunks.length > 0) guestsJson = chunks.join('');
+        }
+
+        if (guestsJson) {
+          const guestsArray = JSON.parse(guestsJson) as { name: string; age: number }[];
+          if (Array.isArray(guestsArray) && guestsArray.length > 0) {
+            const eventId = metadata?.event_id || reservation.event_id;
+
+            // Create ticket_order linked to reservation
+            const { data: ticketOrder, error: toError } = await supabaseClient
+              .from('ticket_orders')
+              .insert({
+                event_id: eventId,
+                user_id: reservation.user_id,
+                customer_name: guestsArray[0]?.name || reservation.reservation_name || 'Guest',
+                customer_email: metadata?.customer_email || null,
+                status: 'completed',
+                subtotal_cents: 0,
+                platform_fee_cents: 0,
+                linked_reservation_id: reservationId,
+              })
+              .select('id')
+              .single();
+
+            if (toError || !ticketOrder) {
+              logStep("ERROR: ticket_order insert", { error: toError });
+            } else {
+              // Create individual tickets per guest
+              const ticketRows = guestsArray.map((g: { name: string; age: number }) => ({
+                order_id: ticketOrder.id,
+                event_id: eventId,
+                guest_name: g.name || 'Guest',
+                guest_age: typeof g.age === 'number' ? g.age : parseInt(String(g.age)) || null,
+                qr_code_token: crypto.randomUUID(),
+                status: 'valid',
+              }));
+
+              const { error: ticketsError } = await supabaseClient
+                .from('tickets')
+                .insert(ticketRows);
+
+              if (ticketsError) {
+                logStep("ERROR: tickets insert", { error: ticketsError });
+              } else {
+                logStep(`Created ${ticketRows.length} guest tickets for reservation`, { reservationId });
+              }
+            }
+          }
+        }
+      } catch (guestErr) {
+        logStep("ERROR: Guest tickets creation", { error: guestErr instanceof Error ? guestErr.message : String(guestErr) });
+      }
+
       // Get seating type info
       let seatingTypeName = "";
       let dressCode = "";
