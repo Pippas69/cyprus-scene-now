@@ -69,7 +69,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
     const { data: eventsData } = await supabase
       .from('events')
-      .select('id, title, start_at')
+      .select('id, title, start_at, event_type')
       .eq('business_id', businessId)
       .gte('end_at', new Date().toISOString())
       .order('start_at', { ascending: true });
@@ -95,10 +95,28 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
     });
 
+    // For ticket-only events, count ticket orders instead
+    const ticketOnlyEventIds = eventsData
+      .filter(e => e.event_type === 'ticket')
+      .map(e => e.id);
+
+    if (ticketOnlyEventIds.length > 0) {
+      const { data: ticketOrders } = await supabase
+        .from('ticket_orders')
+        .select('event_id')
+        .in('event_id', ticketOnlyEventIds)
+        .eq('status', 'completed');
+
+      (ticketOrders || []).forEach(o => {
+        if (o.event_id) counts[o.event_id] = (counts[o.event_id] || 0) + 1;
+      });
+    }
+
     const options: EventOption[] = eventsData.map(e => ({
       id: e.id,
       title: e.title,
       start_at: e.start_at,
+      event_type: e.event_type,
       reservationCount: counts[e.id] || 0,
     }));
 
