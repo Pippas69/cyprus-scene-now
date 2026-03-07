@@ -99,7 +99,6 @@ const translations = {
       partial_refund: "Μερική επιστροφή σε περίπτωση μη εμφάνισης",
       non_refundable: "Μη επιστρέψιμο σε περίπτωση μη εμφάνισης",
     },
-    
     total: "Σύνολο",
     pay: "Πληρωμή",
     back: "Πίσω",
@@ -111,6 +110,10 @@ const translations = {
     errorNoTier: "Δεν βρέθηκε τιμή για αυτό το μέγεθος παρέας",
     paymentsNotReady: "Οι online πληρωμές δεν είναι ακόμη διαθέσιμες",
     paymentsNotReadyDesc: "Η επιχείρηση δεν έχει ολοκληρώσει τη ρύθμιση πληρωμών. Παρακαλώ επικοινωνήστε απευθείας με την επιχείρηση για κράτηση.",
+    guestDetails: "Στοιχεία Καλεσμένων",
+    guestName: "Όνομα",
+    guestAge: "Ηλικία",
+    fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
   },
   en: {
     title: "Book a Seat",
@@ -156,7 +159,6 @@ const translations = {
       partial_refund: "Partial refund if no-show",
       non_refundable: "Non-refundable if no-show",
     },
-    
     total: "Total",
     pay: "Pay",
     back: "Back",
@@ -168,6 +170,10 @@ const translations = {
     errorNoTier: "No price found for this party size",
     paymentsNotReady: "Online payments not yet available",
     paymentsNotReadyDesc: "The business has not completed payment setup. Please contact the business directly to make a reservation.",
+    guestDetails: "Guest Details",
+    guestName: "Name",
+    guestAge: "Age",
+    fillAllGuests: "Please fill in name and age for all guests",
   },
 };
 
