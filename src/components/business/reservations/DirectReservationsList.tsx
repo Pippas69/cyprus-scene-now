@@ -678,6 +678,85 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   // ===================== KALIVA MODE =====================
   if (isTicketLinked) {
+    const isTicketOnly = selectedEventType === 'ticket';
+    const isReservationOnly = selectedEventType === 'reservation';
+    const priceColumnLabel = isTicketOnly
+      ? (language === 'el' ? 'Τιμή' : 'Price')
+      : 'Minimum Charge';
+
+    // TICKET-ONLY: show ticket orders instead of reservations
+    if (isTicketOnly && ticketOnlyOrders.length > 0) {
+      return (
+        <div className="space-y-4 w-full max-w-full">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">{t.name}</TableHead>
+                  <TableHead className="text-xs">{t.details}</TableHead>
+                  <TableHead className="text-xs">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs">{t.status}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ticketOnlyOrders.map((order) => (
+                  <TableRow key={order.id} className="group">
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col gap-0.5">
+                        <span>{order.buyer_name}</span>
+                        {order.buyer_phone && (
+                          <span className="text-sm text-muted-foreground">{order.buyer_phone}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm whitespace-nowrap">
+                          {order.ticket_count} {order.ticket_count === 1 ? (language === 'el' ? 'εισιτήριο' : 'ticket') : (language === 'el' ? 'εισιτήρια' : 'tickets')}
+                        </span>
+                        {order.tier_name && (
+                          <span className="text-sm text-muted-foreground">{order.tier_name}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium">
+                        {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {order.tickets_used > 0 ? (
+                        <Badge className="bg-green-600 text-white whitespace-nowrap">
+                          {order.tickets_used} check-in{order.tickets_used !== 1 ? 's' : ''}
+                        </Badge>
+                      ) : (
+                        <Badge variant="default">{language === 'el' ? 'Έγκυρο' : 'Valid'}</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </div>
+      );
+    }
+
+    // TICKET-ONLY but no orders yet
+    if (isTicketOnly && ticketOnlyOrders.length === 0) {
+      return (
+        <div className="space-y-4 w-full max-w-full">
+          <Card>
+            <CardContent className="py-10 text-center">
+              <Ticket className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">{language === 'el' ? 'Δεν υπάρχουν αγορές εισιτηρίων ακόμα' : 'No ticket purchases yet'}</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // RESERVATION-ONLY or TICKET_AND_RESERVATION (hybrid) — existing flow
     return (
       <div className="space-y-4 w-full max-w-full">
         {filteredReservations.length === 0 ?
@@ -694,23 +773,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 <TableRow>
                   <TableHead className="text-xs">{t.name}</TableHead>
                   <TableHead className="text-xs">{t.details}</TableHead>
-                  <TableHead className="text-xs">Minimum Charge</TableHead>
+                  <TableHead className="text-xs">{priceColumnLabel}</TableHead>
                   <TableHead className="text-xs">{t.status}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
                 const minAge = getMinAge(reservation.id);
-                // Primary value = reservation minimum charge from seating tiers (party-size based).
-                // Secondary fallback = stored prepaid minimum charge.
-                // Parentheses value uses ticket_credit_cents (actual prepaid ticket amount).
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const minChargeDisplay = minChargeCents > 0 ?
+                (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
                 ticketPaidCents > 0 ?
                 `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
-                `€${(minChargeCents / 100).toFixed(2)}` :
+                `€${(minChargeCents / 100).toFixed(2)}`) :
                 '-';
 
                 return (
