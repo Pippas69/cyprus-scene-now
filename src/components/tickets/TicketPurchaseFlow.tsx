@@ -525,16 +525,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                   />
                   <Input
                     placeholder={t.age}
-                    type="number"
-                    min="1"
-                    max="120"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={guestAges[idx] || ''}
                     onChange={(e) => {
-                      setGuestAges(prev => {
-                        const updated = [...prev];
-                        updated[idx] = e.target.value;
-                        return updated;
-                      });
+                      const val = e.target.value;
+                      if (val === '' || /^\d{0,3}$/.test(val)) {
+                        setGuestAges(prev => {
+                          const updated = [...prev];
+                          updated[idx] = val;
+                          return updated;
+                        });
+                      }
                     }}
                     className="h-9 text-sm w-20"
                   />
