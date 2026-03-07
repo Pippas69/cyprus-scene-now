@@ -75,6 +75,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Editing state
   const [editingField, setEditingField] = useState<{id: string;field: string;} | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  // Ticket-only mode: store ticket orders
+  const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
 
   const text = {
     el: {
