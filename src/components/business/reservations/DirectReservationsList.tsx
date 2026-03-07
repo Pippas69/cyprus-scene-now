@@ -408,6 +408,67 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setCheckInCounts(countsMap);
   };
 
+  const fetchTicketOnlyOrders = async (eventId: string) => {
+    try {
+      const { data: orders } = await supabase
+        .from('ticket_orders')
+        .select('id, buyer_name, buyer_email, buyer_phone, subtotal_cents, status, created_at')
+        .eq('event_id', eventId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
+
+      if (!orders || orders.length === 0) {
+        setTicketOnlyOrders([]);
+        return;
+      }
+
+      const orderIds = orders.map(o => o.id);
+
+      const { data: tickets } = await supabase
+        .from('tickets')
+        .select('order_id, status, tier_id')
+        .in('order_id', orderIds);
+
+      const tierIds = [...new Set((tickets || []).map(t => t.tier_id).filter(Boolean))];
+      const tierNames: Record<string, string> = {};
+      if (tierIds.length > 0) {
+        const { data: tiers } = await supabase
+          .from('ticket_tiers')
+          .select('id, name')
+          .in('id', tierIds);
+        (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
+      }
+
+      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string }> = {};
+      (tickets || []).forEach(t => {
+        if (!ticketsByOrder[t.order_id]) {
+          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '' };
+        }
+        ticketsByOrder[t.order_id].total++;
+        if (t.status === 'used') ticketsByOrder[t.order_id].used++;
+      });
+
+      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => ({
+        id: o.id,
+        buyer_name: o.buyer_name || '',
+        buyer_email: o.buyer_email,
+        buyer_phone: o.buyer_phone,
+        ticket_count: ticketsByOrder[o.id]?.total || 0,
+        subtotal_cents: o.subtotal_cents || 0,
+        status: o.status,
+        created_at: o.created_at,
+        tier_name: ticketsByOrder[o.id]?.tierName || '',
+        tickets_used: ticketsByOrder[o.id]?.used || 0,
+        tickets_total: ticketsByOrder[o.id]?.total || 0,
+      }));
+
+      setTicketOnlyOrders(enrichedOrders);
+    } catch (error) {
+      console.error('Error fetching ticket-only orders:', error);
+      setTicketOnlyOrders([]);
+    }
+  };
+
   const getMinChargeForPartySize = (seatingTypeId: string | null | undefined, partySize: number): number | null => {
     if (!seatingTypeId || !seatingTiers[seatingTypeId] || seatingTiers[seatingTypeId].length === 0) return null;
     const tiers = seatingTiers[seatingTypeId];
