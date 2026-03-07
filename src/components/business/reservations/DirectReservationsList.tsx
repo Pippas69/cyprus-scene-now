@@ -70,6 +70,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   tickets_used: number;
   tickets_total: number;
+  min_age: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
