@@ -77,7 +77,9 @@ const translations = {
     guestDetails: "Ονόματα Καλεσμένων",
     guestN: "Άτομο",
     name: "Όνομα",
+    age: "Ηλικία",
     email: "Email",
+    phone: "Τηλέφωνο",
     people: "άτομα",
     total: "Σύνολο",
     pay: "Πληρωμή",
@@ -87,7 +89,9 @@ const translations = {
     processing: "Επεξεργασία...",
     noTicketsSelected: "Επιλέξτε τουλάχιστον ένα εισιτήριο",
     loginRequired: "Πρέπει να συνδεθείτε",
-    fillAllNames: "Συμπληρώστε όνομα για όλους τους καλεσμένους",
+    fillAllNames: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
+    fillPhone: "Συμπληρώστε τηλέφωνο",
+    fillEmail: "Συμπληρώστε email",
     eachPersonGetsQR: "Κάθε άτομο θα λάβει ξεχωριστό QR code εισιτηρίου",
     redirecting: "Μεταφορά στην πληρωμή...",
     redirectFallback: "Αν η σελίδα δεν άνοιξε αυτόματα, πατήστε το κουμπί παραπάνω.",
@@ -115,7 +119,9 @@ const translations = {
     guestDetails: "Guest Names",
     guestN: "Person",
     name: "Name",
+    age: "Age",
     email: "Email",
+    phone: "Phone",
     people: "people",
     total: "Total",
     pay: "Pay",
@@ -125,7 +131,9 @@ const translations = {
     processing: "Processing...",
     noTicketsSelected: "Please select at least one ticket",
     loginRequired: "You must be logged in",
-    fillAllNames: "Please fill in name for all guests",
+    fillAllNames: "Please fill in name and age for all guests",
+    fillPhone: "Please fill in phone number",
+    fillEmail: "Please fill in email",
     eachPersonGetsQR: "Each person will receive their own QR code ticket",
     redirecting: "Opening payment...",
     redirectFallback: "If the page didn't open automatically, tap the button above.",
@@ -180,7 +188,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
+  const [guestAges, setGuestAges] = useState<string[]>([]);
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -272,6 +282,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
+    setGuestAges(prev => {
+      if (prev.length === totalTickets) return prev;
+      if (prev.length < totalTickets) {
+        return [...prev, ...Array(totalTickets - prev.length).fill('')];
+      }
+      return prev.slice(0, totalTickets);
+    });
   }, [totalTickets]);
 
   const updateQuantity = (tierId: string, delta: number) => {
@@ -306,6 +323,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = calculateTotal();
   const isFreeOrder = total === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
+  const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
+  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && customerPhone.trim().length >= 8 && customerEmail.trim().length > 0;
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
@@ -321,7 +340,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       toast.error(t.noTicketsSelected);
       return;
     }
-    if (!allNamesFilled) {
+    if (!allGuestDetailsFilled) {
       toast.error(t.fillAllNames);
       return;
     }
@@ -370,9 +389,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         items,
         customerName: guestNames[0].trim(),
         customerEmail: customerEmail.trim() || user.email,
-        guests: guestNames.map(name => ({
+        customerPhone: customerPhone.trim() || null,
+        guests: guestNames.map((name, idx) => ({
           name: name.trim(),
-          age: 0,
+          age: parseInt(guestAges[idx]) || 0,
         })),
       };
 
@@ -479,7 +499,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         )}
 
-        {/* Guest names */}
+        {/* Guest names & ages */}
         {totalTickets > 0 && (
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-1.5">
@@ -503,8 +523,51 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                     }}
                     className="h-9 text-sm flex-1"
                   />
+                  <Input
+                    placeholder={t.age}
+                    type="number"
+                    min="1"
+                    max="120"
+                    value={guestAges[idx] || ''}
+                    onChange={(e) => {
+                      setGuestAges(prev => {
+                        const updated = [...prev];
+                        updated[idx] = e.target.value;
+                        return updated;
+                      });
+                    }}
+                    className="h-9 text-sm w-20"
+                  />
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Phone & Email */}
+        {totalTickets > 0 && (
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="ticket-phone" className="text-sm">{t.phone}</Label>
+              <Input
+                id="ticket-phone"
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="+357..."
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="ticket-email-guest" className="text-sm">{t.email}</Label>
+              <Input
+                id="ticket-email-guest"
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="h-9 text-sm"
+              />
             </div>
           </div>
         )}
@@ -559,25 +622,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground">{t.guestDetails}</p>
         {guestNames.map((name, i) => (
-          <div key={i} className="text-sm">
-            {i + 1}. {name}
+          <div key={i} className="text-sm flex justify-between">
+            <span>{i + 1}. {name}</span>
+            <span className="text-muted-foreground">{guestAges[i] || '-'}</span>
           </div>
         ))}
-      </div>
-
-      <Separator />
-
-      {/* Email */}
-      <div className="space-y-1">
-        <Label htmlFor="ticket-email" className="text-sm">{t.email}</Label>
-        <Input
-          id="ticket-email"
-          type="email"
-          value={customerEmail}
-          onChange={(e) => setCustomerEmail(e.target.value)}
-          placeholder="email@example.com"
-          className="h-9 text-sm"
-        />
       </div>
 
       <Separator />
@@ -673,7 +722,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'showSelect': return !!selectedShowId;
       case 'seats': return selectedSeats.length > 0;
       case 'tickets': return tierTotalTickets > 0;
-      case 'guests': return allNamesFilled && totalTickets > 0;
+      case 'guests': return allGuestDetailsFilled && totalTickets > 0;
       case 'checkout': return true;
       default: return true;
     }

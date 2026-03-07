@@ -571,11 +571,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (isTicketLinked) {
         const counts = checkInCounts[reservation.id];
         if (counts && counts.total > 0) {
+          if (counts.total === 1) {
+            return (
+              <Badge className="bg-green-600 text-white whitespace-nowrap">
+                {counts.used > 0 ? 'check in' : (language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed')}
+              </Badge>);
+          }
           return (
             <Badge className="bg-green-600 text-white whitespace-nowrap">
-              {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+              {counts.used}/{counts.total} check in{counts.used !== 1 ? 's' : ''}
             </Badge>);
-
         }
       }
       return <Badge className="bg-green-600 text-white whitespace-nowrap">{t.checkedIn}</Badge>;
@@ -584,11 +589,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketLinked) {
       const counts = checkInCounts[reservation.id];
       if (counts && counts.used > 0) {
+        if (counts.total === 1) {
+          return (
+            <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>);
+        }
         return (
           <Badge className="bg-green-600 text-white whitespace-nowrap">
-            {counts.used} check-in{counts.used !== 1 ? 's' : ''}
+            {counts.used}/{counts.total} check in{counts.used !== 1 ? 's' : ''}
           </Badge>);
-
+      }
+      // If no check-ins yet but has ticket counts, show confirmed
+      if (counts && counts.total > 0) {
+        return <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>;
       }
     }
     if (reservation.status === 'cancelled') {
@@ -666,11 +678,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
     return (
       <span
-        className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-2"
+        className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-2 group/edit"
         onClick={() => startEdit(reservationId, field, rawValue)}>
         
         {displayValue}
-        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity" />
       </span>);
 
   };
@@ -706,7 +718,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {ticketOnlyOrders.map((order) => (
-                  <TableRow key={order.id} className="group">
+                  <TableRow key={order.id}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span>{order.buyer_name}</span>
@@ -736,12 +748,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </div>
                     </TableCell>
                     <TableCell>
-                      {order.tickets_used > 0 ? (
-                        <Badge className="bg-green-600 text-white whitespace-nowrap">
-                          {order.tickets_used} check-in{order.tickets_used !== 1 ? 's' : ''}
-                        </Badge>
+                      {order.tickets_total === 1 ? (
+                        // Single ticket: just "check in" or "Επιβεβαιωμένη"
+                        order.tickets_used > 0 ? (
+                          <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
+                        ) : (
+                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
+                        )
                       ) : (
-                        <Badge variant="default">{language === 'el' ? 'Έγκυρο' : 'Valid'}</Badge>
+                        // Multiple tickets: show "X/Y check ins" or "Επιβεβαιωμένη"
+                        order.tickets_used > 0 ? (
+                          <Badge className="bg-green-600 text-white whitespace-nowrap">
+                            {order.tickets_used}/{order.tickets_total} check in{order.tickets_used !== 1 ? 's' : ''}
+                          </Badge>
+                        ) : (
+                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
+                        )
                       )}
                     </TableCell>
                   </TableRow>
