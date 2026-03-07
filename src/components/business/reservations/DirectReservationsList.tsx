@@ -70,6 +70,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   tickets_used: number;
   tickets_total: number;
+  min_age: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
@@ -208,19 +209,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           auto_created_from_tickets, ticket_credit_cents, seating_type_id,
           prepaid_min_charge_cents, event_id,
           profiles(name, email)
-        `).
-      eq('business_id', businessId);
+        `);
 
       if (linked) {
-        query = query.
-        not('event_id', 'is', null).
-        or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
-        // Filter by specific event if selectedEventId is provided
+        // For event-linked reservations, filter by event_id (business_id may be NULL on these rows)
+        query = query.not('event_id', 'is', null);
         if (selectedEventId) {
           query = query.eq('event_id', selectedEventId);
         }
+        query = query.or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
       } else {
-        query = query.is('event_id', null);
+        query = query.eq('business_id', businessId).is('event_id', null);
       }
 
       if (linked) {
@@ -426,7 +425,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('order_id, status, tier_id')
+        .select('order_id, status, tier_id, guest_age')
         .in('order_id', orderIds);
 
       const tierIds = [...new Set((tickets || []).map(t => t.tier_id).filter(Boolean))];
@@ -439,28 +438,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
-      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string }> = {};
+      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string; ages: number[] }> = {};
       (tickets || []).forEach(t => {
         if (!ticketsByOrder[t.order_id]) {
-          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '' };
+          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '', ages: [] };
         }
         ticketsByOrder[t.order_id].total++;
         if (t.status === 'used') ticketsByOrder[t.order_id].used++;
+        if (t.guest_age) ticketsByOrder[t.order_id].ages.push(t.guest_age);
       });
 
-      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => ({
-        id: o.id,
-        buyer_name: o.customer_name || '',
-        buyer_email: o.customer_email,
-        buyer_phone: o.customer_phone,
-        ticket_count: ticketsByOrder[o.id]?.total || 0,
-        subtotal_cents: o.subtotal_cents || 0,
-        status: o.status,
-        created_at: o.created_at,
-        tier_name: ticketsByOrder[o.id]?.tierName || '',
-        tickets_used: ticketsByOrder[o.id]?.used || 0,
-        tickets_total: ticketsByOrder[o.id]?.total || 0,
-      }));
+      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => {
+        const info = ticketsByOrder[o.id];
+        const ages = info?.ages || [];
+        const minAge = ages.length > 0 ? `${Math.min(...ages)}+` : '-';
+        return {
+          id: o.id,
+          buyer_name: o.customer_name || '',
+          buyer_email: o.customer_email,
+          buyer_phone: o.customer_phone,
+          ticket_count: info?.total || 0,
+          subtotal_cents: o.subtotal_cents || 0,
+          status: o.status,
+          created_at: o.created_at,
+          tier_name: info?.tierName || '',
+          tickets_used: info?.used || 0,
+          tickets_total: info?.total || 0,
+          min_age: minAge,
+        };
+      });
 
       setTicketOnlyOrders(enrichedOrders);
     } catch (error) {
@@ -684,7 +690,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ? (language === 'el' ? 'Τιμή' : 'Price')
       : 'Minimum Charge';
 
-    // TICKET-ONLY: show ticket orders instead of reservations
+    // TICKET-ONLY: show ticket orders with same layout as hybrid
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
@@ -714,15 +720,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <span className="text-sm whitespace-nowrap">
                           {order.ticket_count} {order.ticket_count === 1 ? (language === 'el' ? 'εισιτήριο' : 'ticket') : (language === 'el' ? 'εισιτήρια' : 'tickets')}
                         </span>
-                        {order.tier_name && (
-                          <span className="text-sm text-muted-foreground">{order.tier_name}</span>
-                        )}
+                        <span className="text-sm font-thin text-muted-foreground">{order.min_age}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm font-medium">
-                        {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
-                      </span>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium">
+                          {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                        </span>
+                        {order.tier_name && (
+                          <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                            {order.tier_name}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {order.tickets_used > 0 ? (
