@@ -690,7 +690,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ? (language === 'el' ? 'Τιμή' : 'Price')
       : 'Minimum Charge';
 
-    // TICKET-ONLY: show ticket orders instead of reservations
+    // TICKET-ONLY: show ticket orders with same layout as hybrid
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
@@ -720,15 +720,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <span className="text-sm whitespace-nowrap">
                           {order.ticket_count} {order.ticket_count === 1 ? (language === 'el' ? 'εισιτήριο' : 'ticket') : (language === 'el' ? 'εισιτήρια' : 'tickets')}
                         </span>
-                        {order.tier_name && (
-                          <span className="text-sm text-muted-foreground">{order.tier_name}</span>
-                        )}
+                        <span className="text-sm font-thin text-muted-foreground">{order.min_age}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm font-medium">
-                        {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
-                      </span>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium">
+                          {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                        </span>
+                        {order.tier_name && (
+                          <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                            {order.tier_name}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {order.tickets_used > 0 ? (
