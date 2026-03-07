@@ -125,7 +125,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         });
       }
 
-      // Fetch accepted reservations
+      // Fetch accepted reservations (used for revenue + reservation KPI)
       const { data: reservations, error: resError } = await supabase
         .from("reservations")
         .select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents")
@@ -133,6 +133,20 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         .eq("status", "accepted")
         .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null");
       if (resError) throw resError;
+
+      // Fetch live seating occupancy (pending + accepted) for availability display
+      const { data: liveBookedCounts, error: liveBookedCountsError } = await supabase.rpc(
+        'get_event_seating_booked_counts',
+        { p_event_id: eventId }
+      );
+      if (liveBookedCountsError) throw liveBookedCountsError;
+
+      const liveBookedMap: Record<string, number> = {};
+      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+        if (row.seating_type_id) {
+          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
+        }
+      }
 
       // --- Ticket stats (ALL tickets including reservation-linked) ---
       const ticketRevenue = allOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
@@ -152,21 +166,25 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       }));
 
       // --- Reservation stats ---
-      const seatingTypeIds = new Set(seatingTypes.map((st) => st.id));
       const seatingStats = seatingTypes.map((st) => {
         const stReservations = (reservations || []).filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type
         );
+
+        const acceptedBooked = stReservations.length;
+        const bookedForAvailability = liveBookedMap[st.id] ?? acceptedBooked;
+
         return {
           ...st,
-          booked: stReservations.length,
-          available: Math.max(0, st.available_slots - stReservations.length),
+          acceptedBooked,
+          booked: bookedForAvailability,
+          available: Math.max(0, st.available_slots - bookedForAvailability),
           revenue: stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0)
         };
       });
 
       const reservationRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
-      const totalReservations = seatingStats.reduce((sum, st) => sum + st.booked, 0);
+      const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
       const reservationCheckedIn = (reservations || []).filter((r) => r.checked_in_at).length;
 
       // For linked ticket+reservation flows (Kaliva), check-ins are sourced strictly from tickets
