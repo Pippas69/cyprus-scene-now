@@ -219,17 +219,25 @@ export default function EventDetail() {
     }
 
     const activeIds = activeTypes.map(st => st.id);
-    const { data: reservations } = await supabase
-      .from('reservations')
-      .select('seating_type_id')
-      .eq('event_id', targetEventId)
-      .in('seating_type_id', activeIds)
-      .in('status', ['pending', 'accepted']);
+    const activeIdSet = new Set(activeIds);
+
+    const { data: bookedCounts, error: bookedCountsError } = await supabase.rpc(
+      'get_event_seating_booked_counts',
+      { p_event_id: targetEventId }
+    );
+
+    if (bookedCountsError) {
+      console.error('Error fetching reservation availability:', bookedCountsError);
+      setReservationsSoldOut(false);
+      return;
+    }
 
     const counts: Record<string, number> = {};
-    (reservations || []).forEach(r => {
-      if (r.seating_type_id) counts[r.seating_type_id] = (counts[r.seating_type_id] || 0) + 1;
-    });
+    for (const row of (bookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+      if (row.seating_type_id && activeIdSet.has(row.seating_type_id)) {
+        counts[row.seating_type_id] = Number(row.slots_booked) || 0;
+      }
+    }
 
     const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
     setReservationsSoldOut(allFull);
