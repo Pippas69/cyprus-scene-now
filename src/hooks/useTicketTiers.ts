@@ -16,78 +16,25 @@ export const useTicketTiers = (eventId: string | undefined) => {
       if (error) throw error;
       if (!tiers || tiers.length === 0) return [];
 
-      // Count actual tickets per tier for accurate availability
-      // IMPORTANT: finite tiers (walk-ins) should count ONLY non-reservation-linked orders
-      const tierIds = tiers.map(t => t.id);
-      const { data: tickets } = await supabase
-        .from("tickets")
-        .select("tier_id, order_id")
-        .in("tier_id", tierIds)
-        .in("status", ["valid", "used"]);
+      // Count real sold tickets via backend aggregate so all users see identical availability
+      const { data: soldCounts, error: soldCountsError } = await supabase.rpc(
+        "get_event_walk_in_ticket_sold_counts",
+        { p_event_ids: [eventId] }
+      );
 
-      if (tickets) {
-        const tierMap = new Map(tiers.map((tier) => [tier.id, tier]));
-        const orderIds = [...new Set(tickets.map((ticket) => ticket.order_id).filter(Boolean))] as string[];
+      if (soldCountsError) throw soldCountsError;
 
-        let walkInOrderIds = new Set<string>();
-        if (orderIds.length > 0) {
-          const { data: orders } = await supabase
-            .from("ticket_orders")
-            .select("id, linked_reservation_id")
-            .in("id", orderIds);
-
-          const linkedReservationIds = (orders || [])
-            .map((order) => order.linked_reservation_id)
-            .filter((id): id is string => !!id);
-
-          let legacyWalkInReservationIds = new Set<string>();
-          if (linkedReservationIds.length > 0) {
-            const { data: linkedReservations } = await supabase
-              .from("reservations")
-              .select("id, auto_created_from_tickets, seating_type_id")
-              .in("id", linkedReservationIds);
-
-            legacyWalkInReservationIds = new Set(
-              (linkedReservations || [])
-                .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
-                .map((reservation) => reservation.id)
-            );
-          }
-
-          walkInOrderIds = new Set(
-            (orders || [])
-              .filter(
-                (order) =>
-                  !order.linked_reservation_id ||
-                  legacyWalkInReservationIds.has(order.linked_reservation_id)
-              )
-              .map((order) => order.id)
-          );
+      const soldMap: Record<string, number> = {};
+      for (const row of (soldCounts || []) as { tier_id: string; tickets_sold: number | string }[]) {
+        if (row.tier_id) {
+          soldMap[row.tier_id] = Number(row.tickets_sold) || 0;
         }
-
-        const countMap: Record<string, number> = {};
-        for (const ticket of tickets) {
-          const tier = tierMap.get(ticket.tier_id);
-          if (!tier) continue;
-
-          const isFiniteTier = tier.quantity_total > 0 && tier.quantity_total !== 999999;
-          if (!isFiniteTier) {
-            countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
-            continue;
-          }
-
-          if (!ticket.order_id || walkInOrderIds.has(ticket.order_id)) {
-            countMap[ticket.tier_id] = (countMap[ticket.tier_id] || 0) + 1;
-          }
-        }
-
-        return tiers.map(tier => ({
-          ...tier,
-          quantity_sold: countMap[tier.id] ?? 0,
-        }));
       }
 
-      return tiers;
+      return tiers.map((tier) => ({
+        ...tier,
+        quantity_sold: soldMap[tier.id] ?? 0,
+      }));
     },
     enabled: !!eventId,
   });
