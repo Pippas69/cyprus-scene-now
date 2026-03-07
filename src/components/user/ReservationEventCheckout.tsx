@@ -354,6 +354,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Handle checkout
   const handleCheckout = async () => {
     if (!selectedSeating || !price) return;
+    if (!allGuestsFilled) {
+      toast.error(t.fillAllGuests);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -366,6 +370,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           phone_number: phoneNumber,
           customer_email: customerEmail.trim() || null,
           special_requests: specialRequests || null,
+          guests: guests.map(g => ({
+            name: g.name.trim(),
+            age: parseInt(g.age) || 0,
+          })),
         },
       });
 
@@ -387,11 +395,21 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // REMOVED: handleFreeReservation - all reservations now go through Stripe
 
+  // Guest helpers
+  const updateGuest = (index: number, field: 'name' | 'age', value: string) => {
+    setGuests(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const isPhoneValid = phoneNumber.trim() === '' || isValidPhone(phoneNumber);
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
+  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
