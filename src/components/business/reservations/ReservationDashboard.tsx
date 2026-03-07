@@ -213,6 +213,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             businessId={businessId}
             language={language}
             selectedEventId={isTicketLinked ? selectedEventId : undefined}
+            selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
           />
         </TabsContent>
 
