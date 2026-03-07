@@ -736,12 +736,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </div>
                     </TableCell>
                     <TableCell>
-                      {order.tickets_used > 0 ? (
-                        <Badge className="bg-green-600 text-white whitespace-nowrap">
-                          {order.tickets_used} check-in{order.tickets_used !== 1 ? 's' : ''}
-                        </Badge>
+                      {order.tickets_total === 1 ? (
+                        // Single ticket: just "check in" or "Επιβεβαιωμένη"
+                        order.tickets_used > 0 ? (
+                          <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
+                        ) : (
+                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
+                        )
                       ) : (
-                        <Badge variant="default">{language === 'el' ? 'Έγκυρο' : 'Valid'}</Badge>
+                        // Multiple tickets: show "X/Y check ins" or "Επιβεβαιωμένη"
+                        order.tickets_used > 0 ? (
+                          <Badge className="bg-green-600 text-white whitespace-nowrap">
+                            {order.tickets_used}/{order.tickets_total} check in{order.tickets_used !== 1 ? 's' : ''}
+                          </Badge>
+                        ) : (
+                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
+                        )
                       )}
                     </TableCell>
                   </TableRow>
