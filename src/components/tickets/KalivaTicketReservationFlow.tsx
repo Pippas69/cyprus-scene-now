@@ -283,21 +283,21 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         .eq('event_id', eventId);
       if (error) throw error;
 
-      // Count actual reservations per seating type for accurate availability
       const seatingIds = (seatingTypes || []).map(st => st.id);
-      const { data: reservationCounts } = seatingIds.length > 0
-        ? await supabase
-            .from('reservations')
-            .select('seating_type_id')
-            .eq('event_id', eventId)
-            .in('seating_type_id', seatingIds)
-            .in('status', ['pending', 'accepted'])
-        : { data: [] };
-
+      const seatingIdSet = new Set(seatingIds);
       const bookedMap: Record<string, number> = {};
-      for (const reservation of reservationCounts || []) {
-        if (reservation.seating_type_id) {
-          bookedMap[reservation.seating_type_id] = (bookedMap[reservation.seating_type_id] || 0) + 1;
+
+      if (seatingIds.length > 0) {
+        const { data: bookedCounts, error: bookedCountsError } = await supabase.rpc(
+          'get_event_seating_booked_counts',
+          { p_event_id: eventId }
+        );
+        if (bookedCountsError) throw bookedCountsError;
+
+        for (const row of (bookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+          if (row.seating_type_id && seatingIdSet.has(row.seating_type_id)) {
+            bookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
+          }
         }
       }
 
