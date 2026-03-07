@@ -211,7 +211,66 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
     generateQRCodes([...allUpcoming, ...allPast]);
+    fetchGuestTickets([...allUpcoming, ...allPast]);
     setLoading(false);
+  };
+
+  const fetchGuestTickets = async (reservations: ReservationData[]) => {
+    // Only for reservation-only events (event_type === 'reservation')
+    const reservationOnlyIds = reservations
+      .filter(r => r.events?.event_type === 'reservation' && r.status === 'accepted')
+      .map(r => r.id);
+
+    if (reservationOnlyIds.length === 0) return;
+
+    const { data: orders } = await supabase
+      .from('ticket_orders')
+      .select('id, linked_reservation_id')
+      .in('linked_reservation_id', reservationOnlyIds);
+
+    if (!orders || orders.length === 0) return;
+
+    const orderIds = orders.map(o => o.id);
+    const orderToRes: Record<string, string> = {};
+    orders.forEach(o => { if (o.linked_reservation_id) orderToRes[o.id] = o.linked_reservation_id; });
+
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('id, order_id, guest_name, guest_age, qr_code_token, status')
+      .in('order_id', orderIds);
+
+    if (!tickets) return;
+
+    const ticketsByRes: Record<string, typeof tickets> = {};
+    const qrCodesToGenerate: Record<string, string> = {};
+
+    tickets.forEach(t => {
+      const resId = orderToRes[t.order_id];
+      if (resId) {
+        if (!ticketsByRes[resId]) ticketsByRes[resId] = [];
+        ticketsByRes[resId].push(t);
+        if (t.qr_code_token) {
+          qrCodesToGenerate[t.id] = t.qr_code_token;
+        }
+      }
+    });
+
+    setGuestTickets(ticketsByRes);
+
+    // Generate QR codes for guest tickets
+    const codes: Record<string, string> = {};
+    for (const [ticketId, token] of Object.entries(qrCodesToGenerate)) {
+      try {
+        codes[ticketId] = await QRCode.toDataURL(token, {
+          width: 256,
+          margin: 2,
+          color: { dark: '#000000', light: '#FFFFFF' },
+        });
+      } catch (e) {
+        console.error('Error generating guest QR code:', e);
+      }
+    }
+    setGuestQrCodes(codes);
   };
 
   const generateQRCodes = async (reservations: ReservationData[]) => {
