@@ -256,6 +256,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (linked) {
         setReservations(enrichedData);
+
+        // For ticket-only events, fetch ticket orders instead
+        if (selectedEventType === 'ticket' && selectedEventId) {
+          fetchTicketOnlyOrders(selectedEventId);
+        } else {
+          setTicketOnlyOrders([]);
+        }
+
         // Fetch ages for Kaliva
         fetchAgesForReservations(reservationIds);
         // Fetch check-in counts (used tickets per reservation)
