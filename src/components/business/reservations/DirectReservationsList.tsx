@@ -58,7 +58,19 @@ interface SeatingTier {
 
 // Cache for seating type names (seating_type_id -> seating_type string)
 
-
+interface TicketOnlyOrder {
+  id: string;
+  buyer_name: string;
+  buyer_email: string | null;
+  buyer_phone: string | null;
+  ticket_count: number;
+  subtotal_cents: number;
+  status: string;
+  created_at: string;
+  tier_name: string;
+  tickets_used: number;
+  tickets_total: number;
+}
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
