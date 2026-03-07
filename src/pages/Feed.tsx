@@ -161,7 +161,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       const { data: ticketTiers } = await supabase
         .from('ticket_tiers')
         .select('id, event_id, quantity_total')
-        .in('event_id', ticketEventIds);
+        .in('event_id', ticketEventIds)
+        .eq('active', true);
 
       // Build sold-out map using real walk-in counts only
       const soldOutSet = new Set<string>();
