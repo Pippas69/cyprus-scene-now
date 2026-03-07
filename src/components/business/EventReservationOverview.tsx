@@ -103,14 +103,29 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         });
       }
 
-      // Fetch only confirmed (accepted) reservations for this event
+      // Fetch confirmed (accepted) reservations for revenue/commission metrics
       const { data: reservationsRaw, error: reservationsError } = await supabase
         .from("reservations")
         .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at")
         .eq("event_id", eventId)
-        .eq("status", "accepted"); // Only confirmed reservations
+        .eq("status", "accepted");
 
       if (reservationsError) throw reservationsError;
+
+      // Fetch live booked counts (pending + accepted) for availability display
+      const { data: liveBookedCounts, error: liveBookedCountsError } = await supabase.rpc(
+        "get_event_seating_booked_counts",
+        { p_event_id: eventId }
+      );
+
+      if (liveBookedCountsError) throw liveBookedCountsError;
+
+      const liveBookedMap: Record<string, number> = {};
+      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+        if (row.seating_type_id) {
+          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
+        }
+      }
 
       const reservations = (reservationsRaw || []) as (ReservationData & { created_at: string })[];
 
@@ -164,7 +179,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         return currentPlanCommission;
       };
 
-      // Group by seating type - only count categorized reservations
+      // Group by seating type
       const seatingTypeIds = new Set(seatingTypes.map(st => st.id));
       const seatingTypeNames = new Set(seatingTypes.map(st => st.seating_type));
 
@@ -172,25 +187,27 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
         );
-        const bookedCount = stReservations.length;
+        const acceptedCount = stReservations.length;
+        const bookedCountForAvailability = liveBookedMap[st.id] ?? 0;
         const revenue = stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
         const minPrice =
           st.tiers.length > 0 ? Math.min(...st.tiers.map((t) => t.prepaid_min_charge_cents)) : 0;
 
         const totalSlots = st.available_slots;
-        const availableSlots = totalSlots - bookedCount;
+        const availableSlots = totalSlots - bookedCountForAvailability;
 
         return {
           ...st,
-          booked: bookedCount,
+          acceptedBooked: acceptedCount,
+          booked: bookedCountForAvailability,
           available: availableSlots > 0 ? availableSlots : 0,
           minPrice,
           revenue,
         };
       });
 
-      // Revenue & reservations only from categorized bookings
-      const totalReservations = seatingStats.reduce((sum, st) => sum + st.booked, 0);
+      // Revenue uses accepted reservations, availability uses live booked counts
+      const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
       const totalRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
 
       // Calculate commission per-reservation using the plan that was active at each reservation's creation
