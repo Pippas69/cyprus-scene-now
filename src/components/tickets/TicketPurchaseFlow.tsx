@@ -282,6 +282,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
+    setGuestAges(prev => {
+      if (prev.length === totalTickets) return prev;
+      if (prev.length < totalTickets) {
+        return [...prev, ...Array(totalTickets - prev.length).fill('')];
+      }
+      return prev.slice(0, totalTickets);
+    });
   }, [totalTickets]);
 
   const updateQuantity = (tierId: string, delta: number) => {
