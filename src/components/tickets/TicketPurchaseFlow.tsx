@@ -323,6 +323,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = calculateTotal();
   const isFreeOrder = total === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
+  const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
+  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && customerPhone.trim().length >= 8 && customerEmail.trim().length > 0;
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
