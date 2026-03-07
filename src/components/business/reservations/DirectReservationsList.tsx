@@ -718,7 +718,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {ticketOnlyOrders.map((order) => (
-                  <TableRow key={order.id} className="group">
+                  <TableRow key={order.id}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span>{order.buyer_name}</span>
