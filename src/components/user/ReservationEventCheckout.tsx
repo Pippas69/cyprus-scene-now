@@ -255,6 +255,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
+  // Sync guests array with partySize
+  useEffect(() => {
+    setGuests(prev => {
+      if (prev.length === partySize) return prev;
+      if (prev.length < partySize) {
+        return [...prev, ...Array(partySize - prev.length).fill(null).map(() => ({ name: '', age: '' }))];
+      }
+      return prev.slice(0, partySize);
+    });
+  }, [partySize]);
+
   const fetchSeatingOptions = async (silent = false) => {
     if (!silent) setLoading(true);
 
