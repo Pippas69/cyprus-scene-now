@@ -77,7 +77,9 @@ const translations = {
     guestDetails: "Ονόματα Καλεσμένων",
     guestN: "Άτομο",
     name: "Όνομα",
+    age: "Ηλικία",
     email: "Email",
+    phone: "Τηλέφωνο",
     people: "άτομα",
     total: "Σύνολο",
     pay: "Πληρωμή",
@@ -87,7 +89,9 @@ const translations = {
     processing: "Επεξεργασία...",
     noTicketsSelected: "Επιλέξτε τουλάχιστον ένα εισιτήριο",
     loginRequired: "Πρέπει να συνδεθείτε",
-    fillAllNames: "Συμπληρώστε όνομα για όλους τους καλεσμένους",
+    fillAllNames: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
+    fillPhone: "Συμπληρώστε τηλέφωνο",
+    fillEmail: "Συμπληρώστε email",
     eachPersonGetsQR: "Κάθε άτομο θα λάβει ξεχωριστό QR code εισιτηρίου",
     redirecting: "Μεταφορά στην πληρωμή...",
     redirectFallback: "Αν η σελίδα δεν άνοιξε αυτόματα, πατήστε το κουμπί παραπάνω.",
@@ -115,7 +119,9 @@ const translations = {
     guestDetails: "Guest Names",
     guestN: "Person",
     name: "Name",
+    age: "Age",
     email: "Email",
+    phone: "Phone",
     people: "people",
     total: "Total",
     pay: "Pay",
@@ -125,7 +131,9 @@ const translations = {
     processing: "Processing...",
     noTicketsSelected: "Please select at least one ticket",
     loginRequired: "You must be logged in",
-    fillAllNames: "Please fill in name for all guests",
+    fillAllNames: "Please fill in name and age for all guests",
+    fillPhone: "Please fill in phone number",
+    fillEmail: "Please fill in email",
     eachPersonGetsQR: "Each person will receive their own QR code ticket",
     redirecting: "Opening payment...",
     redirectFallback: "If the page didn't open automatically, tap the button above.",
@@ -180,7 +188,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
+  const [guestAges, setGuestAges] = useState<string[]>([]);
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
