@@ -71,6 +71,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       .from('events')
       .select('id, title, start_at, event_type')
       .eq('business_id', businessId)
+      .not('event_type', 'in', '("free","free_entry")')
       .gte('end_at', new Date().toISOString())
       .order('start_at', { ascending: true });
 

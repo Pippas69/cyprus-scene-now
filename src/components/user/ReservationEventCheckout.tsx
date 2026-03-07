@@ -99,7 +99,6 @@ const translations = {
       partial_refund: "Μερική επιστροφή σε περίπτωση μη εμφάνισης",
       non_refundable: "Μη επιστρέψιμο σε περίπτωση μη εμφάνισης",
     },
-    
     total: "Σύνολο",
     pay: "Πληρωμή",
     back: "Πίσω",
@@ -111,6 +110,10 @@ const translations = {
     errorNoTier: "Δεν βρέθηκε τιμή για αυτό το μέγεθος παρέας",
     paymentsNotReady: "Οι online πληρωμές δεν είναι ακόμη διαθέσιμες",
     paymentsNotReadyDesc: "Η επιχείρηση δεν έχει ολοκληρώσει τη ρύθμιση πληρωμών. Παρακαλώ επικοινωνήστε απευθείας με την επιχείρηση για κράτηση.",
+    guestDetails: "Στοιχεία Καλεσμένων",
+    guestName: "Όνομα",
+    guestAge: "Ηλικία",
+    fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
   },
   en: {
     title: "Book a Seat",
@@ -156,7 +159,6 @@ const translations = {
       partial_refund: "Partial refund if no-show",
       non_refundable: "Non-refundable if no-show",
     },
-    
     total: "Total",
     pay: "Pay",
     back: "Back",
@@ -168,6 +170,10 @@ const translations = {
     errorNoTier: "No price found for this party size",
     paymentsNotReady: "Online payments not yet available",
     paymentsNotReadyDesc: "The business has not completed payment setup. Please contact the business directly to make a reservation.",
+    guestDetails: "Guest Details",
+    guestName: "Name",
+    guestAge: "Age",
+    fillAllGuests: "Please fill in name and age for all guests",
   },
 };
 
@@ -224,6 +230,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Selection state
   const [selectedSeating, setSelectedSeating] = useState<SeatingTypeOption | null>(null);
   const [partySize, setPartySize] = useState(minPartySize);
+  const [guests, setGuests] = useState<{ name: string; age: string }[]>(
+    Array.from({ length: minPartySize }, () => ({ name: '', age: '' }))
+  );
   const [reservationName, setReservationName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -245,6 +254,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
+
+  // Sync guests array with partySize
+  useEffect(() => {
+    setGuests(prev => {
+      if (prev.length === partySize) return prev;
+      if (prev.length < partySize) {
+        return [...prev, ...Array(partySize - prev.length).fill(null).map(() => ({ name: '', age: '' }))];
+      }
+      return prev.slice(0, partySize);
+    });
+  }, [partySize]);
 
   const fetchSeatingOptions = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -334,6 +354,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Handle checkout
   const handleCheckout = async () => {
     if (!selectedSeating || !price) return;
+    if (!allGuestsFilled) {
+      toast.error(t.fillAllGuests);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -346,6 +370,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           phone_number: phoneNumber,
           customer_email: customerEmail.trim() || null,
           special_requests: specialRequests || null,
+          guests: guests.map(g => ({
+            name: g.name.trim(),
+            age: parseInt(g.age) || 0,
+          })),
         },
       });
 
@@ -367,11 +395,21 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // REMOVED: handleFreeReservation - all reservations now go through Stripe
 
+  // Guest helpers
+  const updateGuest = (index: number, field: 'name' | 'age', value: string) => {
+    setGuests(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const isPhoneValid = phoneNumber.trim() === '' || isValidPhone(phoneNumber);
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
+  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
@@ -544,7 +582,37 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
 
-            {/* Prepaid Amount */}
+            {/* Guest Details */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                {t.guestDetails} ({partySize} {t.people})
+              </Label>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                {guests.map((guest, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                    <Input
+                      placeholder={t.guestName}
+                      value={guest.name}
+                      onChange={(e) => updateGuest(idx, 'name', e.target.value)}
+                      className="h-9 text-sm flex-1"
+                    />
+                    <Input
+                      placeholder={t.guestAge}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={guest.age}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        updateGuest(idx, 'age', val);
+                      }}
+                      className="h-9 text-sm w-20"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
             {price ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary">
                 <span className="text-sm font-medium">{t.prepaidAmount}</span>

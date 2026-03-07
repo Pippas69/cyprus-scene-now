@@ -64,6 +64,7 @@ serve(async (req) => {
       success_url,
       cancel_url,
       customer_email,
+      guests,
     } = await req.json();
 
     // Validate required fields
@@ -304,6 +305,20 @@ serve(async (req) => {
         business_id: business?.id ?? "",
         used_platform_checkout: hasConnectSetup ? "false" : "true",
         customer_email: customer_email || customerEmail || "",
+        ...(guests && Array.isArray(guests) ? (() => {
+          const guestsJson = JSON.stringify(guests);
+          // Stripe metadata limit: 500 chars per value. Split if needed.
+          const meta: Record<string, string> = {};
+          if (guestsJson.length <= 500) {
+            meta.guests = guestsJson;
+          } else {
+            const chunkSize = 490;
+            for (let i = 0; i * chunkSize < guestsJson.length; i++) {
+              meta[`guests_${i}`] = guestsJson.slice(i * chunkSize, (i + 1) * chunkSize);
+            }
+          }
+          return meta;
+        })() : {}),
       },
     };
 

@@ -35,7 +35,7 @@ serve(async (req) => {
 
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
-    const { event_id, seating_type_id, party_size, reservation_name, phone_number, special_requests } =
+    const { event_id, seating_type_id, party_size, reservation_name, phone_number, special_requests, guests } =
       (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
     // Service client for privileged DB writes (required for demo/preview flows)
@@ -176,6 +176,54 @@ serve(async (req) => {
       await supabaseService.rpc("decrement_seating_slots", { p_seating_type_id: seatingTypeId });
     } catch (e) {
       console.error("[create-free-reservation-event] decrement_seating_slots failed", e);
+    }
+
+    // Create individual guest tickets for QR check-in
+    const guestsArray = Array.isArray(guests) ? (guests as { name: string; age: number }[]) : [];
+    if (guestsArray.length > 0) {
+      try {
+        // Create ticket_order linked to reservation
+        const { data: ticketOrder, error: toError } = await supabaseService
+          .from('ticket_orders')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            customer_name: guestsArray[0]?.name || (reservation_name as string) || 'Guest',
+            customer_email: user.email || null,
+            status: 'completed',
+            subtotal_cents: 0,
+            platform_fee_cents: 0,
+            linked_reservation_id: reservation.id,
+          })
+          .select('id')
+          .single();
+
+        if (toError || !ticketOrder) {
+          console.error("[create-free-reservation-event] ticket_order insert error", toError);
+        } else {
+          // Create individual tickets per guest
+          const ticketRows = guestsArray.map(g => ({
+            order_id: ticketOrder.id,
+            event_id: eventId,
+            guest_name: g.name || 'Guest',
+            guest_age: typeof g.age === 'number' ? g.age : parseInt(String(g.age)) || null,
+            qr_code_token: crypto.randomUUID(),
+            status: 'valid',
+          }));
+
+          const { error: ticketsError } = await supabaseService
+            .from('tickets')
+            .insert(ticketRows);
+
+          if (ticketsError) {
+            console.error("[create-free-reservation-event] tickets insert error", ticketsError);
+          } else {
+            console.log(`[create-free-reservation-event] Created ${ticketRows.length} guest tickets`);
+          }
+        }
+      } catch (e) {
+        console.error("[create-free-reservation-event] guest tickets creation failed", e);
+      }
     }
 
     return json({
