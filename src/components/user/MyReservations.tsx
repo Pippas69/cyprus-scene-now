@@ -482,8 +482,46 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             )
           )}
 
-          {/* QR Code + Cancel on same line */}
-          {!isPast && (
+          {/* Guest QR Codes for reservation-only events */}
+          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (
+            <div className="space-y-1.5 mt-2">
+              {guestTickets[reservation.id].map((ticket, idx) => (
+                <button
+                  key={ticket.id}
+                  type="button"
+                  onClick={() => {
+                    if (guestQrCodes[ticket.id]) {
+                      // Show individual guest QR via the same ReservationQRCard pattern
+                      setSelectedReservationForQR({
+                        ...reservation,
+                        qr_code_token: ticket.qr_code_token,
+                        confirmation_code: `${reservation.confirmation_code}-${idx + 1}`,
+                      });
+                      setQrCodes(prev => ({ ...prev, [reservation.id]: guestQrCodes[ticket.id] }));
+                    }
+                  }}
+                  className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-foreground">{ticket.guest_name}</span>
+                    {ticket.guest_age && (
+                      <span className="text-[10px] text-muted-foreground">({ticket.guest_age})</span>
+                    )}
+                    {ticket.status === 'used' && (
+                      <Badge className="bg-green-600 text-white text-[9px] h-4 px-1.5">Check-in ✓</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 text-primary">
+                    <QrCode className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-medium">QR</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets) */}
+          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && (
             <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
@@ -514,6 +552,20 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   {t.cancelReservation}
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Cancel Button for reservation-only with guest tickets */}
+          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+            <div className="flex justify-end mt-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
+                onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
+              >
+                {t.cancelReservation}
+              </Button>
             </div>
           )}
         </CardContent>
