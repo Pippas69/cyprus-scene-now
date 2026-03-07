@@ -46,6 +46,7 @@ interface DirectReservationsListProps {
   refreshNonce?: number;
   onReservationCountChange?: (count: number) => void;
   selectedEventId?: string | null;
+  selectedEventType?: string | null;
 }
 
 // Cache for seating tiers
