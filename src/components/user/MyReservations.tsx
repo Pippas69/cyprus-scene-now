@@ -849,25 +849,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         };
 
         const content =
-        <div className="space-y-3">
-            {guests.length > 1 &&
-          <div className="flex items-center justify-between px-2">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
-              onClick={() => setCurrentDirectGuestIndex(Math.max(0, currentDirectGuestIndex - 1))}
-              disabled={currentDirectGuestIndex === 0}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {currentDirectGuestIndex + 1}/{guests.length}
-                  <span className="ml-1 text-foreground font-semibold">— {currentGuest?.guest_name}</span>
-                </p>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
-              onClick={() => setCurrentDirectGuestIndex(Math.min(guests.length - 1, currentDirectGuestIndex + 1))}
-              disabled={currentDirectGuestIndex === guests.length - 1}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-          }
+        <div className="space-y-4">
             <SuccessQRCard
             type="reservation"
             qrToken={currentGuest?.qr_code_token || ''}
@@ -879,6 +861,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
             showSuccessMessage={false}
             onClose={closeDialog} />
+          
+            {guests.length > 1 &&
+          <div className="flex items-center justify-center gap-3 pb-2">
+                <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDirectGuestIndex(Math.max(0, currentDirectGuestIndex - 1))}
+              disabled={currentDirectGuestIndex === 0}>
+              
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentGuest?.guest_name} ({currentDirectGuestIndex + 1}/{guests.length})
+                </span>
+                <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDirectGuestIndex(Math.min(guests.length - 1, currentDirectGuestIndex + 1))}
+              disabled={currentDirectGuestIndex === guests.length - 1}>
+              
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+          }
           </div>;
 
 
@@ -921,25 +927,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         const currentTicket = hasTickets ? tickets[currentEventGuestIndex] : null;
 
         const content =
-        <div className="space-y-3">
-            {hasTickets && tickets.length > 1 &&
-          <div className="flex items-center justify-between px-2">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
-              onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
-              disabled={currentEventGuestIndex === 0}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {currentEventGuestIndex + 1}/{tickets.length}
-                  <span className="ml-1 text-foreground font-semibold">— {currentTicket?.guest_name}</span>
-                </p>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
-              onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
-              disabled={currentEventGuestIndex === tickets.length - 1}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-          }
+        <div className="space-y-4">
             <SuccessQRCard
             type="reservation"
             qrToken={hasTickets ? (currentTicket?.qr_code_token || '') : (selectedEventGuestsReservation.qr_code_token || '')}
@@ -952,6 +940,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
             showSuccessMessage={false}
             onClose={closeDialog} />
+          
+            {hasTickets && tickets.length > 1 &&
+          <div className="flex items-center justify-center gap-3 pb-2">
+                <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
+              disabled={currentEventGuestIndex === 0}>
+              
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentTicket?.guest_name} ({currentEventGuestIndex + 1}/{tickets.length})
+                </span>
+                <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
+              disabled={currentEventGuestIndex === tickets.length - 1}>
+              
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+          }
           </div>;
 
 

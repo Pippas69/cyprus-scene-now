@@ -392,49 +392,50 @@ export const SuccessQRCard = ({
           </div>
         )}
 
-        {/* Action buttons - always show download + dashboard */}
-        <div className="flex gap-2 mt-3">
-          <Button 
-            onClick={handleDownload}
-            variant="outline"
-            className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            {text.downloadQR}
-          </Button>
-          {onViewDashboard && viewDashboardLabel && (
-            <Button 
-              onClick={onViewDashboard}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
+        {/* Action buttons */}
+        {((type === "offer" || type === "reservation") && !onViewDashboard) ? (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+              {`${window.location.origin}/${type === "offer" ? "offer-view" : "reservation-view"}/${qrToken}`}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyLink}
+              className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
             >
-              {viewDashboardLabel}
+              {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+              {copied ? text.copied : text.copyLink}
             </Button>
-          )}
-          {!onViewDashboard && onClose && (
-            <Button 
-              onClick={onClose}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-            >
-              {text.done}
-            </Button>
-          )}
-        </div>
-
-        {/* Copy link - always shown */}
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-            {`${window.location.origin}/${type === "offer" ? "offer-view" : type === "ticket" ? "ticket-view" : "reservation-view"}/${qrToken}`}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyLink}
-            className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
-          >
-            {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-            {copied ? text.copied : text.copyLink}
-          </Button>
-        </div>
+        ) : (
+          <div className="flex gap-2 mt-3">
+              <Button 
+                onClick={handleDownload}
+                variant="outline"
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                {text.downloadQR}
+              </Button>
+              {onViewDashboard && viewDashboardLabel && (
+                <Button 
+                  onClick={onViewDashboard}
+                  className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
+                >
+                  {viewDashboardLabel}
+                </Button>
+              )}
+              {!onViewDashboard && onClose && (
+                <Button 
+                  onClick={onClose}
+                  className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
+                >
+                  {text.done}
+                </Button>
+              )}
+          </div>
+        )}
       </div>
 
       {/* Wave Decoration */}

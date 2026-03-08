@@ -296,6 +296,22 @@ export const TicketSuccess = () => {
             onViewDashboard={() => navigate(isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets")}
             viewDashboardLabel={isLinkedToReservation ? text.viewReservations : text.viewTickets}
           />
+
+          {/* Copyable link for this ticket */}
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-[10px] text-muted-foreground font-mono truncate">
+              {`${window.location.origin}/ticket-view/${currentTicket.qr_code_token}`}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCopyLink(currentTicket)}
+              className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              {text.copyLink}
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="text-center space-y-4">

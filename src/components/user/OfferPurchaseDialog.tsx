@@ -635,34 +635,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     const hasGuests = claimSuccess.hasReservation && claimSuccess.guests && claimSuccess.guests.length > 0;
 
     const successContent = hasGuests ?
-    <div className="space-y-3">
-        {/* Carousel navigation above the card */}
-        {claimSuccess.guests!.length > 1 &&
-      <div className="flex items-center justify-between px-2">
-            <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
-          disabled={currentGuestIndex === 0}
-          className="h-8 w-8 p-0">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <p className="text-sm font-medium text-muted-foreground">
-              {currentGuestIndex + 1}/{claimSuccess.guests!.length}
-              <span className="ml-1 text-foreground font-semibold">
-                — {claimSuccess.guests![currentGuestIndex]?.guest_name}
-              </span>
-            </p>
-            <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCurrentGuestIndex(Math.min(claimSuccess.guests!.length - 1, currentGuestIndex + 1))}
-          disabled={currentGuestIndex === claimSuccess.guests!.length - 1}
-          className="h-8 w-8 p-0">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-      }
+    <div className="space-y-4">
         <SuccessQRCard
         type="offer"
         qrToken={claimSuccess.guests![currentGuestIndex]?.qr_code_token || claimSuccess.qrCodeToken}
@@ -679,6 +652,30 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         onViewDashboard={handleViewMyOffers}
         viewDashboardLabel={t("viewMyOffers")}
         onClose={onClose} />
+      
+        {claimSuccess.guests!.length > 1 &&
+      <div className="flex items-center justify-center gap-3 pb-2">
+            <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
+          disabled={currentGuestIndex === 0}>
+          
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium text-foreground">
+              {claimSuccess.guests![currentGuestIndex]?.guest_name} ({currentGuestIndex + 1}/{claimSuccess.guests!.length})
+            </span>
+            <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentGuestIndex(Math.min(claimSuccess.guests!.length - 1, currentGuestIndex + 1))}
+          disabled={currentGuestIndex === claimSuccess.guests!.length - 1}>
+          
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+      }
       </div> :
 
     <SuccessQRCard
