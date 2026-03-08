@@ -513,6 +513,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
     return (
       <div className="space-y-2 sm:space-y-3">
+        {/* Toggle - outside the box */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-medium">
             <span className="text-xs sm:text-sm">{t("wantReservation")}</span>
@@ -530,116 +531,119 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               }
             }} />
         </div>
-        
-        <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
-          {language === "el" ?
-          `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.` :
-          `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
-        </p>
-        {wantsReservation &&
-        <div className="space-y-2 sm:space-y-3 pt-2">
-            {/* Date Picker */}
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
-                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                {t("selectDate")}
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9 sm:h-10">
-                    <CalendarDays className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    {reservationDate ?
-                  format(reservationDate, "PPP", { locale: language === "el" ? el : enUS }) :
-                  t("selectDate")
-                  }
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                  mode="single"
-                  selected={reservationDate}
-                  onSelect={setReservationDate}
-                  disabled={(date) => {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return isBefore(date, today) || !isDateValidForOffer(date);
-                  }}
-                  modifiers={closedDatesModifiers}
-                  modifiersStyles={closedDatesModifiersStyles}
-                  initialFocus
-                  locale={language === "el" ? el : enUS} />
-                
-                </PopoverContent>
-              </Popover>
-            </div>
 
-            {/* Time Selector */}
-            {reservationDate &&
-          <div className="space-y-1.5">
+        {/* Description + form fields - inside the box */}
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+            {language === "el" ?
+            `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.` :
+            `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
+          </p>
+          {wantsReservation &&
+          <div className="space-y-2 sm:space-y-3 pt-2">
+              {/* Date Picker */}
+              <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
-                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {t("selectTime")}
+                  <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {t("selectDate")}
                 </Label>
-                {availabilityLoading ?
-            <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
-                    {language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}
-                  </div> :
-            timeSlots.length === 0 ?
-            <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
-                    {t("noSlotsForDay")}
-                  </div> :
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9 sm:h-10">
+                      <CalendarDays className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {reservationDate ?
+                    format(reservationDate, "PPP", { locale: language === "el" ? el : enUS }) :
+                    t("selectDate")
+                    }
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                    mode="single"
+                    selected={reservationDate}
+                    onSelect={setReservationDate}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return isBefore(date, today) || !isDateValidForOffer(date);
+                    }}
+                    modifiers={closedDatesModifiers}
+                    modifiersStyles={closedDatesModifiersStyles}
+                    initialFocus
+                    locale={language === "el" ? el : enUS} />
+                  
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            <Select value={reservationTime} onValueChange={setReservationTime}>
-                    <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
-                      <SelectValue placeholder={t("selectTime")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeSlots.map((slot) => {
-                  const passed = isSlotPassed(slot);
-                  return (
-                    <SelectItem key={slot} value={slot} disabled={passed} className={passed ? 'opacity-50 text-muted-foreground' : ''}>
-                            {slot}
-                            {passed && <span className="ml-2 text-[10px] text-muted-foreground">({language === "el" ? "Πέρασε" : "Passed"})</span>}
-                          </SelectItem>);
+              {/* Time Selector */}
+              {reservationDate &&
+            <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    {t("selectTime")}
+                  </Label>
+                  {availabilityLoading ?
+              <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                      {language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}
+                    </div> :
+              timeSlots.length === 0 ?
+              <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                      {t("noSlotsForDay")}
+                    </div> :
 
-                })}
-                    </SelectContent>
-                  </Select>
+              <Select value={reservationTime} onValueChange={setReservationTime}>
+                      <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
+                        <SelectValue placeholder={t("selectTime")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((slot) => {
+                    const passed = isSlotPassed(slot);
+                    return (
+                      <SelectItem key={slot} value={slot} disabled={passed} className={passed ? 'opacity-50 text-muted-foreground' : ''}>
+                              {slot}
+                              {passed && <span className="ml-2 text-[10px] text-muted-foreground">({language === "el" ? "Πέρασε" : "Passed"})</span>}
+                            </SelectItem>);
+
+                  })}
+                      </SelectContent>
+                    </Select>
+              }
+                </div>
             }
-              </div>
-          }
 
-            {/* Capacity Status */}
-            {reservationDate &&
-          <div className="text-sm">
-                {checkingCapacity ?
-            <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}</span>
-                  </div> :
-            capacityError ?
-            <div className="flex items-center gap-2 text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{capacityError}</span>
-                  </div> :
-            availableCapacity !== null && availableCapacity > 0 ?
-            <div className="flex items-center gap-2 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>{language === "el" ? `${availableCapacity} διαθέσιμες θέσεις` : `${availableCapacity} available slots`}</span>
-                  </div> :
-            null}
-              </div>
-          }
+              {/* Capacity Status */}
+              {reservationDate &&
+            <div className="text-sm">
+                  {checkingCapacity ?
+              <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}</span>
+                    </div> :
+              capacityError ?
+              <div className="flex items-center gap-2 text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{capacityError}</span>
+                    </div> :
+              availableCapacity !== null && availableCapacity > 0 ?
+              <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>{language === "el" ? `${availableCapacity} διαθέσιμες θέσεις` : `${availableCapacity} available slots`}</span>
+                    </div> :
+              null}
+                </div>
+            }
 
-            {/* Warning if party size exceeds capacity */}
-            {availableCapacity !== null && availableCapacity > 0 && availableCapacity < partySize &&
-          <div className="flex items-center gap-2 text-amber-600 text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>{language === "el" ? `Μόνο ${availableCapacity} θέσεις διαθέσιμες. Μειώστε τον αριθμό ατόμων.` : `Only ${availableCapacity} slots available. Reduce party size.`}</span>
-              </div>
+              {/* Warning if party size exceeds capacity */}
+              {availableCapacity !== null && availableCapacity > 0 && availableCapacity < partySize &&
+            <div className="flex items-center gap-2 text-amber-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{language === "el" ? `Μόνο ${availableCapacity} θέσεις διαθέσιμες. Μειώστε τον αριθμό ατόμων.` : `Only ${availableCapacity} slots available. Reduce party size.`}</span>
+                </div>
+            }
+            </div>
           }
-          </div>
-        }
+        </div>
       </div>);
 
   };
