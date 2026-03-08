@@ -61,7 +61,7 @@ export const DirectReservationDialog = ({
   businessName,
   language,
   userId,
-  onSuccess,
+  onSuccess
 }: DirectReservationDialogProps) => {
   const [formData, setFormData] = useState({
     reservation_name: '',
@@ -71,7 +71,7 @@ export const DirectReservationDialog = ({
     preferred_date: new Date(),
     preferred_time: '19:00',
     phone_number: '',
-    special_requests: '',
+    special_requests: ''
   });
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState<BusinessSettings | null>(null);
@@ -87,15 +87,15 @@ export const DirectReservationDialog = ({
       party_size: number;
       preferred_time: string;
       business_name: string;
-      guests?: { guest_name: string; qr_code_token: string }[];
+      guests?: {guest_name: string;qr_code_token: string;}[];
     } | null;
   }>({ open: false, reservation: null });
 
   const isMobile = useIsMobile();
-  
+
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
-  
+
   // Fetch all fully closed dates for the calendar
   const { closedDates } = useClosedDates(businessId);
 
@@ -132,7 +132,7 @@ export const DirectReservationDialog = ({
       policyTitle: 'Πολιτική Κρατήσεων',
       noShowPolicy: 'Περιθώριο 15 λεπτά. (Ακύρωση αν δεν γίνει check in)',
       cancellationPolicy: 'Μετά από 3 ακυρώσεις, περιορισμός 2 εβδομάδων.',
-      instantConfirmation: 'Άμεση επιβεβαίωση κράτησης',
+      instantConfirmation: 'Άμεση επιβεβαίωση κράτησης'
     },
     en: {
       title: 'Reserve a Table',
@@ -163,8 +163,8 @@ export const DirectReservationDialog = ({
       policyTitle: 'Reservation Policy',
       noShowPolicy: '15 min grace. (Cancel if no check-in)',
       cancellationPolicy: 'After 3 cancellations, 2-week restriction.',
-      instantConfirmation: 'Instant reservation confirmation',
-    },
+      instantConfirmation: 'Instant reservation confirmation'
+    }
   };
 
   const t = text[language];
@@ -221,9 +221,9 @@ export const DirectReservationDialog = ({
   const fetchSettings = async () => {
     setSettingsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select(`
+      const { data, error } = await supabase.
+      from('businesses').
+      select(`
           reservation_capacity_type,
           daily_reservation_limit,
           reservation_time_slots,
@@ -233,12 +233,12 @@ export const DirectReservationDialog = ({
           reservation_seating_options,
           reservation_requires_approval,
           accepts_direct_reservations
-        `)
-        .eq('id', businessId)
-        .single();
+        `).
+      eq('id', businessId).
+      single();
 
       if (error) throw error;
-      
+
       // Parse time slots from JSON
       let parsedTimeSlots: TimeSlot[] | null = null;
       if (data.reservation_time_slots && Array.isArray(data.reservation_time_slots)) {
@@ -249,13 +249,13 @@ export const DirectReservationDialog = ({
           capacity: slot.capacity || 10,
           maxPartySize: slot.maxPartySize ?? 50,
           days: slot.days || [],
-          time: slot.time,
+          time: slot.time
         }));
       }
-      
+
       setSettings({
         ...data,
-        reservation_time_slots: parsedTimeSlots,
+        reservation_time_slots: parsedTimeSlots
       } as BusinessSettings);
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -268,14 +268,14 @@ export const DirectReservationDialog = ({
     try {
       const { data, error } = await supabase.rpc('get_business_available_capacity', {
         p_business_id: businessId,
-        p_date: format(formData.preferred_date, 'yyyy-MM-dd'),
+        p_date: format(formData.preferred_date, 'yyyy-MM-dd')
       });
 
       if (error) throw error;
 
       // Parse the JSONB response
-      const capacityData = data as { available?: boolean; capacity_type?: string; remaining_capacity?: number } | null;
-      
+      const capacityData = data as {available?: boolean;capacity_type?: string;remaining_capacity?: number;} | null;
+
       if (capacityData?.available && capacityData?.capacity_type === 'daily') {
         setAvailableCapacity(capacityData.remaining_capacity ?? null);
       } else {
@@ -290,35 +290,35 @@ export const DirectReservationDialog = ({
     if (!settings) return false;
     if (settings.accepts_direct_reservations === false) return true;
     if (!settings.reservation_days?.length && !settings.reservation_time_slots?.length) return false;
-    
+
     const dayName = format(date, 'EEEE').toLowerCase();
     const isBeforeToday = isBefore(startOfDay(date), startOfDay(new Date()));
 
-    const hasDayEnabled = settings.reservation_days?.length
-      ? settings.reservation_days.includes(dayName)
-      : true;
+    const hasDayEnabled = settings.reservation_days?.length ?
+    settings.reservation_days.includes(dayName) :
+    true;
 
     const hasSlotWindowForDay =
-      settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots?.length
-        ? settings.reservation_time_slots.some((slot) => slot.days?.includes(dayName))
-        : true;
-    
+    settings.reservation_capacity_type === 'time_slots' && settings.reservation_time_slots?.length ?
+    settings.reservation_time_slots.some((slot) => slot.days?.includes(dayName)) :
+    true;
+
     // Check if this date is fully closed by the business
     const dateStr = format(date, 'yyyy-MM-dd');
     const isFullyClosed = closedDates.has(dateStr);
-    
+
     return isBeforeToday || !hasDayEnabled || !hasSlotWindowForDay || isFullyClosed;
   };
-  
+
   // Custom modifiers for the calendar to show closed/unavailable dates with reduced opacity
   const closedDatesModifiers = {
     closed: (date: Date) => closedDates.has(format(date, 'yyyy-MM-dd')),
-    unavailable: (date: Date) => isDateDisabled(date),
+    unavailable: (date: Date) => isDateDisabled(date)
   };
-  
+
   const closedDatesModifiersStyles = {
     closed: { opacity: 0.35 },
-    unavailable: { opacity: 0.35 },
+    unavailable: { opacity: 0.35 }
   };
 
   const getRawTimeSlots = (): string[] => {
@@ -358,7 +358,7 @@ export const DirectReservationDialog = ({
   };
 
   const rawTimeSlots = getRawTimeSlots();
-  
+
   // Fetch availability for all raw slots to know which are fully booked
   const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
     businessId,
@@ -369,19 +369,19 @@ export const DirectReservationDialog = ({
   // Check if a time slot has passed (only relevant for today)
   const isSlotPassed = (slotTime: string): boolean => {
     if (!isToday(formData.preferred_date)) return false;
-    
+
     const now = new Date();
     const [hours, minutes] = slotTime.split(':').map(Number);
     const slotDate = new Date();
     slotDate.setHours(hours, minutes, 0, 0);
-    
+
     return slotDate <= now;
   };
 
   // Filter out fully booked and closed slots from the display
   // Keep passed slots visible but they'll be shown as disabled
   const getAvailableTimeSlots = (): string[] => {
-    return rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
+    return rawTimeSlots.filter((slot) => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -398,7 +398,7 @@ export const DirectReservationDialog = ({
     }
 
     // Validate all guest names are filled
-    const emptyGuests = formData.guest_names.filter(n => !n.trim());
+    const emptyGuests = formData.guest_names.filter((n) => !n.trim());
     if (emptyGuests.length > 0) {
       toast.error(language === 'el' ? 'Παρακαλώ εισάγετε τα ονόματα όλων των ατόμων' : 'Please enter names for all guests');
       return;
@@ -428,46 +428,46 @@ export const DirectReservationDialog = ({
         p_reservation_name: formData.reservation_name,
         p_phone_number: formData.phone_number,
         p_seating_preference:
-          formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
+        formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
         p_special_requests: formData.special_requests || null,
-        p_is_offer_based: false,
+        p_is_offer_based: false
       });
 
       if (error) throw error;
 
       const result = booking as
-        | {
-            success: boolean;
-            error?: string;
-            message?: string;
-            reservation_id?: string;
-            confirmation_code?: string;
-            qr_token?: string;
-            preferred_time?: string;
-            max_party_size?: number;
-          }
-        | null;
+      {
+        success: boolean;
+        error?: string;
+        message?: string;
+        reservation_id?: string;
+        confirmation_code?: string;
+        qr_token?: string;
+        preferred_time?: string;
+        max_party_size?: number;
+      } |
+      null;
 
       if (!result?.success) {
         const msg =
-          result?.error === 'PARTY_TOO_LARGE'
-            ? language === 'el'
-              ? `Μέγιστο ${result?.max_party_size ?? ''} άτομα για αυτό το slot.`
-              : `Max ${result?.max_party_size ?? ''} people for this slot.`
-            : result?.message || toastTranslations[language].error;
+        result?.error === 'PARTY_TOO_LARGE' ?
+        language === 'el' ?
+        `Μέγιστο ${result?.max_party_size ?? ''} άτομα για αυτό το slot.` :
+        `Max ${result?.max_party_size ?? ''} people for this slot.` :
+        result?.message || toastTranslations[language].error;
         throw new Error(msg);
       }
 
       // Create individual guest entries with QR codes
-      const guestInserts = formData.guest_names.map(name => ({
+      const guestInserts = formData.guest_names.map((name) => ({
         reservation_id: result.reservation_id!,
-        guest_name: name.trim(),
+        guest_name: name.trim()
       }));
 
-      const { data: guestEntries, error: guestError } = await supabase
-        .from('reservation_guests')
-        .insert(guestInserts)
-        .select('guest_name, qr_code_token');
+      const { data: guestEntries, error: guestError } = await supabase.
+      from('reservation_guests').
+      insert(guestInserts).
+      select('guest_name, qr_code_token');
 
       if (guestError) {
         console.error('Guest creation error:', guestError);
@@ -476,7 +476,7 @@ export const DirectReservationDialog = ({
       // Send notification
       try {
         await supabase.functions.invoke('send-reservation-notification', {
-          body: { reservationId: result.reservation_id, type: 'new' },
+          body: { reservationId: result.reservation_id, type: 'new' }
         });
       } catch (emailError) {
         console.error('Email error:', emailError);
@@ -484,7 +484,7 @@ export const DirectReservationDialog = ({
 
       // Close the form dialog
       onOpenChange(false);
-      
+
       // Always accepted in atomic booking flow
       setSuccessDialog({
         open: true,
@@ -495,10 +495,10 @@ export const DirectReservationDialog = ({
           party_size: formData.party_size,
           preferred_time: result.preferred_time || preferredDateTime.toISOString(),
           business_name: businessName,
-          guests: guestEntries || [],
-        },
+          guests: guestEntries || []
+        }
       });
-      
+
       onSuccess();
 
       // Reset form
@@ -510,7 +510,7 @@ export const DirectReservationDialog = ({
         preferred_date: new Date(),
         preferred_time: settings?.reservation_opens_at?.substring(0, 5) || '19:00',
         phone_number: '',
-        special_requests: '',
+        special_requests: ''
       });
     } catch (error: any) {
       console.error('Reservation error:', error);
@@ -527,10 +527,10 @@ export const DirectReservationDialog = ({
   useEffect(() => {
     if (timeSlots.length > 0) {
       const currentSlotUnavailable = !timeSlots.includes(formData.preferred_time) || isSlotPassed(formData.preferred_time);
-      
+
       if (currentSlotUnavailable) {
         // Find the first available slot that hasn't passed
-        const firstAvailableSlot = timeSlots.find(slot => !isSlotPassed(slot));
+        const firstAvailableSlot = timeSlots.find((slot) => !isSlotPassed(slot));
         if (firstAvailableSlot) {
           setFormData((prev) => ({ ...prev, preferred_time: firstAvailableSlot }));
         }
@@ -538,35 +538,35 @@ export const DirectReservationDialog = ({
     }
   }, [formData.preferred_date, timeSlots.length, fullyBookedSlots, closedSlots]);
 
-  const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {settingsLoading ? (
-        <div className="text-sm text-muted-foreground text-center py-4">
+  const formContent =
+  <form onSubmit={handleSubmit} className="space-y-4">
+      {settingsLoading ?
+    <div className="text-sm text-muted-foreground text-center py-4">
           {language === 'el' ? 'Φόρτωση...' : 'Loading...'}
-        </div>
-      ) : (
-        <>
+        </div> :
+
+    <>
           {/* Capacity indicator */}
-          {availableCapacity !== null && (
-            <div
-              className={`p-3 rounded-lg ${
-                availableCapacity === 0
-                  ? 'bg-destructive/10 text-destructive'
-                  : availableCapacity < 5
-                  ? 'bg-warning/10 text-warning'
-                  : 'bg-success/10 text-success'
-              }`}
-            >
+          {availableCapacity !== null &&
+      <div
+        className={`p-3 rounded-lg ${
+        availableCapacity === 0 ?
+        'bg-destructive/10 text-destructive' :
+        availableCapacity < 5 ?
+        'bg-warning/10 text-warning' :
+        'bg-success/10 text-success'}`
+        }>
+        
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 <span className="font-medium">
-                  {availableCapacity === 0
-                    ? t.fullyBooked
-                    : `${availableCapacity} ${t.availableSlots}`}
+                  {availableCapacity === 0 ?
+            t.fullyBooked :
+            `${availableCapacity} ${t.availableSlots}`}
                 </span>
               </div>
             </div>
-          )}
+      }
 
           {/* Name + Party Size on same row */}
           <div className="flex gap-3 items-end">
@@ -576,37 +576,37 @@ export const DirectReservationDialog = ({
                 {t.reservationName}
               </Label>
               <Input
-                id="reservation_name"
-                value={formData.reservation_name}
-                onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
-                placeholder={t.namePlaceholder}
-                required
-                className="text-xs sm:text-sm h-9 sm:h-10"
-              />
+            id="reservation_name"
+            value={formData.reservation_name}
+            onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
+            placeholder={t.namePlaceholder}
+            required
+            className="text-xs sm:text-sm h-9 sm:h-10" />
+          
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="party_size" className="flex items-center gap-2 text-xs sm:text-sm">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                
                 {t.partySize}
               </Label>
               <NumberInput
-                value={formData.party_size}
-                onChange={(value) => {
-                  const newSize = Math.min(Math.max(1, value), slotMaxPartySize);
-                  const newNames = [...formData.guest_names];
-                  while (newNames.length < newSize) newNames.push('');
-                  while (newNames.length > newSize) newNames.pop();
-                  setFormData({
-                    ...formData,
-                    party_size: newSize,
-                    guest_names: newNames,
-                  });
-                }}
-                min={1}
-                max={slotMaxPartySize}
-                disabled={availableCapacity === 0}
-                className="w-20 sm:w-24 text-xs sm:text-sm h-8 sm:h-10"
-              />
+            value={formData.party_size}
+            onChange={(value) => {
+              const newSize = Math.min(Math.max(1, value), slotMaxPartySize);
+              const newNames = [...formData.guest_names];
+              while (newNames.length < newSize) newNames.push('');
+              while (newNames.length > newSize) newNames.pop();
+              setFormData({
+                ...formData,
+                party_size: newSize,
+                guest_names: newNames
+              });
+            }}
+            min={1}
+            max={slotMaxPartySize}
+            disabled={availableCapacity === 0}
+            className="w-20 sm:w-24 text-xs sm:text-sm h-8 sm:h-10" />
+          
             </div>
           </div>
 
@@ -617,25 +617,25 @@ export const DirectReservationDialog = ({
               {language === 'el' ? 'Ονόματα Ατόμων' : 'Guest Names'}
             </Label>
             <div className="space-y-2">
-              {formData.guest_names.map((name, index) => (
-                <Input
-                  key={index}
-                  value={name}
-                  onChange={(e) => {
-                    const newNames = [...formData.guest_names];
-                    newNames[index] = e.target.value;
-                    setFormData({ ...formData, guest_names: newNames });
-                  }}
-                  placeholder={`${language === 'el' ? 'Άτομο' : 'Guest'} ${index + 1}`}
-                  required
-                  className="text-xs sm:text-sm h-9 sm:h-10"
-                />
-              ))}
+              {formData.guest_names.map((name, index) =>
+          <Input
+            key={index}
+            value={name}
+            onChange={(e) => {
+              const newNames = [...formData.guest_names];
+              newNames[index] = e.target.value;
+              setFormData({ ...formData, guest_names: newNames });
+            }}
+            placeholder={`${language === 'el' ? 'Άτομο' : 'Guest'} ${index + 1}`}
+            required
+            className="text-xs sm:text-sm h-9 sm:h-10" />
+
+          )}
             </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {language === 'el'
-                ? `Εισάγετε το όνομα κάθε ατόμου. Κάθε άτομο θα λάβει ξεχωριστό QR code.`
-                : `Enter each guest's name. Each person will receive an individual QR code.`}
+              {language === 'el' ?
+          `Εισάγετε το όνομα κάθε ατόμου. Κάθε άτομο θα λάβει ξεχωριστό QR code.` :
+          `Enter each guest's name. Each person will receive an individual QR code.`}
             </p>
           </div>
 
@@ -654,18 +654,18 @@ export const DirectReservationDialog = ({
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
-                  mode="single"
-                  selected={formData.preferred_date}
-                  onSelect={(date) => {
-                    if (date) {
-                      setFormData({ ...formData, preferred_date: date });
-                      setShowCalendar(false);
-                    }
-                  }}
-                  disabled={isDateDisabled}
-                  modifiers={closedDatesModifiers}
-                  modifiersStyles={closedDatesModifiersStyles}
-                />
+              mode="single"
+              selected={formData.preferred_date}
+              onSelect={(date) => {
+                if (date) {
+                  setFormData({ ...formData, preferred_date: date });
+                  setShowCalendar(false);
+                }
+              }}
+              disabled={isDateDisabled}
+              modifiers={closedDatesModifiers}
+              modifiersStyles={closedDatesModifiersStyles} />
+            
               </PopoverContent>
             </Popover>
           </div>
@@ -676,44 +676,44 @@ export const DirectReservationDialog = ({
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.preferredTime}
             </Label>
-            {availabilityLoading ? (
-              <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+            {availabilityLoading ?
+        <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                 {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
-              </div>
-            ) : timeSlots.length === 0 ? (
-              <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+              </div> :
+        timeSlots.length === 0 ?
+        <div className="p-3 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                 {t.noSlotsForDay}
-              </div>
-            ) : (
-              <Select
-                value={formData.preferred_time}
-                onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}
-              >
+              </div> :
+
+        <Select
+          value={formData.preferred_time}
+          onValueChange={(value) => setFormData({ ...formData, preferred_time: value })}>
+          
                 <SelectTrigger className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.selectTime} />
                 </SelectTrigger>
                 <SelectContent>
                   {timeSlots.map((time) => {
-                    const passed = isSlotPassed(time);
-                    return (
-                      <SelectItem 
-                        key={time} 
-                        value={time}
-                        disabled={passed}
-                        className={passed ? 'opacity-50 text-muted-foreground' : ''}
-                      >
+              const passed = isSlotPassed(time);
+              return (
+                <SelectItem
+                  key={time}
+                  value={time}
+                  disabled={passed}
+                  className={passed ? 'opacity-50 text-muted-foreground' : ''}>
+                  
                         {time}
-                        {passed && (
-                          <span className="ml-2 text-[10px] text-muted-foreground">
+                        {passed &&
+                  <span className="ml-2 text-[10px] text-muted-foreground">
                             ({language === 'el' ? 'Πέρασε' : 'Passed'})
                           </span>
-                        )}
-                      </SelectItem>
-                    );
-                  })}
+                  }
+                      </SelectItem>);
+
+            })}
                 </SelectContent>
               </Select>
-            )}
+        }
           </div>
 
           {/* Phone */}
@@ -723,63 +723,63 @@ export const DirectReservationDialog = ({
               {t.phoneNumber}
             </Label>
             <Input
-              id="phone_number"
-              type="tel"
-              value={formData.phone_number}
-              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-              placeholder={t.phonePlaceholder}
-              required
-              className="text-xs sm:text-sm h-9 sm:h-10"
-            />
+          id="phone_number"
+          type="tel"
+          value={formData.phone_number}
+          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+          placeholder={t.phonePlaceholder}
+          required
+          className="text-xs sm:text-sm h-9 sm:h-10" />
+        
           </div>
 
           {/* Seating Preference (Optional) */}
-          {settings?.reservation_seating_options && settings.reservation_seating_options.length > 0 && (
-            <div className="space-y-1.5">
+          {settings?.reservation_seating_options && settings.reservation_seating_options.length > 0 &&
+      <div className="space-y-1.5">
               <Label htmlFor="seating_preference" className="flex items-center gap-2 text-xs sm:text-sm">
                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                 {t.seatingPreference}
               </Label>
               <Select
-                value={formData.seating_preference}
-                onValueChange={(value) => setFormData({ ...formData, seating_preference: value })}
-              >
+          value={formData.seating_preference}
+          onValueChange={(value) => setFormData({ ...formData, seating_preference: value })}>
+          
                 <SelectTrigger id="seating_preference" className="text-xs sm:text-sm font-normal h-9 sm:h-10">
                   <SelectValue placeholder={t.noPreference} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{t.noPreference}</SelectItem>
-                  {settings.reservation_seating_options.includes('indoor') && (
-                    <SelectItem value="indoor">{t.indoor}</SelectItem>
-                  )}
-                  {settings.reservation_seating_options.includes('outdoor') && (
-                    <SelectItem value="outdoor">{t.outdoor}</SelectItem>
-                  )}
+                  {settings.reservation_seating_options.includes('indoor') &&
+            <SelectItem value="indoor">{t.indoor}</SelectItem>
+            }
+                  {settings.reservation_seating_options.includes('outdoor') &&
+            <SelectItem value="outdoor">{t.outdoor}</SelectItem>
+            }
                 </SelectContent>
               </Select>
             </div>
-          )}
+      }
 
           {/* Special Requests (Optional) */}
           <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="special_requests" className="text-xs sm:text-sm">{t.specialRequests}</Label>
             <Textarea
-              id="special_requests"
-              value={formData.special_requests}
-              onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-              placeholder={t.requestsPlaceholder}
-              rows={3}
-              className="text-xs sm:text-sm"
-            />
+          id="special_requests"
+          value={formData.special_requests}
+          onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+          placeholder={t.requestsPlaceholder}
+          rows={3}
+          className="text-xs sm:text-sm" />
+        
           </div>
 
           <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0 || timeSlots.length === 0}>
-            {loading ? t.submitting : (availableCapacity === 0 || timeSlots.length === 0) ? t.fullyBooked : t.submit}
+            {loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
           </Button>
         </>
-      )}
-    </form>
-  );
+    }
+    </form>;
+
 
   if (isMobile) {
     return (
@@ -797,10 +797,10 @@ export const DirectReservationDialog = ({
           open={successDialog.open}
           onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
           reservation={successDialog.reservation}
-          language={language}
-        />
-      </>
-    );
+          language={language} />
+        
+      </>);
+
   }
 
   return (
@@ -818,8 +818,8 @@ export const DirectReservationDialog = ({
         open={successDialog.open}
         onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
         reservation={successDialog.reservation}
-        language={language}
-      />
-    </>
-  );
+        language={language} />
+      
+    </>);
+
 };
