@@ -99,6 +99,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [selectedEventGuestsReservation, setSelectedEventGuestsReservation] = useState<ReservationData | null>(null);
   const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const [ticketOrderTotals, setTicketOrderTotals] = useState<Record<string, number>>({});
+  const [seatingMinCharge, setSeatingMinCharge] = useState<Record<string, number>>({});
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -230,8 +231,35 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       generateQRCodes(allRes),
       fetchGuestTickets(allRes),
       fetchDirectReservationGuests(allRes),
+      fetchSeatingMinCharges(allRes),
     ]);
     setLoading(false);
+  };
+
+  const fetchSeatingMinCharges = async (reservations: ReservationData[]) => {
+    // Get min charge from seating_type_tiers for event reservations with a seating_type_id
+    const eventResWithSeating = reservations.filter((r) => !!r.events && r.seating_type_id);
+    if (eventResWithSeating.length === 0) return;
+
+    const uniqueSeatingTypeIds = [...new Set(eventResWithSeating.map((r) => r.seating_type_id!))];
+    const { data: tiers } = await supabase
+      .from('seating_type_tiers')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .in('seating_type_id', uniqueSeatingTypeIds);
+
+    if (!tiers) return;
+
+    const chargeMap: Record<string, number> = {};
+    eventResWithSeating.forEach((r) => {
+      const matchingTiers = tiers.filter((t) => t.seating_type_id === r.seating_type_id);
+      const matchedTier = matchingTiers.find(
+        (t) => r.party_size >= t.min_people && r.party_size <= t.max_people
+      ) || matchingTiers[0];
+      if (matchedTier?.prepaid_min_charge_cents) {
+        chargeMap[r.id] = matchedTier.prepaid_min_charge_cents;
+      }
+    });
+    setSeatingMinCharge(chargeMap);
   };
 
   const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
@@ -534,17 +562,20 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           }
 
           {/* Row 4: Payment info (event reservations only) */}
-          {isEvent && ((reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0) || ticketOrderTotals[reservation.id] > 0) &&
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-              <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">
-                {t.minPrepayment}: €{((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}
-                {ticketOrderTotals[reservation.id] > 0 &&
-                  ` (${t.tickets}: €${(ticketOrderTotals[reservation.id] / 100).toFixed(2)})`
-                }
-              </span>
-            </div>
-          }
+          {isEvent && (() => {
+            const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
+            const ticketTotal = ticketOrderTotals[reservation.id] || 0;
+            if (minCharge === 0 && ticketTotal === 0) return null;
+            return (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">
+                  {t.minPrepayment}: €{(minCharge / 100).toFixed(2)}
+                  {ticketTotal > 0 && ` (${t.tickets}: €${(ticketTotal / 100).toFixed(2)})`}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Row 5: Location */}
           {location && (
