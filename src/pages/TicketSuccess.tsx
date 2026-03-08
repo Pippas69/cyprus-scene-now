@@ -293,8 +293,8 @@ export const TicketSuccess = () => {
             seatRow={currentTicket.seat_row || undefined}
             seatNumber={currentTicket.seat_number || undefined}
             showSuccessMessage={currentIdx === 0}
-            onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=tickets")}
-            viewDashboardLabel={text.viewTickets}
+            onViewDashboard={() => navigate(isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets")}
+            viewDashboardLabel={isLinkedToReservation ? text.viewReservations : text.viewTickets}
           />
 
           {/* Copyable link for this ticket */}
@@ -324,8 +324,8 @@ export const TicketSuccess = () => {
             {language === "el" ? "Η αγορά ολοκληρώθηκε!" : "Purchase complete!"}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/dashboard-user?tab=events&subtab=tickets">
-              {text.viewTickets}
+            <Link to={isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets"}>
+              {isLinkedToReservation ? text.viewReservations : text.viewTickets}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>
