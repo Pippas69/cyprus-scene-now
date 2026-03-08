@@ -52,6 +52,8 @@ interface OfferPurchase {
   reservations: {
     preferred_time: string | null;
   } | null;
+  // Populated client-side
+  _guests?: { guest_name: string; qr_code_token: string }[];
 }
 
 export function MyOffers({ userId, language }: MyOffersProps) {
