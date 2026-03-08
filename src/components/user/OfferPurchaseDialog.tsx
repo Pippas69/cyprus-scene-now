@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarCheck, CalendarDays, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarDays, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -515,7 +515,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-medium">
-            <CalendarCheck className="h-4 w-4 sm:h-5 sm:w-5" />
+            
             <span className="text-xs sm:text-sm">{t("wantReservation")}</span>
           </div>
           <Checkbox
@@ -841,10 +841,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
       {/* Walk-in Note (below reservation toggle) */}
       {!wantsReservation &&
-      <p className="text-sm text-muted-foreground">
+    <p className="text-sm text-muted-foreground">
         {t("walkInNote")}
       </p>
-      }
+    }
 
       {/* Terms */}
       {offer.terms &&
