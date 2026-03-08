@@ -430,7 +430,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'Δεν υπάρχουν απλές κρατήσεις',
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
       code: 'Κωδικός',
-      viewQRCodes: 'Εμφάνιση QR Codes'
+      viewQRCodes: 'Εμφάνιση QR Codes',
+      minPrepayment: 'Ελάχιστη προπληρωμή',
+      tickets: 'εισιτήρια'
     },
     en: {
       title: 'My Reservations',
