@@ -718,7 +718,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {ticketOnlyOrders.map((order) => (
-                  <TableRow key={order.id}>
+                  <TableRow key={order.id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span>{order.buyer_name}</span>
@@ -824,7 +824,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 '-';
 
                 return (
-                  <TableRow key={reservation.id} className="group">
+                  <TableRow key={reservation.id} className="group hover:bg-transparent">
                       <TableCell className="font-medium">
                         <div className="flex flex-col gap-0.5">
                           <EditableCell
@@ -1045,7 +1045,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) =>
-            <TableRow key={reservation.id}>
+            <TableRow key={reservation.id} className="hover:bg-transparent">
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{reservation.reservation_name}</div>
