@@ -265,6 +265,41 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     }
   });
 
+  const handleCancelOfferReservation = async (purchase: OfferPurchase) => {
+    setCancelDialog({ open: false, purchase: null });
+    try {
+      if (purchase.reservation_id) {
+        // Cancel the reservation (frees slots via existing DB logic)
+        const { error: resError } = await supabase
+          .from('reservations')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('id', purchase.reservation_id)
+          .eq('user_id', userId);
+        if (resError) throw resError;
+      }
+      // Cancel the offer purchase
+      const { error: purchaseError } = await supabase
+        .from('offer_purchases')
+        .update({ status: 'cancelled' })
+        .eq('id', purchase.id)
+        .eq('user_id', userId);
+      if (purchaseError) throw purchaseError;
+
+      // Send cancellation notification
+      if (purchase.reservation_id) {
+        supabase.functions.invoke('send-reservation-notification', {
+          body: { reservationId: purchase.reservation_id, type: 'cancellation' }
+        }).catch(console.error);
+      }
+
+      toast.success(t.reservationCancelled);
+      queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+    } catch (error) {
+      console.error('Error cancelling offer reservation:', error);
+      toast.error(t.cancelFailed);
+    }
+  };
+
   // Filter out null discounts (deleted offers) and cancelled purchases BEFORE any categorization
   const validPurchases = purchases?.filter((p) => p.discounts !== null && p.status !== 'cancelled') || [];
 
