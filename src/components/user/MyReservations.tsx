@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, Building2, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, Building2, Ticket } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -19,9 +19,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ReservationQRCard } from './ReservationQRCard';
+import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MyReservationsProps {
   userId: string;
