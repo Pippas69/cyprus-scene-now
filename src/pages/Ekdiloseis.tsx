@@ -349,11 +349,11 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
   const boostedEventIds = new Set(activeBoosts?.map(b => b.event_id) || []);
 
-  const timeBoundaries = getTimeBoundaries(timeFilter);
+  const timeBoundaries = getTimeBoundaries();
 
   // Fetch BOOSTED events (shown at top, but STILL filtered by selected time window)
   const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-events-ekdiloseis", timeFilter, selectedCity, selectedCategories, Array.from(boostedEventIds)],
+    queryKey: ["boosted-events-ekdiloseis", dateRange, selectedCity, selectedCategories, Array.from(boostedEventIds)],
     queryFn: async () => {
       if (boostedEventIds.size === 0) return [];
 
@@ -420,7 +420,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
   // Fetch NON-BOOSTED events (filtered by time and city)
   const { data: regularEvents, isLoading: loadingRegular } = useQuery({
-    queryKey: ["regular-events", timeFilter, selectedCity, selectedCategories, Array.from(boostedEventIds)],
+    queryKey: ["regular-events", dateRange, selectedCity, selectedCategories, Array.from(boostedEventIds)],
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -490,30 +490,56 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   const hasBoostedEvents = boostedEvents && boostedEvents.length > 0;
   const isLoading = loadingBoosted || loadingRegular;
 
-  // Toggle filter - clicking same filter deselects it
-  const handleFilterClick = (filter: 'today' | 'week' | 'month') => {
-    setTimeFilter(prev => prev === filter ? null : filter);
+  // Client-side RSVP filtering
+  const filterByRsvp = (events: any[] | undefined) => {
+    if (!rsvpFilter || !events) return events;
+    const ids = rsvpFilter === 'interested' ? rsvpInterestedIds : rsvpGoingIds;
+    return events.filter((e: any) => ids.has(e.id));
   };
+
+  const filteredBoosted = filterByRsvp(boostedEvents);
+  const filteredRegular = filterByRsvp(regularEvents);
+  const hasBoostedFiltered = filteredBoosted && filteredBoosted.length > 0;
 
   return (
     <div className="space-y-4">
-      {/* Time Filter Chips */}
-      <div className="flex gap-1.5 sm:gap-2">
-        {(['today', 'week', 'month'] as const).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => handleFilterClick(filter)}
-            className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap ${
-              timeFilter === filter
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-            }`}
-          >
-            {filter === 'today' && t.today}
-            {filter === 'week' && t.week}
-            {filter === 'month' && t.month}
-          </button>
-        ))}
+      {/* Filters Row: Date Range + RSVP Icons */}
+      <div className="flex items-center gap-2">
+        <CompactDateRangeFilter
+          value={dateRange}
+          onChange={setDateRange}
+          language={language}
+        />
+        
+        {/* RSVP filter icons */}
+        {user && (
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => setRsvpFilter(prev => prev === 'interested' ? null : 'interested')}
+              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                rsvpFilter === 'interested'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/60 hover:bg-muted text-muted-foreground'
+              }`}
+              title={language === 'el' ? 'Ενδιαφέρομαι' : 'Interested'}
+            >
+              <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span>{rsvpInterestedIds.size}</span>
+            </button>
+            <button
+              onClick={() => setRsvpFilter(prev => prev === 'going' ? null : 'going')}
+              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                rsvpFilter === 'going'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted/60 hover:bg-muted text-muted-foreground'
+              }`}
+              title={language === 'el' ? 'Θα πάω' : 'Going'}
+            >
+              <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span>{rsvpGoingIds.size}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* BOOSTED ZONE - No header, just cards with badge */}
