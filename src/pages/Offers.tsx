@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { X, Loader2 } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { CompactDateRangeFilter } from "@/components/CompactDateRangeFilter";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
@@ -256,46 +258,17 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   selectedCity: string | null;
   selectedCategories: string[];
 }) => {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  const text = {
-    el: {
-      today: "Σήμερα",
-      week: "Σε 7 Μέρες",
-      month: "Σε 30 Μέρες",
-    },
-    en: {
-      today: "Today",
-      week: "In 7 Days",
-      month: "In 30 Days",
-    },
-  };
+  // Calculate time boundaries from date range
+  const getTimeBoundaries = () => {
+    if (!dateRange?.from) return null;
 
-  const t = text[language];
-
-  // Calculate time boundaries for filtering
-  const getTimeBoundaries = (filter: 'today' | 'week' | 'month' | null) => {
-    if (!filter) return null; // No filter = show all
-
-    const now = new Date();
-    const start = new Date(now);
+    const start = new Date(dateRange.from);
     start.setHours(0, 0, 0, 0);
 
-    const end = new Date(start);
-
-    switch (filter) {
-      case 'today':
-        end.setHours(23, 59, 59, 999);
-        break;
-      case 'week':
-        end.setDate(start.getDate() + 7);
-        end.setHours(23, 59, 59, 999);
-        break;
-      case 'month':
-        end.setDate(start.getDate() + 30);
-        end.setHours(23, 59, 59, 999);
-        break;
-    }
+    const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+    end.setHours(23, 59, 59, 999);
 
     return { start: start.toISOString(), end: end.toISOString() };
   };
@@ -322,11 +295,11 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
   const boostedOfferIds = new Set(activeBoosts?.map(b => b.discount_id) || []);
 
-  const timeBoundaries = getTimeBoundaries(timeFilter);
+  const timeBoundaries = getTimeBoundaries();
 
   // Fetch BOOSTED offers (shown at top, but STILL filtered by selected time window)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
-    queryKey: ["boosted-offers-page", timeFilter, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
+    queryKey: ["boosted-offers-page", dateRange, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
@@ -386,7 +359,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
 
   // Fetch NON-BOOSTED offers (filtered by time and city)
   const { data: regularOffers, isLoading: loadingRegular } = useQuery({
-    queryKey: ["regular-offers", timeFilter, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
+    queryKey: ["regular-offers", dateRange, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
     queryFn: async () => {
       const now = new Date().toISOString();
       
@@ -450,31 +423,15 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   const hasBoostedOffers = boostedOffers && boostedOffers.length > 0;
   const isLoading = loadingBoosted || loadingRegular;
 
-  // Toggle filter - clicking same filter deselects it
-  const handleFilterClick = (filter: 'today' | 'week' | 'month') => {
-    setTimeFilter(prev => prev === filter ? null : filter);
-  };
-
   return (
     <div className="space-y-4">
-
-      {/* Time Filter Chips */}
-      <div className="flex gap-1.5 sm:gap-2">
-        {(['today', 'week', 'month'] as const).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => handleFilterClick(filter)}
-            className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-sm font-medium transition-all whitespace-nowrap ${
-              timeFilter === filter
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-            }`}
-          >
-            {filter === 'today' && t.today}
-            {filter === 'week' && t.week}
-            {filter === 'month' && t.month}
-          </button>
-        ))}
+      {/* Date Range Filter */}
+      <div className="flex items-center gap-2">
+        <CompactDateRangeFilter
+          value={dateRange}
+          onChange={setDateRange}
+          language={language}
+        />
       </div>
 
       {/* BOOSTED ZONE - No header, just cards with badge */}

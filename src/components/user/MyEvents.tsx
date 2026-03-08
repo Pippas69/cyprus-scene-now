@@ -312,63 +312,21 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     );
   };
 
-  const hasPastEvents = pastInterested.length > 0 || pastGoing.length > 0 || pastTickets.length > 0;
+  const hasPastTickets = pastTickets.length > 0;
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue={initialSubtab} className="w-full">
-        <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
-          <TabsTrigger 
-            value="going" 
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{t.going}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {going.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="interested" 
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{t.interested}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {interested.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="tickets" 
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{t.tickets}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {upcomingTickets.length}
-            </span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Tickets - main content now */}
+      {renderTickets(upcomingTickets, t.noTickets, false)}
 
-        <TabsContent value="going" className="mt-4">
-          {renderEvents(going, t.noGoing, true)}
-        </TabsContent>
-        <TabsContent value="interested" className="mt-4">
-          {renderEvents(interested, t.noInterested, true)}
-        </TabsContent>
-        <TabsContent value="tickets" className="mt-4">
-          {renderTickets(upcomingTickets, t.noTickets, false)}
-        </TabsContent>
-      </Tabs>
-
-      {hasPastEvents && (
+      {hasPastTickets && (
         <Collapsible open={showHistory} onOpenChange={setShowHistory}>
           <CollapsibleTrigger asChild>
             <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
-                  {t.history} ({pastGoing.length + pastInterested.length + pastTickets.length})
+                  {t.history} ({pastTickets.length})
                 </span>
               </div>
               <ChevronDown 
@@ -377,29 +335,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3">
-            <Tabs defaultValue="past-going" className="w-full">
-              <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
-                <TabsTrigger value="past-going" className="flex-1 text-xs px-2 py-1.5">
-                  {t.going} ({pastGoing.length})
-                </TabsTrigger>
-                <TabsTrigger value="past-interested" className="flex-1 text-xs px-2 py-1.5">
-                  {t.interested} ({pastInterested.length})
-                </TabsTrigger>
-                <TabsTrigger value="past-tickets" className="flex-1 text-xs px-2 py-1.5">
-                  {t.tickets} ({pastTickets.length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="past-going" className="mt-4">
-                {renderPastEvents(pastGoing, true)}
-              </TabsContent>
-              <TabsContent value="past-interested" className="mt-4">
-                {renderPastEvents(pastInterested, true)}
-              </TabsContent>
-              <TabsContent value="past-tickets" className="mt-4">
-                {renderTickets(pastTickets, t.noHistory, true)}
-              </TabsContent>
-            </Tabs>
+            {renderTickets(pastTickets, t.noHistory, true)}
           </CollapsibleContent>
         </Collapsible>
       )}
