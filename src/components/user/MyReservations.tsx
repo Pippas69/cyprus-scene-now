@@ -761,9 +761,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-row gap-2">
             <AlertDialogAction
+              className="flex-1 h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -773,6 +773,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             >
               {t.confirm}
             </AlertDialogAction>
+            <AlertDialogCancel className="flex-1 h-9 text-xs mt-0">{t.cancel}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

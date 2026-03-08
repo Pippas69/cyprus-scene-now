@@ -693,10 +693,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t.cancelBack}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-row gap-2">
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="flex-1 h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={async (e) => {
                 e.preventDefault();
                 if (!cancelDialog.purchase) return;
@@ -705,6 +704,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             >
               {t.cancelConfirm}
             </AlertDialogAction>
+            <AlertDialogCancel className="flex-1 h-9 text-xs mt-0">{t.cancelBack}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
