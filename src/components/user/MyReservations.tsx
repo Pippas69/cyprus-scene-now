@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -658,7 +658,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             value="direct"
             className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
             
-            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            
             <span className="truncate">{t.directTab}</span>
             <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
               {directReservations.length}
