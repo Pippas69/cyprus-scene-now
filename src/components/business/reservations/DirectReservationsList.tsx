@@ -198,13 +198,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const fetchReservations = async (silent = false) => {
+    const requestId = ++fetchReservationsRequestRef.current;
     if (!silent) setLoading(true);
+
     try {
-      const { data: bizData } = await supabase.
+      const { data: bizData, error: bizError } = await supabase.
       from('businesses').
       select('ticket_reservation_linked, category').
       eq('id', businessId).
-      single();
+      maybeSingle();
+
+      if (bizError) throw bizError;
+
       const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []);
 
       let query = supabase.
@@ -238,6 +243,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const { data, error } = await query;
       if (error) throw error;
 
+      if (requestId !== fetchReservationsRequestRef.current) return;
+
       const reservationIds = data?.map((r) => r.id) || [];
 
       let offerLinkedIds = new Set<string>();
@@ -259,6 +266,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ...r,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
+
+      if (requestId !== fetchReservationsRequestRef.current) return;
 
       if (linked) {
         setReservations(enrichedData);
@@ -309,7 +318,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
-      setLoading(false);
+      if (requestId === fetchReservationsRequestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
