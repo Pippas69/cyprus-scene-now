@@ -39,7 +39,36 @@ export const ReservationSuccessDialog = ({
   const hasGuests = guests.length > 0;
 
   const content = hasGuests ? (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Carousel navigation above the card */}
+      {guests.length > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
+            disabled={currentGuestIndex === 0}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <p className="text-sm font-medium text-muted-foreground">
+            {currentGuestIndex + 1}/{guests.length}
+            <span className="ml-1 text-foreground font-semibold">
+              — {guests[currentGuestIndex]?.guest_name}
+            </span>
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentGuestIndex(Math.min(guests.length - 1, currentGuestIndex + 1))}
+            disabled={currentGuestIndex === guests.length - 1}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       <SuccessQRCard
         type="reservation"
         qrToken={guests[currentGuestIndex]?.qr_code_token || reservation.qr_code_token}
@@ -55,29 +84,6 @@ export const ReservationSuccessDialog = ({
         viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
         onClose={() => onOpenChange(false)}
       />
-      {guests.length > 1 && (
-        <div className="flex items-center justify-center gap-3 pb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
-            disabled={currentGuestIndex === 0}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-medium text-foreground">
-            {guests[currentGuestIndex]?.guest_name} ({currentGuestIndex + 1}/{guests.length})
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentGuestIndex(Math.min(guests.length - 1, currentGuestIndex + 1))}
-            disabled={currentGuestIndex === guests.length - 1}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
     </div>
   ) : (
     <SuccessQRCard
