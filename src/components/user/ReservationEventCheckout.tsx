@@ -798,7 +798,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         reservationDate={eventDate}
         prepaidAmountCents={successData.prepaidAmount}
         showSuccessMessage={true}
-        onViewDashboard={() => { navigate('/dashboard-user?tab=events&subtab=reservations'); onOpenChange(false); }}
+        onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
         viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
         onClose={() => { onSuccess?.(); onOpenChange(false); }}
       />

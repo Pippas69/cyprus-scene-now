@@ -171,7 +171,7 @@ export const ReservationSuccess = () => {
           partySize={reservationData.party_size}
           prepaidAmountCents={reservationData.prepaid_min_charge_cents}
           showSuccessMessage={true}
-          onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=reservations")}
+          onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
           viewDashboardLabel={text.viewReservations}
         />
       ) : (
@@ -184,7 +184,7 @@ export const ReservationSuccess = () => {
           <p className="text-lg font-medium">
             {language === "el" ? "Η κράτηση ολοκληρώθηκε!" : "Reservation complete!"}
           </p>
-          <Button onClick={() => navigate("/dashboard-user?tab=events&subtab=reservations")} className="mt-4">
+          <Button onClick={() => navigate("/dashboard-user?tab=reservations")} className="mt-4">
             {text.viewReservations}
           </Button>
         </div>
