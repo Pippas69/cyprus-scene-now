@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Download, Calendar, Clock, CreditCard, QrCode, ChevronLeft, ChevronRight, User, Copy, Check } from "lucide-react";
+import { Calendar, Clock, CreditCard, QrCode, ChevronLeft, ChevronRight, User, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import QRCode from "qrcode";
