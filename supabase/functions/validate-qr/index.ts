@@ -222,7 +222,18 @@ Deno.serve(async (req) => {
       return await handleOfferQR(supabaseAdmin, purchase, body.businessId, user.id, m, language);
     }
 
-    // 3. Try reservation
+    // 3. Try reservation guest (per-guest QR code)
+    const { data: reservationGuest } = await supabaseAdmin
+      .from("reservation_guests")
+      .select(`*, reservations(*, events(id, title, start_at, business_id), businesses(id, name))`)
+      .eq("qr_code_token", token)
+      .single();
+
+    if (reservationGuest) {
+      return await handleReservationGuestQR(supabaseAdmin, reservationGuest, body.businessId, user.id, m, language);
+    }
+
+    // 4. Try reservation (legacy single QR)
     const { data: reservation } = await supabaseAdmin
       .from("reservations")
       .select(`*, events(id, title, start_at, business_id), businesses(id, name)`)
