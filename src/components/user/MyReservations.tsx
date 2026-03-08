@@ -665,18 +665,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="direct" className="w-full">
+      <Tabs defaultValue="event" className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
-          <TabsTrigger
-            value="direct"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{t.directTab}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {directReservations.length}
-            </span>
-          </TabsTrigger>
           <TabsTrigger
             value="event"
             className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
@@ -687,17 +677,17 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               {eventReservations.length}
             </span>
           </TabsTrigger>
+          <TabsTrigger
+            value="direct"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.directTab}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
+              {directReservations.length}
+            </span>
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="direct" className="mt-4">
-          {directReservations.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-          ) : (
-            <div className="grid gap-3">
-              {directReservations.map(r => renderReservationCard(r, false))}
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="event" className="mt-4">
           {eventReservations.length === 0 ? (
@@ -705,6 +695,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           ) : (
             <div className="grid gap-3">
               {eventReservations.map(r => renderReservationCard(r, false))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="direct" className="mt-4">
+          {directReservations.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
+          ) : (
+            <div className="grid gap-3">
+              {directReservations.map(r => renderReservationCard(r, false))}
             </div>
           )}
         </TabsContent>
@@ -723,30 +723,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3">
-            <Tabs defaultValue="past-direct" className="w-full">
+            <Tabs defaultValue="past-event" className="w-full">
               <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
-                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
-                  {t.directTab} ({pastDirectReservations.length})
-                </TabsTrigger>
                 <TabsTrigger value="past-event" className="flex-1 text-xs px-2 py-1.5">
                   {t.eventTab} ({pastEventReservations.length})
                 </TabsTrigger>
+                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
+                  {t.directTab} ({pastDirectReservations.length})
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="past-direct" className="mt-4">
-                {pastDirectReservations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-                ) : (
-                  <div className="grid gap-3">
-                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
-                  </div>
-                )}
-              </TabsContent>
               <TabsContent value="past-event" className="mt-4">
                 {pastEventReservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
                 ) : (
                   <div className="grid gap-3">
                     {pastEventReservations.map(r => renderReservationCard(r, true))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="past-direct" className="mt-4">
+                {pastDirectReservations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
                   </div>
                 )}
               </TabsContent>
