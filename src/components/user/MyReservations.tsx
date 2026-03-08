@@ -7,7 +7,7 @@ import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, Chevr
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import {
   AlertDialog,
@@ -73,10 +73,13 @@ interface ReservationData {
 
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const isPreviewOrigin =
   typeof window !== 'undefined' && (
   window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
+  const initialReservationsTab = searchParams.get('subtab') === 'direct' ? 'direct' : 'event';
+  const [activeReservationsTab, setActiveReservationsTab] = useState<'event' | 'direct'>(initialReservationsTab);
   const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
   const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +120,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       supabase.removeChannel(channel);
     };
   }, [userId]);
+
+  useEffect(() => {
+    setActiveReservationsTab(searchParams.get('subtab') === 'direct' ? 'direct' : 'event');
+  }, [searchParams]);
 
   const fetchReservations = async () => {
     setLoading(true);
@@ -693,7 +700,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="event" className="w-full">
+      <Tabs
+        value={activeReservationsTab}
+        onValueChange={(value) => {
+          const nextTab = value === 'direct' ? 'direct' : 'event';
+          setActiveReservationsTab(nextTab);
+          navigate(`/dashboard-user?tab=reservations&subtab=${nextTab}`, { replace: true });
+        }}
+        className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger
             value="event"

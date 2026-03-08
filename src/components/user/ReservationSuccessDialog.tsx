@@ -51,7 +51,7 @@ export const ReservationSuccessDialog = ({
         partySize={reservation.party_size}
         guestName={guests[currentGuestIndex]?.guest_name}
         showSuccessMessage={currentGuestIndex === 0}
-        onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
+        onViewDashboard={() => { navigate('/dashboard-user?tab=reservations&subtab=direct'); onOpenChange(false); }}
         viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
         onClose={() => onOpenChange(false)}
       />
@@ -90,7 +90,7 @@ export const ReservationSuccessDialog = ({
       confirmationCode={reservation.confirmation_code}
       partySize={reservation.party_size}
       showSuccessMessage={true}
-      onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
+      onViewDashboard={() => { navigate('/dashboard-user?tab=reservations&subtab=direct'); onOpenChange(false); }}
       viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
       onClose={() => onOpenChange(false)}
     />
