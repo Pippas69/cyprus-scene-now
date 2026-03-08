@@ -166,6 +166,21 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     return () => { supabase.removeChannel(channel); };
   }, [isTicketLinked, fetchEvents]);
 
+  const handleReservationCountChange = useCallback((count: number) => {
+    if (!selectedEventId || !isTicketLinked) return;
+
+    setEvents((prev) => {
+      let changed = false;
+      const next = prev.map((event) => {
+        if (event.id !== selectedEventId) return event;
+        if (event.reservationCount === count) return event;
+        changed = true;
+        return { ...event, reservationCount: count };
+      });
+      return changed ? next : prev;
+    });
+  }, [selectedEventId, isTicketLinked]);
+
   const selectedEvent = events.find(e => e.id === selectedEventId);
 
   if (isTicketLinked === null) {
