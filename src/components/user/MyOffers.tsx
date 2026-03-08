@@ -145,6 +145,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     noRedeemed: text.noRedeemed.en,
     noExpired: text.noExpired.en,
     viewQR: text.viewQR.en,
+    viewQRCodes: text.viewQRCodes.en,
     expiresOn: text.expiresOn.en,
     purchasedOn: text.purchasedOn.en,
     redeemedOn: text.redeemedOn.en,
