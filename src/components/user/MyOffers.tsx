@@ -538,29 +538,28 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 pt-1">
-            {showQR && !isExpired && !isRedeemed && !isDepleted &&
-            <Button
-              onClick={() => setSelectedPurchase(purchase)}
-              size="sm"
-              variant="default"
-              className="text-xs h-8 px-4">
-              
-                
-                {isReservation ? t.viewQRCodes : t.viewQR}
-              </Button>
-            }
-            {isCredit &&
-            <Button
-              onClick={() => setShowHistory(purchase.id)}
-              variant="outline"
-              size="sm"
-              className="flex-1 text-xs h-8">
-              
-                <History className="h-3.5 w-3.5 mr-1.5" />
-                {t.viewHistory}
-              </Button>
-            }
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-2 flex-1">
+              {showQR && !isExpired && !isRedeemed && !isDepleted &&
+              <Button
+                onClick={() => setSelectedPurchase(purchase)}
+                size="sm"
+                variant="default"
+                className={`text-xs h-8 px-4 ${!isReservation ? 'flex-1' : ''}`}>
+                  {isReservation ? t.viewQRCodes : t.viewQR}
+                </Button>
+              }
+              {isCredit &&
+              <Button
+                onClick={() => setShowHistory(purchase.id)}
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs h-8">
+                  <History className="h-3.5 w-3.5 mr-1.5" />
+                  {t.viewHistory}
+                </Button>
+              }
+            </div>
             {/* Cancel button for reservation-linked offers */}
             {isReservation && !isExpired && !isRedeemed && !isDepleted && (
               <Button
