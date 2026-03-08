@@ -13,6 +13,7 @@ const t = {
   el: {
     processing: "Επεξεργασία πληρωμής...",
     viewTickets: "Τα Εισιτήριά Μου",
+    viewReservations: "Οι Κρατήσεις Μου",
     continueBrowsing: "Συνέχεια περιήγησης",
     error: "Κάτι πήγε στραβά",
     tryAgain: "Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε μαζί μας",
@@ -24,6 +25,7 @@ const t = {
   en: {
     processing: "Processing your payment...",
     viewTickets: "My Tickets",
+    viewReservations: "My Reservations",
     continueBrowsing: "Continue Browsing",
     error: "Something went wrong",
     tryAgain: "Please try again or contact support",
@@ -59,6 +61,7 @@ export const TicketSuccess = () => {
   const [allTickets, setAllTickets] = useState<TicketData[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLinkedToReservation, setIsLinkedToReservation] = useState(false);
 
   const ranOnceRef = useRef(false);
 
@@ -145,6 +148,17 @@ export const TicketSuccess = () => {
           console.error("Ticket fetch error:", fetchError);
           setStatus("success");
           return;
+        }
+
+        // Check if this order is linked to a reservation (hybrid event)
+        const { data: orderData } = await supabase
+          .from("ticket_orders")
+          .select("linked_reservation_id")
+          .eq("id", orderId)
+          .single();
+        
+        if (orderData?.linked_reservation_id) {
+          setIsLinkedToReservation(true);
         }
 
         const allTicketData: TicketData[] = tickets.map((ticket: any) => {
@@ -279,8 +293,8 @@ export const TicketSuccess = () => {
             seatRow={currentTicket.seat_row || undefined}
             seatNumber={currentTicket.seat_number || undefined}
             showSuccessMessage={currentIdx === 0}
-            onViewDashboard={() => navigate("/dashboard-user?tab=events&subtab=tickets")}
-            viewDashboardLabel={text.viewTickets}
+            onViewDashboard={() => navigate(isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets")}
+            viewDashboardLabel={isLinkedToReservation ? text.viewReservations : text.viewTickets}
           />
 
           {/* Copyable link for this ticket */}
@@ -310,8 +324,8 @@ export const TicketSuccess = () => {
             {language === "el" ? "Η αγορά ολοκληρώθηκε!" : "Purchase complete!"}
           </p>
           <Button asChild className="mt-4">
-            <Link to="/dashboard-user?tab=events&subtab=tickets">
-              {text.viewTickets}
+            <Link to={isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets"}>
+              {isLinkedToReservation ? text.viewReservations : text.viewTickets}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>

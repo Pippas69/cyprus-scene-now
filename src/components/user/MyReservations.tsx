@@ -95,6 +95,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [directGuestQrCodes, setDirectGuestQrCodes] = useState<Record<string, string>>({});
   const [selectedDirectGuestsReservation, setSelectedDirectGuestsReservation] = useState<ReservationData | null>(null);
   const [currentDirectGuestIndex, setCurrentDirectGuestIndex] = useState(0);
+  // Event reservation guest QR dialog
+  const [selectedEventGuestsReservation, setSelectedEventGuestsReservation] = useState<ReservationData | null>(null);
+  const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -538,41 +541,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             )
           )}
 
-          {/* Guest QR Codes for reservation-only events */}
+          {/* Event reservations with guest QR codes: single CTA button */}
           {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (
-            <div className="space-y-1.5 mt-2">
-              {guestTickets[reservation.id].map((ticket, idx) => (
-                <button
-                  key={ticket.id}
-                  type="button"
-                  onClick={() => {
-                    if (guestQrCodes[ticket.id]) {
-                      // Show individual guest QR via the same ReservationQRCard pattern
-                      setSelectedReservationForQR({
-                        ...reservation,
-                        qr_code_token: ticket.qr_code_token,
-                        confirmation_code: `${reservation.confirmation_code}-${idx + 1}`,
-                      });
-                      setQrCodes(prev => ({ ...prev, [reservation.id]: guestQrCodes[ticket.id] }));
-                    }
-                  }}
-                  className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
+            <div className="flex items-center justify-between gap-1.5 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 text-xs px-4"
+                onClick={() => {
+                  setCurrentEventGuestIndex(0);
+                  setSelectedEventGuestsReservation(reservation);
+                }}
+              >
+                {t.viewQRCodes}
+              </Button>
+
+              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
+                <Button
+                  size="sm"
+                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-foreground">{ticket.guest_name}</span>
-                    {ticket.guest_age && (
-                      <span className="text-[10px] text-muted-foreground">({ticket.guest_age})</span>
-                    )}
-                    {ticket.status === 'used' && (
-                      <Badge className="bg-green-600 text-white text-[9px] h-4 px-1.5">Check-in ✓</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-0.5 text-primary">
-                    <QrCode className="h-3.5 w-3.5" />
-                    <span className="text-[10px] font-medium">QR</span>
-                  </div>
-                </button>
-              ))}
+                  {t.cancelReservation}
+                </Button>
+              )}
             </div>
           )}
 
@@ -603,10 +595,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets and no direct guests) */}
+          {/* QR Code + Cancel on same line (fallback for reservations without guest tickets/guests) */}
           {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
             <div className="flex items-center gap-1.5 mt-2">
-              {/* QR Code Button */}
               {reservation.confirmation_code && (
                 <button
                   type="button"
@@ -624,7 +615,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </button>
               )}
 
-              {/* Cancel Button - matching style */}
               {(reservation.status === 'pending' || reservation.status === 'accepted') && (
                 <Button
                   size="sm"
@@ -634,19 +624,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   {t.cancelReservation}
                 </Button>
               )}
-            </div>
-          )}
-
-          {/* Cancel Button for reservation-only event guest tickets */}
-          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
-            <div className="flex justify-end mt-1.5">
-              <Button
-                size="sm"
-                className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
-                onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-              >
-                {t.cancelReservation}
-              </Button>
             </div>
           )}
         </CardContent>
@@ -865,6 +842,83 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
               <VisuallyHidden>
                 <DialogTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DialogTitle>
+              </VisuallyHidden>
+              {content}
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* Multi-guest QR dialog for event reservations */}
+      {selectedEventGuestsReservation && guestTickets[selectedEventGuestsReservation.id]?.length > 0 && (() => {
+        const tickets = guestTickets[selectedEventGuestsReservation.id];
+        const currentTicket = tickets[currentEventGuestIndex];
+        const businessInfo = selectedEventGuestsReservation.events?.businesses;
+        const closeDialog = () => {
+          setSelectedEventGuestsReservation(null);
+          setCurrentEventGuestIndex(0);
+        };
+        
+        const content = (
+          <div className="space-y-4">
+            <SuccessQRCard
+              type="reservation"
+              qrToken={currentTicket?.qr_code_token || ''}
+              title={selectedEventGuestsReservation.events?.title || ''}
+              businessName={businessInfo?.name || ''}
+              businessLogo={businessInfo?.logo_url}
+              language={language}
+              guestName={currentTicket?.guest_name}
+              guestAge={currentTicket?.guest_age || undefined}
+              reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
+              showSuccessMessage={false}
+              onClose={closeDialog}
+            />
+            {tickets.length > 1 && (
+              <div className="flex items-center justify-center gap-3 pb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
+                  disabled={currentEventGuestIndex === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentTicket?.guest_name} ({currentEventGuestIndex + 1}/{tickets.length})
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
+                  disabled={currentEventGuestIndex === tickets.length - 1}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+
+        if (isMobile) {
+          return (
+            <Drawer open onOpenChange={closeDialog}>
+              <DrawerContent className="max-h-[95vh] bg-transparent border-0">
+                <DrawerHeader className="sr-only">
+                  <DrawerTitle>{selectedEventGuestsReservation.events?.title || ''}</DrawerTitle>
+                  <DrawerDescription>Event Reservation QR Codes</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-6 overflow-y-auto">{content}</div>
+              </DrawerContent>
+            </Drawer>
+          );
+        }
+
+        return (
+          <Dialog open onOpenChange={closeDialog}>
+            <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+              <VisuallyHidden>
+                <DialogTitle>{selectedEventGuestsReservation.events?.title || ''}</DialogTitle>
               </VisuallyHidden>
               {content}
             </DialogContent>
