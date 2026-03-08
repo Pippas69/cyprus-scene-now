@@ -46,7 +46,9 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
         businessName={offer.businessName}
         businessLogo={offer.businessLogo}
         language={language}
-        guestName={`${offer.guests![currentGuestIndex]?.guest_name} (${currentGuestIndex + 1}/${offer.guests!.length})`}
+        guestName={offer.guests![currentGuestIndex]?.guest_name}
+        discountPercent={offer.discountPercent}
+        expiryDate={offer.expiresAt}
         showSuccessMessage={false}
         onClose={onClose}
       />
