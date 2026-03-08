@@ -901,9 +901,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       })()}
 
       {/* Multi-guest QR dialog for event reservations */}
-      {selectedEventGuestsReservation && guestTickets[selectedEventGuestsReservation.id]?.length > 0 && (() => {
-        const tickets = guestTickets[selectedEventGuestsReservation.id];
-        const currentTicket = tickets[currentEventGuestIndex];
+      {selectedEventGuestsReservation && (() => {
+        const tickets = guestTickets[selectedEventGuestsReservation.id] || [];
+        const hasTickets = tickets.length > 0;
         const businessInfo = selectedEventGuestsReservation.events?.businesses;
         const closeDialog = () => {
           setSelectedEventGuestsReservation(null);
