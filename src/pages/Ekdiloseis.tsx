@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Heart, Users } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { CompactDateRangeFilter } from "@/components/CompactDateRangeFilter";
 
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import EventCardSkeleton from "@/components/EventCardSkeleton";

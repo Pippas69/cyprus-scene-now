@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
 import { X, Loader2 } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { CompactDateRangeFilter } from "@/components/CompactDateRangeFilter";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import OfferCard from "@/components/OfferCard";
 import OfferCardSkeleton from "@/components/OfferCardSkeleton";
