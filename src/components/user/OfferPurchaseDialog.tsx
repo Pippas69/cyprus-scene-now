@@ -537,8 +537,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
             <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
               {language === "el" ?
-            `Κάντε κράτηση για τις ώρες της έκπτωσης (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). Η κράτηση θα συνδεθεί αυτόματα με την προσφορά.` :
-            `Book a table during the discount hours (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). The reservation will be linked automatically to the offer.`}
+            `Κάντε κράτηση για τις ώρες της έκπτωσης (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). ` :
+            `Book a table during the discount hours (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). `}
             </p>
 
             {/* Date Selection */}
