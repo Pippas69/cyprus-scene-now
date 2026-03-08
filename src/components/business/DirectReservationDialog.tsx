@@ -397,6 +397,13 @@ export const DirectReservationDialog = ({
       return;
     }
 
+    // Validate all guest names are filled
+    const emptyGuests = formData.guest_names.filter(n => !n.trim());
+    if (emptyGuests.length > 0) {
+      toast.error(language === 'el' ? 'Παρακαλώ εισάγετε τα ονόματα όλων των ατόμων' : 'Please enter names for all guests');
+      return;
+    }
+
     const phoneDigits = formData.phone_number.replace(/\D/g, '').length;
     if (phoneDigits < 8 || phoneDigits > 15) {
       toast.error(language === 'el' ? 'Το τηλέφωνο πρέπει να έχει 8-15 ψηφία' : 'Phone must have 8-15 digits');
