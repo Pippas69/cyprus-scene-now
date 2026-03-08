@@ -270,17 +270,17 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   const fetchGuestTickets = async (reservations: ReservationData[]) => {
-    // Only for reservation-only events (event_type === 'reservation')
-    const reservationOnlyIds = reservations
-      .filter(r => r.events?.event_type === 'reservation' && r.status === 'accepted')
+    // For all event-based reservations (reservation-only AND hybrid)
+    const eventResIds = reservations
+      .filter(r => !!r.events && (r.status === 'accepted' || r.status === 'pending'))
       .map(r => r.id);
 
-    if (reservationOnlyIds.length === 0) return;
+    if (eventResIds.length === 0) return;
 
     const { data: orders } = await supabase
       .from('ticket_orders')
       .select('id, linked_reservation_id')
-      .in('linked_reservation_id', reservationOnlyIds);
+      .in('linked_reservation_id', eventResIds);
 
     if (!orders || orders.length === 0) return;
 
@@ -539,7 +539,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Guest QR Codes for reservation-only events */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (
+          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (
             <div className="space-y-1.5 mt-2">
               {guestTickets[reservation.id].map((ticket, idx) => (
                 <button
@@ -604,7 +604,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets and no direct guests) */}
-          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
+          {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
             <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
@@ -638,7 +638,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Cancel Button for reservation-only event guest tickets */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
                 size="sm"
@@ -665,18 +665,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="direct" className="w-full">
+      <Tabs defaultValue="event" className="w-full">
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
-          <TabsTrigger
-            value="direct"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{t.directTab}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {directReservations.length}
-            </span>
-          </TabsTrigger>
           <TabsTrigger
             value="event"
             className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
@@ -687,17 +677,17 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               {eventReservations.length}
             </span>
           </TabsTrigger>
+          <TabsTrigger
+            value="direct"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+          >
+            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{t.directTab}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
+              {directReservations.length}
+            </span>
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="direct" className="mt-4">
-          {directReservations.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-          ) : (
-            <div className="grid gap-3">
-              {directReservations.map(r => renderReservationCard(r, false))}
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="event" className="mt-4">
           {eventReservations.length === 0 ? (
@@ -705,6 +695,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           ) : (
             <div className="grid gap-3">
               {eventReservations.map(r => renderReservationCard(r, false))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="direct" className="mt-4">
+          {directReservations.length === 0 ? (
+            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
+          ) : (
+            <div className="grid gap-3">
+              {directReservations.map(r => renderReservationCard(r, false))}
             </div>
           )}
         </TabsContent>
@@ -723,30 +723,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3">
-            <Tabs defaultValue="past-direct" className="w-full">
+            <Tabs defaultValue="past-event" className="w-full">
               <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
-                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
-                  {t.directTab} ({pastDirectReservations.length})
-                </TabsTrigger>
                 <TabsTrigger value="past-event" className="flex-1 text-xs px-2 py-1.5">
                   {t.eventTab} ({pastEventReservations.length})
                 </TabsTrigger>
+                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
+                  {t.directTab} ({pastDirectReservations.length})
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="past-direct" className="mt-4">
-                {pastDirectReservations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-                ) : (
-                  <div className="grid gap-3">
-                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
-                  </div>
-                )}
-              </TabsContent>
               <TabsContent value="past-event" className="mt-4">
                 {pastEventReservations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
                 ) : (
                   <div className="grid gap-3">
                     {pastEventReservations.map(r => renderReservationCard(r, true))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="past-direct" className="mt-4">
+                {pastDirectReservations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
                   </div>
                 )}
               </TabsContent>
