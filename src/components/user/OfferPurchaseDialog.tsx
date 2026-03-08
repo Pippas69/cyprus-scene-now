@@ -680,12 +680,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
     <SuccessQRCard
       type="offer"
-      qrToken={claimSuccess.qrCodeToken}
+      qrToken={claimSuccess.guests?.[0]?.qr_code_token || claimSuccess.qrCodeToken}
       title={claimSuccess.offerTitle}
       businessName={claimSuccess.businessName}
       businessLogo={claimSuccess.businessLogo}
       language={language}
-      guestName={guestNames[0]?.trim() || undefined}
+      guestName={claimSuccess.guests?.[0]?.guest_name || guestNames[0]?.trim() || undefined}
       discountPercent={offer.percent_off || undefined}
       purchaseDate={new Date().toISOString()}
       expiryDate={offer.end_at}
