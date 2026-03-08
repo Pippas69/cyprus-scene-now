@@ -249,6 +249,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           <DirectReservationsList
             businessId={businessId}
             language={language}
+            onReservationCountChange={isTicketLinked ? handleReservationCountChange : undefined}
             selectedEventId={isTicketLinked ? selectedEventId : undefined}
             selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
           />
