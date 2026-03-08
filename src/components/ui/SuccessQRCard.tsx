@@ -165,7 +165,8 @@ export const SuccessQRCard = ({
   };
 
   const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}/offer-view/${qrToken}`;
+    const viewPath = type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view";
+    const shareUrl = `${window.location.origin}/${viewPath}/${qrToken}`;
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -255,30 +256,30 @@ export const SuccessQRCard = ({
         );
       }
 
-      case "reservation":
+      case "reservation": {
+        const resHolderName = guestName || (language === "el" ? "Εσύ" : "You");
+        const resDate = reservationDate ? formatDate(reservationDate) : "-";
+        const resTime = reservationTime || (reservationDate ? formatTime(reservationDate) : "-");
         return (
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{resHolderName}</p>
+            </div>
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {reservationDate ? formatDate(reservationDate) : "-"}
-              </p>
+              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{resDate}</p>
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {reservationTime || (reservationDate ? formatTime(reservationDate) : "-")}
-              </p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <QrCodeIcon className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.code}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{confirmationCode || "-"}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{resTime}</p>
             </div>
           </div>
         );
+      }
 
       case "offer": {
         const offerHolderName = guestName || (language === "el" ? "Εσύ" : "You");
@@ -392,10 +393,10 @@ export const SuccessQRCard = ({
         )}
 
         {/* Action buttons */}
-        {type === "offer" ? (
+        {(type === "offer" || type === "reservation") ? (
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-              {`${window.location.origin}/offer-view/${qrToken}`}
+              {`${window.location.origin}/${type === "offer" ? "offer-view" : "reservation-view"}/${qrToken}`}
             </div>
             <Button
               variant="outline"
