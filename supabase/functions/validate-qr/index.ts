@@ -222,7 +222,18 @@ Deno.serve(async (req) => {
       return await handleOfferQR(supabaseAdmin, purchase, body.businessId, user.id, m, language);
     }
 
-    // 3. Try reservation
+    // 3. Try reservation guest (per-guest QR code)
+    const { data: reservationGuest } = await supabaseAdmin
+      .from("reservation_guests")
+      .select(`*, reservations(*, events(id, title, start_at, business_id), businesses(id, name))`)
+      .eq("qr_code_token", token)
+      .single();
+
+    if (reservationGuest) {
+      return await handleReservationGuestQR(supabaseAdmin, reservationGuest, body.businessId, user.id, m, language);
+    }
+
+    // 4. Try reservation (legacy single QR)
     const { data: reservation } = await supabaseAdmin
       .from("reservations")
       .select(`*, events(id, title, start_at, business_id), businesses(id, name)`)
@@ -935,6 +946,175 @@ async function handleReservationQR(
       prepaidMinChargeCents: reservation.prepaid_min_charge_cents,
       prepaidChargeStatus: reservation.prepaid_charge_status,
       seatingType: reservation.seating_type,
+    }
+  }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// Handler for Reservation Guest QR (per-guest individual QR code)
+async function handleReservationGuestQR(
+  supabaseAdmin: any,
+  guest: any,
+  businessId: string,
+  staffUserId: string,
+  m: ReturnType<typeof msg>,
+  language: Language
+) {
+  const reservation = guest.reservations;
+  if (!reservation) {
+    return new Response(JSON.stringify({ success: false, message: m.notFound, qrType: "reservation" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  logStep("Processing reservation guest", { guestId: guest.id, guestName: guest.guest_name, reservationId: reservation.id });
+
+  const isDirectReservation = !reservation.event_id && !!reservation.business_id;
+  const reservationBusinessId = isDirectReservation ? reservation.business_id : reservation.events?.business_id;
+
+  if (reservationBusinessId !== businessId) {
+    return new Response(JSON.stringify({ success: false, message: m.wrongBusiness, qrType: "reservation" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (reservation.status === "cancelled") {
+    return new Response(JSON.stringify({ success: false, message: m.reservationCancelled, qrType: "reservation" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (reservation.status === "declined") {
+    return new Response(JSON.stringify({ success: false, message: m.reservationDeclined, qrType: "reservation" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (reservation.status === "pending") {
+    return new Response(JSON.stringify({ success: false, message: m.reservationPending, qrType: "reservation" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Check if this specific guest is already checked in
+  if (guest.checked_in_at) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: m.reservationAlreadyCheckedIn,
+      qrType: "reservation_guest",
+      alreadyCheckedIn: true,
+      details: {
+        id: guest.id,
+        reservationId: reservation.id,
+        guestName: guest.guest_name,
+        name: reservation.reservation_name,
+        partySize: reservation.party_size,
+        checkedInAt: guest.checked_in_at,
+        isDirectReservation,
+        eventTitle: reservation.events?.title,
+      }
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Check in this specific guest
+  const nowIso = new Date().toISOString();
+  const { error: checkinError } = await supabaseAdmin
+    .from("reservation_guests")
+    .update({ checked_in_at: nowIso, checked_in_by: staffUserId, status: "used" })
+    .eq("id", guest.id)
+    .is("checked_in_at", null);
+
+  if (checkinError) {
+    logStep("Guest check-in failed", { checkinError });
+    return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "reservation_guest" }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Count total checked-in guests for this reservation
+  const { count: checkedInCount } = await supabaseAdmin
+    .from("reservation_guests")
+    .select("id", { count: "exact", head: true })
+    .eq("reservation_id", reservation.id)
+    .not("checked_in_at", "is", null);
+
+  // If all guests are checked in, also check in the reservation itself
+  if (checkedInCount >= reservation.party_size && !reservation.checked_in_at) {
+    await supabaseAdmin.rpc("atomic_reservation_checkin", {
+      p_reservation_id: reservation.id,
+      p_staff_user_id: staffUserId,
+    });
+  }
+
+  // Record scan
+  try {
+    await supabaseAdmin.from('reservation_scans').insert({
+      reservation_id: reservation.id,
+      scanned_by: staffUserId,
+      scan_type: 'guest_check_in',
+      device_info: { source: 'unified_scanner', guest_id: guest.id, guest_name: guest.guest_name },
+      success: true,
+    });
+  } catch (e) {
+    console.error('[VALIDATE-QR] Failed to record guest scan', e);
+  }
+
+  logStep("Reservation guest checked in", { guestId: guest.id, guestName: guest.guest_name });
+
+  const locationName = isDirectReservation 
+    ? reservation.businesses?.name 
+    : reservation.events?.title;
+
+  // Notify business owner
+  const { data: businessOwnerData } = await supabaseAdmin
+    .from("businesses")
+    .select("user_id")
+    .eq("id", businessId)
+    .single();
+
+  if (businessOwnerData?.user_id) {
+    try {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: businessOwnerData.user_id,
+        title: '✅ Guest Check-in!',
+        message: `${guest.guest_name} • ${reservation.reservation_name} (${checkedInCount}/${reservation.party_size})`,
+        type: 'business',
+        event_type: 'reservation_checked_in',
+        entity_type: 'reservation',
+        entity_id: reservation.id,
+        deep_link: '/dashboard-business/reservations',
+        delivered_at: new Date().toISOString(),
+      });
+    } catch (notifError) {
+      logStep("Failed to create business notification", notifError);
+    }
+  }
+
+  return new Response(JSON.stringify({
+    success: true,
+    message: m.checkedIn,
+    qrType: "reservation_guest",
+    details: {
+      id: guest.id,
+      reservationId: reservation.id,
+      guestName: guest.guest_name,
+      name: reservation.reservation_name,
+      partySize: reservation.party_size,
+      checkedInCount,
+      isDirectReservation,
+      eventTitle: reservation.events?.title,
+      businessName: reservation.businesses?.name,
     }
   }), {
     status: 200,

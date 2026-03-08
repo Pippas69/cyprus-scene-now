@@ -84,6 +84,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   // Guest tickets per reservation (for reservation-only events with individual QR codes)
   const [guestTickets, setGuestTickets] = useState<Record<string, { id: string; guest_name: string; guest_age: number | null; qr_code_token: string; status: string }[]>>({});
   const [guestQrCodes, setGuestQrCodes] = useState<Record<string, string>>({});
+  // Direct reservation guests (per-guest QR codes)
+  const [directGuests, setDirectGuests] = useState<Record<string, { id: string; guest_name: string; qr_code_token: string; status: string; checked_in_at: string | null }[]>>({});
+  const [directGuestQrCodes, setDirectGuestQrCodes] = useState<Record<string, string>>({});
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -212,7 +215,50 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setPastReservations(allPast);
     generateQRCodes([...allUpcoming, ...allPast]);
     fetchGuestTickets([...allUpcoming, ...allPast]);
+    fetchDirectReservationGuests([...allUpcoming, ...allPast]);
     setLoading(false);
+  };
+
+  const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
+    const directResIds = reservations
+      .filter(r => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending'))
+      .map(r => r.id);
+
+    if (directResIds.length === 0) return;
+
+    const { data: guests, error } = await supabase
+      .from('reservation_guests')
+      .select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at')
+      .in('reservation_id', directResIds);
+
+    if (error || !guests) return;
+
+    const guestsByRes: Record<string, typeof guests> = {};
+    const qrCodesToGenerate: Record<string, string> = {};
+
+    guests.forEach(g => {
+      if (!guestsByRes[g.reservation_id]) guestsByRes[g.reservation_id] = [];
+      guestsByRes[g.reservation_id].push(g);
+      if (g.qr_code_token) {
+        qrCodesToGenerate[g.id] = g.qr_code_token;
+      }
+    });
+
+    setDirectGuests(guestsByRes);
+
+    const codes: Record<string, string> = {};
+    for (const [guestId, token] of Object.entries(qrCodesToGenerate)) {
+      try {
+        codes[guestId] = await QRCode.toDataURL(token, {
+          width: 256,
+          margin: 2,
+          color: { dark: '#000000', light: '#FFFFFF' },
+        });
+      } catch (e) {
+        console.error('Error generating direct guest QR code:', e);
+      }
+    }
+    setDirectGuestQrCodes(codes);
   };
 
   const fetchGuestTickets = async (reservations: ReservationData[]) => {
@@ -520,8 +566,42 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets) */}
-          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && (
+          {/* Guest QR Codes for direct reservations */}
+          {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 && (
+            <div className="space-y-1.5 mt-2">
+              {directGuests[reservation.id].map((guest, idx) => (
+                <button
+                  key={guest.id}
+                  type="button"
+                  onClick={() => {
+                    if (directGuestQrCodes[guest.id]) {
+                      setSelectedReservationForQR({
+                        ...reservation,
+                        qr_code_token: guest.qr_code_token,
+                        confirmation_code: `${reservation.confirmation_code}-${idx + 1}`,
+                      });
+                      setQrCodes(prev => ({ ...prev, [reservation.id]: directGuestQrCodes[guest.id] }));
+                    }
+                  }}
+                  className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-foreground">{guest.guest_name}</span>
+                    {guest.checked_in_at && (
+                      <Badge className="bg-green-600 text-white text-[9px] h-4 px-1.5">Check-in ✓</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 text-primary">
+                    <QrCode className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-medium">QR</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets and no direct guests) */}
+          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
             <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
@@ -555,8 +635,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* Cancel Button for reservation-only with guest tickets */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+          {/* Cancel Button for reservation-only with guest tickets or direct guests */}
+          {!isPast && (
+            (reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0) ||
+            (!reservation.events && directGuests[reservation.id]?.length > 0)
+          ) && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
                 variant="outline"
