@@ -482,6 +482,7 @@ export const DirectReservationDialog = ({
       setFormData({
         reservation_name: '',
         party_size: 2,
+        guest_names: ['', ''],
         seating_preference: 'none',
         preferred_date: new Date(),
         preferred_time: settings?.reservation_opens_at?.substring(0, 5) || '19:00',
