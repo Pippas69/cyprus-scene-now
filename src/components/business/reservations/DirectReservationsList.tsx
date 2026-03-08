@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,6 +77,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
+  const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
   // Kaliva: seating tiers for min charge calculation
@@ -180,11 +181,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   }, [refreshNonce]);
 
   const checkBusinessFlags = async () => {
-    const { data } = await supabase.
+    const { data, error } = await supabase.
     from('businesses').
     select('ticket_reservation_linked, category').
     eq('id', businessId).
-    single();
+    maybeSingle();
+
+    if (error) {
+      console.error('Error checking business flags:', error);
+      return false;
+    }
+
     const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
     setIsTicketLinked(linked);
     return linked;
