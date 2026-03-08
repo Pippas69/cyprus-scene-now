@@ -3301,6 +3301,47 @@ export type Database = {
           },
         ]
       }
+      reservation_guests: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          created_at: string
+          guest_name: string
+          id: string
+          qr_code_token: string
+          reservation_id: string
+          status: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          guest_name: string
+          id?: string
+          qr_code_token?: string
+          reservation_id: string
+          status?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          guest_name?: string
+          id?: string
+          qr_code_token?: string
+          reservation_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_guests_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_no_shows: {
         Row: {
           business_id: string
