@@ -275,12 +275,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       .filter(r => !!r.events && (r.status === 'accepted' || r.status === 'pending'))
       .map(r => r.id);
 
-    if (reservationOnlyIds.length === 0) return;
+    if (eventResIds.length === 0) return;
 
     const { data: orders } = await supabase
       .from('ticket_orders')
       .select('id, linked_reservation_id')
-      .in('linked_reservation_id', reservationOnlyIds);
+      .in('linked_reservation_id', eventResIds);
 
     if (!orders || orders.length === 0) return;
 
@@ -539,7 +539,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Guest QR Codes for reservation-only events */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (
+          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (
             <div className="space-y-1.5 mt-2">
               {guestTickets[reservation.id].map((ticket, idx) => (
                 <button
@@ -604,7 +604,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets and no direct guests) */}
-          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
+          {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
             <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
@@ -638,7 +638,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Cancel Button for reservation-only event guest tickets */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
                 size="sm"
