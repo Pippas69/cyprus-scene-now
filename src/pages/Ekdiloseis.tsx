@@ -543,10 +543,10 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       </div>
 
       {/* BOOSTED ZONE - No header, just cards with badge */}
-      {hasBoostedEvents && (
+      {hasBoostedFiltered && (
         <section>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {boostedEvents.map((event) => (
+            {filteredBoosted.map((event) => (
               <div
                 key={event.id}
                 className="relative overflow-visible"
@@ -573,7 +573,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {regularEvents && regularEvents.map((event, index) => (
+            {filteredRegular && filteredRegular.map((event, index) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
