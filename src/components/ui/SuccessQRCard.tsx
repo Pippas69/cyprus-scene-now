@@ -268,32 +268,30 @@ export const SuccessQRCard = ({
           </div>
         );
 
-      case "offer":
+      case "offer": {
+        const offerHolderName = guestName || (language === "el" ? "Εσύ" : "You");
+        const offerLabel = discountPercent ? `-${discountPercent}%` : title;
+        const offerExpiry = expiryDate ? formatShortDate(expiryDate) : (language === "el" ? "Ανοιχτή" : "Open");
         return (
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.purchase}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {purchaseDate ? formatShortDate(purchaseDate) : "-"}
-              </p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.expiry}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {expiryDate ? formatShortDate(expiryDate) : "-"}
-              </p>
+              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{offerHolderName}</p>
             </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Tag className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.offer}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {discountPercent ? `-${discountPercent}%` : "-"}
-              </p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{offerLabel}</p>
+            </div>
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.expiry}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{offerExpiry}</p>
             </div>
           </div>
         );
+      }
 
       case "event_reservation":
         return (
@@ -351,8 +349,8 @@ export const SuccessQRCard = ({
           {title}
         </h2>
 
-        {/* Guest Name & Age */}
-        {type !== "ticket" && guestName && (
+        {/* Guest Name & Age (not for offers - shown in grid instead) */}
+        {type !== "ticket" && type !== "offer" && guestName && (
           <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
             <User className="h-4 w-4 text-[#3ec3b7]" />
             <span className="text-sm font-semibold text-[#102b4a]">{guestName}</span>
