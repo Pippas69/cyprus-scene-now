@@ -532,6 +532,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   const filteredBoosted = showRsvpMode ? [] : (boostedEvents || []);
   const filteredRegular = showRsvpMode ? (rsvpFilteredEvents || []) : (regularEvents || []);
   const hasBoostedFiltered = filteredBoosted.length > 0;
+  const isLoading = rsvpFilter ? loadingRsvpEvents : (loadingBoosted || loadingRegular);
 
   return (
     <div className="space-y-4">
