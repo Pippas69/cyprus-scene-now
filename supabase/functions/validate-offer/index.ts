@@ -323,27 +323,66 @@ Deno.serve(async (req) => {
 
     // Redeem (atomic-ish)
     const nowIso = new Date().toISOString();
-    const { error: updateError } = await supabaseAdmin
-      .from("offer_purchases")
-      .update({
-        status: "redeemed",
-        redeemed_at: nowIso,
-        redeemed_by: user.id,
-      })
-      .eq("id", purchase.id)
-      .eq("status", "paid");
 
-    if (updateError) {
-      logStep("Update failed", { updateError });
-      await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
-        reason: "update_failed", 
-        error: updateError.message 
-      });
+    if (guestRecord) {
+      // Per-guest check-in: mark individual guest as checked in
+      const { error: guestUpdateError } = await supabaseAdmin
+        .from("offer_purchase_guests")
+        .update({
+          checked_in_at: nowIso,
+          checked_in_by: user.id,
+          status: 'checked_in',
+        })
+        .eq("id", guestRecord.id)
+        .is("checked_in_at", null);
 
-      return new Response(JSON.stringify({ success: false, message: m.internalError }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (guestUpdateError) {
+        logStep("Guest check-in failed", { guestUpdateError });
+        return new Response(JSON.stringify({ success: false, message: m.internalError }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if ALL guests for this purchase are now checked in
+      const { data: remainingGuests } = await supabaseAdmin
+        .from("offer_purchase_guests")
+        .select("id")
+        .eq("purchase_id", purchase.id)
+        .is("checked_in_at", null);
+
+      if (!remainingGuests || remainingGuests.length === 0) {
+        // All guests checked in → mark entire purchase as redeemed
+        await supabaseAdmin
+          .from("offer_purchases")
+          .update({ status: "redeemed", redeemed_at: nowIso, redeemed_by: user.id })
+          .eq("id", purchase.id);
+        logStep("All guests checked in, purchase marked as redeemed");
+      }
+    } else {
+      // Direct QR token scan → redeem whole purchase
+      const { error: updateError } = await supabaseAdmin
+        .from("offer_purchases")
+        .update({
+          status: "redeemed",
+          redeemed_at: nowIso,
+          redeemed_by: user.id,
+        })
+        .eq("id", purchase.id)
+        .eq("status", "paid");
+
+      if (updateError) {
+        logStep("Update failed", { updateError });
+        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { 
+          reason: "update_failed", 
+          error: updateError.message 
+        });
+
+        return new Response(JSON.stringify({ success: false, message: m.internalError }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // If this offer purchase is linked to a reservation, mark it as checked-in too.
