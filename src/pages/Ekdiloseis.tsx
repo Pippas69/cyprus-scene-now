@@ -296,15 +296,17 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [rsvpFilter, setRsvpFilter] = useState<'interested' | 'going' | null>(null);
 
-  // Fetch user's RSVPs for the filter
+  // Fetch user's upcoming RSVPs for the filter
   const { data: userRsvps } = useQuery({
     queryKey: ["user-rsvps-ekdiloseis", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('rsvps')
-        .select('event_id, status')
-        .eq('user_id', user.id);
+        .select('event_id, status, events!inner(end_at)')
+        .eq('user_id', user.id)
+        .gte('events.end_at', now);
       if (error) throw error;
       return data || [];
     },
