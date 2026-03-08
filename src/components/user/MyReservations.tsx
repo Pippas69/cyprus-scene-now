@@ -98,6 +98,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   // Event reservation guest QR dialog
   const [selectedEventGuestsReservation, setSelectedEventGuestsReservation] = useState<ReservationData | null>(null);
   const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
+  const [ticketOrderTotals, setTicketOrderTotals] = useState<Record<string, number>>({});
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -285,14 +286,21 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     const { data: orders } = await supabase.
     from('ticket_orders').
-    select('id, linked_reservation_id').
+    select('id, linked_reservation_id, total_cents').
     in('linked_reservation_id', eventResIds);
 
     if (!orders || orders.length === 0) return;
 
     const orderIds = orders.map((o) => o.id);
     const orderToRes: Record<string, string> = {};
-    orders.forEach((o) => {if (o.linked_reservation_id) orderToRes[o.id] = o.linked_reservation_id;});
+    const resTotalMap: Record<string, number> = {};
+    orders.forEach((o) => {
+      if (o.linked_reservation_id) {
+        orderToRes[o.id] = o.linked_reservation_id;
+        resTotalMap[o.linked_reservation_id] = (o as any).total_cents || 0;
+      }
+    });
+    setTicketOrderTotals(resTotalMap);
 
     const { data: tickets } = await supabase.
     from('tickets').
@@ -422,7 +430,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'Δεν υπάρχουν απλές κρατήσεις',
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
       code: 'Κωδικός',
-      viewQRCodes: 'Εμφάνιση QR Codes'
+      viewQRCodes: 'Εμφάνιση QR Codes',
+      minPrepayment: 'Ελάχιστη προπληρωμή',
+      tickets: 'εισιτήρια'
     },
     en: {
       title: 'My Reservations',
@@ -444,7 +454,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'No direct reservations',
       noEventReservations: 'No reservations via events',
       code: 'Code',
-      viewQRCodes: 'Show QR Codes'
+      viewQRCodes: 'Show QR Codes',
+      minPrepayment: 'Min. prepayment',
+      tickets: 'tickets'
     }
   };
 
@@ -507,19 +519,31 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             <span className="text-sm font-medium">{businessInfo?.name}</span>
           </div>
 
-          {/* Row 3: Date/Time */}
+          {/* Row 3: Date/Time + Party size */}
           {dateTime &&
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">{formatDateTime(dateTime)}</span>
+          <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">{formatDateTime(dateTime)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">{reservation.party_size} {t.people}</span>
+              </div>
             </div>
           }
 
-          {/* Row 4: Party size */}
+          {/* Row 4: Payment info (event reservations only) */}
+          {isEvent && reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0 &&
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs">{reservation.party_size} {t.people}</span>
-          </div>
+              <span className="text-xs">
+                {t.minPrepayment}: €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
+                {reservation.events?.event_type === 'hybrid' && ticketOrderTotals[reservation.id] > 0 &&
+                  ` (${t.tickets}: €${(ticketOrderTotals[reservation.id] / 100).toFixed(2)})`
+                }
+              </span>
+            </div>
+          }
 
           {/* Row 5: Location */}
           {location && (
