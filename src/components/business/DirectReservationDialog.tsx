@@ -458,6 +458,21 @@ export const DirectReservationDialog = ({
         throw new Error(msg);
       }
 
+      // Create individual guest entries with QR codes
+      const guestInserts = formData.guest_names.map(name => ({
+        reservation_id: result.reservation_id!,
+        guest_name: name.trim(),
+      }));
+
+      const { data: guestEntries, error: guestError } = await supabase
+        .from('reservation_guests')
+        .insert(guestInserts)
+        .select('guest_name, qr_code_token');
+
+      if (guestError) {
+        console.error('Guest creation error:', guestError);
+      }
+
       // Send notification
       try {
         await supabase.functions.invoke('send-reservation-notification', {
@@ -480,6 +495,7 @@ export const DirectReservationDialog = ({
           party_size: formData.party_size,
           preferred_time: result.preferred_time || preferredDateTime.toISOString(),
           business_name: businessName,
+          guests: guestEntries || [],
         },
       });
       
