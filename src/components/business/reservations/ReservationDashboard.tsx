@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
@@ -27,6 +27,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const fetchEventsRequestRef = useRef(0);
 
   const text = useMemo(
     () => ({
@@ -52,11 +53,17 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   useEffect(() => {
     const checkLinked = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('businesses')
         .select('ticket_reservation_linked, category')
         .eq('id', businessId)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking reservation mode:', error);
+        return;
+      }
+
       const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
       setIsTicketLinked(linked);
     };
