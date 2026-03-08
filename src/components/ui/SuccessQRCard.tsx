@@ -136,6 +136,7 @@ export const SuccessQRCard = ({
   const text = translations[language];
   const dateLocale = language === "el" ? el : enUS;
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (qrToken) {
