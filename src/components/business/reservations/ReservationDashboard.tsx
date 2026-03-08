@@ -74,64 +74,78 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const fetchEvents = useCallback(async () => {
     if (!isTicketLinked) return;
 
-    const { data: eventsData } = await supabase
-      .from('events')
-      .select('id, title, start_at, event_type')
-      .eq('business_id', businessId)
-      .not('event_type', 'in', '("free","free_entry")')
-      .gte('end_at', new Date().toISOString())
-      .order('start_at', { ascending: true });
+    const requestId = ++fetchEventsRequestRef.current;
 
-    if (!eventsData || eventsData.length === 0) {
-      setEvents([]);
-      setSelectedEventId(null);
-      return;
-    }
+    try {
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select('id, title, start_at, event_type')
+        .eq('business_id', businessId)
+        .not('event_type', 'in', '("free","free_entry")')
+        .gte('end_at', new Date().toISOString())
+        .order('start_at', { ascending: true });
 
-    const eventIds = eventsData.map(e => e.id);
+      if (eventsError) throw eventsError;
+      if (requestId !== fetchEventsRequestRef.current) return;
 
-    // Get reservation counts per event (exclude walk-in auto-created)
-    const { data: reservations } = await supabase
-      .from('reservations')
-      .select('event_id')
-      .in('event_id', eventIds)
-      .in('status', ['pending', 'accepted'])
-      .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+      if (!eventsData || eventsData.length === 0) {
+        setEvents([]);
+        setSelectedEventId(null);
+        return;
+      }
 
-    const counts: Record<string, number> = {};
-    (reservations || []).forEach(r => {
-      if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
-    });
+      const eventIds = eventsData.map((e) => e.id);
 
-    // For ticket-only events, count ticket orders instead
-    const ticketOnlyEventIds = eventsData
-      .filter(e => e.event_type === 'ticket')
-      .map(e => e.id);
-
-    if (ticketOnlyEventIds.length > 0) {
-      const { data: ticketOrders } = await supabase
-        .from('ticket_orders')
+      // Match list logic: count visible reservations only (exclude walk-in auto-created)
+      const { data: reservations, error: reservationsError } = await supabase
+        .from('reservations')
         .select('event_id')
-        .in('event_id', ticketOnlyEventIds)
-        .eq('status', 'completed');
+        .in('event_id', eventIds)
+        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
 
-      (ticketOrders || []).forEach(o => {
-        if (o.event_id) counts[o.event_id] = (counts[o.event_id] || 0) + 1;
+      if (reservationsError) throw reservationsError;
+      if (requestId !== fetchEventsRequestRef.current) return;
+
+      const counts: Record<string, number> = {};
+      (reservations || []).forEach((r) => {
+        if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
       });
-    }
 
-    const options: EventOption[] = eventsData.map(e => ({
-      id: e.id,
-      title: e.title,
-      start_at: e.start_at,
-      event_type: e.event_type,
-      reservationCount: counts[e.id] || 0,
-    }));
+      // For ticket-only events, count ticket orders instead
+      const ticketOnlyEventIds = eventsData
+        .filter((e) => e.event_type === 'ticket')
+        .map((e) => e.id);
 
-    setEvents(options);
+      if (ticketOnlyEventIds.length > 0) {
+        const { data: ticketOrders, error: ticketOrdersError } = await supabase
+          .from('ticket_orders')
+          .select('event_id')
+          .in('event_id', ticketOnlyEventIds)
+          .eq('status', 'completed');
 
-    if (!selectedEventId || !options.find(e => e.id === selectedEventId)) {
-      setSelectedEventId(options[0]?.id || null);
+        if (ticketOrdersError) throw ticketOrdersError;
+        if (requestId !== fetchEventsRequestRef.current) return;
+
+        (ticketOrders || []).forEach((o) => {
+          if (o.event_id) counts[o.event_id] = (counts[o.event_id] || 0) + 1;
+        });
+      }
+
+      const options: EventOption[] = eventsData.map((e) => ({
+        id: e.id,
+        title: e.title,
+        start_at: e.start_at,
+        event_type: e.event_type,
+        reservationCount: counts[e.id] || 0,
+      }));
+
+      setEvents(options);
+
+      if (!selectedEventId || !options.find((e) => e.id === selectedEventId)) {
+        setSelectedEventId(options[0]?.id || null);
+      }
+    } catch (error) {
+      console.error('Error fetching reservation dashboard events:', error);
     }
   }, [isTicketLinked, businessId, selectedEventId]);
 
