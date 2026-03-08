@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 const t = {
   el: {
@@ -27,6 +27,7 @@ const t = {
 
 interface ReservationData {
   id: string;
+  reservation_name: string;
   qr_code_token: string;
   confirmation_code: string;
   party_size: number;
@@ -38,6 +39,13 @@ interface ReservationData {
   business_logo?: string | null;
 }
 
+interface GuestTicketData {
+  id: string;
+  guest_name: string | null;
+  guest_age: number | null;
+  qr_code_token: string;
+}
+
 export const ReservationSuccess = () => {
   const { language } = useLanguage();
   const text = t[language];
@@ -46,6 +54,8 @@ export const ReservationSuccess = () => {
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
+  const [guestTickets, setGuestTickets] = useState<GuestTicketData[]>([]);
+  const [currentGuestIndex, setCurrentGuestIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
   const ranOnceRef = useRef(false);
@@ -70,22 +80,25 @@ export const ReservationSuccess = () => {
         // The Stripe webhook (checkout.session.completed) handles payment processing
         // and reservation status updates automatically. We just need to wait briefly
         // for the webhook to complete, then fetch the reservation data.
-        
+
         // Small delay to allow webhook processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Fetch reservation details
         const { data: reservation, error: fetchError } = await supabase
           .from("reservations")
-          .select(`
-            id,
-            qr_code_token,
-            confirmation_code,
-            party_size,
-            preferred_time,
-            prepaid_min_charge_cents,
-            events!inner(title, start_at, businesses!inner(name, logo_url))
-          `)
+          .select(
+            `
+              id,
+              reservation_name,
+              qr_code_token,
+              confirmation_code,
+              party_size,
+              preferred_time,
+              prepaid_min_charge_cents,
+              events!inner(title, start_at, businesses!inner(name, logo_url))
+            `
+          )
           .eq("id", reservationId)
           .single();
 
@@ -98,8 +111,9 @@ export const ReservationSuccess = () => {
         const event = (reservation as any).events;
         const business = event?.businesses;
 
-        setReservationData({
+        const baseReservationData: ReservationData = {
           id: reservation.id,
+          reservation_name: (reservation as any).reservation_name,
           qr_code_token: reservation.qr_code_token,
           confirmation_code: reservation.confirmation_code,
           party_size: reservation.party_size,
@@ -109,12 +123,68 @@ export const ReservationSuccess = () => {
           event_date: event?.start_at || "",
           business_name: business?.name || "",
           business_logo: business?.logo_url || null,
-        });
+        };
 
+        setReservationData(baseReservationData);
+
+        // Fetch individual guest QR codes (tickets) linked to this reservation
+        // (works for reservation-only & hybrid events).
+        const { data: orders, error: ordersError } = await supabase
+          .from("ticket_orders")
+          .select("id")
+          .eq("linked_reservation_id", reservationId);
+
+        if (ordersError) {
+          console.warn("Ticket orders fetch error:", ordersError);
+          setGuestTickets([]);
+          setCurrentGuestIndex(0);
+          setStatus("success");
+          return;
+        }
+
+        const orderIds = (orders || []).map((o) => o.id);
+        if (orderIds.length === 0) {
+          setGuestTickets([]);
+          setCurrentGuestIndex(0);
+          setStatus("success");
+          return;
+        }
+
+        const { data: tickets, error: ticketsError } = await supabase
+          .from("tickets")
+          .select("id, guest_name, guest_age, qr_code_token, created_at, order_id")
+          .in("order_id", orderIds)
+          .order("created_at", { ascending: true });
+
+        if (ticketsError) {
+          console.warn("Guest tickets fetch error:", ticketsError);
+          setGuestTickets([]);
+          setCurrentGuestIndex(0);
+          setStatus("success");
+          return;
+        }
+
+        const cleanedTickets = (tickets || [])
+          .filter((x: any) => !!x.qr_code_token)
+          .map(
+            (x: any): GuestTicketData => ({
+              id: x.id,
+              guest_name: x.guest_name ?? null,
+              guest_age: x.guest_age ?? null,
+              qr_code_token: x.qr_code_token,
+            })
+          );
+
+        setGuestTickets(cleanedTickets);
+        setCurrentGuestIndex(0);
         setStatus("success");
       } catch (err) {
         console.error("Payment processing error:", err);
-        try { sessionStorage.removeItem(processKey); } catch { /* ignore */ }
+        try {
+          sessionStorage.removeItem(processKey);
+        } catch {
+          /* ignore */
+        }
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "Unknown error");
       }
@@ -156,24 +226,56 @@ export const ReservationSuccess = () => {
     );
   }
 
+  const hasGuestTickets = guestTickets.length > 0;
+  const currentTicket = hasGuestTickets ? guestTickets[currentGuestIndex] : null;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       {reservationData ? (
-        <SuccessQRCard
-          type="event_reservation"
-          qrToken={reservationData.qr_code_token}
-          title={reservationData.event_title}
-          businessName={reservationData.business_name}
-          businessLogo={reservationData.business_logo}
-          language={language}
-          reservationDate={reservationData.event_date}
-          confirmationCode={reservationData.confirmation_code}
-          partySize={reservationData.party_size}
-          prepaidAmountCents={reservationData.prepaid_min_charge_cents}
-          showSuccessMessage={true}
-          onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
-          viewDashboardLabel={text.viewReservations}
-        />
+        <div className="space-y-4 w-full">
+          <SuccessQRCard
+            type="event_reservation"
+            qrToken={hasGuestTickets ? currentTicket?.qr_code_token || "" : reservationData.qr_code_token}
+            title={reservationData.event_title}
+            businessName={reservationData.business_name}
+            businessLogo={reservationData.business_logo}
+            language={language}
+            reservationDate={reservationData.event_date}
+            reservationName={reservationData.reservation_name}
+            guestName={hasGuestTickets ? currentTicket?.guest_name || undefined : undefined}
+            guestAge={hasGuestTickets ? currentTicket?.guest_age || undefined : undefined}
+            confirmationCode={reservationData.confirmation_code}
+            partySize={reservationData.party_size}
+            showSuccessMessage={!hasGuestTickets || currentGuestIndex === 0}
+            onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
+            viewDashboardLabel={text.viewReservations}
+          />
+
+          {hasGuestTickets && guestTickets.length > 1 && (
+            <div className="flex items-center justify-center gap-3 pb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
+                disabled={currentGuestIndex === 0}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium text-foreground">
+                {(currentTicket?.guest_name || reservationData.reservation_name) ?? "-"} ({currentGuestIndex + 1}/
+                {guestTickets.length})
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentGuestIndex(Math.min(guestTickets.length - 1, currentGuestIndex + 1))}
+                disabled={currentGuestIndex === guestTickets.length - 1}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
@@ -181,9 +283,7 @@ export const ReservationSuccess = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className="text-lg font-medium">
-            {language === "el" ? "Η κράτηση ολοκληρώθηκε!" : "Reservation complete!"}
-          </p>
+          <p className="text-lg font-medium">{language === "el" ? "Η κράτηση ολοκληρώθηκε!" : "Reservation complete!"}</p>
           <Button onClick={() => navigate("/dashboard-user?tab=reservations")} className="mt-4">
             {text.viewReservations}
           </Button>
