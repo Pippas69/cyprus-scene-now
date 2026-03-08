@@ -843,7 +843,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
       {/* Walk-in Note (below reservation toggle) */}
       {!wantsReservation &&
-    <p className="text-sm text-muted-foreground">
+    <p className="text-muted-foreground text-xs">
         {t("walkInNote")}
       </p>
     }
