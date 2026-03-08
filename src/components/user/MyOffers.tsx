@@ -688,6 +688,27 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         language={language}
         onClose={() => setSelectedPurchase(null)} />
       
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
+            <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancelBack}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!cancelDialog.purchase) return;
+                await handleCancelOfferReservation(cancelDialog.purchase);
+              }}
+            >
+              {t.cancelConfirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>);
 
 }
