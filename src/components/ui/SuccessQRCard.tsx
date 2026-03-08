@@ -164,6 +164,13 @@ export const SuccessQRCard = ({
     }
   };
 
+  const handleCopyLink = async () => {
+    const shareUrl = `${window.location.origin}/offer-view/${qrToken}`;
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Format helpers
   const formatDate = (dateStr: string) => {
     try {
