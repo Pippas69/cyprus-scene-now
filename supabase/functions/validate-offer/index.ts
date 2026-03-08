@@ -265,8 +265,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Status checks
-    if (purchase.status === "redeemed") {
+    // If scanning a per-guest QR token, check if that specific guest was already checked in
+    if (guestRecord) {
+      if (guestRecord.checked_in_at) {
+        logStep("Guest already checked in", { guestId: guestRecord.id, checkedInAt: guestRecord.checked_in_at });
+        await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "guest_already_checked_in" });
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: language === "el" ? `Ο/Η ${guestRecord.guest_name} έχει ήδη γίνει check-in` : `${guestRecord.guest_name} has already been checked in`
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Status checks (only block if the WHOLE purchase is redeemed and we're NOT scanning a per-guest token)
+    if (purchase.status === "redeemed" && !guestRecord) {
       logStep("Already redeemed", { redeemedAt: purchase.redeemed_at });
       await logScan(supabaseAdmin, purchase.discount_id, user.id, false, { reason: "already_redeemed" });
 
