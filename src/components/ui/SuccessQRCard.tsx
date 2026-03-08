@@ -393,10 +393,10 @@ export const SuccessQRCard = ({
         )}
 
         {/* Action buttons */}
-        {type === "offer" ? (
+        {(type === "offer" || type === "reservation") ? (
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-              {`${window.location.origin}/offer-view/${qrToken}`}
+              {`${window.location.origin}/${type === "offer" ? "offer-view" : "reservation-view"}/${qrToken}`}
             </div>
             <Button
               variant="outline"
