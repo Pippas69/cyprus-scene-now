@@ -409,7 +409,6 @@ export const SuccessQRCard = ({
           </div>
         ) : (
           <div className="flex gap-2 mt-3">
-            <>
               <Button 
                 onClick={handleDownload}
                 variant="outline"
@@ -434,9 +433,8 @@ export const SuccessQRCard = ({
                   {text.done}
                 </Button>
               )}
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Wave Decoration */}
