@@ -110,6 +110,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     noRedeemed: text.noRedeemed.el,
     noExpired: text.noExpired.el,
     viewQR: text.viewQR.el,
+    viewQRCodes: text.viewQRCodes.el,
     expiresOn: text.expiresOn.el,
     purchasedOn: text.purchasedOn.el,
     redeemedOn: text.redeemedOn.el,
