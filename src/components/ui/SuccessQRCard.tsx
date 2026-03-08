@@ -392,29 +392,23 @@ export const SuccessQRCard = ({
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2 mt-3">
-          {type === "offer" ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyLink}
-                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-              >
-                {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                {copied ? text.copied : text.copyLink}
-              </Button>
-              <Button
-                onClick={handleDownload}
-                variant="outline"
-                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2 shrink-0"
-              >
-                <Download className="h-3 w-3 mr-1" />
-                {text.downloadQR}
-              </Button>
-            </>
-          ) : (
-            <>
+        {type === "offer" ? (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+              {`${window.location.origin}/offer-view/${qrToken}`}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyLink}
+              className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
+            >
+              {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+              {copied ? text.copied : text.copyLink}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2 mt-3">
               <Button 
                 onClick={handleDownload}
                 variant="outline"
@@ -439,9 +433,8 @@ export const SuccessQRCard = ({
                   {text.done}
                 </Button>
               )}
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Wave Decoration */}
