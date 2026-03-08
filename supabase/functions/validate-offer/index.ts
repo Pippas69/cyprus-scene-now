@@ -152,8 +152,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch purchase by QR token
-    const { data: purchase, error: purchaseError } = await supabaseAdmin
+    // Fetch purchase by QR token (check both offer_purchases and offer_purchase_guests)
+    let purchase: any = null;
+    let purchaseError: any = null;
+    let guestRecord: any = null;
+
+    // First try direct match on offer_purchases
+    const { data: directPurchase, error: directError } = await supabaseAdmin
       .from("offer_purchases")
       .select(
         `
@@ -182,9 +187,61 @@ Deno.serve(async (req) => {
       `
       )
       .eq("qr_code_token", body.qrToken)
-      .single();
+      .maybeSingle();
 
-    if (purchaseError || !purchase) {
+    if (directPurchase) {
+      purchase = directPurchase;
+    } else {
+      // Try to find in offer_purchase_guests
+      const { data: guest } = await supabaseAdmin
+        .from("offer_purchase_guests")
+        .select("id, purchase_id, guest_name, status, checked_in_at")
+        .eq("qr_code_token", body.qrToken)
+        .maybeSingle();
+
+      if (guest) {
+        guestRecord = guest;
+        const { data: parentPurchase, error: parentError } = await supabaseAdmin
+          .from("offer_purchases")
+          .select(
+            `
+            id,
+            discount_id,
+            user_id,
+            reservation_id,
+            original_price_cents,
+            discount_percent,
+            final_price_cents,
+            status,
+            created_at,
+            expires_at,
+            redeemed_at,
+            redeemed_by,
+            qr_code_token,
+            discounts (
+              id,
+              title,
+              description,
+              business_id,
+              valid_days,
+              valid_start_time,
+              valid_end_time
+            )
+          `
+          )
+          .eq("id", guest.purchase_id)
+          .single();
+
+        if (parentPurchase) {
+          purchase = parentPurchase;
+        }
+        purchaseError = parentError;
+      } else {
+        purchaseError = directError;
+      }
+    }
+
+    if (!purchase) {
       logStep("Purchase not found", { purchaseError, qrToken: body.qrToken });
       await logScan(supabaseAdmin, null, user.id, false, { reason: "not_found", qrToken: body.qrToken });
 

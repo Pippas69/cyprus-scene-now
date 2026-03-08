@@ -632,7 +632,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   // === SUCCESS VIEW ===
   if (claimSuccess) {
-    const hasGuests = claimSuccess.hasReservation && claimSuccess.guests && claimSuccess.guests.length > 0;
+    const hasGuests = claimSuccess.guests && claimSuccess.guests.length > 1;
 
     const successContent = hasGuests ?
     <div className="space-y-4">
