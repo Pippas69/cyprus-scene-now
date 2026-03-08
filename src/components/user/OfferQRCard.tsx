@@ -35,7 +35,7 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
 
   if (!offer) return null;
 
-  const hasGuests = offer.hasReservation && offer.guests && offer.guests.length > 0;
+  const hasGuests = offer.guests && offer.guests.length > 1;
 
   const content = hasGuests ? (
     <div className="space-y-4">
@@ -79,11 +79,12 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
   ) : (
     <SuccessQRCard
       type="offer"
-      qrToken={offer.qrToken}
+      qrToken={offer.guests?.[0]?.qr_code_token || offer.qrToken}
       title={offer.title}
       businessName={offer.businessName}
       businessLogo={offer.businessLogo}
       language={language}
+      guestName={offer.guests?.[0]?.guest_name}
       discountPercent={offer.discountPercent}
       purchaseDate={offer.purchasedAt}
       expiryDate={offer.expiresAt}

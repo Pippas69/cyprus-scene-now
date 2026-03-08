@@ -270,6 +270,33 @@ Deno.serve(async (req) => {
 
     logStep("Availability already decremented atomically", { remaining: claimResult.remaining });
 
+    // Create per-guest QR codes in offer_purchase_guests for ALL claims (walk-in & reservation)
+    const walkInGuestResults: { guest_name: string; qr_code_token: string }[] = [];
+    if (partySize >= 1) {
+      const names = guestNames && guestNames.length === partySize
+        ? guestNames
+        : Array.from({ length: partySize }, (_, i) => i === 0 ? 'Guest' : `Guest ${i + 1}`);
+
+      const guestInserts = names.map((name) => ({
+        purchase_id: purchase.id,
+        guest_name: (name || '').trim() || 'Guest',
+        qr_code_token: crypto.randomUUID(),
+        status: 'active',
+      }));
+
+      const { data: guestEntries, error: guestError } = await supabaseAdmin
+        .from('offer_purchase_guests')
+        .insert(guestInserts)
+        .select('guest_name, qr_code_token');
+
+      if (guestError) {
+        logStep("Offer guest insert error", guestError);
+      } else if (guestEntries) {
+        walkInGuestResults.push(...guestEntries);
+        logStep("Offer purchase guests created", { count: guestEntries.length });
+      }
+    }
+
     // Get user profile for emails
     const { data: userProfile } = await supabaseAdmin
       .from("profiles")
@@ -418,6 +445,11 @@ Deno.serve(async (req) => {
       logStep("Business in-app notification error", String(notifError));
     }
 
+    // Combine guest results: reservation guests take priority, fallback to walk-in guests
+    const allGuests = reservationGuestResults.length > 0
+      ? reservationGuestResults
+      : walkInGuestResults;
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -432,8 +464,8 @@ Deno.serve(async (req) => {
         businessId: discount.business_id,
         hasReservation: !!reservationId,
         reservationId,
-        // Per-guest QR data for reservation claims
-        guests: reservationGuestResults.length > 0 ? reservationGuestResults : undefined,
+        // Per-guest QR data for ALL claims (walk-in and reservation)
+        guests: allGuests.length > 0 ? allGuests : undefined,
       }),
       {
         status: 200,
