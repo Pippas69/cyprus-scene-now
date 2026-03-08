@@ -490,7 +490,6 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   });
 
   const hasBoostedEvents = boostedEvents && boostedEvents.length > 0;
-  const isLoading = rsvpFilter ? loadingRsvpEvents : (loadingBoosted || loadingRegular);
 
   // When RSVP filter is active, fetch those specific events
   const rsvpFilterIds = rsvpFilter === 'interested' ? rsvpInterestedIds : rsvpFilter === 'going' ? rsvpGoingIds : new Set<string>();
