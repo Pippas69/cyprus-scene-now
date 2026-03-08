@@ -812,40 +812,14 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
       <Separator />
 
-      {/* Availability Info */}
-      <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-        <h4 className="font-medium text-sm flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          {language === "el" ? "Διαθεσιμότητα" : "Availability"}
-        </h4>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
-            <span className="font-medium">
-              {peopleRemaining === null ?
-            language === "el" ? "Χωρίς όριο" : "No limit" :
-            `${peopleRemaining} ${language === "el" ? "άτομα" : "people"}`}
-            </span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
-            <span className="font-medium">
-              {maxPerRedemption === null ?
-            language === "el" ? "Χωρίς όριο" : "No limit" :
-            `${maxPerRedemption} ${language === "el" ? "άτομα" : "people"}`}
-            </span>
-          </div>
-        </div>
-        {offer.one_per_user &&
-      <Badge variant="secondary" className="text-xs">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
-          </Badge>
-      }
-      </div>
-
       {/* Validity Info */}
       <div className="space-y-2 text-sm">
+        {peopleRemaining !== null &&
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>{peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "people available"}</span>
+        </div>
+        }
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
@@ -858,16 +832,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           <Clock className="h-4 w-4" />
           <span>{t("expiresOn")}: {formatDate(offer.end_at)}</span>
         </div>
-      </div>
-
-      {/* Walk-in Note */}
-      <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-        
-        <span>{t("walkInNote")}</span>
+        {offer.one_per_user &&
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <AlertCircle className="h-4 w-4" />
+          <span>{language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}</span>
+        </div>
+        }
       </div>
 
       {/* RESERVATION SECTION */}
       <ReservationSection />
+
+      {/* Walk-in Note (below reservation toggle) */}
+      {!wantsReservation &&
+      <p className="text-sm text-muted-foreground">
+        {t("walkInNote")}
+      </p>
+      }
 
       {/* Terms */}
       {offer.terms &&
