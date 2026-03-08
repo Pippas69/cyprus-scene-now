@@ -201,22 +201,57 @@ serve(async (req) => {
           if (chunks.length > 0) guestsJson = chunks.join('');
         }
 
-        if (guestsJson) {
-          const guestsArray = JSON.parse(guestsJson) as { name: string; age: number }[];
-          if (Array.isArray(guestsArray) && guestsArray.length > 0) {
-            const eventId = metadata?.event_id || reservation.event_id;
+        let guestsArray: { name: string; age: number | null }[] = [];
 
+        if (guestsJson) {
+          try {
+            const parsed = JSON.parse(guestsJson) as Array<{ name?: string; age?: number | string }>;
+            if (Array.isArray(parsed)) {
+              guestsArray = parsed.map((g, idx) => ({
+                name: (g?.name || '').trim() || `${reservation.reservation_name || 'Guest'} ${idx + 1}`,
+                age: typeof g?.age === 'number' ? g.age : (g?.age ? parseInt(String(g.age)) || null : null),
+              }));
+            }
+          } catch (parseErr) {
+            logStep("ERROR: Failed to parse guests metadata", {
+              error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+            });
+          }
+        }
+
+        // Hard fallback: always generate one QR per person even if metadata is missing/corrupt
+        if (guestsArray.length === 0 && reservation.party_size > 0) {
+          const fallbackBaseName = reservation.reservation_name || 'Guest';
+          guestsArray = Array.from({ length: reservation.party_size }, (_, idx) => ({
+            name: reservation.party_size === 1 ? fallbackBaseName : `${fallbackBaseName} ${idx + 1}`,
+            age: null,
+          }));
+          logStep("Guests metadata missing, using fallback guest names", { reservationId, partySize: reservation.party_size });
+        }
+
+        if (guestsArray.length > 0) {
+          const eventId = metadata?.event_id || reservation.event_id;
+          const reservationBusinessId = reservation.events?.businesses?.id || reservation.events?.business_id;
+
+          if (!eventId || !reservationBusinessId) {
+            logStep("ERROR: Missing event_id/business_id for ticket_order", { reservationId, eventId, reservationBusinessId });
+          } else {
             // Create ticket_order linked to reservation
             const { data: ticketOrder, error: toError } = await supabaseClient
               .from('ticket_orders')
               .insert({
                 event_id: eventId,
+                business_id: reservationBusinessId,
                 user_id: reservation.user_id,
                 customer_name: guestsArray[0]?.name || reservation.reservation_name || 'Guest',
-                customer_email: metadata?.customer_email || null,
+                customer_email: (metadata?.customer_email || session.customer_details?.email || '').trim() || 'unknown@fomo.local',
                 status: 'completed',
                 subtotal_cents: 0,
-                platform_fee_cents: 0,
+                commission_cents: 0,
+                commission_percent: 0,
+                total_cents: 0,
+                stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+                stripe_checkout_session_id: session.id,
                 linked_reservation_id: reservationId,
               })
               .select('id')
@@ -226,11 +261,11 @@ serve(async (req) => {
               logStep("ERROR: ticket_order insert", { error: toError });
             } else {
               // Create individual tickets per guest
-              const ticketRows = guestsArray.map((g: { name: string; age: number }) => ({
+              const ticketRows = guestsArray.map((g) => ({
                 order_id: ticketOrder.id,
                 event_id: eventId,
                 guest_name: g.name || 'Guest',
-                guest_age: typeof g.age === 'number' ? g.age : parseInt(String(g.age)) || null,
+                guest_age: g.age,
                 qr_code_token: crypto.randomUUID(),
                 status: 'valid',
               }));
