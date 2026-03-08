@@ -5,7 +5,7 @@ import {
   DialogContent } from
 "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, Calendar, Ticket, Copy, User, MapPin, Hash } from "lucide-react";
+import { FileText, Calendar, Ticket, Copy, User, MapPin, Hash } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { generateTicketPdf } from "@/lib/ticketPdf";
 import { format } from "date-fns";
@@ -236,13 +236,6 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 </p>
               </div>
             }
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 mt-3">
-              
-
-
-
 
 
 
