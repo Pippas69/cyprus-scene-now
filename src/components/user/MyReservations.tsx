@@ -848,6 +848,83 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </Dialog>
         );
       })()}
+
+      {/* Multi-guest QR dialog for event reservations */}
+      {selectedEventGuestsReservation && guestTickets[selectedEventGuestsReservation.id]?.length > 0 && (() => {
+        const tickets = guestTickets[selectedEventGuestsReservation.id];
+        const currentTicket = tickets[currentEventGuestIndex];
+        const businessInfo = selectedEventGuestsReservation.events?.businesses;
+        const closeDialog = () => {
+          setSelectedEventGuestsReservation(null);
+          setCurrentEventGuestIndex(0);
+        };
+        
+        const content = (
+          <div className="space-y-4">
+            <SuccessQRCard
+              type="reservation"
+              qrToken={currentTicket?.qr_code_token || ''}
+              title={selectedEventGuestsReservation.events?.title || ''}
+              businessName={businessInfo?.name || ''}
+              businessLogo={businessInfo?.logo_url}
+              language={language}
+              guestName={currentTicket?.guest_name}
+              guestAge={currentTicket?.guest_age || undefined}
+              reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
+              showSuccessMessage={false}
+              onClose={closeDialog}
+            />
+            {tickets.length > 1 && (
+              <div className="flex items-center justify-center gap-3 pb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
+                  disabled={currentEventGuestIndex === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentTicket?.guest_name} ({currentEventGuestIndex + 1}/{tickets.length})
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
+                  disabled={currentEventGuestIndex === tickets.length - 1}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+
+        if (isMobile) {
+          return (
+            <Drawer open onOpenChange={closeDialog}>
+              <DrawerContent className="max-h-[95vh] bg-transparent border-0">
+                <DrawerHeader className="sr-only">
+                  <DrawerTitle>{selectedEventGuestsReservation.events?.title || ''}</DrawerTitle>
+                  <DrawerDescription>Event Reservation QR Codes</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-6 overflow-y-auto">{content}</div>
+              </DrawerContent>
+            </Drawer>
+          );
+        }
+
+        return (
+          <Dialog open onOpenChange={closeDialog}>
+            <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+              <VisuallyHidden>
+                <DialogTitle>{selectedEventGuestsReservation.events?.title || ''}</DialogTitle>
+              </VisuallyHidden>
+              {content}
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 };
