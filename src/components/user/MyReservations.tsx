@@ -578,7 +578,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Direct reservations with guest QR codes: single CTA */}
           {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
+            <div className="flex items-center justify-between gap-1.5 mt-2">
               <Button
                 type="button"
                 size="sm"
@@ -593,9 +593,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
               {(reservation.status === 'pending' || reservation.status === 'accepted') && (
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
+                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
                   onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
                 >
                   {t.cancelReservation}
@@ -625,12 +624,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </button>
               )}
 
-              {/* Cancel Button - compact */}
+              {/* Cancel Button - matching style */}
               {(reservation.status === 'pending' || reservation.status === 'accepted') && (
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
+                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
                   onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
                 >
                   {t.cancelReservation}
@@ -643,9 +641,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
-                variant="outline"
                 size="sm"
-                className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
+                className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
                 onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
               >
                 {t.cancelReservation}

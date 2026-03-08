@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
+import { toast } from "sonner";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
 import { OfferQRCard } from "./OfferQRCard";
 
@@ -61,6 +63,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; purchase: OfferPurchase | null }>({ open: false, purchase: null });
+  const queryClient = useQueryClient();
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const highlightedPurchaseId = searchParams.get('purchaseId');
 
@@ -98,7 +102,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: { el: "Εξαντλημένο", en: "Depleted" },
     totalCredit: { el: "Συνολική Πίστωση", en: "Total Credit" },
     used: { el: "Χρησιμοποιημένα", en: "Used" },
-    reservation: { el: "Κράτηση", en: "Reservation" }
+    reservation: { el: "Κράτηση", en: "Reservation" },
+    cancelReservation: { el: "Ακύρωση", en: "Cancel" },
+    confirmCancel: { el: "Επιβεβαίωση Ακύρωσης", en: "Confirm Cancellation" },
+    confirmCancelDescription: { el: "Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;", en: "Are you sure you want to cancel this reservation?" },
+    cancelConfirm: { el: "Ακύρωση Κράτησης", en: "Cancel Reservation" },
+    cancelBack: { el: "Πίσω", en: "Back" },
+    reservationCancelled: { el: "Η κράτηση ακυρώθηκε", en: "Reservation cancelled" },
+    cancelFailed: { el: "Αποτυχία ακύρωσης", en: "Cancellation failed" }
   };
 
   const t = language === "el" ? {
@@ -135,7 +146,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.el,
     totalCredit: text.totalCredit.el,
     used: text.used.el,
-    reservation: text.reservation.el
+    reservation: text.reservation.el,
+    cancelReservation: text.cancelReservation.el,
+    confirmCancel: text.confirmCancel.el,
+    confirmCancelDescription: text.confirmCancelDescription.el,
+    cancelConfirm: text.cancelConfirm.el,
+    cancelBack: text.cancelBack.el,
+    reservationCancelled: text.reservationCancelled.el,
+    cancelFailed: text.cancelFailed.el
   } : {
     title: text.title.en,
     active: text.active.en,
@@ -170,7 +188,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.en,
     totalCredit: text.totalCredit.en,
     used: text.used.en,
-    reservation: text.reservation.en
+    reservation: text.reservation.en,
+    cancelReservation: text.cancelReservation.en,
+    confirmCancel: text.confirmCancel.en,
+    confirmCancelDescription: text.confirmCancelDescription.en,
+    cancelConfirm: text.cancelConfirm.en,
+    cancelBack: text.cancelBack.en,
+    reservationCancelled: text.reservationCancelled.en,
+    cancelFailed: text.cancelFailed.en
   };
 
   // Fetch purchased offers with expanded data
@@ -239,6 +264,41 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       return results;
     }
   });
+
+  const handleCancelOfferReservation = async (purchase: OfferPurchase) => {
+    setCancelDialog({ open: false, purchase: null });
+    try {
+      if (purchase.reservation_id) {
+        // Cancel the reservation (frees slots via existing DB logic)
+        const { error: resError } = await supabase
+          .from('reservations')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('id', purchase.reservation_id)
+          .eq('user_id', userId);
+        if (resError) throw resError;
+      }
+      // Cancel the offer purchase
+      const { error: purchaseError } = await supabase
+        .from('offer_purchases')
+        .update({ status: 'cancelled' })
+        .eq('id', purchase.id)
+        .eq('user_id', userId);
+      if (purchaseError) throw purchaseError;
+
+      // Send cancellation notification
+      if (purchase.reservation_id) {
+        supabase.functions.invoke('send-reservation-notification', {
+          body: { reservationId: purchase.reservation_id, type: 'cancellation' }
+        }).catch(console.error);
+      }
+
+      toast.success(t.reservationCancelled);
+      queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+    } catch (error) {
+      console.error('Error cancelling offer reservation:', error);
+      toast.error(t.cancelFailed);
+    }
+  };
 
   // Filter out null discounts (deleted offers) and cancelled purchases BEFORE any categorization
   const validPurchases = purchases?.filter((p) => p.discounts !== null && p.status !== 'cancelled') || [];
@@ -484,7 +544,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               onClick={() => setSelectedPurchase(purchase)}
               size="sm"
               variant="default"
-              className="flex-1 text-xs h-8">
+              className="text-xs h-8 px-4">
               
                 
                 {isReservation ? t.viewQRCodes : t.viewQR}
@@ -501,6 +561,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 {t.viewHistory}
               </Button>
             }
+            {/* Cancel button for reservation-linked offers */}
+            {isReservation && !isExpired && !isRedeemed && purchase.status === 'active' && (
+              <Button
+                size="sm"
+                className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+                onClick={() => setCancelDialog({ open: true, purchase })}
+              >
+                {t.cancelReservation}
+              </Button>
+            )}
           </div>
         </div>
       </Card>);
@@ -618,6 +688,27 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         language={language}
         onClose={() => setSelectedPurchase(null)} />
       
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
+            <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.cancelBack}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!cancelDialog.purchase) return;
+                await handleCancelOfferReservation(cancelDialog.purchase);
+              }}
+            >
+              {t.cancelConfirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>);
 
 }
