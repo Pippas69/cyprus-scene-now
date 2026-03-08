@@ -73,6 +73,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     noRedeemed: { el: "Δεν έχετε εξαργυρώσει προσφορές ακόμα", en: "You haven't redeemed any offers yet" },
     noExpired: { el: "Δεν έχετε ληγμένες προσφορές", en: "No expired offers" },
     viewQR: { el: "Εμφάνιση QR", en: "Show QR Code" },
+    viewQRCodes: { el: "Εμφάνιση QR Codes", en: "Show QR Codes" },
     expiresOn: { el: "Λήγει", en: "Expires" },
     purchasedOn: { el: "Αγοράστηκε", en: "Purchased" },
     redeemedOn: { el: "Εξαργυρώθηκε", en: "Redeemed on" },
@@ -109,6 +110,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     noRedeemed: text.noRedeemed.el,
     noExpired: text.noExpired.el,
     viewQR: text.viewQR.el,
+    viewQRCodes: text.viewQRCodes.el,
     expiresOn: text.expiresOn.el,
     purchasedOn: text.purchasedOn.el,
     redeemedOn: text.redeemedOn.el,
@@ -143,6 +145,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     noRedeemed: text.noRedeemed.en,
     noExpired: text.noExpired.en,
     viewQR: text.viewQR.en,
+    viewQRCodes: text.viewQRCodes.en,
     expiresOn: text.expiresOn.en,
     purchasedOn: text.purchasedOn.en,
     redeemedOn: text.redeemedOn.en,
@@ -484,7 +487,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 className="flex-1 text-xs h-8"
               >
                 <QrCode className="h-3.5 w-3.5 mr-1.5" />
-                {t.viewQR}
+                {isReservation ? t.viewQRCodes : t.viewQR}
               </Button>
             )}
             {isCredit && (

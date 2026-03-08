@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users, User } from "lucide-react";
+import { Download, CheckCircle, Calendar, Clock, CreditCard, QrCode as QrCodeIcon, Ticket, Tag, Users, User, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -59,6 +59,8 @@ const translations = {
       event_reservation: "Σαρώστε στην επιχείρηση",
     },
     downloadQR: "QR Εικόνα",
+    copyLink: "Αντιγραφή",
+    copied: "Αντιγράφηκε!",
     date: "ΗΜΕΡΟΜΗΝΙΑ",
     time: "ΩΡΑ",
     name: "ΟΝΟΜΑ",
@@ -86,6 +88,8 @@ const translations = {
       event_reservation: "Scan at the venue",
     },
     downloadQR: "QR Image",
+    copyLink: "Copy",
+    copied: "Copied!",
     date: "DATE",
     time: "TIME",
     name: "NAME",
@@ -132,6 +136,7 @@ export const SuccessQRCard = ({
   const text = translations[language];
   const dateLocale = language === "el" ? el : enUS;
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (qrToken) {
@@ -157,6 +162,13 @@ export const SuccessQRCard = ({
       link.href = qrDataUrl;
       link.click();
     }
+  };
+
+  const handleCopyLink = async () => {
+    const shareUrl = `${window.location.origin}/offer-view/${qrToken}`;
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Format helpers
@@ -381,29 +393,53 @@ export const SuccessQRCard = ({
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-3">
-          <Button 
-            onClick={handleDownload}
-            variant="outline"
-            className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            {text.downloadQR}
-          </Button>
-          {onViewDashboard && viewDashboardLabel && (
-            <Button 
-              onClick={onViewDashboard}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-            >
-              {viewDashboardLabel}
-            </Button>
-          )}
-          {!onViewDashboard && onClose && (
-            <Button 
-              onClick={onClose}
-              className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
-            >
-              {text.done}
-            </Button>
+          {type === "offer" ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+              >
+                {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                {copied ? text.copied : text.copyLink}
+              </Button>
+              <Button
+                onClick={handleDownload}
+                variant="outline"
+                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2 shrink-0"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                {text.downloadQR}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                onClick={handleDownload}
+                variant="outline"
+                className="flex-1 border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 text-xs px-2"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                {text.downloadQR}
+              </Button>
+              {onViewDashboard && viewDashboardLabel && (
+                <Button 
+                  onClick={onViewDashboard}
+                  className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
+                >
+                  {viewDashboardLabel}
+                </Button>
+              )}
+              {!onViewDashboard && onClose && (
+                <Button 
+                  onClick={onClose}
+                  className="flex-1 bg-[#102b4a] hover:bg-[#1a3d5c] text-white h-8 text-xs px-2"
+                >
+                  {text.done}
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
