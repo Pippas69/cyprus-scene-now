@@ -261,6 +261,32 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         }
       }
 
+      // Fetch offer_purchase_guests for walk-in purchases (no reservation)
+      const walkInPurchaseIds = results
+        .filter((p) => p.claim_type === 'walk_in' && !p._guests)
+        .map((p) => p.id);
+
+      if (walkInPurchaseIds.length > 0) {
+        const { data: offerGuests } = await supabase
+          .from('offer_purchase_guests' as any)
+          .select('purchase_id, guest_name, qr_code_token')
+          .in('purchase_id', walkInPurchaseIds);
+
+        if (offerGuests) {
+          const guestMap = new Map<string, {guest_name: string;qr_code_token: string;}[]>();
+          for (const g of offerGuests as any[]) {
+            const arr = guestMap.get(g.purchase_id) || [];
+            arr.push({ guest_name: g.guest_name, qr_code_token: g.qr_code_token });
+            guestMap.set(g.purchase_id, arr);
+          }
+          for (const p of results) {
+            if (!p._guests && guestMap.has(p.id)) {
+              p._guests = guestMap.get(p.id);
+            }
+          }
+        }
+      }
+
       return results;
     }
   });
