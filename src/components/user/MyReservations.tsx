@@ -600,27 +600,28 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           }
 
-          {/* Event reservations with guest QR codes: single CTA button */}
-          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 &&
+          {/* Event reservations: always show "Εμφάνιση QR Codes" button */}
+          {!isPast && !!reservation.events &&
           <div className="flex items-center justify-between gap-1.5 mt-2">
               <Button
               type="button"
               size="sm"
               className="h-8 text-xs px-4"
               onClick={() => {
-                setCurrentEventGuestIndex(0);
-                setSelectedEventGuestsReservation(reservation);
+                if (guestTickets[reservation.id]?.length > 0) {
+                  setCurrentEventGuestIndex(0);
+                  setSelectedEventGuestsReservation(reservation);
+                } else if (qrCodes[reservation.id]) {
+                  setSelectedReservationForQR(reservation);
+                }
               }}>
-              
                 {t.viewQRCodes}
               </Button>
-
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
               size="sm"
               className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
-              
                   {t.cancelReservation}
                 </Button>
             }
@@ -638,31 +639,27 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 setCurrentDirectGuestIndex(0);
                 setSelectedDirectGuestsReservation(reservation);
               }}>
-              
                 {t.viewQRCodes}
               </Button>
-
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
               size="sm"
               className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
-              
                   {t.cancelReservation}
                 </Button>
             }
             </div>
           }
 
-          {/* QR Code + Cancel on same line (fallback for reservations without guest tickets/guests) */}
-          {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length &&
+          {/* QR Code + Cancel (fallback for direct reservations without guests) */}
+          {!isPast && !reservation.events && !directGuests[reservation.id]?.length &&
           <div className="flex items-center gap-1.5 mt-2">
               {reservation.confirmation_code &&
             <button
               type="button"
               onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
               className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors">
-              
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-muted-foreground">{t.code}</span>
                     <span className="text-xs font-semibold text-foreground tracking-wider">{reservation.confirmation_code}</span>
@@ -673,13 +670,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   </div>
                 </button>
             }
-
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
               size="sm"
               className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
-              
                   {t.cancelReservation}
                 </Button>
             }
