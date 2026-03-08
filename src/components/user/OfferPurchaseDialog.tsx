@@ -644,6 +644,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         businessLogo={claimSuccess.businessLogo}
         language={language}
         guestName={claimSuccess.guests![currentGuestIndex]?.guest_name}
+        discountPercent={offer.percent_off || undefined}
+        expiryDate={offer.end_at}
         reservationDate={claimSuccess.reservationDate}
         reservationTime={claimSuccess.reservationTime}
         showSuccessMessage={currentGuestIndex === 0}
