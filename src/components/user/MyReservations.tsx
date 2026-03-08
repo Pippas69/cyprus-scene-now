@@ -796,33 +796,75 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       {selectedDirectGuestsReservation && directGuests[selectedDirectGuestsReservation.id]?.length > 0 && (() => {
         const guests = directGuests[selectedDirectGuestsReservation.id];
         const currentGuest = guests[currentDirectGuestIndex];
-        const qrDataUrl = currentGuest ? directGuestQrCodes[currentGuest.id] : '';
         const businessInfo = selectedDirectGuestsReservation.businesses;
+        const closeDialog = () => {
+          setSelectedDirectGuestsReservation(null);
+          setCurrentDirectGuestIndex(0);
+        };
         
+        const content = (
+          <div className="space-y-4">
+            <SuccessQRCard
+              type="reservation"
+              qrToken={currentGuest?.qr_code_token || ''}
+              title={language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}
+              businessName={businessInfo?.name || ''}
+              businessLogo={businessInfo?.logo_url}
+              language={language}
+              guestName={currentGuest?.guest_name}
+              reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
+              showSuccessMessage={false}
+              onClose={closeDialog}
+            />
+            {guests.length > 1 && (
+              <div className="flex items-center justify-center gap-3 pb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDirectGuestIndex(Math.max(0, currentDirectGuestIndex - 1))}
+                  disabled={currentDirectGuestIndex === 0}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm font-medium text-foreground">
+                  {currentGuest?.guest_name} ({currentDirectGuestIndex + 1}/{guests.length})
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDirectGuestIndex(Math.min(guests.length - 1, currentDirectGuestIndex + 1))}
+                  disabled={currentDirectGuestIndex === guests.length - 1}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+
+        if (isMobile) {
+          return (
+            <Drawer open onOpenChange={closeDialog}>
+              <DrawerContent className="max-h-[95vh] bg-transparent border-0">
+                <DrawerHeader className="sr-only">
+                  <DrawerTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DrawerTitle>
+                  <DrawerDescription>Reservation QR Codes</DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 pb-6 overflow-y-auto">{content}</div>
+              </DrawerContent>
+            </Drawer>
+          );
+        }
+
         return (
-          <ReservationQRCard
-            reservation={{
-              qrCodeToken: currentGuest?.qr_code_token || undefined,
-              qrCode: qrDataUrl,
-              confirmationCode: selectedDirectGuestsReservation.confirmation_code || '',
-              businessName: businessInfo?.name || '',
-              businessLogo: businessInfo?.logo_url,
-              reservationDate: selectedDirectGuestsReservation.preferred_time || undefined,
-              partySize: selectedDirectGuestsReservation.party_size,
-              seatingType: selectedDirectGuestsReservation.seating_preference || undefined,
-              isEventBased: false,
-              guestName: currentGuest?.guest_name,
-              totalGuests: guests.length,
-              currentGuestIndex: currentDirectGuestIndex,
-              onPrevGuest: currentDirectGuestIndex > 0 ? () => setCurrentDirectGuestIndex(currentDirectGuestIndex - 1) : undefined,
-              onNextGuest: currentDirectGuestIndex < guests.length - 1 ? () => setCurrentDirectGuestIndex(currentDirectGuestIndex + 1) : undefined,
-            }}
-            language={language}
-            onClose={() => {
-              setSelectedDirectGuestsReservation(null);
-              setCurrentDirectGuestIndex(0);
-            }}
-          />
+          <Dialog open onOpenChange={closeDialog}>
+            <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+              <VisuallyHidden>
+                <DialogTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DialogTitle>
+              </VisuallyHidden>
+              {content}
+            </DialogContent>
+          </Dialog>
         );
       })()}
     </div>
