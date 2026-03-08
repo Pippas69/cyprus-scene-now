@@ -1031,7 +1031,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       
       {/* Desktop table - only on lg+ */}
       {filteredReservations.length > 0 &&
-      <div className="rounded-md border w-full max-w-full overflow-x-auto hidden lg:block">
+      <div className="rounded-md border w-full max-w-full hidden lg:block">
           <Table className="w-full min-w-[980px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
