@@ -73,6 +73,7 @@ interface ReservationData {
 
 export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const isPreviewOrigin =
     typeof window !== 'undefined' &&
     (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
