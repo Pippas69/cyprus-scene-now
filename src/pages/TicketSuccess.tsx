@@ -150,6 +150,17 @@ export const TicketSuccess = () => {
           return;
         }
 
+        // Check if this order is linked to a reservation (hybrid event)
+        const { data: orderData } = await supabase
+          .from("ticket_orders")
+          .select("linked_reservation_id")
+          .eq("id", orderId)
+          .single();
+        
+        if (orderData?.linked_reservation_id) {
+          setIsLinkedToReservation(true);
+        }
+
         const allTicketData: TicketData[] = tickets.map((ticket: any) => {
           const tierData = ticket.ticket_tiers as any;
           const eventData = ticket.events as any;
