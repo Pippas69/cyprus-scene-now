@@ -519,19 +519,31 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             <span className="text-sm font-medium">{businessInfo?.name}</span>
           </div>
 
-          {/* Row 3: Date/Time */}
+          {/* Row 3: Date/Time + Party size */}
           {dateTime &&
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">{formatDateTime(dateTime)}</span>
+          <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">{formatDateTime(dateTime)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">{reservation.party_size} {t.people}</span>
+              </div>
             </div>
           }
 
-          {/* Row 4: Party size */}
+          {/* Row 4: Payment info (event reservations only) */}
+          {isEvent && reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0 &&
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs">{reservation.party_size} {t.people}</span>
-          </div>
+              <span className="text-xs">
+                {t.minPrepayment}: €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
+                {reservation.events?.event_type === 'hybrid' && ticketOrderTotals[reservation.id] > 0 &&
+                  ` (${t.tickets}: €${(ticketOrderTotals[reservation.id] / 100).toFixed(2)})`
+                }
+              </span>
+            </div>
+          }
 
           {/* Row 5: Location */}
           {location && (
