@@ -296,15 +296,17 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [rsvpFilter, setRsvpFilter] = useState<'interested' | 'going' | null>(null);
 
-  // Fetch user's RSVPs for the filter
+  // Fetch user's upcoming RSVPs for the filter
   const { data: userRsvps } = useQuery({
     queryKey: ["user-rsvps-ekdiloseis", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('rsvps')
-        .select('event_id, status')
-        .eq('user_id', user.id);
+        .select('event_id, status, events!inner(end_at)')
+        .eq('user_id', user.id)
+        .gte('events.end_at', now);
       if (error) throw error;
       return data || [];
     },
@@ -488,18 +490,49 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   });
 
   const hasBoostedEvents = boostedEvents && boostedEvents.length > 0;
-  const isLoading = loadingBoosted || loadingRegular;
 
-  // Client-side RSVP filtering
-  const filterByRsvp = (events: any[] | undefined) => {
-    if (!rsvpFilter || !events) return events;
-    const ids = rsvpFilter === 'interested' ? rsvpInterestedIds : rsvpGoingIds;
-    return events.filter((e: any) => ids.has(e.id));
-  };
+  // When RSVP filter is active, fetch those specific events
+  const rsvpFilterIds = rsvpFilter === 'interested' ? rsvpInterestedIds : rsvpFilter === 'going' ? rsvpGoingIds : new Set<string>();
 
-  const filteredBoosted = filterByRsvp(boostedEvents);
-  const filteredRegular = filterByRsvp(regularEvents);
-  const hasBoostedFiltered = filteredBoosted && filteredBoosted.length > 0;
+  const { data: rsvpFilteredEvents, isLoading: loadingRsvpEvents } = useQuery({
+    queryKey: ["rsvp-filtered-events", rsvpFilter, Array.from(rsvpFilterIds)],
+    queryFn: async () => {
+      if (rsvpFilterIds.size === 0) return [];
+      const { data, error } = await supabase
+        .from('events')
+        .select(`*, businesses!inner (name, logo_url, city, verified, category)`)
+        .in('id', Array.from(rsvpFilterIds))
+        .eq('businesses.verified', true)
+        .gte('end_at', new Date().toISOString())
+        .order('start_at', { ascending: true });
+      if (error) throw error;
+
+      // Fetch RSVP counts
+      const eventsWithStats = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: rsvps } = await supabase
+            .from('rsvps')
+            .select('status, user_id')
+            .eq('event_id', event.id);
+          return {
+            ...event,
+            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
+            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
+            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
+          };
+        })
+      );
+      return eventsWithStats;
+    },
+    enabled: !!rsvpFilter && rsvpFilterIds.size > 0,
+  });
+
+  // When RSVP filter active, show only those events; otherwise show boosted + regular
+  const showRsvpMode = !!rsvpFilter;
+  const filteredBoosted = showRsvpMode ? [] : (boostedEvents || []);
+  const filteredRegular = showRsvpMode ? (rsvpFilteredEvents || []) : (regularEvents || []);
+  const hasBoostedFiltered = filteredBoosted.length > 0;
+  const isLoading = rsvpFilter ? loadingRsvpEvents : (loadingBoosted || loadingRegular);
 
   return (
     <div className="space-y-4">

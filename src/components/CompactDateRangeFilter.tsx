@@ -53,7 +53,7 @@ export const CompactDateRangeFilter = ({ value, onChange, language }: CompactDat
                 setTimeout(() => setOpen(false), 200);
               }
             }}
-            numberOfMonths={typeof window !== 'undefined' && window.innerWidth < 640 ? 1 : 2}
+            numberOfMonths={1}
             locale={locale}
             className="text-sm"
           />
