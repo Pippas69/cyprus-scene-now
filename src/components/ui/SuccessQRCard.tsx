@@ -362,8 +362,8 @@ export const SuccessQRCard = ({
           {title}
         </h2>
 
-        {/* Guest Name & Age (not for offers - shown in grid instead) */}
-        {type !== "ticket" && type !== "offer" && guestName && (
+        {/* Guest Name & Age - only for types that don't already show it in the grid */}
+        {type !== "ticket" && type !== "offer" && type !== "reservation" && guestName && (
           <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
             <User className="h-4 w-4 text-[#3ec3b7]" />
             <span className="text-sm font-semibold text-[#102b4a]">{guestName}</span>
