@@ -605,6 +605,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           purchasedAt: selectedPurchase.created_at,
           isCredit: selectedPurchase.discounts?.offer_type === 'credit',
           balanceRemaining: selectedPurchase.balance_remaining_cents ?? 0,
+          hasReservation: selectedPurchase.claim_type === 'with_reservation',
+          guests: selectedPurchase._guests,
+          reservationDate: selectedPurchase.reservations?.preferred_time || undefined,
+          reservationTime: selectedPurchase.reservations?.preferred_time 
+            ? new Date(selectedPurchase.reservations.preferred_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : undefined,
         } : null}
         language={language}
         onClose={() => setSelectedPurchase(null)}
