@@ -67,7 +67,7 @@ serve(async (req) => {
 
     const { data: event, error: eventError } = await supabaseService
       .from("events")
-      .select("id, title, start_at, end_at, event_type")
+      .select("id, title, start_at, end_at, event_type, business_id")
       .eq("id", eventId)
       .single();
 
@@ -187,12 +187,15 @@ serve(async (req) => {
           .from('ticket_orders')
           .insert({
             event_id: eventId,
+            business_id: event.business_id,
             user_id: user.id,
             customer_name: guestsArray[0]?.name || (reservation_name as string) || 'Guest',
-            customer_email: user.email || null,
+            customer_email: user.email || 'unknown@fomo.local',
             status: 'completed',
             subtotal_cents: 0,
-            platform_fee_cents: 0,
+            commission_cents: 0,
+            commission_percent: 0,
+            total_cents: 0,
             linked_reservation_id: reservation.id,
           })
           .select('id')
