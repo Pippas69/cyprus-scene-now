@@ -910,22 +910,24 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           setCurrentEventGuestIndex(0);
         };
 
+        const currentTicket = hasTickets ? tickets[currentEventGuestIndex] : null;
+
         const content =
         <div className="space-y-4">
             <SuccessQRCard
             type="reservation"
-            qrToken={currentTicket?.qr_code_token || ''}
+            qrToken={hasTickets ? (currentTicket?.qr_code_token || '') : (selectedEventGuestsReservation.qr_code_token || '')}
             title={selectedEventGuestsReservation.events?.title || ''}
             businessName={businessInfo?.name || ''}
             businessLogo={businessInfo?.logo_url}
             language={language}
-            guestName={currentTicket?.guest_name}
-            guestAge={currentTicket?.guest_age || undefined}
+            guestName={hasTickets ? currentTicket?.guest_name : selectedEventGuestsReservation.reservation_name}
+            guestAge={hasTickets ? (currentTicket?.guest_age || undefined) : undefined}
             reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
             showSuccessMessage={false}
             onClose={closeDialog} />
           
-            {tickets.length > 1 &&
+            {hasTickets && tickets.length > 1 &&
           <div className="flex items-center justify-center gap-3 pb-2">
                 <Button
               variant="outline"
