@@ -576,7 +576,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <Button
                 type="button"
                 size="sm"
-                className="flex-1 h-[30px] text-[10px] px-2.5"
+                className="h-8 text-xs px-4"
                 onClick={() => {
                   setCurrentDirectGuestIndex(0);
                   setSelectedDirectGuestsReservation(reservation);
