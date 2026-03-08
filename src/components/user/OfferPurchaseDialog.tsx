@@ -733,7 +733,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   }
 
   // === CLAIM FORM ===
-  const canClaim = acceptedTerms && (peopleRemaining === null || peopleRemaining >= partySize) && !isLoading;
+  const canClaim = (peopleRemaining === null || peopleRemaining >= partySize) && !isLoading;
   const reservationValid = !wantsReservation || reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError;
   const claimEnabled = canClaim && reservationValid;
 
