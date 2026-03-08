@@ -487,7 +487,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 className="flex-1 text-xs h-8"
               >
                 <QrCode className="h-3.5 w-3.5 mr-1.5" />
-                {t.viewQR}
+                {isReservation ? t.viewQRCodes : t.viewQR}
               </Button>
             )}
             {isCredit && (
