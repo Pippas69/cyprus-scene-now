@@ -608,13 +608,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               size="sm"
               className="h-8 text-xs px-4"
               onClick={() => {
-                if (guestTickets[reservation.id]?.length > 0) {
-                  setCurrentEventGuestIndex(0);
-                  setSelectedEventGuestsReservation(reservation);
-                } else if (qrCodes[reservation.id]) {
-                  setSelectedReservationForQR(reservation);
-                }
+                setCurrentEventGuestIndex(0);
+                setSelectedEventGuestsReservation(reservation);
               }}>
+
                 {t.viewQRCodes}
               </Button>
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
@@ -904,31 +901,33 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       })()}
 
       {/* Multi-guest QR dialog for event reservations */}
-      {selectedEventGuestsReservation && guestTickets[selectedEventGuestsReservation.id]?.length > 0 && (() => {
-        const tickets = guestTickets[selectedEventGuestsReservation.id];
-        const currentTicket = tickets[currentEventGuestIndex];
+      {selectedEventGuestsReservation && (() => {
+        const tickets = guestTickets[selectedEventGuestsReservation.id] || [];
+        const hasTickets = tickets.length > 0;
         const businessInfo = selectedEventGuestsReservation.events?.businesses;
         const closeDialog = () => {
           setSelectedEventGuestsReservation(null);
           setCurrentEventGuestIndex(0);
         };
 
+        const currentTicket = hasTickets ? tickets[currentEventGuestIndex] : null;
+
         const content =
         <div className="space-y-4">
             <SuccessQRCard
             type="reservation"
-            qrToken={currentTicket?.qr_code_token || ''}
+            qrToken={hasTickets ? (currentTicket?.qr_code_token || '') : (selectedEventGuestsReservation.qr_code_token || '')}
             title={selectedEventGuestsReservation.events?.title || ''}
             businessName={businessInfo?.name || ''}
             businessLogo={businessInfo?.logo_url}
             language={language}
-            guestName={currentTicket?.guest_name}
-            guestAge={currentTicket?.guest_age || undefined}
+            guestName={hasTickets ? currentTicket?.guest_name : selectedEventGuestsReservation.reservation_name}
+            guestAge={hasTickets ? (currentTicket?.guest_age || undefined) : undefined}
             reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
             showSuccessMessage={false}
             onClose={closeDialog} />
           
-            {tickets.length > 1 &&
+            {hasTickets && tickets.length > 1 &&
           <div className="flex items-center justify-center gap-3 pb-2">
                 <Button
               variant="outline"
