@@ -258,46 +258,17 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   selectedCity: string | null;
   selectedCategories: string[];
 }) => {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  const text = {
-    el: {
-      today: "Σήμερα",
-      week: "Σε 7 Μέρες",
-      month: "Σε 30 Μέρες",
-    },
-    en: {
-      today: "Today",
-      week: "In 7 Days",
-      month: "In 30 Days",
-    },
-  };
+  // Calculate time boundaries from date range
+  const getTimeBoundaries = () => {
+    if (!dateRange?.from) return null;
 
-  const t = text[language];
-
-  // Calculate time boundaries for filtering
-  const getTimeBoundaries = (filter: 'today' | 'week' | 'month' | null) => {
-    if (!filter) return null; // No filter = show all
-
-    const now = new Date();
-    const start = new Date(now);
+    const start = new Date(dateRange.from);
     start.setHours(0, 0, 0, 0);
 
-    const end = new Date(start);
-
-    switch (filter) {
-      case 'today':
-        end.setHours(23, 59, 59, 999);
-        break;
-      case 'week':
-        end.setDate(start.getDate() + 7);
-        end.setHours(23, 59, 59, 999);
-        break;
-      case 'month':
-        end.setDate(start.getDate() + 30);
-        end.setHours(23, 59, 59, 999);
-        break;
-    }
+    const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+    end.setHours(23, 59, 59, 999);
 
     return { start: start.toISOString(), end: end.toISOString() };
   };
