@@ -75,6 +75,20 @@ const DashboardBusiness = () => {
     checkVerificationStatus();
   }, []);
 
+  // Prevent double page scrollbars in business dashboard (keep only internal main scroll)
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, []);
+
   // Always jump to top when switching dashboard sections
   useEffect(() => {
     const el = scrollRef.current;
