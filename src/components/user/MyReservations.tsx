@@ -286,14 +286,21 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     const { data: orders } = await supabase.
     from('ticket_orders').
-    select('id, linked_reservation_id').
+    select('id, linked_reservation_id, total_cents').
     in('linked_reservation_id', eventResIds);
 
     if (!orders || orders.length === 0) return;
 
     const orderIds = orders.map((o) => o.id);
     const orderToRes: Record<string, string> = {};
-    orders.forEach((o) => {if (o.linked_reservation_id) orderToRes[o.id] = o.linked_reservation_id;});
+    const resTotalMap: Record<string, number> = {};
+    orders.forEach((o) => {
+      if (o.linked_reservation_id) {
+        orderToRes[o.id] = o.linked_reservation_id;
+        resTotalMap[o.linked_reservation_id] = (o as any).total_cents || 0;
+      }
+    });
+    setTicketOrderTotals(resTotalMap);
 
     const { data: tickets } = await supabase.
     from('tickets').
