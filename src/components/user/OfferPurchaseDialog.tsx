@@ -814,30 +814,26 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
       {/* Validity Info */}
       <div className="space-y-2 text-sm">
-        {peopleRemaining !== null &&
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Users className="h-4 w-4" />
-          <span>{peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "people available"}</span>
+        {/* Availability + one per user on same line */}
+        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
+          <Users className="h-4 w-4 shrink-0" />
+          <span>
+            {peopleRemaining !== null && `${peopleRemaining} ${language === "el" ? "άτομα διαθέσιμα" : "people available"}`}
+            {peopleRemaining !== null && offer.one_per_user && ` · `}
+            {offer.one_per_user && (language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user")}
+          </span>
         </div>
-        }
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4" />
+          <Clock className="h-4 w-4 shrink-0" />
           <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}</span>
+        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>
+            {t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
+            {` (`}{t("expiresOn")}: {formatDate(offer.end_at)}{`)`}
+          </span>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{t("expiresOn")}: {formatDate(offer.end_at)}</span>
-        </div>
-        {offer.one_per_user &&
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <AlertCircle className="h-4 w-4" />
-          <span>{language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}</span>
-        </div>
-        }
       </div>
 
       {/* RESERVATION SECTION */}
@@ -859,17 +855,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
-      {/* Accept Terms */}
-      <div className="flex items-center space-x-2">
-        <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} />
-        <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          {language === "el" ?
-        <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></> :
-
-        <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
-        }
-        </label>
-      </div>
 
       {/* Actions */}
       <div className="flex gap-3">
