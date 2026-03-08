@@ -237,7 +237,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     account_total: { el: "Σύνολο Λογαριασμού", en: "Account Total" },
     everyDay: { el: "Κάθε μέρα", en: "Every day" },
     allDay: { el: "Όλη μέρα", en: "All day" },
-    wantReservation: { el: "Θέλετε να κλείσετε τραπέζι;", en: "Want to book a table?" },
+    wantReservation: { el: "Θέλετε να κλείσετε τραπέζι στις ώρες έκπτωσης;", en: "Want to book a table during discount hours?" },
     selectDate: { el: "Επιλέξτε ημερομηνία", en: "Select date" },
     selectTime: { el: "Επιλέξτε ώρα", en: "Select time" },
     noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" }
