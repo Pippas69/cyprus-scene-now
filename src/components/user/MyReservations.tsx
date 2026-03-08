@@ -635,8 +635,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* Cancel Button for reservation-only with guest tickets */}
-          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+          {/* Cancel Button for reservation-only with guest tickets or direct guests */}
+          {!isPast && (
+            (reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0) ||
+            (!reservation.events && directGuests[reservation.id]?.length > 0)
+          ) && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
                 variant="outline"
