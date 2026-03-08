@@ -84,6 +84,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   // Guest tickets per reservation (for reservation-only events with individual QR codes)
   const [guestTickets, setGuestTickets] = useState<Record<string, { id: string; guest_name: string; guest_age: number | null; qr_code_token: string; status: string }[]>>({});
   const [guestQrCodes, setGuestQrCodes] = useState<Record<string, string>>({});
+  // Direct reservation guests (per-guest QR codes)
+  const [directGuests, setDirectGuests] = useState<Record<string, { id: string; guest_name: string; qr_code_token: string; status: string; checked_in_at: string | null }[]>>({});
+  const [directGuestQrCodes, setDirectGuestQrCodes] = useState<Record<string, string>>({});
   const tt = toastTranslations[language];
 
   useEffect(() => {
