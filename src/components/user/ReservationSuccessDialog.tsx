@@ -49,8 +49,7 @@ export const ReservationSuccessDialog = ({
         reservationDate={reservation.preferred_time}
         confirmationCode={reservation.confirmation_code}
         partySize={reservation.party_size}
-        guestName={guests[currentGuestIndex]?.guest_name}
-        guestLabel={`${currentGuestIndex + 1}/${guests.length}`}
+        guestName={`${guests[currentGuestIndex]?.guest_name} (${currentGuestIndex + 1}/${guests.length})`}
         showSuccessMessage={currentGuestIndex === 0}
         onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
         viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
