@@ -2485,6 +2485,47 @@ export type Database = {
           },
         ]
       }
+      offer_purchase_guests: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          created_at: string
+          guest_name: string
+          id: string
+          purchase_id: string
+          qr_code_token: string
+          status: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          guest_name: string
+          id?: string
+          purchase_id: string
+          qr_code_token?: string
+          status?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          guest_name?: string
+          id?: string
+          purchase_id?: string
+          qr_code_token?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_purchase_guests_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "offer_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_purchases: {
         Row: {
           amount_paid_cents: number | null
