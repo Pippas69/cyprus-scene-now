@@ -297,7 +297,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   const [rsvpFilter, setRsvpFilter] = useState<'interested' | 'going' | null>(null);
 
   // Fetch user's upcoming RSVPs for the filter
-  const { data: userRsvps } = useQuery({
+  const { data: userRsvps, refetch: refetchUserRsvps } = useQuery({
     queryKey: ["user-rsvps-ekdiloseis", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -312,6 +312,30 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
     },
     enabled: !!user?.id,
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`ekdiloseis-rsvps-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rsvps',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          refetchUserRsvps();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refetchUserRsvps]);
 
   const rsvpInterestedIds = new Set(userRsvps?.filter(r => r.status === 'interested').map(r => r.event_id) || []);
   const rsvpGoingIds = new Set(userRsvps?.filter(r => r.status === 'going').map(r => r.event_id) || []);
