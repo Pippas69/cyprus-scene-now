@@ -215,7 +215,50 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setPastReservations(allPast);
     generateQRCodes([...allUpcoming, ...allPast]);
     fetchGuestTickets([...allUpcoming, ...allPast]);
+    fetchDirectReservationGuests([...allUpcoming, ...allPast]);
     setLoading(false);
+  };
+
+  const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
+    const directResIds = reservations
+      .filter(r => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending'))
+      .map(r => r.id);
+
+    if (directResIds.length === 0) return;
+
+    const { data: guests, error } = await supabase
+      .from('reservation_guests')
+      .select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at')
+      .in('reservation_id', directResIds);
+
+    if (error || !guests) return;
+
+    const guestsByRes: Record<string, typeof guests> = {};
+    const qrCodesToGenerate: Record<string, string> = {};
+
+    guests.forEach(g => {
+      if (!guestsByRes[g.reservation_id]) guestsByRes[g.reservation_id] = [];
+      guestsByRes[g.reservation_id].push(g);
+      if (g.qr_code_token) {
+        qrCodesToGenerate[g.id] = g.qr_code_token;
+      }
+    });
+
+    setDirectGuests(guestsByRes);
+
+    const codes: Record<string, string> = {};
+    for (const [guestId, token] of Object.entries(qrCodesToGenerate)) {
+      try {
+        codes[guestId] = await QRCode.toDataURL(token, {
+          width: 256,
+          margin: 2,
+          color: { dark: '#000000', light: '#FFFFFF' },
+        });
+      } catch (e) {
+        console.error('Error generating direct guest QR code:', e);
+      }
+    }
+    setDirectGuestQrCodes(codes);
   };
 
   const fetchGuestTickets = async (reservations: ReservationData[]) => {
