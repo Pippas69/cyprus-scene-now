@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -11,7 +11,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -21,29 +20,23 @@ import {
 
 const translations = {
   el: {
-    mainNav: 'Πλοήγηση',
     feed: 'Feed',
     map: 'Χάρτης',
     events: 'Εκδηλώσεις',
     offers: 'Προσφορές',
-    myActivities: 'Οι Δραστηριότητές Μου',
-    myEvents: 'Οι Εκδηλώσεις Μου',
+    myTickets: 'Τα Εισιτήρια Μου',
     reservations: 'Οι Κρατήσεις Μου',
     myOffers: 'Οι Προσφορές Μου',
-    account: 'Λογαριασμός',
     settings: 'Ρυθμίσεις',
   },
   en: {
-    mainNav: 'Main Navigation',
     feed: 'Feed',
     map: 'Map',
     events: 'Events',
     offers: 'Offers',
-    myActivities: 'My Activities',
-    myEvents: 'My Events',
+    myTickets: 'My Tickets',
     reservations: 'My Reservations',
     myOffers: 'My Offers',
-    account: 'Account',
     settings: 'Settings',
   },
 };
@@ -107,13 +100,10 @@ export function UserSidebar() {
     { title: t.offers, url: '/offers', icon: Percent },
   ];
 
-  const activityItems = [
-    { title: t.myEvents, url: '/dashboard-user?tab=events', icon: Calendar, tab: 'events' },
+  const personalItems = [
+    { title: t.myTickets, url: '/dashboard-user?tab=events', icon: Ticket, tab: 'events' },
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
     { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
-  ];
-
-  const accountItems = [
     { title: t.settings, url: '/dashboard-user?tab=settings', icon: Settings, tab: 'settings' },
   ];
 
@@ -146,7 +136,6 @@ export function UserSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.mainNav}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -164,28 +153,9 @@ export function UserSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.myActivities}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {activityItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.account}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountItems.map((item) => (
+              {personalItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
