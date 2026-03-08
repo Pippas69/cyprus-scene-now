@@ -237,17 +237,6 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
               </div>
             }
 
-
-
-              
-              
-
-
-
-
-
-
-              
             </div>
 
             {/* Copyable Link */}
