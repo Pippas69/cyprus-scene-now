@@ -800,6 +800,40 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         language={language}
         onClose={() => setSelectedReservationForQR(null)}
       />
+
+      {/* Multi-guest QR dialog for direct reservations */}
+      {selectedDirectGuestsReservation && directGuests[selectedDirectGuestsReservation.id]?.length > 0 && (() => {
+        const guests = directGuests[selectedDirectGuestsReservation.id];
+        const currentGuest = guests[currentDirectGuestIndex];
+        const qrDataUrl = currentGuest ? directGuestQrCodes[currentGuest.id] : '';
+        const businessInfo = selectedDirectGuestsReservation.businesses;
+        
+        return (
+          <ReservationQRCard
+            reservation={{
+              qrCodeToken: currentGuest?.qr_code_token || undefined,
+              qrCode: qrDataUrl,
+              confirmationCode: selectedDirectGuestsReservation.confirmation_code || '',
+              businessName: businessInfo?.name || '',
+              businessLogo: businessInfo?.logo_url,
+              reservationDate: selectedDirectGuestsReservation.preferred_time || undefined,
+              partySize: selectedDirectGuestsReservation.party_size,
+              seatingType: selectedDirectGuestsReservation.seating_preference || undefined,
+              isEventBased: false,
+              guestName: currentGuest?.guest_name,
+              totalGuests: guests.length,
+              currentGuestIndex: currentDirectGuestIndex,
+              onPrevGuest: currentDirectGuestIndex > 0 ? () => setCurrentDirectGuestIndex(currentDirectGuestIndex - 1) : undefined,
+              onNextGuest: currentDirectGuestIndex < guests.length - 1 ? () => setCurrentDirectGuestIndex(currentDirectGuestIndex + 1) : undefined,
+            }}
+            language={language}
+            onClose={() => {
+              setSelectedDirectGuestsReservation(null);
+              setCurrentDirectGuestIndex(0);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };
