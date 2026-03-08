@@ -13,6 +13,7 @@ const t = {
   el: {
     processing: "Επεξεργασία πληρωμής...",
     viewTickets: "Τα Εισιτήριά Μου",
+    viewReservations: "Οι Κρατήσεις Μου",
     continueBrowsing: "Συνέχεια περιήγησης",
     error: "Κάτι πήγε στραβά",
     tryAgain: "Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε μαζί μας",
@@ -24,6 +25,7 @@ const t = {
   en: {
     processing: "Processing your payment...",
     viewTickets: "My Tickets",
+    viewReservations: "My Reservations",
     continueBrowsing: "Continue Browsing",
     error: "Something went wrong",
     tryAgain: "Please try again or contact support",
@@ -59,6 +61,7 @@ export const TicketSuccess = () => {
   const [allTickets, setAllTickets] = useState<TicketData[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLinkedToReservation, setIsLinkedToReservation] = useState(false);
 
   const ranOnceRef = useRef(false);
 
