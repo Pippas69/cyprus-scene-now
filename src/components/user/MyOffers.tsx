@@ -562,7 +562,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               </Button>
             }
             {/* Cancel button for reservation-linked offers */}
-            {isReservation && !isExpired && !isRedeemed && purchase.status === 'active' && (
+            {isReservation && !isExpired && !isRedeemed && !isDepleted && (
               <Button
                 size="sm"
                 className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
