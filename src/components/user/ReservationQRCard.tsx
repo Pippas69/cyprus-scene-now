@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface ReservationQRCardProps {
   reservation: {
     qrCodeToken?: string;
-    qrCode?: string; // Legacy: pre-generated data URL
+    qrCode?: string;
     confirmationCode: string;
     businessName: string;
     businessLogo?: string | null;
@@ -19,10 +19,15 @@ interface ReservationQRCardProps {
     reservationTime?: string;
     partySize?: number;
     seatingType?: string;
-    // For event-based reservations
     eventTitle?: string;
     prepaidAmountCents?: number;
     isEventBased?: boolean;
+    // Guest navigation
+    guestName?: string;
+    totalGuests?: number;
+    currentGuestIndex?: number;
+    onPrevGuest?: () => void;
+    onNextGuest?: () => void;
   } | null;
   language: "el" | "en";
   onClose: () => void;
