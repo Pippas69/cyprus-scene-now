@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
@@ -101,13 +101,10 @@ export function UserSidebar() {
     { title: t.offers, url: '/offers', icon: Percent },
   ];
 
-  const activityItems = [
-    { title: t.myEvents, url: '/dashboard-user?tab=events', icon: Calendar, tab: 'events' },
+  const personalItems = [
+    { title: t.myTickets, url: '/dashboard-user?tab=events', icon: Ticket, tab: 'events' },
     { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
     { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
-  ];
-
-  const accountItems = [
     { title: t.settings, url: '/dashboard-user?tab=settings', icon: Settings, tab: 'settings' },
   ];
 
@@ -140,7 +137,6 @@ export function UserSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.mainNav}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -158,28 +154,9 @@ export function UserSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.myActivities}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {activityItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">{t.account}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountItems.map((item) => (
+              {personalItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
