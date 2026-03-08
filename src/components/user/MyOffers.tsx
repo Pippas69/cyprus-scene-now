@@ -146,7 +146,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.el,
     totalCredit: text.totalCredit.el,
     used: text.used.el,
-    reservation: text.reservation.el
+    reservation: text.reservation.el,
+    cancelReservation: text.cancelReservation.el,
+    confirmCancel: text.confirmCancel.el,
+    confirmCancelDescription: text.confirmCancelDescription.el,
+    cancelConfirm: text.cancelConfirm.el,
+    cancelBack: text.cancelBack.el,
+    reservationCancelled: text.reservationCancelled.el,
+    cancelFailed: text.cancelFailed.el
   } : {
     title: text.title.en,
     active: text.active.en,
@@ -181,7 +188,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: text.depleted.en,
     totalCredit: text.totalCredit.en,
     used: text.used.en,
-    reservation: text.reservation.en
+    reservation: text.reservation.en,
+    cancelReservation: text.cancelReservation.en,
+    confirmCancel: text.confirmCancel.en,
+    confirmCancelDescription: text.confirmCancelDescription.en,
+    cancelConfirm: text.cancelConfirm.en,
+    cancelBack: text.cancelBack.en,
+    reservationCancelled: text.reservationCancelled.en,
+    cancelFailed: text.cancelFailed.en
   };
 
   // Fetch purchased offers with expanded data
