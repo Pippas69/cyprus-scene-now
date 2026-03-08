@@ -566,8 +566,42 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets) */}
-          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && (
+          {/* Guest QR Codes for direct reservations */}
+          {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 && (
+            <div className="space-y-1.5 mt-2">
+              {directGuests[reservation.id].map((guest, idx) => (
+                <button
+                  key={guest.id}
+                  type="button"
+                  onClick={() => {
+                    if (directGuestQrCodes[guest.id]) {
+                      setSelectedReservationForQR({
+                        ...reservation,
+                        qr_code_token: guest.qr_code_token,
+                        confirmation_code: `${reservation.confirmation_code}-${idx + 1}`,
+                      });
+                      setQrCodes(prev => ({ ...prev, [reservation.id]: directGuestQrCodes[guest.id] }));
+                    }
+                  }}
+                  className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-foreground">{guest.guest_name}</span>
+                    {guest.checked_in_at && (
+                      <Badge className="bg-green-600 text-white text-[9px] h-4 px-1.5">Check-in ✓</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 text-primary">
+                    <QrCode className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-medium">QR</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* QR Code + Cancel on same line (for non-reservation-only events or when no guest tickets and no direct guests) */}
+          {!isPast && (reservation.events?.event_type !== 'reservation' || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
             <div className="flex items-center gap-1.5 mt-2">
               {/* QR Code Button */}
               {reservation.confirmation_code && (
