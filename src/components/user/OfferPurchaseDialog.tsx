@@ -643,7 +643,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         businessName={claimSuccess.businessName}
         businessLogo={claimSuccess.businessLogo}
         language={language}
-        guestName={`${claimSuccess.guests![currentGuestIndex]?.guest_name} (${currentGuestIndex + 1}/${claimSuccess.guests!.length})`}
+        guestName={claimSuccess.guests![currentGuestIndex]?.guest_name}
         reservationDate={claimSuccess.reservationDate}
         reservationTime={claimSuccess.reservationTime}
         showSuccessMessage={currentGuestIndex === 0}
