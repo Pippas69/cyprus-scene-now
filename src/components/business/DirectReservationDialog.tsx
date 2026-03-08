@@ -66,6 +66,7 @@ export const DirectReservationDialog = ({
   const [formData, setFormData] = useState({
     reservation_name: '',
     party_size: 2,
+    guest_names: ['', ''] as string[],
     seating_preference: 'none',
     preferred_date: new Date(),
     preferred_time: '19:00',
@@ -86,6 +87,7 @@ export const DirectReservationDialog = ({
       party_size: number;
       preferred_time: string;
       business_name: string;
+      guests?: { guest_name: string; qr_code_token: string }[];
     } | null;
   }>({ open: false, reservation: null });
 
