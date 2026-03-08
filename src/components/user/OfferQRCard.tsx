@@ -79,11 +79,12 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
   ) : (
     <SuccessQRCard
       type="offer"
-      qrToken={offer.qrToken}
+      qrToken={offer.guests?.[0]?.qr_code_token || offer.qrToken}
       title={offer.title}
       businessName={offer.businessName}
       businessLogo={offer.businessLogo}
       language={language}
+      guestName={offer.guests?.[0]?.guest_name}
       discountPercent={offer.discountPercent}
       purchaseDate={offer.purchasedAt}
       expiryDate={offer.expiresAt}
