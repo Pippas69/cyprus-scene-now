@@ -534,11 +534,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
         {/* Description + form fields - inside the box */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
-          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
-            {language === "el" ?
-            `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.` :
-            `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
-          </p>
+          
+
+
+
+          
           {wantsReservation &&
           <div className="space-y-2 sm:space-y-3 pt-2">
               {/* Date Picker */}
