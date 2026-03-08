@@ -685,6 +685,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       businessName={claimSuccess.businessName}
       businessLogo={claimSuccess.businessLogo}
       language={language}
+      guestName={guestNames[0]?.trim() || undefined}
       discountPercent={offer.percent_off || undefined}
       purchaseDate={new Date().toISOString()}
       expiryDate={offer.end_at}
