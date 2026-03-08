@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, Building2, Ticket } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -17,8 +17,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  AlertDialogTitle } from
+'@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -60,7 +60,7 @@ interface ReservationData {
     end_at: string;
     location: string;
     event_type: string | null;
-    businesses: { id: string; name: string; logo_url: string | null };
+    businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
     id: string;
@@ -75,23 +75,23 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isPreviewOrigin =
-    typeof window !== 'undefined' &&
-    (window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
+  typeof window !== 'undefined' && (
+  window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
   const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
   const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; reservationId: string | null }>({
+  const [cancelDialog, setCancelDialog] = useState<{open: boolean;reservationId: string | null;}>({
     open: false,
-    reservationId: null,
+    reservationId: null
   });
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [selectedReservationForQR, setSelectedReservationForQR] = useState<ReservationData | null>(null);
   // Guest tickets per reservation (for reservation-only events with individual QR codes)
-  const [guestTickets, setGuestTickets] = useState<Record<string, { id: string; guest_name: string; guest_age: number | null; qr_code_token: string; status: string }[]>>({});
+  const [guestTickets, setGuestTickets] = useState<Record<string, {id: string;guest_name: string;guest_age: number | null;qr_code_token: string;status: string;}[]>>({});
   const [guestQrCodes, setGuestQrCodes] = useState<Record<string, string>>({});
   // Direct reservation guests (per-guest QR codes)
-  const [directGuests, setDirectGuests] = useState<Record<string, { id: string; guest_name: string; qr_code_token: string; status: string; checked_in_at: string | null }[]>>({});
+  const [directGuests, setDirectGuests] = useState<Record<string, {id: string;guest_name: string;qr_code_token: string;status: string;checked_in_at: string | null;}[]>>({});
   const [directGuestQrCodes, setDirectGuestQrCodes] = useState<Record<string, string>>({});
   const [selectedDirectGuestsReservation, setSelectedDirectGuestsReservation] = useState<ReservationData | null>(null);
   const [currentDirectGuestIndex, setCurrentDirectGuestIndex] = useState(0);
@@ -102,14 +102,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   useEffect(() => {
     fetchReservations();
-    const channel = supabase
-      .channel('my_reservations')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations', filter: `user_id=eq.${userId}` },
-        () => fetchReservations()
-      )
-      .subscribe();
+    const channel = supabase.
+    channel('my_reservations').
+    on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'reservations', filter: `user_id=eq.${userId}` },
+      () => fetchReservations()
+    ).
+    subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -128,81 +128,81 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     `;
 
     // Fetch offer_purchases to identify offer-based reservations (we'll exclude them)
-    const { data: offerPurchases } = await supabase
-      .from('offer_purchases')
-      .select('reservation_id')
-      .eq('user_id', userId)
-      .not('reservation_id', 'is', null);
+    const { data: offerPurchases } = await supabase.
+    from('offer_purchases').
+    select('reservation_id').
+    eq('user_id', userId).
+    not('reservation_id', 'is', null);
 
     const offerReservationIds = new Set(
-      (offerPurchases || []).map(p => p.reservation_id).filter(Boolean)
+      (offerPurchases || []).map((p) => p.reservation_id).filter(Boolean)
     );
 
     // 1. Event-based reservations (upcoming)
-    const { data: upcomingEventRes } = await supabase
-      .from('reservations')
-      .select(`
+    const { data: upcomingEventRes } = await supabase.
+    from('reservations').
+    select(`
         ${reservationFields},
         events!inner(
           id, title, start_at, end_at, location, event_type,
           businesses(id, name, logo_url)
         )
-      `)
-      .eq('user_id', userId)
-      .not('event_id', 'is', null)
-      .neq('status', 'cancelled')
-      .gte('events.end_at', now);
+      `).
+    eq('user_id', userId).
+    not('event_id', 'is', null).
+    neq('status', 'cancelled').
+    gte('events.end_at', now);
 
     // 2. Event-based reservations (past)
-    const { data: pastEventRes } = await supabase
-      .from('reservations')
-      .select(`
+    const { data: pastEventRes } = await supabase.
+    from('reservations').
+    select(`
         ${reservationFields},
         events!inner(
           id, title, start_at, end_at, location, event_type,
           businesses(id, name, logo_url)
         )
-      `)
-      .eq('user_id', userId)
-      .not('event_id', 'is', null)
-      .lt('events.end_at', now);
+      `).
+    eq('user_id', userId).
+    not('event_id', 'is', null).
+    lt('events.end_at', now);
 
     // 3. Direct business reservations (upcoming)
-    const { data: upcomingDirectRes } = await supabase
-      .from('reservations')
-      .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
-      .eq('user_id', userId)
-      .is('event_id', null)
-      .not('business_id', 'is', null)
-      .neq('status', 'cancelled')
-      .gte('preferred_time', now);
+    const { data: upcomingDirectRes } = await supabase.
+    from('reservations').
+    select(`${reservationFields}, businesses(id, name, logo_url, address)`).
+    eq('user_id', userId).
+    is('event_id', null).
+    not('business_id', 'is', null).
+    neq('status', 'cancelled').
+    gte('preferred_time', now);
 
     // 4. Direct business reservations (past)
-    const { data: pastDirectRes } = await supabase
-      .from('reservations')
-      .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
-      .eq('user_id', userId)
-      .is('event_id', null)
-      .not('business_id', 'is', null)
-      .lt('preferred_time', now);
+    const { data: pastDirectRes } = await supabase.
+    from('reservations').
+    select(`${reservationFields}, businesses(id, name, logo_url, address)`).
+    eq('user_id', userId).
+    is('event_id', null).
+    not('business_id', 'is', null).
+    lt('preferred_time', now);
 
     // Filter out offer-based reservations
     const filterOutOffers = (reservations: ReservationData[]) =>
-      reservations.filter(r => !offerReservationIds.has(r.id));
+    reservations.filter((r) => !offerReservationIds.has(r.id));
 
     const allUpcoming = filterOutOffers([
-      ...(upcomingEventRes as unknown as ReservationData[] || []),
-      ...(upcomingDirectRes as unknown as ReservationData[] || [])
-    ]).sort((a, b) => {
+    ...(upcomingEventRes as unknown as ReservationData[] || []),
+    ...(upcomingDirectRes as unknown as ReservationData[] || [])]
+    ).sort((a, b) => {
       const dateA = a.events?.start_at || a.preferred_time || '';
       const dateB = b.events?.start_at || b.preferred_time || '';
       return new Date(dateA).getTime() - new Date(dateB).getTime();
     });
 
     const allPast = filterOutOffers([
-      ...(pastEventRes as unknown as ReservationData[] || []),
-      ...(pastDirectRes as unknown as ReservationData[] || [])
-    ]).sort((a, b) => {
+    ...(pastEventRes as unknown as ReservationData[] || []),
+    ...(pastDirectRes as unknown as ReservationData[] || [])]
+    ).sort((a, b) => {
       const dateA = a.events?.end_at || a.preferred_time || '';
       const dateB = b.events?.end_at || b.preferred_time || '';
       return new Date(dateB).getTime() - new Date(dateA).getTime();
@@ -231,23 +231,23 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
-    const directResIds = reservations
-      .filter(r => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending'))
-      .map(r => r.id);
+    const directResIds = reservations.
+    filter((r) => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending')).
+    map((r) => r.id);
 
     if (directResIds.length === 0) return;
 
-    const { data: guests, error } = await supabase
-      .from('reservation_guests')
-      .select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at')
-      .in('reservation_id', directResIds);
+    const { data: guests, error } = await supabase.
+    from('reservation_guests').
+    select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at').
+    in('reservation_id', directResIds);
 
     if (error || !guests) return;
 
     const guestsByRes: Record<string, typeof guests> = {};
     const qrCodesToGenerate: Record<string, string> = {};
 
-    guests.forEach(g => {
+    guests.forEach((g) => {
       if (!guestsByRes[g.reservation_id]) guestsByRes[g.reservation_id] = [];
       guestsByRes[g.reservation_id].push(g);
       if (g.qr_code_token) {
@@ -263,7 +263,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         codes[guestId] = await QRCode.toDataURL(token, {
           width: 256,
           margin: 2,
-          color: { dark: '#000000', light: '#FFFFFF' },
+          color: { dark: '#000000', light: '#FFFFFF' }
         });
       } catch (e) {
         console.error('Error generating direct guest QR code:', e);
@@ -274,34 +274,34 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const fetchGuestTickets = async (reservations: ReservationData[]) => {
     // For all event-based reservations (reservation-only AND hybrid)
-    const eventResIds = reservations
-      .filter(r => !!r.events && (r.status === 'accepted' || r.status === 'pending'))
-      .map(r => r.id);
+    const eventResIds = reservations.
+    filter((r) => !!r.events && (r.status === 'accepted' || r.status === 'pending')).
+    map((r) => r.id);
 
     if (eventResIds.length === 0) return;
 
-    const { data: orders } = await supabase
-      .from('ticket_orders')
-      .select('id, linked_reservation_id')
-      .in('linked_reservation_id', eventResIds);
+    const { data: orders } = await supabase.
+    from('ticket_orders').
+    select('id, linked_reservation_id').
+    in('linked_reservation_id', eventResIds);
 
     if (!orders || orders.length === 0) return;
 
-    const orderIds = orders.map(o => o.id);
+    const orderIds = orders.map((o) => o.id);
     const orderToRes: Record<string, string> = {};
-    orders.forEach(o => { if (o.linked_reservation_id) orderToRes[o.id] = o.linked_reservation_id; });
+    orders.forEach((o) => {if (o.linked_reservation_id) orderToRes[o.id] = o.linked_reservation_id;});
 
-    const { data: tickets } = await supabase
-      .from('tickets')
-      .select('id, order_id, guest_name, guest_age, qr_code_token, status')
-      .in('order_id', orderIds);
+    const { data: tickets } = await supabase.
+    from('tickets').
+    select('id, order_id, guest_name, guest_age, qr_code_token, status').
+    in('order_id', orderIds);
 
     if (!tickets) return;
 
     const ticketsByRes: Record<string, typeof tickets> = {};
     const qrCodesToGenerate: Record<string, string> = {};
 
-    tickets.forEach(t => {
+    tickets.forEach((t) => {
       const resId = orderToRes[t.order_id];
       if (resId) {
         if (!ticketsByRes[resId]) ticketsByRes[resId] = [];
@@ -321,7 +321,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         codes[ticketId] = await QRCode.toDataURL(token, {
           width: 256,
           margin: 2,
-          color: { dark: '#000000', light: '#FFFFFF' },
+          color: { dark: '#000000', light: '#FFFFFF' }
         });
       } catch (e) {
         console.error('Error generating guest QR code:', e);
@@ -338,7 +338,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           const qrDataUrl = await QRCode.toDataURL(reservation.qr_code_token, {
             width: 256,
             margin: 2,
-            color: { dark: '#000000', light: '#FFFFFF' },
+            color: { dark: '#000000', light: '#FFFFFF' }
           });
           codes[reservation.id] = qrDataUrl;
         } catch (error) {
@@ -355,27 +355,27 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     toast.success(tt.reservationCancelled);
 
     try {
-      const cancelReservation = supabase
-        .from('reservations')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', reservationId)
-        .eq('user_id', userId);
+      const cancelReservation = supabase.
+      from('reservations').
+      update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+      eq('id', reservationId).
+      eq('user_id', userId);
 
-      const cancelLinkedOffer = supabase
-        .from('offer_purchases')
-        .update({ status: 'cancelled' })
-        .eq('reservation_id', reservationId)
-        .neq('status', 'redeemed')
-        .neq('status', 'cancelled');
+      const cancelLinkedOffer = supabase.
+      from('offer_purchases').
+      update({ status: 'cancelled' }).
+      eq('reservation_id', reservationId).
+      neq('status', 'redeemed').
+      neq('status', 'cancelled');
 
       const [resResult] = await Promise.all([cancelReservation, cancelLinkedOffer]);
       if (resResult.error) throw resResult.error;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('reservation_cancellation_count')
-        .eq('id', userId)
-        .single();
+      const { data: profile } = await supabase.
+      from('profiles').
+      select('reservation_cancellation_count').
+      eq('id', userId).
+      single();
 
       const newCount = (profile?.reservation_cancellation_count || 0) + 1;
       const updateData: any = { reservation_cancellation_count: newCount };
@@ -419,7 +419,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'Δεν υπάρχουν απλές κρατήσεις',
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
       code: 'Κωδικός',
-      viewQRCodes: 'Εμφάνιση QR Codes',
+      viewQRCodes: 'Εμφάνιση QR Codes'
     },
     en: {
       title: 'My Reservations',
@@ -441,8 +441,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'No direct reservations',
       noEventReservations: 'No reservations via events',
       code: 'Code',
-      viewQRCodes: 'Show QR Codes',
-    },
+      viewQRCodes: 'Show QR Codes'
+    }
   };
 
   const t = text[language];
@@ -498,19 +498,19 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Row 2: Business */}
           <div className="flex items-center gap-1.5">
-            {businessInfo?.logo_url && (
-              <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
-            )}
+            {businessInfo?.logo_url &&
+            <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
+            }
             <span className="text-sm font-medium">{businessInfo?.name}</span>
           </div>
 
           {/* Row 3: Date/Time */}
-          {dateTime && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
+          {dateTime &&
+          <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
               <span className="text-xs">{formatDateTime(dateTime)}</span>
             </div>
-          )}
+          }
 
           {/* Row 4: Party size */}
           <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -520,90 +520,90 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Row 5: Location */}
           {location && (
-            isEvent ? (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-              >
+          isEvent ?
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+            
                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span className="text-xs truncate">{location}</span>
-              </a>
-            ) : (
-              <button
-                onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
-              >
+              </a> :
+
+          <button
+            onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+            
                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span className="text-xs truncate">{location}</span>
-              </button>
-            )
-          )}
+              </button>)
+
+          }
 
           {/* Event reservations with guest QR codes: single CTA button */}
-          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 && (
-            <div className="flex items-center justify-between gap-1.5 mt-2">
+          {!isPast && !!reservation.events && guestTickets[reservation.id]?.length > 0 &&
+          <div className="flex items-center justify-between gap-1.5 mt-2">
               <Button
-                type="button"
-                size="sm"
-                className="h-8 text-xs px-4"
-                onClick={() => {
-                  setCurrentEventGuestIndex(0);
-                  setSelectedEventGuestsReservation(reservation);
-                }}
-              >
+              type="button"
+              size="sm"
+              className="h-8 text-xs px-4"
+              onClick={() => {
+                setCurrentEventGuestIndex(0);
+                setSelectedEventGuestsReservation(reservation);
+              }}>
+              
                 {t.viewQRCodes}
               </Button>
 
-              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
-                <Button
-                  size="sm"
-                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
-                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-                >
+              {(reservation.status === 'pending' || reservation.status === 'accepted') &&
+            <Button
+              size="sm"
+              className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
+              
                   {t.cancelReservation}
                 </Button>
-              )}
+            }
             </div>
-          )}
+          }
 
           {/* Direct reservations with guest QR codes: single CTA */}
-          {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 && (
-            <div className="flex items-center justify-between gap-1.5 mt-2">
+          {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 &&
+          <div className="flex items-center justify-between gap-1.5 mt-2">
               <Button
-                type="button"
-                size="sm"
-                className="h-8 text-xs px-4"
-                onClick={() => {
-                  setCurrentDirectGuestIndex(0);
-                  setSelectedDirectGuestsReservation(reservation);
-                }}
-              >
+              type="button"
+              size="sm"
+              className="h-8 text-xs px-4"
+              onClick={() => {
+                setCurrentDirectGuestIndex(0);
+                setSelectedDirectGuestsReservation(reservation);
+              }}>
+              
                 {t.viewQRCodes}
               </Button>
 
-              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
-                <Button
-                  size="sm"
-                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
-                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-                >
+              {(reservation.status === 'pending' || reservation.status === 'accepted') &&
+            <Button
+              size="sm"
+              className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
+              
                   {t.cancelReservation}
                 </Button>
-              )}
+            }
             </div>
-          )}
+          }
 
           {/* QR Code + Cancel on same line (fallback for reservations without guest tickets/guests) */}
-          {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length && (
-            <div className="flex items-center gap-1.5 mt-2">
-              {reservation.confirmation_code && (
-                <button
-                  type="button"
-                  onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
-                  className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
-                >
+          {!isPast && (!reservation.events || !guestTickets[reservation.id]?.length) && !directGuests[reservation.id]?.length &&
+          <div className="flex items-center gap-1.5 mt-2">
+              {reservation.confirmation_code &&
+            <button
+              type="button"
+              onClick={() => qrCodes[reservation.id] && setSelectedReservationForQR(reservation)}
+              className="flex-1 flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors">
+              
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-muted-foreground">{t.code}</span>
                     <span className="text-xs font-semibold text-foreground tracking-wider">{reservation.confirmation_code}</span>
@@ -613,30 +613,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                     <span className="text-[10px] font-medium">QR</span>
                   </div>
                 </button>
-              )}
+            }
 
-              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
-                <Button
-                  size="sm"
-                  className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
-                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
-                >
+              {(reservation.status === 'pending' || reservation.status === 'accepted') &&
+            <Button
+              size="sm"
+              className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
+              
                   {t.cancelReservation}
                 </Button>
-              )}
+            }
             </div>
-          )}
+          }
         </CardContent>
-      </Card>
-    );
+      </Card>);
+
   };
 
   // Categorize
-  const directReservations = upcomingReservations.filter(r => !r.events);
-  const eventReservations = upcomingReservations.filter(r => !!r.events);
+  const directReservations = upcomingReservations.filter((r) => !r.events);
+  const eventReservations = upcomingReservations.filter((r) => !!r.events);
 
-  const pastDirectReservations = pastReservations.filter(r => !r.events);
-  const pastEventReservations = pastReservations.filter(r => !!r.events);
+  const pastDirectReservations = pastReservations.filter((r) => !r.events);
+  const pastEventReservations = pastReservations.filter((r) => !!r.events);
 
   const hasPast = pastReservations.length > 0;
 
@@ -646,9 +646,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
           <TabsTrigger
             value="event"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
-            <Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            
+            
             <span className="truncate">{t.eventTab}</span>
             <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
               {eventReservations.length}
@@ -656,8 +656,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </TabsTrigger>
           <TabsTrigger
             value="direct"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-          >
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            
             <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <span className="truncate">{t.directTab}</span>
             <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
@@ -667,29 +667,29 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         </TabsList>
 
         <TabsContent value="event" className="mt-4">
-          {eventReservations.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
-          ) : (
-            <div className="grid gap-3">
-              {eventReservations.map(r => renderReservationCard(r, false))}
+          {eventReservations.length === 0 ?
+          <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
+
+          <div className="grid gap-3">
+              {eventReservations.map((r) => renderReservationCard(r, false))}
             </div>
-          )}
+          }
         </TabsContent>
 
         <TabsContent value="direct" className="mt-4">
-          {directReservations.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-          ) : (
-            <div className="grid gap-3">
-              {directReservations.map(r => renderReservationCard(r, false))}
+          {directReservations.length === 0 ?
+          <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
+
+          <div className="grid gap-3">
+              {directReservations.map((r) => renderReservationCard(r, false))}
             </div>
-          )}
+          }
         </TabsContent>
       </Tabs>
 
       {/* History */}
-      {hasPast && (
-        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+      {hasPast &&
+      <Collapsible open={showHistory} onOpenChange={setShowHistory}>
           <CollapsibleTrigger asChild>
             <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
               <div className="flex items-center gap-2">
@@ -710,27 +710,27 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="past-event" className="mt-4">
-                {pastEventReservations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p>
-                ) : (
-                  <div className="grid gap-3">
-                    {pastEventReservations.map(r => renderReservationCard(r, true))}
+                {pastEventReservations.length === 0 ?
+              <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
+
+              <div className="grid gap-3">
+                    {pastEventReservations.map((r) => renderReservationCard(r, true))}
                   </div>
-                )}
+              }
               </TabsContent>
               <TabsContent value="past-direct" className="mt-4">
-                {pastDirectReservations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p>
-                ) : (
-                  <div className="grid gap-3">
-                    {pastDirectReservations.map(r => renderReservationCard(r, true))}
+                {pastDirectReservations.length === 0 ?
+              <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
+
+              <div className="grid gap-3">
+                    {pastDirectReservations.map((r) => renderReservationCard(r, true))}
                   </div>
-                )}
+              }
               </TabsContent>
             </Tabs>
           </CollapsibleContent>
         </Collapsible>
-      )}
+      }
 
       <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
         <AlertDialogContent>
@@ -746,8 +746,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 e.stopPropagation();
                 if (!cancelDialog.reservationId) return;
                 await handleCancelReservation(cancelDialog.reservationId);
-              }}
-            >
+              }}>
+              
               {t.confirm}
             </AlertDialogAction>
             <AlertDialogCancel className="flex-1 h-9 text-xs mt-0">{t.cancel}</AlertDialogCancel>
@@ -767,11 +767,11 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           seatingType: selectedReservationForQR.seating_preference || undefined,
           eventTitle: selectedReservationForQR.events?.title,
           prepaidAmountCents: selectedReservationForQR.prepaid_min_charge_cents || 0,
-          isEventBased: !!selectedReservationForQR.events,
+          isEventBased: !!selectedReservationForQR.events
         } : null}
         language={language}
-        onClose={() => setSelectedReservationForQR(null)}
-      />
+        onClose={() => setSelectedReservationForQR(null)} />
+      
 
       {/* Multi-guest QR dialog for direct reservations */}
       {selectedDirectGuestsReservation && directGuests[selectedDirectGuestsReservation.id]?.length > 0 && (() => {
@@ -782,46 +782,46 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           setSelectedDirectGuestsReservation(null);
           setCurrentDirectGuestIndex(0);
         };
-        
-        const content = (
-          <div className="space-y-4">
+
+        const content =
+        <div className="space-y-4">
             <SuccessQRCard
-              type="reservation"
-              qrToken={currentGuest?.qr_code_token || ''}
-              title={language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}
-              businessName={businessInfo?.name || ''}
-              businessLogo={businessInfo?.logo_url}
-              language={language}
-              guestName={currentGuest?.guest_name}
-              reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
-              showSuccessMessage={false}
-              onClose={closeDialog}
-            />
-            {guests.length > 1 && (
-              <div className="flex items-center justify-center gap-3 pb-2">
+            type="reservation"
+            qrToken={currentGuest?.qr_code_token || ''}
+            title={language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}
+            businessName={businessInfo?.name || ''}
+            businessLogo={businessInfo?.logo_url}
+            language={language}
+            guestName={currentGuest?.guest_name}
+            reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
+            showSuccessMessage={false}
+            onClose={closeDialog} />
+          
+            {guests.length > 1 &&
+          <div className="flex items-center justify-center gap-3 pb-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentDirectGuestIndex(Math.max(0, currentDirectGuestIndex - 1))}
-                  disabled={currentDirectGuestIndex === 0}
-                >
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDirectGuestIndex(Math.max(0, currentDirectGuestIndex - 1))}
+              disabled={currentDirectGuestIndex === 0}>
+              
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <span className="text-sm font-medium text-foreground">
                   {currentGuest?.guest_name} ({currentDirectGuestIndex + 1}/{guests.length})
                 </span>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentDirectGuestIndex(Math.min(guests.length - 1, currentDirectGuestIndex + 1))}
-                  disabled={currentDirectGuestIndex === guests.length - 1}
-                >
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDirectGuestIndex(Math.min(guests.length - 1, currentDirectGuestIndex + 1))}
+              disabled={currentDirectGuestIndex === guests.length - 1}>
+              
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-            )}
-          </div>
-        );
+          }
+          </div>;
+
 
         if (isMobile) {
           return (
@@ -833,8 +833,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </DrawerHeader>
                 <div className="px-4 pb-6 overflow-y-auto">{content}</div>
               </DrawerContent>
-            </Drawer>
-          );
+            </Drawer>);
+
         }
 
         return (
@@ -845,8 +845,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               </VisuallyHidden>
               {content}
             </DialogContent>
-          </Dialog>
-        );
+          </Dialog>);
+
       })()}
 
       {/* Multi-guest QR dialog for event reservations */}
@@ -858,47 +858,47 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           setSelectedEventGuestsReservation(null);
           setCurrentEventGuestIndex(0);
         };
-        
-        const content = (
-          <div className="space-y-4">
+
+        const content =
+        <div className="space-y-4">
             <SuccessQRCard
-              type="reservation"
-              qrToken={currentTicket?.qr_code_token || ''}
-              title={selectedEventGuestsReservation.events?.title || ''}
-              businessName={businessInfo?.name || ''}
-              businessLogo={businessInfo?.logo_url}
-              language={language}
-              guestName={currentTicket?.guest_name}
-              guestAge={currentTicket?.guest_age || undefined}
-              reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
-              showSuccessMessage={false}
-              onClose={closeDialog}
-            />
-            {tickets.length > 1 && (
-              <div className="flex items-center justify-center gap-3 pb-2">
+            type="reservation"
+            qrToken={currentTicket?.qr_code_token || ''}
+            title={selectedEventGuestsReservation.events?.title || ''}
+            businessName={businessInfo?.name || ''}
+            businessLogo={businessInfo?.logo_url}
+            language={language}
+            guestName={currentTicket?.guest_name}
+            guestAge={currentTicket?.guest_age || undefined}
+            reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
+            showSuccessMessage={false}
+            onClose={closeDialog} />
+          
+            {tickets.length > 1 &&
+          <div className="flex items-center justify-center gap-3 pb-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
-                  disabled={currentEventGuestIndex === 0}
-                >
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentEventGuestIndex(Math.max(0, currentEventGuestIndex - 1))}
+              disabled={currentEventGuestIndex === 0}>
+              
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <span className="text-sm font-medium text-foreground">
                   {currentTicket?.guest_name} ({currentEventGuestIndex + 1}/{tickets.length})
                 </span>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
-                  disabled={currentEventGuestIndex === tickets.length - 1}
-                >
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentEventGuestIndex(Math.min(tickets.length - 1, currentEventGuestIndex + 1))}
+              disabled={currentEventGuestIndex === tickets.length - 1}>
+              
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-            )}
-          </div>
-        );
+          }
+          </div>;
+
 
         if (isMobile) {
           return (
@@ -910,8 +910,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </DrawerHeader>
                 <div className="px-4 pb-6 overflow-y-auto">{content}</div>
               </DrawerContent>
-            </Drawer>
-          );
+            </Drawer>);
+
         }
 
         return (
@@ -922,9 +922,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               </VisuallyHidden>
               {content}
             </DialogContent>
-          </Dialog>
-        );
+          </Dialog>);
+
       })()}
-    </div>
-  );
+    </div>);
+
 };
