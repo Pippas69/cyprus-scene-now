@@ -546,25 +546,6 @@ export const DirectReservationDialog = ({
         </div>
       ) : (
         <>
-          {/* Policy Info */}
-          <div className="bg-muted/50 border rounded-lg p-3 space-y-2">
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">{t.policyTitle}</p>
-            <div className="flex flex-col gap-1 text-[10px] sm:text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 flex-shrink-0" />
-                <span className="whitespace-nowrap">{t.instantConfirmation}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-                <span className="whitespace-nowrap">{t.noShowPolicy}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                <span className="whitespace-nowrap">{t.cancellationPolicy}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Capacity indicator */}
           {availableCapacity !== null && (
             <div
@@ -587,45 +568,74 @@ export const DirectReservationDialog = ({
             </div>
           )}
 
-          {/* Name */}
-          <div className="space-y-1.5">
-            <Label htmlFor="reservation_name" className="flex items-center gap-2 text-xs sm:text-sm">
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              {t.reservationName}
-            </Label>
-            <Input
-              id="reservation_name"
-              value={formData.reservation_name}
-              onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
-              placeholder={t.namePlaceholder}
-              required
-              className="text-xs sm:text-sm h-9 sm:h-10"
-            />
+          {/* Name + Party Size on same row */}
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="reservation_name" className="flex items-center gap-2 text-xs sm:text-sm">
+                <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                {t.reservationName}
+              </Label>
+              <Input
+                id="reservation_name"
+                value={formData.reservation_name}
+                onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
+                placeholder={t.namePlaceholder}
+                required
+                className="text-xs sm:text-sm h-9 sm:h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="party_size" className="flex items-center gap-2 text-xs sm:text-sm">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                {t.partySize}
+              </Label>
+              <NumberInput
+                value={formData.party_size}
+                onChange={(value) => {
+                  const newSize = Math.min(Math.max(1, value), slotMaxPartySize);
+                  const newNames = [...formData.guest_names];
+                  while (newNames.length < newSize) newNames.push('');
+                  while (newNames.length > newSize) newNames.pop();
+                  setFormData({
+                    ...formData,
+                    party_size: newSize,
+                    guest_names: newNames,
+                  });
+                }}
+                min={1}
+                max={slotMaxPartySize}
+                disabled={availableCapacity === 0}
+                className="w-20 sm:w-24 text-xs sm:text-sm h-8 sm:h-10"
+              />
+            </div>
           </div>
 
-          {/* Party Size */}
-          <div className="space-y-1.5">
-            <Label htmlFor="party_size" className="flex items-center gap-2 text-xs sm:text-sm">
+          {/* Guest Names */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-xs sm:text-sm">
               <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-              {t.partySize}
+              {language === 'el' ? 'Ονόματα Ατόμων' : 'Guest Names'}
             </Label>
-            <NumberInput
-              value={formData.party_size}
-              onChange={(value) => {
-                setFormData({
-                  ...formData,
-                  party_size: Math.min(Math.max(1, value), slotMaxPartySize),
-                });
-              }}
-              min={1}
-              max={slotMaxPartySize}
-              disabled={availableCapacity === 0}
-              className="w-20 sm:w-24 text-xs sm:text-sm h-8 sm:h-10"
-            />
+            <div className="space-y-2">
+              {formData.guest_names.map((name, index) => (
+                <Input
+                  key={index}
+                  value={name}
+                  onChange={(e) => {
+                    const newNames = [...formData.guest_names];
+                    newNames[index] = e.target.value;
+                    setFormData({ ...formData, guest_names: newNames });
+                  }}
+                  placeholder={`${language === 'el' ? 'Άτομο' : 'Guest'} ${index + 1}`}
+                  required
+                  className="text-xs sm:text-sm h-9 sm:h-10"
+                />
+              ))}
+            </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
               {language === 'el'
-                ? `Μέγιστο ${slotMaxPartySize} άτομα ανά κράτηση για αυτό το slot.`
-                : `Max ${slotMaxPartySize} people per reservation for this slot.`}
+                ? `Εισάγετε το όνομα κάθε ατόμου. Κάθε άτομο θα λάβει ξεχωριστό QR code.`
+                : `Enter each guest's name. Each person will receive an individual QR code.`}
             </p>
           </div>
 
