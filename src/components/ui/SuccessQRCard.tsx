@@ -165,7 +165,8 @@ export const SuccessQRCard = ({
   };
 
   const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}/offer-view/${qrToken}`;
+    const viewPath = type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view";
+    const shareUrl = `${window.location.origin}/${viewPath}/${qrToken}`;
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
