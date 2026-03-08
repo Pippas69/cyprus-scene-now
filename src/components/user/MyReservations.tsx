@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -534,11 +534,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           }
 
           {/* Row 4: Payment info (event reservations only) */}
-          {isEvent && reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0 &&
+          {isEvent && ((reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0) || ticketOrderTotals[reservation.id] > 0) &&
           <div className="flex items-center gap-1.5 text-muted-foreground">
+              <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
               <span className="text-xs">
-                {t.minPrepayment}: €{(reservation.prepaid_min_charge_cents / 100).toFixed(2)}
-                {reservation.events?.event_type === 'hybrid' && ticketOrderTotals[reservation.id] > 0 &&
+                {t.minPrepayment}: €{((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}
+                {ticketOrderTotals[reservation.id] > 0 &&
                   ` (${t.tickets}: €${(ticketOrderTotals[reservation.id] / 100).toFixed(2)})`
                 }
               </span>
