@@ -224,9 +224,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
-    generateQRCodes([...allUpcoming, ...allPast]);
-    fetchGuestTickets([...allUpcoming, ...allPast]);
-    fetchDirectReservationGuests([...allUpcoming, ...allPast]);
+    const allRes = [...allUpcoming, ...allPast];
+    await Promise.all([
+      generateQRCodes(allRes),
+      fetchGuestTickets(allRes),
+      fetchDirectReservationGuests(allRes),
+    ]);
     setLoading(false);
   };
 
