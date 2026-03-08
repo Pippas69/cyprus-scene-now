@@ -95,6 +95,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [directGuestQrCodes, setDirectGuestQrCodes] = useState<Record<string, string>>({});
   const [selectedDirectGuestsReservation, setSelectedDirectGuestsReservation] = useState<ReservationData | null>(null);
   const [currentDirectGuestIndex, setCurrentDirectGuestIndex] = useState(0);
+  // Event reservation guest QR dialog
+  const [selectedEventGuestsReservation, setSelectedEventGuestsReservation] = useState<ReservationData | null>(null);
+  const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const tt = toastTranslations[language];
 
   useEffect(() => {
