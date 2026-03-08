@@ -90,7 +90,7 @@ interface ClaimSuccessData {
   hasReservation: boolean;
   reservationDate?: string;
   reservationTime?: string;
-  guests?: { guest_name: string; qr_code_token: string }[];
+  guests?: {guest_name: string;qr_code_token: string;}[];
 }
 
 export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, language }: OfferClaimDialogProps) {
@@ -102,11 +102,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [guestNames, setGuestNames] = useState<string[]>(['']);
   const [claimSuccess, setClaimSuccess] = useState<ClaimSuccessData | null>(null);
   const [currentGuestIndex, setCurrentGuestIndex] = useState(0);
-  
+
   // Fresh offer data
   const [freshOffer, setFreshOffer] = useState<Offer | null>(null);
   const offer = freshOffer || initialOffer;
-  
+
   // Reservation state
   const [wantsReservation, setWantsReservation] = useState(false);
   const [reservationDate, setReservationDate] = useState<Date | undefined>(undefined);
@@ -114,7 +114,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
-  
+
   const businessId = offer?.business_id || offer?.businesses?.id;
   const { closedSlots } = useClosedSlots(businessId, reservationDate);
   const { closedDates } = useClosedDates(businessId);
@@ -123,19 +123,19 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   useEffect(() => {
     if (isOpen && initialOffer?.id) {
       const fetchFreshOffer = async () => {
-        const { data, error } = await supabase
-          .from('discounts')
-          .select(`
+        const { data, error } = await supabase.
+        from('discounts').
+        select(`
             id, title, description, percent_off, original_price_cents,
             start_at, end_at, business_id, terms, max_per_user,
             valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
             total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
             offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
             businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days)
-          `)
-          .eq('id', initialOffer.id)
-          .single();
-        
+          `).
+        eq('id', initialOffer.id).
+        single();
+
         if (!error && data) {
           setFreshOffer(data as unknown as Offer);
         }
@@ -164,7 +164,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   // Sync guest names array with party size
   useEffect(() => {
-    setGuestNames(prev => {
+    setGuestNames((prev) => {
       const newNames = [...prev];
       while (newNames.length < partySize) newNames.push('');
       return newNames.slice(0, partySize);
@@ -183,15 +183,15 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   const checkCapacity = async () => {
     if (!reservationDate || !reservationTime || !offer?.business_id) return;
-    
+
     setCheckingCapacity(true);
     setCapacityError(null);
-    
+
     try {
       const { data, error } = await supabase.rpc('get_slot_available_capacity', {
         p_business_id: offer.business_id,
         p_date: format(reservationDate, 'yyyy-MM-dd'),
-        p_slot_time: reservationTime,
+        p_slot_time: reservationTime
       });
 
       if (error) throw error;
@@ -240,7 +240,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     wantReservation: { el: "Θέλετε να κλείσετε τραπέζι;", en: "Want to book a table?" },
     selectDate: { el: "Επιλέξτε ημερομηνία", en: "Select date" },
     selectTime: { el: "Επιλέξτε ώρα", en: "Select time" },
-    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
+    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" }
   };
 
   const t = (key: keyof typeof text) => text[key][language];
@@ -252,7 +252,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     thursday: { el: "Πέμπτη", en: "Thursday" },
     friday: { el: "Παρασκευή", en: "Friday" },
     saturday: { el: "Σάββατο", en: "Saturday" },
-    sunday: { el: "Κυριακή", en: "Sunday" },
+    sunday: { el: "Κυριακή", en: "Sunday" }
   };
 
   const getCategoryLabel = (category: string | null): string => {
@@ -265,14 +265,14 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     const icons: Record<string, string> = {
       drink: "🍹",
       food: "🍽️",
-      account_total: "💳",
+      account_total: "💳"
     };
     return icons[category || ""] || "";
   };
 
   const formatDays = (days: string[] | null): string => {
     if (!days || days.length === 0 || days.length === 7) return t("everyDay");
-    return days.map(d => dayTranslations[d]?.[language] || d).join(", ");
+    return days.map((d) => dayTranslations[d]?.[language] || d).join(", ");
   };
 
   const formatTimeRange = (start: string | null, end: string | null): string => {
@@ -292,9 +292,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     const selectedDay = dayNames[reservationDate.getDay()];
 
     const businessSlots = offer.businesses?.reservation_time_slots;
-    const candidates = businessSlots && Array.isArray(businessSlots)
-      ? expandSlotsForDay(businessSlots, selectedDay, 30)
-      : [];
+    const candidates = businessSlots && Array.isArray(businessSlots) ?
+    expandSlotsForDay(businessSlots, selectedDay, 30) :
+    [];
 
     if (candidates.length === 0) {
       const out: number[] = [];
@@ -303,7 +303,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       if (isOvernight) end += 1440;
 
       for (let t = start; t <= end; t += 30) {
-        out.push(((t % 1440) + 1440) % 1440);
+        out.push((t % 1440 + 1440) % 1440);
       }
 
       return out.map((m) => {
@@ -323,7 +323,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const rawTimeSlots = getRawTimeSlots();
-  
+
   const { fullyBookedSlots, loading: availabilityLoading } = useSlotAvailability(
     businessId,
     reservationDate,
@@ -339,61 +339,61 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     return slotDate <= now;
   };
 
-  const timeSlots = rawTimeSlots.filter(slot => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
+  const timeSlots = rawTimeSlots.filter((slot) => !fullyBookedSlots.has(slot) && !closedSlots.has(slot));
 
   // Clear reservationTime if selected slot is no longer available
   useEffect(() => {
     if (reservationTime && (closedSlots.has(reservationTime) || fullyBookedSlots.has(reservationTime) || isSlotPassed(reservationTime))) {
-      const firstAvailableSlot = timeSlots.find(slot => !isSlotPassed(slot));
+      const firstAvailableSlot = timeSlots.find((slot) => !isSlotPassed(slot));
       setReservationTime(firstAvailableSlot || "");
     }
   }, [closedSlots, fullyBookedSlots, reservationTime, reservationDate]);
 
   const isDateValidForOffer = (date: Date): boolean => {
     if (!offer) return false;
-    
+
     const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endAtFull = new Date(offer.end_at);
     const endAt = new Date(endAtFull.getFullYear(), endAtFull.getMonth(), endAtFull.getDate());
     const startAtFull = offer.start_at ? new Date(offer.start_at) : new Date();
     const startAt = new Date(startAtFull.getFullYear(), startAtFull.getMonth(), startAtFull.getDate());
-    
+
     if (dateOnly < startAt || dateOnly > endAt) return false;
-    
+
     const dayIndex = date.getDay();
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = dayNames[dayIndex];
-    
+
     if (offer.valid_days && offer.valid_days.length > 0 && offer.valid_days.length < 7) {
       if (!offer.valid_days.includes(dayName)) return false;
     }
-    
+
     const businessSlots = offer.businesses?.reservation_time_slots;
     const businessDays = offer.businesses?.reservation_days;
-    
+
     if (businessDays && businessDays.length > 0) {
       if (!businessDays.includes(dayName)) return false;
     }
-    
+
     if (businessSlots && Array.isArray(businessSlots) && businessSlots.length > 0) {
-      const hasSlotForDay = businessSlots.some(slot => slot.days && slot.days.includes(dayName));
+      const hasSlotForDay = businessSlots.some((slot) => slot.days && slot.days.includes(dayName));
       if (!hasSlotForDay) return false;
     }
-    
+
     const dateStr = format(date, 'yyyy-MM-dd');
     if (closedDates.has(dateStr)) return false;
-    
+
     return true;
   };
-  
+
   const closedDatesModifiers = {
     closed: (date: Date) => closedDates.has(format(date, 'yyyy-MM-dd')),
-    unavailable: (date: Date) => !isDateValidForOffer(date),
+    unavailable: (date: Date) => !isDateValidForOffer(date)
   };
-  
+
   const closedDatesModifiersStyles = {
     closed: { opacity: 0.35 },
-    unavailable: { opacity: 0.35 },
+    unavailable: { opacity: 0.35 }
   };
 
   if (!offer) return null;
@@ -401,11 +401,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const maxPerRedemption = offer.max_people_per_redemption ?? null;
   const peopleRemaining = offer.people_remaining ?? offer.total_people ?? null;
   const maxSelectablePartySize = Math.min(maxPerRedemption ?? 10, peopleRemaining ?? 10);
-  const discountDisplay = offer.discount_type === "special_deal" && offer.special_deal_text
-    ? offer.special_deal_text
-    : offer.percent_off
-      ? `-${offer.percent_off}%`
-      : null;
+  const discountDisplay = offer.discount_type === "special_deal" && offer.special_deal_text ?
+  offer.special_deal_text :
+  offer.percent_off ?
+  `-${offer.percent_off}%` :
+  null;
 
   const businessAcceptsReservations = offer.businesses?.accepts_direct_reservations === true;
   const showReservationOption = offer.show_reservation_cta === true && businessAcceptsReservations && businessId;
@@ -414,7 +414,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     return new Date(dateString).toLocaleDateString(language === "el" ? "el-GR" : "en-US", {
       day: "numeric",
       month: "long",
-      year: "numeric",
+      year: "numeric"
     });
   };
 
@@ -427,10 +427,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         return;
       }
 
-      const requestBody: Record<string, unknown> = { 
-        discountId: offer.id, 
+      const requestBody: Record<string, unknown> = {
+        discountId: offer.id,
         partySize,
-        guestNames: guestNames.map(n => n.trim()).filter(Boolean),
+        guestNames: guestNames.map((n) => n.trim()).filter(Boolean)
       };
 
       if (wantsReservation && reservationDate && reservationTime) {
@@ -438,35 +438,35 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         requestBody.reservationData = {
           preferred_date: format(reservationDate, 'yyyy-MM-dd'),
           preferred_time: reservationTime,
-          party_size: partySize,
+          party_size: partySize
         };
       }
 
       const { data, error } = await supabase.functions.invoke("claim-offer", {
-        body: requestBody,
+        body: requestBody
       });
 
-      const serverMsg = (data as any)?.success === false
-        ? ((data as any)?.error as string | undefined)
-        : undefined;
+      const serverMsg = (data as any)?.success === false ?
+      (data as any)?.error as string | undefined :
+      undefined;
 
       if (error || serverMsg) {
         const rawBody = (error as any)?.context?.body;
         const parsedMsg = (() => {
           if (typeof rawBody === "string") {
-            try { return JSON.parse(rawBody)?.error as string | undefined; }
-            catch { return undefined; }
+            try {return JSON.parse(rawBody)?.error as string | undefined;}
+            catch {return undefined;}
           }
           return undefined;
         })();
 
         const msg = serverMsg || parsedMsg || (error as any)?.message;
         const friendlyMsg =
-          msg === "You have already claimed this offer"
-            ? language === "el"
-              ? "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις \"Οι Προσφορές μου\"."
-              : "You already claimed this offer. Check it in \"My Offers\"."
-            : msg || t("errorGeneric");
+        msg === "You have already claimed this offer" ?
+        language === "el" ?
+        "Έχετε ήδη διεκδικήσει αυτή την προσφορά. Δείτε την στις \"Οι Προσφορές μου\"." :
+        "You already claimed this offer. Check it in \"My Offers\"." :
+        msg || t("errorGeneric");
 
         toast.error(friendlyMsg);
         return;
@@ -484,12 +484,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           hasReservation: data.hasReservation || false,
           reservationDate: wantsReservation && reservationDate ? format(reservationDate, 'dd/MM/yyyy') : undefined,
           reservationTime: wantsReservation ? reservationTime : undefined,
-          guests: data.guests || undefined,
+          guests: data.guests || undefined
         });
-        
-        const successMsg = wantsReservation 
-          ? (language === "el" ? "Η προσφορά διεκδικήθηκε με κράτηση!" : "Offer claimed with reservation!")
-          : (language === "el" ? "Η προσφορά διεκδικήθηκε!" : "Offer claimed!");
+
+        const successMsg = wantsReservation ?
+        language === "el" ? "Η προσφορά διεκδικήθηκε με κράτηση!" : "Offer claimed with reservation!" :
+        language === "el" ? "Η προσφορά διεκδικήθηκε!" : "Offer claimed!";
         toast.success(successMsg);
       }
     } catch {
@@ -508,8 +508,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const ReservationSection = () => {
     if (!showReservationOption) return null;
 
-    const canProceedWithReservation = wantsReservation && reservationDate && reservationTime && 
-      availableCapacity !== null && availableCapacity >= partySize && !capacityError;
+    const canProceedWithReservation = wantsReservation && reservationDate && reservationTime &&
+    availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
     return (
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
@@ -529,17 +529,17 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 setAvailableCapacity(null);
                 setCapacityError(null);
               }
-            }}
-          />
+            }} />
+          
         </div>
         
         <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
-          {language === "el"
-            ? `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.`
-            : `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
+          {language === "el" ?
+          `Κάντε κράτηση για τις ώρες της έκπτωσης (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) για να εξασφαλίσετε θέση.` :
+          `Book for discount hours (${offer?.valid_start_time?.substring(0, 5) || ""} - ${offer?.valid_end_time?.substring(0, 5) || ""}) to secure a seat.`}
         </p>
-        {wantsReservation && (
-          <div className="space-y-2 sm:space-y-3 pt-2">
+        {wantsReservation &&
+        <div className="space-y-2 sm:space-y-3 pt-2">
             {/* Date Picker */}
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
@@ -550,164 +550,164 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9 sm:h-10">
                     <CalendarDays className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    {reservationDate 
-                      ? format(reservationDate, "PPP", { locale: language === "el" ? el : enUS })
-                      : t("selectDate")
-                    }
+                    {reservationDate ?
+                  format(reservationDate, "PPP", { locale: language === "el" ? el : enUS }) :
+                  t("selectDate")
+                  }
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
-                    mode="single"
-                    selected={reservationDate}
-                    onSelect={setReservationDate}
-                    disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      return isBefore(date, today) || !isDateValidForOffer(date);
-                    }}
-                    modifiers={closedDatesModifiers}
-                    modifiersStyles={closedDatesModifiersStyles}
-                    initialFocus
-                    locale={language === "el" ? el : enUS}
-                  />
+                  mode="single"
+                  selected={reservationDate}
+                  onSelect={setReservationDate}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return isBefore(date, today) || !isDateValidForOffer(date);
+                  }}
+                  modifiers={closedDatesModifiers}
+                  modifiersStyles={closedDatesModifiersStyles}
+                  initialFocus
+                  locale={language === "el" ? el : enUS} />
+                
                 </PopoverContent>
               </Popover>
             </div>
 
             {/* Time Selector */}
-            {reservationDate && (
-              <div className="space-y-1.5">
+            {reservationDate &&
+          <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
                   <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {t("selectTime")}
                 </Label>
-                {availabilityLoading ? (
-                  <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                {availabilityLoading ?
+            <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                     {language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}
-                  </div>
-                ) : timeSlots.length === 0 ? (
-                  <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
+                  </div> :
+            timeSlots.length === 0 ?
+            <div className="p-2.5 bg-muted rounded-lg text-xs sm:text-sm text-muted-foreground text-center">
                     {t("noSlotsForDay")}
-                  </div>
-                ) : (
-                  <Select value={reservationTime} onValueChange={setReservationTime}>
+                  </div> :
+
+            <Select value={reservationTime} onValueChange={setReservationTime}>
                     <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                       <SelectValue placeholder={t("selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
                       {timeSlots.map((slot) => {
-                        const passed = isSlotPassed(slot);
-                        return (
-                          <SelectItem key={slot} value={slot} disabled={passed} className={passed ? 'opacity-50 text-muted-foreground' : ''}>
+                  const passed = isSlotPassed(slot);
+                  return (
+                    <SelectItem key={slot} value={slot} disabled={passed} className={passed ? 'opacity-50 text-muted-foreground' : ''}>
                             {slot}
                             {passed && <span className="ml-2 text-[10px] text-muted-foreground">({language === "el" ? "Πέρασε" : "Passed"})</span>}
-                          </SelectItem>
-                        );
-                      })}
+                          </SelectItem>);
+
+                })}
                     </SelectContent>
                   </Select>
-                )}
+            }
               </div>
-            )}
+          }
 
             {/* Capacity Status */}
-            {reservationDate && (
-              <div className="text-sm">
-                {checkingCapacity ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
+            {reservationDate &&
+          <div className="text-sm">
+                {checkingCapacity ?
+            <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>{language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}</span>
-                  </div>
-                ) : capacityError ? (
-                  <div className="flex items-center gap-2 text-destructive">
+                  </div> :
+            capacityError ?
+            <div className="flex items-center gap-2 text-destructive">
                     <AlertCircle className="h-4 w-4" />
                     <span>{capacityError}</span>
-                  </div>
-                ) : availableCapacity !== null && availableCapacity > 0 ? (
-                  <div className="flex items-center gap-2 text-green-600">
+                  </div> :
+            availableCapacity !== null && availableCapacity > 0 ?
+            <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle className="h-4 w-4" />
                     <span>{language === "el" ? `${availableCapacity} διαθέσιμες θέσεις` : `${availableCapacity} available slots`}</span>
-                  </div>
-                ) : null}
+                  </div> :
+            null}
               </div>
-            )}
+          }
 
             {/* Warning if party size exceeds capacity */}
-            {availableCapacity !== null && availableCapacity > 0 && availableCapacity < partySize && (
-              <div className="flex items-center gap-2 text-amber-600 text-sm">
+            {availableCapacity !== null && availableCapacity > 0 && availableCapacity < partySize &&
+          <div className="flex items-center gap-2 text-amber-600 text-sm">
                 <AlertCircle className="h-4 w-4" />
                 <span>{language === "el" ? `Μόνο ${availableCapacity} θέσεις διαθέσιμες. Μειώστε τον αριθμό ατόμων.` : `Only ${availableCapacity} slots available. Reduce party size.`}</span>
               </div>
-            )}
+          }
           </div>
-        )}
-      </div>
-    );
+        }
+      </div>);
+
   };
 
   // === SUCCESS VIEW ===
   if (claimSuccess) {
     const hasGuests = claimSuccess.hasReservation && claimSuccess.guests && claimSuccess.guests.length > 0;
-    
-    const successContent = hasGuests ? (
-      <div className="space-y-4">
+
+    const successContent = hasGuests ?
+    <div className="space-y-4">
         <SuccessQRCard
-          type="offer"
-          qrToken={claimSuccess.guests![currentGuestIndex]?.qr_code_token || claimSuccess.qrCodeToken}
-          title={claimSuccess.offerTitle}
-          businessName={claimSuccess.businessName}
-          businessLogo={claimSuccess.businessLogo}
-          language={language}
-          guestName={`${claimSuccess.guests![currentGuestIndex]?.guest_name} (${currentGuestIndex + 1}/${claimSuccess.guests!.length})`}
-          reservationDate={claimSuccess.reservationDate}
-          reservationTime={claimSuccess.reservationTime}
-          showSuccessMessage={currentGuestIndex === 0}
-          onViewDashboard={handleViewMyOffers}
-          viewDashboardLabel={t("viewMyOffers")}
-          onClose={onClose}
-        />
-        {claimSuccess.guests!.length > 1 && (
-          <div className="flex items-center justify-center gap-3 pb-2">
+        type="offer"
+        qrToken={claimSuccess.guests![currentGuestIndex]?.qr_code_token || claimSuccess.qrCodeToken}
+        title={claimSuccess.offerTitle}
+        businessName={claimSuccess.businessName}
+        businessLogo={claimSuccess.businessLogo}
+        language={language}
+        guestName={`${claimSuccess.guests![currentGuestIndex]?.guest_name} (${currentGuestIndex + 1}/${claimSuccess.guests!.length})`}
+        reservationDate={claimSuccess.reservationDate}
+        reservationTime={claimSuccess.reservationTime}
+        showSuccessMessage={currentGuestIndex === 0}
+        onViewDashboard={handleViewMyOffers}
+        viewDashboardLabel={t("viewMyOffers")}
+        onClose={onClose} />
+      
+        {claimSuccess.guests!.length > 1 &&
+      <div className="flex items-center justify-center gap-3 pb-2">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
-              disabled={currentGuestIndex === 0}
-            >
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentGuestIndex(Math.max(0, currentGuestIndex - 1))}
+          disabled={currentGuestIndex === 0}>
+          
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="text-sm font-medium text-foreground">
               {claimSuccess.guests![currentGuestIndex]?.guest_name} ({currentGuestIndex + 1}/{claimSuccess.guests!.length})
             </span>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentGuestIndex(Math.min(claimSuccess.guests!.length - 1, currentGuestIndex + 1))}
-              disabled={currentGuestIndex === claimSuccess.guests!.length - 1}
-            >
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentGuestIndex(Math.min(claimSuccess.guests!.length - 1, currentGuestIndex + 1))}
+          disabled={currentGuestIndex === claimSuccess.guests!.length - 1}>
+          
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-        )}
-      </div>
-    ) : (
-      <SuccessQRCard
-        type="offer"
-        qrToken={claimSuccess.qrCodeToken}
-        title={claimSuccess.offerTitle}
-        businessName={claimSuccess.businessName}
-        businessLogo={claimSuccess.businessLogo}
-        language={language}
-        discountPercent={offer.percent_off || undefined}
-        purchaseDate={new Date().toISOString()}
-        expiryDate={offer.end_at}
-        showSuccessMessage={true}
-        onViewDashboard={handleViewMyOffers}
-        viewDashboardLabel={t("viewMyOffers")}
-        onClose={onClose}
-      />
-    );
+      }
+      </div> :
+
+    <SuccessQRCard
+      type="offer"
+      qrToken={claimSuccess.qrCodeToken}
+      title={claimSuccess.offerTitle}
+      businessName={claimSuccess.businessName}
+      businessLogo={claimSuccess.businessLogo}
+      language={language}
+      discountPercent={offer.percent_off || undefined}
+      purchaseDate={new Date().toISOString()}
+      expiryDate={offer.end_at}
+      showSuccessMessage={true}
+      onViewDashboard={handleViewMyOffers}
+      viewDashboardLabel={t("viewMyOffers")}
+      onClose={onClose} />;
+
+
 
     if (isMobile) {
       return (
@@ -719,8 +719,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             </DrawerHeader>
             <div className="px-4 pb-6 overflow-y-auto">{successContent}</div>
           </DrawerContent>
-        </Drawer>
-      );
+        </Drawer>);
+
     }
 
     return (
@@ -728,28 +728,28 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
           {successContent}
         </DialogContent>
-      </Dialog>
-    );
+      </Dialog>);
+
   }
 
   // === CLAIM FORM ===
   const canClaim = acceptedTerms && (peopleRemaining === null || peopleRemaining >= partySize) && !isLoading;
-  const reservationValid = !wantsReservation || (reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError);
+  const reservationValid = !wantsReservation || reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError;
   const claimEnabled = canClaim && reservationValid;
 
-  const formContent = (
-    <div className="space-y-4">
+  const formContent =
+  <div className="space-y-4">
       {/* Description */}
-      {offer.description && (
-        <p className="text-sm text-muted-foreground">{offer.description}</p>
-      )}
+      {offer.description &&
+    <p className="text-sm text-muted-foreground">{offer.description}</p>
+    }
 
       {/* Category badge */}
-      {offer.category && (
-        <Badge variant="outline" className="text-xs w-fit">
+      {offer.category &&
+    <Badge variant="outline" className="text-xs w-fit">
           {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
         </Badge>
-      )}
+    }
 
       <Separator />
 
@@ -761,19 +761,19 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             {t("name")}
           </Label>
           <Input
-            value={guestNames[0] || ''}
-            onChange={(e) => {
-              const newNames = [...guestNames];
-              newNames[0] = e.target.value;
-              setGuestNames(newNames);
-            }}
-            placeholder={language === "el" ? "Το όνομά σας" : "Your name"}
-            className="h-9 sm:h-10 text-xs sm:text-sm"
-          />
+          value={guestNames[0] || ''}
+          onChange={(e) => {
+            const newNames = [...guestNames];
+            newNames[0] = e.target.value;
+            setGuestNames(newNames);
+          }}
+          placeholder={language === "el" ? "Το όνομά σας" : "Your name"}
+          className="h-9 sm:h-10 text-xs sm:text-sm" />
+        
         </div>
         <div className="w-[120px] space-y-1.5">
           <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <Users className="h-3.5 w-3.5" />
+            
             {t("partySize")}
           </Label>
           <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
@@ -781,34 +781,34 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: maxSelectablePartySize }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()}>
+              {Array.from({ length: maxSelectablePartySize }, (_, i) => i + 1).map((num) =>
+            <SelectItem key={num} value={num.toString()}>
                   {num} {num === 1 ? t("person") : t("people")}
                 </SelectItem>
-              ))}
+            )}
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Dynamic guest name fields */}
-      {partySize > 1 && (
-        <div className="space-y-2">
-          {guestNames.slice(1).map((name, index) => (
-            <Input
-              key={index + 1}
-              value={name}
-              onChange={(e) => {
-                const newNames = [...guestNames];
-                newNames[index + 1] = e.target.value;
-                setGuestNames(newNames);
-              }}
-              placeholder={`${language === "el" ? "Όνομα ατόμου" : "Guest name"} ${index + 2}`}
-              className="h-9 sm:h-10 text-xs sm:text-sm"
-            />
-          ))}
-        </div>
+      {partySize > 1 &&
+    <div className="space-y-2">
+          {guestNames.slice(1).map((name, index) =>
+      <Input
+        key={index + 1}
+        value={name}
+        onChange={(e) => {
+          const newNames = [...guestNames];
+          newNames[index + 1] = e.target.value;
+          setGuestNames(newNames);
+        }}
+        placeholder={`${language === "el" ? "Όνομα ατόμου" : "Guest name"} ${index + 2}`}
+        className="h-9 sm:h-10 text-xs sm:text-sm" />
+
       )}
+        </div>
+    }
 
       <Separator />
 
@@ -822,26 +822,26 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           <div className="flex flex-col">
             <span className="text-muted-foreground text-xs">{language === "el" ? "Διαθέσιμα" : "Available"}</span>
             <span className="font-medium">
-              {peopleRemaining === null
-                ? (language === "el" ? "Χωρίς όριο" : "No limit")
-                : `${peopleRemaining} ${language === "el" ? "άτομα" : "people"}`}
+              {peopleRemaining === null ?
+            language === "el" ? "Χωρίς όριο" : "No limit" :
+            `${peopleRemaining} ${language === "el" ? "άτομα" : "people"}`}
             </span>
           </div>
           <div className="flex flex-col">
             <span className="text-muted-foreground text-xs">{language === "el" ? "Μέγ. ανά εξαργύρωση" : "Max per redemption"}</span>
             <span className="font-medium">
-              {maxPerRedemption === null
-                ? (language === "el" ? "Χωρίς όριο" : "No limit")
-                : `${maxPerRedemption} ${language === "el" ? "άτομα" : "people"}`}
+              {maxPerRedemption === null ?
+            language === "el" ? "Χωρίς όριο" : "No limit" :
+            `${maxPerRedemption} ${language === "el" ? "άτομα" : "people"}`}
             </span>
           </div>
         </div>
-        {offer.one_per_user && (
-          <Badge variant="secondary" className="text-xs">
+        {offer.one_per_user &&
+      <Badge variant="secondary" className="text-xs">
             <AlertCircle className="h-3 w-3 mr-1" />
             {language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user"}
           </Badge>
-        )}
+      }
       </div>
 
       {/* Validity Info */}
@@ -870,23 +870,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       <ReservationSection />
 
       {/* Terms */}
-      {offer.terms && (
-        <div className="mt-2">
+      {offer.terms &&
+    <div className="mt-2">
           <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
             <span className="font-medium">{t("terms")}:</span> {offer.terms}
           </p>
         </div>
-      )}
+    }
 
       {/* Accept Terms */}
       <div className="flex items-center space-x-2">
         <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(checked) => setAcceptedTerms(checked === true)} />
         <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          {language === "el" ? (
-            <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></>
-          ) : (
-            <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
-          )}
+          {language === "el" ?
+        <>Αποδέχομαι τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a></> :
+
+        <>I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a></>
+        }
         </label>
       </div>
 
@@ -896,15 +896,15 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           {t("cancel")}
         </Button>
         <Button onClick={handleClaim} className="flex-1" disabled={!claimEnabled}>
-          {isLoading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</>
-          ) : (
-            <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
-          )}
+          {isLoading ?
+        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
+
+        <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
+        }
         </Button>
       </div>
-    </div>
-  );
+    </div>;
+
 
   if (isMobile) {
     return (
@@ -912,24 +912,24 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <DrawerContent className="h-[90vh] flex flex-col">
           <DrawerHeader className="flex-shrink-0 border-b pb-3">
             <div className="flex items-center gap-2 pr-1">
-              {offer.businesses.logo_url ? (
-                <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-10 h-10 rounded-lg object-cover" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+              {offer.businesses.logo_url ?
+              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-10 h-10 rounded-lg object-cover" /> :
+
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <Store className="h-5 w-5 text-muted-foreground" />
                 </div>
-              )}
+              }
               <div className="flex-1 min-w-0">
                 <DrawerTitle className="text-left text-[13px] font-semibold leading-tight whitespace-nowrap overflow-hidden">
                   {offer.title}
                 </DrawerTitle>
                 <p className="text-sm text-muted-foreground truncate -ml-10 sm:ml-0">{offer.businesses.name}</p>
               </div>
-              {discountDisplay && (
-                <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
+              {discountDisplay &&
+              <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
                   {discountDisplay}
                 </Badge>
-              )}
+              }
             </div>
             <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
           </DrawerHeader>
@@ -938,8 +938,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             {formContent}
           </div>
         </DrawerContent>
-      </Drawer>
-    );
+      </Drawer>);
+
   }
 
   return (
@@ -947,24 +947,24 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
-            {offer.businesses.logo_url ? (
-              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-lg object-cover" />
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+            {offer.businesses.logo_url ?
+            <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-lg object-cover" /> :
+
+            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
                 <Store className="h-6 w-6 text-muted-foreground" />
               </div>
-            )}
+            }
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-left text-base sm:text-lg whitespace-nowrap overflow-hidden">
                 {offer.title}
               </DialogTitle>
               <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
             </div>
-            {discountDisplay && (
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-sm py-1.5 sm:py-1 px-3 sm:px-2 mr-1">
+            {discountDisplay &&
+            <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-sm py-1.5 sm:py-1 px-3 sm:px-2 mr-1">
                 {discountDisplay}
               </Badge>
-            )}
+            }
           </div>
         </DialogHeader>
         
@@ -972,6 +972,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           {formContent}
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
