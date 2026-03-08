@@ -454,7 +454,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noDirectReservations: 'No direct reservations',
       noEventReservations: 'No reservations via events',
       code: 'Code',
-      viewQRCodes: 'Show QR Codes'
+      viewQRCodes: 'Show QR Codes',
+      minPrepayment: 'Min. prepayment',
+      tickets: 'tickets'
     }
   };
 
