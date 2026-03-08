@@ -308,9 +308,15 @@ export const SuccessQRCard = ({
         );
       }
 
-      case "event_reservation":
+      case "event_reservation": {
+        const holderName = guestName || reservationName || (language === "el" ? "Εσύ" : "You");
         return (
           <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+              <p className="text-xs font-semibold text-[#102b4a] truncate">{holderName}</p>
+            </div>
             <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
               <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
               <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
@@ -325,15 +331,9 @@ export const SuccessQRCard = ({
                 {reservationDate ? formatTime(reservationDate) : "-"}
               </p>
             </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <CreditCard className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.reservation}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {prepaidAmountCents !== undefined ? formatPrice(prepaidAmountCents) : "-"}
-              </p>
-            </div>
           </div>
         );
+      }
     }
   };
 
@@ -353,25 +353,19 @@ export const SuccessQRCard = ({
         {showSuccessMessage && (
           <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-green-50 rounded-lg">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            <p className="text-sm font-semibold text-green-700">
-              {text.success[type]}
-            </p>
+            <p className="text-sm font-semibold text-green-700">{text.success[type]}</p>
           </div>
         )}
 
         {/* Title */}
-        <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">
-          {title}
-        </h2>
+        <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">{title}</h2>
 
         {/* Guest Name & Age - only for types that don't already show it in the grid */}
-        {type !== "ticket" && type !== "offer" && type !== "reservation" && guestName && (
+        {type !== "ticket" && type !== "offer" && type !== "reservation" && type !== "event_reservation" && guestName && (
           <div className="bg-[#f0f9ff] rounded-lg p-2 mb-3 flex items-center justify-center gap-2">
             <User className="h-4 w-4 text-[#3ec3b7]" />
             <span className="text-sm font-semibold text-[#102b4a]">{guestName}</span>
-            {guestAge && (
-              <span className="text-[10px] text-[#64748b]">({guestAge})</span>
-            )}
+            {guestAge && <span className="text-[10px] text-[#64748b]">({guestAge})</span>}
           </div>
         )}
 
