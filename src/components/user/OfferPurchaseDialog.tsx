@@ -547,7 +547,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9">
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarDays className="mr-2 h-3.5 w-3.5" />
                     {reservationDate ? format(reservationDate, 'dd/MM/yyyy') : t("selectDate")}
                   </Button>
                 </PopoverTrigger>
