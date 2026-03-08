@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
+import { toast } from "sonner";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
 import { OfferQRCard } from "./OfferQRCard";
 
@@ -61,6 +63,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; purchase: OfferPurchase | null }>({ open: false, purchase: null });
+  const queryClient = useQueryClient();
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const highlightedPurchaseId = searchParams.get('purchaseId');
 
