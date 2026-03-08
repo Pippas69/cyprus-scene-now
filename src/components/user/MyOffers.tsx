@@ -544,7 +544,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               onClick={() => setSelectedPurchase(purchase)}
               size="sm"
               variant="default"
-              className="flex-1 text-xs h-8">
+              className="text-xs h-8 px-4">
               
                 
                 {isReservation ? t.viewQRCodes : t.viewQR}
@@ -561,6 +561,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 {t.viewHistory}
               </Button>
             }
+            {/* Cancel button for reservation-linked offers */}
+            {isReservation && !isExpired && !isRedeemed && purchase.status === 'active' && (
+              <Button
+                size="sm"
+                className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+                onClick={() => setCancelDialog({ open: true, purchase })}
+              >
+                {t.cancelReservation}
+              </Button>
+            )}
           </div>
         </div>
       </Card>);
