@@ -35,7 +35,7 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
 
   if (!offer) return null;
 
-  const hasGuests = offer.hasReservation && offer.guests && offer.guests.length > 0;
+  const hasGuests = offer.guests && offer.guests.length > 1;
 
   const content = hasGuests ? (
     <div className="space-y-4">
