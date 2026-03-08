@@ -533,117 +533,99 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
 
         {/* Description + form fields - inside the box */}
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
+        {wantsReservation && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+              {language === "el"
+                ? `Κάντε κράτηση για τις ώρες της έκπτωσης (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). Η κράτηση θα συνδεθεί αυτόματα με την προσφορά.`
+                : `Book a table during the discount hours (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). The reservation will be linked automatically to the offer.`}
+            </p>
+
+            {/* Date Selection */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">{t("selectDate")}</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9">
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {reservationDate ? format(reservationDate, 'dd/MM/yyyy') : t("selectDate")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[9999]" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={reservationDate}
+                    onSelect={(date) => {
+                      setReservationDate(date);
+                      setReservationTime("");
+                      setAvailableCapacity(null);
+                      setCapacityError(null);
+                    }}
+                    disabled={(date) => {
+                      if (date < new Date(new Date().setHours(0, 0, 0, 0))) return true;
+                      if (!isDateValidForOffer(date)) return true;
+                      return false;
+                    }}
+                    modifiers={closedDatesModifiers}
+                    modifiersStyles={closedDatesModifiersStyles}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Time Selection */}
+            {reservationDate && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-foreground">{t("selectTime")}</label>
+                {availabilityLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>{language === "el" ? "Φόρτωση..." : "Loading..."}</span>
+                  </div>
+                ) : timeSlots.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t("noSlotsForDay")}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {timeSlots.map((slot) => {
+                      const isPassed = isSlotPassed(slot);
+                      return (
+                        <Button
+                          key={slot}
+                          variant={reservationTime === slot ? "default" : "outline"}
+                          size="sm"
+                          className="text-xs h-7 px-2.5"
+                          disabled={isPassed}
+                          onClick={() => setReservationTime(slot)}
+                        >
+                          {slot}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Capacity Check */}
+            {checkingCapacity && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>{language === "el" ? "Έλεγχος διαθεσιμότητας..." : "Checking availability..."}</span>
+              </div>
+            )}
+            {capacityError && (
+              <p className="text-xs text-destructive">{capacityError}</p>
+            )}
+            {availableCapacity !== null && !capacityError && reservationTime && (
+              <p className="text-xs text-green-600">
+                {language === "el"
+                  ? `✓ Διαθέσιμες θέσεις: ${availableCapacity}`
+                  : `✓ Available seats: ${availableCapacity}`}
+              </p>
+            )}
+          </div>
+        )}
       </div>);
 
   };
@@ -852,7 +834,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       {offer.terms &&
     <div className="mt-2">
           <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
-            <span className="font-medium">{t("terms")}:</span> {offer.terms}
+            {offer.terms}
           </p>
         </div>
     }
