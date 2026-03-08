@@ -102,7 +102,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     depleted: { el: "Εξαντλημένο", en: "Depleted" },
     totalCredit: { el: "Συνολική Πίστωση", en: "Total Credit" },
     used: { el: "Χρησιμοποιημένα", en: "Used" },
-    reservation: { el: "Κράτηση", en: "Reservation" }
+    reservation: { el: "Κράτηση", en: "Reservation" },
+    cancelReservation: { el: "Ακύρωση", en: "Cancel" },
+    confirmCancel: { el: "Επιβεβαίωση Ακύρωσης", en: "Confirm Cancellation" },
+    confirmCancelDescription: { el: "Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;", en: "Are you sure you want to cancel this reservation?" },
+    cancelConfirm: { el: "Ακύρωση Κράτησης", en: "Cancel Reservation" },
+    cancelBack: { el: "Πίσω", en: "Back" },
+    reservationCancelled: { el: "Η κράτηση ακυρώθηκε", en: "Reservation cancelled" },
+    cancelFailed: { el: "Αποτυχία ακύρωσης", en: "Cancellation failed" }
   };
 
   const t = language === "el" ? {
