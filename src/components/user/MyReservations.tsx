@@ -608,13 +608,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               size="sm"
               className="h-8 text-xs px-4"
               onClick={() => {
-                if (guestTickets[reservation.id]?.length > 0) {
-                  setCurrentEventGuestIndex(0);
-                  setSelectedEventGuestsReservation(reservation);
-                } else if (qrCodes[reservation.id]) {
-                  setSelectedReservationForQR(reservation);
-                }
+                setCurrentEventGuestIndex(0);
+                setSelectedEventGuestsReservation(reservation);
               }}>
+
                 {t.viewQRCodes}
               </Button>
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
