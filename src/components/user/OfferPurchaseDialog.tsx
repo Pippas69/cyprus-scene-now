@@ -512,10 +512,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
     return (
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-medium">
-            
             <span className="text-xs sm:text-sm">{t("wantReservation")}</span>
           </div>
           <Checkbox
@@ -530,7 +529,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 setCapacityError(null);
               }
             }} />
-          
         </div>
         
         <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
