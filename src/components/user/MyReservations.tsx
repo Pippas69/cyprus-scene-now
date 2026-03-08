@@ -562,17 +562,20 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           }
 
           {/* Row 4: Payment info (event reservations only) */}
-          {isEvent && ((reservation.prepaid_min_charge_cents != null && reservation.prepaid_min_charge_cents > 0) || ticketOrderTotals[reservation.id] > 0) &&
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-              <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-xs">
-                {t.minPrepayment}: €{((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2)}
-                {ticketOrderTotals[reservation.id] > 0 &&
-                  ` (${t.tickets}: €${(ticketOrderTotals[reservation.id] / 100).toFixed(2)})`
-                }
-              </span>
-            </div>
-          }
+          {isEvent && (() => {
+            const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
+            const ticketTotal = ticketOrderTotals[reservation.id] || 0;
+            if (minCharge === 0 && ticketTotal === 0) return null;
+            return (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs">
+                  {t.minPrepayment}: €{(minCharge / 100).toFixed(2)}
+                  {ticketTotal > 0 && ` (${t.tickets}: €${(ticketTotal / 100).toFixed(2)})`}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Row 5: Location */}
           {location && (
