@@ -570,37 +570,31 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* Guest QR Codes for direct reservations */}
+          {/* Direct reservations with guest QR codes: single CTA */}
           {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 && (
-            <div className="space-y-1.5 mt-2">
-              {directGuests[reservation.id].map((guest, idx) => (
-                <button
-                  key={guest.id}
-                  type="button"
-                  onClick={() => {
-                    if (directGuestQrCodes[guest.id]) {
-                      setSelectedReservationForQR({
-                        ...reservation,
-                        qr_code_token: guest.qr_code_token,
-                        confirmation_code: `${reservation.confirmation_code}-${idx + 1}`,
-                      });
-                      setQrCodes(prev => ({ ...prev, [reservation.id]: directGuestQrCodes[guest.id] }));
-                    }
-                  }}
-                  className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-md px-2.5 py-1.5 hover:bg-muted transition-colors"
+            <div className="flex items-center gap-1.5 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                className="flex-1 h-[30px] text-[10px] px-2.5"
+                onClick={() => {
+                  setCurrentDirectGuestIndex(0);
+                  setSelectedDirectGuestsReservation(reservation);
+                }}
+              >
+                {t.viewQRCodes}
+              </Button>
+
+              {(reservation.status === 'pending' || reservation.status === 'accepted') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-[30px] text-[10px] text-destructive border-destructive/30 hover:bg-destructive/10 px-2.5 shrink-0"
+                  onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-foreground">{guest.guest_name}</span>
-                    {guest.checked_in_at && (
-                      <Badge className="bg-green-600 text-white text-[9px] h-4 px-1.5">Check-in ✓</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-0.5 text-primary">
-                    <QrCode className="h-3.5 w-3.5" />
-                    <span className="text-[10px] font-medium">QR</span>
-                  </div>
-                </button>
-              ))}
+                  {t.cancelReservation}
+                </Button>
+              )}
             </div>
           )}
 
@@ -639,11 +633,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* Cancel Button for reservation-only with guest tickets or direct guests */}
-          {!isPast && (
-            (reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0) ||
-            (!reservation.events && directGuests[reservation.id]?.length > 0)
-          ) && (reservation.status === 'pending' || reservation.status === 'accepted') && (
+          {/* Cancel Button for reservation-only event guest tickets */}
+          {!isPast && reservation.events?.event_type === 'reservation' && guestTickets[reservation.id]?.length > 0 && (reservation.status === 'pending' || reservation.status === 'accepted') && (
             <div className="flex justify-end mt-1.5">
               <Button
                 variant="outline"
