@@ -21,29 +21,23 @@ import {
 
 const translations = {
   el: {
-    mainNav: 'Πλοήγηση',
     feed: 'Feed',
     map: 'Χάρτης',
     events: 'Εκδηλώσεις',
     offers: 'Προσφορές',
-    myActivities: 'Οι Δραστηριότητές Μου',
-    myEvents: 'Οι Εκδηλώσεις Μου',
+    myTickets: 'Τα Εισιτήρια Μου',
     reservations: 'Οι Κρατήσεις Μου',
     myOffers: 'Οι Προσφορές Μου',
-    account: 'Λογαριασμός',
     settings: 'Ρυθμίσεις',
   },
   en: {
-    mainNav: 'Main Navigation',
     feed: 'Feed',
     map: 'Map',
     events: 'Events',
     offers: 'Offers',
-    myActivities: 'My Activities',
-    myEvents: 'My Events',
+    myTickets: 'My Tickets',
     reservations: 'My Reservations',
     myOffers: 'My Offers',
-    account: 'Account',
     settings: 'Settings',
   },
 };
