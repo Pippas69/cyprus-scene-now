@@ -52,6 +52,8 @@ interface OfferPurchase {
   reservations: {
     preferred_time: string | null;
   } | null;
+  // Populated client-side
+  _guests?: { guest_name: string; qr_code_token: string }[];
 }
 
 export function MyOffers({ userId, language }: MyOffersProps) {
@@ -203,7 +205,35 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as OfferPurchase[];
+      const results = data as OfferPurchase[];
+
+      // Fetch reservation guests for purchases with reservations
+      const reservationIds = results
+        .filter(p => p.claim_type === 'with_reservation' && p.reservation_id)
+        .map(p => p.reservation_id!);
+
+      if (reservationIds.length > 0) {
+        const { data: guests } = await supabase
+          .from('reservation_guests')
+          .select('reservation_id, guest_name, qr_code_token')
+          .in('reservation_id', reservationIds);
+
+        if (guests) {
+          const guestMap = new Map<string, { guest_name: string; qr_code_token: string }[]>();
+          for (const g of guests) {
+            const arr = guestMap.get(g.reservation_id) || [];
+            arr.push({ guest_name: g.guest_name, qr_code_token: g.qr_code_token });
+            guestMap.set(g.reservation_id, arr);
+          }
+          for (const p of results) {
+            if (p.reservation_id && guestMap.has(p.reservation_id)) {
+              p._guests = guestMap.get(p.reservation_id);
+            }
+          }
+        }
+      }
+
+      return results;
     },
   });
 
@@ -575,6 +605,12 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           purchasedAt: selectedPurchase.created_at,
           isCredit: selectedPurchase.discounts?.offer_type === 'credit',
           balanceRemaining: selectedPurchase.balance_remaining_cents ?? 0,
+          hasReservation: selectedPurchase.claim_type === 'with_reservation',
+          guests: selectedPurchase._guests,
+          reservationDate: selectedPurchase.reservations?.preferred_time || undefined,
+          reservationTime: selectedPurchase.reservations?.preferred_time 
+            ? new Date(selectedPurchase.reservations.preferred_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : undefined,
         } : null}
         language={language}
         onClose={() => setSelectedPurchase(null)}

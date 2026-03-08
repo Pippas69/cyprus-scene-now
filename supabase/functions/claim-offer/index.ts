@@ -20,6 +20,7 @@ interface ReservationData {
 interface ClaimOfferRequest {
   discountId: string;
   partySize: number;
+  guestNames?: string[];
   withReservation?: boolean;
   reservationData?: ReservationData;
 }
@@ -53,8 +54,8 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse request
-    const { discountId, partySize, withReservation, reservationData }: ClaimOfferRequest = await req.json();
-    logStep("Request data", { discountId, partySize, withReservation, reservationData });
+    const { discountId, partySize, guestNames, withReservation, reservationData }: ClaimOfferRequest = await req.json();
+    logStep("Request data", { discountId, partySize, guestNames, withReservation, reservationData });
 
     if (!discountId || !partySize || partySize < 1) {
       throw new Error("Invalid request: discountId and partySize are required");
@@ -117,7 +118,7 @@ Deno.serve(async (req) => {
     if (!claimResult?.success) {
       throw new Error(claimResult?.message || "Not enough spots remaining");
     }
-    const peopleRemaining = claimResult.remaining === -1 ? 999 : claimResult.remaining + partySize; // pre-decrement value for logging
+    const peopleRemaining = claimResult.remaining === -1 ? 999 : claimResult.remaining + partySize;
 
     // Check one-per-user constraint
     if (discount.one_per_user) {
@@ -136,6 +137,8 @@ Deno.serve(async (req) => {
 
     // If reservation requested, check capacity first
     let reservationId: string | null = null;
+    const reservationGuestResults: { guest_name: string; qr_code_token: string }[] = [];
+    
     if (withReservation && reservationData) {
       logStep("Creating reservation with offer claim", reservationData);
       
@@ -160,6 +163,7 @@ Deno.serve(async (req) => {
       if (capacity?.remaining_capacity !== undefined && capacity.remaining_capacity < partySize) {
         throw new Error("Not enough reservation slots available");
       }
+      
       // Create reservation - convert Cyprus local date+time to a UTC instant (DST-safe)
       const preferredDateTime = localToUtcISOString(
         reservationData.preferred_date,
@@ -180,10 +184,10 @@ Deno.serve(async (req) => {
           business_id: discount.business_id,
           user_id: user.id,
           reservation_name: reservationName,
-          event_id: null, // Direct business reservation
+          event_id: null,
           preferred_time: preferredDateTime,
           party_size: partySize,
-          status: "accepted", // Auto-accept for offer-based reservations
+          status: "accepted",
           special_requests: `Offer claim: ${discount.title}`,
           confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
         })
@@ -198,12 +202,32 @@ Deno.serve(async (req) => {
       reservationId = reservation.id;
       logStep("Reservation created", { reservationId });
 
-      // NOTE: We do NOT call send-reservation-notification here!
-      // The offer claim email (send-offer-claim-email) already includes reservation details
-      // to avoid sending duplicate emails to the user and business.
+      // Create per-guest reservation_guests records with individual QR codes
+      const names = guestNames && guestNames.length === partySize 
+        ? guestNames 
+        : Array.from({ length: partySize }, (_, i) => `Guest ${i + 1}`);
+      
+      const guestInserts = names.map((name) => ({
+        reservation_id: reservationId!,
+        guest_name: name.trim() || `Guest`,
+        qr_code_token: crypto.randomUUID(),
+        status: 'active',
+      }));
+
+      const { data: guestEntries, error: guestError } = await supabaseAdmin
+        .from('reservation_guests')
+        .insert(guestInserts)
+        .select('guest_name, qr_code_token');
+
+      if (guestError) {
+        logStep("Guest insert error", guestError);
+      } else if (guestEntries) {
+        reservationGuestResults.push(...guestEntries);
+        logStep("Reservation guests created", { count: guestEntries.length });
+      }
     }
 
-    // Generate unique QR token
+    // Generate unique QR token for the walk-in offer itself
     const qrCodeToken = crypto.randomUUID();
 
     // Calculate expiry (end of offer validity)
@@ -237,7 +261,6 @@ Deno.serve(async (req) => {
 
     if (purchaseError) {
       logStep("Purchase insert error", purchaseError);
-      // Clean up reservation if purchase failed
       if (reservationId) {
         await supabaseAdmin.from("reservations").delete().eq("id", reservationId);
       }
@@ -245,7 +268,6 @@ Deno.serve(async (req) => {
     }
     logStep("Claim record created", { purchaseId: purchase.id, hasReservation: !!reservationId });
 
-    // Availability already decremented atomically by claim_offer_spots_atomically()
     logStep("Availability already decremented atomically", { remaining: claimResult.remaining });
 
     // Get user profile for emails
@@ -410,6 +432,8 @@ Deno.serve(async (req) => {
         businessId: discount.business_id,
         hasReservation: !!reservationId,
         reservationId,
+        // Per-guest QR data for reservation claims
+        guests: reservationGuestResults.length > 0 ? reservationGuestResults : undefined,
       }),
       {
         status: 200,
