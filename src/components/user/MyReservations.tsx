@@ -236,6 +236,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setLoading(false);
   };
 
+  const fetchSeatingMinCharges = async (reservations: ReservationData[]) => {
+    // Get min charge from seating_type_tiers for event reservations with a seating_type_id
+    const eventResWithSeating = reservations.filter((r) => !!r.events && r.seating_type_id);
+    if (eventResWithSeating.length === 0) return;
+
+    const uniqueSeatingTypeIds = [...new Set(eventResWithSeating.map((r) => r.seating_type_id!))];
+    const { data: tiers } = await supabase
+      .from('seating_type_tiers')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .in('seating_type_id', uniqueSeatingTypeIds);
+
+    if (!tiers) return;
+
+    const chargeMap: Record<string, number> = {};
+    eventResWithSeating.forEach((r) => {
+      const matchingTiers = tiers.filter((t) => t.seating_type_id === r.seating_type_id);
+      const matchedTier = matchingTiers.find(
+        (t) => r.party_size >= t.min_people && r.party_size <= t.max_people
+      ) || matchingTiers[0];
+      if (matchedTier?.prepaid_min_charge_cents) {
+        chargeMap[r.id] = matchedTier.prepaid_min_charge_cents;
+      }
+    });
+    setSeatingMinCharge(chargeMap);
+  };
+
   const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
     const directResIds = reservations.
     filter((r) => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending')).
