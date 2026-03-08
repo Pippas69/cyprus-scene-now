@@ -270,9 +270,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   const fetchGuestTickets = async (reservations: ReservationData[]) => {
-    // Only for reservation-only events (event_type === 'reservation')
-    const reservationOnlyIds = reservations
-      .filter(r => r.events?.event_type === 'reservation' && r.status === 'accepted')
+    // For all event-based reservations (reservation-only AND hybrid)
+    const eventResIds = reservations
+      .filter(r => !!r.events && (r.status === 'accepted' || r.status === 'pending'))
       .map(r => r.id);
 
     if (reservationOnlyIds.length === 0) return;

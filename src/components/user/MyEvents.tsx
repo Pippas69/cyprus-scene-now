@@ -49,13 +49,14 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           ticket_code,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, end_at, location, cover_image_url, business_id, businesses(name)),
-          ticket_orders(customer_name, total_cents)
+          ticket_orders(customer_name, total_cents, linked_reservation_id)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      // Only show tickets NOT linked to a reservation (walk-in / direct ticket purchases)
+      return (data || []).filter(t => !(t.ticket_orders as any)?.linked_reservation_id);
     },
   });
 
