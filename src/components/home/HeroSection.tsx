@@ -54,16 +54,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const marqueeScreens = [...screens, ...screens, ...screens, ...screens];
 
   return (
-    <section className="relative min-h-screen flex items-start justify-center overflow-hidden pt-[5.5rem] sm:pt-[6.5rem]">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&q=80')"
-        }}
-      />
-
-      <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
-      
+    <section className="relative flex items-start justify-center overflow-hidden pt-[5.5rem] sm:pt-[6.5rem]">
 
       <div className="relative z-10 w-full">
         <div className="container mx-auto px-4 text-center">
