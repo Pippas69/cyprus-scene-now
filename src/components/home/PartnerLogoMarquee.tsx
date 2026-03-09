@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useLanguage } from "@/hooks/useLanguage";
+
 
 const PARTNER_SEARCH = [
   { display: "Kaliva on the Beach", search: "%kaliva%", gradient: "from-cyan-500 to-blue-600" },
@@ -23,14 +23,9 @@ interface PartnerData {
   logo_url: string | null;
 }
 
-const translations = {
-  el: { heading: "Μας Εμπιστεύονται" },
-  en: { heading: "Trusted By" },
-};
+const HEADING = "Trusted By";
 
 const PartnerLogoMarquee = () => {
-  const { language } = useLanguage();
-  const t = translations[language];
 
   const [partners, setPartners] = useState<PartnerData[]>(
     PARTNER_SEARCH.map((p) => ({
@@ -67,17 +62,17 @@ const PartnerLogoMarquee = () => {
   const marqueeItems = [...partners, ...partners];
 
   return (
-    <section className="relative py-8 sm:py-12 overflow-hidden bg-transparent">
+    <section className="relative py-8 sm:py-12 overflow-visible bg-transparent">
       <div className="relative z-10">
         <p className="text-center text-white/50 font-playfair text-xs sm:text-sm tracking-[0.25em] uppercase mb-6 sm:mb-8">
-          {t.heading}
+          Trusted By
         </p>
 
         <div className="relative">
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-          <div className="flex overflow-hidden">
+          <div className="flex overflow-hidden py-2">
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
               transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
