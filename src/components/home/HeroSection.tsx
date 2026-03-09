@@ -63,7 +63,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       />
 
       <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-seafoam/10 rounded-full blur-[120px]" />
+      
 
       <div className="relative z-10 w-full">
         <div className="container mx-auto px-4 text-center">
