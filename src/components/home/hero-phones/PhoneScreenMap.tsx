@@ -109,11 +109,9 @@ const PhoneScreenMap = ({ language }: Props) => {
         </div>
       </div>
 
-      {/* Bottom nav mock */}
-      <div className="px-6 pb-2 pt-2 flex items-center justify-around border-t border-white/5">
-        {["🏠", "🗺️", "📅", "🎫", "⚙️"].map((icon, i) => (
-          <span key={i} className={`text-[14px] ${i === 1 ? "opacity-100" : "opacity-30"}`}>{icon}</span>
-        ))}
+      {/* Bottom close */}
+      <div className="mt-auto px-6 pb-3 pt-3 bg-gradient-to-t from-black/45 to-transparent">
+        <div className="mx-auto h-1 w-20 rounded-full bg-white/30" />
       </div>
     </div>
   );
