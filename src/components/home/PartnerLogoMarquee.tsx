@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useLanguage } from "@/hooks/useLanguage";
+
 
 const PARTNER_SEARCH = [
   { display: "Kaliva on the Beach", search: "%kaliva%", gradient: "from-cyan-500 to-blue-600" },
