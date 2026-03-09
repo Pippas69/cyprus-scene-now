@@ -1,4 +1,5 @@
 import { Heart, Calendar, MapPin, Share2, Clock } from "lucide-react";
+import summerVibesImage from "@/assets/hero-summer-vibes.jpg";
 
 interface Props {
   language: "el" | "en";
@@ -35,28 +36,31 @@ const PhoneScreenEvent = ({ language }: Props) => {
   return (
     <div className="w-full h-full bg-[#0a1929] flex flex-col text-white overflow-hidden select-none pointer-events-none">
       {/* Cover image area */}
-      <div className="relative h-[38%] bg-gradient-to-br from-[#1a3d5c] via-[#0f2b45] to-[#0a1929]">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1929] via-transparent to-transparent" />
-        {/* Decorative circles */}
-        <div className="absolute top-[20%] left-[15%] w-16 h-16 rounded-full bg-[#3ec3b7]/10 blur-xl" />
-        <div className="absolute top-[35%] right-[20%] w-20 h-20 rounded-full bg-seafoam/8 blur-2xl" />
+      <div className="relative h-[42%] overflow-hidden">
+        <img src={summerVibesImage} alt="Summer Vibes Festival" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1929] via-[#0a1929]/25 to-black/35" />
+
+        {/* Decorative glow */}
+        <div className="absolute top-[20%] left-[12%] w-20 h-20 rounded-full bg-seafoam/20 blur-2xl" />
+
         {/* Back & share */}
         <div className="absolute top-3 left-4 right-4 flex items-center justify-between">
-          <div className="w-7 h-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-black/35 backdrop-blur flex items-center justify-center border border-white/15">
             <span className="text-white/80 text-[10px]">←</span>
           </div>
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-black/35 backdrop-blur flex items-center justify-center border border-white/15">
               <Heart className="w-3 h-3 text-white/80" />
             </div>
-            <div className="w-7 h-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-black/35 backdrop-blur flex items-center justify-center border border-white/15">
               <Share2 className="w-3 h-3 text-white/80" />
             </div>
           </div>
         </div>
+
         {/* Price badge */}
         <div className="absolute bottom-3 right-4">
-          <span className="px-2.5 py-1 rounded-lg bg-[#3ec3b7] text-[11px] font-bold text-white">{txt.price}</span>
+          <span className="px-2.5 py-1 rounded-lg bg-accent text-[11px] font-bold text-accent-foreground">{txt.price}</span>
         </div>
       </div>
 
@@ -82,7 +86,7 @@ const PhoneScreenEvent = ({ language }: Props) => {
         {/* Social proof */}
         <div className="flex items-center gap-3">
           <div className="flex -space-x-1.5">
-            {[0, 1, 2].map(i => (
+            {[0, 1, 2].map((i) => (
               <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-[#3ec3b7] to-[#1a3d5c] border border-[#0a1929]" />
             ))}
           </div>
@@ -97,14 +101,13 @@ const PhoneScreenEvent = ({ language }: Props) => {
         </div>
       </div>
 
-      {/* Bottom nav mock */}
-      <div className="px-6 pb-2 pt-2 flex items-center justify-around border-t border-white/5">
-        {["🏠", "🗺️", "📅", "🎫", "⚙️"].map((icon, i) => (
-          <span key={i} className={`text-[14px] ${i === 0 ? "opacity-100" : "opacity-30"}`}>{icon}</span>
-        ))}
+      {/* Bottom close */}
+      <div className="mt-auto px-6 pb-3 pt-2 bg-gradient-to-t from-black/45 to-transparent">
+        <div className="mx-auto h-1 w-20 rounded-full bg-white/30" />
       </div>
     </div>
   );
 };
 
 export default PhoneScreenEvent;
+

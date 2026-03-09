@@ -81,8 +81,8 @@ const PhoneScreenMap = ({ language }: Props) => {
 
         {/* User location */}
         <div className="absolute top-[45%] left-[45%]">
-          <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-lg">
-            <div className="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping" />
+          <div className="w-3 h-3 rounded-full bg-accent border-2 border-white shadow-lg shadow-accent/40">
+            <div className="absolute -inset-2 rounded-full bg-accent/30 animate-ping" />
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ const PhoneScreenMap = ({ language }: Props) => {
                 <p className="text-[9px] text-white/40">{venue.type} · {venue.distance}</p>
               </div>
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                <Star className="w-2.5 h-2.5 text-accent fill-accent" />
                 <span className="text-[10px] font-medium text-white/60">{venue.rating}</span>
               </div>
             </div>
@@ -109,11 +109,9 @@ const PhoneScreenMap = ({ language }: Props) => {
         </div>
       </div>
 
-      {/* Bottom nav mock */}
-      <div className="px-6 pb-2 pt-2 flex items-center justify-around border-t border-white/5">
-        {["🏠", "🗺️", "📅", "🎫", "⚙️"].map((icon, i) => (
-          <span key={i} className={`text-[14px] ${i === 1 ? "opacity-100" : "opacity-30"}`}>{icon}</span>
-        ))}
+      {/* Bottom close */}
+      <div className="mt-auto px-6 pb-3 pt-3 bg-gradient-to-t from-black/45 to-transparent">
+        <div className="mx-auto h-1 w-20 rounded-full bg-white/30" />
       </div>
     </div>
   );

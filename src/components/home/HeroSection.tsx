@@ -9,19 +9,21 @@ interface HeroSectionProps {
 }
 
 const PhoneMockup = ({ children }: { children: ReactNode }) => (
-  <div className="w-[240px] sm:w-[280px] md:w-[330px] lg:w-[370px] flex-shrink-0">
+  <div className="w-[240px] sm:w-[280px] md:w-[330px] lg:w-[370px] flex-shrink-0 px-1 sm:px-2 py-2 sm:py-3">
     <div
-      className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[#2a2a2a] via-[#1a1a1a] to-[#0f0f0f] p-[4px] sm:p-[5px] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7),0_0_40px_rgba(78,205,196,0.06),inset_0_1px_0_rgba(255,255,255,0.1)]"
+      className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[hsl(var(--midnight))] via-[hsl(var(--primary))] to-[hsl(var(--midnight))] p-[4px] sm:p-[5px] ring-1 ring-white/10 shadow-[0_30px_80px_-20px_hsl(var(--midnight)/0.75),0_0_45px_hsl(var(--seafoam)/0.22),inset_0_1px_0_hsl(var(--sand-white)/0.22)]"
       style={{ aspectRatio: "9/19.5" }}
     >
       {/* Hardware buttons */}
-      <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[#2a2a2a] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[#2a2a2a] rounded-l-sm" />
-      <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[#2a2a2a] rounded-r-sm" />
+      <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[hsl(var(--midnight))] rounded-l-sm" />
+      <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[hsl(var(--midnight))] rounded-l-sm" />
+      <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[hsl(var(--midnight))] rounded-l-sm" />
+      <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[hsl(var(--midnight))] rounded-r-sm" />
 
       <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
         {children}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/55 to-transparent" />
+        <div className="pointer-events-none absolute bottom-2.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-white/35" />
       </div>
     </div>
   </div>
@@ -121,7 +123,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-          <div className="flex overflow-hidden">
+          <div className="flex overflow-x-hidden overflow-y-visible py-2">
             <div
               className="flex items-end gap-4 sm:gap-6 md:gap-8 will-change-transform [transform:translate3d(0,0,0)]"
               style={{
