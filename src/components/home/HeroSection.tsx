@@ -157,7 +157,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         </div>
       </div>
 
-      <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-background to-transparent" />
+      
       <style>{`
         @keyframes hero-marquee {
           from {
