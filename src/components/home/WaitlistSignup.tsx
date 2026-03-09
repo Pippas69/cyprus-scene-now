@@ -106,7 +106,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
   }
 
   return (
-    <section className="py-16 sm:py-20 md:py-28 bg-background relative overflow-hidden">
+    <section className="py-10 sm:py-14 bg-background relative overflow-hidden">
       {/* Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[250px] bg-seafoam/8 rounded-full blur-[120px]" />
 
