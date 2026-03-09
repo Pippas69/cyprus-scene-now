@@ -46,7 +46,7 @@ const Index = () => {
             backgroundImage: "url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&q=80')"
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background/95" />
+        <div className="absolute inset-0 bg-background/88" />
         <HeroSection language={language} />
         <PartnerLogoMarquee />
       </div>
