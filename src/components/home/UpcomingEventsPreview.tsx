@@ -94,23 +94,6 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-8 sm:mb-12"
-        >
-          <p className="text-seafoam/70 text-xs sm:text-sm tracking-[0.2em] uppercase font-medium mb-3">
-            {language === "el" ? "Events" : "Events"}
-          </p>
-          <h2 className="font-poppins text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
-            {content[language].title}
-          </h2>
-          <p className="text-white/40 text-sm sm:text-base max-w-md mx-auto">
-            {content[language].subtitle}
-          </p>
-        </motion.div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
           {events.slice(0, 3).map((event, index) => (
             <motion.div
