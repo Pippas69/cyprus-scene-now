@@ -11,7 +11,7 @@ interface HeroSectionProps {
 const PhoneMockup = ({ children }: { children: ReactNode }) => (
   <div className="w-[240px] sm:w-[280px] md:w-[330px] lg:w-[370px] flex-shrink-0 px-1 sm:px-2 py-2 sm:py-3">
     <div
-      className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[hsl(0_0%_14%)] via-[hsl(0_0%_7%)] to-[hsl(0_0%_3%)] p-[4px] sm:p-[5px] ring-1 ring-white/12 shadow-[0_30px_80px_-20px_hsl(0_0%_0%/0.9),inset_0_1px_0_hsl(0_0%_100%/0.18)]"
+      className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[hsl(0_0%_14%)] via-[hsl(0_0%_7%)] to-[hsl(0_0%_3%)] p-[4px] sm:p-[5px] ring-1 ring-white/8"
       style={{ aspectRatio: "9/19.5" }}
     >
       {/* Hardware buttons */}
