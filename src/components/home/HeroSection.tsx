@@ -119,9 +119,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="relative mt-4 sm:mt-6"
         >
-          {/* Edge fade overlays */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
           <div className="flex overflow-x-hidden overflow-y-visible py-2">
             <div
