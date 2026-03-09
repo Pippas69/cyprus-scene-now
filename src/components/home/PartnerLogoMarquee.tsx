@@ -23,10 +23,7 @@ interface PartnerData {
   logo_url: string | null;
 }
 
-const translations = {
-  el: { heading: "Μας Εμπιστεύονται" },
-  en: { heading: "Trusted By" },
-};
+const HEADING = "Trusted By";
 
 const PartnerLogoMarquee = () => {
   const { language } = useLanguage();
