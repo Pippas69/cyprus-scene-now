@@ -123,7 +123,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 md:w-48 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-          <div className="flex overflow-hidden">
+          <div className="flex overflow-x-hidden overflow-y-visible py-2">
             <div
               className="flex items-end gap-4 sm:gap-6 md:gap-8 will-change-transform [transform:translate3d(0,0,0)]"
               style={{

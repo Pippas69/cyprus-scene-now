@@ -101,7 +101,7 @@ const PhoneScreenMap = ({ language }: Props) => {
                 <p className="text-[9px] text-white/40">{venue.type} · {venue.distance}</p>
               </div>
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                <Star className="w-2.5 h-2.5 text-accent fill-accent" />
                 <span className="text-[10px] font-medium text-white/60">{venue.rating}</span>
               </div>
             </div>
