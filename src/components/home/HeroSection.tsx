@@ -54,7 +54,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const marqueeScreens = [...screens, ...screens, ...screens, ...screens];
 
   return (
-    <section className="relative flex items-start justify-center overflow-hidden pt-[5.5rem] sm:pt-[6.5rem]">
+    <section className="relative flex items-start justify-center pt-[5.5rem] sm:pt-[6.5rem]">
 
       <div className="relative z-10 w-full">
         <div className="container mx-auto px-4 text-center">
