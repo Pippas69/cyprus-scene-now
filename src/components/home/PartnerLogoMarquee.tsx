@@ -62,10 +62,10 @@ const PartnerLogoMarquee = () => {
   const marqueeItems = [...partners, ...partners];
 
   return (
-    <section className="relative py-8 sm:py-12 overflow-hidden bg-transparent">
+    <section className="relative py-8 sm:py-12 overflow-visible bg-transparent">
       <div className="relative z-10">
         <p className="text-center text-white/50 font-playfair text-xs sm:text-sm tracking-[0.25em] uppercase mb-6 sm:mb-8">
-          {t.heading}
+          Trusted By
         </p>
 
         <div className="relative">
