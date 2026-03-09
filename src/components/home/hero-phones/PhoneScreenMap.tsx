@@ -81,8 +81,8 @@ const PhoneScreenMap = ({ language }: Props) => {
 
         {/* User location */}
         <div className="absolute top-[45%] left-[45%]">
-          <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-lg">
-            <div className="absolute -inset-2 rounded-full bg-blue-500/20 animate-ping" />
+          <div className="w-3 h-3 rounded-full bg-accent border-2 border-white shadow-lg shadow-accent/40">
+            <div className="absolute -inset-2 rounded-full bg-accent/30 animate-ping" />
           </div>
         </div>
       </div>
