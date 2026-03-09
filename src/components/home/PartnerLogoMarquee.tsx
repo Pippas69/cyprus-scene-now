@@ -26,8 +26,6 @@ interface PartnerData {
 const HEADING = "Trusted By";
 
 const PartnerLogoMarquee = () => {
-  const { language } = useLanguage();
-  const t = translations[language];
 
   const [partners, setPartners] = useState<PartnerData[]>(
     PARTNER_SEARCH.map((p) => ({
