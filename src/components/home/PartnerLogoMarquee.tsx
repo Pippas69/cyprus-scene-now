@@ -72,7 +72,7 @@ const PartnerLogoMarquee = () => {
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-          <div className="flex overflow-hidden">
+          <div className="flex overflow-hidden py-2">
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
               transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
