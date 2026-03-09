@@ -90,7 +90,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   if (events.length === 0) return null;
 
   return (
-    <section className="relative py-14 sm:py-20 overflow-hidden bg-background">
+    <section className="relative py-10 sm:py-14 overflow-hidden bg-background">
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
 
       <div className="container mx-auto px-4 relative z-10">
