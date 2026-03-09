@@ -8,14 +8,14 @@ interface FeaturesSectionProps {
 const FeaturesSection = ({ language }: FeaturesSectionProps) => {
   const text = {
     el: [
-      { icon: Compass, title: "Εξερεύνησε venues & events", subtitle: "Χάρτης, κατηγορίες, αξιολογήσεις — ό,τι χρειάζεσαι για να βρεις το επόμενο στέκι σου" },
-      { icon: Ticket, title: "Κρατήσεις, εισιτήρια & προσφορές", subtitle: "Ένα tap σε χωρίζει από τραπέζι, είσοδο ή αποκλειστικό deal" },
-      { icon: Megaphone, title: "Εργαλεία για επιχειρήσεις", subtitle: "Ορατότητα σε χιλιάδες, analytics σε πραγματικό χρόνο και πλήρη διαχείριση" },
+      { icon: Compass, title: "Εξερεύνησε venues & events", subtitle: "Ανακάλυψε clubs, bars, εστιατόρια και events γύρω σου μέσα από τον χάρτη. Δες τι παίζει κοντά σου, κλείσε εισιτήρια ή κράτηση και μη χάσεις ποτέ ξανά κάτι που σ' ενδιαφέρει" },
+      { icon: Ticket, title: "Κρατήσεις, εισιτήρια & προσφορές", subtitle: "Κλείσε τραπέζι σε εστιατόριο ή club, αγόρασε εισιτήρια για events, απόκτησε αποκλειστικές προσφορές και φοιτητικές εκπτώσεις — όλα από ένα μέρος, σε δευτερόλεπτα" },
+      { icon: Megaphone, title: "Εργαλεία για επιχειρήσεις", subtitle: "Σύστημα κρατήσεων, εισιτηρίων και προσφορών. Ορατότητα σε χιλιάδες χρήστες, real-time analytics, boost προβολής και πλήρης διαχείριση της παρουσίας σου" },
     ],
     en: [
-      { icon: Compass, title: "Discover venues & events", subtitle: "Maps, categories, reviews — everything you need to find your next spot" },
-      { icon: Ticket, title: "Reservations, tickets & deals", subtitle: "One tap away from a table, entry, or an exclusive deal" },
-      { icon: Megaphone, title: "Tools for businesses", subtitle: "Visibility to thousands, real-time analytics, and full management" },
+      { icon: Compass, title: "Discover venues & events", subtitle: "Explore clubs, bars, restaurants and events near you via the map. See what's happening, book tickets or reserve a table, and never miss out on what matters to you" },
+      { icon: Ticket, title: "Reservations, tickets & deals", subtitle: "Book a table at a restaurant or club, grab event tickets, unlock exclusive offers and student discounts — all in one place, in seconds" },
+      { icon: Megaphone, title: "Tools for businesses", subtitle: "Reservation system, ticketing and deals engine. Visibility to thousands, real-time analytics, boost promotions and full control of your presence" },
     ],
   };
 
