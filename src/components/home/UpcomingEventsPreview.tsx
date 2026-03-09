@@ -94,11 +94,6 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
 
       <div className="container mx-auto px-4 relative z-10">
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
-          </p>
-        </motion.div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
           {events.slice(0, 3).map((event, index) => (
             <motion.div
