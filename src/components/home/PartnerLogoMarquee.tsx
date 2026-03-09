@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const PARTNER_NAMES = [
   "Kaliva on the Beach",
@@ -34,7 +35,15 @@ interface PartnerData {
   logo_url: string | null;
 }
 
+const translations = {
+  el: { heading: "Μας Εμπιστεύονται" },
+  en: { heading: "Trusted By" },
+};
+
 const PartnerLogoMarquee = () => {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   const [partners, setPartners] = useState<PartnerData[]>(
     PARTNER_NAMES.map((name, i) => ({
       name,
@@ -46,13 +55,24 @@ const PartnerLogoMarquee = () => {
 
   useEffect(() => {
     const fetchLogos = async () => {
-      const { data } = await supabase
-        .from("businesses")
-        .select("name, logo_url")
-        .in("name", PARTNER_NAMES);
+      // Use ilike for case-insensitive matching
+      const promises = PARTNER_NAMES.map(name =>
+        supabase
+          .from("businesses")
+          .select("name, logo_url")
+          .ilike("name", name)
+          .maybeSingle()
+      );
+      const results = await Promise.all(promises);
+      
+      const logoMap = new Map<string, string | null>();
+      results.forEach((res, i) => {
+        if (res.data?.logo_url) {
+          logoMap.set(PARTNER_NAMES[i], res.data.logo_url);
+        }
+      });
 
-      if (data && data.length > 0) {
-        const logoMap = new Map(data.map(b => [b.name, b.logo_url]));
+      if (logoMap.size > 0) {
         setPartners(prev =>
           prev.map(p => ({ ...p, logo_url: logoMap.get(p.name) ?? p.logo_url }))
         );
@@ -67,7 +87,7 @@ const PartnerLogoMarquee = () => {
     <section className="relative py-8 sm:py-12 overflow-hidden bg-transparent">
       <div className="relative z-10">
         <p className="text-center text-white/50 font-playfair text-xs sm:text-sm tracking-[0.25em] uppercase mb-6 sm:mb-8">
-          Ήδη στο ΦΟΜΟ
+          {t.heading}
         </p>
 
         <div className="relative">
@@ -85,7 +105,7 @@ const PartnerLogoMarquee = () => {
                   key={`${partner.name}-${index}`}
                   className="flex flex-col items-center gap-2 flex-shrink-0 group"
                 >
-                  <Avatar className={`w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20`}>
+                  <Avatar className="w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20">
                     <AvatarImage src={partner.logo_url || undefined} alt={partner.name} />
                     <AvatarFallback className={`bg-gradient-to-br ${partner.gradient} text-white font-semibold text-xs sm:text-sm tracking-wide`}>
                       {partner.initials}
