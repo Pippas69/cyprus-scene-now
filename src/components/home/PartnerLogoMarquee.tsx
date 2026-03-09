@@ -4,28 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLanguage } from "@/hooks/useLanguage";
 
-const PARTNER_NAMES = [
-  "Kaliva on the Beach",
-  "Blue Martini",
-  "Amnesia",
-  "SugarwaveCy",
-  "Mr. Mellow",
-  "Legacy",
-  "Eterna",
-  "Baristro",
-  "Crosta Nostra",
-];
-
-const GRADIENTS = [
-  "from-cyan-500 to-blue-600",
-  "from-blue-400 to-indigo-600",
-  "from-purple-500 to-pink-600",
-  "from-pink-400 to-rose-600",
-  "from-amber-400 to-orange-600",
-  "from-emerald-400 to-teal-600",
-  "from-violet-400 to-purple-600",
-  "from-orange-400 to-red-600",
-  "from-teal-400 to-cyan-600",
+const PARTNER_SEARCH = [
+  { display: "Kaliva on the Beach", search: "%kaliva%", gradient: "from-cyan-500 to-blue-600" },
+  { display: "Blue Martini", search: "%blue martini%", gradient: "from-blue-400 to-indigo-600" },
+  { display: "Amnesia", search: "%amnesia%", gradient: "from-purple-500 to-pink-600" },
+  { display: "SugarwaveCy", search: "%sugarwave%", gradient: "from-pink-400 to-rose-600" },
+  { display: "Mr. Mellow", search: "%mellow%", gradient: "from-amber-400 to-orange-600" },
+  { display: "Legacy", search: "%legacy%", gradient: "from-emerald-400 to-teal-600" },
+  { display: "Eterna", search: "%eterna%", gradient: "from-violet-400 to-purple-600" },
+  { display: "Baristro", search: "%baristro%", gradient: "from-orange-400 to-red-600" },
+  { display: "Crosta Nostra", search: "%crosta%", gradient: "from-teal-400 to-cyan-600" },
 ];
 
 interface PartnerData {
@@ -45,38 +33,33 @@ const PartnerLogoMarquee = () => {
   const t = translations[language];
 
   const [partners, setPartners] = useState<PartnerData[]>(
-    PARTNER_NAMES.map((name, i) => ({
-      name,
-      initials: name.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
-      gradient: GRADIENTS[i % GRADIENTS.length],
+    PARTNER_SEARCH.map((p) => ({
+      name: p.display,
+      initials: p.display.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
+      gradient: p.gradient,
       logo_url: null,
     }))
   );
 
   useEffect(() => {
     const fetchLogos = async () => {
-      // Use ilike for case-insensitive matching
-      const promises = PARTNER_NAMES.map(name =>
+      const promises = PARTNER_SEARCH.map(p =>
         supabase
           .from("businesses")
           .select("name, logo_url")
-          .ilike("name", name)
+          .ilike("name", p.search)
+          .not("logo_url", "is", null)
+          .limit(1)
           .maybeSingle()
       );
       const results = await Promise.all(promises);
-      
-      const logoMap = new Map<string, string | null>();
-      results.forEach((res, i) => {
-        if (res.data?.logo_url) {
-          logoMap.set(PARTNER_NAMES[i], res.data.logo_url);
-        }
-      });
 
-      if (logoMap.size > 0) {
-        setPartners(prev =>
-          prev.map(p => ({ ...p, logo_url: logoMap.get(p.name) ?? p.logo_url }))
-        );
-      }
+      setPartners(prev =>
+        prev.map((partner, i) => ({
+          ...partner,
+          logo_url: results[i].data?.logo_url ?? partner.logo_url,
+        }))
+      );
     };
     fetchLogos();
   }, []);

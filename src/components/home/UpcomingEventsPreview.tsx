@@ -58,24 +58,24 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
 
   const content = {
     en: {
-      title: "Upcoming Events",
-      subtitle: "Stay tuned with all events in Cyprus",
-      viewAll: "View All Events",
+      title: "What's Coming Up",
+      subtitle: "The hottest events across Cyprus — don't miss out",
+      viewAll: "Explore All Events",
     },
     el: {
-      title: "Επερχόμενες Εκδηλώσεις",
-      subtitle: "Συντονίσου με όλα τα events της Κύπρου",
-      viewAll: "Δες Όλες τις Εκδηλώσεις",
+      title: "Τι Έρχεται",
+      subtitle: "Τα πιο hot events σε όλη την Κύπρο — μη χάσεις κανένα",
+      viewAll: "Εξερεύνησε Όλα τα Events",
     },
   };
 
   if (loading) {
     return (
-      <section className="relative py-16 md:py-20 bg-background">
+      <section className="relative py-14 sm:py-20 bg-background">
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-12">
-            <Skeleton className="h-10 w-64 mx-auto mb-4 bg-white/10" />
-            <Skeleton className="h-6 w-96 mx-auto bg-white/10" />
+          <div className="text-center mb-10">
+            <Skeleton className="h-8 w-48 mx-auto mb-3 bg-white/10" />
+            <Skeleton className="h-5 w-72 mx-auto bg-white/10" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {[1, 2, 3].map((i) => (
@@ -90,21 +90,23 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   if (events.length === 0) return null;
 
   return (
-    <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden bg-background">
-      {/* Subtle glow */}
+    <section className="relative py-14 sm:py-20 overflow-hidden bg-background">
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
-      
+
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10 sm:mb-14"
+          className="text-center mb-8 sm:mb-12"
         >
-          <h2 className="font-cinzel text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4 tracking-tight">
+          <p className="text-seafoam/70 text-xs sm:text-sm tracking-[0.2em] uppercase font-medium mb-3">
+            {language === "el" ? "Events" : "Events"}
+          </p>
+          <h2 className="font-poppins text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
             {content[language].title}
           </h2>
-          <p className="text-white/50 text-sm sm:text-base md:text-lg">
+          <p className="text-white/40 text-sm sm:text-base max-w-md mx-auto">
             {content[language].subtitle}
           </p>
         </motion.div>
@@ -136,7 +138,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
           >
             <Link to="/feed">
               {content[language].viewAll}
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 w-4 h-4" />
             </Link>
           </Button>
         </motion.div>
