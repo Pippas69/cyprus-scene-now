@@ -583,7 +583,7 @@ export default function EventDetail() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}>
               
-              <div className="aspect-[4/3] sm:aspect-video">
+              <div className="aspect-[4/3] sm:aspect-[16/10] lg:aspect-video">
                 {event.cover_image_url ?
                 <img
                   src={event.cover_image_url}
