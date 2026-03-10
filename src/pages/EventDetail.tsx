@@ -927,8 +927,7 @@ export default function EventDetail() {
             transition={{ delay: 0.3 }}>
             
             {/* RSVP Buttons */}
-            <Card variant="glass" className="backdrop-blur-md">
-              
+            
 
 
 
@@ -970,8 +969,9 @@ export default function EventDetail() {
 
 
 
-              
-            </Card>
+
+
+            
 
             {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
