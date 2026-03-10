@@ -7,8 +7,9 @@ interface Props {
 
 const t = {
   el: {
-    title: "Summer Vibes Festival",
-    venue: "Guaba Beach Bar",
+    title: "Summer Vibes",
+    type: "Event · Beach Party",
+    venue: "Kaliva on the Beach",
     date: "Σάβ, 14 Ιουν",
     time: "22:00 – 04:00",
     price: "€15",
@@ -18,8 +19,9 @@ const t = {
     getTickets: "Αγορά Εισιτηρίων",
   },
   en: {
-    title: "Summer Vibes Festival",
-    venue: "Guaba Beach Bar",
+    title: "Summer Vibes",
+    type: "Event · Beach Party",
+    venue: "Kaliva on the Beach",
     date: "Sat, Jun 14",
     time: "22:00 – 04:00",
     price: "€15",
@@ -66,7 +68,10 @@ const PhoneScreenEvent = ({ language }: Props) => {
 
       {/* Content */}
       <div className="flex-1 px-5 pt-3 space-y-3 overflow-hidden">
-        <h2 className="text-[15px] font-bold leading-tight">{txt.title}</h2>
+        <div>
+          <h2 className="text-[15px] font-bold leading-tight">{txt.title}</h2>
+          <p className="text-[10px] text-white/45 mt-0.5">{txt.type}</p>
+        </div>
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
