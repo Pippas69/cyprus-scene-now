@@ -1,4 +1,5 @@
-import { Star, MapPin, Clock, Users, ChevronRight, Utensils } from "lucide-react";
+import { Star, MapPin, Clock, ChevronRight } from "lucide-react";
+import diningHero from "@/assets/dining-hero.jpg";
 
 interface Props {
   language: "el" | "en";
@@ -12,7 +13,6 @@ const t = {
     reviews: "324 κριτικές",
     location: "Λεμεσός, Παλιό Λιμάνι",
     hours: "12:00 – 00:00",
-    capacity: "Διαθέσιμα τραπέζια",
     reserve: "Κράτηση Τραπεζιού",
     popular: "Δημοφιλές",
     menu: "Μενού",
@@ -30,7 +30,6 @@ const t = {
     reviews: "324 reviews",
     location: "Limassol, Old Port",
     hours: "12:00 – 00:00",
-    capacity: "Tables available",
     reserve: "Reserve a Table",
     popular: "Popular",
     menu: "Menu",
@@ -56,58 +55,53 @@ const PhoneScreenDining = ({ language }: Props) => {
         </div>
       </div>
 
-      {/* Cover image area */}
-      <div className="relative h-[28%] bg-gradient-to-br from-[#1a3a2a] via-[#0f2620] to-[#0a1929] overflow-hidden">
-        {/* Decorative food/ambiance pattern */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-3 left-4 w-14 h-14 rounded-full bg-[#c8956c]/40 blur-xl" />
-          <div className="absolute bottom-2 right-6 w-20 h-12 rounded-full bg-[#3ec3b7]/20 blur-xl" />
-          <div className="absolute top-6 right-10 w-8 h-8 rounded-full bg-[#e8c170]/30 blur-lg" />
-        </div>
-        {/* Utensils icon */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-white/[0.08] backdrop-blur-sm flex items-center justify-center border border-white/10">
-            <Utensils className="w-8 h-8 text-[#e8c170]" />
-          </div>
-        </div>
+      {/* Cover photo */}
+      <div className="relative h-[26%] overflow-hidden">
+        <img
+          src={diningHero}
+          alt="Restaurant"
+          className="w-full h-full object-cover"
+          draggable={false}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1929] via-[#0a1929]/40 to-transparent" />
         {/* Popular badge */}
-        <div className="absolute top-3 right-3">
-          <span className="px-2 py-0.5 rounded-full bg-[#e8c170]/20 text-[#e8c170] text-[8px] font-bold uppercase tracking-wider">
+        <div className="absolute top-2.5 right-3">
+          <span className="px-2 py-0.5 rounded-full bg-[#3ec3b7]/20 text-[#3ec3b7] text-[8px] font-bold uppercase tracking-wider">
             {txt.popular}
           </span>
         </div>
       </div>
 
       {/* Venue info */}
-      <div className="px-4 pt-3 pb-2">
+      <div className="px-4 pt-2.5 pb-1.5">
         <h2 className="text-[15px] font-bold tracking-tight">{txt.venue}</h2>
         <p className="text-[10px] text-white/45 mt-0.5">{txt.type}</p>
 
         {/* Rating */}
-        <div className="flex items-center gap-1.5 mt-2">
+        <div className="flex items-center gap-1.5 mt-1.5">
           <div className="flex items-center gap-0.5">
             {[1, 2, 3, 4, 5].map((s) => (
               <Star
                 key={s}
                 className="w-2.5 h-2.5"
-                fill={s <= 4 ? "#e8c170" : "none"}
-                stroke={s <= 4 ? "#e8c170" : "#e8c170"}
+                fill={s <= 4 ? "#3ec3b7" : "none"}
+                stroke={s <= 4 ? "#3ec3b7" : "#3ec3b7"}
                 strokeWidth={s === 5 ? 1.5 : 0}
               />
             ))}
           </div>
-          <span className="text-[10px] font-semibold text-[#e8c170]">{txt.rating}</span>
+          <span className="text-[10px] font-semibold text-[#3ec3b7]">{txt.rating}</span>
           <span className="text-[9px] text-white/35">({txt.reviews})</span>
         </div>
       </div>
 
-      {/* Details row */}
-      <div className="mx-4 flex items-center gap-3 py-2 border-t border-white/[0.06]">
-        <div className="flex items-center gap-1.5">
+      {/* Location & hours - single row */}
+      <div className="mx-4 flex items-center gap-3 py-1.5 border-t border-white/[0.06]">
+        <div className="flex items-center gap-1">
           <MapPin className="w-3 h-3 text-[#3ec3b7]" />
           <span className="text-[9px] text-white/50">{txt.location}</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <Clock className="w-3 h-3 text-[#3ec3b7]" />
           <span className="text-[9px] text-white/50">{txt.hours}</span>
         </div>
@@ -124,14 +118,14 @@ const PhoneScreenDining = ({ language }: Props) => {
           ].map((item) => (
             <div key={item.name} className="flex items-center justify-between">
               <span className="text-[11px] font-medium text-white/80">{item.name}</span>
-              <span className="text-[10px] text-[#e8c170] font-semibold">{item.price}</span>
+              <span className="text-[10px] text-[#3ec3b7] font-semibold">{item.price}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* CTA */}
-      <div className="px-4 mt-3">
+      <div className="px-4 mt-2.5">
         <div className="w-full h-9 rounded-xl bg-gradient-to-r from-[#3ec3b7] to-[#2da89e] flex items-center justify-center gap-1.5">
           <span className="text-[12px] font-semibold text-white">{txt.reserve}</span>
           <ChevronRight className="w-3.5 h-3.5 text-white/80" />
