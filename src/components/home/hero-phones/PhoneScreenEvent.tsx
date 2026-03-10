@@ -7,8 +7,9 @@ interface Props {
 
 const t = {
   el: {
-    title: "Summer Vibes Festival",
-    venue: "Guaba Beach Bar",
+    title: "Summer Vibes",
+    type: "Event · Beach Party",
+    venue: "Kaliva on the Beach",
     date: "Σάβ, 14 Ιουν",
     time: "22:00 – 04:00",
     price: "€15",
@@ -18,8 +19,9 @@ const t = {
     getTickets: "Αγορά Εισιτηρίων",
   },
   en: {
-    title: "Summer Vibes Festival",
-    venue: "Guaba Beach Bar",
+    title: "Summer Vibes",
+    type: "Event · Beach Party",
+    venue: "Kaliva on the Beach",
     date: "Sat, Jun 14",
     time: "22:00 – 04:00",
     price: "€15",
