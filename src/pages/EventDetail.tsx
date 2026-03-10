@@ -13,7 +13,6 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-// Tabs removed from Event Detail (Details/Live Feed section removed)
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -110,8 +109,6 @@ export default function EventDetail() {
     checkUser();
     if (eventId) {
       fetchEventDetails();
-      // Do NOT count views when navigation originated from the user's dashboard sections
-      // or when the view was already tracked by the source component (e.g., search)
       const src = new URLSearchParams(location.search).get('src');
       const analyticsTracked = location.state?.analyticsTracked === true;
       console.debug('[EventDetail] view check', { eventId, src, analyticsTracked, pathname: location.pathname, search: location.search });
@@ -159,7 +156,6 @@ export default function EventDetail() {
   const fetchRSVPStatus = async () => {
     if (!user || !event) return;
 
-    // Fetch all user RSVPs for this event (may have 0, 1, or 2 rows)
     const { data: rows, error } = await supabase
       .from("rsvps")
       .select("status")
@@ -250,7 +246,6 @@ export default function EventDetail() {
     setError(null);
 
     try {
-      // Fetch event with business details
       const { data: eventData, error: fetchError } = await supabase
         .from("events")
         .select(
@@ -283,7 +278,6 @@ export default function EventDetail() {
         return;
       }
 
-      // If event is paused, it must disappear everywhere EXCEPT for users who already purchased/reserved.
       if (isEventPaused(eventData)) {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) {
@@ -321,7 +315,6 @@ export default function EventDetail() {
 
       setEvent(eventData);
 
-      // Fetch show instances for performance events (theatre, music, dance, kids)
       const performanceCategories = ['theatre', 'music', 'dance', 'kids', 'θέατρο', 'μουσική', 'χορός', 'παιδικά'];
       const bizCategories = (eventData.businesses?.category || []).map((c: string) => c.toLowerCase());
       const isPerformance = bizCategories.some((c: string) => performanceCategories.includes(c));
@@ -335,7 +328,6 @@ export default function EventDetail() {
           .order('start_at', { ascending: true });
         setShowInstances(shows || []);
 
-        // Fetch cast/crew via production_id from show instances
         const productionId = shows?.[0]?.production_id;
         if (productionId) {
           const { data: cast } = await supabase
@@ -347,28 +339,23 @@ export default function EventDetail() {
         }
       }
 
-      // Check if all reservation seating types are sold out for Kaliva flow
       const eventDataLinked = !!(eventData as any).businesses?.ticket_reservation_linked || isClubOrEventBusiness((eventData as any).businesses?.category || []);
       await refreshReservationSoldOut(eventId, eventDataLinked, eventData.event_type);
 
-      // Fetch RSVP counts (global)
       await refreshCounts(eventId);
 
-      // Fetch personalized similar events using the new RPC function
-      // Prioritizes: boosted events first, then user interests/city match
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
         p_event_id: eventId,
         p_user_id: currentUser?.id || null,
-        p_limit: 2  // Maximum 2 similar events
+        p_limit: 2
       });
 
       if (similarError) {
         console.error('Error fetching similar events:', similarError);
         setSimilarEvents([]);
       } else {
-        // Transform RPC result to match the expected format
         const transformedSimilar = (similar || []).map((item: any) => ({
           id: item.id,
           title: item.title,
@@ -391,7 +378,6 @@ export default function EventDetail() {
           }
         }));
 
-        // Enforce pause visibility: remove paused similar events
         const ids = transformedSimilar.map((e: any) => e.id);
         if (ids.length > 0) {
           const { data: vis } = await supabase
@@ -430,7 +416,6 @@ export default function EventDetail() {
       const isCurrentlyActive = newStatus === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
-        // Toggle OFF this specific status only
         const { error } = await supabase
           .from("rsvps")
           .delete()
@@ -446,7 +431,6 @@ export default function EventDetail() {
           setIsGoing(false);
         }
       } else {
-        // Insert new row for this status (allows both interested AND going)
         const { error } = await supabase.from("rsvps").insert({
           event_id: event.id,
           user_id: user.id,
@@ -465,7 +449,6 @@ export default function EventDetail() {
 
       await refreshCounts(event.id);
 
-      // Track engagement
       if (event?.businesses?.id) {
         trackEngagement(event.businesses.id, "share", "event", event.id);
       }
@@ -476,8 +459,6 @@ export default function EventDetail() {
       setRsvpLoading(false);
     }
   };
-
-  // NOTE: Details/Live Feed section removed; keep RSVP state for buttons/eligibility elsewhere.
 
   const t = {
     el: {
@@ -524,7 +505,6 @@ export default function EventDetail() {
       })()
     : activeTicketTiers;
 
-  // Sold-out for walk-ins must use walk-in tiers only (never reservation-linked tickets)
   const tiersForSoldOutCheck = isLinkedHybridEvent ? walkInTicketTiers : activeTicketTiers;
   const allTicketsSoldOut = hasNativeTickets && (
     tiersForSoldOutCheck.length === 0 ||
@@ -536,38 +516,15 @@ export default function EventDetail() {
   const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
   const eventHasTickets = eventType === 'ticket' || eventType === 'ticket_and_reservation';
   const eventHasReservation = eventType === 'reservation' || eventType === 'ticket_and_reservation' || event?.accepts_reservations;
-  
-  const getEventTypeBadge = () => {
-    switch (eventType) {
-      case 'ticket':
-        return (
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
-            {language === 'el' ? 'Με Εισιτήριο (Event)' : 'Ticketed (Event)'}
-          </Badge>
-        );
-      case 'ticket_and_reservation':
-        return (
-          <div className="flex gap-1.5">
-            <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
-              {language === 'el' ? 'Εισιτήριο & Κράτηση' : 'Ticket & Reservation'}
-            </Badge>
-          </div>
-        );
-      case 'reservation':
-        return (
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
-            {language === 'el' ? 'Με Κράτηση (Event)' : 'Reservation (Event)'}
-          </Badge>
-        );
-      case 'free_entry':
-        return (
-          <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-medium bg-background border-border">
-            {language === 'el' ? 'Ελεύθερη Είσοδος (Event)' : 'Free Entry (Event)'}
-          </Badge>
-        );
-      default:
-        return null;
-    }
+
+  // Compute the starting ticket price for the price badge
+  const startingPriceCents = activeTicketTiers.length > 0
+    ? Math.min(...activeTicketTiers.map((t: any) => t.price_cents ?? 0))
+    : (event?.price ? event.price * 100 : null);
+
+  const formatPrice = (cents: number) => {
+    if (cents === 0) return language === 'el' ? 'Δωρεάν' : 'Free';
+    return `€${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
   };
 
   if (loading) {
@@ -607,12 +564,12 @@ export default function EventDetail() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8 pt-24">
-        {/* Back Button */}
+      <div className="container mx-auto px-4 py-8 pt-20 lg:pt-24">
+        {/* Desktop-only back button */}
         <RippleButton
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4 gap-2 relative z-20"
+          className="mb-4 gap-2 relative z-20 hidden lg:inline-flex"
         >
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
@@ -620,15 +577,15 @@ export default function EventDetail() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Hero Image with Event Type Badge (half-overlapping like reference) */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Hero Image — premium style with title + price overlaid */}
             <motion.div
-              className="relative rounded-xl shadow-lg"
+              className="relative rounded-xl shadow-lg overflow-hidden -mx-4 sm:mx-0"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <div className="aspect-video rounded-xl overflow-hidden">
+              <div className="aspect-[4/3] sm:aspect-video">
                 {event.cover_image_url ? (
                   <img
                     src={event.cover_image_url}
@@ -642,25 +599,80 @@ export default function EventDetail() {
                 )}
               </div>
 
-              {/* Badge overlaps the bottom edge (like screenshot) */}
-              <div className="absolute right-4 bottom-0 translate-y-1/2">
-                {getEventTypeBadge()}
+              {/* Gradient overlay at bottom for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+              {/* Back arrow — overlaid on image (mobile/tablet only) */}
+              <button
+                onClick={() => navigate(-1)}
+                className="lg:hidden absolute top-3 left-3 sm:left-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 text-white" />
+              </button>
+
+              {/* Title + Price badge at bottom of image */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
+                <h1 className="text-white text-lg sm:text-xl font-bold leading-tight line-clamp-2 flex-1">{event.title}</h1>
+                {eventHasTickets && startingPriceCents !== null && (
+                  <span className="shrink-0 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-bold">
+                    {formatPrice(startingPriceCents)}
+                  </span>
+                )}
               </div>
             </motion.div>
 
-            {/* Title and Description - close to image */}
-            <div className="mt-2">
-              <h1 className="text-lg font-bold line-clamp-1">{event.title}</h1>
-              {event.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 mt-0">
-                  {event.description}
-                </p>
+            {/* Description (if any) */}
+            {event.description && (
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
+                {event.description}
+              </p>
+            )}
+
+            {/* Location / Date / Time — compact rows with icons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                  window.open(mapsUrl, '_blank');
+                }}
+                className="flex items-center gap-2.5 w-full text-left group"
+              >
+                <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{event.location}</span>
+              </button>
+
+              {showInstances.length > 1 ? (
+                <div className="flex items-start gap-2.5">
+                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    {showInstances.map((si: any) => (
+                      <p key={si.id} className="text-sm text-muted-foreground">
+                        {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(event.start_at), 'EEE, d MMM', { locale: language === 'el' ? el : enUS })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
 
             {/* Cast & Crew for performance events */}
             {castMembers.length > 0 && (
-              <div className="mt-3">
+              <div>
                 <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   {language === 'el' ? 'Συντελεστές' : 'Cast & Crew'}
@@ -691,7 +703,7 @@ export default function EventDetail() {
             )}
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
-            <div className="lg:hidden space-y-3 mt-3">
+            <div className="lg:hidden space-y-3">
               {/* RSVP Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <RippleButton
@@ -735,10 +747,10 @@ export default function EventDetail() {
                 </div>
               </div>
 
-              {/* Tickets/Reservations - DIRECTLY after RSVP buttons (before date) */}
+              {/* Tickets/Reservations */}
               {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
                 <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
+                  className="w-full gap-2 h-10 text-sm"
                   onClick={() => setShowTicketFlow(true)}
                 >
                   <Ticket className="h-3.5 w-3.5" />
@@ -746,7 +758,7 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
+              {/* Kaliva flow */}
               {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
                 <div className="w-full space-y-1">
                   {kalivaFullySoldOut ? (
@@ -776,7 +788,7 @@ export default function EventDetail() {
                   ) : (
                     <>
                       <RippleButton
-                        className="w-full gap-2 h-9 text-sm"
+                        className="w-full gap-2 h-10 text-sm"
                         onClick={() => setShowKalivaFlow(true)}
                       >
                         <Ticket className="h-3.5 w-3.5" />
@@ -806,8 +818,6 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-
-
               {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked && (
                 <RippleButton
                   className="w-full gap-2 h-9 text-sm"
@@ -828,56 +838,6 @@ export default function EventDetail() {
                 </RippleButton>
               )}
 
-              {/* Event Details Card - Date & Location (AFTER tickets) */}
-              <Card variant="glass" className="backdrop-blur-md">
-                <CardContent className="py-3 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      {showInstances.length > 1 ? (
-                        <>
-                          <p className="font-medium text-sm">
-                            {language === 'el' ? 'Πολλαπλές Ημερομηνίες' : 'Multiple Dates'}
-                          </p>
-                          <div className="space-y-0.5">
-                            {showInstances.map((si: any) => (
-                              <p key={si.id} className="text-xs text-muted-foreground">
-                                {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
-                              </p>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <p className="font-medium text-sm">
-                            {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(event.start_at), 'HH:mm')} -{' '}
-                            {format(new Date(event.end_at), 'HH:mm')}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <button
-                    onClick={() => {
-                      // Open Google Maps with the EVENT's location (not business address)
-                      // NO analytics tracking for this action
-                      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                      window.open(mapsUrl, '_blank');
-                    }}
-                    className="flex items-start gap-2 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
-                  >
-                    <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-primary mt-0.5 shrink-0 transition-colors" />
-                    <p className="font-medium text-sm group-hover:text-primary transition-colors">{event.location}</p>
-                  </button>
-                </CardContent>
-              </Card>
-
               {/* Business Card */}
               <Card variant="glass" className="backdrop-blur-md">
                 <CardContent className="py-3">
@@ -890,7 +850,6 @@ export default function EventDetail() {
                       from: fromPath,
                     }}
                     onClick={() => {
-                      // Profile interaction: clicking the host business counts as profile_click
                       trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
                         source: 'event_host_link',
                       });
@@ -928,7 +887,7 @@ export default function EventDetail() {
                 {text.share}
               </RippleButton>
               
-              {/* Terms & Conditions (mobile/tablet) - below share button */}
+              {/* Terms & Conditions */}
               {event.terms_and_conditions && (
                 <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
                   <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
@@ -936,25 +895,22 @@ export default function EventDetail() {
               )}
             </div>
 
-            {/* Similar Events - Always show section, use personalized RPC */}
+            {/* Similar Events */}
             <div className="mt-4">
               <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
               {similarEvents.length > 0 ? (
-                <>
-                  {/* Mobile only: single column */}
-                  <motion.div
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {similarEvents.map((similar) => (
-                      <motion.div key={similar.id} variants={itemVariants}>
-                        <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </>
+                <motion.div
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {similarEvents.map((similar) => (
+                    <motion.div key={similar.id} variants={itemVariants}>
+                      <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
+                    </motion.div>
+                  ))}
+                </motion.div>
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {language === 'el' ? 'Δεν βρέθηκαν παρόμοια events' : 'No similar events found'}
@@ -970,7 +926,7 @@ export default function EventDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {/* RSVP Buttons - Tablet optimized: larger buttons, smaller text */}
+            {/* RSVP Buttons */}
             <Card variant="glass" className="backdrop-blur-md">
               <CardContent className="pt-4 md:pt-5 lg:pt-6">
                 <div className="grid grid-cols-2 gap-2">
@@ -1017,7 +973,7 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Tickets/Reservations - DIRECTLY after RSVP buttons */}
+            {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
               <RippleButton
                 className="w-full gap-2"
@@ -1028,7 +984,7 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {/* Kaliva flow: button that opens stepped reservation+ticket dialog */}
+            {/* Kaliva flow */}
             {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
               <div className="w-full space-y-1">
                 {kalivaFullySoldOut ? (
@@ -1108,7 +1064,7 @@ export default function EventDetail() {
               </RippleButton>
             )}
 
-            {/* Event Details Card - Date & Location (AFTER tickets) */}
+            {/* Event Details Card - Date & Location */}
             <Card variant="glass" className="backdrop-blur-md">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-start gap-3">
@@ -1128,8 +1084,6 @@ export default function EventDetail() {
 
                 <button
                   onClick={() => {
-                    // Open Google Maps with the EVENT's location (not business address)
-                    // NO analytics tracking for this action
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
                     window.open(mapsUrl, '_blank');
                   }}
@@ -1153,7 +1107,6 @@ export default function EventDetail() {
                     from: fromPath,
                   }}
                   onClick={() => {
-                    // Profile interaction: clicking the host business counts as profile_click
                     trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
                       source: 'event_host_link',
                     });
@@ -1191,7 +1144,7 @@ export default function EventDetail() {
               {text.share}
             </RippleButton>
             
-            {/* Terms & Conditions (desktop) - below share button */}
+            {/* Terms & Conditions (desktop) */}
             {event.terms_and_conditions && (
               <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
                 <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
@@ -1221,7 +1174,7 @@ export default function EventDetail() {
         />
       )}
 
-      {/* Reservation Event Checkout Dialog (for new reservation events) */}
+      {/* Reservation Event Checkout Dialog */}
       {user && (event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') && (
         <ReservationEventCheckout
           open={showReservationCheckout}
@@ -1260,7 +1213,7 @@ export default function EventDetail() {
         />
       )}
 
-      {/* Ticket Purchase Flow (non-Kaliva ticket events) */}
+      {/* Ticket Purchase Flow */}
       {user && hasNativeTickets && (
         <TicketPurchaseFlow
           open={showTicketFlow}
