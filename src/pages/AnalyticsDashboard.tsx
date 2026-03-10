@@ -18,6 +18,9 @@ import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { shouldHideOffers } from '@/lib/shouldHideOffers';
 
 const translations = {
   el: {
