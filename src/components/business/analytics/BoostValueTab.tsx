@@ -419,6 +419,7 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data, isLoading } = useBoostValueMetrics(businessId, dateRange);
