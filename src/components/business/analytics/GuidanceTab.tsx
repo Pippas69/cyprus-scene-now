@@ -752,6 +752,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data, isLoading } = useGuidanceData(businessId, dateRange);
