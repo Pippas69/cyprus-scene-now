@@ -20,6 +20,9 @@ const InfoNavbar = () => {
       contact: "Επικοινωνία",
       login: "Σύνδεση",
       getStarted: "Ξεκίνα Τώρα",
+      signup: "Εγγραφή",
+      signupFomo: "Εγγραφή στο FOMO",
+      signupBusiness: "Εγγραφή σαν Επιχείρηση",
     },
     en: {
       home: "Home",
@@ -28,6 +31,9 @@ const InfoNavbar = () => {
       contact: "Contact",
       login: "Login",
       getStarted: "Get Started",
+      signup: "Sign Up",
+      signupFomo: "Sign up to FOMO",
+      signupBusiness: "Sign up as Business",
     },
   };
 
