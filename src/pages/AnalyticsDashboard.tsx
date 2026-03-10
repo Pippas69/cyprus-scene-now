@@ -180,10 +180,10 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         <TabsContent value="performance">
           {hasPerformanceAccess ? (
-            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
-              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>
