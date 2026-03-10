@@ -103,18 +103,14 @@ const InfoNavbar = () => {
             ))}
           </div>
 
-          {/* Tablet Right Side (md to lg) - Language toggle + hamburger */}
+          {/* Tablet Right Side (md to lg) - Language toggle + signup badge */}
           <div className="hidden md:flex lg:hidden items-center gap-3">
             <LanguageToggle />
             <button
-              className="p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#4ECDC4] to-[#3dbdb5] text-white text-sm font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {t.signup}
             </button>
           </div>
 
@@ -133,16 +129,12 @@ const InfoNavbar = () => {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile signup badge */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden px-4 py-1.5 rounded-full bg-gradient-to-r from-[#4ECDC4] to-[#3dbdb5] text-white text-sm font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            {t.signup}
           </button>
         </div>
       </div>
