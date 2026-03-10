@@ -290,7 +290,7 @@ const Navbar = () => {
                   </Button>
                 ) : (
                   <button
-                    className="px-3 py-1 rounded-xl bg-gradient-ocean text-white text-xs font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-ocean text-white text-xs font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
                   >
                     {t.signup}
                   </button>
