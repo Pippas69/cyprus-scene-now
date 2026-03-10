@@ -1077,9 +1077,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     {reservation.preferred_time &&
                       <div className="flex items-center gap-2 min-w-0">
                         <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="whitespace-nowrap">
-                          {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
-                        </span>
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="preferred_time"
+                          displayValue={format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                          rawValue={format(new Date(reservation.preferred_time), "yyyy-MM-dd'T'HH:mm")}
+                          inputType="datetime-local"
+                        />
                       </div>
                     }
                   </TableCell>
