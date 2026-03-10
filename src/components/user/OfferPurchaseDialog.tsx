@@ -726,53 +726,51 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   const formContent =
   <div className="space-y-5">
-      {/* Description + Category */}
-      {(offer.description || offer.category) && (
-        <div className="space-y-2.5">
-          {offer.description && (
-            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
-          )}
-          {offer.category && (
-            <Badge variant="outline" className="text-[11px] sm:text-xs w-fit gap-1 font-medium border-primary/30 text-primary">
-              {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
-            </Badge>
-          )}
-        </div>
+      {/* Description */}
+      {offer.description && (
+        <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
       )}
 
-      {/* Info Grid - compact cards */}
-      <div className="grid grid-cols-2 gap-2">
-        {/* People available */}
-        {peopleRemaining !== null && (
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-[11px] sm:text-xs text-foreground font-medium">
-              {peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "spots left"}
-            </span>
-          </div>
-        )}
-        {/* Valid days */}
-        <div className="flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-2 col-span-2">
-          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-          <span className="text-[11px] sm:text-xs text-foreground leading-relaxed">
+      {/* Row 1: Valid days (auto-width) + Category badge */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
+          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] sm:text-xs text-foreground font-medium">
             {formatDays(offer.valid_days || null)}
           </span>
         </div>
-        {/* Valid hours */}
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+        {offer.category && (
+          <Badge variant="outline" className="text-[11px] sm:text-xs gap-1 font-medium border-primary/30 text-primary h-[34px] px-3">
+            {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+          </Badge>
+        )}
+      </div>
+
+      {/* Row 2: Hours + Expiry */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground">
+          <span className="text-[11px] sm:text-xs text-foreground font-medium">
             {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
           </span>
         </div>
-        {/* Expiry */}
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground truncate">
+          <span className="text-[11px] sm:text-xs text-foreground">
             {t("expiresOn")}: {new Date(offer.end_at).toLocaleDateString(language === "el" ? "el-GR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
           </span>
         </div>
       </div>
+
+      {/* Row 3: People available */}
+      {peopleRemaining !== null && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
+          <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] sm:text-xs text-foreground font-medium">
+            {peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "spots left"}
+          </span>
+        </div>
+      )}
 
       {/* One per user notice */}
       {offer.one_per_user && (
