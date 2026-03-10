@@ -813,7 +813,7 @@ export default function EventDetail() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
+                  <p className="text-[10px] tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
                     {event.businesses.verified &&
