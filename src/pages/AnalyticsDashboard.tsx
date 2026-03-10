@@ -200,10 +200,10 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         <TabsContent value="guidance">
           {hasGuidanceAccess ? (
-            <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('guidance')} language={language}>
-              <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>
