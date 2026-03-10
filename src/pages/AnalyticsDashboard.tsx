@@ -190,10 +190,10 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         <TabsContent value="boostValue">
           {hasBoostValueAccess ? (
-            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('boostValue')} language={language}>
-              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>
