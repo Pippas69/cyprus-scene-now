@@ -27,8 +27,8 @@ import {
   Heart,
   CheckCircle,
   Ticket,
-  PartyPopper,
-} from 'lucide-react';
+  PartyPopper } from
+'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
@@ -48,9 +48,9 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
+      delayChildren: 0.2
+    }
+  }
 };
 
 const itemVariants = {
@@ -61,9 +61,9 @@ const itemVariants = {
     transition: {
       type: "spring" as const,
       stiffness: 400,
-      damping: 30,
-    },
-  },
+      damping: 30
+    }
+  }
 };
 
 export default function EventDetail() {
@@ -98,10 +98,10 @@ export default function EventDetail() {
 
   // Determine if this business uses the linked ticket+reservation (Kaliva) flow
   const isBusinessTicketLinked = !!(
-    (event as any)?.businesses?.ticket_reservation_linked ||
-    isClubOrEventBusiness((event as any)?.businesses?.category || [])
-  );
-  
+  (event as any)?.businesses?.ticket_reservation_linked ||
+  isClubOrEventBusiness((event as any)?.businesses?.category || []));
+
+
   // Fetch ticket tiers for this event
   const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
 
@@ -140,7 +140,7 @@ export default function EventDetail() {
 
   const refreshCounts = async (targetEventId: string) => {
     const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
-      p_event_id: targetEventId,
+      p_event_id: targetEventId
     });
 
     if (error) {
@@ -156,11 +156,11 @@ export default function EventDetail() {
   const fetchRSVPStatus = async () => {
     if (!user || !event) return;
 
-    const { data: rows, error } = await supabase
-      .from("rsvps")
-      .select("status")
-      .eq("event_id", event.id)
-      .eq("user_id", user.id);
+    const { data: rows, error } = await supabase.
+    from("rsvps").
+    select("status").
+    eq("event_id", event.id).
+    eq("user_id", user.id);
 
     if (error) {
       console.error("Error fetching RSVP status:", error);
@@ -173,48 +173,48 @@ export default function EventDetail() {
 
   const checkUser = async () => {
     const {
-      data: { user },
+      data: { user }
     } = await supabase.auth.getUser();
     setUser(user);
 
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("first_name, last_name, avatar_url, interests, city")
-        .eq("id", user.id)
-        .single();
+      const { data: profile } = await supabase.
+      from("profiles").
+      select("first_name, last_name, avatar_url, interests, city").
+      eq("id", user.id).
+      single();
 
       setUserProfile(profile);
     }
   };
 
   const refreshReservationSoldOut = async (
-    targetEventId: string,
-    isLinkedHybrid: boolean,
-    eventType?: string | null
-  ) => {
+  targetEventId: string,
+  isLinkedHybrid: boolean,
+  eventType?: string | null) =>
+  {
     if (!isLinkedHybrid || eventType !== 'ticket_and_reservation') {
       setReservationsSoldOut(false);
       return;
     }
 
-    const { data: seatingTypes } = await supabase
-      .from('reservation_seating_types')
-      .select('id, available_slots, paused')
-      .eq('event_id', targetEventId);
+    const { data: seatingTypes } = await supabase.
+    from('reservation_seating_types').
+    select('id, available_slots, paused').
+    eq('event_id', targetEventId);
 
     if (!seatingTypes || seatingTypes.length === 0) {
       setReservationsSoldOut(false);
       return;
     }
 
-    const activeTypes = seatingTypes.filter(st => !st.paused);
+    const activeTypes = seatingTypes.filter((st) => !st.paused);
     if (activeTypes.length === 0) {
       setReservationsSoldOut(true);
       return;
     }
 
-    const activeIds = activeTypes.map(st => st.id);
+    const activeIds = activeTypes.map((st) => st.id);
     const activeIdSet = new Set(activeIds);
 
     const { data: bookedCounts, error: bookedCountsError } = await supabase.rpc(
@@ -229,13 +229,13 @@ export default function EventDetail() {
     }
 
     const counts: Record<string, number> = {};
-    for (const row of (bookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+    for (const row of (bookedCounts || []) as {seating_type_id: string;slots_booked: number | string;}[]) {
       if (row.seating_type_id && activeIdSet.has(row.seating_type_id)) {
         counts[row.seating_type_id] = Number(row.slots_booked) || 0;
       }
     }
 
-    const allFull = activeTypes.every(st => (counts[st.id] || 0) >= st.available_slots);
+    const allFull = activeTypes.every((st) => (counts[st.id] || 0) >= st.available_slots);
     setReservationsSoldOut(allFull);
   };
 
@@ -246,10 +246,10 @@ export default function EventDetail() {
     setError(null);
 
     try {
-      const { data: eventData, error: fetchError } = await supabase
-        .from("events")
-        .select(
-          `
+      const { data: eventData, error: fetchError } = await supabase.
+      from("events").
+      select(
+        `
           *,
             businesses!inner(
             id,
@@ -261,9 +261,9 @@ export default function EventDetail() {
             ticket_reservation_linked
           )
         `
-        )
-        .eq("id", eventId)
-        .maybeSingle();
+      ).
+      eq("id", eventId).
+      maybeSingle();
 
       if (fetchError) {
         console.error("Event fetch error:", fetchError);
@@ -287,24 +287,24 @@ export default function EventDetail() {
         }
 
         const [ticketOrderRes, reservationRes] = await Promise.all([
-          supabase
-            .from('ticket_orders')
-            .select('id')
-            .eq('event_id', eventId)
-            .eq('user_id', currentUser.id)
-            .eq('status', 'completed')
-            .limit(1),
-          supabase
-            .from('reservations')
-            .select('id')
-            .eq('event_id', eventId)
-            .eq('user_id', currentUser.id)
-            .eq('status', 'accepted')
-            .limit(1),
-        ]);
+        supabase.
+        from('ticket_orders').
+        select('id').
+        eq('event_id', eventId).
+        eq('user_id', currentUser.id).
+        eq('status', 'completed').
+        limit(1),
+        supabase.
+        from('reservations').
+        select('id').
+        eq('event_id', eventId).
+        eq('user_id', currentUser.id).
+        eq('status', 'accepted').
+        limit(1)]
+        );
 
         const hasAccess =
-          (ticketOrderRes.data?.length || 0) > 0 || (reservationRes.data?.length || 0) > 0;
+        (ticketOrderRes.data?.length || 0) > 0 || (reservationRes.data?.length || 0) > 0;
 
         if (!hasAccess) {
           setError(language === "el" ? "Η εκδήλωση δεν βρέθηκε" : "Event not found");
@@ -318,23 +318,23 @@ export default function EventDetail() {
       const performanceCategories = ['theatre', 'music', 'dance', 'kids', 'θέατρο', 'μουσική', 'χορός', 'παιδικά'];
       const bizCategories = (eventData.businesses?.category || []).map((c: string) => c.toLowerCase());
       const isPerformance = bizCategories.some((c: string) => performanceCategories.includes(c));
-      
+
       if (isPerformance) {
-        const { data: shows } = await supabase
-          .from('show_instances')
-          .select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id')
-          .eq('event_id', eventId)
-          .eq('status', 'scheduled')
-          .order('start_at', { ascending: true });
+        const { data: shows } = await supabase.
+        from('show_instances').
+        select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id').
+        eq('event_id', eventId).
+        eq('status', 'scheduled').
+        order('start_at', { ascending: true });
         setShowInstances(shows || []);
 
         const productionId = shows?.[0]?.production_id;
         if (productionId) {
-          const { data: cast } = await supabase
-            .from('production_cast')
-            .select('id, person_name, role_type, role_name, bio, photo_url, sort_order')
-            .eq('production_id', productionId)
-            .order('sort_order', { ascending: true });
+          const { data: cast } = await supabase.
+          from('production_cast').
+          select('id, person_name, role_type, role_name, bio, photo_url, sort_order').
+          eq('production_id', productionId).
+          order('sort_order', { ascending: true });
           setCastMembers(cast || []);
         }
       }
@@ -345,7 +345,7 @@ export default function EventDetail() {
       await refreshCounts(eventId);
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
+
       const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
         p_event_id: eventId,
         p_user_id: currentUser?.id || null,
@@ -374,16 +374,16 @@ export default function EventDetail() {
             name: item.business_name,
             logo_url: item.business_logo_url,
             verified: item.business_verified,
-            city: item.business_city,
+            city: item.business_city
           }
         }));
 
         const ids = transformedSimilar.map((e: any) => e.id);
         if (ids.length > 0) {
-          const { data: vis } = await supabase
-            .from('events')
-            .select('id, appearance_start_at')
-            .in('id', ids);
+          const { data: vis } = await supabase.
+          from('events').
+          select('id, appearance_start_at').
+          in('id', ids);
 
           const pausedIds = new Set((vis || []).filter((e: any) => isEventPaused(e)).map((e: any) => e.id));
           setSimilarEvents(transformedSimilar.filter((e: any) => !pausedIds.has(e.id)));
@@ -416,12 +416,12 @@ export default function EventDetail() {
       const isCurrentlyActive = newStatus === "interested" ? isInterested : isGoing;
 
       if (isCurrentlyActive) {
-        const { error } = await supabase
-          .from("rsvps")
-          .delete()
-          .eq("event_id", event.id)
-          .eq("user_id", user.id)
-          .eq("status", newStatus);
+        const { error } = await supabase.
+        from("rsvps").
+        delete().
+        eq("event_id", event.id).
+        eq("user_id", user.id).
+        eq("status", newStatus);
 
         if (error) throw error;
 
@@ -434,7 +434,7 @@ export default function EventDetail() {
         const { error } = await supabase.from("rsvps").insert({
           event_id: event.id,
           user_id: user.id,
-          status: newStatus,
+          status: newStatus
         });
 
         if (error) throw error;
@@ -472,7 +472,7 @@ export default function EventDetail() {
       buyTickets: 'Αγοράστε εισιτήρια',
       ticketEvent: 'Εκδήλωση με Εισιτήρια',
       reservationEvent: 'Εκδήλωση με Κράτηση',
-      freeEntry: 'Ελεύθερη Είσοδος',
+      freeEntry: 'Ελεύθερη Είσοδος'
     },
     en: {
       backToEvents: 'Back to Events',
@@ -485,8 +485,8 @@ export default function EventDetail() {
       buyTickets: 'Buy tickets',
       ticketEvent: 'Ticket Event',
       reservationEvent: 'Reservation Event',
-      freeEntry: 'Free Entry',
-    },
+      freeEntry: 'Free Entry'
+    }
   };
 
   const text = t[language];
@@ -495,32 +495,32 @@ export default function EventDetail() {
   const hasNativeTickets = ticketTiers.length > 0;
   const activeTicketTiers = ticketTiers.filter((t: any) => t.active !== false);
   const isLinkedHybridEvent = isBusinessTicketLinked && event?.event_type === 'ticket_and_reservation';
-  const walkInTicketTiers = isLinkedHybridEvent
-    ? activeTicketTiers.filter((t: any) => t.quantity_total !== 999999)
-    : activeTicketTiers;
-  const reservationFlowTicketTiers = isLinkedHybridEvent
-    ? (() => {
-        const reservationTiers = activeTicketTiers.filter((t: any) => t.quantity_total === 999999);
-        return reservationTiers.length > 0 ? reservationTiers : activeTicketTiers;
-      })()
-    : activeTicketTiers;
+  const walkInTicketTiers = isLinkedHybridEvent ?
+  activeTicketTiers.filter((t: any) => t.quantity_total !== 999999) :
+  activeTicketTiers;
+  const reservationFlowTicketTiers = isLinkedHybridEvent ?
+  (() => {
+    const reservationTiers = activeTicketTiers.filter((t: any) => t.quantity_total === 999999);
+    return reservationTiers.length > 0 ? reservationTiers : activeTicketTiers;
+  })() :
+  activeTicketTiers;
 
   const tiersForSoldOutCheck = isLinkedHybridEvent ? walkInTicketTiers : activeTicketTiers;
   const allTicketsSoldOut = hasNativeTickets && (
-    tiersForSoldOutCheck.length === 0 ||
-    tiersForSoldOutCheck.every((t: any) => t.quantity_total > 0 && (t.quantity_sold ?? 0) >= t.quantity_total)
-  );
+  tiersForSoldOutCheck.length === 0 ||
+  tiersForSoldOutCheck.every((t: any) => t.quantity_total > 0 && (t.quantity_sold ?? 0) >= t.quantity_total));
+
   const kalivaFullySoldOut = reservationsSoldOut && allTicketsSoldOut;
 
   // Determine event type
-  const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : (event?.accepts_reservations ? 'reservation' : 'free_entry'));
+  const eventType = event?.event_type || (hasNativeTickets ? 'ticket' : event?.accepts_reservations ? 'reservation' : 'free_entry');
   const eventHasTickets = eventType === 'ticket' || eventType === 'ticket_and_reservation';
   const eventHasReservation = eventType === 'reservation' || eventType === 'ticket_and_reservation' || event?.accepts_reservations;
 
   // Compute the starting ticket price for the price badge
-  const startingPriceCents = activeTicketTiers.length > 0
-    ? Math.min(...activeTicketTiers.map((t: any) => t.price_cents ?? 0))
-    : (event?.price ? event.price * 100 : null);
+  const startingPriceCents = activeTicketTiers.length > 0 ?
+  Math.min(...activeTicketTiers.map((t: any) => t.price_cents ?? 0)) :
+  event?.price ? event.price * 100 : null;
 
   const formatPrice = (cents: number) => {
     if (cents === 0) return language === 'el' ? 'Δωρεάν' : 'Free';
@@ -531,8 +531,8 @@ export default function EventDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (error || !event) {
@@ -543,8 +543,8 @@ export default function EventDetail() {
           <RippleButton
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-4 gap-2"
-          >
+            className="mb-4 gap-2">
+            
             <ArrowLeft className="h-4 w-4" />
             {language === 'el' ? 'Επιστροφή' : 'Go Back'}
           </RippleButton>
@@ -553,11 +553,11 @@ export default function EventDetail() {
             title={language === 'el' ? 'Σφάλμα φόρτωσης' : 'Failed to load event'}
             message={error || (language === 'el' ? 'Η εκδήλωση δεν βρέθηκε' : 'Event not found')}
             onRetry={() => fetchEventDetails()}
-            showRetry
-          />
+            showRetry />
+          
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -569,8 +569,8 @@ export default function EventDetail() {
         <RippleButton
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4 gap-2 relative z-20 hidden lg:inline-flex"
-        >
+          className="mb-4 gap-2 relative z-20 hidden lg:inline-flex">
+          
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
         </RippleButton>
@@ -583,20 +583,20 @@ export default function EventDetail() {
               className="relative rounded-xl shadow-lg overflow-hidden -mx-4 sm:mx-0"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
+              transition={{ duration: 0.5, ease: "easeOut" }}>
+              
               <div className="aspect-[4/3] sm:aspect-video">
-                {event.cover_image_url ? (
-                  <img
-                    src={event.cover_image_url}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                {event.cover_image_url ?
+                <img
+                  src={event.cover_image_url}
+                  alt={event.title}
+                  className="w-full h-full object-cover" /> :
+
+
+                <div className="w-full h-full bg-muted flex items-center justify-center">
                     <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
                   </div>
-                )}
+                }
               </div>
 
               {/* Gradient overlay at bottom for text readability */}
@@ -605,28 +605,28 @@ export default function EventDetail() {
               {/* Back arrow — overlaid on image (mobile/tablet only) */}
               <button
                 onClick={() => navigate(-1)}
-                className="lg:hidden absolute top-3 left-3 sm:left-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors"
-              >
+                className="lg:hidden absolute top-3 left-3 sm:left-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors">
+                
                 <ArrowLeft className="h-4 w-4 text-white" />
               </button>
 
               {/* Title + Price badge at bottom of image */}
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-lg sm:text-xl font-bold leading-tight line-clamp-2 flex-1">{event.title}</h1>
-                {eventHasTickets && startingPriceCents !== null && (
-                  <span className="shrink-0 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-bold">
+                {eventHasTickets && startingPriceCents !== null &&
+                <span className="shrink-0 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-bold">
                     {formatPrice(startingPriceCents)}
                   </span>
-                )}
+                }
               </div>
             </motion.div>
 
             {/* Description (if any) */}
-            {event.description && (
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
+            {event.description &&
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                 {event.description}
               </p>
-            )}
+            }
 
             {/* Location / Date / Time — compact rows with icons */}
             <div className="space-y-2">
@@ -635,25 +635,25 @@ export default function EventDetail() {
                   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
                   window.open(mapsUrl, '_blank');
                 }}
-                className="flex items-center gap-2.5 w-full text-left group"
-              >
+                className="flex items-center gap-2.5 w-full text-left group">
+                
                 <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
                 <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{event.location}</span>
               </button>
 
-              {showInstances.length > 1 ? (
-                <div className="flex items-start gap-2.5">
+              {showInstances.length > 1 ?
+              <div className="flex items-start gap-2.5">
                   <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
-                    {showInstances.map((si: any) => (
-                      <p key={si.id} className="text-sm text-muted-foreground">
+                    {showInstances.map((si: any) =>
+                  <p key={si.id} className="text-sm text-muted-foreground">
                         {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
                       </p>
-                    ))}
+                  )}
                   </div>
-                </div>
-              ) : (
-                <>
+                </div> :
+
+              <>
                   <div className="flex items-center gap-2.5">
                     <Calendar className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm text-muted-foreground">
@@ -667,40 +667,40 @@ export default function EventDetail() {
                     </span>
                   </div>
                 </>
-              )}
+              }
             </div>
 
             {/* Cast & Crew for performance events */}
-            {castMembers.length > 0 && (
-              <div>
+            {castMembers.length > 0 &&
+            <div>
                 <h2 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   {language === 'el' ? 'Συντελεστές' : 'Cast & Crew'}
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {castMembers.map((member: any) => (
-                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30">
+                  {castMembers.map((member: any) =>
+                <div key={member.id} className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30">
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                        {member.photo_url ? (
-                          <img src={member.photo_url} alt={member.person_name} className="h-full w-full object-cover" />
-                        ) : (
-                          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
+                        {member.photo_url ?
+                    <img src={member.photo_url} alt={member.person_name} className="h-full w-full object-cover" /> :
+
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    }
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-medium truncate">{member.person_name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">
-                          {member.role_name || (language === 'el'
-                            ? (member.role_type === 'actor' ? 'Ηθοποιός' : member.role_type === 'director' ? 'Σκηνοθέτης' : member.role_type === 'musician' ? 'Μουσικός' : member.role_type)
-                            : member.role_type.charAt(0).toUpperCase() + member.role_type.slice(1)
-                          )}
+                          {member.role_name || (language === 'el' ?
+                      member.role_type === 'actor' ? 'Ηθοποιός' : member.role_type === 'director' ? 'Σκηνοθέτης' : member.role_type === 'musician' ? 'Μουσικός' : member.role_type :
+                      member.role_type.charAt(0).toUpperCase() + member.role_type.slice(1))
+                      }
                         </p>
                       </div>
                     </div>
-                  ))}
+                )}
                 </div>
               </div>
-            )}
+            }
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
             <div className="lg:hidden space-y-3">
@@ -712,11 +712,11 @@ export default function EventDetail() {
                   onClick={() => handleRSVP('interested')}
                   disabled={rsvpLoading || !user}
                   className={`gap-1.5 text-xs h-9 transition-all ${
-                    isInterested
-                      ? 'border-ocean text-ocean bg-ocean/5'
-                      : 'border-border text-muted-foreground hover:border-ocean/50'
-                  }`}
-                >
+                  isInterested ?
+                  'border-ocean text-ocean bg-ocean/5' :
+                  'border-border text-muted-foreground hover:border-ocean/50'}`
+                  }>
+                  
                   <Heart className="h-3.5 w-3.5" />
                   {text.interested}
                 </RippleButton>
@@ -725,11 +725,11 @@ export default function EventDetail() {
                   onClick={() => handleRSVP('going')}
                   disabled={rsvpLoading || !user}
                   className={`gap-1.5 text-xs h-9 transition-all ${
-                    isGoing
-                      ? 'bg-ocean hover:bg-ocean/90 text-white'
-                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                  }`}
-                >
+                  isGoing ?
+                  'bg-ocean hover:bg-ocean/90 text-white' :
+                  'bg-muted hover:bg-muted/80 text-muted-foreground'}`
+                  }>
+                  
                   <Users className="h-3.5 w-3.5" />
                   {text.going}
                 </RippleButton>
@@ -748,26 +748,26 @@ export default function EventDetail() {
               </div>
 
               {/* Tickets/Reservations */}
-              {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
-                <RippleButton
-                  className="w-full gap-2 h-10 text-sm"
-                  onClick={() => setShowTicketFlow(true)}
-                >
+              {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
+              <RippleButton
+                className="w-full gap-2 h-10 text-sm"
+                onClick={() => setShowTicketFlow(true)}>
+                
                   <Ticket className="h-3.5 w-3.5" />
                   {text.buyTickets}
                 </RippleButton>
-              )}
+              }
 
               {/* Kaliva flow */}
-              {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
-                <div className="w-full space-y-1">
-                  {kalivaFullySoldOut ? (
-                    <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
+              {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
+              <div className="w-full space-y-1">
+                  {kalivaFullySoldOut ?
+                <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                       <Ticket className="h-3.5 w-3.5" />
                       <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
-                    </div>
-                  ) : !user ? null : reservationsSoldOut ? (
-                    <>
+                    </div> :
+                !user ? null : reservationsSoldOut ?
+                <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
                         <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
@@ -775,68 +775,68 @@ export default function EventDetail() {
                           {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                         </span>
                       </div>
-                      {!allTicketsSoldOut && (
-                        <button
-                          type="button"
-                          className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
-                          onClick={() => setShowTicketFlow(true)}
-                        >
+                      {!allTicketsSoldOut &&
+                  <button
+                    type="button"
+                    className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                    onClick={() => setShowTicketFlow(true)}>
+                    
                           {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
                         </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
+                  }
+                    </> :
+
+                <>
                       <RippleButton
-                        className="w-full gap-2 h-10 text-sm"
-                        onClick={() => setShowKalivaFlow(true)}
-                      >
+                    className="w-full gap-2 h-10 text-sm"
+                    onClick={() => setShowKalivaFlow(true)}>
+                    
                         <Ticket className="h-3.5 w-3.5" />
                         {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
                       </RippleButton>
-                      {!allTicketsSoldOut && (
-                        <button
-                          type="button"
-                          className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                          onClick={() => setShowTicketFlow(true)}
-                        >
+                      {!allTicketsSoldOut &&
+                  <button
+                    type="button"
+                    className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                    onClick={() => setShowTicketFlow(true)}>
+                    
                           {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
                         </button>
-                      )}
+                  }
                     </>
-                  )}
+                }
                 </div>
-              )}
+              }
 
-              {eventHasReservation && event.event_type === 'reservation' && user && (
-                <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
-                  onClick={() => setShowReservationCheckout(true)}
-                >
+              {eventHasReservation && event.event_type === 'reservation' && user &&
+              <RippleButton
+                className="w-full gap-2 h-9 text-sm"
+                onClick={() => setShowReservationCheckout(true)}>
+                
                   <Calendar className="h-3.5 w-3.5" />
                   {text.makeReservation}
                 </RippleButton>
-              )}
+              }
 
-              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked && (
-                <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
-                  onClick={() => setShowReservationCheckout(true)}
-                >
+              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
+              <RippleButton
+                className="w-full gap-2 h-9 text-sm"
+                onClick={() => setShowReservationCheckout(true)}>
+                
                   <Calendar className="h-3.5 w-3.5" />
                   {text.makeReservation}
                 </RippleButton>
-              )}
+              }
 
-              {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
-                <RippleButton
-                  className="w-full gap-2 h-9 text-sm"
-                  onClick={() => setShowReservationDialog(true)}
-                >
+              {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
+              <RippleButton
+                className="w-full gap-2 h-9 text-sm"
+                onClick={() => setShowReservationDialog(true)}>
+                
                   <Calendar className="h-3.5 w-3.5" />
                   {text.makeReservation}
                 </RippleButton>
-              )}
+              }
 
               {/* Business Card */}
               <Card variant="glass" className="backdrop-blur-md">
@@ -847,15 +847,15 @@ export default function EventDetail() {
                     state={{
                       analyticsTracked: true,
                       analyticsSource: 'event',
-                      from: fromPath,
+                      from: fromPath
                     }}
                     onClick={() => {
                       trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
-                        source: 'event_host_link',
+                        source: 'event_host_link'
                       });
                     }}
-                    className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors"
-                  >
+                    className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors">
+                    
                     <Avatar className="h-8 w-8 border">
                       <AvatarImage src={event.businesses.logo_url || ''} />
                       <AvatarFallback>
@@ -865,9 +865,9 @@ export default function EventDetail() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
-                        {event.businesses.verified && (
-                          <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
-                        )}
+                        {event.businesses.verified &&
+                        <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
+                        }
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">
                         {translateCity(event.businesses.city, language)}
@@ -881,119 +881,119 @@ export default function EventDetail() {
               <RippleButton
                 variant="outline"
                 className="w-full gap-2 h-8 text-sm"
-                onClick={handleShare}
-              >
+                onClick={handleShare}>
+                
                 <Share2 className="h-3.5 w-3.5" />
                 {text.share}
               </RippleButton>
               
               {/* Terms & Conditions */}
-              {event.terms_and_conditions && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
+              {event.terms_and_conditions &&
+              <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
                   <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
                 </p>
-              )}
+              }
             </div>
 
             {/* Similar Events */}
             <div className="mt-4">
               <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-              {similarEvents.length > 0 ? (
-                <motion.div
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {similarEvents.map((similar) => (
-                    <motion.div key={similar.id} variants={itemVariants}>
+              {similarEvents.length > 0 ?
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible">
+                
+                  {similarEvents.map((similar) =>
+                <motion.div key={similar.id} variants={itemVariants}>
                       <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
                     </motion.div>
-                  ))}
-                </motion.div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
+                )}
+                </motion.div> :
+
+              <p className="text-sm text-muted-foreground">
                   {language === 'el' ? 'Δεν βρέθηκαν παρόμοια events' : 'No similar events found'}
                 </p>
-              )}
+              }
             </div>
           </div>
 
           {/* Sidebar - hidden on mobile/tablet, shown on desktop (lg+) */}
-          <motion.div 
+          <motion.div
             className="hidden lg:block space-y-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+            transition={{ delay: 0.3 }}>
+            
             {/* RSVP Buttons */}
             <Card variant="glass" className="backdrop-blur-md">
-              <CardContent className="pt-4 md:pt-5 lg:pt-6">
-                <div className="grid grid-cols-2 gap-2">
-                  <RippleButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRSVP('interested')}
-                    disabled={rsvpLoading || !user}
-                    className={`gap-1.5 md:gap-2 text-[11px] md:text-xs lg:text-sm h-10 md:h-11 lg:h-10 transition-all ${
-                      isInterested
-                        ? 'border-ocean text-ocean bg-ocean/5'
-                        : 'border-border text-muted-foreground hover:border-ocean/50'
-                    }`}
-                  >
-                    <Heart className="h-4 w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 shrink-0" />
-                    <span className="truncate">{text.interested}</span>
-                  </RippleButton>
-                  <RippleButton
-                    size="sm"
-                    onClick={() => handleRSVP('going')}
-                    disabled={rsvpLoading || !user}
-                    className={`gap-1.5 md:gap-2 text-[11px] md:text-xs lg:text-sm h-10 md:h-11 lg:h-10 transition-all ${
-                      isGoing
-                        ? 'bg-ocean hover:bg-ocean/90 text-white'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    <Users className="h-4 w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 shrink-0" />
-                    <span className="truncate">{text.going}</span>
-                  </RippleButton>
-                </div>
-                
-                {/* RSVP Counts */}
-                <div className="flex items-center justify-center gap-4 mt-3 md:mt-4 text-xs md:text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    <span>{interestedCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    <span>{goingCount}</span>
-                  </div>
-                </div>
-              </CardContent>
+              
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              
             </Card>
 
             {/* Tickets/Reservations */}
-            {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowTicketFlow(true)}
-              >
+            {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
+            <RippleButton
+              className="w-full gap-2"
+              onClick={() => setShowTicketFlow(true)}>
+              
                 <Ticket className="h-4 w-4" />
                 {text.buyTickets}
               </RippleButton>
-            )}
+            }
 
             {/* Kaliva flow */}
-            {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
-              <div className="w-full space-y-1">
-                {kalivaFullySoldOut ? (
-                  <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
+            {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
+            <div className="w-full space-y-1">
+                {kalivaFullySoldOut ?
+              <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                     <Ticket className="h-4 w-4" />
                     <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
-                  </div>
-                ) : !user ? null : reservationsSoldOut ? (
-                  <>
+                  </div> :
+              !user ? null : reservationsSoldOut ?
+              <>
                     <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
                       <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
@@ -1001,68 +1001,68 @@ export default function EventDetail() {
                         {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                       </span>
                     </div>
-                    {!allTicketsSoldOut && (
-                      <button
-                        type="button"
-                        className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
-                        onClick={() => setShowTicketFlow(true)}
-                      >
+                    {!allTicketsSoldOut &&
+                <button
+                  type="button"
+                  className="w-full text-center text-[11px] text-primary hover:text-primary/80 transition-colors underline underline-offset-2 font-medium"
+                  onClick={() => setShowTicketFlow(true)}>
+                  
                         {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
                       </button>
-                    )}
-                  </>
-                ) : (
-                  <>
+                }
+                  </> :
+
+              <>
                     <RippleButton
-                      className="w-full gap-2"
-                      onClick={() => setShowKalivaFlow(true)}
-                    >
+                  className="w-full gap-2"
+                  onClick={() => setShowKalivaFlow(true)}>
+                  
                       <Ticket className="h-4 w-4" />
                       {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
                     </RippleButton>
-                    {!allTicketsSoldOut && (
-                      <button
-                        type="button"
-                        className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-                        onClick={() => setShowTicketFlow(true)}
-                      >
+                    {!allTicketsSoldOut &&
+                <button
+                  type="button"
+                  className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                  onClick={() => setShowTicketFlow(true)}>
+                  
                         {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
                       </button>
-                    )}
+                }
                   </>
-                )}
+              }
               </div>
-            )}
+            }
 
-            {eventHasReservation && event.event_type === 'reservation' && user && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowReservationCheckout(true)}
-              >
+            {eventHasReservation && event.event_type === 'reservation' && user &&
+            <RippleButton
+              className="w-full gap-2"
+              onClick={() => setShowReservationCheckout(true)}>
+              
                 <Calendar className="h-4 w-4" />
                 {text.makeReservation}
               </RippleButton>
-            )}
+            }
 
-            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowReservationCheckout(true)}
-              >
+            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
+            <RippleButton
+              className="w-full gap-2"
+              onClick={() => setShowReservationCheckout(true)}>
+              
                 <Calendar className="h-4 w-4" />
                 {text.makeReservation}
               </RippleButton>
-            )}
+            }
 
-            {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' && (
-              <RippleButton
-                className="w-full gap-2"
-                onClick={() => setShowReservationDialog(true)}
-              >
+            {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
+            <RippleButton
+              className="w-full gap-2"
+              onClick={() => setShowReservationDialog(true)}>
+              
                 <Calendar className="h-4 w-4" />
                 {text.makeReservation}
               </RippleButton>
-            )}
+            }
 
             {/* Event Details Card - Date & Location */}
             <Card variant="glass" className="backdrop-blur-md">
@@ -1087,8 +1087,8 @@ export default function EventDetail() {
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
                     window.open(mapsUrl, '_blank');
                   }}
-                  className="flex items-start gap-3 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group"
-                >
+                  className="flex items-start gap-3 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group">
+                  
                   <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-primary mt-0.5 transition-colors" />
                   <p className="font-medium group-hover:text-primary transition-colors">{event.location}</p>
                 </button>
@@ -1104,15 +1104,15 @@ export default function EventDetail() {
                   state={{
                     analyticsTracked: true,
                     analyticsSource: 'event',
-                    from: fromPath,
+                    from: fromPath
                   }}
                   onClick={() => {
                     trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
-                      source: 'event_host_link',
+                      source: 'event_host_link'
                     });
                   }}
-                  className="flex items-center gap-3 hover:bg-accent p-2 rounded-lg transition-colors"
-                >
+                  className="flex items-center gap-3 hover:bg-accent p-2 rounded-lg transition-colors">
+                  
                   <Avatar className="h-12 w-12 border">
                     <AvatarImage src={event.businesses.logo_url || ''} />
                     <AvatarFallback>
@@ -1122,9 +1122,9 @@ export default function EventDetail() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold truncate">{event.businesses.name}</p>
-                      {event.businesses.verified && (
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                      )}
+                      {event.businesses.verified &&
+                      <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                      }
                     </div>
                     <p className="text-sm text-muted-foreground truncate">
                       {event.businesses.city}
@@ -1138,18 +1138,18 @@ export default function EventDetail() {
             <RippleButton
               variant="outline"
               className="w-full gap-2"
-              onClick={handleShare}
-            >
+              onClick={handleShare}>
+              
               <Share2 className="h-4 w-4" />
               {text.share}
             </RippleButton>
             
             {/* Terms & Conditions (desktop) */}
-            {event.terms_and_conditions && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
+            {event.terms_and_conditions &&
+            <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
                 <span className="font-medium">{language === 'el' ? 'Όροι:' : 'Terms:'}</span> {event.terms_and_conditions}
               </p>
-            )}
+            }
           </motion.div>
         </div>
       </div>
@@ -1157,87 +1157,87 @@ export default function EventDetail() {
       <Footer />
 
       {/* Reservation Dialog */}
-      {user && (
-        <ReservationDialog
-          eventId={event.id}
-          eventTitle={event.title}
-          eventStartAt={event.start_at}
-          seatingOptions={event.seating_options || []}
-          language={language}
-          userId={user.id}
-          open={showReservationDialog}
-          onOpenChange={setShowReservationDialog}
-          onSuccess={() => {
-            setShowReservationDialog(false);
-            toast.success(language === 'el' ? 'Η κράτησή σας υποβλήθηκε!' : 'Reservation submitted!');
-          }}
-        />
-      )}
+      {user &&
+      <ReservationDialog
+        eventId={event.id}
+        eventTitle={event.title}
+        eventStartAt={event.start_at}
+        seatingOptions={event.seating_options || []}
+        language={language}
+        userId={user.id}
+        open={showReservationDialog}
+        onOpenChange={setShowReservationDialog}
+        onSuccess={() => {
+          setShowReservationDialog(false);
+          toast.success(language === 'el' ? 'Η κράτησή σας υποβλήθηκε!' : 'Reservation submitted!');
+        }} />
+
+      }
 
       {/* Reservation Event Checkout Dialog */}
-      {user && (event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') && (
-        <ReservationEventCheckout
-          open={showReservationCheckout}
-          onOpenChange={setShowReservationCheckout}
-          eventId={event.id}
-          eventTitle={event.title}
-          eventDate={event.start_at}
-          eventLocation={event.location}
-          minPartySize={event.min_party_size || 1}
-          maxPartySize={event.max_party_size || 10}
-          reservationHoursFrom={event.reservation_hours_from}
-          reservationHoursTo={event.reservation_hours_to}
-          userId={user.id}
-          language={language}
-          onSuccess={() => {
-            setShowReservationCheckout(false);
-            toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
-          }}
-        />
-      )}
+      {user && (event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') &&
+      <ReservationEventCheckout
+        open={showReservationCheckout}
+        onOpenChange={setShowReservationCheckout}
+        eventId={event.id}
+        eventTitle={event.title}
+        eventDate={event.start_at}
+        eventLocation={event.location}
+        minPartySize={event.min_party_size || 1}
+        maxPartySize={event.max_party_size || 10}
+        reservationHoursFrom={event.reservation_hours_from}
+        reservationHoursTo={event.reservation_hours_to}
+        userId={user.id}
+        language={language}
+        onSuccess={() => {
+          setShowReservationCheckout(false);
+          toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
+        }} />
+
+      }
 
       {/* Kaliva Ticket + Reservation Flow */}
-      {user && hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' && (
-        <KalivaTicketReservationFlow
-          open={showKalivaFlow}
-          onOpenChange={setShowKalivaFlow}
-          eventId={event.id}
-          eventTitle={event.title}
-          ticketTiers={reservationFlowTicketTiers}
-          onSuccess={(orderId, isFree) => {
-            setShowKalivaFlow(false);
-            if (isFree) {
-              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
-            }
-          }}
-        />
-      )}
+      {user && hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
+      <KalivaTicketReservationFlow
+        open={showKalivaFlow}
+        onOpenChange={setShowKalivaFlow}
+        eventId={event.id}
+        eventTitle={event.title}
+        ticketTiers={reservationFlowTicketTiers}
+        onSuccess={(orderId, isFree) => {
+          setShowKalivaFlow(false);
+          if (isFree) {
+            toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+          }
+        }} />
+
+      }
 
       {/* Ticket Purchase Flow */}
-      {user && hasNativeTickets && (
-        <TicketPurchaseFlow
-          open={showTicketFlow}
-          onOpenChange={setShowTicketFlow}
-          eventId={event.id}
-          eventTitle={event.title}
-          ticketTiers={walkInTicketTiers}
-          showInstances={showInstances.length > 0 ? showInstances : undefined}
-          onSuccess={(orderId, isFree) => {
-            setShowTicketFlow(false);
-            if (isFree) {
-              toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
-            }
-          }}
-        />
-      )}
+      {user && hasNativeTickets &&
+      <TicketPurchaseFlow
+        open={showTicketFlow}
+        onOpenChange={setShowTicketFlow}
+        eventId={event.id}
+        eventTitle={event.title}
+        ticketTiers={walkInTicketTiers}
+        showInstances={showInstances.length > 0 ? showInstances : undefined}
+        onSuccess={(orderId, isFree) => {
+          setShowTicketFlow(false);
+          if (isFree) {
+            toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+          }
+        }} />
+
+      }
 
       {/* Share Dialog */}
       <ShareDialog
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
         event={event}
-        language={language}
-      />
-    </div>
-  );
+        language={language} />
+      
+    </div>);
+
 }
