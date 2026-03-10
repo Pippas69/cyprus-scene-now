@@ -839,7 +839,9 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
     };
 
     addGuidanceSection(t.featuredProfile, data.profile, 'profile');
-    addGuidanceSection(t.boostedOffers, data.offers, 'offers');
+    if (!hideOffers) {
+      addGuidanceSection(t.boostedOffers, data.offers, 'offers');
+    }
     addGuidanceSection(t.boostedEvents, data.events, 'events');
 
     // Recommended plan
