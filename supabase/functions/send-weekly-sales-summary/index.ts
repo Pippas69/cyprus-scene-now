@@ -331,15 +331,16 @@ Deno.serve(async (req) => {
           logStep("Email sent successfully", { businessId: business.id, email: profile.email });
           
           // Also create in-app notification
-          await createInAppNotification(
-            supabase,
-            business.user_id,
-            business.id,
-            totalReservations,
-            totalTickets,
-            totalOfferRedemptions,
-            totalRevenue
-          );
+            await createInAppNotification(
+              supabase,
+              business.user_id,
+              business.id,
+              totalReservations,
+              totalTickets,
+              totalOfferRedemptions,
+              totalRevenue,
+              hideOffers
+            );
           
           // Send push notification to business owner
           const pushResult = await sendPushIfEnabled(business.user_id, {
