@@ -705,13 +705,14 @@ export default function EventDetail() {
             <div className="lg:hidden space-y-3">
               {/* Tickets/Reservations */}
               {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
-              <RippleButton
-                className="w-full gap-2 h-10 text-sm"
-                onClick={() => setShowTicketFlow(true)}>
-                
+              <div className="flex justify-center">
+                <RippleButton
+                  className="gap-2 h-10 text-sm px-8"
+                  onClick={() => setShowTicketFlow(true)}>
                   <Ticket className="h-3.5 w-3.5" />
                   {text.buyTickets}
                 </RippleButton>
+              </div>
               }
 
               {/* Kaliva flow */}
