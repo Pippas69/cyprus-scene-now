@@ -626,8 +626,8 @@ export default function EventDetail() {
               </p>
             }
 
-            {/* Date / Time / Location — premium info card */}
-            <Card variant="glass" className="backdrop-blur-md border-border/50">
+            {/* Date / Time / Location — premium info card (mobile/tablet only, desktop has sidebar) */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50 lg:hidden">
               <CardContent className="py-4 px-4 space-y-3">
                 {showInstances.length > 1 ?
                 <div className="flex items-start gap-3">
@@ -793,44 +793,40 @@ export default function EventDetail() {
                 </RippleButton>
               }
 
-              {/* Business Card */}
-              <Card variant="glass" className="backdrop-blur-md border-border/50">
-                <CardContent className="py-3 px-4">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
-                  <Link
-                    to={`/business/${event.businesses.id}`}
-                    state={{
-                      analyticsTracked: true,
-                      analyticsSource: 'event',
-                      from: fromPath
-                    }}
-                    onClick={() => {
-                      trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
-                        source: 'event_host_link'
-                      });
-                    }}
-                    className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
-                    
-                    <Avatar className="h-9 w-9 border border-border/50 ring-1 ring-primary/10">
-                      <AvatarImage src={event.businesses.logo_url || ''} />
-                      <AvatarFallback>
-                        <Building2 className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
-                        {event.businesses.verified &&
-                        <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                        }
-                      </div>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {translateCity(event.businesses.city, language)}
-                      </p>
-                    </div>
-                  </Link>
-                </CardContent>
-              </Card>
+              {/* Business Card — Mobile */}
+              <Link
+                to={`/business/${event.businesses.id}`}
+                state={{
+                  analyticsTracked: true,
+                  analyticsSource: 'event',
+                  from: fromPath
+                }}
+                onClick={() => {
+                  trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
+                    source: 'event_host_link'
+                  });
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md hover:bg-accent/30 transition-all duration-200 group">
+                
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                  <AvatarImage src={event.businesses.logo_url || ''} />
+                  <AvatarFallback className="bg-muted">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
+                    {event.businesses.verified &&
+                    <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                    }
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {translateCity(event.businesses.city, language)}
+                  </p>
+                </div>
+              </Link>
 
               {/* Share Button */}
               <RippleButton
@@ -880,9 +876,35 @@ export default function EventDetail() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}>
-            
 
+            {/* Event Details Card - Date & Location (FIRST in sidebar) */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50">
+              <CardContent className="py-4 px-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                    </p>
+                  </div>
+                </div>
 
+                <Separator className="opacity-30" />
+
+                <button
+                  onClick={() => {
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
+                  className="flex items-center gap-3 w-full text-left group">
+                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</p>
+                </button>
+              </CardContent>
+            </Card>
 
             {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
@@ -975,73 +997,43 @@ export default function EventDetail() {
               </RippleButton>
             }
 
-            {/* Event Details Card - Date & Location */}
-            <Card variant="glass" className="backdrop-blur-md border-border/50">
-              <CardContent className="py-4 px-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
-                    </p>
-                  </div>
+
+
+
+            {/* Business Card — Desktop */}
+            <Link
+              to={`/business/${event.businesses.id}`}
+              state={{
+                analyticsTracked: true,
+                analyticsSource: 'event',
+                from: fromPath
+              }}
+              onClick={() => {
+                trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
+                  source: 'event_host_link'
+                });
+              }}
+              className="flex items-center gap-3.5 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md hover:bg-accent/30 transition-all duration-200 group">
+              
+              <Avatar className="h-11 w-11 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                <AvatarImage src={event.businesses.logo_url || ''} />
+                <AvatarFallback className="bg-muted">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
+                  {event.businesses.verified &&
+                  <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  }
                 </div>
-
-                <Separator className="opacity-30" />
-
-                <button
-                  onClick={() => {
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                    window.open(mapsUrl, '_blank');
-                  }}
-                  className="flex items-center gap-3 w-full text-left group">
-                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
-                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</p>
-                </button>
-              </CardContent>
-            </Card>
-
-            {/* Business Card */}
-            <Card variant="glass" className="backdrop-blur-md border-border/50 hover:shadow-hover transition-all duration-300">
-              <CardContent className="py-4 px-4">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
-                <Link
-                  to={`/business/${event.businesses.id}`}
-                  state={{
-                    analyticsTracked: true,
-                    analyticsSource: 'event',
-                    from: fromPath
-                  }}
-                  onClick={() => {
-                    trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
-                      source: 'event_host_link'
-                    });
-                  }}
-                  className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
-                  
-                  <Avatar className="h-10 w-10 border border-border/50 ring-1 ring-primary/10">
-                    <AvatarImage src={event.businesses.logo_url || ''} />
-                    <AvatarFallback>
-                      <Building2 className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold truncate">{event.businesses.name}</p>
-                      {event.businesses.verified &&
-                      <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                      }
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {translateCity(event.businesses.city, language)}
-                    </p>
-                  </div>
-                </Link>
-              </CardContent>
-            </Card>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {translateCity(event.businesses.city, language)}
+                </p>
+              </div>
+            </Link>
 
             {/* Share Button */}
             <RippleButton
