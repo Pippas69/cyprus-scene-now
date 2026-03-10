@@ -725,13 +725,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const claimEnabled = canClaim && reservationValid;
 
   const formContent =
-  <div className="space-y-5">
+  <div className="space-y-3">
       {/* Description */}
       {offer.description && (
         <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
       )}
 
-      {/* Row 1: Valid days (auto-width) + Category badge */}
+      {/* Row 1: Valid days + Category badge - same line */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -740,9 +740,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </span>
         </div>
         {offer.category && (
-          <Badge variant="outline" className="text-[11px] sm:text-xs gap-1 font-medium border-primary/30 text-primary h-[34px] px-3">
-            {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
-          </Badge>
+          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
+            <span className="text-[11px] sm:text-xs">{getCategoryIcon(offer.category)}</span>
+            <span className="text-[11px] sm:text-xs text-foreground font-medium">
+              {getCategoryLabel(offer.category)}
+            </span>
+          </div>
         )}
       </div>
 
