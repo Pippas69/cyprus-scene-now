@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     // Get businesses for these users
     const { data: businesses, error: bizError } = await supabase
       .from("businesses")
-      .select("id, name, user_id")
+      .select("id, name, user_id, category")
       .in("user_id", userIds);
 
     if (bizError) {
