@@ -26,7 +26,9 @@ async function createInAppNotification(
   totalOfferRedemptions: number,
   totalRevenue: number
 ): Promise<void> {
-  const message = `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Εξαργυρώσεις: ${totalOfferRedemptions} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`;
+  const message = hideOffers
+    ? `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`
+    : `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Εξαργυρώσεις: ${totalOfferRedemptions} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`;
   
   await supabase.from('notifications').insert({
     user_id: userId,
