@@ -672,51 +672,6 @@ export const ReservationSlotManager = ({
           </Card>
 
       {settings.accepts_direct_reservations && <>
-          {/* Policy Info Cards - compact on mobile/tablet */}
-          <div className="grid grid-cols-1 gap-2 sm:gap-3">
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-green-800 dark:text-green-200 whitespace-nowrap">{t.instantConfirmation}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-green-700 dark:text-green-300 whitespace-nowrap">{t.instantConfirmationDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-orange-800 dark:text-orange-200 whitespace-nowrap">{t.noShowPolicy}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-orange-700 dark:text-orange-300 whitespace-nowrap">{t.noShowPolicyDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
-              <CardContent className="py-2 sm:py-3 px-2.5 sm:px-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 whitespace-nowrap">{t.cancellationPolicy}</h4>
-                    <p className="text-[9px] sm:text-[11px] text-blue-700 dark:text-blue-300 whitespace-nowrap">{t.cancellationPolicyDescription}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Seating Options */}
           <Card>
             <CardHeader className="pb-2 sm:pb-4">

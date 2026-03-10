@@ -948,27 +948,31 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
       isMobile ?
       <div className="space-y-3">
-          {filteredReservations.map((reservation) =>
+          {filteredReservations.map((reservation) => {
+            const typeLabel = reservation.offer_purchase
+              ? (language === 'el' ? 'Προσφορά' : 'Offer')
+              : (language === 'el' ? 'Προφίλ' : 'Profile');
+            return (
         <Card key={reservation.id} className="min-w-0">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
-                      {getTypeBadge(reservation)}
-                    </div>
-                    {reservation.profiles?.email &&
-                <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
-                }
+                    <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
+                    {reservation.phone_number &&
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{reservation.phone_number}</p>
+                    }
                   </div>
                   {getStatusBadge(reservation)}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">{reservation.party_size} {t.people}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{reservation.party_size} {t.people}</span>
+                    </div>
+                    <span className="text-muted-foreground ml-6">{typeLabel}</span>
                   </div>
                   {reservation.preferred_time &&
               <div className="flex items-center gap-2 min-w-0">
@@ -978,47 +982,40 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </span>
                     </div>
               }
-                  {reservation.phone_number &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate">{reservation.phone_number}</span>
-                    </div>
-              }
-                  {reservation.confirmation_code &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-mono truncate">{reservation.confirmation_code}</span>
-                    </div>
-              }
                 </div>
               </CardContent>
             </Card>
-        )}
+            );
+          })}
         </div> : (
 
       /* Tablet uses mobile card layout */
       <div className="space-y-3 lg:hidden">
-          {filteredReservations.map((reservation) =>
+          {filteredReservations.map((reservation) => {
+            const typeLabel = reservation.offer_purchase
+              ? (language === 'el' ? 'Προσφορά' : 'Offer')
+              : (language === 'el' ? 'Προφίλ' : 'Profile');
+            return (
         <Card key={reservation.id} className="min-w-0">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
-                      {getTypeBadge(reservation)}
-                    </div>
-                    {reservation.profiles?.email &&
-                <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
-                }
+                    <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
+                    {reservation.phone_number &&
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{reservation.phone_number}</p>
+                    }
                   </div>
                   {getStatusBadge(reservation)}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">{reservation.party_size} {t.people}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{reservation.party_size} {t.people}</span>
+                    </div>
+                    <span className="text-muted-foreground ml-6">{typeLabel}</span>
                   </div>
                   {reservation.preferred_time &&
               <div className="flex items-center gap-2 min-w-0">
@@ -1028,86 +1025,81 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </span>
                     </div>
               }
-                  {reservation.phone_number &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate">{reservation.phone_number}</span>
-                    </div>
-              }
-                  {reservation.confirmation_code &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-mono truncate">{reservation.confirmation_code}</span>
-                    </div>
-              }
                 </div>
               </CardContent>
             </Card>
-        )}
+            );
+          })}
         </div>)
       }
       
       {/* Desktop table - only on lg+ */}
       {filteredReservations.length > 0 &&
       <div className="rounded-md border w-full max-w-full hidden lg:block">
-          <Table className="w-full min-w-[980px] table-fixed text-sm">
+          <Table className="w-full min-w-[700px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/6">{t.name}</TableHead>
-                <TableHead className="w-1/6">{t.dateTime}</TableHead>
-                <TableHead className="w-1/6">{t.details}</TableHead>
-                <TableHead className="w-1/6">{t.type}</TableHead>
-                <TableHead className="w-1/6">{t.confirmationCode}</TableHead>
-                <TableHead className="w-1/6">{t.status}</TableHead>
+                <TableHead className="w-1/4">{t.name}</TableHead>
+                <TableHead className="w-1/4">{t.dateTime}</TableHead>
+                <TableHead className="w-1/4">{t.details}</TableHead>
+                <TableHead className="w-1/4">{t.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReservations.map((reservation) =>
-            <TableRow key={reservation.id} className="hover:bg-transparent">
+              {filteredReservations.map((reservation) => {
+                const typeLabel = reservation.offer_purchase
+                  ? (language === 'el' ? 'Προσφορά' : 'Offer')
+                  : (language === 'el' ? 'Προφίλ' : 'Profile');
+
+                return (
+                <TableRow key={reservation.id} className="hover:bg-transparent">
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{reservation.reservation_name}</div>
-                      <div className="text-sm text-muted-foreground truncate">{reservation.profiles?.email}</div>
+                      <EditableCell
+                        reservationId={reservation.id}
+                        field="reservation_name"
+                        displayValue={reservation.reservation_name}
+                        rawValue={reservation.reservation_name}
+                      />
+                      {reservation.phone_number &&
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5 min-w-0">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="whitespace-nowrap">{reservation.phone_number}</span>
+                        </div>
+                      }
                     </div>
                   </TableCell>
 
                   <TableCell className="align-top">
                     {reservation.preferred_time &&
-                <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="whitespace-nowrap">
                           {format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
                         </span>
                       </div>
-                }
+                    }
                   </TableCell>
 
                   <TableCell className="align-top">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="whitespace-nowrap">{reservation.party_size} {t.people}</span>
-                    </div>
-                    {reservation.phone_number &&
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1 min-w-0">
-                        <Phone className="h-3 w-3 flex-shrink-0" />
-                        <span className="whitespace-nowrap">{reservation.phone_number}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="party_size"
+                          displayValue={`${reservation.party_size} ${t.people}`}
+                          rawValue={String(reservation.party_size)}
+                        />
                       </div>
-                }
-                  </TableCell>
-
-                  <TableCell className="min-w-0 align-top">{getTypeBadge(reservation)}</TableCell>
-
-                  <TableCell className="align-top">
-                    {reservation.confirmation_code &&
-                <span className="font-mono text-sm bg-primary/10 px-2 py-1 rounded whitespace-nowrap inline-block">
-                        {reservation.confirmation_code}
-                      </span>
-                }
+                      <span className="text-sm text-muted-foreground ml-6">{typeLabel}</span>
+                    </div>
                   </TableCell>
 
                   <TableCell className="align-top">{getStatusBadge(reservation)}</TableCell>
                 </TableRow>
-            )}
+                );
+              })}
             </TableBody>
           </Table>
           </div>
