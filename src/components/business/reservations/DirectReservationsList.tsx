@@ -670,16 +670,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   // Editable cell component
-  const EditableCell = ({ reservationId, field, displayValue, rawValue }: {reservationId: string;field: string;displayValue: string;rawValue: string;}) => {
+  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;}) => {
     const isEditing = editingField?.id === reservationId && editingField?.field === field;
 
     if (isEditing) {
       return (
         <div className="flex items-center gap-1">
           <Input
+            type={inputType || 'text'}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            className="h-7 text-sm w-20"
+            className={`h-7 text-sm ${inputType === 'datetime-local' ? 'w-44' : 'w-20'}`}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') saveEdit();
