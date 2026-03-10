@@ -1007,9 +1007,9 @@ export default function EventDetail() {
             </Card>
 
             {/* Business Card */}
-            <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground mb-3">{text.hostedBy}</p>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 hover:shadow-hover transition-all duration-300">
+              <CardContent className="py-4 px-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
                 <Link
                   to={`/business/${event.businesses.id}`}
                   state={{
@@ -1022,12 +1022,12 @@ export default function EventDetail() {
                       source: 'event_host_link'
                     });
                   }}
-                  className="flex items-center gap-3 hover:bg-accent p-2 rounded-lg transition-colors">
+                  className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
                   
-                  <Avatar className="h-12 w-12 border">
+                  <Avatar className="h-10 w-10 border border-border/50 ring-1 ring-primary/10">
                     <AvatarImage src={event.businesses.logo_url || ''} />
                     <AvatarFallback>
-                      <Building2 className="h-6 w-6" />
+                      <Building2 className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -1037,8 +1037,8 @@ export default function EventDetail() {
                       <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
                       }
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {event.businesses.city}
+                    <p className="text-xs text-muted-foreground truncate">
+                      {translateCity(event.businesses.city, language)}
                     </p>
                   </div>
                 </Link>
