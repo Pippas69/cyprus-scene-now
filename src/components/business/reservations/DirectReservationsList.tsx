@@ -948,27 +948,31 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
       isMobile ?
       <div className="space-y-3">
-          {filteredReservations.map((reservation) =>
+          {filteredReservations.map((reservation) => {
+            const typeLabel = reservation.offer_purchase
+              ? (language === 'el' ? 'Προσφορά' : 'Offer')
+              : (language === 'el' ? 'Προφίλ' : 'Profile');
+            return (
         <Card key={reservation.id} className="min-w-0">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
-                      {getTypeBadge(reservation)}
-                    </div>
-                    {reservation.profiles?.email &&
-                <p className="text-sm text-muted-foreground mt-1 truncate">{reservation.profiles.email}</p>
-                }
+                    <CardTitle className="text-base truncate">{reservation.reservation_name}</CardTitle>
+                    {reservation.phone_number &&
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{reservation.phone_number}</p>
+                    }
                   </div>
                   {getStatusBadge(reservation)}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">{reservation.party_size} {t.people}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate">{reservation.party_size} {t.people}</span>
+                    </div>
+                    <span className="text-muted-foreground ml-6">{typeLabel}</span>
                   </div>
                   {reservation.preferred_time &&
               <div className="flex items-center gap-2 min-w-0">
@@ -978,22 +982,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </span>
                     </div>
               }
-                  {reservation.phone_number &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate">{reservation.phone_number}</span>
-                    </div>
-              }
-                  {reservation.confirmation_code &&
-              <div className="flex items-center gap-2 min-w-0">
-                      <QrCode className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="font-mono truncate">{reservation.confirmation_code}</span>
-                    </div>
-              }
                 </div>
               </CardContent>
             </Card>
-        )}
+            );
+          })}
         </div> : (
 
       /* Tablet uses mobile card layout */
