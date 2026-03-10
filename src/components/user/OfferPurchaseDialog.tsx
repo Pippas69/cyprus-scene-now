@@ -752,9 +752,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </div>
         )}
         {/* Valid days */}
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground truncate">
+        <div className="flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-2 col-span-2">
+          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <span className="text-[11px] sm:text-xs text-foreground leading-relaxed">
             {formatDays(offer.valid_days || null)}
           </span>
         </div>
