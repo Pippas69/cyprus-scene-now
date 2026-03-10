@@ -213,6 +213,7 @@ interface GuidanceTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 interface TimeWindow {
