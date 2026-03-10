@@ -725,100 +725,58 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const claimEnabled = canClaim && reservationValid;
 
   const formContent =
-  <div className="space-y-3">
+  <div className="space-y-4">
       {/* Description */}
-      {offer.description && (
-        <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
-      )}
+      {offer.description &&
+    <p className="text-sm text-muted-foreground">{offer.description}</p>
+    }
 
-      {/* Row 1: Valid days + Category badge - same line */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground font-medium">
-            {formatDays(offer.valid_days || null)}
-          </span>
-        </div>
-        {offer.category && (
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-            <span className="text-[11px] sm:text-xs">{getCategoryIcon(offer.category)}</span>
-            <span className="text-[11px] sm:text-xs text-foreground font-medium">
-              {getCategoryLabel(offer.category)}
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Category badge */}
+      {offer.category &&
+    <Badge variant="outline" className="text-xs w-fit">
+          {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+        </Badge>
+    }
 
-      {/* Row 2: Hours + Expiry */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground font-medium">
-            {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-          <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground">
-            {t("expiresOn")}: {new Date(offer.end_at).toLocaleDateString(language === "el" ? "el-GR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
-          </span>
-        </div>
-      </div>
+      <Separator />
 
-      {/* Row 3: People available */}
-      {peopleRemaining !== null && (
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-          <Users className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground font-medium">
-            {peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "spots left"}
-          </span>
-        </div>
-      )}
+      {/* Name + Party Size on same row */}
+      
 
-      {/* One per user notice */}
-      {offer.one_per_user && (
-        <p className="text-[10px] sm:text-[11px] text-muted-foreground text-center">
-          {language === "el" ? "⚡ Μία εξαργύρωση ανά χρήστη" : "⚡ One redemption per user"}
-        </p>
-      )}
 
-      <Separator className="!my-1" />
 
-      {/* Name + Party Size */}
-      <div className="flex gap-3 items-end">
-        <div className="flex-1 space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
-            <User className="h-3 w-3" />
-            {t("name")}
-          </Label>
-          <Input
-          value={guestNames[0] || ''}
-          onChange={(e) => {
-            const newNames = [...guestNames];
-            newNames[0] = e.target.value;
-            setGuestNames(newNames);
-          }}
-          placeholder={language === "el" ? "Το όνομά σας" : "Your name"}
-          className="h-9 sm:h-10 text-xs sm:text-sm" />
-        </div>
-        <div className="w-[130px] space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
-            {t("partySize")}
-          </Label>
-          <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
-            <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: maxSelectablePartySize }, (_, i) => i + 1).map((num) =>
-            <SelectItem key={num} value={num.toString()}>
-                  {num} {num === 1 ? t("person") : t("people")}
-                </SelectItem>
-            )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
       {/* Dynamic guest name fields */}
       {partySize > 1 &&
@@ -834,37 +792,66 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         }}
         placeholder={`${language === "el" ? "Όνομα ατόμου" : "Guest name"} ${index + 2}`}
         className="h-9 sm:h-10 text-xs sm:text-sm" />
+
       )}
         </div>
     }
 
+      <Separator />
+
+      {/* Validity Info */}
+      <div className="space-y-2 text-sm">
+        {/* Availability + one per user on same line */}
+        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
+          <Users className="h-4 w-4 shrink-0" />
+          <span>
+            {peopleRemaining !== null && `${peopleRemaining} ${language === "el" ? "άτομα διαθέσιμα" : "people available"}`}
+            {peopleRemaining !== null && offer.one_per_user && ` · `}
+            {offer.one_per_user && (language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user")}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>
+            {t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
+            {` (`}{t("expiresOn")}: {formatDate(offer.end_at)}{`)`}
+          </span>
+        </div>
+      </div>
+
       {/* RESERVATION SECTION */}
       <ReservationSection />
 
-      {/* Walk-in Note */}
-      {!wantsReservation && (
-        <p className="text-muted-foreground text-[11px] sm:text-xs text-center">
-          {t("walkInNote")}
-        </p>
-      )}
+      {/* Walk-in Note (below reservation toggle) */}
+      {!wantsReservation &&
+    <p className="text-muted-foreground text-xs">
+        {t("walkInNote")}
+      </p>
+    }
 
       {/* Terms */}
-      {offer.terms && (
-        <div className="rounded-lg bg-muted/30 px-3 py-2">
-          <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 leading-relaxed">
+      {offer.terms &&
+    <div className="mt-2">
+          <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
             {offer.terms}
           </p>
         </div>
-      )}
+    }
+
 
       {/* Actions */}
-      <div className="flex gap-3 pt-1">
-        <Button variant="outline" onClick={onClose} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" disabled={isLoading}>
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled}>
+        <Button onClick={handleClaim} className="flex-1" disabled={!claimEnabled}>
           {isLoading ?
         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
+
         <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
         }
         </Button>
@@ -876,22 +863,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent className="h-[90vh] flex flex-col">
-          <DrawerHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4">
-            <div className="flex items-center gap-3">
+          <DrawerHeader className="flex-shrink-0 border-b pb-3">
+            <div className="flex items-center gap-2 pr-1">
               {offer.businesses.logo_url ?
-              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-11 h-11 rounded-xl object-cover ring-1 ring-border/50" /> :
-              <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center ring-1 ring-border/50">
+              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-10 h-10 rounded-lg object-cover" /> :
+
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <Store className="h-5 w-5 text-muted-foreground" />
                 </div>
               }
               <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
+                <DrawerTitle className="text-left text-[13px] font-semibold leading-tight whitespace-nowrap overflow-hidden">
                   {offer.title}
                 </DrawerTitle>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{offer.businesses.name}</p>
+                <p className="text-sm text-muted-foreground truncate -ml-10 sm:ml-0">{offer.businesses.name}</p>
               </div>
               {discountDisplay &&
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-sm font-bold h-7 px-2.5 rounded-lg">
+              <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
                   {discountDisplay}
                 </Badge>
               }
@@ -910,29 +898,30 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="flex-shrink-0 p-5 pb-4 border-b border-border/50">
+        <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
           <div className="flex items-center gap-3">
             {offer.businesses.logo_url ?
-            <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-xl object-cover ring-1 ring-border/50" /> :
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center ring-1 ring-border/50">
+            <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-lg object-cover" /> :
+
+            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
                 <Store className="h-6 w-6 text-muted-foreground" />
               </div>
             }
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-left text-base sm:text-lg font-bold">
+              <DialogTitle className="text-left text-base sm:text-lg whitespace-nowrap overflow-hidden">
                 {offer.title}
               </DialogTitle>
-              <DialogDescription className="text-left text-sm mt-0.5">{offer.businesses.name}</DialogDescription>
+              <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
             </div>
             {discountDisplay &&
-            <Badge className="bg-primary text-primary-foreground shrink-0 text-base font-bold py-1.5 px-3 rounded-lg">
+            <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-sm py-1.5 sm:py-1 px-3 sm:px-2 mr-1">
                 {discountDisplay}
               </Badge>
             }
           </div>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-6">
           {formContent}
         </div>
       </DialogContent>
