@@ -752,9 +752,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </div>
         )}
         {/* Valid days */}
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
-          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground truncate">
+        <div className="flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-2 col-span-2">
+          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <span className="text-[11px] sm:text-xs text-foreground leading-relaxed">
             {formatDays(offer.valid_days || null)}
           </span>
         </div>
@@ -786,7 +786,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       {/* Name + Party Size */}
       <div className="flex gap-3 items-end">
         <div className="flex-1 space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
             <User className="h-3 w-3" />
             {t("name")}
           </Label>
@@ -801,7 +801,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           className="h-9 sm:h-10 text-xs sm:text-sm" />
         </div>
         <div className="w-[130px] space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
             {t("partySize")}
           </Label>
           <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
