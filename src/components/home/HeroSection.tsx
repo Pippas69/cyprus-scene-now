@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import PhoneScreenReservation from "./hero-phones/PhoneScreenReservation";
+import PhoneScreenDining from "./hero-phones/PhoneScreenDining";
 import PhoneScreenEvent from "./hero-phones/PhoneScreenEvent";
 import PhoneScreenMap from "./hero-phones/PhoneScreenMap";
 
@@ -47,7 +47,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   // 3 unique screens, duplicated for seamless loop
   const screens = [
-    <PhoneScreenReservation language={language} />,
+    <PhoneScreenDining language={language} />,
     <PhoneScreenEvent language={language} />,
     <PhoneScreenMap language={language} />,
   ];
