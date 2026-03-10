@@ -322,6 +322,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data: metrics, isLoading: metricsLoading } = usePerformanceMetrics(businessId, dateRange);
