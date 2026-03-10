@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     // Get all businesses with weekly summary enabled
     const { data: businesses, error: bizError } = await supabase
       .from('businesses')
-      .select('id, name, user_id');
+      .select('id, name, user_id, category');
 
     if (bizError) {
       throw new Error(`Failed to fetch businesses: ${bizError.message}`);
