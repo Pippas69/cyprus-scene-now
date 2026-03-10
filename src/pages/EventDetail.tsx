@@ -880,9 +880,35 @@ export default function EventDetail() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}>
-            
 
+            {/* Event Details Card - Date & Location (FIRST in sidebar) */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50">
+              <CardContent className="py-4 px-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                    </p>
+                  </div>
+                </div>
 
+                <Separator className="opacity-30" />
+
+                <button
+                  onClick={() => {
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
+                  className="flex items-center gap-3 w-full text-left group">
+                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</p>
+                </button>
+              </CardContent>
+            </Card>
 
             {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
