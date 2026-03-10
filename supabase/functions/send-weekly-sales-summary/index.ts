@@ -24,7 +24,8 @@ async function createInAppNotification(
   totalReservations: number,
   totalTickets: number,
   totalOfferRedemptions: number,
-  totalRevenue: number
+  totalRevenue: number,
+  hideOffers: boolean
 ): Promise<void> {
   const message = hideOffers
     ? `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`
