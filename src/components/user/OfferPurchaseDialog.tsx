@@ -786,7 +786,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       {/* Name + Party Size */}
       <div className="flex gap-3 items-end">
         <div className="flex-1 space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
             <User className="h-3 w-3" />
             {t("name")}
           </Label>
