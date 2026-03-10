@@ -628,47 +628,46 @@ export default function EventDetail() {
               </p>
             }
 
-            {/* Location / Date / Time — compact rows with icons */}
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                  window.open(mapsUrl, '_blank');
-                }}
-                className="flex items-center gap-2.5 w-full text-left group">
-                
-                <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{event.location}</span>
-              </button>
-
-              {showInstances.length > 1 ?
-              <div className="flex items-start gap-2.5">
-                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    {showInstances.map((si: any) =>
-                  <p key={si.id} className="text-sm text-muted-foreground">
-                        {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+            {/* Date / Time / Location — premium info card */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50">
+              <CardContent className="py-4 px-4 space-y-3">
+                {showInstances.length > 1 ?
+                <div className="flex items-start gap-3">
+                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      {showInstances.map((si: any) =>
+                    <p key={si.id} className="text-sm text-foreground font-medium">
+                          {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                        </p>
+                    )}
+                    </div>
+                  </div> :
+                <div className="flex items-start gap-3">
+                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                       </p>
-                  )}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                      </p>
+                    </div>
                   </div>
-                </div> :
+                }
 
-              <>
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(event.start_at), 'EEE, d MMM', { locale: language === 'el' ? el : enUS })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
-                    </span>
-                  </div>
-                </>
-              }
-            </div>
+                <Separator className="opacity-30" />
+
+                <button
+                  onClick={() => {
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
+                  className="flex items-center gap-3 w-full text-left group">
+                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</span>
+                </button>
+              </CardContent>
+            </Card>
 
             {/* Cast & Crew for performance events */}
             {castMembers.length > 0 &&
