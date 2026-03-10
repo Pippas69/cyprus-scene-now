@@ -27,6 +27,8 @@ const dayNamesEl: Record<number, string> = {
 };
 
 // Email template
+const NO_OFFERS_CATEGORIES = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const buildWeeklySummaryEmail = (
   businessName: string,
   stats: {
@@ -37,6 +39,7 @@ const buildWeeklySummaryEmail = (
     bestDay: string;
     weekStart: string;
     weekEnd: string;
+    hideOffers: boolean;
   }
 ) => `
 <!DOCTYPE html>
