@@ -62,6 +62,20 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
   const currentPlan = subscriptionData?.plan || 'free';
 
+  // Fetch business categories to determine if offers should be hidden
+  const { data: hideOffers } = useQuery({
+    queryKey: ['business-hide-offers', businessId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('category')
+        .eq('id', businessId)
+        .single();
+      return shouldHideOffers(data?.category || []);
+    },
+    staleTime: Infinity,
+  });
+
   const convertedDateRange = dateRange?.from && dateRange?.to 
     ? { from: dateRange.from, to: dateRange.to }
     : undefined;
