@@ -279,14 +279,22 @@ const Navbar = () => {
             {/* Mobile Menu Sheet */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-foreground"
-                  aria-label="Open menu"
-                >
-                  <Menu aria-hidden="true" />
-                </Button>
+                {user ? (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-foreground"
+                    aria-label="Open menu"
+                  >
+                    <Menu aria-hidden="true" />
+                  </Button>
+                ) : (
+                  <button
+                    className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#4ECDC4] to-[#3dbdb5] text-white text-sm font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
+                  >
+                    {t.signup}
+                  </button>
+                )}
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] bg-background">
                 <div className="flex flex-col gap-6 mt-8">
