@@ -875,23 +875,22 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent className="h-[90vh] flex flex-col">
-          <DrawerHeader className="flex-shrink-0 border-b pb-3">
-            <div className="flex items-center gap-2 pr-1">
+          <DrawerHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4">
+            <div className="flex items-center gap-3">
               {offer.businesses.logo_url ?
-              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-10 h-10 rounded-lg object-cover" /> :
-
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+              <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-11 h-11 rounded-xl object-cover ring-1 ring-border/50" /> :
+              <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center ring-1 ring-border/50">
                   <Store className="h-5 w-5 text-muted-foreground" />
                 </div>
               }
               <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-left text-[13px] font-semibold leading-tight whitespace-nowrap overflow-hidden">
+                <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
                   {offer.title}
                 </DrawerTitle>
-                <p className="text-sm text-muted-foreground truncate -ml-10 sm:ml-0">{offer.businesses.name}</p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{offer.businesses.name}</p>
               </div>
               {discountDisplay &&
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-xs h-6 px-2 mr-1">
+              <Badge className="bg-primary text-primary-foreground shrink-0 text-sm font-bold h-7 px-2.5 rounded-lg">
                   {discountDisplay}
                 </Badge>
               }
