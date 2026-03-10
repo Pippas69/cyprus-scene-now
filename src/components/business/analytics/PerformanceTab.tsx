@@ -115,6 +115,7 @@ interface PerformanceTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 type MetricType = 'profile' | 'offers' | 'events';
