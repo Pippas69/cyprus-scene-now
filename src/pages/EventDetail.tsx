@@ -703,49 +703,6 @@ export default function EventDetail() {
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
             <div className="lg:hidden space-y-3">
-              {/* RSVP Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <RippleButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRSVP('interested')}
-                  disabled={rsvpLoading || !user}
-                  className={`gap-1.5 text-xs h-9 transition-all ${
-                  isInterested ?
-                  'border-ocean text-ocean bg-ocean/5' :
-                  'border-border text-muted-foreground hover:border-ocean/50'}`
-                  }>
-                  
-                  <Heart className="h-3.5 w-3.5" />
-                  {text.interested}
-                </RippleButton>
-                <RippleButton
-                  size="sm"
-                  onClick={() => handleRSVP('going')}
-                  disabled={rsvpLoading || !user}
-                  className={`gap-1.5 text-xs h-9 transition-all ${
-                  isGoing ?
-                  'bg-ocean hover:bg-ocean/90 text-white' :
-                  'bg-muted hover:bg-muted/80 text-muted-foreground'}`
-                  }>
-                  
-                  <Users className="h-3.5 w-3.5" />
-                  {text.going}
-                </RippleButton>
-              </div>
-              
-              {/* RSVP Counts */}
-              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-3 w-3" />
-                  <span>{interestedCount}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  <span>{goingCount}</span>
-                </div>
-              </div>
-
               {/* Tickets/Reservations */}
               {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
               <RippleButton
