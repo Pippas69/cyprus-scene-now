@@ -801,7 +801,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           className="h-9 sm:h-10 text-xs sm:text-sm" />
         </div>
         <div className="w-[130px] space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
             {t("partySize")}
           </Label>
           <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
