@@ -796,9 +796,9 @@ export default function EventDetail() {
               }
 
               {/* Business Card */}
-              <Card variant="glass" className="backdrop-blur-md">
-                <CardContent className="py-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
+              <Card variant="glass" className="backdrop-blur-md border-border/50">
+                <CardContent className="py-3 px-4">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
                   <Link
                     to={`/business/${event.businesses.id}`}
                     state={{
@@ -811,9 +811,9 @@ export default function EventDetail() {
                         source: 'event_host_link'
                       });
                     }}
-                    className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors">
+                    className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
                     
-                    <Avatar className="h-8 w-8 border">
+                    <Avatar className="h-9 w-9 border border-border/50 ring-1 ring-primary/10">
                       <AvatarImage src={event.businesses.logo_url || ''} />
                       <AvatarFallback>
                         <Building2 className="h-4 w-4" />
@@ -823,7 +823,7 @@ export default function EventDetail() {
                       <div className="flex items-center gap-1.5">
                         <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
                         {event.businesses.verified &&
-                        <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
+                        <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                         }
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">
