@@ -149,43 +149,28 @@ const InfoNavbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="lg:hidden bg-background border-b border-border"
           >
-            <div className="container mx-auto px-4 py-4 space-y-4">
-              {mobileNavLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block py-2 text-sm font-medium ${
-                    isActive(link.href)
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <LanguageToggle />
-
-                <Link to="/login" className="shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="px-3 whitespace-nowrap"
-                  >
-                    {t.login}
-                  </Button>
-                </Link>
-
-                <Link to="/signup-business" className="flex-1 min-w-0">
-                  <Button
-                    size="sm"
-                    className="w-full px-3 whitespace-normal leading-tight h-auto py-2"
-                  >
-                    {t.getStarted}
-                  </Button>
-                </Link>
-              </div>
+            <div className="container mx-auto px-4 py-4 space-y-2">
+              <Link
+                to="/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+              >
+                {t.signupFomo}
+              </Link>
+              <Link
+                to="/signup-business"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+              >
+                {t.signupBusiness}
+              </Link>
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+              >
+                {t.login}
+              </Link>
             </div>
           </motion.div>
         )}
