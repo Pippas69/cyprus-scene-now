@@ -150,6 +150,7 @@ interface BoostValueTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 interface ChangeIndicatorProps {
