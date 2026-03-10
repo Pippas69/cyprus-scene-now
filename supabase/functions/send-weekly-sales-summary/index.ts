@@ -240,6 +240,9 @@ Deno.serve(async (req) => {
 
         const bestDay = Object.entries(dayActivity).sort((a, b) => b[1] - a[1])[0];
 
+        const bizCategories = (business.category || []).map((c: string) => c.toLowerCase());
+        const hideOffers = bizCategories.some((c: string) => NO_OFFERS_CATEGORIES.includes(c));
+
         // Build email content
         const emailContent = `
           <h2 style="color: #1e293b; font-size: 20px; margin: 0 0 24px 0;">Γεια σου ${business.name}! 👋</h2>
@@ -263,6 +266,7 @@ Deno.serve(async (req) => {
                   <strong style="color: #1e293b; font-size: 18px;">${totalTickets}</strong>
                 </td>
               </tr>
+              ${!hideOffers ? `
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                   <span style="color: #64748b; font-size: 14px;">🎁 Εξαργυρώσεις Προσφορών</span>
@@ -271,6 +275,7 @@ Deno.serve(async (req) => {
                   <strong style="color: #1e293b; font-size: 18px;">${totalOfferRedemptions}</strong>
                 </td>
               </tr>
+              ` : ''}
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                   <span style="color: #64748b; font-size: 14px;">📱 QR Check-ins</span>
