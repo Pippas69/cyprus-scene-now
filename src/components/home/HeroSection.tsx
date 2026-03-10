@@ -47,7 +47,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   // 3 unique screens, duplicated for seamless loop
   const screens = [
-    <PhoneScreenReservation language={language} />,
+    <PhoneScreenDining language={language} />,
     <PhoneScreenEvent language={language} />,
     <PhoneScreenMap language={language} />,
   ];
