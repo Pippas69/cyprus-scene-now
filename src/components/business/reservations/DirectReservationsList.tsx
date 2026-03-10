@@ -1073,9 +1073,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </div>
                   </TableCell>
 
-                  <TableCell className="align-top">
+                  <TableCell className="align-top pl-2">
                     {reservation.preferred_time &&
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 -ml-2">
                         <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <EditableCell
                           reservationId={reservation.id}
@@ -1099,7 +1099,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={String(reservation.party_size)}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground ml-6">{typeLabel}</span>
+                      <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
                     </div>
                   </TableCell>
 
