@@ -4,6 +4,8 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+const NO_OFFERS_CATEGORIES = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
