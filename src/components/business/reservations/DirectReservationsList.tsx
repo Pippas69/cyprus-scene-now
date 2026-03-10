@@ -535,12 +535,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const newSize = parseInt(editValue);
         if (isNaN(newSize) || newSize < 1) return;
         updateData.party_size = newSize;
-        // Min charge display auto-recalculates from seating tiers based on party size
-        // Do NOT overwrite ticket_credit_cents — that represents the actual amount paid for tickets
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
         updateData.ticket_credit_cents = cents;
+      } else if (field === 'preferred_time') {
+        // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
+        if (!editValue) return;
+        updateData.preferred_time = new Date(editValue).toISOString();
       }
 
       const { error } = await supabase.
