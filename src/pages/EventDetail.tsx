@@ -883,52 +883,8 @@ export default function EventDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}>
             
-            {/* RSVP Buttons */}
-            
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
 
             {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
