@@ -626,8 +626,8 @@ export default function EventDetail() {
               </p>
             }
 
-            {/* Date / Time / Location — premium info card */}
-            <Card variant="glass" className="backdrop-blur-md border-border/50">
+            {/* Date / Time / Location — premium info card (mobile/tablet only, desktop has sidebar) */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50 lg:hidden">
               <CardContent className="py-4 px-4 space-y-3">
                 {showInstances.length > 1 ?
                 <div className="flex items-start gap-3">
