@@ -909,30 +909,29 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
+        <DialogHeader className="flex-shrink-0 p-5 pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
             {offer.businesses.logo_url ?
-            <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-lg object-cover" /> :
-
-            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+            <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-12 h-12 rounded-xl object-cover ring-1 ring-border/50" /> :
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center ring-1 ring-border/50">
                 <Store className="h-6 w-6 text-muted-foreground" />
               </div>
             }
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-left text-base sm:text-lg whitespace-nowrap overflow-hidden">
+              <DialogTitle className="text-left text-base sm:text-lg font-bold">
                 {offer.title}
               </DialogTitle>
-              <DialogDescription className="text-left">{offer.businesses.name}</DialogDescription>
+              <DialogDescription className="text-left text-sm mt-0.5">{offer.businesses.name}</DialogDescription>
             </div>
             {discountDisplay &&
-            <Badge className="bg-primary text-primary-foreground shrink-0 text-base sm:text-sm py-1.5 sm:py-1 px-3 sm:px-2 mr-1">
+            <Badge className="bg-primary text-primary-foreground shrink-0 text-base font-bold py-1.5 px-3 rounded-lg">
                 {discountDisplay}
               </Badge>
             }
           </div>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5">
           {formContent}
         </div>
       </DialogContent>
