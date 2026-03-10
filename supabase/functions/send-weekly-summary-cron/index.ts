@@ -80,10 +80,12 @@ const buildWeeklySummaryEmail = (
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.tickets}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Εισιτήρια</div>
         </div>
+        ${!stats.hideOffers ? `
         <div style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 12px; padding: 20px; text-align: center;">
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.offers}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Προσφορές</div>
         </div>
+        ` : ''}
         <div style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 12px; padding: 20px; text-align: center;">
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.qrCheckins}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">QR Check-ins</div>
