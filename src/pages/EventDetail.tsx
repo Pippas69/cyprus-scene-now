@@ -793,44 +793,40 @@ export default function EventDetail() {
                 </RippleButton>
               }
 
-              {/* Business Card */}
-              <Card variant="glass" className="backdrop-blur-md border-border/50">
-                <CardContent className="py-3 px-4">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
-                  <Link
-                    to={`/business/${event.businesses.id}`}
-                    state={{
-                      analyticsTracked: true,
-                      analyticsSource: 'event',
-                      from: fromPath
-                    }}
-                    onClick={() => {
-                      trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
-                        source: 'event_host_link'
-                      });
-                    }}
-                    className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
-                    
-                    <Avatar className="h-9 w-9 border border-border/50 ring-1 ring-primary/10">
-                      <AvatarImage src={event.businesses.logo_url || ''} />
-                      <AvatarFallback>
-                        <Building2 className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
-                        {event.businesses.verified &&
-                        <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                        }
-                      </div>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {translateCity(event.businesses.city, language)}
-                      </p>
-                    </div>
-                  </Link>
-                </CardContent>
-              </Card>
+              {/* Business Card — Mobile */}
+              <Link
+                to={`/business/${event.businesses.id}`}
+                state={{
+                  analyticsTracked: true,
+                  analyticsSource: 'event',
+                  from: fromPath
+                }}
+                onClick={() => {
+                  trackEngagement(event.businesses.id, 'profile_click', 'business', event.businesses.id, {
+                    source: 'event_host_link'
+                  });
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md hover:bg-accent/30 transition-all duration-200 group">
+                
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                  <AvatarImage src={event.businesses.logo_url || ''} />
+                  <AvatarFallback className="bg-muted">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
+                    {event.businesses.verified &&
+                    <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                    }
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {translateCity(event.businesses.city, language)}
+                  </p>
+                </div>
+              </Link>
 
               {/* Share Button */}
               <RippleButton
