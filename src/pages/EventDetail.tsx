@@ -19,12 +19,10 @@ import { useLanguage } from '@/hooks/useLanguage';
 import {
   Calendar,
   MapPin,
-  Clock,
   Users,
   Share2,
   Building2,
   ArrowLeft,
-  Heart,
   CheckCircle,
   Ticket,
   PartyPopper } from
