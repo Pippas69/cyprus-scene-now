@@ -19,12 +19,10 @@ import { useLanguage } from '@/hooks/useLanguage';
 import {
   Calendar,
   MapPin,
-  Clock,
   Users,
   Share2,
   Building2,
   ArrowLeft,
-  Heart,
   CheckCircle,
   Ticket,
   PartyPopper } from
@@ -628,47 +626,46 @@ export default function EventDetail() {
               </p>
             }
 
-            {/* Location / Date / Time — compact rows with icons */}
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                  window.open(mapsUrl, '_blank');
-                }}
-                className="flex items-center gap-2.5 w-full text-left group">
-                
-                <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">{event.location}</span>
-              </button>
-
-              {showInstances.length > 1 ?
-              <div className="flex items-start gap-2.5">
-                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    {showInstances.map((si: any) =>
-                  <p key={si.id} className="text-sm text-muted-foreground">
-                        {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+            {/* Date / Time / Location — premium info card */}
+            <Card variant="glass" className="backdrop-blur-md border-border/50">
+              <CardContent className="py-4 px-4 space-y-3">
+                {showInstances.length > 1 ?
+                <div className="flex items-start gap-3">
+                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      {showInstances.map((si: any) =>
+                    <p key={si.id} className="text-sm text-foreground font-medium">
+                          {format(new Date(si.start_at), 'EEE d MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                        </p>
+                    )}
+                    </div>
+                  </div> :
+                <div className="flex items-start gap-3">
+                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                       </p>
-                  )}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                      </p>
+                    </div>
                   </div>
-                </div> :
+                }
 
-              <>
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(event.start_at), 'EEE, d MMM', { locale: language === 'el' ? el : enUS })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
-                    </span>
-                  </div>
-                </>
-              }
-            </div>
+                <Separator className="opacity-30" />
+
+                <button
+                  onClick={() => {
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+                    window.open(mapsUrl, '_blank');
+                  }}
+                  className="flex items-center gap-3 w-full text-left group">
+                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</span>
+                </button>
+              </CardContent>
+            </Card>
 
             {/* Cast & Crew for performance events */}
             {castMembers.length > 0 &&
@@ -704,58 +701,16 @@ export default function EventDetail() {
 
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
             <div className="lg:hidden space-y-3">
-              {/* RSVP Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <RippleButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRSVP('interested')}
-                  disabled={rsvpLoading || !user}
-                  className={`gap-1.5 text-xs h-9 transition-all ${
-                  isInterested ?
-                  'border-ocean text-ocean bg-ocean/5' :
-                  'border-border text-muted-foreground hover:border-ocean/50'}`
-                  }>
-                  
-                  <Heart className="h-3.5 w-3.5" />
-                  {text.interested}
-                </RippleButton>
-                <RippleButton
-                  size="sm"
-                  onClick={() => handleRSVP('going')}
-                  disabled={rsvpLoading || !user}
-                  className={`gap-1.5 text-xs h-9 transition-all ${
-                  isGoing ?
-                  'bg-ocean hover:bg-ocean/90 text-white' :
-                  'bg-muted hover:bg-muted/80 text-muted-foreground'}`
-                  }>
-                  
-                  <Users className="h-3.5 w-3.5" />
-                  {text.going}
-                </RippleButton>
-              </div>
-              
-              {/* RSVP Counts */}
-              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Heart className="h-3 w-3" />
-                  <span>{interestedCount}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  <span>{goingCount}</span>
-                </div>
-              </div>
-
               {/* Tickets/Reservations */}
               {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
-              <RippleButton
-                className="w-full gap-2 h-10 text-sm"
-                onClick={() => setShowTicketFlow(true)}>
-                
+              <div className="flex justify-center">
+                <RippleButton
+                  className="gap-2 h-10 text-sm px-8"
+                  onClick={() => setShowTicketFlow(true)}>
                   <Ticket className="h-3.5 w-3.5" />
                   {text.buyTickets}
                 </RippleButton>
+              </div>
               }
 
               {/* Kaliva flow */}
@@ -839,9 +794,9 @@ export default function EventDetail() {
               }
 
               {/* Business Card */}
-              <Card variant="glass" className="backdrop-blur-md">
-                <CardContent className="py-3">
-                  <p className="text-[10px] text-muted-foreground mb-1">{text.hostedBy}</p>
+              <Card variant="glass" className="backdrop-blur-md border-border/50">
+                <CardContent className="py-3 px-4">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
                   <Link
                     to={`/business/${event.businesses.id}`}
                     state={{
@@ -854,9 +809,9 @@ export default function EventDetail() {
                         source: 'event_host_link'
                       });
                     }}
-                    className="flex items-center gap-2 hover:bg-accent p-1.5 -mx-1.5 rounded-lg transition-colors">
+                    className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
                     
-                    <Avatar className="h-8 w-8 border">
+                    <Avatar className="h-9 w-9 border border-border/50 ring-1 ring-primary/10">
                       <AvatarImage src={event.businesses.logo_url || ''} />
                       <AvatarFallback>
                         <Building2 className="h-4 w-4" />
@@ -866,7 +821,7 @@ export default function EventDetail() {
                       <div className="flex items-center gap-1.5">
                         <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
                         {event.businesses.verified &&
-                        <CheckCircle className="h-3 w-3 text-primary flex-shrink-0" />
+                        <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                         }
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">
@@ -926,52 +881,8 @@ export default function EventDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}>
             
-            {/* RSVP Buttons */}
-            
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
 
             {/* Tickets/Reservations */}
             {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
@@ -1065,40 +976,38 @@ export default function EventDetail() {
             }
 
             {/* Event Details Card - Date & Location */}
-            <Card variant="glass" className="backdrop-blur-md">
-              <CardContent className="pt-6 space-y-4">
+            <Card variant="glass" className="backdrop-blur-md border-border/50">
+              <CardContent className="py-4 px-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
                   <div>
-                    <p className="font-medium">
+                    <p className="text-sm font-semibold text-foreground">
                       {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(event.start_at), 'HH:mm')} -{' '}
-                      {format(new Date(event.end_at), 'HH:mm')}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
                     </p>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="opacity-30" />
 
                 <button
                   onClick={() => {
                     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
                     window.open(mapsUrl, '_blank');
                   }}
-                  className="flex items-start gap-3 w-full text-left hover:bg-accent/50 -mx-1 px-1 py-0.5 rounded-md transition-colors cursor-pointer group">
-                  
-                  <MapPin className="h-5 w-5 text-muted-foreground group-hover:text-primary mt-0.5 transition-colors" />
-                  <p className="font-medium group-hover:text-primary transition-colors">{event.location}</p>
+                  className="flex items-center gap-3 w-full text-left group">
+                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
+                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</p>
                 </button>
               </CardContent>
             </Card>
 
             {/* Business Card */}
-            <Card variant="glass" className="backdrop-blur-md hover:shadow-hover transition-all duration-300">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground mb-3">{text.hostedBy}</p>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 hover:shadow-hover transition-all duration-300">
+              <CardContent className="py-4 px-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-2 font-medium">{text.hostedBy}</p>
                 <Link
                   to={`/business/${event.businesses.id}`}
                   state={{
@@ -1111,12 +1020,12 @@ export default function EventDetail() {
                       source: 'event_host_link'
                     });
                   }}
-                  className="flex items-center gap-3 hover:bg-accent p-2 rounded-lg transition-colors">
+                  className="flex items-center gap-3 hover:bg-accent/50 p-2 -mx-2 rounded-xl transition-colors">
                   
-                  <Avatar className="h-12 w-12 border">
+                  <Avatar className="h-10 w-10 border border-border/50 ring-1 ring-primary/10">
                     <AvatarImage src={event.businesses.logo_url || ''} />
                     <AvatarFallback>
-                      <Building2 className="h-6 w-6" />
+                      <Building2 className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -1126,8 +1035,8 @@ export default function EventDetail() {
                       <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
                       }
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {event.businesses.city}
+                    <p className="text-xs text-muted-foreground truncate">
+                      {translateCity(event.businesses.city, language)}
                     </p>
                   </div>
                 </Link>
