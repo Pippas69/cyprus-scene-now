@@ -18,6 +18,9 @@ import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
 import { useGuidanceData } from '@/hooks/useGuidanceData';
 import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { shouldHideOffers } from '@/lib/shouldHideOffers';
 
 const translations = {
   el: {
@@ -58,6 +61,20 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   // Get current subscription plan
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
   const currentPlan = subscriptionData?.plan || 'free';
+
+  // Fetch business categories to determine if offers should be hidden
+  const { data: hideOffers } = useQuery({
+    queryKey: ['business-hide-offers', businessId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('category')
+        .eq('id', businessId)
+        .single();
+      return shouldHideOffers(data?.category || []);
+    },
+    staleTime: Infinity,
+  });
 
   const convertedDateRange = dateRange?.from && dateRange?.to 
     ? { from: dateRange.from, to: dateRange.to }
@@ -163,30 +180,30 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
         <TabsContent value="performance">
           {hasPerformanceAccess ? (
-            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
-              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>
 
         <TabsContent value="boostValue">
           {hasBoostValueAccess ? (
-            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('boostValue')} language={language}>
-              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>
 
         <TabsContent value="guidance">
           {hasGuidanceAccess ? (
-            <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+            <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('guidance')} language={language}>
-              <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+              <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
             </LockedSection>
           )}
         </TabsContent>

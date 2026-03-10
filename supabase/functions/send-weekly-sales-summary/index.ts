@@ -4,6 +4,8 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+const NO_OFFERS_CATEGORIES = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -22,9 +24,12 @@ async function createInAppNotification(
   totalReservations: number,
   totalTickets: number,
   totalOfferRedemptions: number,
-  totalRevenue: number
+  totalRevenue: number,
+  hideOffers: boolean
 ): Promise<void> {
-  const message = `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Εξαργυρώσεις: ${totalOfferRedemptions} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`;
+  const message = hideOffers
+    ? `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`
+    : `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | Εξαργυρώσεις: ${totalOfferRedemptions} | Έσοδα: €${(totalRevenue / 100).toFixed(2)}`;
   
   await supabase.from('notifications').insert({
     user_id: userId,
@@ -130,7 +135,7 @@ Deno.serve(async (req) => {
     // Get businesses for these users
     const { data: businesses, error: bizError } = await supabase
       .from("businesses")
-      .select("id, name, user_id")
+      .select("id, name, user_id, category")
       .in("user_id", userIds);
 
     if (bizError) {
@@ -238,6 +243,9 @@ Deno.serve(async (req) => {
 
         const bestDay = Object.entries(dayActivity).sort((a, b) => b[1] - a[1])[0];
 
+        const bizCategories = (business.category || []).map((c: string) => c.toLowerCase());
+        const hideOffers = bizCategories.some((c: string) => NO_OFFERS_CATEGORIES.includes(c));
+
         // Build email content
         const emailContent = `
           <h2 style="color: #1e293b; font-size: 20px; margin: 0 0 24px 0;">Γεια σου ${business.name}! 👋</h2>
@@ -261,6 +269,7 @@ Deno.serve(async (req) => {
                   <strong style="color: #1e293b; font-size: 18px;">${totalTickets}</strong>
                 </td>
               </tr>
+              ${!hideOffers ? `
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                   <span style="color: #64748b; font-size: 14px;">🎁 Εξαργυρώσεις Προσφορών</span>
@@ -269,6 +278,7 @@ Deno.serve(async (req) => {
                   <strong style="color: #1e293b; font-size: 18px;">${totalOfferRedemptions}</strong>
                 </td>
               </tr>
+              ` : ''}
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
                   <span style="color: #64748b; font-size: 14px;">📱 QR Check-ins</span>
@@ -321,15 +331,16 @@ Deno.serve(async (req) => {
           logStep("Email sent successfully", { businessId: business.id, email: profile.email });
           
           // Also create in-app notification
-          await createInAppNotification(
-            supabase,
-            business.user_id,
-            business.id,
-            totalReservations,
-            totalTickets,
-            totalOfferRedemptions,
-            totalRevenue
-          );
+            await createInAppNotification(
+              supabase,
+              business.user_id,
+              business.id,
+              totalReservations,
+              totalTickets,
+              totalOfferRedemptions,
+              totalRevenue,
+              hideOffers
+            );
           
           // Send push notification to business owner
           const pushResult = await sendPushIfEnabled(business.user_id, {

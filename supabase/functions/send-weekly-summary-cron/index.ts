@@ -27,6 +27,8 @@ const dayNamesEl: Record<number, string> = {
 };
 
 // Email template
+const NO_OFFERS_CATEGORIES = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+
 const buildWeeklySummaryEmail = (
   businessName: string,
   stats: {
@@ -37,6 +39,7 @@ const buildWeeklySummaryEmail = (
     bestDay: string;
     weekStart: string;
     weekEnd: string;
+    hideOffers: boolean;
   }
 ) => `
 <!DOCTYPE html>
@@ -77,10 +80,12 @@ const buildWeeklySummaryEmail = (
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.tickets}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Εισιτήρια</div>
         </div>
+        ${!stats.hideOffers ? `
         <div style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 12px; padding: 20px; text-align: center;">
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.offers}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Προσφορές</div>
         </div>
+        ` : ''}
         <div style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-radius: 12px; padding: 20px; text-align: center;">
           <div style="font-size: 32px; font-weight: bold; color: #0d3b66;">${stats.qrCheckins}</div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">QR Check-ins</div>
@@ -149,7 +154,7 @@ Deno.serve(async (req) => {
     // Get all businesses with weekly summary enabled
     const { data: businesses, error: bizError } = await supabase
       .from('businesses')
-      .select('id, name, user_id');
+      .select('id, name, user_id, category');
 
     if (bizError) {
       throw new Error(`Failed to fetch businesses: ${bizError.message}`);
@@ -252,15 +257,19 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        const bizCategories = (business.category || []).map((c: string) => c.toLowerCase());
+        const hideOffers = bizCategories.some((c: string) => NO_OFFERS_CATEGORIES.includes(c));
+
         // Send email
         const emailHtml = buildWeeklySummaryEmail(business.name, {
           reservations: reservationsCount || 0,
           tickets: ticketsCount || 0,
-          offers: offersCount || 0,
+          offers: hideOffers ? 0 : (offersCount || 0),
           qrCheckins: qrCheckinsCount || 0,
           bestDay,
           weekStart,
           weekEnd,
+          hideOffers,
         });
 
         await resend.emails.send({

@@ -115,6 +115,7 @@ interface PerformanceTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 type MetricType = 'profile' | 'offers' | 'events';
@@ -321,6 +322,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data: metrics, isLoading: metricsLoading } = usePerformanceMetrics(businessId, dateRange);
@@ -377,7 +379,7 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
       {/* Performance Section */}
       <div>
         <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{t.performanceTitle}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${hideOffers ? '' : 'lg:grid-cols-3'} gap-3 sm:gap-4`}>
           <MetricCard
             icon={User}
             title={t.profile}
@@ -388,16 +390,18 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             language={language}
             metricType="profile"
           />
-          <MetricCard
-            icon={Tag}
-            title={t.offers}
-            description={t.offersDesc}
-            views={metrics?.offers.views || 0}
-            interactions={metrics?.offers.interactions || 0}
-            visits={metrics?.offers.visits || 0}
-            language={language}
-            metricType="offers"
-          />
+          {!hideOffers && (
+            <MetricCard
+              icon={Tag}
+              title={t.offers}
+              description={t.offersDesc}
+              views={metrics?.offers.views || 0}
+              interactions={metrics?.offers.interactions || 0}
+              visits={metrics?.offers.visits || 0}
+              language={language}
+              metricType="offers"
+            />
+          )}
           <MetricCard
             icon={Calendar}
             title={t.events}

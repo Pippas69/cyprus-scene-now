@@ -150,6 +150,7 @@ interface BoostValueTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 interface ChangeIndicatorProps {
@@ -418,6 +419,7 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data, isLoading } = useBoostValueMetrics(businessId, dateRange);
@@ -538,16 +540,18 @@ export const BoostValueTab: React.FC<BoostValueTabProps> = ({
         blockType="profile"
       />
 
-      <ComparisonTable
-        title={t.offersBlock}
-        icon={Tag}
-        data={data.offers}
-        withoutLabel={t.withoutOffer}
-        withLabel={t.withOffer}
-        tips={getOfferTips()}
-        language={language}
-        blockType="offers"
-      />
+      {!hideOffers && (
+        <ComparisonTable
+          title={t.offersBlock}
+          icon={Tag}
+          data={data.offers}
+          withoutLabel={t.withoutOffer}
+          withLabel={t.withOffer}
+          tips={getOfferTips()}
+          language={language}
+          blockType="offers"
+        />
+      )}
 
       <ComparisonTable
         title={t.eventsBlock}

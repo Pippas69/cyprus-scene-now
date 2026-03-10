@@ -213,6 +213,7 @@ interface GuidanceTabProps {
   businessId: string;
   dateRange?: { from: Date; to: Date };
   language: 'el' | 'en';
+  hideOffers?: boolean;
 }
 
 interface TimeWindow {
@@ -751,6 +752,7 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
   businessId,
   dateRange,
   language,
+  hideOffers = false,
 }) => {
   const t = translations[language];
   const { data, isLoading } = useGuidanceData(businessId, dateRange);
@@ -837,7 +839,9 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
     };
 
     addGuidanceSection(t.featuredProfile, data.profile, 'profile');
-    addGuidanceSection(t.boostedOffers, data.offers, 'offers');
+    if (!hideOffers) {
+      addGuidanceSection(t.boostedOffers, data.offers, 'offers');
+    }
     addGuidanceSection(t.boostedEvents, data.events, 'events');
 
     // Recommended plan
@@ -958,25 +962,27 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         }
       />
 
-      {/* 2. Boosted Offers */}
-      <GuidanceTable
-        title={t.boostedOffers}
-        icon={Gift}
-        iconColor="text-orange-500"
-        data={data.offers}
-        totals={data.offerTotals}
-        sectionType="offers"
-        language={language}
-        metricsContent={
-          metrics && (
-            <OfferBoostMetricsSection
-              boostSpentCents={metrics.offers.boostSpentCents}
-              totalVisits={metrics.offers.totalVisits}
-              language={language}
-            />
-          )
-        }
-      />
+      {/* 2. Boosted Offers - hidden for clubs/events/performances */}
+      {!hideOffers && (
+        <GuidanceTable
+          title={t.boostedOffers}
+          icon={Gift}
+          iconColor="text-orange-500"
+          data={data.offers}
+          totals={data.offerTotals}
+          sectionType="offers"
+          language={language}
+          metricsContent={
+            metrics && (
+              <OfferBoostMetricsSection
+                boostSpentCents={metrics.offers.boostSpentCents}
+                totalVisits={metrics.offers.totalVisits}
+                language={language}
+              />
+            )
+          }
+        />
+      )}
 
       {/* 3. Boosted Events */}
       <GuidanceTable
