@@ -257,15 +257,19 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        const bizCategories = (business.category || []).map((c: string) => c.toLowerCase());
+        const hideOffers = bizCategories.some((c: string) => NO_OFFERS_CATEGORIES.includes(c));
+
         // Send email
         const emailHtml = buildWeeklySummaryEmail(business.name, {
           reservations: reservationsCount || 0,
           tickets: ticketsCount || 0,
-          offers: offersCount || 0,
+          offers: hideOffers ? 0 : (offersCount || 0),
           qrCheckins: qrCheckinsCount || 0,
           bestDay,
           weekStart,
           weekEnd,
+          hideOffers,
         });
 
         await resend.emails.send({
