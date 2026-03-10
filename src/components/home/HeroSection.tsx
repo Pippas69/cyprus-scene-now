@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import PhoneScreenReservation from "./hero-phones/PhoneScreenReservation";
+import PhoneScreenDining from "./hero-phones/PhoneScreenDining";
 import PhoneScreenEvent from "./hero-phones/PhoneScreenEvent";
 import PhoneScreenMap from "./hero-phones/PhoneScreenMap";
 
