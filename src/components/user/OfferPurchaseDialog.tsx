@@ -725,26 +725,69 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const claimEnabled = canClaim && reservationValid;
 
   const formContent =
-  <div className="space-y-4">
-      {/* Description */}
-      {offer.description &&
-    <p className="text-sm text-muted-foreground">{offer.description}</p>
-    }
+  <div className="space-y-5">
+      {/* Description + Category */}
+      {(offer.description || offer.category) && (
+        <div className="space-y-2.5">
+          {offer.description && (
+            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
+          )}
+          {offer.category && (
+            <Badge variant="outline" className="text-[11px] sm:text-xs w-fit gap-1 font-medium border-primary/30 text-primary">
+              {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
+            </Badge>
+          )}
+        </div>
+      )}
 
-      {/* Category badge */}
-      {offer.category &&
-    <Badge variant="outline" className="text-xs w-fit">
-          {getCategoryIcon(offer.category)} {getCategoryLabel(offer.category)}
-        </Badge>
-    }
+      {/* Info Grid - compact cards */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* People available */}
+        {peopleRemaining !== null && (
+          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+            <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-[11px] sm:text-xs text-foreground font-medium">
+              {peopleRemaining} {language === "el" ? "άτομα διαθέσιμα" : "spots left"}
+            </span>
+          </div>
+        )}
+        {/* Valid days */}
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+          <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] sm:text-xs text-foreground truncate">
+            {formatDays(offer.valid_days || null)}
+          </span>
+        </div>
+        {/* Valid hours */}
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] sm:text-xs text-foreground">
+            {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
+          </span>
+        </div>
+        {/* Expiry */}
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+          <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] sm:text-xs text-foreground truncate">
+            {t("expiresOn")}: {new Date(offer.end_at).toLocaleDateString(language === "el" ? "el-GR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
+        </div>
+      </div>
 
-      <Separator />
+      {/* One per user notice */}
+      {offer.one_per_user && (
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground text-center">
+          {language === "el" ? "⚡ Μία εξαργύρωση ανά χρήστη" : "⚡ One redemption per user"}
+        </p>
+      )}
 
-      {/* Name + Party Size on same row */}
+      <Separator className="!my-1" />
+
+      {/* Name + Party Size */}
       <div className="flex gap-3 items-end">
         <div className="flex-1 space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
-            <User className="h-3.5 w-3.5" />
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <User className="h-3 w-3" />
             {t("name")}
           </Label>
           <Input
@@ -756,11 +799,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           }}
           placeholder={language === "el" ? "Το όνομά σας" : "Your name"}
           className="h-9 sm:h-10 text-xs sm:text-sm" />
-        
         </div>
-        <div className="w-[120px] space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-xs sm:text-sm">
-            
+        <div className="w-[130px] space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
             {t("partySize")}
           </Label>
           <Select value={partySize.toString()} onValueChange={(val) => setPartySize(parseInt(val))}>
@@ -792,66 +833,37 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         }}
         placeholder={`${language === "el" ? "Όνομα ατόμου" : "Guest name"} ${index + 2}`}
         className="h-9 sm:h-10 text-xs sm:text-sm" />
-
       )}
         </div>
     }
 
-      <Separator />
-
-      {/* Validity Info */}
-      <div className="space-y-2 text-sm">
-        {/* Availability + one per user on same line */}
-        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
-          <Users className="h-4 w-4 shrink-0" />
-          <span>
-            {peopleRemaining !== null && `${peopleRemaining} ${language === "el" ? "άτομα διαθέσιμα" : "people available"}`}
-            {peopleRemaining !== null && offer.one_per_user && ` · `}
-            {offer.one_per_user && (language === "el" ? "Μία εξαργύρωση ανά χρήστη" : "One redemption per user")}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4 shrink-0" />
-          <span>{t("validDays")}: {formatDays(offer.valid_days || null)}</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
-          <Clock className="h-4 w-4 shrink-0" />
-          <span>
-            {t("validHours")}: {formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}
-            {` (`}{t("expiresOn")}: {formatDate(offer.end_at)}{`)`}
-          </span>
-        </div>
-      </div>
-
       {/* RESERVATION SECTION */}
       <ReservationSection />
 
-      {/* Walk-in Note (below reservation toggle) */}
-      {!wantsReservation &&
-    <p className="text-muted-foreground text-xs">
-        {t("walkInNote")}
-      </p>
-    }
+      {/* Walk-in Note */}
+      {!wantsReservation && (
+        <p className="text-muted-foreground text-[11px] sm:text-xs text-center italic">
+          {t("walkInNote")}
+        </p>
+      )}
 
       {/* Terms */}
-      {offer.terms &&
-    <div className="mt-2">
-          <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-tight">
+      {offer.terms && (
+        <div className="rounded-lg bg-muted/30 px-3 py-2">
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 leading-relaxed">
             {offer.terms}
           </p>
         </div>
-    }
-
+      )}
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+      <div className="flex gap-3 pt-1">
+        <Button variant="outline" onClick={onClose} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1" disabled={!claimEnabled}>
+        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled}>
           {isLoading ?
         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
-
         <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
         }
         </Button>
