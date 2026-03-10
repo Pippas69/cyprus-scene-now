@@ -960,25 +960,27 @@ export const GuidanceTab: React.FC<GuidanceTabProps> = ({
         }
       />
 
-      {/* 2. Boosted Offers */}
-      <GuidanceTable
-        title={t.boostedOffers}
-        icon={Gift}
-        iconColor="text-orange-500"
-        data={data.offers}
-        totals={data.offerTotals}
-        sectionType="offers"
-        language={language}
-        metricsContent={
-          metrics && (
-            <OfferBoostMetricsSection
-              boostSpentCents={metrics.offers.boostSpentCents}
-              totalVisits={metrics.offers.totalVisits}
-              language={language}
-            />
-          )
-        }
-      />
+      {/* 2. Boosted Offers - hidden for clubs/events/performances */}
+      {!hideOffers && (
+        <GuidanceTable
+          title={t.boostedOffers}
+          icon={Gift}
+          iconColor="text-orange-500"
+          data={data.offers}
+          totals={data.offerTotals}
+          sectionType="offers"
+          language={language}
+          metricsContent={
+            metrics && (
+              <OfferBoostMetricsSection
+                boostSpentCents={metrics.offers.boostSpentCents}
+                totalVisits={metrics.offers.totalVisits}
+                language={language}
+              />
+            )
+          }
+        />
+      )}
 
       {/* 3. Boosted Events */}
       <GuidanceTable

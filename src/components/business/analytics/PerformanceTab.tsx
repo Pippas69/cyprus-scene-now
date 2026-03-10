@@ -390,16 +390,18 @@ export const PerformanceTab: React.FC<PerformanceTabProps> = ({
             language={language}
             metricType="profile"
           />
-          <MetricCard
-            icon={Tag}
-            title={t.offers}
-            description={t.offersDesc}
-            views={metrics?.offers.views || 0}
-            interactions={metrics?.offers.interactions || 0}
-            visits={metrics?.offers.visits || 0}
-            language={language}
-            metricType="offers"
-          />
+          {!hideOffers && (
+            <MetricCard
+              icon={Tag}
+              title={t.offers}
+              description={t.offersDesc}
+              views={metrics?.offers.views || 0}
+              interactions={metrics?.offers.interactions || 0}
+              visits={metrics?.offers.visits || 0}
+              language={language}
+              metricType="offers"
+            />
+          )}
           <MetricCard
             icon={Calendar}
             title={t.events}
