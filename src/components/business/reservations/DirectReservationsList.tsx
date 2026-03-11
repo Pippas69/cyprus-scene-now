@@ -739,13 +739,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return (
         <div className="space-y-4 w-full max-w-full">
           <Card>
-            <Table>
+            <Table className="w-full min-w-[600px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">{t.name}</TableHead>
-                  <TableHead className="text-xs">{t.details}</TableHead>
-                  <TableHead className="text-xs">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs">{t.status}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.name}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.details}</TableHead>
+                  <TableHead className="text-xs w-1/4">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.status}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -823,13 +823,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <Card>
-            <Table>
+            <Table className="w-full min-w-[600px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">{t.name}</TableHead>
-                  <TableHead className="text-xs">{t.details}</TableHead>
-                  <TableHead className="text-xs">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs">{t.status}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.name}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.details}</TableHead>
+                  <TableHead className="text-xs w-1/4">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-1/4">{t.status}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
