@@ -264,6 +264,7 @@ Deno.serve(async (req) => {
     // ============================================================
     // 4. Find pending offer purchases
     // ============================================================
+    const { data: pendingOffers, error: offersError } = await supabaseClient
       .from("offer_purchases")
       .select("id, stripe_checkout_session_id, status")
       .eq("status", "pending")
