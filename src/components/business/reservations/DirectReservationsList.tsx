@@ -60,17 +60,16 @@ interface SeatingTier {
 
 interface TicketOnlyOrder {
   id: string;
-  buyer_name: string;
-  buyer_email: string | null;
+  ticket_id: string;
+  guest_name: string;
+  guest_age: number | null;
   buyer_phone: string | null;
-  ticket_count: number;
   subtotal_cents: number;
   status: string;
+  checked_in: boolean;
   created_at: string;
   tier_name: string;
-  tickets_used: number;
-  tickets_total: number;
-  min_age: string;
+  ticket_code: string | null;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
