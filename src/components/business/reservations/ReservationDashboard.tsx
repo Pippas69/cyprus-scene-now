@@ -74,6 +74,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     checkLinked();
   }, [businessId]);
 
+  // Keep ref in sync with state
+  useEffect(() => { selectedEventIdRef.current = selectedEventId; }, [selectedEventId]);
+
   // Fetch events for ticket-linked businesses
   const fetchEvents = useCallback(async () => {
     if (!isTicketLinked) return;
