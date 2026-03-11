@@ -914,30 +914,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     <div className="space-y-4 w-full max-w-full">
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
-        <Card className="min-w-0">
-          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-lg sm:text-2xl font-bold">{stats.total}</div>
-              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.total}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0">
-          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-lg sm:text-2xl font-bold text-blue-600">{stats.today}</div>
-              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.today}</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0">
-          <CardContent className="py-2 sm:py-3 px-2 sm:px-4">
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-lg sm:text-2xl font-bold text-green-600">{stats.checkedIn}</div>
-              <div className="text-[9px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.checkedInCount}</div>
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { value: stats.total, label: t.total },
+          { value: stats.today, label: t.today },
+          { value: stats.checkedIn, label: t.checkedInCount },
+        ].map((stat, i) => (
+          <div key={i} className="min-w-0 rounded-xl border border-border/15 bg-card/40 backdrop-blur-sm px-2 sm:px-4 py-3 sm:py-4 text-center">
+            <div className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">{stat.value}</div>
+            <div className="text-[9px] sm:text-[11px] font-medium text-muted-foreground/70 uppercase tracking-widest mt-1">{stat.label}</div>
+          </div>
+        ))}
       </div>
 
       <div className="min-w-0"></div>
