@@ -731,7 +731,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
       )}
 
-      {/* Row 1: Valid days + Category badge - same line */}
+      {/* Row 1: Valid days */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -739,17 +739,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             {formatDays(offer.valid_days || null)}
           </span>
         </div>
-        {offer.category && (
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-            <span className="text-[11px] sm:text-xs">{getCategoryIcon(offer.category)}</span>
-            <span className="text-[11px] sm:text-xs text-foreground font-medium">
-              {getCategoryLabel(offer.category)}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Row 2: Hours + Expiry */}
+      {/* Row 2: Hours + Expiry (merged) */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -759,7 +751,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground">
+          <span className="text-[11px] sm:text-xs text-foreground font-medium">
             {t("expiresOn")}: {new Date(offer.end_at).toLocaleDateString(language === "el" ? "el-GR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
           </span>
         </div>
