@@ -632,7 +632,7 @@ export const ReservationSlotManager = ({
             {['indoor', 'outdoor'].map((option) => {
           const isSelected = settings.reservation_seating_options.includes(option);
           return (
-            <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-2 px-3 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
+            <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-2 px-3 sm:py-2.5 sm:px-4 rounded-lg text-[10px] sm:text-sm font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
                   {option === 'indoor' ? t.indoor : t.outdoor}
                 </button>);
 
