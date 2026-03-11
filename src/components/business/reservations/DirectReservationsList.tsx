@@ -47,6 +47,7 @@ interface DirectReservationsListProps {
   onReservationCountChange?: (count: number) => void;
   selectedEventId?: string | null;
   selectedEventType?: string | null;
+  forceEventMode?: boolean;
 }
 
 // Cache for seating tiers
@@ -71,7 +72,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   ticket_code: string | null;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,7 +173,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [businessId, selectedEventId, selectedEventType]);
+  }, [businessId, selectedEventId, selectedEventType, forceEventMode]);
 
   useEffect(() => {
     if (refreshNonce === undefined) return;
@@ -191,7 +192,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return false;
     }
 
-    const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
+    const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []) || !!forceEventMode;
     setIsTicketLinked(linked);
     return linked;
   };
@@ -209,7 +210,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (bizError) throw bizError;
 
-      const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []);
+      const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []) || !!forceEventMode;
 
       let query = supabase.
       from('reservations').

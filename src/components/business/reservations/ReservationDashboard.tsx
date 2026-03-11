@@ -43,6 +43,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         list: 'Διαχείριση',
         selectEvent: 'Επιλέξτε εκδήλωση',
         directReservations: 'Κρατήσεις',
+        events: 'Εκδηλώσεις',
       },
       en: {
         reservations: 'Reservations',
@@ -51,6 +52,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         list: 'Reservation List',
         selectEvent: 'Select event',
         directReservations: 'Reservations',
+        events: 'Events',
       }
     }),
     []
@@ -355,7 +357,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               </SelectTrigger>
               <SelectContent className="rounded-lg">
                 <SelectItem value="__direct__" className="text-sm rounded-md">
-                  <span className="text-sm">{t.directReservations}</span>
+                  <span className="text-sm">{t.events}</span>
                 </SelectItem>
                 {diningEvents.map((event) => {
                   const dateStr = new Date(event.start_at).toLocaleDateString(
@@ -398,13 +400,14 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
         <TabsContent value="list" className="mt-4">
           {isDiningEventMode ? (
-            // Dining/bar viewing an event → show event-specific reservations
+            // Dining/bar viewing an event → show event-specific reservations (full event mode)
             <DirectReservationsList
               businessId={businessId}
               language={language}
               onReservationCountChange={undefined}
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
+              forceEventMode
             />
           ) : (
             <DirectReservationsList
