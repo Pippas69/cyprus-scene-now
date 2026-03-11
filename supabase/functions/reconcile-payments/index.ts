@@ -208,9 +208,62 @@ Deno.serve(async (req) => {
     }
 
     // ============================================================
-    // 3. Find pending offer purchases
+    // 3. Heal already-paid reservation event bookings that still have
+    //    missing per-guest ticket rows (legacy broken state)
     // ============================================================
-    const { data: pendingOffers, error: offersError } = await supabaseClient
+    const { data: paidReservations, error: paidReservationsError } = await supabaseClient
+      .from("reservations")
+      .select("id, event_id, stripe_payment_intent_id")
+      .eq("prepaid_charge_status", "paid")
+      .not("event_id", "is", null)
+      .not("stripe_payment_intent_id", "is", null)
+      .gt("created_at", maxAge);
+
+    if (paidReservationsError) {
+      logStep("Error fetching paid reservations for ticket healing", { error: paidReservationsError.message });
+    } else if (paidReservations && paidReservations.length > 0) {
+      for (const reservation of paidReservations) {
+        try {
+          let checkoutSession: Stripe.Checkout.Session | null = null;
+
+          try {
+            const sessionList = await stripe.checkout.sessions.list({
+              payment_intent: reservation.stripe_payment_intent_id!,
+              limit: 1,
+            } as any);
+
+            checkoutSession = sessionList.data?.[0] ?? null;
+          } catch (sessionLookupError) {
+            logStep("Failed to lookup checkout session during paid reservation heal", {
+              reservationId: reservation.id,
+              error: sessionLookupError instanceof Error ? sessionLookupError.message : String(sessionLookupError),
+            });
+          }
+
+          const createdTickets = await ensureReservationEventGuestTickets({
+            supabaseClient,
+            reservationId: reservation.id,
+            paymentIntentId: reservation.stripe_payment_intent_id,
+            session: checkoutSession,
+          });
+
+          if (createdTickets > 0) {
+            logStep("Healed missing reservation guest tickets", {
+              reservationId: reservation.id,
+              createdTickets,
+            });
+            results.reservations_reconciled++;
+          }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          results.errors.push(`Reservation heal ${reservation.id}: ${msg}`);
+        }
+      }
+    }
+
+    // ============================================================
+    // 4. Find pending offer purchases
+    // ============================================================
       .from("offer_purchases")
       .select("id, stripe_checkout_session_id, status")
       .eq("status", "pending")

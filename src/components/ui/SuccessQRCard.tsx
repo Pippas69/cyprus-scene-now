@@ -358,9 +358,9 @@ export const SuccessQRCard = ({
       <div className="bg-white dark:bg-white backdrop-blur-xl px-4 py-3">
         {/* Success Message */}
         {showSuccessMessage && (
-          <div className="flex items-center justify-center gap-2 mb-3 p-2 bg-primary/10 rounded-lg">
+          <div className="flex items-center justify-center gap-2 mb-3 p-2 rounded-lg border border-primary/30 bg-primary/15">
             <CheckCircle className="h-5 w-5 text-primary" />
-            <p className="text-sm font-semibold text-foreground">{text.success[type]}</p>
+            <p className="text-sm font-semibold text-primary">{text.success[type]}</p>
           </div>
         )}
 
