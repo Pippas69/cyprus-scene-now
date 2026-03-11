@@ -136,6 +136,7 @@ export const SuccessQRCard = ({
   onViewDashboard,
   viewDashboardLabel,
   showSuccessMessage = true,
+  shareViewType,
 }: SuccessQRCardProps) => {
   const text = translations[language];
   const dateLocale = language === "el" ? el : enUS;
