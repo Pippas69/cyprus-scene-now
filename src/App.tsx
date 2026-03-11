@@ -53,6 +53,8 @@ import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import TicketSuccess from "./pages/TicketSuccess";
 import TicketView from "./pages/TicketView";
+import ReservationView from "./pages/ReservationView";
+import OfferView from "./pages/OfferView";
 import ReservationSuccess from "./pages/ReservationSuccess";
 import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
 import Offers from "./pages/Offers";
