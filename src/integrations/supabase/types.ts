@@ -5667,9 +5667,61 @@ export type Database = {
           tier_id: string
         }[]
       }
+      get_offer_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_logo_url: string
+          business_name: string
+          created_at: string
+          discount_percent: number
+          discount_title: string
+          expires_at: string
+          id: string
+          offer_type: string
+          qr_code_token: string
+          redeemed_at: string
+          status: string
+        }[]
+      }
+      get_offer_guest_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_logo_url: string
+          business_name: string
+          discount_percent: number
+          discount_title: string
+          guest_name: string
+          id: string
+          offer_type: string
+          purchase_created_at: string
+          purchase_expires_at: string
+          purchase_redeemed_at: string
+          purchase_status: string
+          qr_code_token: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      get_reservation_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_logo_url: string
+          business_name: string
+          checked_in_at: string
+          confirmation_code: string
+          event_location: string
+          event_start_at: string
+          event_title: string
+          id: string
+          party_size: number
+          preferred_time: string
+          qr_code_token: string
+          reservation_name: string
+          seating_preference: string
+          status: string
+        }[]
       }
       get_seating_price_for_party: {
         Args: { p_party_size: number; p_seating_type_id: string }

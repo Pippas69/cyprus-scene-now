@@ -43,6 +43,8 @@ interface SuccessQRCardProps {
   viewDashboardLabel?: string;
   // Show success animation
   showSuccessMessage?: boolean;
+  // Override the share link type (e.g. use "ticket" path for event reservation tickets)
+  shareViewType?: "ticket" | "reservation" | "offer";
 }
 
 const translations = {
@@ -134,6 +136,7 @@ export const SuccessQRCard = ({
   onViewDashboard,
   viewDashboardLabel,
   showSuccessMessage = true,
+  shareViewType,
 }: SuccessQRCardProps) => {
   const text = translations[language];
   const dateLocale = language === "el" ? el : enUS;
@@ -166,9 +169,13 @@ export const SuccessQRCard = ({
     }
   };
 
+  const getViewPath = () => {
+    const effectiveType = shareViewType || type;
+    return effectiveType === "offer" ? "offer-view" : effectiveType === "reservation" ? "reservation-view" : effectiveType === "ticket" ? "ticket-view" : "reservation-view";
+  };
+
   const handleCopyLink = async () => {
-    const viewPath = type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view";
-    const shareUrl = `${window.location.origin}/${viewPath}/${qrToken}`;
+    const shareUrl = `${window.location.origin}/${getViewPath()}/${qrToken}`;
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -399,7 +406,7 @@ export const SuccessQRCard = ({
             </Button>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-                {`${window.location.origin}/${type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view"}/${qrToken}`}
+                {`${window.location.origin}/${getViewPath()}/${qrToken}`}
               </div>
               <Button
                 variant="outline"
@@ -415,7 +422,7 @@ export const SuccessQRCard = ({
         ) : (
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-              {`${window.location.origin}/${type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view"}/${qrToken}`}
+              {`${window.location.origin}/${getViewPath()}/${qrToken}`}
             </div>
             <Button
               variant="outline"

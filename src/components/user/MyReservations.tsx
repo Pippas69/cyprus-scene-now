@@ -930,6 +930,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         <div className="space-y-4">
             <SuccessQRCard
             type="reservation"
+            shareViewType={hasTickets ? "ticket" : "reservation"}
             qrToken={hasTickets ? (currentTicket?.qr_code_token || '') : (selectedEventGuestsReservation.qr_code_token || '')}
             title={selectedEventGuestsReservation.events?.title || ''}
             businessName={businessInfo?.name || ''}
