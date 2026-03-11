@@ -833,10 +833,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
       {/* Walk-in Note */}
       {!wantsReservation && (
-        <p className="text-muted-foreground text-[11px] sm:text-xs text-left">
+        <p className="text-muted-foreground text-[11px] sm:text-xs text-left pl-3 mt-1">
           {t("walkInNote")}
         </p>
       )}
+
+      <div className="h-1" />
 
       {/* Terms */}
       {offer.terms && (
@@ -846,6 +848,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </p>
         </div>
       )}
+
+      <div className="h-1" />
 
       {/* Actions */}
       <div className="flex gap-3 pt-1">
