@@ -169,9 +169,13 @@ export const SuccessQRCard = ({
     }
   };
 
+  const getViewPath = () => {
+    const effectiveType = shareViewType || type;
+    return effectiveType === "offer" ? "offer-view" : effectiveType === "reservation" ? "reservation-view" : effectiveType === "ticket" ? "ticket-view" : "reservation-view";
+  };
+
   const handleCopyLink = async () => {
-    const viewPath = type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view";
-    const shareUrl = `${window.location.origin}/${viewPath}/${qrToken}`;
+    const shareUrl = `${window.location.origin}/${getViewPath()}/${qrToken}`;
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
