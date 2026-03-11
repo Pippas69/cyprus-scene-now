@@ -92,8 +92,8 @@ export const DirectReservationSettings = ({ businessId, language }: DirectReserv
     en: {
       enableReservations: 'Accept Reservations',
       enableDescription: 'Allow reservations via ΦΟΜΟ',
-      timeSlots: 'Reservation Time Slots',
-      timeSlotsDescription: 'Each slot is a time window (From-To) with its own capacity and active days',
+      timeSlots: 'Reservation Management',
+      timeSlotsDescription: 'Configure time windows and availability',
       slotFrom: 'From',
       slotTo: 'To',
       slotCapacity: 'Capacity',
