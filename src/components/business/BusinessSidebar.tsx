@@ -83,12 +83,20 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
     ? (language === 'el' ? 'Παραστάσεις' : 'Productions')
     : t.events;
 
-  const contentItems = [
-    { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
-    ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
-    { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
-    { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
-  ];
+  // For bars/pubs/dining: Reservations → Events → Offers → Analytics
+  // For clubs/events/performances: Events → Reservations → Analytics
+  const contentItems = showOffers
+    ? [
+        { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
+        { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
+        { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
+        { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+      ]
+    : [
+        { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
+        { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
+        { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+      ];
 
   const businessItems = [
     { title: t.subscription, url: "/dashboard-business/subscription", icon: CreditCard },
