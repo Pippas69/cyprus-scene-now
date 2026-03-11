@@ -442,7 +442,48 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
               </p>
             </SectionCard>
 
-            {/* 3. Cover Image */}
+            {/* 3. Dates & Venue */}
+            <SectionCard title={t.step2b} icon={<Calendar className="h-4 w-4 text-muted-foreground" />} required requiredLabel={t.required}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.startDate}</Label>
+                  <DateTimePicker
+                    value={startAt || undefined}
+                    onChange={(d) => setStartAt(d || null)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.endDate}</Label>
+                  <DateTimePicker
+                    value={endAt || undefined}
+                    onChange={(d) => setEndAt(d || null)}
+                    minDate={startAt || undefined}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.location}</Label>
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder={t.locationPlaceholder}
+                    className="h-9 sm:h-10 text-xs sm:text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.venueName}</Label>
+                  <Input
+                    value={venueName}
+                    onChange={(e) => setVenueName(e.target.value)}
+                    placeholder={t.venuePlaceholder}
+                    className="h-9 sm:h-10 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* 4. Cover Image */}
             <SectionCard title={t.step3} requiredLabel={t.optional}>
               {existingCoverUrl && !coverImage && (
                 <div className="mb-3">
