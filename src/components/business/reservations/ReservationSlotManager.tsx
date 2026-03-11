@@ -565,7 +565,7 @@ export const ReservationSlotManager = ({
                     {/* Days Selection */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotDays}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotDays}</Label>
                         <button type="button" onClick={() => applySlotToAllDays(slot.id)} className="text-[10px] sm:text-xs text-primary hover:text-primary/80 font-medium transition-colors">
                           {t.copyToAllDays}
                         </button>
