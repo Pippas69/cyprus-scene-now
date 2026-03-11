@@ -15,6 +15,7 @@ import {
   eventHeader,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
