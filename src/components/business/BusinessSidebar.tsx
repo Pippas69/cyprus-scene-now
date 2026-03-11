@@ -1,6 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket } from "lucide-react";
+import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import {
   Sidebar,
   SidebarContent,
@@ -73,11 +74,15 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   const normalizedCategories = businessCategories.map((cat) => cat.toLowerCase());
   const noOffersCategories = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
   const showOffers = !normalizedCategories.some((cat) => noOffersCategories.includes(cat));
+  const isPerformance = isPerformanceBusiness(businessCategories);
+  const reservationLabel = isPerformance
+    ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
+    : t.reservations;
 
   const contentItems = [
     { title: t.events, url: "/dashboard-business/events", icon: Calendar },
     ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
-    { title: t.reservations, url: "/dashboard-business/reservations", icon: Users },
+    { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
     { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
   ];
 

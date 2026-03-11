@@ -7,7 +7,7 @@ import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, CalendarDays } from 'lucide-react';
-import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
+import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -25,6 +25,7 @@ interface EventOption {
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
+  const [isPerformance, setIsPerformance] = useState(false);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
@@ -64,8 +65,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         return;
       }
 
-      const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
+      const categories = data?.category || [];
+      const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(categories);
       setIsTicketLinked(linked);
+      setIsPerformance(isPerformanceBusiness(categories));
     };
     checkLinked();
   }, [businessId]);
@@ -197,7 +200,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       <div className="min-w-0">
         <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-2xl md:text-3xl font-bold shrink-0">
-            {t.reservations}
+            {isPerformance ? (language === 'el' ? 'Εισιτήρια' : 'Tickets') : t.reservations}
           </h1>
 
           {/* Event selector for ticket-linked businesses */}
