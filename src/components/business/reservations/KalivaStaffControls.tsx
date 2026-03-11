@@ -299,11 +299,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
   };
 
-  const toggleTicketTier = async (id: string, currentActive: boolean) => {
+  const toggleTicketTier = async (id: string, currentActive: boolean, ids?: string[]) => {
     setUpdatingId(id);
     try {
-      const { error } = await supabase.from('ticket_tiers').update({ active: !currentActive }).eq('id', id);
-      if (error) throw error;
+      const allIds = ids && ids.length > 0 ? ids : [id];
+      for (const tierId of allIds) {
+        const { error } = await supabase.from('ticket_tiers').update({ active: !currentActive }).eq('id', tierId);
+        if (error) throw error;
+      }
       toast.success(t.updated);
       await fetchData();
     } catch {
