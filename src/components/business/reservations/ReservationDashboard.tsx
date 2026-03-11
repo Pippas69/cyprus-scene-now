@@ -400,13 +400,14 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
         <TabsContent value="list" className="mt-4">
           {isDiningEventMode ? (
-            // Dining/bar viewing an event → show event-specific reservations
+            // Dining/bar viewing an event → show event-specific reservations (full event mode)
             <DirectReservationsList
               businessId={businessId}
               language={language}
               onReservationCountChange={undefined}
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
+              forceEventMode
             />
           ) : (
             <DirectReservationsList
