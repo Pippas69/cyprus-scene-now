@@ -748,53 +748,43 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ticketOnlyOrders.map((order) => (
-                  <TableRow key={order.id} className="hover:bg-transparent">
+                {ticketOnlyOrders.map((ticket) => (
+                  <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
-                        <span>{order.buyer_name}</span>
-                        {order.buyer_phone && (
-                          <span className="text-sm text-muted-foreground">{order.buyer_phone}</span>
+                        <span>{ticket.guest_name}</span>
+                        {ticket.buyer_phone && (
+                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone}</span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm whitespace-nowrap">
-                          {order.ticket_count} {order.ticket_count === 1 ? (language === 'el' ? 'εισιτήριο' : 'ticket') : (language === 'el' ? 'εισιτήρια' : 'tickets')}
+                          1 {language === 'el' ? 'εισιτήριο' : 'ticket'}
                         </span>
-                        <span className="text-sm font-thin text-muted-foreground">{order.min_age}</span>
+                        {ticket.guest_age && (
+                          <span className="text-sm font-thin text-muted-foreground">{ticket.guest_age}+</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start">
                         <span className="text-sm font-medium">
-                          {order.subtotal_cents > 0 ? `€${(order.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                          {ticket.subtotal_cents > 0 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
                         </span>
-                        {order.tier_name && (
+                        {ticket.tier_name && (
                           <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
-                            {order.tier_name}
+                            {ticket.tier_name}
                           </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {order.tickets_total === 1 ? (
-                        // Single ticket: just "check in" or "Επιβεβαιωμένη"
-                        order.tickets_used > 0 ? (
-                          <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
-                        ) : (
-                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
-                        )
+                      {ticket.checked_in ? (
+                        <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
                       ) : (
-                        // Multiple tickets: show "X/Y check ins" or "Επιβεβαιωμένη"
-                        order.tickets_used > 0 ? (
-                          <Badge className="bg-green-600 text-white whitespace-nowrap">
-                            {order.tickets_used}/{order.tickets_total} check in{order.tickets_used !== 1 ? 's' : ''}
-                          </Badge>
-                        ) : (
-                          <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
-                        )
+                        <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
                       )}
                     </TableCell>
                   </TableRow>
