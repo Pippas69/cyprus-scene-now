@@ -553,7 +553,7 @@ export const ReservationSlotManager = ({
                     {/* Capacity & Max Party */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotCapacity}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotCapacity}</Label>
                         <NumberInput value={slot.capacity} onChange={(value) => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                       <div>
