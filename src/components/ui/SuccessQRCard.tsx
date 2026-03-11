@@ -406,7 +406,7 @@ export const SuccessQRCard = ({
             </Button>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
-                {`${window.location.origin}/${type === "offer" ? "offer-view" : type === "reservation" ? "reservation-view" : type === "ticket" ? "ticket-view" : "reservation-view"}/${qrToken}`}
+                {`${window.location.origin}/${getViewPath()}/${qrToken}`}
               </div>
               <Button
                 variant="outline"
