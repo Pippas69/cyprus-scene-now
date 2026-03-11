@@ -248,8 +248,8 @@ export const ReservationSlotManager = ({
 
       // Collect all unique days from slots
       const allDays = new Set<string>();
-      settings.reservation_time_slots?.forEach(slot => {
-        slot.days.forEach(day => allDays.add(day));
+      settings.reservation_time_slots?.forEach((slot) => {
+        slot.days.forEach((day) => allDays.add(day));
       });
       const {
         error
@@ -271,15 +271,15 @@ export const ReservationSlotManager = ({
     }
   };
   const toggleSeating = async (option: string) => {
-    const newOptions = settings.reservation_seating_options.includes(option) 
-      ? settings.reservation_seating_options.filter(o => o !== option) 
-      : [...settings.reservation_seating_options, option];
-    
-    setSettings(prev => ({
+    const newOptions = settings.reservation_seating_options.includes(option) ?
+    settings.reservation_seating_options.filter((o) => o !== option) :
+    [...settings.reservation_seating_options, option];
+
+    setSettings((prev) => ({
       ...prev,
       reservation_seating_options: newOptions
     }));
-    
+
     // Auto-save seating options immediately
     try {
       const { error } = await supabase.from('businesses').update({
@@ -301,30 +301,30 @@ export const ReservationSlotManager = ({
       maxPartySize: 7,
       days: [...DAYS] // Default to all days
     };
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       reservation_time_slots: [...(prev.reservation_time_slots || []), newSlot]
     }));
-    setExpandedSlots(prev => ({
+    setExpandedSlots((prev) => ({
       ...prev,
       [newSlot.id]: true
     }));
   };
   const updateTimeSlot = (slotId: string, field: keyof TimeSlot, value: string | number | string[]) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      reservation_time_slots: prev.reservation_time_slots?.map(slot => slot.id === slotId ? {
+      reservation_time_slots: prev.reservation_time_slots?.map((slot) => slot.id === slotId ? {
         ...slot,
         [field]: value
       } : slot) || []
     }));
   };
   const toggleSlotDay = (slotId: string, day: string) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      reservation_time_slots: prev.reservation_time_slots?.map(slot => {
+      reservation_time_slots: prev.reservation_time_slots?.map((slot) => {
         if (slot.id !== slotId) return slot;
-        const newDays = slot.days.includes(day) ? slot.days.filter(d => d !== day) : [...slot.days, day];
+        const newDays = slot.days.includes(day) ? slot.days.filter((d) => d !== day) : [...slot.days, day];
         return {
           ...slot,
           days: newDays
@@ -336,10 +336,10 @@ export const ReservationSlotManager = ({
     updateTimeSlot(slotId, 'days', [...DAYS]);
   };
   const removeTimeSlot = async (slotId: string) => {
-    const remainingSlots = settings.reservation_time_slots?.filter(slot => slot.id !== slotId) || [];
-    
+    const remainingSlots = settings.reservation_time_slots?.filter((slot) => slot.id !== slotId) || [];
+
     // Update local state immediately
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       reservation_time_slots: remainingSlots.length > 0 ? remainingSlots : null
     }));
@@ -347,27 +347,27 @@ export const ReservationSlotManager = ({
     try {
       // Collect all unique days from remaining slots
       const allDays = new Set<string>();
-      remainingSlots.forEach(slot => {
-        slot.days.forEach(day => allDays.add(day));
+      remainingSlots.forEach((slot) => {
+        slot.days.forEach((day) => allDays.add(day));
       });
 
       const timeSlotsJson = remainingSlots.length > 0 ? JSON.parse(JSON.stringify(remainingSlots)) : null;
 
       // If no slots remain and reservations are enabled, auto-disable
       if (remainingSlots.length === 0 && settings.accepts_direct_reservations) {
-        setSettings(prev => ({
+        setSettings((prev) => ({
           ...prev,
           accepts_direct_reservations: false,
           reservation_time_slots: null
         }));
-        
+
         await supabase.from('businesses').update({
           accepts_direct_reservations: false,
           reservation_time_slots: null,
           reservation_days: [],
           updated_at: new Date().toISOString()
         }).eq('id', businessId);
-        
+
         setSavedSlotsCount(0);
         toast.success(language === 'el' ? 'Οι κρατήσεις απενεργοποιήθηκαν (δεν υπάρχουν slots)' : 'Reservations disabled (no slots available)');
       } else {
@@ -377,7 +377,7 @@ export const ReservationSlotManager = ({
           reservation_days: Array.from(allDays),
           updated_at: new Date().toISOString()
         }).eq('id', businessId);
-        
+
         setSavedSlotsCount(remainingSlots.length);
         toast.success(language === 'el' ? 'Το slot διαγράφηκε' : 'Slot deleted');
       }
@@ -393,17 +393,17 @@ export const ReservationSlotManager = ({
       ...slot,
       id: generateSlotId()
     };
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       reservation_time_slots: [...(prev.reservation_time_slots || []), newSlot]
     }));
-    setExpandedSlots(prev => ({
+    setExpandedSlots((prev) => ({
       ...prev,
       [newSlot.id]: true
     }));
   };
   const toggleSlotExpanded = (slotId: string) => {
-    setExpandedSlots(prev => ({
+    setExpandedSlots((prev) => ({
       ...prev,
       [slotId]: !prev[slotId]
     }));
@@ -411,7 +411,7 @@ export const ReservationSlotManager = ({
 
   // Sort slots by time
   const sortedSlots = [...(settings.reservation_time_slots || [])].sort((a, b) => a.timeFrom.localeCompare(b.timeFrom));
-  const hasValidConfig = settings.reservation_time_slots && settings.reservation_time_slots.length > 0 && settings.reservation_time_slots.every(slot => slot.days.length > 0);
+  const hasValidConfig = settings.reservation_time_slots && settings.reservation_time_slots.length > 0 && settings.reservation_time_slots.every((slot) => slot.days.length > 0);
   const formatTimeRange = (from: string, to: string) => {
     return `${from} - ${to}`;
   };
@@ -420,7 +420,7 @@ export const ReservationSlotManager = ({
     if (days.length === 0) return t.noDaysWarning;
     // Sort days in correct order (Monday to Sunday)
     const sortedDays = [...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b));
-    return sortedDays.map(d => dayShortTranslations[d]).join(', ');
+    return sortedDays.map((d) => dayShortTranslations[d]).join(', ');
   };
   if (loading) {
     return <div className="flex items-center justify-center p-8">
@@ -442,32 +442,32 @@ export const ReservationSlotManager = ({
             <p className="text-xs text-muted-foreground mt-0.5">
               {t.enableDescription}
             </p>
-            {!canEnableReservations && !settings.accepts_direct_reservations && (
-              <p className="text-[10px] sm:text-xs text-destructive mt-1.5 flex items-center gap-1">
+            {!canEnableReservations && !settings.accepts_direct_reservations &&
+          <p className="text-[10px] sm:text-xs text-destructive mt-1.5 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3 flex-shrink-0" />
                 {t.noSlotsToEnableWarning}
               </p>
-            )}
+          }
           </div>
-          <Switch id="enable-reservations" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
-            if (checked && !canEnableReservations) {
-              toast.error(t.noSlotsToEnableWarning);
-              return;
-            }
-            setSettings(prev => ({ ...prev, accepts_direct_reservations: checked }));
-            try {
-              const { error } = await supabase.from('businesses').update({
-                accepts_direct_reservations: checked,
-                updated_at: new Date().toISOString()
-              }).eq('id', businessId);
-              if (error) throw error;
-              toast.success(checked ? language === 'el' ? 'Οι κρατήσεις ενεργοποιήθηκαν' : 'Reservations enabled' : language === 'el' ? 'Οι κρατήσεις απενεργοποιήθηκαν' : 'Reservations disabled');
-            } catch (error) {
-              console.error('Error updating reservations status:', error);
-              toast.error(t.error);
-              setSettings(prev => ({ ...prev, accepts_direct_reservations: !checked }));
-            }
-          }} />
+          <Switch id="enable-reservations" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async (checked) => {
+          if (checked && !canEnableReservations) {
+            toast.error(t.noSlotsToEnableWarning);
+            return;
+          }
+          setSettings((prev) => ({ ...prev, accepts_direct_reservations: checked }));
+          try {
+            const { error } = await supabase.from('businesses').update({
+              accepts_direct_reservations: checked,
+              updated_at: new Date().toISOString()
+            }).eq('id', businessId);
+            if (error) throw error;
+            toast.success(checked ? language === 'el' ? 'Οι κρατήσεις ενεργοποιήθηκαν' : 'Reservations enabled' : language === 'el' ? 'Οι κρατήσεις απενεργοποιήθηκαν' : 'Reservations disabled');
+          } catch (error) {
+            console.error('Error updating reservations status:', error);
+            toast.error(t.error);
+            setSettings((prev) => ({ ...prev, accepts_direct_reservations: !checked }));
+          }
+        }} />
         </div>
       </div>
 
@@ -490,24 +490,24 @@ export const ReservationSlotManager = ({
 
         {/* Slots List */}
         <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-2.5">
-          {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && (
-            <div className="text-center py-10 rounded-xl border border-dashed border-border/30 bg-muted/5">
+          {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) &&
+        <div className="text-center py-10 rounded-xl border border-dashed border-border/30 bg-muted/5">
               <div className="h-12 w-12 rounded-2xl bg-muted/20 flex items-center justify-center mx-auto mb-3">
                 <Clock className="h-6 w-6 text-muted-foreground/40" />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground">{t.noSlotsWarning}</p>
             </div>
-          )}
+        }
 
-          {sortedSlots.map(slot => (
-            <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
+          {sortedSlots.map((slot) =>
+        <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
               <div className="rounded-xl border border-border/20 bg-background/40 backdrop-blur-sm overflow-hidden transition-all hover:border-border/40">
                 <CollapsibleTrigger asChild>
                   <div className="px-4 py-3.5 cursor-pointer transition-colors group">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-colors">
-                          <Clock className="h-4 w-4 text-primary" />
+                          
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-sm sm:text-[15px] text-foreground">
@@ -532,12 +532,12 @@ export const ReservationSlotManager = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {slot.days.length === 0 && (
-                          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-2 py-0.5 rounded-md font-medium">
+                        {slot.days.length === 0 &&
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-2 py-0.5 rounded-md font-medium">
                             <AlertTriangle className="h-2.5 w-2.5" />
                             {t.noDaysWarning}
                           </span>
-                        )}
+                    }
                         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expandedSlots[slot.id] ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
@@ -550,11 +550,11 @@ export const ReservationSlotManager = ({
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotFrom}</Label>
-                        <Input type="time" value={slot.timeFrom} onChange={e => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
+                        <Input type="time" value={slot.timeFrom} onChange={(e) => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                       <div>
                         <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotTo}</Label>
-                        <Input type="time" value={slot.timeTo} onChange={e => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
+                        <Input type="time" value={slot.timeTo} onChange={(e) => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                     </div>
 
@@ -562,11 +562,11 @@ export const ReservationSlotManager = ({
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotCapacity}</Label>
-                        <NumberInput value={slot.capacity} onChange={value => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
+                        <NumberInput value={slot.capacity} onChange={(value) => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                       <div>
                         <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotMaxPartySize}</Label>
-                        <NumberInput value={slot.maxPartySize} onChange={value => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
+                        <NumberInput value={slot.maxPartySize} onChange={(value) => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                     </div>
 
@@ -579,12 +579,12 @@ export const ReservationSlotManager = ({
                         </button>
                       </div>
                       <div className="grid grid-cols-7 gap-1.5">
-                        {DAYS.map(day => {
-                          const isSelected = slot.days.includes(day);
-                          return <button key={day} type="button" onClick={() => toggleSlotDay(slot.id, day)} className={`py-2 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40'}`}>
+                        {DAYS.map((day) => {
+                      const isSelected = slot.days.includes(day);
+                      return <button key={day} type="button" onClick={() => toggleSlotDay(slot.id, day)} className={`py-2 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40'}`}>
                             {dayShortTranslations[day]}
                           </button>;
-                        })}
+                    })}
                       </div>
                     </div>
 
@@ -603,7 +603,7 @@ export const ReservationSlotManager = ({
                 </CollapsibleContent>
               </div>
             </Collapsible>
-          ))}
+        )}
 
           {/* Bottom Actions */}
           <div className="flex items-center gap-2.5 pt-2">
@@ -620,8 +620,8 @@ export const ReservationSlotManager = ({
       </div>
 
       {/* Seating Options */}
-      {settings.accepts_direct_reservations && (
-        <div className="relative rounded-2xl border border-border/20 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-md p-5 sm:p-6 shadow-sm">
+      {settings.accepts_direct_reservations &&
+    <div className="relative rounded-2xl border border-border/20 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-md p-5 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
               <Armchair className="h-4 w-4 text-primary" />
@@ -630,23 +630,23 @@ export const ReservationSlotManager = ({
               {t.seatingOptions}
             </h3>
           </div>
-          {settings.reservation_seating_options.length === 0 && (
-            <p className="text-xs text-destructive mb-3 flex items-center gap-1.5">
+          {settings.reservation_seating_options.length === 0 &&
+      <p className="text-xs text-destructive mb-3 flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5" />
               {t.noSeatingSelected}
             </p>
-          )}
+      }
           <div className="flex gap-3">
-            {['indoor', 'outdoor'].map(option => {
-              const isSelected = settings.reservation_seating_options.includes(option);
-              return (
-                <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
+            {['indoor', 'outdoor'].map((option) => {
+          const isSelected = settings.reservation_seating_options.includes(option);
+          return (
+            <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
                   {option === 'indoor' ? t.indoor : t.outdoor}
-                </button>
-              );
-            })}
+                </button>);
+
+        })}
           </div>
         </div>
-      )}
+    }
     </div>;
 };
