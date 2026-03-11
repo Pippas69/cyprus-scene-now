@@ -356,13 +356,7 @@ export const SuccessQRCard = ({
 
       {/* Main Content - Frosted Glass Effect */}
       <div className="bg-white dark:bg-white backdrop-blur-xl px-4 py-3">
-        {/* Success Message */}
-        {showSuccessMessage && (
-          <div className="flex items-center justify-center gap-2 mb-3 p-2 rounded-lg border border-border bg-muted/60">
-            <CheckCircle className="h-5 w-5 text-foreground" />
-            <p className="text-sm font-semibold text-foreground">{text.success[type]}</p>
-          </div>
-        )}
+        {/* Success message removed – the QR card itself is confirmation enough */}
 
         {/* Title */}
         <h2 className="text-sm font-semibold text-[#102b4a] text-center mb-2 line-clamp-2">{title}</h2>
