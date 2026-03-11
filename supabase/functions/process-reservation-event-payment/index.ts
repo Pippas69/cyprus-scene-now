@@ -15,6 +15,7 @@ import {
   eventHeader,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -188,100 +189,18 @@ serve(async (req) => {
 
       // Create individual guest tickets for QR check-in
       try {
-        // Reconstruct guests from metadata (may be split across multiple keys)
-        let guestsJson = metadata?.guests || '';
-        if (!guestsJson) {
-          // Check for chunked guests_0, guests_1, ...
-          const chunks: string[] = [];
-          for (let i = 0; ; i++) {
-            const chunk = metadata?.[`guests_${i}`];
-            if (!chunk) break;
-            chunks.push(chunk);
-          }
-          if (chunks.length > 0) guestsJson = chunks.join('');
-        }
+        const createdTickets = await ensureReservationEventGuestTickets({
+          supabaseClient,
+          reservationId,
+          paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          session: {
+            id: session.id,
+            metadata: metadata as Record<string, string | undefined> | null | undefined,
+            customer_details: { email: session.customer_details?.email ?? null },
+          },
+        });
 
-        let guestsArray: { name: string; age: number | null }[] = [];
-
-        if (guestsJson) {
-          try {
-            const parsed = JSON.parse(guestsJson) as Array<{ name?: string; age?: number | string }>;
-            if (Array.isArray(parsed)) {
-              guestsArray = parsed.map((g, idx) => ({
-                name: (g?.name || '').trim() || `${reservation.reservation_name || 'Guest'} ${idx + 1}`,
-                age: typeof g?.age === 'number' ? g.age : (g?.age ? parseInt(String(g.age)) || null : null),
-              }));
-            }
-          } catch (parseErr) {
-            logStep("ERROR: Failed to parse guests metadata", {
-              error: parseErr instanceof Error ? parseErr.message : String(parseErr),
-            });
-          }
-        }
-
-        // Hard fallback: always generate one QR per person even if metadata is missing/corrupt
-        if (guestsArray.length === 0 && reservation.party_size > 0) {
-          const fallbackBaseName = reservation.reservation_name || 'Guest';
-          guestsArray = Array.from({ length: reservation.party_size }, (_, idx) => ({
-            name: reservation.party_size === 1 ? fallbackBaseName : `${fallbackBaseName} ${idx + 1}`,
-            age: null,
-          }));
-          logStep("Guests metadata missing, using fallback guest names", { reservationId, partySize: reservation.party_size });
-        }
-
-        if (guestsArray.length > 0) {
-          const eventId = metadata?.event_id || reservation.event_id;
-          const reservationBusinessId = reservation.events?.businesses?.id || reservation.events?.business_id;
-
-          if (!eventId || !reservationBusinessId) {
-            logStep("ERROR: Missing event_id/business_id for ticket_order", { reservationId, eventId, reservationBusinessId });
-          } else {
-            // Create ticket_order linked to reservation
-            const { data: ticketOrder, error: toError } = await supabaseClient
-              .from('ticket_orders')
-              .insert({
-                event_id: eventId,
-                business_id: reservationBusinessId,
-                user_id: reservation.user_id,
-                customer_name: guestsArray[0]?.name || reservation.reservation_name || 'Guest',
-                customer_email: (metadata?.customer_email || session.customer_details?.email || '').trim() || 'unknown@fomo.local',
-                status: 'completed',
-                subtotal_cents: 0,
-                commission_cents: 0,
-                commission_percent: 0,
-                total_cents: 0,
-                stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-                stripe_checkout_session_id: session.id,
-                linked_reservation_id: reservationId,
-              })
-              .select('id')
-              .single();
-
-            if (toError || !ticketOrder) {
-              logStep("ERROR: ticket_order insert", { error: toError });
-            } else {
-              // Create individual tickets per guest
-              const ticketRows = guestsArray.map((g) => ({
-                order_id: ticketOrder.id,
-                event_id: eventId,
-                guest_name: g.name || 'Guest',
-                guest_age: g.age,
-                qr_code_token: crypto.randomUUID(),
-                status: 'valid',
-              }));
-
-              const { error: ticketsError } = await supabaseClient
-                .from('tickets')
-                .insert(ticketRows);
-
-              if (ticketsError) {
-                logStep("ERROR: tickets insert", { error: ticketsError });
-              } else {
-                logStep(`Created ${ticketRows.length} guest tickets for reservation`, { reservationId });
-              }
-            }
-          }
-        }
+        logStep("Reservation guest tickets ensured", { reservationId, createdTickets });
       } catch (guestErr) {
         logStep("ERROR: Guest tickets creation", { error: guestErr instanceof Error ? guestErr.message : String(guestErr) });
       }

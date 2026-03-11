@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -179,54 +180,17 @@ serve(async (req) => {
     }
 
     // Create individual guest tickets for QR check-in
-    const guestsArray = Array.isArray(guests) ? (guests as { name: string; age: number }[]) : [];
-    if (guestsArray.length > 0) {
-      try {
-        // Create ticket_order linked to reservation
-        const { data: ticketOrder, error: toError } = await supabaseService
-          .from('ticket_orders')
-          .insert({
-            event_id: eventId,
-            business_id: event.business_id,
-            user_id: user.id,
-            customer_name: guestsArray[0]?.name || (reservation_name as string) || 'Guest',
-            customer_email: user.email || 'unknown@fomo.local',
-            status: 'completed',
-            subtotal_cents: 0,
-            commission_cents: 0,
-            commission_percent: 0,
-            total_cents: 0,
-            linked_reservation_id: reservation.id,
-          })
-          .select('id')
-          .single();
+    try {
+      const createdTickets = await ensureReservationEventGuestTickets({
+        supabaseClient: supabaseService,
+        reservationId: reservation.id,
+        guests: Array.isArray(guests) ? (guests as Array<{ name?: string; age?: number | string | null }>) : [],
+        customerEmail: user.email || null,
+      });
 
-        if (toError || !ticketOrder) {
-          console.error("[create-free-reservation-event] ticket_order insert error", toError);
-        } else {
-          // Create individual tickets per guest
-          const ticketRows = guestsArray.map(g => ({
-            order_id: ticketOrder.id,
-            event_id: eventId,
-            guest_name: g.name || 'Guest',
-            guest_age: typeof g.age === 'number' ? g.age : parseInt(String(g.age)) || null,
-            qr_code_token: crypto.randomUUID(),
-            status: 'valid',
-          }));
-
-          const { error: ticketsError } = await supabaseService
-            .from('tickets')
-            .insert(ticketRows);
-
-          if (ticketsError) {
-            console.error("[create-free-reservation-event] tickets insert error", ticketsError);
-          } else {
-            console.log(`[create-free-reservation-event] Created ${ticketRows.length} guest tickets`);
-          }
-        }
-      } catch (e) {
-        console.error("[create-free-reservation-event] guest tickets creation failed", e);
-      }
+      console.log(`[create-free-reservation-event] Ensured ${createdTickets} guest tickets`);
+    } catch (e) {
+      console.error("[create-free-reservation-event] guest tickets creation failed", e);
     }
 
     return json({
