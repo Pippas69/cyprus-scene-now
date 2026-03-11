@@ -940,7 +940,7 @@ export default function EventDetail() {
             </Link>
 
             {/* Tickets/Reservations */}
-            {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
+            {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
             <RippleButton
               className="w-full gap-2"
               onClick={() => setShowTicketFlow(true)}>
