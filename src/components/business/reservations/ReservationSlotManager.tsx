@@ -503,33 +503,25 @@ export const ReservationSlotManager = ({
         <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
               <div className="rounded-xl border border-border/20 bg-background/40 backdrop-blur-sm overflow-hidden transition-all hover:border-border/40">
                 <CollapsibleTrigger asChild>
-                  <div className="px-4 py-3.5 cursor-pointer transition-colors group">
+                  <div className="px-4 py-3 cursor-pointer transition-colors group">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center min-w-0 gap-0">
-                        <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-colors">
-                          
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-sm sm:text-[15px] text-foreground">
-                            {formatTimeRange(slot.timeFrom, slot.timeTo)}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-primary font-medium bg-primary/8 px-2 py-0.5 rounded-md">
-                              <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                              {t.slotCapacity}: {slot.capacity}
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground font-medium bg-muted/30 px-2 py-0.5 rounded-md">
-                              <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                              Max: {slot.maxPartySize}
-                            </span>
-                            <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
-                              {getDaysLabel(slot.days)}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground sm:hidden mt-0.5 block">
-                            {getDaysLabel(slot.days)}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground">
+                          {formatTimeRange(slot.timeFrom, slot.timeTo)}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-primary font-medium">
+                            <Users className="h-2.5 w-2.5" />
+                            {t.slotCapacity}: {slot.capacity}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                            <Users className="h-2.5 w-2.5" />
+                            Max: {slot.maxPartySize}
                           </span>
                         </div>
+                        <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                          {getDaysLabel(slot.days)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {slot.days.length === 0 &&
@@ -606,13 +598,13 @@ export const ReservationSlotManager = ({
         )}
 
           {/* Bottom Actions */}
-          <div className="flex items-center gap-2.5 pt-2">
-            <Button type="button" variant="outline" onClick={addTimeSlot} className="h-9 sm:h-10 text-xs sm:text-sm px-4 rounded-xl border-border/30 hover:bg-card/50">
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <div className="flex items-center gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={addTimeSlot} className="h-7 sm:h-8 text-[10px] sm:text-xs px-3 rounded-lg border-border/30 hover:bg-card/50">
+              <Plus className="h-3 w-3 mr-1" />
               {t.addSlot}
             </Button>
-            <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="h-9 sm:h-10 text-xs sm:text-sm px-5 rounded-xl shadow-sm">
-              {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+            <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="h-7 sm:h-8 text-[10px] sm:text-xs px-3 rounded-lg shadow-sm">
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               {saving ? t.saving : t.save}
             </Button>
           </div>
@@ -636,11 +628,11 @@ export const ReservationSlotManager = ({
               {t.noSeatingSelected}
             </p>
       }
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {['indoor', 'outdoor'].map((option) => {
           const isSelected = settings.reservation_seating_options.includes(option);
           return (
-            <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
+            <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-2 px-3 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
                   {option === 'indoor' ? t.indoor : t.outdoor}
                 </button>);
 
