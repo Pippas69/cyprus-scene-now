@@ -725,7 +725,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const claimEnabled = canClaim && reservationValid;
 
   const formContent =
-  <div className="space-y-3">
+  <div className="space-y-1.5">
       {/* Description */}
       {offer.description && (
         <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
