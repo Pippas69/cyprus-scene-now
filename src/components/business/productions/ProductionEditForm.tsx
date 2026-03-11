@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Theater, Clock, Coffee, Users, Baby } from "lucide-react";
+import { Loader2, Theater, Clock, Coffee, Users, Baby, Calendar } from "lucide-react";
 import { ImageUploadField } from "../ImageUploadField";
 import { ImageCropDialog } from "../ImageCropDialog";
 import { compressImage } from "@/lib/imageCompression";
@@ -51,12 +51,13 @@ const translations = {
     editProduction: "Επεξεργασία Παράστασης",
     step1: "1. Τίτλος Παράστασης",
     step2: "2. Περιγραφή",
-    step3: "3. Εικόνα Κάλυψης",
-    step4: "4. Λεπτομέρειες Παράστασης",
-    step5: "5. Διάλειμμα",
-    step6: "6. Ηθοποιοί & Συντελεστές",
-    step7: "7. Ομαδικές Κρατήσεις",
-    step9: "8. Εμφάνιση στο ΦΟΜΟ",
+    step2b: "3. Ημερομηνίες & Χώρος",
+    step3: "4. Εικόνα Κάλυψης",
+    step4: "5. Λεπτομέρειες Παράστασης",
+    step5: "6. Διάλειμμα",
+    step6: "7. Ηθοποιοί & Συντελεστές",
+    step7: "8. Ομαδικές Κρατήσεις",
+    step9: "9. Εμφάνιση στο ΦΟΜΟ",
     required: "Υποχρεωτικό",
     optional: "Προαιρετικό",
     titlePlaceholder: "π.χ. Το Θαύμα, Romeo & Juliet...",
@@ -84,17 +85,24 @@ const translations = {
     success: "Η παράσταση ενημερώθηκε επιτυχώς!",
     failed: "Αποτυχία ενημέρωσης",
     loading: "Φόρτωση...",
+    startDate: "Ημερομηνία & Ώρα Έναρξης",
+    endDate: "Ημερομηνία & Ώρα Λήξης",
+    location: "Τοποθεσία / Διεύθυνση",
+    venueName: "Όνομα Χώρου",
+    locationPlaceholder: "π.χ. Λεωφ. Ανδρέα Παπανδρέου 12, Αθήνα",
+    venuePlaceholder: "π.χ. Θέατρο Παλλάς",
   },
   en: {
     editProduction: "Edit Production",
     step1: "1. Production Title",
     step2: "2. Description",
-    step3: "3. Cover Image",
-    step4: "4. Production Details",
-    step5: "5. Intermission",
-    step6: "6. Cast & Crew",
-    step7: "7. Group Bookings",
-    step9: "8. Appearance on ΦΟΜΟ",
+    step2b: "3. Dates & Venue",
+    step3: "4. Cover Image",
+    step4: "5. Production Details",
+    step5: "6. Intermission",
+    step6: "7. Cast & Crew",
+    step7: "8. Group Bookings",
+    step9: "9. Appearance on ΦΟΜΟ",
     required: "Required",
     optional: "Optional",
     titlePlaceholder: "e.g. The Miracle, Romeo & Juliet...",
@@ -122,6 +130,12 @@ const translations = {
     success: "Production updated successfully!",
     failed: "Failed to update production",
     loading: "Loading...",
+    startDate: "Start Date & Time",
+    endDate: "End Date & Time",
+    location: "Location / Address",
+    venueName: "Venue Name",
+    locationPlaceholder: "e.g. 12 Main Street, Athens",
+    venuePlaceholder: "e.g. National Theatre",
   },
 };
 
@@ -151,6 +165,12 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
   const [description, setDescription] = useState('');
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [minAgeHint, setMinAgeHint] = useState(0);
+
+  // Dates & Location
+  const [startAt, setStartAt] = useState<Date | null>(null);
+  const [endAt, setEndAt] = useState<Date | null>(null);
+  const [location, setLocation] = useState('');
+  const [venueName, setVenueName] = useState('');
 
   // Intermission
   const [hasIntermission, setHasIntermission] = useState(false);
@@ -199,6 +219,10 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
       setDescription(event.description || '');
       setExistingCoverUrl(event.cover_image_url || null);
       setMinAgeHint(event.min_age_hint || 0);
+      setStartAt(event.start_at ? new Date(event.start_at) : null);
+      setEndAt(event.end_at ? new Date(event.end_at) : null);
+      setLocation(event.location || '');
+      setVenueName(event.venue_name || '');
       setAppearanceStart(event.appearance_start_at ? new Date(event.appearance_start_at) : null);
       setAppearanceEnd(event.appearance_end_at ? new Date(event.appearance_end_at) : null);
 
@@ -312,6 +336,10 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
           description: description.trim(),
           cover_image_url: coverImageUrl,
           min_age_hint: minAgeHint || null,
+          start_at: startAt?.toISOString() || event.start_at,
+          end_at: endAt?.toISOString() || event.end_at,
+          location: location.trim() || event.location,
+          venue_name: venueName.trim() || null,
           appearance_start_at: appearanceStart?.toISOString() || null,
           appearance_end_at: appearanceEnd?.toISOString() || null,
         })
@@ -414,7 +442,48 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
               </p>
             </SectionCard>
 
-            {/* 3. Cover Image */}
+            {/* 3. Dates & Venue */}
+            <SectionCard title={t.step2b} icon={<Calendar className="h-4 w-4 text-muted-foreground" />} required requiredLabel={t.required}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.startDate}</Label>
+                  <DateTimePicker
+                    value={startAt || undefined}
+                    onChange={(d) => setStartAt(d || null)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.endDate}</Label>
+                  <DateTimePicker
+                    value={endAt || undefined}
+                    onChange={(d) => setEndAt(d || null)}
+                    minDate={startAt || undefined}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.location}</Label>
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder={t.locationPlaceholder}
+                    className="h-9 sm:h-10 text-xs sm:text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs sm:text-sm">{t.venueName}</Label>
+                  <Input
+                    value={venueName}
+                    onChange={(e) => setVenueName(e.target.value)}
+                    placeholder={t.venuePlaceholder}
+                    className="h-9 sm:h-10 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* 4. Cover Image */}
             <SectionCard title={t.step3} requiredLabel={t.optional}>
               {existingCoverUrl && !coverImage && (
                 <div className="mb-3">

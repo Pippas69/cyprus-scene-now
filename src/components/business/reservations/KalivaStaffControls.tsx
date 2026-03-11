@@ -38,6 +38,7 @@ interface EventWithControls {
   }[];
   ticketTiers: {
     id: string;
+    ids?: string[];
     name: string;
     quantity_total: number;
     active: boolean;
@@ -194,41 +195,67 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
 
       const seatingTypeOrder = ['table', 'vip', 'bar', 'sofa'];
 
-      const enrichedEvents: EventWithControls[] = eventsData.map((event) => ({
-        id: event.id,
-        title: event.title,
-        start_at: event.start_at,
-        seatingTypes: seatingTypes.
-        filter((st) => st.event_id === event.id).
-        sort((a, b) => {
-          const aType = (a.seating_type || '').toLowerCase();
-          const bType = (b.seating_type || '').toLowerCase();
-          const aIndex = seatingTypeOrder.indexOf(aType);
-          const bIndex = seatingTypeOrder.indexOf(bType);
+      const enrichedEvents: EventWithControls[] = eventsData.map((event) => {
+        const eventSeatingTypes = seatingTypes
+          .filter((st) => st.event_id === event.id)
+          .sort((a, b) => {
+            const aType = (a.seating_type || '').toLowerCase();
+            const bType = (b.seating_type || '').toLowerCase();
+            const aIndex = seatingTypeOrder.indexOf(aType);
+            const bIndex = seatingTypeOrder.indexOf(bType);
+            if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          })
+          .map((st) => ({
+            id: st.id,
+            seating_type: st.seating_type,
+            available_slots: st.available_slots,
+            paused: st.paused ?? false,
+            actualBooked: reservationCounts[st.id] || 0,
+            tiers: (seatingTypeTiers || []).filter((tier) => tier.seating_type_id === st.id)
+          }));
 
-          if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
-          if (aIndex === -1) return 1;
-          if (bIndex === -1) return -1;
-          return aIndex - bIndex;
-        }).
-        map((st) => ({
-          id: st.id,
-          seating_type: st.seating_type,
-          available_slots: st.available_slots,
-          paused: st.paused ?? false,
-          actualBooked: reservationCounts[st.id] || 0,
-          tiers: (seatingTypeTiers || []).filter((tier) => tier.seating_type_id === st.id)
-        })),
-        ticketTiers: walkInTicketTiers.
-        filter((tt) => tt.event_id === event.id).
-        map((tt) => ({
-          id: tt.id,
-          name: tt.name,
-          quantity_total: tt.quantity_total,
-          active: tt.active,
-          actualSold: ticketCounts[tt.id] || 0
-        }))
-      }));
+        // Aggregate ticket tiers by name to avoid duplicates
+        const rawTicketTiers = walkInTicketTiers
+          .filter((tt) => tt.event_id === event.id)
+          .map((tt) => ({
+            id: tt.id,
+            name: tt.name,
+            quantity_total: tt.quantity_total,
+            active: tt.active,
+            actualSold: ticketCounts[tt.id] || 0
+          }));
+
+        const tierAggMap = new Map<string, { id: string; ids: string[]; name: string; quantity_total: number; active: boolean; actualSold: number }>();
+        rawTicketTiers.forEach((tt) => {
+          const existing = tierAggMap.get(tt.name);
+          if (existing) {
+            existing.ids.push(tt.id);
+            existing.quantity_total += tt.quantity_total;
+            existing.actualSold += tt.actualSold;
+            existing.active = existing.active || tt.active;
+          } else {
+            tierAggMap.set(tt.name, {
+              id: tt.id,
+              ids: [tt.id],
+              name: tt.name,
+              quantity_total: tt.quantity_total,
+              active: tt.active,
+              actualSold: tt.actualSold,
+            });
+          }
+        });
+
+        return {
+          id: event.id,
+          title: event.title,
+          start_at: event.start_at,
+          seatingTypes: eventSeatingTypes,
+          ticketTiers: Array.from(tierAggMap.values()),
+        };
+      });
 
       setEvents(enrichedEvents);
 
@@ -272,11 +299,14 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
   };
 
-  const toggleTicketTier = async (id: string, currentActive: boolean) => {
+  const toggleTicketTier = async (id: string, currentActive: boolean, ids?: string[]) => {
     setUpdatingId(id);
     try {
-      const { error } = await supabase.from('ticket_tiers').update({ active: !currentActive }).eq('id', id);
-      if (error) throw error;
+      const allIds = ids && ids.length > 0 ? ids : [id];
+      for (const tierId of allIds) {
+        const { error } = await supabase.from('ticket_tiers').update({ active: !currentActive }).eq('id', tierId);
+        if (error) throw error;
+      }
       toast.success(t.updated);
       await fetchData();
     } catch {
@@ -620,7 +650,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                             {updatingId === tt.id ?
                         <Loader2 className="h-4 w-4 animate-spin" /> :
 
-                        <Switch checked={tt.active} onCheckedChange={() => toggleTicketTier(tt.id, tt.active)} />
+                        <Switch checked={tt.active} onCheckedChange={() => toggleTicketTier(tt.id, tt.active, tt.ids)} />
                         }
                           </div>
                         </div>);

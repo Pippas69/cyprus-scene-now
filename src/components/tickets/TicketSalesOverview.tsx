@@ -92,11 +92,25 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
 
-      // Enrich tiers with actual sold count
-      const enrichedTiers = (tiers || []).map(tier => ({
-        ...tier,
-        actual_sold: tierSoldCount.get(tier.id) || 0,
-      }));
+      // Aggregate tiers by name to avoid duplicates
+      const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
+      (tiers || []).forEach(tier => {
+        const sold = tierSoldCount.get(tier.id) || 0;
+        const existing = tierAggMap.get(tier.name);
+        if (existing) {
+          existing.quantity_total += tier.quantity_total;
+          existing.actual_sold += sold;
+        } else {
+          tierAggMap.set(tier.name, {
+            name: tier.name,
+            price_cents: tier.price_cents,
+            quantity_total: tier.quantity_total,
+            actual_sold: sold,
+            id: tier.id,
+          });
+        }
+      });
+      const enrichedTiers = Array.from(tierAggMap.values());
 
       return {
         tiers: enrichedTiers,
