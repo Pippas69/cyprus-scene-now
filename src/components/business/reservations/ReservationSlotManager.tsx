@@ -606,13 +606,13 @@ export const ReservationSlotManager = ({
         )}
 
           {/* Bottom Actions */}
-          <div className="flex items-center gap-2.5 pt-2">
-            <Button type="button" variant="outline" onClick={addTimeSlot} className="h-9 sm:h-10 text-xs sm:text-sm px-4 rounded-xl border-border/30 hover:bg-card/50">
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <div className="flex items-center gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={addTimeSlot} className="h-7 sm:h-8 text-[10px] sm:text-xs px-3 rounded-lg border-border/30 hover:bg-card/50">
+              <Plus className="h-3 w-3 mr-1" />
               {t.addSlot}
             </Button>
-            <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="h-9 sm:h-10 text-xs sm:text-sm px-5 rounded-xl shadow-sm">
-              {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+            <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="h-7 sm:h-8 text-[10px] sm:text-xs px-3 rounded-lg shadow-sm">
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               {saving ? t.saving : t.save}
             </Button>
           </div>
