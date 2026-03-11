@@ -160,7 +160,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   useEffect(() => {
     fetchEvents();
     if (!isTicketLinked) return;
-    const interval = setInterval(fetchEvents, 30000);
+    const interval = setInterval(fetchEvents, 5000);
     return () => clearInterval(interval);
   }, [fetchEvents, isTicketLinked]);
 

@@ -275,7 +275,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
     }
     // Pause auto-refresh while editing to prevent re-render shifting
     if (editingKey) return;
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [fetchData, editingKey]);
 

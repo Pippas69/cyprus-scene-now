@@ -124,7 +124,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
   // Background auto-refresh every 30 seconds (no loading spinner)
   useEffect(() => {
     if (editingSlot) return; // Pause refresh while editing
-    const interval = setInterval(() => fetchData(true), 30000);
+    const interval = setInterval(() => fetchData(true), 5000);
     return () => clearInterval(interval);
   }, [fetchData, editingSlot]);
 
