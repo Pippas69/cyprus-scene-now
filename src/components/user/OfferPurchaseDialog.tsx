@@ -731,7 +731,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed">{offer.description}</p>
       )}
 
-      {/* Row 1: Valid days + Category badge - same line */}
+      {/* Row 1: Valid days */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -739,17 +739,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             {formatDays(offer.valid_days || null)}
           </span>
         </div>
-        {offer.category && (
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
-            <span className="text-[11px] sm:text-xs">{getCategoryIcon(offer.category)}</span>
-            <span className="text-[11px] sm:text-xs text-foreground font-medium">
-              {getCategoryLabel(offer.category)}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Row 2: Hours + Expiry */}
+      {/* Row 2: Hours + Expiry (merged) */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -759,7 +751,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 w-fit">
           <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] sm:text-xs text-foreground">
+          <span className="text-[11px] sm:text-xs text-foreground font-medium">
             {t("expiresOn")}: {new Date(offer.end_at).toLocaleDateString(language === "el" ? "el-GR" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
           </span>
         </div>
@@ -885,16 +877,25 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 </div>
               }
               <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
-                  {offer.title}
-                </DrawerTitle>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{offer.businesses.name}</p>
+                <div className="flex items-center gap-2">
+                  <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
+                    {offer.title}
+                  </DrawerTitle>
+                  {discountDisplay &&
+                  <Badge className="bg-primary text-primary-foreground shrink-0 text-[11px] font-bold h-5 px-1.5 rounded-md">
+                      {discountDisplay}
+                    </Badge>
+                  }
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate">{offer.businesses.name}</p>
+                  {offer.category && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
+                    </span>
+                  )}
+                </div>
               </div>
-              {discountDisplay &&
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-sm font-bold h-7 px-2.5 rounded-lg">
-                  {discountDisplay}
-                </Badge>
-              }
             </div>
             <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
           </DrawerHeader>
@@ -919,16 +920,25 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               </div>
             }
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-left text-base sm:text-lg font-bold">
-                {offer.title}
-              </DialogTitle>
-              <DialogDescription className="text-left text-sm mt-0.5">{offer.businesses.name}</DialogDescription>
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-left text-base sm:text-lg font-bold">
+                  {offer.title}
+                </DialogTitle>
+                {discountDisplay &&
+                <Badge className="bg-primary text-primary-foreground shrink-0 text-xs font-bold h-5 px-1.5 rounded-md">
+                    {discountDisplay}
+                  </Badge>
+                }
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <DialogDescription className="text-left text-sm">{offer.businesses.name}</DialogDescription>
+                {offer.category && (
+                  <span className="text-sm text-muted-foreground">
+                    · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
+                  </span>
+                )}
+              </div>
             </div>
-            {discountDisplay &&
-            <Badge className="bg-primary text-primary-foreground shrink-0 text-base font-bold py-1.5 px-3 rounded-lg">
-                {discountDisplay}
-              </Badge>
-            }
           </div>
         </DialogHeader>
         
