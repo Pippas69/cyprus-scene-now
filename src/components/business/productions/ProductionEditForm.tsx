@@ -130,6 +130,12 @@ const translations = {
     success: "Production updated successfully!",
     failed: "Failed to update production",
     loading: "Loading...",
+    startDate: "Start Date & Time",
+    endDate: "End Date & Time",
+    location: "Location / Address",
+    venueName: "Venue Name",
+    locationPlaceholder: "e.g. 12 Main Street, Athens",
+    venuePlaceholder: "e.g. National Theatre",
   },
 };
 
