@@ -702,7 +702,7 @@ export default function EventDetail() {
             {/* Mobile/Tablet info section - shown below lg breakpoint */}
             <div className="lg:hidden space-y-3">
               {/* Tickets/Reservations */}
-              {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
+              {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
               <RippleButton
                 className="w-full gap-2 h-10 text-sm"
                 onClick={() => setShowTicketFlow(true)}>
@@ -940,7 +940,7 @@ export default function EventDetail() {
             </Link>
 
             {/* Tickets/Reservations */}
-            {hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
+            {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
             <RippleButton
               className="w-full gap-2"
               onClick={() => setShowTicketFlow(true)}>
