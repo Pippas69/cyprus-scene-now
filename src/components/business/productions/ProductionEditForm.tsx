@@ -219,6 +219,10 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
       setDescription(event.description || '');
       setExistingCoverUrl(event.cover_image_url || null);
       setMinAgeHint(event.min_age_hint || 0);
+      setStartAt(event.start_at ? new Date(event.start_at) : null);
+      setEndAt(event.end_at ? new Date(event.end_at) : null);
+      setLocation(event.location || '');
+      setVenueName(event.venue_name || '');
       setAppearanceStart(event.appearance_start_at ? new Date(event.appearance_start_at) : null);
       setAppearanceEnd(event.appearance_end_at ? new Date(event.appearance_end_at) : null);
 
