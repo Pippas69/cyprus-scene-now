@@ -557,7 +557,7 @@ export const ReservationSlotManager = ({
                         <NumberInput value={slot.capacity} onChange={(value) => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotMaxPartySize}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotMaxPartySize}</Label>
                         <NumberInput value={slot.maxPartySize} onChange={(value) => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                     </div>
