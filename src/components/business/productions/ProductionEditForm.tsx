@@ -166,6 +166,12 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [minAgeHint, setMinAgeHint] = useState(0);
 
+  // Dates & Location
+  const [startAt, setStartAt] = useState<Date | null>(null);
+  const [endAt, setEndAt] = useState<Date | null>(null);
+  const [location, setLocation] = useState('');
+  const [venueName, setVenueName] = useState('');
+
   // Intermission
   const [hasIntermission, setHasIntermission] = useState(false);
   const [intermissionCount, setIntermissionCount] = useState(1);
