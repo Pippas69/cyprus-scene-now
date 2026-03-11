@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
 import EventEditForm from "./EventEditForm";
+import ProductionEditForm from "./productions/ProductionEditForm";
+import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
 import { useEventActiveBoost } from "@/hooks/useBoostAnalytics";
@@ -57,6 +59,18 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [combinedEvent, setCombinedEvent] = useState<{id: string;title: string;} | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
+
+  // Check if business is a performance type
+  const { data: businessCatData } = useQuery({
+    queryKey: ["business-categories", businessId],
+    queryFn: async () => {
+      const { data } = await supabase.from('businesses').select('category').eq('id', businessId).maybeSingle();
+      return data;
+    },
+    enabled: !!businessId,
+    staleTime: 60_000,
+  });
+  const isPerformance = isPerformanceBusiness(businessCatData?.category || []);
 
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
@@ -581,16 +595,24 @@ const EventsList = ({ businessId }: EventsListProps) => {
       }
 
       {/* Edit Form */}
-      {editingEvent &&
-      <EventEditForm
-        event={editingEvent}
-        open={!!editingEvent}
-        onOpenChange={(open) => !open && setEditingEvent(null)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
-        }} />
+      {editingEvent && isPerformance ? (
+        <ProductionEditForm
+          event={editingEvent}
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+          }} />
+      ) : editingEvent ? (
+        <EventEditForm
+          event={editingEvent}
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+          }} />
+      ) : null}
 
-      }
 
       {/* Boost Dialog */}
       {boostingEvent &&
