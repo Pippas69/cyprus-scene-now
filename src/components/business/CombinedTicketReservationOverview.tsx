@@ -160,10 +160,26 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       });
 
       const walkInDisplayTiers = (tiers || []).filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
-      const enrichedTiers = walkInDisplayTiers.map((tier) => ({
-        ...tier,
-        actual_sold: tierSoldCount.get(tier.id) || 0
-      }));
+      
+      // Aggregate tiers by name to avoid duplicates (e.g. 2x "Αριστερά")
+      const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
+      walkInDisplayTiers.forEach((tier) => {
+        const sold = tierSoldCount.get(tier.id) || 0;
+        const existing = tierAggMap.get(tier.name);
+        if (existing) {
+          existing.quantity_total += tier.quantity_total;
+          existing.actual_sold += sold;
+        } else {
+          tierAggMap.set(tier.name, {
+            name: tier.name,
+            price_cents: tier.price_cents,
+            quantity_total: tier.quantity_total,
+            actual_sold: sold,
+            id: tier.id,
+          });
+        }
+      });
+      const enrichedTiers = Array.from(tierAggMap.values());
 
       // --- Reservation stats ---
       const seatingStats = seatingTypes.map((st) => {
