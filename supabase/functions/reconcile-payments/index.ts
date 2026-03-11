@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     // Grace window: 45 min (not 30) — prevents race with user who pays at minute 29
     const cutoffTime = new Date(Date.now() - 45 * 60 * 1000).toISOString();
     const maxAge = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const healWindowStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: pendingTicketOrders, error: ticketOrdersError } = await supabaseClient
       .from("ticket_orders")
