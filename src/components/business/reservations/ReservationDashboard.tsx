@@ -25,6 +25,7 @@ interface EventOption {
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
+  const [isPerformance, setIsPerformance] = useState(false);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
