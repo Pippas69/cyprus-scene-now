@@ -510,11 +510,11 @@ export const ReservationSlotManager = ({
                           {formatTimeRange(slot.timeFrom, slot.timeTo)}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="inline-flex items-center gap-1 font-medium text-[sidebar-accent-foreground] text-neutral-300">
+                          <span className="inline-flex items-center gap-1 font-medium text-inherit text-xs">
                             <Users className="h-2.5 w-2.5" />
                             {t.slotCapacity}: {slot.capacity}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                          <span className="inline-flex items-center gap-1 font-medium text-inherit text-xs">
                             <Users className="h-2.5 w-2.5" />
                             Max: {slot.maxPartySize}
                           </span>
