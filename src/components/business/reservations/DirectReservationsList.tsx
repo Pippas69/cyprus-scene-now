@@ -47,6 +47,7 @@ interface DirectReservationsListProps {
   onReservationCountChange?: (count: number) => void;
   selectedEventId?: string | null;
   selectedEventType?: string | null;
+  forceEventMode?: boolean;
 }
 
 // Cache for seating tiers
