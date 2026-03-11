@@ -877,16 +877,25 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 </div>
               }
               <div className="flex-1 min-w-0">
-                <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
-                  {offer.title}
-                </DrawerTitle>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{offer.businesses.name}</p>
+                <div className="flex items-center gap-2">
+                  <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
+                    {offer.title}
+                  </DrawerTitle>
+                  {discountDisplay &&
+                  <Badge className="bg-primary text-primary-foreground shrink-0 text-[11px] font-bold h-5 px-1.5 rounded-md">
+                      {discountDisplay}
+                    </Badge>
+                  }
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate">{offer.businesses.name}</p>
+                  {offer.category && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
+                    </span>
+                  )}
+                </div>
               </div>
-              {discountDisplay &&
-              <Badge className="bg-primary text-primary-foreground shrink-0 text-sm font-bold h-7 px-2.5 rounded-lg">
-                  {discountDisplay}
-                </Badge>
-              }
             </div>
             <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
           </DrawerHeader>
