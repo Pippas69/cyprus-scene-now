@@ -219,16 +219,41 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
           actualBooked: reservationCounts[st.id] || 0,
           tiers: (seatingTypeTiers || []).filter((tier) => tier.seating_type_id === st.id)
         })),
-        ticketTiers: walkInTicketTiers.
-        filter((tt) => tt.event_id === event.id).
-        map((tt) => ({
-          id: tt.id,
-          name: tt.name,
-          quantity_total: tt.quantity_total,
-          active: tt.active,
-          actualSold: ticketCounts[tt.id] || 0
-        }))
-      }));
+        // Aggregate ticket tiers by name to avoid duplicates
+        const rawTicketTiers = walkInTicketTiers
+          .filter((tt) => tt.event_id === event.id)
+          .map((tt) => ({
+            id: tt.id,
+            name: tt.name,
+            quantity_total: tt.quantity_total,
+            active: tt.active,
+            actualSold: ticketCounts[tt.id] || 0
+          }));
+
+        const tierAggMap = new Map<string, { id: string; ids: string[]; name: string; quantity_total: number; active: boolean; actualSold: number }>();
+        rawTicketTiers.forEach((tt) => {
+          const existing = tierAggMap.get(tt.name);
+          if (existing) {
+            existing.ids.push(tt.id);
+            existing.quantity_total += tt.quantity_total;
+            existing.actualSold += tt.actualSold;
+            existing.active = existing.active || tt.active;
+          } else {
+            tierAggMap.set(tt.name, {
+              id: tt.id,
+              ids: [tt.id],
+              name: tt.name,
+              quantity_total: tt.quantity_total,
+              active: tt.active,
+              actualSold: tt.actualSold,
+            });
+          }
+        });
+
+        return {
+          ...baseEvent,
+          ticketTiers: Array.from(tierAggMap.values()),
+        };
 
       setEvents(enrichedEvents);
 
