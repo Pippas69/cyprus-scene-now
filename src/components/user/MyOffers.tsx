@@ -43,6 +43,9 @@ interface OfferPurchase {
     offer_image_url: string | null;
     valid_start_time: string | null;
     valid_end_time: string | null;
+    discount_type: string | null;
+    special_deal_text: string | null;
+    category: string | null;
     businesses: {
       id: string;
       name: string;
@@ -204,27 +207,30 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     queryFn: async () => {
       const { data, error } = await supabase.
       from("offer_purchases").
-      select(`
-          *,
-          discounts (
-            id,
-            title,
-            description,
-            percent_off,
-            offer_type,
-            bonus_percent,
-            credit_amount_cents,
-            offer_image_url,
-            valid_start_time,
-            valid_end_time,
-            businesses (
-              id,
-              name,
-              logo_url,
-              cover_url,
-              city
-            )
-          ),
+       select(`
+           *,
+           discounts (
+             id,
+             title,
+             description,
+             percent_off,
+             offer_type,
+             bonus_percent,
+             credit_amount_cents,
+             offer_image_url,
+             valid_start_time,
+             valid_end_time,
+             discount_type,
+             special_deal_text,
+             category,
+             businesses (
+               id,
+               name,
+               logo_url,
+               cover_url,
+               city
+             )
+           ),
           reservations (
             preferred_time
           )
@@ -489,14 +495,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Badge>
           }
           
-          {/* Status/Discount Badge - Top Right */}
+          {/* Status Badge - Top Right (only for status indicators) */}
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
             {isDepleted ?
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm">
                 <TrendingDown className="h-3 w-3 mr-0.5" />
               </Badge> :
-            isCredit ?
-            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-emerald-600 shadow-sm">
+            isCredit && !isExpired ?
+            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm bg-emerald-600">
                 <Wallet className="h-3 w-3 mr-0.5" />
                 €{(balanceRemaining / 100).toFixed(0)}
               </Badge> :
@@ -509,39 +515,76 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 shadow-sm">
                 <AlertCircle className="h-3 w-3" />
               </Badge> :
-            purchase.discount_percent > 0 &&
-            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm">
-                -{purchase.discount_percent}%
-              </Badge>
+            null
             }
           </div>
         </div>
 
-        {/* Content section - reduced spacing */}
-        <div className="p-2.5 space-y-0.5">
-          {/* Title */}
-          <h4 className="text-sm font-semibold line-clamp-1">
-            {purchase.discounts.title}
-          </h4>
-
-          {/* Business row with logo */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            {purchase.discounts.businesses.logo_url ?
-            <img
-              src={purchase.discounts.businesses.logo_url}
-              alt={purchase.discounts.businesses.name}
-              className="h-4 w-4 rounded-full object-cover" /> :
-
-
-            <Store className="h-4 w-4 text-primary" />
-            }
-            <span className="text-xs line-clamp-1">{purchase.discounts.businesses.name}</span>
+        {/* Content section */}
+        <div className="p-2.5 space-y-1">
+          {/* Row 1: Title + Offer type badge */}
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold line-clamp-1 flex-1 min-w-0">
+              {purchase.discounts.title}
+            </h4>
+            {(() => {
+              const disc = purchase.discounts;
+              if (disc?.discount_type === 'special_deal' && disc.special_deal_text) {
+                return (
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 shrink-0 whitespace-nowrap font-medium">
+                    {language === "el" ? "Ειδική προσφορά" : "Special offer"}
+                  </Badge>
+                );
+              }
+              if (purchase.discount_percent > 0) {
+                return (
+                  <Badge variant="default" className="text-[10px] px-2 py-0.5 shrink-0 whitespace-nowrap font-semibold">
+                    -{purchase.discount_percent}%
+                  </Badge>
+                );
+              }
+              if (isCredit) {
+                return (
+                  <Badge variant="default" className="text-[10px] px-2 py-0.5 shrink-0 whitespace-nowrap font-semibold bg-emerald-600">
+                    <Wallet className="h-3 w-3 mr-0.5" />
+                    {language === "el" ? "Πίστωση" : "Credit"}
+                  </Badge>
+                );
+              }
+              return null;
+            })()}
           </div>
 
-          {/* Date + Time + Location row - location icon right after time */}
+          {/* Row 2: Business logo + name + Category badge */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {purchase.discounts.businesses.logo_url ?
+                <img
+                  src={purchase.discounts.businesses.logo_url}
+                  alt={purchase.discounts.businesses.name}
+                  className="h-4 w-4 rounded-full object-cover shrink-0" /> :
+                <Store className="h-4 w-4 text-primary shrink-0" />
+              }
+              <span className="text-xs text-muted-foreground line-clamp-1">{purchase.discounts.businesses.name}</span>
+            </div>
+            {purchase.discounts.category && (
+              <Badge variant="outline" className="text-[10px] px-2 py-0.5 shrink-0 whitespace-nowrap font-medium text-muted-foreground">
+                {purchase.discounts.category === 'drink' ? (language === "el" ? "Ποτά" : "Drinks") :
+                 purchase.discounts.category === 'food' ? (language === "el" ? "Φαγητό" : "Food") :
+                 purchase.discounts.category === 'account_total' ? (language === "el" ? "Σύνολο λογαριασμού" : "Total bill") :
+                 purchase.discounts.category}
+              </Badge>
+            )}
+          </div>
+
+          {/* Row 3: Date/time with expiry in parentheses + location */}
           <div className="flex items-center gap-1 text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs line-clamp-1">{formatDateWithTime()}</span>
+            <span className="text-xs line-clamp-1">
+              {formatDateWithTime()}
+              {' '}
+              <span className="text-muted-foreground/70">({formatExpiryDate(purchase.expires_at).toLowerCase()})</span>
+            </span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -552,15 +595,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               }}
               className="p-0.5 hover:bg-muted rounded-full transition-colors shrink-0"
               aria-label={language === "el" ? "Δείτε στον χάρτη" : "View on map"}>
-              
               <MapPin className="h-3.5 w-3.5 text-primary" />
             </button>
-          </div>
-
-          {/* Expiry row */}
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-xs">{formatExpiryDate(purchase.expires_at)}</span>
           </div>
 
           {/* Action buttons */}
