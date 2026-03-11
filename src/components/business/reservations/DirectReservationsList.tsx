@@ -919,9 +919,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           { value: stats.today, label: t.today },
           { value: stats.checkedIn, label: t.checkedInCount },
         ].map((stat, i) => (
-          <div key={i} className="min-w-0 rounded-xl border border-border/15 bg-card/40 backdrop-blur-sm px-2 sm:px-4 py-3 sm:py-4 text-center">
-            <div className="text-xl sm:text-3xl font-bold tracking-tight text-foreground">{stat.value}</div>
-            <div className="text-[9px] sm:text-[11px] font-medium text-muted-foreground/70 uppercase tracking-widest mt-1">{stat.label}</div>
+          <div key={i} className="min-w-0 rounded-xl border border-border/15 bg-card/40 backdrop-blur-sm px-2 sm:px-3 py-2 sm:py-2.5 text-center">
+            <div className="text-base sm:text-lg font-bold tracking-tight text-foreground">{stat.value}</div>
+            <div className="text-[8px] sm:text-[10px] font-medium text-muted-foreground/70 tracking-wide mt-0.5">{stat.label}</div>
           </div>
         ))}
       </div>

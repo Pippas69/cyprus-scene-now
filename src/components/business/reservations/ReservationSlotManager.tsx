@@ -541,11 +541,11 @@ export const ReservationSlotManager = ({
                     {/* Time Range */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotFrom}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotFrom}</Label>
                         <Input type="time" value={slot.timeFrom} onChange={(e) => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotTo}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotTo}</Label>
                         <Input type="time" value={slot.timeTo} onChange={(e) => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                     </div>
@@ -553,11 +553,11 @@ export const ReservationSlotManager = ({
                     {/* Capacity & Max Party */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotCapacity}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotCapacity}</Label>
                         <NumberInput value={slot.capacity} onChange={(value) => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotMaxPartySize}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotMaxPartySize}</Label>
                         <NumberInput value={slot.maxPartySize} onChange={(value) => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
                       </div>
                     </div>
@@ -565,7 +565,7 @@ export const ReservationSlotManager = ({
                     {/* Days Selection */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotDays}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotDays}</Label>
                         <button type="button" onClick={() => applySlotToAllDays(slot.id)} className="text-[10px] sm:text-xs text-primary hover:text-primary/80 font-medium transition-colors">
                           {t.copyToAllDays}
                         </button>
