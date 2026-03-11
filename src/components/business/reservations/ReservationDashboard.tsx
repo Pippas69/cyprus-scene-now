@@ -28,6 +28,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [isPerformance, setIsPerformance] = useState(false);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const selectedEventIdRef = useRef<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
 
   const text = useMemo(
@@ -72,6 +73,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     };
     checkLinked();
   }, [businessId]);
+
+  // Keep ref in sync with state
+  useEffect(() => { selectedEventIdRef.current = selectedEventId; }, [selectedEventId]);
 
   // Fetch events for ticket-linked businesses
   const fetchEvents = useCallback(async () => {
@@ -144,13 +148,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
       setEvents(options);
 
-      if (!selectedEventId || !options.find((e) => e.id === selectedEventId)) {
+      if (!selectedEventIdRef.current || !options.find((e) => e.id === selectedEventIdRef.current)) {
         setSelectedEventId(options[0]?.id || null);
       }
     } catch (error) {
       console.error('Error fetching reservation dashboard events:', error);
     }
-  }, [isTicketLinked, businessId, selectedEventId]);
+  }, [isTicketLinked, businessId]);
 
   useEffect(() => {
     fetchEvents();
