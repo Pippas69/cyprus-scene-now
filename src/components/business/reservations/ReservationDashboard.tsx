@@ -124,17 +124,18 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .map((e) => e.id);
 
       if (ticketOnlyEventIds.length > 0) {
-        const { data: ticketOrders, error: ticketOrdersError } = await supabase
-          .from('ticket_orders')
+        // Count individual tickets (not orders) for accurate badge count
+        const { data: tickets, error: ticketsError } = await supabase
+          .from('tickets')
           .select('event_id')
           .in('event_id', ticketOnlyEventIds)
-          .eq('status', 'completed');
+          .in('status', ['valid', 'used']);
 
-        if (ticketOrdersError) throw ticketOrdersError;
+        if (ticketsError) throw ticketsError;
         if (requestId !== fetchEventsRequestRef.current) return;
 
-        (ticketOrders || []).forEach((o) => {
-          if (o.event_id) counts[o.event_id] = (counts[o.event_id] || 0) + 1;
+        (tickets || []).forEach((t) => {
+          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
         });
       }
 

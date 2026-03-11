@@ -79,8 +79,12 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
     ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
     : t.reservations;
 
+  const eventsLabel = isPerformance
+    ? (language === 'el' ? 'Παραστάσεις' : 'Productions')
+    : t.events;
+
   const contentItems = [
-    { title: t.events, url: "/dashboard-business/events", icon: Calendar },
+    { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
     ...(showOffers ? [{ title: t.offers, url: "/dashboard-business/offers", icon: Percent }] : []),
     { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
     { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
