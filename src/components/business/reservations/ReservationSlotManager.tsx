@@ -476,9 +476,9 @@ export const ReservationSlotManager = ({
         {/* Section Header */}
         <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-primary" />
-            </div>
+            
+
+          
             <div>
               <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
                 {t.timeSlots}
