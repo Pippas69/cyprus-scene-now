@@ -38,6 +38,7 @@ interface EventWithControls {
   }[];
   ticketTiers: {
     id: string;
+    ids?: string[];
     name: string;
     quantity_total: number;
     active: boolean;
