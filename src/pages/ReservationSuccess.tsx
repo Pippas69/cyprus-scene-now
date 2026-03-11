@@ -237,6 +237,7 @@ export const ReservationSuccess = () => {
         <div className="space-y-4 w-full">
           <SuccessQRCard
             type="event_reservation"
+            shareViewType={hasGuestTickets ? "ticket" : "reservation"}
             qrToken={hasGuestTickets ? currentTicket?.qr_code_token || "" : reservationData.qr_code_token}
             title={reservationData.event_title}
             businessName={reservationData.business_name}

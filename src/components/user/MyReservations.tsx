@@ -107,17 +107,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   useEffect(() => {
     fetchReservations();
-    const channel = supabase.
-    channel('my_reservations').
-    on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'reservations', filter: `user_id=eq.${userId}` },
-      () => fetchReservations()
-    ).
-    subscribe();
+
+    const reservationsChannel = supabase
+      .channel('my_reservations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations', filter: `user_id=eq.${userId}` },
+        () => fetchReservations()
+      )
+      .subscribe();
+
+    const ticketOrdersChannel = supabase
+      .channel('my_reservation_ticket_orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ticket_orders', filter: `user_id=eq.${userId}` },
+        () => {
+          window.setTimeout(() => {
+            fetchReservations();
+          }, 500);
+        }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(reservationsChannel);
+      supabase.removeChannel(ticketOrdersChannel);
     };
   }, [userId]);
 

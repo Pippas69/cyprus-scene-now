@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
     // ============================================================
     const { data: pendingReservations, error: resError } = await supabaseClient
       .from("reservations")
-      .select("id, stripe_payment_intent_id, status, prepaid_charge_status")
+      .select("id, event_id, stripe_payment_intent_id, status, prepaid_charge_status")
       .eq("prepaid_charge_status", "pending")
       .not("stripe_payment_intent_id", "is", null)
       .lt("created_at", cutoffTime)
@@ -311,9 +311,8 @@ Deno.serve(async (req) => {
           const paymentIntent = await stripe.paymentIntents.retrieve(res.stripe_payment_intent_id);
 
           if (paymentIntent.status === "succeeded") {
-            logStep("Found paid but unprocessed reservation", { reservationId: res.id });
+            logStep("Found paid but unprocessed reservation", { reservationId: res.id, eventId: res.event_id });
 
-            // Directly update the reservation since we know payment succeeded
             const { error: updateError } = await supabaseClient
               .from("reservations")
               .update({
@@ -326,6 +325,31 @@ Deno.serve(async (req) => {
             if (updateError) {
               results.errors.push(`Reservation ${res.id}: ${updateError.message}`);
             } else {
+              if (res.event_id) {
+                let checkoutSession: Stripe.Checkout.Session | null = null;
+
+                try {
+                  const sessionList = await stripe.checkout.sessions.list({
+                    payment_intent: res.stripe_payment_intent_id,
+                    limit: 1,
+                  } as any);
+
+                  checkoutSession = sessionList.data?.[0] ?? null;
+                } catch (sessionLookupError) {
+                  logStep("Failed to lookup checkout session during reservation reconciliation", {
+                    reservationId: res.id,
+                    error: sessionLookupError instanceof Error ? sessionLookupError.message : String(sessionLookupError),
+                  });
+                }
+
+                await ensureReservationEventGuestTickets({
+                  supabaseClient,
+                  reservationId: res.id,
+                  paymentIntentId: res.stripe_payment_intent_id,
+                  session: checkoutSession,
+                });
+              }
+
               results.reservations_reconciled++;
             }
           }
