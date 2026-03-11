@@ -43,6 +43,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         list: 'Διαχείριση',
         selectEvent: 'Επιλέξτε εκδήλωση',
         directReservations: 'Κρατήσεις',
+        events: 'Εκδηλώσεις',
       },
       en: {
         reservations: 'Reservations',
@@ -51,6 +52,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         list: 'Reservation List',
         selectEvent: 'Select event',
         directReservations: 'Reservations',
+        events: 'Events',
       }
     }),
     []
