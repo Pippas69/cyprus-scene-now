@@ -510,7 +510,7 @@ export const ReservationSlotManager = ({
                           {formatTimeRange(slot.timeFrom, slot.timeTo)}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="inline-flex items-center gap-1 text-[10px] text-primary font-medium">
+                          <span className="inline-flex items-center gap-1 font-medium text-[sidebar-accent-foreground] text-neutral-300">
                             <Users className="h-2.5 w-2.5" />
                             {t.slotCapacity}: {slot.capacity}
                           </span>
