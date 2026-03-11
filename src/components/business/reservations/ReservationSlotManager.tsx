@@ -55,8 +55,8 @@ export const ReservationSlotManager = ({
       enableDescriptionSub: '(Προφίλ & Προσφορές)',
       paused: 'Προσωρινή Παύση',
       pausedDescription: 'Οι κρατήσεις είναι προσωρινά κλειστές',
-      timeSlots: 'Χρονικά Slots Κρατήσεων',
-      timeSlotsDescription: 'Κάθε slot είναι ένα χρονικό παράθυρο (Από-Έως) με δική του χωρητικότητα και ημέρες λειτουργίας',
+      timeSlots: 'Διαχείριση Κρατήσεων',
+      timeSlotsDescription: 'Ρυθμίστε τα χρονικά παράθυρα και τη διαθεσιμότητα',
       slotFrom: 'Από',
       slotTo: 'Έως',
       slotCapacity: 'Χωρητικότητα',
@@ -111,8 +111,8 @@ export const ReservationSlotManager = ({
       enableDescriptionSub: '(Profile & Offers)',
       paused: 'Temporarily Paused',
       pausedDescription: 'Reservations are temporarily closed',
-      timeSlots: 'Reservation Time Slots',
-      timeSlotsDescription: 'Each slot is a time window (From-To) with its own capacity and active days',
+      timeSlots: 'Reservation Management',
+      timeSlotsDescription: 'Configure time windows and availability',
       slotFrom: 'From',
       slotTo: 'To',
       slotCapacity: 'Capacity',
@@ -431,38 +431,32 @@ export const ReservationSlotManager = ({
   // Check if there are SAVED time slots in database (not just local unsaved ones)
   const hasSavedTimeSlots = savedSlotsCount > 0;
   const canEnableReservations = hasSavedTimeSlots;
-  return <div className="space-y-4 sm:space-y-6">
-      {/* Main Toggle */}
-      <Card>
-        <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 lg:pt-6 lg:pb-6">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex-1 min-w-0 pr-12 sm:pr-14">
-              <Label htmlFor="enable-reservations" className="text-[11px] sm:text-sm lg:text-base font-semibold whitespace-nowrap">
-                {t.enableReservations}
-              </Label>
-              <p className="text-[10px] sm:text-xs lg:text-sm text-muted-foreground whitespace-nowrap">
-                {t.enableDescription}
+  return <div className="space-y-5">
+      {/* Accept Reservations Toggle */}
+      <div className="relative rounded-2xl border border-border/20 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-md p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
+              {t.enableReservations}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t.enableDescription}
+            </p>
+            {!canEnableReservations && !settings.accepts_direct_reservations && (
+              <p className="text-[10px] sm:text-xs text-destructive mt-1.5 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                {t.noSlotsToEnableWarning}
               </p>
-              {/* Show warning if trying to enable without slots */}
-              {!canEnableReservations && !settings.accepts_direct_reservations && <p className="text-[8px] sm:text-[9px] md:text-[10px] text-orange-600 mt-1.5 flex items-center gap-1 whitespace-nowrap ml-0 sm:-ml-4 md:ml-0">
-                  <span className="whitespace-nowrap">{t.noSlotsToEnableWarning}</span>
-                </p>}
-            </div>
-            <Switch id="enable-reservations" className="flex-shrink-0 scale-75 md:scale-90 lg:scale-100" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
-            // Prevent enabling if no slots exist
+            )}
+          </div>
+          <Switch id="enable-reservations" checked={settings.accepts_direct_reservations} disabled={!canEnableReservations && !settings.accepts_direct_reservations} onCheckedChange={async checked => {
             if (checked && !canEnableReservations) {
               toast.error(t.noSlotsToEnableWarning);
               return;
             }
-            setSettings(prev => ({
-              ...prev,
-              accepts_direct_reservations: checked
-            }));
-            // Auto-save immediately for this toggle
+            setSettings(prev => ({ ...prev, accepts_direct_reservations: checked }));
             try {
-              const {
-                error
-              } = await supabase.from('businesses').update({
+              const { error } = await supabase.from('businesses').update({
                 accepts_direct_reservations: checked,
                 updated_at: new Date().toISOString()
               }).eq('id', businessId);
@@ -471,233 +465,188 @@ export const ReservationSlotManager = ({
             } catch (error) {
               console.error('Error updating reservations status:', error);
               toast.error(t.error);
-              // Revert on error
-              setSettings(prev => ({
-                ...prev,
-                accepts_direct_reservations: !checked
-              }));
+              setSettings(prev => ({ ...prev, accepts_direct_reservations: !checked }));
             }
           }} />
+        </div>
+      </div>
+
+      {/* Time Slots — Premium Section */}
+      <div className="relative rounded-2xl border border-border/20 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-md shadow-sm overflow-hidden">
+        {/* Section Header */}
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
+                {t.timeSlots}
+              </h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t.timeSlotsDescription}</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Time Slots - Always visible so user can configure before enabling */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-4">
-          <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base whitespace-nowrap">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.timeSlots}
-          </CardTitle>
-          <CardDescription className="text-[10px] sm:text-xs">{t.timeSlotsDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed">
-              <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground px-4">{t.noSlotsWarning}</p>
-            </div>}
+        {/* Slots List */}
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-2.5">
+          {(!settings.reservation_time_slots || settings.reservation_time_slots.length === 0) && (
+            <div className="text-center py-10 rounded-xl border border-dashed border-border/30 bg-muted/5">
+              <div className="h-12 w-12 rounded-2xl bg-muted/20 flex items-center justify-center mx-auto mb-3">
+                <Clock className="h-6 w-6 text-muted-foreground/40" />
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t.noSlotsWarning}</p>
+            </div>
+          )}
 
-              {sortedSlots.map(slot => <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
-                  <Card className="border-2">
-                    <CollapsibleTrigger asChild>
-                      <div className="p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            {/* Time row with icon */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="h-6 w-6 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
-                                <Clock className="h-3 w-3 text-muted-foreground" />
-                              </div>
-                              <span className="font-medium text-sm sm:text-base">
-                                {formatTimeRange(slot.timeFrom, slot.timeTo)}
-                              </span>
-                            </div>
-                            
-                            {/* Badges row - Desktop: badges + days on same line */}
-                            <div className="hidden lg:flex items-center gap-2">
-                              <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-xs px-2.5 py-0.5">
-                                <Users className="h-3 w-3 mr-1" />
-                                {t.slotCapacity}: {slot.capacity}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs px-2.5 py-0.5 border-border">
-                                <Users className="h-3 w-3 mr-1" />
-                                {t.slotMaxPartySize}: {slot.maxPartySize}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground ml-1">
-                                {getDaysLabel(slot.days)}
-                              </span>
-                            </div>
-                            
-                            {/* Badges row - Tablet: badges on one line, days below */}
-                            <div className="hidden sm:block lg:hidden">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-xs px-2 py-0.5">
-                                  <Users className="h-3 w-3 mr-1" />
-                                  {t.slotCapacity}: {slot.capacity}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs px-2 py-0.5 border-border">
-                                  <Users className="h-3 w-3 mr-1" />
-                                  {t.slotMaxPartySize}: {slot.maxPartySize}
-                                </Badge>
-                              </div>
-                              <span className="text-xs text-muted-foreground mt-1.5 block">
-                                {getDaysLabel(slot.days)}
-                              </span>
-                            </div>
-                            
-                            {/* Badges row - Mobile: all on same line */}
-                            <div className="sm:hidden">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge className="bg-destructive/15 text-destructive hover:bg-destructive/20 border-0 text-[10px] px-2 py-0.5">
-                                  <Users className="h-2.5 w-2.5 mr-0.5" />
-                                  {t.slotCapacity}: {slot.capacity}
-                                </Badge>
-                                <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-border">
-                                  <Users className="h-2.5 w-2.5 mr-0.5" />
-                                  {t.slotMaxPartySize}: {slot.maxPartySize}
-                                </Badge>
-                                <span className="text-[10px] text-muted-foreground">
-                                  {getDaysLabel(slot.days)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Chevron on right */}
-                          <div className="flex items-center flex-shrink-0 mt-1">
-                            {slot.days.length === 0 && <Badge variant="destructive" className="text-[9px] sm:text-xs hidden sm:flex mr-2">
-                                <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                                {t.noDaysWarning}
-                              </Badge>}
-                            {expandedSlots[slot.id] ? <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />}
-                          </div>
+          {sortedSlots.map(slot => (
+            <Collapsible key={slot.id} open={expandedSlots[slot.id] ?? false} onOpenChange={() => toggleSlotExpanded(slot.id)}>
+              <div className="rounded-xl border border-border/20 bg-background/40 backdrop-blur-sm overflow-hidden transition-all hover:border-border/40">
+                <CollapsibleTrigger asChild>
+                  <div className="px-4 py-3.5 cursor-pointer transition-colors group">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/12 transition-colors">
+                          <Clock className="h-4 w-4 text-primary" />
                         </div>
-                      </div>
-                    </CollapsibleTrigger>
-                    
-                    <CollapsibleContent>
-                      <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t space-y-3 sm:space-y-4">
-                        {/* Time Range */}
-                        <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                          <div>
-                            <Label className="text-[10px] sm:text-sm font-medium">{t.slotFrom}</Label>
-                            <Input type="time" value={slot.timeFrom} onChange={e => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1 h-8 sm:h-10 text-[11px] sm:text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-[10px] sm:text-sm font-medium">{t.slotTo}</Label>
-                            <Input type="time" value={slot.timeTo} onChange={e => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1 h-8 sm:h-10 text-[11px] sm:text-sm" />
-                          </div>
-                        </div>
-
-                        {/* Capacity */}
-                        <div>
-                          <Label className="text-[10px] sm:text-sm font-medium">{t.slotCapacity}</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <NumberInput value={slot.capacity} onChange={value => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm" />
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
-                              {language === 'el' ? 'μέγιστες κρατήσεις' : 'max reservations'}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm sm:text-[15px] text-foreground">
+                            {formatTimeRange(slot.timeFrom, slot.timeTo)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-primary font-medium bg-primary/8 px-2 py-0.5 rounded-md">
+                              <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                              {t.slotCapacity}: {slot.capacity}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground font-medium bg-muted/30 px-2 py-0.5 rounded-md">
+                              <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                              Max: {slot.maxPartySize}
+                            </span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
+                              {getDaysLabel(slot.days)}
                             </span>
                           </div>
-                        </div>
-
-                        {/* Max party size per reservation */}
-                        <div>
-                          <Label className="text-[10px] sm:text-sm font-medium">{t.slotMaxPartySize}</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <NumberInput value={slot.maxPartySize} onChange={value => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="max-w-[120px] h-8 sm:h-10 text-[11px] sm:text-sm" />
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-[11px] sm:text-sm text-muted-foreground whitespace-nowrap">
-                              {language === 'el' ? 'άτομα ανά κράτηση' : 'people per reservation'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Days Selection */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-sm font-medium">{t.slotDays}</Label>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => applySlotToAllDays(slot.id)} className="text-xs h-7">
-                              {t.copyToAllDays}
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                            {DAYS.map(day => {
-                      const isSelected = slot.days.includes(day);
-                      return <button key={day} type="button" onClick={() => toggleSlotDay(slot.id, day)} className={`
-                                    py-2 px-1 rounded-lg text-xs font-medium transition-all
-                                    ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'}
-                                  `}>
-                                  {dayShortTranslations[day]}
-                                </button>;
-                    })}
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center justify-between pt-2 border-t gap-2">
-                          <Button type="button" variant="outline" size="sm" onClick={() => duplicateSlot(slot)} className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3">
-                            <Copy className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
-                            {t.copySlot}
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => removeTimeSlot(slot.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3">
-                            <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
-                            <span className="hidden sm:inline">{t.removeSlot}</span>
-                            <span className="sm:hidden">{language === 'el' ? 'Διαγραφή' : 'Delete'}</span>
-                          </Button>
+                          <span className="text-[10px] text-muted-foreground sm:hidden mt-0.5 block">
+                            {getDaysLabel(slot.days)}
+                          </span>
                         </div>
                       </div>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>)}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {slot.days.length === 0 && (
+                          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-2 py-0.5 rounded-md font-medium">
+                            <AlertTriangle className="h-2.5 w-2.5" />
+                            {t.noDaysWarning}
+                          </span>
+                        )}
+                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expandedSlots[slot.id] ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
 
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <Button type="button" variant="outline" onClick={addTimeSlot} className="flex-1 sm:flex-none h-8 sm:h-9 md:h-10 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">
-                  <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2" />
-                  {t.addSlot}
-                </Button>
-                <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="flex-1 sm:flex-none h-8 sm:h-9 md:h-10 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 md:px-4">
-                  {saving ? <>
-                    <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2 animate-spin" />
-                    <span className="hidden sm:inline">{t.saving}</span>
-                    <span className="sm:hidden">{language === 'el' ? 'Αποθήκ...' : 'Saving...'}</span>
-                  </> : <>
-                    <Save className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 mr-1 sm:mr-1.5 md:mr-2" />
-                    <span className="hidden sm:inline">{t.save}</span>
-                    <span className="sm:hidden">{language === 'el' ? 'Αποθήκευση' : 'Save'}</span>
-                  </>}
-                </Button>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4 pt-1 border-t border-border/15 space-y-4">
+                    {/* Time Range */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotFrom}</Label>
+                        <Input type="time" value={slot.timeFrom} onChange={e => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotTo}</Label>
+                        <Input type="time" value={slot.timeTo} onChange={e => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
+                      </div>
+                    </div>
+
+                    {/* Capacity & Max Party */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotCapacity}</Label>
+                        <NumberInput value={slot.capacity} onChange={value => updateTimeSlot(slot.id, 'capacity', value)} min={1} max={999} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotMaxPartySize}</Label>
+                        <NumberInput value={slot.maxPartySize} onChange={value => updateTimeSlot(slot.id, 'maxPartySize', value)} min={1} max={50} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm" />
+                      </div>
+                    </div>
+
+                    {/* Days Selection */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotDays}</Label>
+                        <button type="button" onClick={() => applySlotToAllDays(slot.id)} className="text-[10px] sm:text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+                          {t.copyToAllDays}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1.5">
+                        {DAYS.map(day => {
+                          const isSelected = slot.days.includes(day);
+                          return <button key={day} type="button" onClick={() => toggleSlotDay(slot.id, day)} className={`py-2 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40'}`}>
+                            {dayShortTranslations[day]}
+                          </button>;
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Slot Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-border/15">
+                      <button type="button" onClick={() => duplicateSlot(slot)} className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                        <Copy className="h-3 w-3" />
+                        {t.copySlot}
+                      </button>
+                      <button type="button" onClick={() => removeTimeSlot(slot.id)} className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-medium text-destructive hover:text-destructive/80 transition-colors">
+                        <Trash2 className="h-3 w-3" />
+                        {t.removeSlot}
+                      </button>
+                    </div>
+                  </div>
+                </CollapsibleContent>
               </div>
-            </CardContent>
-          </Card>
+            </Collapsible>
+          ))}
 
-      {settings.accepts_direct_reservations && <>
-          {/* Seating Options */}
-          <Card>
-            <CardHeader className="pb-2 sm:pb-4">
-              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm lg:text-base">
-                <Armchair className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                {t.seatingOptions}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {settings.reservation_seating_options.length === 0 && <p className="text-[10px] sm:text-sm text-orange-600 mb-3 flex items-center gap-1.5 sm:gap-2">
-                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t.noSeatingSelected}
-                </p>}
-              <div className="flex flex-wrap gap-3 sm:gap-4">
-                <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
-                  <Checkbox checked={settings.reservation_seating_options.includes('indoor')} onCheckedChange={() => toggleSeating('indoor')} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="text-[11px] sm:text-sm">{t.indoor}</span>
-                </label>
-                <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
-                  <Checkbox checked={settings.reservation_seating_options.includes('outdoor')} onCheckedChange={() => toggleSeating('outdoor')} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="text-[11px] sm:text-sm">{t.outdoor}</span>
-                </label>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Bottom Actions */}
+          <div className="flex items-center gap-2.5 pt-2">
+            <Button type="button" variant="outline" onClick={addTimeSlot} className="h-9 sm:h-10 text-xs sm:text-sm px-4 rounded-xl border-border/30 hover:bg-card/50">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              {t.addSlot}
+            </Button>
+            <Button onClick={handleSave} disabled={saving || !hasValidConfig} className="h-9 sm:h-10 text-xs sm:text-sm px-5 rounded-xl shadow-sm">
+              {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+              {saving ? t.saving : t.save}
+            </Button>
+          </div>
+        </div>
+      </div>
 
-        </>}
+      {/* Seating Options */}
+      {settings.accepts_direct_reservations && (
+        <div className="relative rounded-2xl border border-border/20 bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-md p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Armchair className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
+              {t.seatingOptions}
+            </h3>
+          </div>
+          {settings.reservation_seating_options.length === 0 && (
+            <p className="text-xs text-destructive mb-3 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {t.noSeatingSelected}
+            </p>
+          )}
+          <div className="flex gap-3">
+            {['indoor', 'outdoor'].map(option => {
+              const isSelected = settings.reservation_seating_options.includes(option);
+              return (
+                <button key={option} type="button" onClick={() => toggleSeating(option)} className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all ${isSelected ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/40 border border-border/20'}`}>
+                  {option === 'indoor' ? t.indoor : t.outdoor}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>;
 };
