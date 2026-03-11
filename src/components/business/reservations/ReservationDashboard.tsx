@@ -145,13 +145,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
       setEvents(options);
 
-      if (!selectedEventId || !options.find((e) => e.id === selectedEventId)) {
+      if (!selectedEventIdRef.current || !options.find((e) => e.id === selectedEventIdRef.current)) {
         setSelectedEventId(options[0]?.id || null);
       }
     } catch (error) {
       console.error('Error fetching reservation dashboard events:', error);
     }
-  }, [isTicketLinked, businessId, selectedEventId]);
+  }, [isTicketLinked, businessId]);
 
   useEffect(() => {
     fetchEvents();
