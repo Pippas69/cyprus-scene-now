@@ -115,6 +115,8 @@ function AppContent() {
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
           <Route path="/ticket-success" element={<PageTransition><TicketSuccess /></PageTransition>} />
           <Route path="/ticket-view/:token" element={<PageTransition><TicketView /></PageTransition>} />
+          <Route path="/reservation-view/:token" element={<PageTransition><ReservationView /></PageTransition>} />
+          <Route path="/offer-view/:token" element={<PageTransition><OfferView /></PageTransition>} />
           <Route path="/reservation-success" element={<PageTransition><ReservationSuccess /></PageTransition>} />
           <Route path="/offer-purchase-success" element={<PageTransition><OfferPurchaseSuccess /></PageTransition>} />
           
