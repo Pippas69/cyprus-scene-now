@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, RefreshCw, Edit2, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 
@@ -25,13 +25,16 @@ interface SlotAvailability {
 }
 
 export const ReservationStaffControls = ({ businessId, language }: ReservationStaffControlsProps) => {
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [acceptsReservations, setAcceptsReservations] = useState<boolean | null>(null);
   const [globallyPaused, setGloballyPaused] = useState<boolean | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [updatingSlot, setUpdatingSlot] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<string>('');
+  const mountedRef = useRef(true);
 
   const t = language === 'el' ? {
     title: 'Διαχείριση Διαθεσιμότητας',
@@ -44,6 +47,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     slotClosed: 'Το slot έκλεισε',
     slotOpened: 'Το slot άνοιξε',
     error: 'Σφάλμα',
+    saved: 'Αποθηκεύτηκε!',
   } : {
     title: 'Availability Management',
     refresh: 'Refresh',
@@ -55,20 +59,15 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     slotClosed: 'Slot closed',
     slotOpened: 'Slot opened',
     error: 'Error',
+    saved: 'Saved!',
   };
 
   useEffect(() => {
-    fetchData();
-  }, [businessId, selectedDate]);
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
-  // Auto-refresh every 15 seconds
-  useEffect(() => {
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, [businessId, selectedDate]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (isBackground = false) => {
     try {
       const { data: business, error: businessError } = await supabase
         .from('businesses')
@@ -77,6 +76,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
         .maybeSingle();
 
       if (businessError) console.error('Error fetching business reservation flags:', businessError);
+      if (!mountedRef.current) return;
 
       const accepts = business?.accepts_direct_reservations === true;
       const paused = business?.reservations_globally_paused === true;
@@ -94,6 +94,8 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
         p_date: formattedDate,
       });
 
+      if (!mountedRef.current) return;
+
       if (error) {
         console.error('Error fetching slots:', error);
         setSlots([]);
@@ -107,13 +109,28 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      setLoading(false);
+      if (mountedRef.current && !isBackground) {
+        setInitialLoading(false);
+      }
     }
-  };
+  }, [businessId, selectedDate]);
+
+  // Initial load
+  useEffect(() => {
+    setInitialLoading(true);
+    fetchData(false);
+  }, [businessId, selectedDate]);
+
+  // Background auto-refresh every 30 seconds (no loading spinner)
+  useEffect(() => {
+    if (editingSlot) return; // Pause refresh while editing
+    const interval = setInterval(() => fetchData(true), 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, editingSlot]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   };
 
@@ -139,12 +156,66 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
         toast.success(t.slotClosed);
       }
 
-      await fetchData();
+      await fetchData(true);
     } catch (error) {
       console.error('Error toggling slot:', error);
       toast.error(t.error);
     } finally {
       setUpdatingSlot(null);
+    }
+  };
+
+  const startEditCapacity = (slotTime: string, currentCapacity: number) => {
+    setEditingSlot(slotTime);
+    setEditDraft(String(currentCapacity));
+  };
+
+  const cancelEdit = () => {
+    setEditingSlot(null);
+    setEditDraft('');
+  };
+
+  const saveCapacityEdit = async (slotTime: string) => {
+    const newVal = parseInt(editDraft, 10);
+    if (isNaN(newVal) || newVal < 1) {
+      cancelEdit();
+      return;
+    }
+
+    try {
+      // Update capacity in reservation_time_slots JSON on the business
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('reservation_time_slots')
+        .eq('id', businessId)
+        .single();
+
+      if (business?.reservation_time_slots && Array.isArray(business.reservation_time_slots)) {
+        const updatedSlots = (business.reservation_time_slots as any[]).map((slot: any) => {
+          const slotTimeFrom = slot.timeFrom || slot.time;
+          if (slotTimeFrom === slotTime) {
+            return { ...slot, capacity: newVal };
+          }
+          return slot;
+        });
+
+        const { error } = await supabase
+          .from('businesses')
+          .update({
+            reservation_time_slots: JSON.parse(JSON.stringify(updatedSlots)),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', businessId);
+
+        if (error) throw error;
+        toast.success(t.saved);
+        await fetchData(true);
+      }
+    } catch (error) {
+      console.error('Error updating capacity:', error);
+      toast.error(t.error);
+    } finally {
+      cancelEdit();
     }
   };
 
@@ -154,7 +225,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     { locale: language === 'el' ? el : enUS }
   );
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -166,7 +237,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
     <div className="rounded-xl border border-border/30 bg-card/40 backdrop-blur-sm p-4 sm:p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold italic text-foreground">
+        <h2 className="text-base sm:text-lg font-bold text-foreground">
           {t.title}
         </h2>
         <Button
@@ -219,6 +290,7 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
             const timeDisplay = slot.time_from && slot.time_to
               ? `${slot.time_from} - ${slot.time_to}`
               : slot.slot_time;
+            const isEditing = editingSlot === slot.slot_time;
 
             return (
               <div
@@ -233,11 +305,43 @@ export const ReservationStaffControls = ({ businessId, language }: ReservationSt
                   <p className={`font-semibold text-sm sm:text-base ${slot.is_closed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                     {timeDisplay}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {slot.booked}/ {slot.capacity}
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <span>{slot.booked}/</span>
+                    {isEditing ? (
+                      <div className="inline-flex items-center gap-1">
+                        <input
+                          value={editDraft}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === '' || /^\d+$/.test(v)) setEditDraft(v);
+                          }}
+                          className="h-5 w-14 text-xs px-1 rounded border border-input bg-background text-center focus:outline-none focus:ring-1 focus:ring-ring"
+                          inputMode="numeric"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveCapacityEdit(slot.slot_time);
+                            if (e.key === 'Escape') cancelEdit();
+                          }}
+                        />
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => saveCapacityEdit(slot.slot_time)}>
+                          <Check className="h-3 w-3 text-green-600" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={cancelEdit}>
+                          <X className="h-3 w-3 text-red-500" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span
+                        className="cursor-pointer hover:underline inline-flex items-center gap-0.5"
+                        onClick={() => startEditCapacity(slot.slot_time, slot.capacity)}
+                      >
+                        {slot.capacity}
+                        <Edit2 className="h-2.5 w-2.5 opacity-50" />
+                      </span>
+                    )}
                     <span className="mx-1">—</span>
-                    {slot.available} {t.available}
-                  </p>
+                    <span>{slot.available} {t.available}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {updatingSlot === slot.slot_time ? (
