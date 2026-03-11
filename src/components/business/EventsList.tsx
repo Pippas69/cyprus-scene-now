@@ -60,6 +60,18 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
+  // Check if business is a performance type
+  const { data: businessCatData } = useQuery({
+    queryKey: ["business-categories", businessId],
+    queryFn: async () => {
+      const { data } = await supabase.from('businesses').select('category').eq('id', businessId).maybeSingle();
+      return data;
+    },
+    enabled: !!businessId,
+    staleTime: 60_000,
+  });
+  const isPerformance = isPerformanceBusiness(businessCatData?.category || []);
+
   // Fetch subscription status
   const { data: subscriptionData } = useQuery({
     queryKey: ["subscription-status"],
