@@ -581,7 +581,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ? ticketOnlyOrders.filter((o) => isSameDay(o.created_at)).length
       : reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
     checkedIn: isTicketOnlyMode
-      ? ticketOnlyOrders.filter((o) => o.tickets?.some((t: any) => t.status === 'used')).length
+      ? ticketOnlyOrders.filter((o) => o.tickets_used > 0).length
       : reservations.filter((r) => Boolean(r.checked_in_at)).length
   };
 
