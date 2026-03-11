@@ -28,6 +28,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [isPerformance, setIsPerformance] = useState(false);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const selectedEventIdRef = useRef<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
 
   const text = useMemo(
