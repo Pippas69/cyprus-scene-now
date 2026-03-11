@@ -352,7 +352,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
     <>
       {/* Header with title only - scanner removed, use Unified QR Scanner in dashboard header */}
       <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
-        <h1 className="text-2xl font-bold">{t.title}</h1>
+        <h1 className="text-2xl font-bold">{isPerformance ? (language === 'el' ? 'Παραστάσεις' : 'Productions') : t.title}</h1>
 
         {/* Expired toggle (same placement/behavior as Offers) */}
         {expiredEvents.length > 0 &&
