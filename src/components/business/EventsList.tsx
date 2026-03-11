@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
 import EventEditForm from "./EventEditForm";
+import ProductionEditForm from "./productions/ProductionEditForm";
+import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import EventBoostDialog from "./EventBoostDialog";
 import { BoostPerformanceDialog } from "./BoostPerformanceDialog";
 import { useEventActiveBoost } from "@/hooks/useBoostAnalytics";
