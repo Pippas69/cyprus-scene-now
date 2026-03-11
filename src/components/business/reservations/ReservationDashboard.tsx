@@ -65,8 +65,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         return;
       }
 
-      const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
+      const categories = data?.category || [];
+      const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(categories);
       setIsTicketLinked(linked);
+      setIsPerformance(isPerformanceBusiness(categories));
     };
     checkLinked();
   }, [businessId]);
