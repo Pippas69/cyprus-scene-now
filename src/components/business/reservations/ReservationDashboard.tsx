@@ -357,7 +357,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               </SelectTrigger>
               <SelectContent className="rounded-lg">
                 <SelectItem value="__direct__" className="text-sm rounded-md">
-                  <span className="text-sm">{t.directReservations}</span>
+                  <span className="text-sm">{t.events}</span>
                 </SelectItem>
                 {diningEvents.map((event) => {
                   const dateStr = new Date(event.start_at).toLocaleDateString(
