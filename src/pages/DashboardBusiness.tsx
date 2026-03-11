@@ -330,7 +330,15 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
             style={{ WebkitOverflowScrolling: 'touch', willChange: 'scroll-position' }}
           >
             <Routes>
-              <Route index element={<Navigate to="/dashboard-business/events" replace />} />
+              <Route index element={
+                (() => {
+                  const normalizedCats = businessCategories.map(c => c.toLowerCase());
+                  const noOffersCats = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
+                  const isDiningBar = !normalizedCats.some(c => noOffersCats.includes(c));
+                  const defaultPath = isDiningBar ? '/dashboard-business/reservations' : '/dashboard-business/events';
+                  return <Navigate to={defaultPath} replace />;
+                })()
+              } />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostsList businessId={businessId} language={language} /></div> : null} />
