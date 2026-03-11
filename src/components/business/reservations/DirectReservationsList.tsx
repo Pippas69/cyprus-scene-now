@@ -210,7 +210,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (bizError) throw bizError;
 
-      const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []);
+      const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []) || !!forceEventMode;
 
       let query = supabase.
       from('reservations').
