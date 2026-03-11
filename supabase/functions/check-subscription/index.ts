@@ -74,9 +74,14 @@ Deno.serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError || !userData?.user?.id || !userData?.user?.email) {
+      logStep('Auth failed, returning unsubscribed', { error: userError?.message });
+      return new Response(JSON.stringify({ subscribed: false, plan_slug: 'free' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
     const user = userData.user;
-    if (!user?.id || !user?.email) throw new Error('User not authenticated or email not available');
     const userId = user.id;
     const userEmail = user.email;
     logStep('User authenticated', { userId, email: userEmail });
