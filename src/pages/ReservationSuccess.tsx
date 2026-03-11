@@ -127,53 +127,55 @@ export const ReservationSuccess = () => {
 
         setReservationData(baseReservationData);
 
-        // Fetch individual guest QR codes (tickets) linked to this reservation
-        // (works for reservation-only & hybrid events).
-        const { data: orders, error: ordersError } = await supabase
-          .from("ticket_orders")
-          .select("id")
-          .eq("linked_reservation_id", reservationId);
+        // Fetch individual guest QR codes (tickets) linked to this reservation.
+        // Wait briefly for the payment processor to finish creating all per-guest QR records.
+        const expectedGuestCount = Math.max(baseReservationData.party_size || 0, 0);
+        const maxAttempts = expectedGuestCount > 1 ? 7 : 2;
+        let cleanedTickets: GuestTicketData[] = [];
 
-        if (ordersError) {
-          console.warn("Ticket orders fetch error:", ordersError);
-          setGuestTickets([]);
-          setCurrentGuestIndex(0);
-          setStatus("success");
-          return;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          const { data: orders, error: ordersError } = await supabase
+            .from("ticket_orders")
+            .select("id")
+            .eq("linked_reservation_id", reservationId);
+
+          if (ordersError) {
+            console.warn("Ticket orders fetch error:", ordersError);
+          } else {
+            const orderIds = (orders || []).map((o) => o.id);
+
+            if (orderIds.length > 0) {
+              const { data: tickets, error: ticketsError } = await supabase
+                .from("tickets")
+                .select("id, guest_name, guest_age, qr_code_token, created_at, order_id")
+                .in("order_id", orderIds)
+                .order("created_at", { ascending: true });
+
+              if (ticketsError) {
+                console.warn("Guest tickets fetch error:", ticketsError);
+              } else {
+                cleanedTickets = (tickets || [])
+                  .filter((x: any) => !!x.qr_code_token)
+                  .map(
+                    (x: any): GuestTicketData => ({
+                      id: x.id,
+                      guest_name: x.guest_name ?? null,
+                      guest_age: x.guest_age ?? null,
+                      qr_code_token: x.qr_code_token,
+                    })
+                  );
+
+                if (expectedGuestCount <= 1 || cleanedTickets.length >= expectedGuestCount) {
+                  break;
+                }
+              }
+            }
+          }
+
+          if (attempt < maxAttempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1200));
+          }
         }
-
-        const orderIds = (orders || []).map((o) => o.id);
-        if (orderIds.length === 0) {
-          setGuestTickets([]);
-          setCurrentGuestIndex(0);
-          setStatus("success");
-          return;
-        }
-
-        const { data: tickets, error: ticketsError } = await supabase
-          .from("tickets")
-          .select("id, guest_name, guest_age, qr_code_token, created_at, order_id")
-          .in("order_id", orderIds)
-          .order("created_at", { ascending: true });
-
-        if (ticketsError) {
-          console.warn("Guest tickets fetch error:", ticketsError);
-          setGuestTickets([]);
-          setCurrentGuestIndex(0);
-          setStatus("success");
-          return;
-        }
-
-        const cleanedTickets = (tickets || [])
-          .filter((x: any) => !!x.qr_code_token)
-          .map(
-            (x: any): GuestTicketData => ({
-              id: x.id,
-              guest_name: x.guest_name ?? null,
-              guest_age: x.guest_age ?? null,
-              qr_code_token: x.qr_code_token,
-            })
-          );
 
         setGuestTickets(cleanedTickets);
         setCurrentGuestIndex(0);
