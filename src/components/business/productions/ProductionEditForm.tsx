@@ -85,6 +85,12 @@ const translations = {
     success: "Η παράσταση ενημερώθηκε επιτυχώς!",
     failed: "Αποτυχία ενημέρωσης",
     loading: "Φόρτωση...",
+    startDate: "Ημερομηνία & Ώρα Έναρξης",
+    endDate: "Ημερομηνία & Ώρα Λήξης",
+    location: "Τοποθεσία / Διεύθυνση",
+    venueName: "Όνομα Χώρου",
+    locationPlaceholder: "π.χ. Λεωφ. Ανδρέα Παπανδρέου 12, Αθήνα",
+    venuePlaceholder: "π.χ. Θέατρο Παλλάς",
   },
   en: {
     editProduction: "Edit Production",
