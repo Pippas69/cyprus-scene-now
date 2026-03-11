@@ -61,8 +61,8 @@ export const DirectReservationSettings = ({ businessId, language }: DirectReserv
     el: {
       enableReservations: 'Αποδοχή Κρατήσεων',
       enableDescription: 'Επιτρέψτε κρατήσεις μέσω ΦΟΜΟ',
-      timeSlots: 'Χρονικά Slots Κρατήσεων',
-      timeSlotsDescription: 'Κάθε slot είναι ένα χρονικό παράθυρο (Από-Έως) με δική του χωρητικότητα και ημέρες λειτουργίας',
+      timeSlots: 'Διαχείριση Κρατήσεων',
+      timeSlotsDescription: 'Ρυθμίστε τα χρονικά παράθυρα και τη διαθεσιμότητα',
       slotFrom: 'Από',
       slotTo: 'Έως',
       slotCapacity: 'Χωρητικότητα',
