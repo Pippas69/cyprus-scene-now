@@ -545,7 +545,7 @@ export const ReservationSlotManager = ({
                         <Input type="time" value={slot.timeFrom} onChange={(e) => updateTimeSlot(slot.id, 'timeFrom', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                       <div>
-                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.slotTo}</Label>
+                        <Label className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wider">{t.slotTo}</Label>
                         <Input type="time" value={slot.timeTo} onChange={(e) => updateTimeSlot(slot.id, 'timeTo', e.target.value)} className="mt-1.5 h-9 sm:h-10 text-xs sm:text-sm rounded-lg border-border/30 bg-background/60" />
                       </div>
                     </div>
