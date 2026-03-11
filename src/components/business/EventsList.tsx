@@ -595,14 +595,23 @@ const EventsList = ({ businessId }: EventsListProps) => {
       }
 
       {/* Edit Form */}
-      {editingEvent &&
-      <EventEditForm
-        event={editingEvent}
-        open={!!editingEvent}
-        onOpenChange={(open) => !open && setEditingEvent(null)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
-        }} />
+      {editingEvent && isPerformance ? (
+        <ProductionEditForm
+          event={editingEvent}
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+          }} />
+      ) : editingEvent ? (
+        <EventEditForm
+          event={editingEvent}
+          open={!!editingEvent}
+          onOpenChange={(open) => !open && setEditingEvent(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
+          }} />
+      ) : null}
 
       }
 
