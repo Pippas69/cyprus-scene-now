@@ -572,10 +572,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return format(new Date(iso), 'yyyy-MM-dd') === todayStr;
   };
 
+  const isTicketOnlyMode = selectedEventType === 'ticket';
+  const effectiveTotal = isTicketOnlyMode ? ticketOnlyOrders.length : reservations.length;
+
   const stats = {
-    total: reservations.length,
-    today: reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
-    checkedIn: reservations.filter((r) => Boolean(r.checked_in_at)).length
+    total: effectiveTotal,
+    today: isTicketOnlyMode
+      ? ticketOnlyOrders.filter((o) => isSameDay(o.created_at)).length
+      : reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
+    checkedIn: isTicketOnlyMode
+      ? ticketOnlyOrders.filter((o) => o.tickets?.some((t: any) => t.status === 'used')).length
+      : reservations.filter((r) => Boolean(r.checked_in_at)).length
   };
 
   // Report count to parent for Kaliva header
