@@ -650,7 +650,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
                             {updatingId === tt.id ?
                         <Loader2 className="h-4 w-4 animate-spin" /> :
 
-                        <Switch checked={tt.active} onCheckedChange={() => toggleTicketTier(tt.id, tt.active)} />
+                        <Switch checked={tt.active} onCheckedChange={() => toggleTicketTier(tt.id, tt.active, tt.ids)} />
                         }
                           </div>
                         </div>);
