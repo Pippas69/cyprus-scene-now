@@ -194,31 +194,28 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
 
       const seatingTypeOrder = ['table', 'vip', 'bar', 'sofa'];
 
-      const enrichedEvents: EventWithControls[] = eventsData.map((event) => ({
-        id: event.id,
-        title: event.title,
-        start_at: event.start_at,
-        seatingTypes: seatingTypes.
-        filter((st) => st.event_id === event.id).
-        sort((a, b) => {
-          const aType = (a.seating_type || '').toLowerCase();
-          const bType = (b.seating_type || '').toLowerCase();
-          const aIndex = seatingTypeOrder.indexOf(aType);
-          const bIndex = seatingTypeOrder.indexOf(bType);
+      const enrichedEvents: EventWithControls[] = eventsData.map((event) => {
+        const eventSeatingTypes = seatingTypes
+          .filter((st) => st.event_id === event.id)
+          .sort((a, b) => {
+            const aType = (a.seating_type || '').toLowerCase();
+            const bType = (b.seating_type || '').toLowerCase();
+            const aIndex = seatingTypeOrder.indexOf(aType);
+            const bIndex = seatingTypeOrder.indexOf(bType);
+            if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          })
+          .map((st) => ({
+            id: st.id,
+            seating_type: st.seating_type,
+            available_slots: st.available_slots,
+            paused: st.paused ?? false,
+            actualBooked: reservationCounts[st.id] || 0,
+            tiers: (seatingTypeTiers || []).filter((tier) => tier.seating_type_id === st.id)
+          }));
 
-          if (aIndex === -1 && bIndex === -1) return aType.localeCompare(bType);
-          if (aIndex === -1) return 1;
-          if (bIndex === -1) return -1;
-          return aIndex - bIndex;
-        }).
-        map((st) => ({
-          id: st.id,
-          seating_type: st.seating_type,
-          available_slots: st.available_slots,
-          paused: st.paused ?? false,
-          actualBooked: reservationCounts[st.id] || 0,
-          tiers: (seatingTypeTiers || []).filter((tier) => tier.seating_type_id === st.id)
-        })),
         // Aggregate ticket tiers by name to avoid duplicates
         const rawTicketTiers = walkInTicketTiers
           .filter((tt) => tt.event_id === event.id)
@@ -251,9 +248,13 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
         });
 
         return {
-          ...baseEvent,
+          id: event.id,
+          title: event.title,
+          start_at: event.start_at,
+          seatingTypes: eventSeatingTypes,
           ticketTiers: Array.from(tierAggMap.values()),
         };
+      });
 
       setEvents(enrichedEvents);
 
