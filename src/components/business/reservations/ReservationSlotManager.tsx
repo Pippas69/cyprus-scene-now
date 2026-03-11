@@ -511,7 +511,7 @@ export const ReservationSlotManager = ({
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <span className="inline-flex items-center gap-1 font-medium text-inherit text-xs">
-                            <Users className="h-2.5 w-2.5" />
+                            
                             {t.slotCapacity}: {slot.capacity}
                           </span>
                           <span className="inline-flex items-center gap-1 font-medium text-inherit text-xs">
