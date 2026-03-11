@@ -43,6 +43,9 @@ interface OfferPurchase {
     offer_image_url: string | null;
     valid_start_time: string | null;
     valid_end_time: string | null;
+    discount_type: string | null;
+    special_deal_text: string | null;
+    category: string | null;
     businesses: {
       id: string;
       name: string;
