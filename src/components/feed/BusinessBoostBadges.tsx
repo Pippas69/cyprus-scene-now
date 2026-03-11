@@ -3,8 +3,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  TooltipTrigger } from
+"@/components/ui/tooltip";
 
 interface BusinessBoostBadgesProps {
   // Legacy props (no longer used for boost badges)
@@ -22,12 +22,12 @@ interface BusinessBoostBadgesProps {
 const tooltips = {
   el: {
     student: (percent?: number | null, mode?: string | null) =>
-      `Φοιτητική έκπτωση${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "απεριόριστη" : "μια φορά"})` : ""}`,
+    `Φοιτητική έκπτωση${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "απεριόριστη" : "μια φορά"})` : ""}`
   },
   en: {
     student: (percent?: number | null, mode?: string | null) =>
-      `Student discount${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "unlimited" : "once"})` : ""}`,
-  },
+    `Student discount${percent ? ` ${percent}%` : ""}${mode ? ` (${mode === "unlimited" ? "unlimited" : "once"})` : ""}`
+  }
 } as const;
 
 export const BusinessBoostBadges = ({
@@ -35,7 +35,7 @@ export const BusinessBoostBadges = ({
   showStudentDiscount = false,
   studentDiscountPercent,
   studentDiscountMode,
-  language = "en",
+  language = "en"
 }: BusinessBoostBadgesProps) => {
   const t = tooltips[language];
   // Only show student badge when filter is active AND business has discount
@@ -52,27 +52,27 @@ export const BusinessBoostBadges = ({
   return (
     <TooltipProvider delayDuration={300}>
       {/* Plan badge - top right (only Pro and Elite) */}
-      {showPlanBadge && (
-        // NOTE: Icon-only (no plan text) by requirement.
-        <div
-          className={`absolute -top-1 -right-1 rounded-full p-0.5 ring-2 ring-background shadow-sm z-10 ${
-            isElite
-              ? "bg-gradient-to-br from-amber-400 to-yellow-600"
-              : "bg-[hsl(280,70%,58%)]"
-          }`}
-          aria-hidden
-        >
-          {isElite ? (
-            <Crown className="h-2.5 w-2.5 text-white" />
-          ) : (
-            <Star className="h-2.5 w-2.5 text-white" />
-          )}
-        </div>
-      )}
+      {showPlanBadge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      }
 
       {/* Student discount - bottom left - ONLY when filter is active */}
-      {hasStudentDiscount && (
-        <Tooltip>
+      {hasStudentDiscount &&
+      <Tooltip>
           <TooltipTrigger asChild>
             <div className="absolute -bottom-1 -left-1 bg-primary rounded-full p-0.5 ring-2 ring-background shadow-sm z-10">
               <GraduationCap className="h-3 w-3 text-primary-foreground" />
@@ -82,9 +82,9 @@ export const BusinessBoostBadges = ({
             {t.student(studentDiscountPercent, studentDiscountMode)}
           </TooltipContent>
         </Tooltip>
-      )}
-    </TooltipProvider>
-  );
+      }
+    </TooltipProvider>);
+
 };
 
 export default BusinessBoostBadges;
