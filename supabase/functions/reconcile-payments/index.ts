@@ -10,6 +10,160 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[RECONCILE-PAYMENTS] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+const buildReservationGuestsFromMetadata = (
+  metadata: Record<string, string | undefined> | null | undefined,
+  reservationName: string,
+  partySize: number,
+) => {
+  let guestsJson = metadata?.guests || "";
+
+  if (!guestsJson && metadata) {
+    const chunks: string[] = [];
+    for (let i = 0; ; i++) {
+      const chunk = metadata[`guests_${i}`];
+      if (!chunk) break;
+      chunks.push(chunk);
+    }
+    if (chunks.length > 0) guestsJson = chunks.join("");
+  }
+
+  let guests: { name: string; age: number | null }[] = [];
+
+  if (guestsJson) {
+    try {
+      const parsed = JSON.parse(guestsJson) as Array<{ name?: string; age?: number | string }>;
+      if (Array.isArray(parsed)) {
+        guests = parsed.map((guest, index) => ({
+          name: (guest?.name || "").trim() || `${reservationName || "Guest"} ${index + 1}`,
+          age:
+            typeof guest?.age === "number"
+              ? guest.age
+              : guest?.age
+                ? parseInt(String(guest.age), 10) || null
+                : null,
+        }));
+      }
+    } catch (error) {
+      logStep("Failed to parse reservation guests during reconciliation", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  if (guests.length === 0 && partySize > 0) {
+    guests = Array.from({ length: partySize }, (_, index) => ({
+      name: partySize === 1 ? reservationName || "Guest" : `${reservationName || "Guest"} ${index + 1}`,
+      age: null,
+    }));
+  }
+
+  return guests;
+};
+
+const ensureReservationEventGuestTickets = async ({
+  supabaseClient,
+  reservationId,
+  paymentIntentId,
+  session,
+}: {
+  supabaseClient: any;
+  reservationId: string;
+  paymentIntentId: string;
+  session: Stripe.Checkout.Session | null;
+}) => {
+  const { data: reservation, error: reservationError } = await supabaseClient
+    .from("reservations")
+    .select("id, event_id, user_id, reservation_name, party_size")
+    .eq("id", reservationId)
+    .single();
+
+  if (reservationError || !reservation?.event_id) {
+    throw reservationError || new Error("Reservation event context not found");
+  }
+
+  const guests = buildReservationGuestsFromMetadata(
+    session?.metadata as Record<string, string | undefined> | undefined,
+    reservation.reservation_name || "Guest",
+    reservation.party_size || 1,
+  );
+
+  const { data: existingOrder } = await supabaseClient
+    .from("ticket_orders")
+    .select("id")
+    .eq("linked_reservation_id", reservationId)
+    .maybeSingle();
+
+  let orderId = existingOrder?.id ?? null;
+
+  if (!orderId) {
+    const { data: eventData, error: eventError } = await supabaseClient
+      .from("events")
+      .select("business_id")
+      .eq("id", reservation.event_id)
+      .single();
+
+    if (eventError || !eventData?.business_id) {
+      throw eventError || new Error("Business not found for reservation event");
+    }
+
+    const { data: createdOrder, error: orderError } = await supabaseClient
+      .from("ticket_orders")
+      .insert({
+        event_id: reservation.event_id,
+        business_id: eventData.business_id,
+        user_id: reservation.user_id,
+        customer_name: guests[0]?.name || reservation.reservation_name || "Guest",
+        customer_email:
+          (session?.metadata?.customer_email || session?.customer_details?.email || "").trim() || "unknown@fomo.local",
+        status: "completed",
+        subtotal_cents: 0,
+        commission_cents: 0,
+        commission_percent: 0,
+        total_cents: 0,
+        stripe_payment_intent_id: paymentIntentId,
+        stripe_checkout_session_id: session?.id ?? null,
+        linked_reservation_id: reservationId,
+      })
+      .select("id")
+      .single();
+
+    if (orderError || !createdOrder) {
+      throw orderError || new Error("Failed to create ticket order");
+    }
+
+    orderId = createdOrder.id;
+  }
+
+  const { data: existingTickets, error: existingTicketsError } = await supabaseClient
+    .from("tickets")
+    .select("id")
+    .eq("order_id", orderId);
+
+  if (existingTicketsError) {
+    throw existingTicketsError;
+  }
+
+  const missingGuests = guests.slice(existingTickets?.length || 0);
+  if (missingGuests.length === 0) {
+    return;
+  }
+
+  const { error: ticketsError } = await supabaseClient.from("tickets").insert(
+    missingGuests.map((guest) => ({
+      order_id: orderId,
+      event_id: reservation.event_id,
+      guest_name: guest.name || "Guest",
+      guest_age: guest.age,
+      qr_code_token: crypto.randomUUID(),
+      status: "valid",
+    })),
+  );
+
+  if (ticketsError) {
+    throw ticketsError;
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -138,7 +292,7 @@ Deno.serve(async (req) => {
     // ============================================================
     const { data: pendingReservations, error: resError } = await supabaseClient
       .from("reservations")
-      .select("id, stripe_payment_intent_id, status, prepaid_charge_status")
+      .select("id, event_id, stripe_payment_intent_id, status, prepaid_charge_status")
       .eq("prepaid_charge_status", "pending")
       .not("stripe_payment_intent_id", "is", null)
       .lt("created_at", cutoffTime)
@@ -157,9 +311,8 @@ Deno.serve(async (req) => {
           const paymentIntent = await stripe.paymentIntents.retrieve(res.stripe_payment_intent_id);
 
           if (paymentIntent.status === "succeeded") {
-            logStep("Found paid but unprocessed reservation", { reservationId: res.id });
+            logStep("Found paid but unprocessed reservation", { reservationId: res.id, eventId: res.event_id });
 
-            // Directly update the reservation since we know payment succeeded
             const { error: updateError } = await supabaseClient
               .from("reservations")
               .update({
@@ -172,6 +325,31 @@ Deno.serve(async (req) => {
             if (updateError) {
               results.errors.push(`Reservation ${res.id}: ${updateError.message}`);
             } else {
+              if (res.event_id) {
+                let checkoutSession: Stripe.Checkout.Session | null = null;
+
+                try {
+                  const sessionList = await stripe.checkout.sessions.list({
+                    payment_intent: res.stripe_payment_intent_id,
+                    limit: 1,
+                  } as any);
+
+                  checkoutSession = sessionList.data?.[0] ?? null;
+                } catch (sessionLookupError) {
+                  logStep("Failed to lookup checkout session during reservation reconciliation", {
+                    reservationId: res.id,
+                    error: sessionLookupError instanceof Error ? sessionLookupError.message : String(sessionLookupError),
+                  });
+                }
+
+                await ensureReservationEventGuestTickets({
+                  supabaseClient,
+                  reservationId: res.id,
+                  paymentIntentId: res.stripe_payment_intent_id,
+                  session: checkoutSession,
+                });
+              }
+
               results.reservations_reconciled++;
             }
           }

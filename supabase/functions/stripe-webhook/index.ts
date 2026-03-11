@@ -185,11 +185,39 @@ Deno.serve(async (req) => {
         logStep("Subscription created/updated successfully");
 
       } else if (session.mode === "payment") {
-        // Handle boost payment
         const metadata = session.metadata;
-        logStep("Processing boost payment", { metadata });
-        
-        if (metadata?.type === "event_boost" && metadata?.boost_id) {
+        logStep("Processing payment checkout", { metadata });
+
+        if (metadata?.type === "reservation_event" && metadata?.reservation_id) {
+          logStep("Forwarding reservation event payment to dedicated processor", {
+            reservationId: metadata.reservation_id,
+            sessionId: session.id,
+          });
+
+          const functionsBaseUrl = `${(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "")}/functions/v1`;
+          const forwardResponse = await fetch(`${functionsBaseUrl}/process-reservation-event-payment`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "stripe-signature": signature,
+            },
+            body,
+          });
+
+          if (!forwardResponse.ok) {
+            const forwardText = await forwardResponse.text();
+            logStep("Reservation event processor failed", {
+              reservationId: metadata.reservation_id,
+              status: forwardResponse.status,
+              body: forwardText,
+            });
+            throw new Error(`Reservation processor failed: ${forwardResponse.status}`);
+          }
+
+          logStep("Reservation event payment processed successfully", {
+            reservationId: metadata.reservation_id,
+          });
+        } else if (metadata?.type === "event_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
           const partialBudgetCents = parseInt(metadata?.partial_budget_cents || "0", 10);
           const businessId = metadata?.business_id;
