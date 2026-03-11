@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Theater, Clock, Coffee, Users, Baby } from "lucide-react";
+import { Loader2, Theater, Clock, Coffee, Users, Baby, Calendar } from "lucide-react";
 import { ImageUploadField } from "../ImageUploadField";
 import { ImageCropDialog } from "../ImageCropDialog";
 import { compressImage } from "@/lib/imageCompression";
