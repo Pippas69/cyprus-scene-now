@@ -613,7 +613,6 @@ const EventsList = ({ businessId }: EventsListProps) => {
           }} />
       ) : null}
 
-      }
 
       {/* Boost Dialog */}
       {boostingEvent &&
