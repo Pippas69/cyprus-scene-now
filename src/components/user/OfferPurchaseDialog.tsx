@@ -920,16 +920,25 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               </div>
             }
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-left text-base sm:text-lg font-bold">
-                {offer.title}
-              </DialogTitle>
-              <DialogDescription className="text-left text-sm mt-0.5">{offer.businesses.name}</DialogDescription>
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-left text-base sm:text-lg font-bold">
+                  {offer.title}
+                </DialogTitle>
+                {discountDisplay &&
+                <Badge className="bg-primary text-primary-foreground shrink-0 text-xs font-bold h-5 px-1.5 rounded-md">
+                    {discountDisplay}
+                  </Badge>
+                }
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <DialogDescription className="text-left text-sm">{offer.businesses.name}</DialogDescription>
+                {offer.category && (
+                  <span className="text-sm text-muted-foreground">
+                    · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
+                  </span>
+                )}
+              </div>
             </div>
-            {discountDisplay &&
-            <Badge className="bg-primary text-primary-foreground shrink-0 text-base font-bold py-1.5 px-3 rounded-lg">
-                {discountDisplay}
-              </Badge>
-            }
           </div>
         </DialogHeader>
         
