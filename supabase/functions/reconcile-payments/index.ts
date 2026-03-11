@@ -214,31 +214,62 @@ Deno.serve(async (req) => {
     // ============================================================
     const { data: paidReservations, error: paidReservationsError } = await supabaseClient
       .from("reservations")
-      .select("id, event_id, stripe_payment_intent_id")
+      .select("id, event_id, party_size, stripe_payment_intent_id")
       .eq("prepaid_charge_status", "paid")
       .not("event_id", "is", null)
-      .not("stripe_payment_intent_id", "is", null)
-      .gt("created_at", maxAge);
+      .gt("created_at", healWindowStart);
 
     if (paidReservationsError) {
       logStep("Error fetching paid reservations for ticket healing", { error: paidReservationsError.message });
     } else if (paidReservations && paidReservations.length > 0) {
       for (const reservation of paidReservations) {
         try {
+          const { data: existingOrder } = await supabaseClient
+            .from("ticket_orders")
+            .select("id, stripe_checkout_session_id")
+            .eq("linked_reservation_id", reservation.id)
+            .maybeSingle();
+
+          let existingTicketCount = 0;
+          if (existingOrder?.id) {
+            const { count: ticketCount } = await supabaseClient
+              .from("tickets")
+              .select("id", { count: "exact", head: true })
+              .eq("order_id", existingOrder.id);
+            existingTicketCount = ticketCount ?? 0;
+          }
+
+          const expectedGuestCount = Math.max(reservation.party_size || 0, 1);
+          if (existingTicketCount >= expectedGuestCount) {
+            continue;
+          }
+
           let checkoutSession: Stripe.Checkout.Session | null = null;
 
-          try {
-            const sessionList = await stripe.checkout.sessions.list({
-              payment_intent: reservation.stripe_payment_intent_id!,
-              limit: 1,
-            } as any);
+          if (existingOrder?.stripe_checkout_session_id) {
+            try {
+              checkoutSession = await stripe.checkout.sessions.retrieve(existingOrder.stripe_checkout_session_id);
+            } catch (sessionRetrieveError) {
+              logStep("Failed to retrieve checkout session by id during paid reservation heal", {
+                reservationId: reservation.id,
+                sessionId: existingOrder.stripe_checkout_session_id,
+                error: sessionRetrieveError instanceof Error ? sessionRetrieveError.message : String(sessionRetrieveError),
+              });
+            }
+          } else if (reservation.stripe_payment_intent_id) {
+            try {
+              const sessionList = await stripe.checkout.sessions.list({
+                payment_intent: reservation.stripe_payment_intent_id,
+                limit: 1,
+              } as any);
 
-            checkoutSession = sessionList.data?.[0] ?? null;
-          } catch (sessionLookupError) {
-            logStep("Failed to lookup checkout session during paid reservation heal", {
-              reservationId: reservation.id,
-              error: sessionLookupError instanceof Error ? sessionLookupError.message : String(sessionLookupError),
-            });
+              checkoutSession = sessionList.data?.[0] ?? null;
+            } catch (sessionLookupError) {
+              logStep("Failed to lookup checkout session during paid reservation heal", {
+                reservationId: reservation.id,
+                error: sessionLookupError instanceof Error ? sessionLookupError.message : String(sessionLookupError),
+              });
+            }
           }
 
           const createdTickets = await ensureReservationEventGuestTickets({
