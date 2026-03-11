@@ -192,7 +192,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return false;
     }
 
-    const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []);
+    const linked = !!data?.ticket_reservation_linked || isClubOrEventBusiness(data?.category || []) || !!forceEventMode;
     setIsTicketLinked(linked);
     return linked;
   };
