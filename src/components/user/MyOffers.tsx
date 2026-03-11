@@ -207,27 +207,30 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     queryFn: async () => {
       const { data, error } = await supabase.
       from("offer_purchases").
-      select(`
-          *,
-          discounts (
-            id,
-            title,
-            description,
-            percent_off,
-            offer_type,
-            bonus_percent,
-            credit_amount_cents,
-            offer_image_url,
-            valid_start_time,
-            valid_end_time,
-            businesses (
-              id,
-              name,
-              logo_url,
-              cover_url,
-              city
-            )
-          ),
+       select(`
+           *,
+           discounts (
+             id,
+             title,
+             description,
+             percent_off,
+             offer_type,
+             bonus_percent,
+             credit_amount_cents,
+             offer_image_url,
+             valid_start_time,
+             valid_end_time,
+             discount_type,
+             special_deal_text,
+             category,
+             businesses (
+               id,
+               name,
+               logo_url,
+               cover_url,
+               city
+             )
+           ),
           reservations (
             preferred_time
           )
