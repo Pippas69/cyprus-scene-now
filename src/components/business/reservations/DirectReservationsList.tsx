@@ -426,26 +426,40 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const fetchTicketOnlyOrders = async (eventId: string) => {
     try {
-      const { data: orders } = await supabase
-        .from('ticket_orders')
-        .select('id, customer_name, customer_email, customer_phone, subtotal_cents, status, created_at')
+      // Fetch individual tickets directly — one row per guest
+      const { data: tickets } = await supabase
+        .from('tickets')
+        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at')
         .eq('event_id', eventId)
-        .eq('status', 'completed')
         .order('created_at', { ascending: false });
 
-      if (!orders || orders.length === 0) {
+      if (!tickets || tickets.length === 0) {
         setTicketOnlyOrders([]);
         return;
       }
 
-      const orderIds = orders.map(o => o.id);
+      // Get order info for phone numbers and prices
+      const orderIds = [...new Set(tickets.map(t => t.order_id))];
+      const { data: orders } = await supabase
+        .from('ticket_orders')
+        .select('id, customer_phone, subtotal_cents, status')
+        .in('id', orderIds)
+        .eq('status', 'completed');
 
-      const { data: tickets } = await supabase
-        .from('tickets')
-        .select('order_id, status, tier_id, guest_age')
-        .in('order_id', orderIds);
+      const completedOrderIds = new Set((orders || []).map(o => o.id));
+      const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number }> = {};
+      (orders || []).forEach(o => {
+        orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0 };
+      });
 
-      const tierIds = [...new Set((tickets || []).map(t => t.tier_id).filter(Boolean))];
+      // Count tickets per order for per-ticket price calculation
+      const completedTickets = tickets.filter(t => completedOrderIds.has(t.order_id));
+      completedTickets.forEach(t => {
+        if (orderMap[t.order_id]) orderMap[t.order_id].ticketCount++;
+      });
+
+      // Get tier names
+      const tierIds = [...new Set(completedTickets.map(t => t.tier_id).filter(Boolean))];
       const tierNames: Record<string, string> = {};
       if (tierIds.length > 0) {
         const { data: tiers } = await supabase
@@ -455,33 +469,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
-      const ticketsByOrder: Record<string, { total: number; used: number; tierName: string; ages: number[] }> = {};
-      (tickets || []).forEach(t => {
-        if (!ticketsByOrder[t.order_id]) {
-          ticketsByOrder[t.order_id] = { total: 0, used: 0, tierName: tierNames[t.tier_id] || '', ages: [] };
-        }
-        ticketsByOrder[t.order_id].total++;
-        if (t.status === 'used') ticketsByOrder[t.order_id].used++;
-        if (t.guest_age) ticketsByOrder[t.order_id].ages.push(t.guest_age);
-      });
-
-      const enrichedOrders: TicketOnlyOrder[] = orders.map(o => {
-        const info = ticketsByOrder[o.id];
-        const ages = info?.ages || [];
-        const minAge = ages.length > 0 ? `${Math.min(...ages)}+` : '-';
+      const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
+        const order = orderMap[t.order_id];
+        const perTicketPrice = order && order.ticketCount > 0
+          ? Math.round(order.subtotal / order.ticketCount)
+          : 0;
         return {
-          id: o.id,
-          buyer_name: o.customer_name || '',
-          buyer_email: o.customer_email,
-          buyer_phone: o.customer_phone,
-          ticket_count: info?.total || 0,
-          subtotal_cents: o.subtotal_cents || 0,
-          status: o.status,
-          created_at: o.created_at,
-          tier_name: info?.tierName || '',
-          tickets_used: info?.used || 0,
-          tickets_total: info?.total || 0,
-          min_age: minAge,
+          id: t.order_id,
+          ticket_id: t.id,
+          guest_name: t.guest_name || '-',
+          guest_age: t.guest_age,
+          buyer_phone: order?.phone || null,
+          subtotal_cents: perTicketPrice,
+          status: 'completed',
+          checked_in: t.status === 'used' || !!t.checked_in_at,
+          created_at: t.created_at,
+          tier_name: tierNames[t.tier_id] || '',
+          ticket_code: t.ticket_code || null,
         };
       });
 
