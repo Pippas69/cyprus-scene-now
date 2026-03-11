@@ -512,7 +512,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     availableCapacity !== null && availableCapacity >= partySize && !capacityError;
 
     return (
-      <div className="space-y-2 sm:space-y-3">
+      <div className="space-y-3 sm:space-y-4">
         {/* Toggle - outside the box */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-medium">
