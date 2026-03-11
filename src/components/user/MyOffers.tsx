@@ -495,14 +495,14 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             </Badge>
           }
           
-          {/* Status/Discount Badge - Top Right */}
+          {/* Status Badge - Top Right (only for status indicators) */}
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
             {isDepleted ?
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shadow-sm">
                 <TrendingDown className="h-3 w-3 mr-0.5" />
               </Badge> :
-            isCredit ?
-            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-emerald-600 shadow-sm">
+            isCredit && !isExpired ?
+            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm bg-emerald-600">
                 <Wallet className="h-3 w-3 mr-0.5" />
                 €{(balanceRemaining / 100).toFixed(0)}
               </Badge> :
@@ -515,10 +515,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5 shadow-sm">
                 <AlertCircle className="h-3 w-3" />
               </Badge> :
-            purchase.discount_percent > 0 &&
-            <Badge variant="default" className="text-[10px] px-1.5 py-0.5 shadow-sm">
-                -{purchase.discount_percent}%
-              </Badge>
+            null
             }
           </div>
         </div>
