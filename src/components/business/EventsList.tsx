@@ -23,18 +23,6 @@ import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
 import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
 
-  // Check if business is a performance type
-  const { data: businessData } = useQuery({
-    queryKey: ["business-categories", businessId],
-    queryFn: async () => {
-      const { data } = await supabase.from('businesses').select('category').eq('id', businessId).maybeSingle();
-      return data;
-    },
-    enabled: !!businessId,
-    staleTime: 60_000,
-  });
-  const isPerformance = isPerformanceBusiness(businessData?.category || []);
-
 
 interface EventsListProps {
   businessId: string;
