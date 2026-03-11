@@ -43,6 +43,8 @@ interface SuccessQRCardProps {
   viewDashboardLabel?: string;
   // Show success animation
   showSuccessMessage?: boolean;
+  // Override the share link type (e.g. use "ticket" path for event reservation tickets)
+  shareViewType?: "ticket" | "reservation" | "offer";
 }
 
 const translations = {
