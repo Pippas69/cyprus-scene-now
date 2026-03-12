@@ -828,6 +828,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
+      <div className="h-1.5" />
+
       {/* RESERVATION SECTION */}
       <ReservationSection />
 
