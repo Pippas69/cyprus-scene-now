@@ -911,7 +911,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
 
         return (
           <Dialog open onOpenChange={closeDialog}>
-            <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
               <VisuallyHidden>
                 <DialogTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DialogTitle>
               </VisuallyHidden>
@@ -977,7 +977,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
 
         return (
           <Dialog open onOpenChange={closeDialog}>
-            <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
               <VisuallyHidden>
                 <DialogTitle>{selectedEventGuestsReservation.events?.title || ''}</DialogTitle>
               </VisuallyHidden>
