@@ -696,7 +696,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[92vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
           {successContent}
         </DialogContent>
       </Dialog>);
@@ -856,9 +856,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   if (isMobile) {
     return (
-      <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="max-h-[90vh] flex flex-col">
-          <DrawerHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4">
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ?
               <img src={offer.businesses.logo_url} alt={offer.businesses.name} className="w-11 h-11 rounded-xl object-cover ring-1 ring-border/50" /> :
@@ -868,9 +868,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <DrawerTitle className="text-left text-sm font-bold leading-tight truncate">
+                  <DialogTitle className="text-left text-sm font-bold leading-tight truncate">
                     {offer.title}
-                  </DrawerTitle>
+                  </DialogTitle>
                   {discountDisplay &&
                   <Badge className="bg-primary text-primary-foreground shrink-0 text-[11px] font-bold h-5 px-1.5 rounded-md">
                       {discountDisplay}
@@ -878,7 +878,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   }
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <p className="text-xs text-muted-foreground truncate">{offer.businesses.name}</p>
+                  <DialogDescription className="text-left text-xs text-muted-foreground truncate">{offer.businesses.name}</DialogDescription>
                   {offer.category && (
                     <span className="text-xs text-muted-foreground truncate">
                       · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
@@ -887,15 +887,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 </div>
               </div>
             </div>
-            <DrawerDescription className="sr-only">Claim this offer</DrawerDescription>
-          </DrawerHeader>
+          </DialogHeader>
           
           <div className="flex-1 overflow-y-auto px-4 py-4">
             {formContent}
           </div>
-        </DrawerContent>
-      </Drawer>);
-
+        </DialogContent>
+      </Dialog>);
   }
 
   return (
