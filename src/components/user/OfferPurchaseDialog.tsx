@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -695,7 +696,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[88vw] max-w-[22rem] p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
           {successContent}
         </DialogContent>
       </Dialog>);
@@ -856,7 +857,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   if (isMobile) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[88vw] max-w-[22rem] max-h-[85vh] flex flex-col p-0 gap-0 overflow-x-hidden">
+        <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0">
           <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ?
@@ -876,10 +877,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                     </Badge>
                   }
                 </div>
-                <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
-                  <DialogDescription className="text-left text-xs text-muted-foreground leading-tight">{offer.businesses.name}</DialogDescription>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <DialogDescription className="text-left text-xs text-muted-foreground truncate">{offer.businesses.name}</DialogDescription>
                   {offer.category && (
-                    <span className="text-xs text-muted-foreground leading-tight">
+                    <span className="text-xs text-muted-foreground truncate">
                       · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
                     </span>
                   )}

@@ -806,7 +806,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[88vw] max-w-[22rem] p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
           {successContent}
         </DialogContent>
       </Dialog>

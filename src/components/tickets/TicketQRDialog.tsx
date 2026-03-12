@@ -153,7 +153,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
-      <DialogContent className="w-[88vw] max-w-[22rem] p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
         {/* Ticket Card Container - Start from top on mobile */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
           {/* Header with ΦΟΜΟ branding - Compact */}
@@ -238,15 +238,15 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             }
 
             {/* Copyable Link */}
-            <div className="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="w-full sm:flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
                 {`${window.location.origin}/ticket-view/${ticket?.qrToken}`}
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="w-full sm:w-auto border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3">
+                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0">
                 <Copy className="h-3 w-3 mr-1" />
                 {text.copyLink}
               </Button>
