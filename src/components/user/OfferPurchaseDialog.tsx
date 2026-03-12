@@ -876,10 +876,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                     </Badge>
                   }
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <DialogDescription className="text-left text-xs text-muted-foreground truncate">{offer.businesses.name}</DialogDescription>
+                <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                  <DialogDescription className="text-left text-xs text-muted-foreground leading-tight">{offer.businesses.name}</DialogDescription>
                   {offer.category && (
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span className="text-xs text-muted-foreground leading-tight">
                       · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
                     </span>
                   )}
