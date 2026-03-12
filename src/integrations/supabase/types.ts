@@ -5667,6 +5667,23 @@ export type Database = {
           tier_id: string
         }[]
       }
+      get_offer_by_reservation_guest_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_logo_url: string
+          business_name: string
+          discount_percent: number
+          discount_title: string
+          guest_name: string
+          id: string
+          offer_type: string
+          purchase_created_at: string
+          purchase_expires_at: string
+          purchase_redeemed_at: string
+          purchase_status: string
+          qr_code_token: string
+        }[]
+      }
       get_offer_by_token: {
         Args: { p_token: string }
         Returns: {
