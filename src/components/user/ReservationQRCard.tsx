@@ -268,23 +268,9 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={!!reservation} onOpenChange={() => onClose()}>
-        <DrawerContent className="max-h-[95vh] bg-transparent border-0">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>{reservation?.eventTitle || "Reservation"}</DrawerTitle>
-            <DrawerDescription>Reservation QR Code</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">{cardContent}</div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={!!reservation} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
+      <DialogContent className="max-w-[92vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
         {cardContent}
       </DialogContent>
     </Dialog>

@@ -96,25 +96,9 @@ export const ReservationSuccessDialog = ({
     />
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[95vh] bg-transparent border-0">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>{language === 'el' ? 'Επιτυχής Κράτηση' : 'Reservation Success'}</DrawerTitle>
-            <DrawerDescription>Your reservation was successful</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">
-            {content}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+      <DialogContent className="max-w-[92vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto">
         {content}
       </DialogContent>
     </Dialog>

@@ -93,23 +93,9 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
     />
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={!!offer} onOpenChange={() => onClose()}>
-        <DrawerContent className="max-h-[95vh] bg-transparent border-0">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>{offer.title}</DrawerTitle>
-            <DrawerDescription>Offer QR Code</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">{content}</div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={!!offer} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+      <DialogContent className="max-w-[92vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>{offer.title}</DialogTitle>
         </VisuallyHidden>
