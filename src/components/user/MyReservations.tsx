@@ -655,11 +655,13 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <Button
               type="button"
               size="sm"
-              className="h-8 text-xs px-4"
+              variant="outline"
+              className="h-8 text-xs px-3"
               onClick={() => {
                 setCurrentDirectGuestIndex(0);
                 setSelectedDirectGuestsReservation(reservation);
               }}>
+                <QrCode className="h-3.5 w-3.5 mr-1.5" />
                 {t.viewQRCodes}
               </Button>
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
