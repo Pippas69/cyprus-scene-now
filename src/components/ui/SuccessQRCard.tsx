@@ -414,7 +414,7 @@ export const SuccessQRCard = ({
             </div>
           </div>
         ) : (
-          <div className="mt-2 flex items-center gap-2 min-w-0">
+          <div className="mt-2 flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div className="flex-1 min-w-0 bg-[#f0f9ff] rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] text-[#64748b] font-mono truncate">
               {`${window.location.origin}/${getViewPath()}/${qrToken}`}
             </div>
