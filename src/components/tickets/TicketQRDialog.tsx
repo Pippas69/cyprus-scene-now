@@ -238,15 +238,15 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
             }
 
             {/* Copyable Link */}
-            <div className="mt-2 flex items-center gap-2">
-              <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+            <div className="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="w-full sm:flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
                 {`${window.location.origin}/ticket-view/${ticket?.qrToken}`}
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0">
+                className="w-full sm:w-auto border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3">
                 <Copy className="h-3 w-3 mr-1" />
                 {text.copyLink}
               </Button>

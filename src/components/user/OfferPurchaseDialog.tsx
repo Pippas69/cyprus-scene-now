@@ -856,7 +856,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   if (isMobile) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogContent className="w-[88vw] max-w-[22rem] max-h-[85vh] flex flex-col p-0 gap-0 overflow-x-hidden">
           <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ?
