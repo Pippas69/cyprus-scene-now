@@ -28,7 +28,7 @@ interface OfferQRCardProps {
 }
 
 export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
-  const isMobile = useIsMobile();
+  
   const [currentGuestIndex, setCurrentGuestIndex] = useState(0);
 
   if (!offer) return null;

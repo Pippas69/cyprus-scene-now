@@ -27,7 +27,7 @@ export const ReservationSuccessDialog = ({
   reservation,
   language,
 }: ReservationSuccessDialogProps) => {
-  const isMobile = useIsMobile();
+  
   const navigate = useNavigate();
   const [currentGuestIndex, setCurrentGuestIndex] = useState(0);
 
