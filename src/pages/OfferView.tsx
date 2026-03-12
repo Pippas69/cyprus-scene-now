@@ -53,7 +53,11 @@ const OfferView = () => {
 
     const fetchOffer = async () => {
       // Try main offer_purchases first
-      const { data: mainData } = await supabase.rpc("get_offer_by_token", { p_token: token });
+      const { data: mainData, error: mainError } = await supabase.rpc("get_offer_by_token", { p_token: token });
+      
+      if (mainError) {
+        console.error("[OfferView] get_offer_by_token error:", mainError);
+      }
       
       if (mainData && mainData.length > 0) {
         setOffer(mainData[0]);
@@ -66,8 +70,12 @@ const OfferView = () => {
         return;
       }
 
-      // Try guest tokens
-      const { data: guestData } = await supabase.rpc("get_offer_guest_by_token", { p_token: token });
+      // Try guest tokens (offer_purchase_guests)
+      const { data: guestData, error: guestError } = await supabase.rpc("get_offer_guest_by_token", { p_token: token });
+      
+      if (guestError) {
+        console.error("[OfferView] get_offer_guest_by_token error:", guestError);
+      }
       
       if (guestData && guestData.length > 0) {
         const g = guestData[0];
@@ -93,6 +101,38 @@ const OfferView = () => {
         return;
       }
 
+      // Try reservation_guests tokens (offers claimed with reservation)
+      const { data: resGuestData, error: resGuestError } = await supabase.rpc("get_offer_by_reservation_guest_token" as any, { p_token: token });
+      
+      if (resGuestError) {
+        console.error("[OfferView] get_offer_by_reservation_guest_token error:", resGuestError);
+      }
+      
+      if (resGuestData && (resGuestData as any[]).length > 0) {
+        const g = (resGuestData as any[])[0];
+        setOffer({
+          qr_code_token: g.qr_code_token,
+          guest_name: g.guest_name,
+          status: g.purchase_status,
+          created_at: g.purchase_created_at,
+          expires_at: g.purchase_expires_at,
+          redeemed_at: g.purchase_redeemed_at,
+          discount_title: g.discount_title,
+          discount_percent: g.discount_percent,
+          offer_type: g.offer_type,
+          business_name: g.business_name,
+          business_logo_url: g.business_logo_url,
+        });
+        setIsGuest(true);
+        setLoading(false);
+        QRCode.toDataURL(g.qr_code_token, {
+          width: 512, margin: 2,
+          color: { dark: "#102b4a", light: "#ffffff" },
+        }).then(setQrDataUrl);
+        return;
+      }
+
+      console.error("[OfferView] No offer found for token:", token);
       setLoading(false);
     };
 
