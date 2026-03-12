@@ -405,6 +405,7 @@ export const SuccessQRCard = ({
               <Button
                 variant="outline"
                 size="sm"
+                aria-label={copied ? text.copied : text.copyLink}
                 onClick={handleCopyLink}
                 className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 w-9 sm:w-auto px-0 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
               >
