@@ -668,7 +668,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-xs px-3 border-destructive/50 text-destructive hover:bg-destructive/10 shrink-0"
+className="h-8 text-xs px-3 text-destructive shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
                   {t.cancelReservation}
                 </Button>
