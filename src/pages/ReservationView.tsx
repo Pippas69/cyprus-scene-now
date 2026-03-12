@@ -61,7 +61,7 @@ const ReservationView = () => {
           p_token: token,
         });
         if (guestData && guestData.length > 0) {
-          const g = guestData[0];
+          const g = guestData[0] as any;
           resData = {
             qr_code_token: g.qr_code_token,
             reservation_name: g.guest_name || g.reservation_name,
@@ -71,7 +71,7 @@ const ReservationView = () => {
             event_title: g.event_title,
             business_name: g.business_name,
             checked_in_at: g.guest_checked_in_at || g.checked_in_at,
-          };
+          } as any;
         }
       }
 
