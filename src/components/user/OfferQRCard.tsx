@@ -93,7 +93,7 @@ export const OfferQRCard = ({ offer, language, onClose }: OfferQRCardProps) => {
 
   return (
     <Dialog open={!!offer} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <VisuallyHidden>
           <DialogTitle>{offer.title}</DialogTitle>
         </VisuallyHidden>
