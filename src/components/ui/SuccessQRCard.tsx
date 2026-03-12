@@ -406,7 +406,7 @@ export const SuccessQRCard = ({
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-2 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
+                className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 w-9 sm:w-auto px-0 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
               >
                 {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
                 {copied ? text.copied : text.copyLink}
