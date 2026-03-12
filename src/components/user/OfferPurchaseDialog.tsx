@@ -922,7 +922,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 <DialogDescription className="text-left text-sm">{offer.businesses.name}</DialogDescription>
                 {offer.category && (
                   <span className="text-sm text-muted-foreground">
-                    · {language === "el" ? "Η έκπτωση ισχύει για" : "Discount applies to"} {getCategoryLabel(offer.category)}
+                    · {language === "el" ? "Ισχύει για" : "Applies to"} {getCategoryLabel(offer.category)}
                   </span>
                 )}
               </div>
