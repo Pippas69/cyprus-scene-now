@@ -48,11 +48,33 @@ const ReservationView = () => {
     if (!token) return;
 
     const fetchReservation = async () => {
+      // Try main reservation token first
       const { data, error } = await supabase.rpc("get_reservation_by_token", {
         p_token: token,
       });
 
-      const resData = data && data.length > 0 ? data[0] : null;
+      let resData = data && data.length > 0 ? data[0] : null;
+
+      // Fallback: check reservation_guests table
+      if (!resData) {
+        const { data: guestData } = await supabase.rpc("get_reservation_by_guest_token", {
+          p_token: token,
+        });
+        if (guestData && guestData.length > 0) {
+          const g = guestData[0] as any;
+          resData = {
+            qr_code_token: g.qr_code_token,
+            reservation_name: g.guest_name || g.reservation_name,
+            party_size: g.party_size,
+            preferred_time: g.preferred_time,
+            event_start_at: g.event_start_at,
+            event_title: g.event_title,
+            business_name: g.business_name,
+            checked_in_at: g.guest_checked_in_at || g.checked_in_at,
+          } as any;
+        }
+      }
+
       setReservation(resData);
       setLoading(false);
 
