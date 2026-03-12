@@ -828,6 +828,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
+      <div className="h-1.5" />
+
       {/* RESERVATION SECTION */}
       <ReservationSection />
 
@@ -869,7 +871,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="h-[90vh] flex flex-col">
+        <DrawerContent className="max-h-[90vh] flex flex-col">
           <DrawerHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4">
             <div className="flex items-center gap-3">
               {offer.businesses.logo_url ?
