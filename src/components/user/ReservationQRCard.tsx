@@ -234,8 +234,8 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
         )}
 
         {/* Copy link (ticket-style) */}
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+        <div className="mt-2 flex items-center gap-2 min-w-0">
+          <div className="flex-1 min-w-0 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
             {`${window.location.origin}/reservation-view/${reservation?.qrCodeToken || ''}`}
           </div>
           <Button
@@ -270,7 +270,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
 
   return (
     <Dialog open={!!reservation} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {cardContent}
       </DialogContent>
     </Dialog>
