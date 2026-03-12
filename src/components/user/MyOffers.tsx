@@ -570,8 +570,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <Button
                 onClick={() => setSelectedPurchase(purchase)}
                 size="sm"
-                variant="default"
-                className={`text-xs h-8 px-4 ${!isReservation ? 'flex-1' : ''}`}>
+                variant="outline"
+                className={`text-xs h-8 px-3 ${!isReservation ? 'flex-1' : ''}`}>
+                  <QrCode className="h-3.5 w-3.5 mr-1.5" />
                   {isReservation ? t.viewQRCodes : t.viewQR}
                 </Button>
               }
