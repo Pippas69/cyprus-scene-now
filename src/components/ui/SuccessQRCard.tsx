@@ -345,7 +345,7 @@ export const SuccessQRCard = ({
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm mx-auto">
+    <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full max-w-[22rem] sm:max-w-sm mx-auto">
       {/* Header with ΦΟΜΟ branding */}
       <div className="bg-gradient-to-br from-[#102b4a] to-[#1a3d5c] px-4 pt-5 pb-3 text-center">
         <h1 className="text-xl font-bold text-white tracking-wider">ΦΟΜΟ</h1>
