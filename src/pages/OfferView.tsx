@@ -53,7 +53,11 @@ const OfferView = () => {
 
     const fetchOffer = async () => {
       // Try main offer_purchases first
-      const { data: mainData } = await supabase.rpc("get_offer_by_token", { p_token: token });
+      const { data: mainData, error: mainError } = await supabase.rpc("get_offer_by_token", { p_token: token });
+      
+      if (mainError) {
+        console.error("[OfferView] get_offer_by_token error:", mainError);
+      }
       
       if (mainData && mainData.length > 0) {
         setOffer(mainData[0]);
@@ -67,7 +71,11 @@ const OfferView = () => {
       }
 
       // Try guest tokens
-      const { data: guestData } = await supabase.rpc("get_offer_guest_by_token", { p_token: token });
+      const { data: guestData, error: guestError } = await supabase.rpc("get_offer_guest_by_token", { p_token: token });
+      
+      if (guestError) {
+        console.error("[OfferView] get_offer_guest_by_token error:", guestError);
+      }
       
       if (guestData && guestData.length > 0) {
         const g = guestData[0];
@@ -93,6 +101,7 @@ const OfferView = () => {
         return;
       }
 
+      console.error("[OfferView] No offer found for token:", token);
       setLoading(false);
     };
 
