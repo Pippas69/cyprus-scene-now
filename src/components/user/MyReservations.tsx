@@ -977,7 +977,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
 
         return (
           <Dialog open onOpenChange={closeDialog}>
-            <DialogContent className="w-[90vw] max-w-sm p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[88vw] max-w-[22rem] p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
               <VisuallyHidden>
                 <DialogTitle>{selectedEventGuestsReservation.events?.title || ''}</DialogTitle>
               </VisuallyHidden>
