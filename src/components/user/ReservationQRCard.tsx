@@ -235,14 +235,14 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
 
         {/* Copy link (ticket-style) */}
         <div className="mt-2 flex items-center gap-2 min-w-0">
-          <div className="flex-1 min-w-0 bg-[#f0f9ff] rounded-lg px-3 py-2 text-[10px] text-[#64748b] font-mono truncate">
+          <div className="flex-1 min-w-0 bg-[#f0f9ff] rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] text-[#64748b] font-mono truncate">
             {`${window.location.origin}/reservation-view/${reservation?.qrCodeToken || ''}`}
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
-            className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-3 shrink-0"
+            className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-2 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
           >
             {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
             {copied ? (language === "el" ? "Αντιγράφηκε!" : "Copied!") : (language === "el" ? "Αντιγραφή" : "Copy")}
