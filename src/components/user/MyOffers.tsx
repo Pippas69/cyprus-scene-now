@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin, QrCode } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
@@ -63,7 +63,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
-  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; purchase: OfferPurchase | null }>({ open: false, purchase: null });
+  const [cancelDialog, setCancelDialog] = useState<{open: boolean;purchase: OfferPurchase | null;}>({ open: false, purchase: null });
   const queryClient = useQueryClient();
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const highlightedPurchaseId = searchParams.get('purchaseId');
@@ -262,15 +262,15 @@ export function MyOffers({ userId, language }: MyOffersProps) {
       }
 
       // Fetch offer_purchase_guests for walk-in purchases (no reservation)
-      const walkInPurchaseIds = results
-        .filter((p) => p.claim_type === 'walk_in' && !p._guests)
-        .map((p) => p.id);
+      const walkInPurchaseIds = results.
+      filter((p) => p.claim_type === 'walk_in' && !p._guests).
+      map((p) => p.id);
 
       if (walkInPurchaseIds.length > 0) {
-        const { data: offerGuests } = await supabase
-          .from('offer_purchase_guests' as any)
-          .select('purchase_id, guest_name, qr_code_token')
-          .in('purchase_id', walkInPurchaseIds);
+        const { data: offerGuests } = await supabase.
+        from('offer_purchase_guests' as any).
+        select('purchase_id, guest_name, qr_code_token').
+        in('purchase_id', walkInPurchaseIds);
 
         if (offerGuests) {
           const guestMap = new Map<string, {guest_name: string;qr_code_token: string;}[]>();
@@ -296,19 +296,19 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     try {
       if (purchase.reservation_id) {
         // Cancel the reservation (frees slots via existing DB logic)
-        const { error: resError } = await supabase
-          .from('reservations')
-          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-          .eq('id', purchase.reservation_id)
-          .eq('user_id', userId);
+        const { error: resError } = await supabase.
+        from('reservations').
+        update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+        eq('id', purchase.reservation_id).
+        eq('user_id', userId);
         if (resError) throw resError;
       }
       // Cancel the offer purchase
-      const { error: purchaseError } = await supabase
-        .from('offer_purchases')
-        .update({ status: 'cancelled' })
-        .eq('id', purchase.id)
-        .eq('user_id', userId);
+      const { error: purchaseError } = await supabase.
+      from('offer_purchases').
+      update({ status: 'cancelled' }).
+      eq('id', purchase.id).
+      eq('user_id', userId);
       if (purchaseError) throw purchaseError;
 
       // Send cancellation notification
@@ -572,7 +572,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 size="sm"
                 variant="outline"
                 className={`text-xs h-8 px-3 ${!isReservation ? 'flex-1' : ''}`}>
-                  <QrCode className="h-3.5 w-3.5 mr-1.5" />
+                  
                   {isReservation ? t.viewQRCodes : t.viewQR}
                 </Button>
               }
@@ -588,16 +588,16 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               }
             </div>
             {/* Cancel button for reservation-linked offers */}
-            {isReservation && !isExpired && !isRedeemed && !isDepleted && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs px-3 border-destructive/50 text-destructive hover:bg-destructive/10 shrink-0"
-                onClick={() => setCancelDialog({ open: true, purchase })}
-              >
+            {isReservation && !isExpired && !isRedeemed && !isDepleted &&
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs px-3 border-destructive/50 text-destructive hover:bg-destructive/10 shrink-0"
+              onClick={() => setCancelDialog({ open: true, purchase })}>
+              
                 {t.cancelReservation}
               </Button>
-            )}
+            }
           </div>
         </div>
       </Card>);
@@ -728,8 +728,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 e.preventDefault();
                 if (!cancelDialog.purchase) return;
                 await handleCancelOfferReservation(cancelDialog.purchase);
-              }}
-            >
+              }}>
+              
               {t.cancelConfirm}
             </AlertDialogAction>
             <AlertDialogCancel className="flex-1 h-9 text-xs mt-0">{t.cancelBack}</AlertDialogCancel>
