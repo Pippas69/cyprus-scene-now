@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
