@@ -1,6 +1,4 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { useState } from 'react';
