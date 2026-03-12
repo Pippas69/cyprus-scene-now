@@ -5721,6 +5721,24 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      get_reservation_by_guest_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_logo: string
+          business_name: string
+          checked_in_at: string
+          event_start_at: string
+          event_title: string
+          guest_checked_in_at: string
+          guest_name: string
+          party_size: number
+          preferred_time: string
+          qr_code_token: string
+          reservation_id: string
+          reservation_name: string
+          status: string
+        }[]
+      }
       get_reservation_by_token: {
         Args: { p_token: string }
         Returns: {
