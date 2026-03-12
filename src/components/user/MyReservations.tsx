@@ -697,7 +697,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
               size="sm"
-              className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+              variant="outline"
+              className="h-8 text-xs px-3 border-destructive/50 text-destructive hover:bg-destructive/10 shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
                   {t.cancelReservation}
                 </Button>
