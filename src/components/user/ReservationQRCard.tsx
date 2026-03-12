@@ -234,18 +234,19 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
         )}
 
         {/* Copy link (ticket-style) */}
-        <div className="mt-2 flex items-center gap-2 min-w-0">
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_2.25rem] sm:grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 sm:gap-2 min-w-0">
           <div className="flex-1 min-w-0 bg-[#f0f9ff] rounded-lg px-2 sm:px-3 py-2 text-[9px] sm:text-[10px] text-[#64748b] font-mono truncate">
             {`${window.location.origin}/reservation-view/${reservation?.qrCodeToken || ''}`}
           </div>
           <Button
             variant="outline"
             size="sm"
+            aria-label={copied ? (language === "el" ? "Αντιγράφηκε!" : "Copied!") : (language === "el" ? "Αντιγραφή" : "Copy")}
             onClick={handleCopyLink}
-            className="border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 px-2 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
+            className="justify-self-end border-[#3ec3b7] text-[#102b4a] bg-white hover:bg-[#3ec3b7]/10 h-8 w-9 sm:w-auto px-0 sm:px-3 text-[11px] sm:text-sm gap-1 shrink-0"
           >
-            {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-            {copied ? (language === "el" ? "Αντιγράφηκε!" : "Copied!") : (language === "el" ? "Αντιγραφή" : "Copy")}
+            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{copied ? (language === "el" ? "Αντιγράφηκε!" : "Copied!") : (language === "el" ? "Αντιγραφή" : "Copy")}</span>
           </Button>
         </div>
       </div>
@@ -270,7 +271,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
 
   return (
     <Dialog open={!!reservation} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {cardContent}
       </DialogContent>
     </Dialog>
