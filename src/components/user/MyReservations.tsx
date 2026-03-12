@@ -909,23 +909,9 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
           </div>;
 
 
-        if (isMobile) {
-          return (
-            <Drawer open onOpenChange={closeDialog}>
-              <DrawerContent className="max-h-[95vh] bg-transparent border-0">
-                <DrawerHeader className="sr-only">
-                  <DrawerTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DrawerTitle>
-                  <DrawerDescription>Reservation QR Codes</DrawerDescription>
-                </DrawerHeader>
-                <div className="px-4 pb-6 overflow-y-auto">{content}</div>
-              </DrawerContent>
-            </Drawer>);
-
-        }
-
         return (
           <Dialog open onOpenChange={closeDialog}>
-            <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent">
+            <DialogContent className="max-w-[92vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto">
               <VisuallyHidden>
                 <DialogTitle>{language === 'el' ? 'Κράτηση Τραπεζιού' : 'Table Reservation'}</DialogTitle>
               </VisuallyHidden>
