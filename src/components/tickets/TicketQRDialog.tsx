@@ -153,7 +153,7 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[85vw] sm:max-w-sm p-0 overflow-hidden border-0 bg-transparent max-h-[90vh] overflow-y-auto flex flex-col items-start">
+      <DialogContent className="w-[88vw] max-w-[22rem] p-0 border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {/* Ticket Card Container - Start from top on mobile */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full">
           {/* Header with ΦΟΜΟ branding - Compact */}
