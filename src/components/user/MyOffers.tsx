@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
+import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
@@ -570,8 +570,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
               <Button
                 onClick={() => setSelectedPurchase(purchase)}
                 size="sm"
-                variant="default"
-                className={`text-xs h-8 px-4 ${!isReservation ? 'flex-1' : ''}`}>
+                variant="outline"
+                className={`text-xs h-8 px-3 ${!isReservation ? 'flex-1' : ''}`}>
+                  <QrCode className="h-3.5 w-3.5 mr-1.5" />
                   {isReservation ? t.viewQRCodes : t.viewQR}
                 </Button>
               }
@@ -590,7 +591,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             {isReservation && !isExpired && !isRedeemed && !isDepleted && (
               <Button
                 size="sm"
-                className="h-8 text-xs px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground shrink-0"
+                variant="outline"
+                className="h-8 text-xs px-3 border-destructive/50 text-destructive hover:bg-destructive/10 shrink-0"
                 onClick={() => setCancelDialog({ open: true, purchase })}
               >
                 {t.cancelReservation}
