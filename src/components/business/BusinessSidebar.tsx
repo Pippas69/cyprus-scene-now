@@ -56,10 +56,9 @@ const translations = {
 
 interface BusinessSidebarProps {
   businessCategories: string[];
-  hasFloorPlan?: boolean;
 }
 
-export function BusinessSidebar({ businessCategories, hasFloorPlan }: BusinessSidebarProps) {
+export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
@@ -93,13 +92,13 @@ export function BusinessSidebar({ businessCategories, hasFloorPlan }: BusinessSi
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
-        ...(hasFloorPlan ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
+        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ]
     : [
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
-        ...(hasFloorPlan ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
+        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ];
 
