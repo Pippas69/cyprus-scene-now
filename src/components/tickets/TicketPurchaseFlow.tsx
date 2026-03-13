@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -13,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Ticket, Minus, Plus, Loader2, CreditCard,
-  ArrowRight, ArrowLeft, ExternalLink, Users, Calendar
+  ArrowRight, ArrowLeft, ExternalLink, Users, Calendar, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -103,6 +104,8 @@ const translations = {
     row: "Σειρά",
     seat: "Θέση",
     zone: "Ζώνη",
+    specialRequests: "Ειδικά αιτήματα",
+    optional: "προαιρετικό",
   },
   en: {
     title: "Tickets",
@@ -145,6 +148,8 @@ const translations = {
     row: "Row",
     seat: "Seat",
     zone: "Zone",
+    specialRequests: "Special requests",
+    optional: "optional",
   },
 };
 
@@ -189,8 +194,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
   const [guestAges, setGuestAges] = useState<string[]>([]);
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+   const [customerEmail, setCustomerEmail] = useState('');
+   const [customerPhone, setCustomerPhone] = useState('');
+   const [specialRequests, setSpecialRequests] = useState('');
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -390,6 +396,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         customerName: guestNames[0].trim(),
         customerEmail: customerEmail.trim() || user.email,
         customerPhone: customerPhone.trim() || null,
+        specialRequests: specialRequests.trim() || null,
         guests: guestNames.map((name, idx) => ({
           name: name.trim(),
           age: parseInt(guestAges[idx]) || 0,
@@ -570,6 +577,21 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 placeholder="email@example.com"
                 className="h-9 text-sm"
+              />
+            </div>
+            {/* Special Requests */}
+            <div className="space-y-1">
+              <Label htmlFor="ticket-special-requests" className="flex items-center gap-2 text-sm">
+                <MessageSquare className="h-3.5 w-3.5" />
+                {t.specialRequests}
+                <span className="text-xs text-muted-foreground">({t.optional})</span>
+              </Label>
+              <Textarea
+                id="ticket-special-requests"
+                value={specialRequests}
+                onChange={(e) => setSpecialRequests(e.target.value)}
+                rows={2}
+                className="text-sm"
               />
             </div>
           </div>

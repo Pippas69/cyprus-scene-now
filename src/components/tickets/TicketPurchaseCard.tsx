@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,6 +60,8 @@ const t = {
     minimumChargeNote: "Ελάχιστη κατανάλωση τραπεζιού",
     paidAtVenue: "Πληρώνεται στο κατάστημα",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
+    specialRequests: "Ειδικά αιτήματα",
+    optional: "προαιρετικό",
   },
   en: {
     tickets: "Tickets",
@@ -83,6 +86,8 @@ const t = {
     minimumChargeNote: "Table minimum charge",
     paidAtVenue: "Paid at the venue",
     fillAllGuests: "Please fill in name and age for all guests",
+    specialRequests: "Special requests",
+    optional: "optional",
   },
 };
 
@@ -101,6 +106,7 @@ export const TicketPurchaseCard = ({
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [specialRequests, setSpecialRequests] = useState('');
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
@@ -257,6 +263,7 @@ export const TicketPurchaseCard = ({
         items,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim() || user.email,
+        specialRequests: specialRequests.trim() || null,
       };
 
       // Pass guest info for Kaliva-linked reservations
@@ -445,6 +452,20 @@ export const TicketPurchaseCard = ({
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder={language === 'el' ? "email@example.com" : "email@example.com"}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="special-requests-card" className="text-xs flex items-center gap-1.5">
+                    <MessageSquare className="h-3 w-3" />
+                    {text.specialRequests}
+                    <span className="text-muted-foreground">({text.optional})</span>
+                  </Label>
+                  <Textarea
+                    id="special-requests-card"
+                    value={specialRequests}
+                    onChange={(e) => setSpecialRequests(e.target.value)}
+                    rows={2}
+                    className="text-sm mt-1"
                   />
                 </div>
               </div>
