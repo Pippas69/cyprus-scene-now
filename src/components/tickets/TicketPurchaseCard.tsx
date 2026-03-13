@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
