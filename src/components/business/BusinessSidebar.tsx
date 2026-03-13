@@ -45,6 +45,7 @@ const translations = {
     events: "Events",
     offers: "Offers",
     reservations: "Reservations",
+    floorPlan: "Floor plan",
     business: "Business",
     subscription: "Subscription",
     boosts: "Boosts",
