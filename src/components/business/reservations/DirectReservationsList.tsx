@@ -1031,8 +1031,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        {renderStaffMemoCell(reservation)}
+                      </TableCell>
                     </TableRow>);
-
               })}
               </TableBody>
             </Table>
