@@ -395,6 +395,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         customerName: guestNames[0].trim(),
         customerEmail: customerEmail.trim() || user.email,
         customerPhone: customerPhone.trim() || null,
+        specialRequests: specialRequests.trim() || null,
         guests: guestNames.map((name, idx) => ({
           name: name.trim(),
           age: parseInt(guestAges[idx]) || 0,
