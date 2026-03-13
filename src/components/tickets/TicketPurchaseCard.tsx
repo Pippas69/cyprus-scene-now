@@ -106,6 +106,7 @@ export const TicketPurchaseCard = ({
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [specialRequests, setSpecialRequests] = useState('');
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
