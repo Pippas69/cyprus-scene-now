@@ -767,6 +767,47 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation.status)}</TableCell>
                   <TableCell>
+                    {editingMemo === reservation.id ? (
+                      <div className="flex items-center gap-1.5 min-w-[160px]">
+                        <Input
+                          value={memoValue}
+                          onChange={(e) => setMemoValue(e.target.value)}
+                          placeholder={t.staffMemoPlaceholder}
+                          className="h-8 text-xs"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveMemo(reservation.id);
+                            if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); }
+                          }}
+                        />
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveMemo(reservation.id)}>
+                          <Save className="h-3.5 w-3.5 text-primary" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); }}>
+                          <X className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        className="flex items-center gap-1.5 text-left group min-w-[100px] hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+                        onClick={() => {
+                          setEditingMemo(reservation.id);
+                          setMemoValue((reservation as any).staff_memo || '');
+                        }}
+                      >
+                        {(reservation as any).staff_memo ? (
+                          <span className="text-xs text-foreground max-w-[140px] truncate">{(reservation as any).staff_memo}</span>
+                        ) : (
+                          <>
+                            <StickyNote className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                            <span className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">—</span>
+                          </>
+                        )}
+                        <Pencil className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors ml-auto" />
+                      </button>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex gap-2">
                       {reservation.status === 'pending' && (
                         <>
