@@ -30,6 +30,7 @@ interface DirectReservation {
   preferred_time: string | null;
   seating_preference: string | null;
   special_requests: string | null;
+  staff_memo: string | null;
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
