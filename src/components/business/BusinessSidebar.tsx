@@ -27,6 +27,7 @@ const translations = {
     events: "Εκδηλώσεις",
     offers: "Προσφορές",
     reservations: "Κρατήσεις",
+    floorPlan: "Σχεδιάγραμμα",
     business: "Επιχείρηση",
     subscription: "Συνδρομή",
     boosts: "Προωθήσεις",
