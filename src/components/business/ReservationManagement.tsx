@@ -270,6 +270,25 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
     }
   };
 
+  const handleSaveMemo = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
+        .eq('id', reservationId);
+
+      if (error) throw error;
+
+      toast.success(language === 'el' ? 'Αποθηκεύτηκε' : 'Saved');
+      setEditingMemo(null);
+      setMemoValue('');
+      fetchData();
+    } catch (error) {
+      console.error('Error saving memo:', error);
+      toast.error(toastTranslations[language].error);
+    }
+  };
+
   const exportToCSV = () => {
     const headers = [t.event, t.name, 'Email', t.contact, t.details, t.status];
     const rows = filteredReservations.map((r) => [
