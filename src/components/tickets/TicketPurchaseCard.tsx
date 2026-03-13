@@ -60,6 +60,8 @@ const t = {
     minimumChargeNote: "Ελάχιστη κατανάλωση τραπεζιού",
     paidAtVenue: "Πληρώνεται στο κατάστημα",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
+    specialRequests: "Ειδικά αιτήματα",
+    optional: "προαιρετικό",
   },
   en: {
     tickets: "Tickets",
