@@ -193,8 +193,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
   const [guestAges, setGuestAges] = useState<string[]>([]);
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+   const [customerEmail, setCustomerEmail] = useState('');
+   const [customerPhone, setCustomerPhone] = useState('');
+   const [specialRequests, setSpecialRequests] = useState('');
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
