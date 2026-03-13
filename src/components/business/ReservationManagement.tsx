@@ -410,6 +410,9 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       table: 'Table',
       vip: 'VIP',
       sofa: 'Sofa',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Note for the team...',
+      customerNote: 'Customer note',
     },
   };
 
