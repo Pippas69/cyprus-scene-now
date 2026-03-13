@@ -631,14 +631,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         />
       </div>
 
-      {/* Special Requests */}
-      <CollapsibleSpecialRequests
-        value={specialRequests}
-        onChange={setSpecialRequests}
-        label={t.specialRequests}
-        optionalLabel={t.optional}
-      />
-
       {/* Arrival Hours */}
       {(reservationHoursFrom || reservationHoursTo) && (
         <div className="space-y-1">
@@ -653,6 +645,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           />
         </div>
       )}
+
+      {/* Special Requests */}
+      <CollapsibleSpecialRequests
+        value={specialRequests}
+        onChange={setSpecialRequests}
+        label={t.specialRequests}
+        optionalLabel={t.optional}
+      />
     </div>
   );
 
