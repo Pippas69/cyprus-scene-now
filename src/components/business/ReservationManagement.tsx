@@ -579,7 +579,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                     <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span>{getReservationDateTime(reservation)}</span>
                   </div>
-                  {reservation.special_requests && (
+                  {reservation.special_requests && !/^Created from ticket/i.test(reservation.special_requests) && !/^Offer claim:/i.test(reservation.special_requests) && (
                     <div className="p-2 bg-muted rounded text-xs">
                       <strong>{t.specialRequests}:</strong> {reservation.special_requests}
                     </div>
