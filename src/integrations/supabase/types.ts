@@ -722,6 +722,7 @@ export type Database = {
           created_at: string
           daily_reservation_limit: number | null
           description: string | null
+          floor_plan_enabled: boolean | null
           floor_plan_image_url: string | null
           free_entry_boost_banned: boolean | null
           free_entry_creation_banned: boolean | null
@@ -766,6 +767,7 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          floor_plan_enabled?: boolean | null
           floor_plan_image_url?: string | null
           free_entry_boost_banned?: boolean | null
           free_entry_creation_banned?: boolean | null
@@ -810,6 +812,7 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          floor_plan_enabled?: boolean | null
           floor_plan_image_url?: string | null
           free_entry_boost_banned?: boolean | null
           free_entry_creation_banned?: boolean | null
