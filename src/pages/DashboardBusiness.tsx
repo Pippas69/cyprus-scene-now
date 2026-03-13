@@ -189,6 +189,7 @@ const DashboardBusiness = () => {
       setBusinessLogoUrl(businessResult.data.logo_url ?? null);
       setBusinessCoverUrl(businessResult.data.cover_url ?? null);
       setBusinessCategories(businessResult.data.category || []);
+      setFloorPlanEnabled(!!businessResult.data.floor_plan_enabled);
 
       // Set user profile data with defensive defaults
       setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
