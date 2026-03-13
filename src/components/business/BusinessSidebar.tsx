@@ -93,13 +93,13 @@ export function BusinessSidebar({ businessCategories, hasFloorPlan }: BusinessSi
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
-        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
+        ...(hasFloorPlan ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ]
     : [
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
-        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
+        ...(hasFloorPlan ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ];
 
