@@ -37,14 +37,15 @@ interface FloorPlanAssignmentDialogProps {
   onAssigned?: () => void;
 }
 
-const ZONE_COLORS: Record<string, { bg: string; border: string; text: string; occupied: string }> = {
-  vip: { bg: 'rgba(234, 179, 8, 0.2)', border: '#eab308', text: '#eab308', occupied: 'rgba(239, 68, 68, 0.35)' },
-  table: { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', text: '#3b82f6', occupied: 'rgba(239, 68, 68, 0.35)' },
-  bar: { bg: 'rgba(168, 85, 247, 0.2)', border: '#a855f7', text: '#a855f7', occupied: 'rgba(239, 68, 68, 0.35)' },
-  stage: { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444', text: '#ef4444', occupied: 'rgba(239, 68, 68, 0.35)' },
-  dj: { bg: 'rgba(236, 72, 153, 0.2)', border: '#ec4899', text: '#ec4899', occupied: 'rgba(239, 68, 68, 0.35)' },
-  other: { bg: 'rgba(107, 114, 128, 0.2)', border: '#6b7280', text: '#6b7280', occupied: 'rgba(239, 68, 68, 0.35)' },
-};
+const ZONE_TYPES = {
+  vip: { color: '#F59E0B', icon: '⭐' },
+  table: { color: '#3B82F6', icon: '🪑' },
+  bar: { color: '#8B5CF6', icon: '🍸' },
+  stage: { color: '#EF4444', icon: '🎤' },
+  dj: { color: '#EC4899', icon: '🎧' },
+  lounge: { color: '#14B8A6', icon: '🛋️' },
+  other: { color: '#6B7280', icon: '📍' },
+} as const;
 
 const translations = {
   el: {
@@ -52,36 +53,34 @@ const translations = {
     selectZone: 'Επιλέξτε ζώνη στο σχεδιάγραμμα',
     confirm: 'Τοποθέτηση',
     confirmTitle: 'Επιβεβαίωση τοποθέτησης',
-    confirmMessage: 'Είστε σίγουροι ότι θέλετε να τοποθετήσετε αυτήν την κράτηση;',
+    confirmMessage: 'Τοποθέτηση κράτησης στη ζώνη:',
     guest: 'Πελάτης',
     people: 'άτομα',
     zone: 'Ζώνη',
     cancel: 'Ακύρωση',
-    yes: 'Ναι, τοποθέτηση',
-    assigned: 'Η κράτηση τοποθετήθηκε επιτυχώς',
+    yes: 'Τοποθέτηση',
+    assigned: 'Η κράτηση τοποθετήθηκε',
     occupied: 'Κατειλημμένη',
     available: 'Διαθέσιμη',
     noFloorPlan: 'Δεν υπάρχει σχεδιάγραμμα',
-    removeAssignment: 'Αφαίρεση',
-    alreadyAssigned: 'Ήδη τοποθετημένη',
+    alreadyAssigned: 'Τοποθετημένη',
   },
   en: {
     title: 'Place reservation',
     selectZone: 'Select a zone on the floor plan',
     confirm: 'Place',
     confirmTitle: 'Confirm placement',
-    confirmMessage: 'Are you sure you want to place this reservation?',
+    confirmMessage: 'Place reservation in zone:',
     guest: 'Guest',
     people: 'people',
     zone: 'Zone',
     cancel: 'Cancel',
-    yes: 'Yes, place it',
-    assigned: 'Reservation placed successfully',
+    yes: 'Place it',
+    assigned: 'Reservation placed',
     occupied: 'Occupied',
     available: 'Available',
     noFloorPlan: 'No floor plan available',
-    removeAssignment: 'Remove',
-    alreadyAssigned: 'Already placed',
+    alreadyAssigned: 'Placed',
   },
 };
 
@@ -105,7 +104,6 @@ export function FloorPlanAssignmentDialog({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
-  const imageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) loadData();
@@ -125,7 +123,6 @@ export function FloorPlanAssignmentDialog({
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setZones(loadedZones);
 
-    // Load current assignments for all zones
     if (loadedZones.length > 0) {
       const zoneIds = loadedZones.map(z => z.id);
       const { data: assignmentData } = await supabase
@@ -141,13 +138,12 @@ export function FloorPlanAssignmentDialog({
       }));
       setAssignments(mapped);
     }
-
     setLoading(false);
   };
 
   const handleZoneClick = (zoneId: string) => {
     const isOccupied = assignments.some(a => a.zone_id === zoneId && a.reservation_id !== reservationId);
-    if (isOccupied) return; // Can't select occupied zones
+    if (isOccupied) return;
     setSelectedZoneId(zoneId);
     setConfirming(true);
   };
@@ -155,23 +151,15 @@ export function FloorPlanAssignmentDialog({
   const handleConfirm = async () => {
     if (!selectedZoneId) return;
     setSaving(true);
-
     try {
-      // Remove existing assignment for this reservation
       await supabase.from('reservation_zone_assignments').delete().eq('reservation_id', reservationId);
-
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-
-      // Create new assignment
       const { error } = await supabase.from('reservation_zone_assignments').insert({
         reservation_id: reservationId,
         zone_id: selectedZoneId,
         assigned_by: user?.id || null,
       });
-
       if (error) throw error;
-
       toast.success(t.assigned);
       onAssigned?.();
       onOpenChange(false);
@@ -186,162 +174,212 @@ export function FloorPlanAssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            {t.title}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 border-b border-border/30">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5 text-base">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <MapPin className="h-4 w-4 text-primary" />
+              </div>
+              {t.title}
+            </DialogTitle>
+          </DialogHeader>
 
-        {/* Reservation info card */}
-        <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-          <Users className="h-5 w-5 text-primary flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">{reservationName}</p>
-            <p className="text-xs text-muted-foreground">{partySize} {t.people}</p>
+          {/* Guest info pill */}
+          <div className="flex items-center gap-3 mt-3 bg-muted/50 rounded-lg px-3 py-2">
+            <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{reservationName}</p>
+              <p className="text-[10px] text-muted-foreground">{partySize} {t.people}</p>
+            </div>
+            {confirming && selectedZone && (
+              <Badge variant="outline" className="border-primary/30 text-primary text-[10px] gap-1">
+                <span>{(ZONE_TYPES[selectedZone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).icon}</span>
+                {selectedZone.label}
+              </Badge>
+            )}
           </div>
-          {confirming && selectedZone && (
-            <Badge variant="outline" className="border-primary/40 text-primary text-xs">
-              → {selectedZone.label}
-            </Badge>
-          )}
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
-        ) : !imageUrl ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <AlertCircle className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">{t.noFloorPlan}</p>
-          </div>
-        ) : confirming ? (
-          /* Confirmation view */
-          <div className="space-y-4">
-            <div className="bg-accent/50 rounded-lg p-4 text-center space-y-3">
-              <p className="text-sm font-medium text-foreground">{t.confirmMessage}</p>
-              <div className="flex items-center justify-center gap-3 text-sm">
-                <span className="font-semibold">{reservationName}</span>
-                <span className="text-muted-foreground">→</span>
-                <Badge
-                  style={{
-                    backgroundColor: ZONE_COLORS[selectedZone?.zone_type || 'other']?.bg,
-                    borderColor: ZONE_COLORS[selectedZone?.zone_type || 'other']?.border,
-                    color: ZONE_COLORS[selectedZone?.zone_type || 'other']?.text,
-                  }}
-                  className="border"
-                >
-                  {selectedZone?.label}
-                </Badge>
+        <div className="p-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          ) : !imageUrl ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <AlertCircle className="h-10 w-10 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">{t.noFloorPlan}</p>
+            </div>
+          ) : confirming ? (
+            /* Confirmation */
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-xl p-5 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">{t.confirmMessage}</p>
+                <div className="flex items-center justify-center gap-2">
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: (ZONE_TYPES[selectedZone?.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).color }}
+                  />
+                  <span className="text-lg font-semibold text-foreground">{selectedZone?.label}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {reservationName} · {partySize} {t.people}
+                </p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setConfirming(false)} disabled={saving}>
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  {t.cancel}
+                </Button>
+                <Button size="sm" className="h-9 text-xs" onClick={handleConfirm} disabled={saving}>
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  {saving ? '...' : t.yes}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => setConfirming(false)} disabled={saving}>
-                <X className="h-3.5 w-3.5 mr-1" />
-                {t.cancel}
-              </Button>
-              <Button size="sm" onClick={handleConfirm} disabled={saving}>
-                <Check className="h-3.5 w-3.5 mr-1" />
-                {saving ? '...' : t.yes}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          /* Floor plan view */
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
-            <div ref={imageRef} className="relative rounded-lg overflow-hidden">
-              <img src={imageUrl} alt="Floor plan" className="w-full h-auto block" draggable={false} />
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                {zones.map((zone) => {
-                  const colors = ZONE_COLORS[zone.zone_type] || ZONE_COLORS.other;
-                  const assignment = assignments.find(a => a.zone_id === zone.id);
-                  const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
-                  const isSelf = assignment?.reservation_id === reservationId;
-                  const fill = isOccupied ? colors.occupied : isSelf ? 'rgba(34, 197, 94, 0.3)' : colors.bg;
-                  const stroke = isOccupied ? '#ef4444' : isSelf ? '#22c55e' : colors.border;
+          ) : (
+            /* Floor plan view */
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
+              
+              <div className="relative rounded-xl overflow-hidden bg-[#0f0f0f] shadow-xl border border-border/20">
+                <img src={imageUrl} alt="Floor plan" className="w-full h-auto block opacity-85" draggable={false} />
+                
+                {/* Grid overlay */}
+                <div className="absolute inset-0 pointer-events-none" style={{
+                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)',
+                  backgroundSize: '20px 20px',
+                }} />
 
-                  return (
-                    <g key={zone.id}>
-                      <rect
-                        x={zone.x_percent}
-                        y={zone.y_percent}
-                        width={zone.width_percent}
-                        height={zone.height_percent}
-                        rx={0.4}
-                        fill={fill}
-                        stroke={stroke}
-                        strokeWidth={0.4}
-                        className="transition-all duration-200"
-                      />
-                      <text
-                        x={zone.x_percent + zone.width_percent / 2}
-                        y={zone.y_percent + zone.height_percent / 2 - 0.5}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill={isOccupied ? '#ef4444' : isSelf ? '#22c55e' : colors.text}
-                        fontSize="1.5"
-                        fontWeight="600"
-                        className="pointer-events-none"
-                      >
-                        {zone.label}
-                      </text>
-                      {isOccupied && (
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <defs>
+                    {zones.map((zone) => {
+                      const assignment = assignments.find(a => a.zone_id === zone.id);
+                      const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
+                      const isSelf = assignment?.reservation_id === reservationId;
+                      const zt = ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other;
+                      const color = isOccupied ? '#EF4444' : isSelf ? '#22C55E' : zt.color;
+                      return (
+                        <linearGradient key={`grad-${zone.id}`} id={`assign-grad-${zone.id}`} x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={isOccupied ? 0.3 : 0.25} />
+                          <stop offset="100%" stopColor={color} stopOpacity={isOccupied ? 0.1 : 0.08} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  {zones.map((zone) => {
+                    const zt = ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other;
+                    const assignment = assignments.find(a => a.zone_id === zone.id);
+                    const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
+                    const isSelf = assignment?.reservation_id === reservationId;
+                    const color = isOccupied ? '#EF4444' : isSelf ? '#22C55E' : zt.color;
+
+                    return (
+                      <g key={zone.id}>
+                        <rect
+                          x={zone.x_percent}
+                          y={zone.y_percent}
+                          width={zone.width_percent}
+                          height={zone.height_percent}
+                          rx={0.6}
+                          fill={`url(#assign-grad-${zone.id})`}
+                          stroke={color}
+                          strokeWidth={0.3}
+                          strokeDasharray={isOccupied ? undefined : "0.8 0.4"}
+                          className="transition-all duration-200"
+                          style={{ filter: `drop-shadow(0 0 3px ${color}40)` }}
+                        />
+                        {/* Label bg pill */}
+                        <rect
+                          x={zone.x_percent + zone.width_percent / 2 - (zone.label.length * 0.38)}
+                          y={zone.y_percent + zone.height_percent / 2 - 1.2}
+                          width={zone.label.length * 0.76}
+                          height={2.4}
+                          rx={0.4}
+                          fill="rgba(0,0,0,0.65)"
+                          className="pointer-events-none"
+                        />
                         <text
                           x={zone.x_percent + zone.width_percent / 2}
-                          y={zone.y_percent + zone.height_percent / 2 + 1.5}
+                          y={zone.y_percent + zone.height_percent / 2 + 0.35}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          fill="#ef4444"
-                          fontSize="1"
+                          fill="white"
+                          fontSize="1.4"
+                          fontWeight="600"
                           className="pointer-events-none"
+                          style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                         >
-                          {assignment.reservation_name}
+                          {zone.label}
                         </text>
-                      )}
-                    </g>
+                        {isOccupied && (
+                          <text
+                            x={zone.x_percent + zone.width_percent / 2}
+                            y={zone.y_percent + zone.height_percent / 2 + 2.2}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill="#EF4444"
+                            fontSize="0.9"
+                            className="pointer-events-none"
+                          >
+                            {assignment.reservation_name}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Clickable hit areas */}
+                {zones.map((zone) => {
+                  const assignment = assignments.find(a => a.zone_id === zone.id);
+                  const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
+                  return (
+                    <div
+                      key={`hit-${zone.id}`}
+                      className={`absolute rounded-md transition-all duration-200 ${
+                        isOccupied 
+                          ? 'cursor-not-allowed' 
+                          : 'cursor-pointer hover:ring-1 hover:ring-white/30 hover:bg-white/5'
+                      }`}
+                      style={{
+                        left: `${zone.x_percent}%`,
+                        top: `${zone.y_percent}%`,
+                        width: `${zone.width_percent}%`,
+                        height: `${zone.height_percent}%`,
+                      }}
+                      onClick={() => handleZoneClick(zone.id)}
+                    />
                   );
                 })}
-              </svg>
-              {/* Clickable hit areas */}
-              {zones.map((zone) => {
-                const assignment = assignments.find(a => a.zone_id === zone.id);
-                const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
-                return (
-                  <div
-                    key={`hit-${zone.id}`}
-                    className={`absolute rounded transition-all ${isOccupied ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:ring-2 hover:ring-primary/60'}`}
-                    style={{
-                      left: `${zone.x_percent}%`,
-                      top: `${zone.y_percent}%`,
-                      width: `${zone.width_percent}%`,
-                      height: `${zone.height_percent}%`,
-                    }}
-                    onClick={() => handleZoneClick(zone.id)}
-                  />
-                );
-              })}
-            </div>
+              </div>
 
-            {/* Legend */}
-            <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-blue-500/20 border border-blue-500" />
-                {t.available}
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-red-500/30 border border-red-500" />
-                {t.occupied}
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-green-500/30 border border-green-500" />
-                {t.alreadyAssigned}
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-5 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm border border-blue-500/60" style={{
+                    background: 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(59,130,246,0.08))'
+                  }} />
+                  {t.available}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm border border-red-500/60" style={{
+                    background: 'linear-gradient(135deg, rgba(239,68,68,0.3), rgba(239,68,68,0.1))'
+                  }} />
+                  {t.occupied}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm border border-green-500/60" style={{
+                    background: 'linear-gradient(135deg, rgba(34,197,94,0.3), rgba(34,197,94,0.1))'
+                  }} />
+                  {t.alreadyAssigned}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
