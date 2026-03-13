@@ -164,6 +164,7 @@ const translations = {
     redirectFallback: "If the page didn't open automatically, tap the button above.",
     continuePayment: "Continue to Payment",
     cancel: "Cancel",
+    specialRequests: "Special requests",
   },
 };
 
