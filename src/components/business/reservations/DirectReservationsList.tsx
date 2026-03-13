@@ -92,7 +92,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [editValue, setEditValue] = useState<string>('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
-
+  // Floor plan assignment dialog
+  const [floorPlanAssignment, setFloorPlanAssignment] = useState<{
+    reservationId: string;
+    reservationName: string;
+    partySize: number;
+    eventId?: string | null;
+  } | null>(null);
+  const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
