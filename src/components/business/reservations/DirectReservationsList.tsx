@@ -169,7 +169,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ages: 'Ages',
       minCharge: 'Min. Charge',
       saved: 'Saved!',
-      errorSaving: 'Error saving'
+      errorSaving: 'Error saving',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Note for the team...',
+      customerNote: 'Customer note',
     }
   };
 
