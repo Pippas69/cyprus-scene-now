@@ -61,6 +61,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
     reservation: null,
   });
   const [businessNotes, setBusinessNotes] = useState('');
+  const [editingMemo, setEditingMemo] = useState<string | null>(null);
+  const [memoValue, setMemoValue] = useState('');
 
   useEffect(() => {
     fetchData();
