@@ -112,6 +112,7 @@ const translations = {
     redirectFallback: "Αν η σελίδα δεν άνοιξε αυτόματα, πατήστε το κουμπί παραπάνω.",
     continuePayment: "Συνέχεια στην Πληρωμή",
     cancel: "Ακύρωση",
+    specialRequests: "Ειδικά αιτήματα",
   },
   en: {
     title: "Ticket & Reservation",
