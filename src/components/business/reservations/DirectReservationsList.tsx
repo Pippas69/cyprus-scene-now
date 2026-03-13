@@ -909,7 +909,24 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(reservation)}
+                        <div className="flex items-center gap-1.5">
+                          {getStatusBadge(reservation)}
+                          {hasFloorPlan && reservation.status === 'accepted' && !reservation.checked_in_at && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-primary hover:text-primary"
+                              onClick={() => setFloorPlanAssignment({
+                                reservationId: reservation.id,
+                                reservationName: reservation.reservation_name,
+                                partySize: reservation.party_size,
+                                eventId: reservation.event_id,
+                              })}
+                            >
+                              <MapPin className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>);
 
@@ -918,6 +935,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </Table>
           </Card>
         }
+
+        {/* Floor Plan Assignment Dialog - Kaliva mode */}
+        {floorPlanAssignment && (
+          <FloorPlanAssignmentDialog
+            open={!!floorPlanAssignment}
+            onOpenChange={(open) => { if (!open) setFloorPlanAssignment(null); }}
+            businessId={businessId}
+            reservationId={floorPlanAssignment.reservationId}
+            reservationName={floorPlanAssignment.reservationName}
+            partySize={floorPlanAssignment.partySize}
+            eventId={floorPlanAssignment.eventId}
+            onAssigned={() => {
+              setFloorPlanAssignment(null);
+              fetchReservations(true);
+            }}
+          />
+        )}
       </div>);
 
   }
