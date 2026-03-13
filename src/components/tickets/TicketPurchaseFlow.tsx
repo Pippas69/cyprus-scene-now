@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -580,20 +580,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               />
             </div>
             {/* Special Requests */}
-            <div className="space-y-1">
-              <Label htmlFor="ticket-special-requests" className="flex items-center gap-2 text-sm">
-                <MessageSquare className="h-3.5 w-3.5" />
-                {t.specialRequests}
-                <span className="text-xs text-muted-foreground">({t.optional})</span>
-              </Label>
-              <Textarea
-                id="ticket-special-requests"
-                value={specialRequests}
-                onChange={(e) => setSpecialRequests(e.target.value)}
-                rows={2}
-                className="text-sm"
-              />
-            </div>
+            <CollapsibleSpecialRequests
+              value={specialRequests}
+              onChange={setSpecialRequests}
+              label={t.specialRequests}
+              optionalLabel={t.optional}
+            />
           </div>
         )}
       </div>

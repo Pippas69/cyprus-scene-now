@@ -5,7 +5,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -643,20 +643,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             )}
 
             {/* Special Requests */}
-            <div className="space-y-1">
-              <Label htmlFor="requests" className="flex items-center gap-2 text-sm">
-                <MessageSquare className="h-3.5 w-3.5" />
-                {t.specialRequests}
-                <span className="text-xs text-muted-foreground">({t.optional})</span>
-              </Label>
-              <Textarea
-                id="requests"
-                value={specialRequests}
-                onChange={(e) => setSpecialRequests(e.target.value)}
-                rows={2}
-                className="text-sm"
-              />
-            </div>
+            <CollapsibleSpecialRequests
+              value={specialRequests}
+              onChange={setSpecialRequests}
+              label={t.specialRequests}
+              optionalLabel={t.optional}
+            />
           </div>
         );
 

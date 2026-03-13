@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -112,6 +112,7 @@ const translations = {
     redirectFallback: "Αν η σελίδα δεν άνοιξε αυτόματα, πατήστε το κουμπί παραπάνω.",
     continuePayment: "Συνέχεια στην Πληρωμή",
     cancel: "Ακύρωση",
+    specialRequests: "Ειδικά αιτήματα",
   },
   en: {
     title: "Ticket & Reservation",
@@ -163,6 +164,7 @@ const translations = {
     redirectFallback: "If the page didn't open automatically, tap the button above.",
     continuePayment: "Continue to Payment",
     cancel: "Cancel",
+    specialRequests: "Special requests",
   },
 };
 
@@ -628,6 +630,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           className="h-9 text-sm"
         />
       </div>
+
+      {/* Special Requests */}
+      <CollapsibleSpecialRequests
+        value={specialRequests}
+        onChange={setSpecialRequests}
+        label={t.specialRequests}
+        optionalLabel={t.optional}
+      />
 
       {/* Arrival Hours */}
       {(reservationHoursFrom || reservationHoursTo) && (
