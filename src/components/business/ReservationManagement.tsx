@@ -732,11 +732,6 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                         <Calendar className="h-3 w-3" />
                         {getReservationDateTime(reservation)}
                       </div>
-                      {reservation.special_requests && (
-                        <div className="text-xs text-muted-foreground max-w-xs truncate">
-                          {reservation.special_requests}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
