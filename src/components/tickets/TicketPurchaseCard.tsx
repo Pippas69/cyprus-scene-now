@@ -86,6 +86,8 @@ const t = {
     minimumChargeNote: "Table minimum charge",
     paidAtVenue: "Paid at the venue",
     fillAllGuests: "Please fill in name and age for all guests",
+    specialRequests: "Special requests",
+    optional: "optional",
   },
 };
 
