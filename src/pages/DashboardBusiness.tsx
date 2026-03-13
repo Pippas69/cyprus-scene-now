@@ -50,6 +50,7 @@ const DashboardBusiness = () => {
   const [businessLogoUrl, setBusinessLogoUrl] = useState<string | null>(null);
   const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
   const [businessCategories, setBusinessCategories] = useState<string[]>([]);
+  const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
