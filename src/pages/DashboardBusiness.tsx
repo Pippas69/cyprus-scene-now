@@ -165,7 +165,7 @@ const DashboardBusiness = () => {
       const [businessResult, profileResult] = await Promise.all([
         supabase
           .from("businesses")
-          .select("id, verified, name, logo_url, cover_url, category")
+          .select("id, verified, name, logo_url, cover_url, category, floor_plan_enabled")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
