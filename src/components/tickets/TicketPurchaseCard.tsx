@@ -263,6 +263,7 @@ export const TicketPurchaseCard = ({
         items,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim() || user.email,
+        specialRequests: specialRequests.trim() || null,
       };
 
       // Pass guest info for Kaliva-linked reservations
