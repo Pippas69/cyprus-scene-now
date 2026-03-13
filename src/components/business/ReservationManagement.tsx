@@ -31,6 +31,7 @@ interface ReservationWithEvent {
   seating_preference: string | null;
   special_requests: string | null;
   business_notes: string | null;
+  staff_memo: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
