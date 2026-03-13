@@ -733,11 +733,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
     return (
       <span
-        className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center whitespace-nowrap -ml-2 group/edit relative pr-4"
+        className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-2 group/edit"
         onClick={() => startEdit(reservationId, field, rawValue)}>
-        
         {displayValue}
-        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity absolute right-0 top-1/2 -translate-y-1/2" />
+        <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
       </span>);
 
   };
