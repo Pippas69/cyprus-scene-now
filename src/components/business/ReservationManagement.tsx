@@ -678,9 +678,31 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{reservation.reservation_name}</div>
-                      <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="font-medium">{reservation.reservation_name}</div>
+                        <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
+                      </div>
+                      {reservation.special_requests && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors" title={t.customerNote}>
+                              <MessageSquare className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-72 p-0" side="right">
+                            <div className="p-3 border-b border-border/50 bg-muted/30">
+                              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                <MessageSquare className="h-3 w-3" />
+                                {t.customerNote}
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-sm leading-relaxed">{reservation.special_requests}</p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
