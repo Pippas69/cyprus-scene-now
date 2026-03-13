@@ -579,7 +579,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                     <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span>{getReservationDateTime(reservation)}</span>
                   </div>
-                  {reservation.special_requests && (
+                  {reservation.special_requests && !/^Created from ticket/i.test(reservation.special_requests) && !/^Offer claim:/i.test(reservation.special_requests) && (
                     <div className="p-2 bg-muted rounded text-xs">
                       <strong>{t.specialRequests}:</strong> {reservation.special_requests}
                     </div>
@@ -683,7 +683,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                         <div className="font-medium">{reservation.reservation_name}</div>
                         <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
                       </div>
-                      {reservation.special_requests && (
+                      {reservation.special_requests && !/^Created from ticket/i.test(reservation.special_requests) && !/^Offer claim:/i.test(reservation.special_requests) && (
                         <Popover>
                           <PopoverTrigger asChild>
                             <button className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors" title={t.customerNote}>
