@@ -742,7 +742,94 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   };
 
-  if (loading) {
+  const handleSaveMemo = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
+        .eq('id', reservationId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingMemo(null);
+      setMemoValue('');
+      fetchReservations(true);
+    } catch (error) {
+      console.error('Error saving memo:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
+  // Helper to render Staff Memo cell
+  const renderStaffMemoCell = (reservation: DirectReservation) => {
+    if (editingMemo === reservation.id) {
+      return (
+        <div className="flex items-center gap-1 min-w-[140px]">
+          <Input
+            value={memoValue}
+            onChange={(e) => setMemoValue(e.target.value)}
+            placeholder={t.staffMemoPlaceholder}
+            className="h-7 text-xs"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveMemo(reservation.id);
+              if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); }
+            }}
+          />
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
+            <Save className="h-3 w-3 text-primary" />
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); }}>
+            <X className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <button
+        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        onClick={() => {
+          setEditingMemo(reservation.id);
+          setMemoValue((reservation as any).staff_memo || '');
+        }}
+      >
+        {(reservation as any).staff_memo ? (
+          <span className="text-xs text-foreground max-w-[120px] truncate">{(reservation as any).staff_memo}</span>
+        ) : (
+          <>
+            <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
+            <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
+          </>
+        )}
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+      </button>
+    );
+  };
+
+  // Helper to render customer note bubble next to name
+  const renderCustomerNoteBubble = (reservation: DirectReservation) => {
+    if (!reservation.special_requests) return null;
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors" title={t.customerNote}>
+            <MessageSquare className="h-2.5 w-2.5 text-emerald-600 dark:text-emerald-400" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0" side="right">
+          <div className="p-2.5 border-b border-border/50 bg-muted/30">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <MessageSquare className="h-3 w-3" />
+              {t.customerNote}
+            </div>
+          </div>
+          <div className="p-2.5">
+            <p className="text-sm leading-relaxed">{reservation.special_requests}</p>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
     return (
       <div className="flex items-center justify-center p-6">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
