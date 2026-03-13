@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2, CreditCard, Wallet } from 'lucide-react';
+import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2, CreditCard, Wallet, StickyNote, Pencil, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
