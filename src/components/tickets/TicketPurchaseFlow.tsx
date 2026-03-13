@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Ticket, Minus, Plus, Loader2, CreditCard,
-  ArrowRight, ArrowLeft, ExternalLink, Users, Calendar
+  ArrowRight, ArrowLeft, ExternalLink, Users, Calendar, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
