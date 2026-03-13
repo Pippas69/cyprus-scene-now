@@ -722,6 +722,7 @@ export type Database = {
           created_at: string
           daily_reservation_limit: number | null
           description: string | null
+          floor_plan_image_url: string | null
           free_entry_boost_banned: boolean | null
           free_entry_creation_banned: boolean | null
           free_entry_strikes: number | null
@@ -765,6 +766,7 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          floor_plan_image_url?: string | null
           free_entry_boost_banned?: boolean | null
           free_entry_creation_banned?: boolean | null
           free_entry_strikes?: number | null
@@ -808,6 +810,7 @@ export type Database = {
           created_at?: string
           daily_reservation_limit?: number | null
           description?: string | null
+          floor_plan_image_url?: string | null
           free_entry_boost_banned?: boolean | null
           free_entry_creation_banned?: boolean | null
           free_entry_strikes?: number | null
@@ -2138,6 +2141,72 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      floor_plan_zones: {
+        Row: {
+          business_id: string
+          capacity: number | null
+          created_at: string | null
+          height_percent: number
+          id: string
+          label: string
+          metadata: Json | null
+          shape: string
+          sort_order: number | null
+          updated_at: string | null
+          width_percent: number
+          x_percent: number
+          y_percent: number
+          zone_type: string
+        }
+        Insert: {
+          business_id: string
+          capacity?: number | null
+          created_at?: string | null
+          height_percent?: number
+          id?: string
+          label: string
+          metadata?: Json | null
+          shape?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          width_percent?: number
+          x_percent: number
+          y_percent: number
+          zone_type?: string
+        }
+        Update: {
+          business_id?: string
+          capacity?: number | null
+          created_at?: string | null
+          height_percent?: number
+          id?: string
+          label?: string
+          metadata?: Json | null
+          shape?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          width_percent?: number
+          x_percent?: number
+          y_percent?: number
+          zone_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_zones_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_zones_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       free_entry_reports: {
         Row: {
@@ -3575,6 +3644,45 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_zone_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          reservation_id: string
+          zone_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          reservation_id: string
+          zone_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          reservation_id?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_zone_assignments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: true
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_zone_assignments_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plan_zones"
             referencedColumns: ["id"]
           },
         ]
