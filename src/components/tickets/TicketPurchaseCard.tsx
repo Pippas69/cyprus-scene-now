@@ -454,6 +454,20 @@ export const TicketPurchaseCard = ({
                     placeholder={language === 'el' ? "email@example.com" : "email@example.com"}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="special-requests-card" className="text-xs flex items-center gap-1.5">
+                    <MessageSquare className="h-3 w-3" />
+                    {text.specialRequests}
+                    <span className="text-muted-foreground">({text.optional})</span>
+                  </Label>
+                  <Textarea
+                    id="special-requests-card"
+                    value={specialRequests}
+                    onChange={(e) => setSpecialRequests(e.target.value)}
+                    rows={2}
+                    className="text-sm mt-1"
+                  />
+                </div>
               </div>
             </div>
           </>
