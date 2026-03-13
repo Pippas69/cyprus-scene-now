@@ -934,13 +934,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <Card>
-            <Table className="w-full min-w-[600px] table-fixed">
+            <Table className="w-full min-w-[750px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-1/4">{t.name}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.details}</TableHead>
-                  <TableHead className="text-xs w-1/4">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
