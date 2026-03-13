@@ -358,6 +358,9 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       table: 'Τραπέζι',
       vip: 'VIP',
       sofa: 'Καναπές',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Σημείωση για το team...',
+      customerNote: 'Σχόλιο πελάτη',
     },
     en: {
       title: 'Reservation Management',
