@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin } from
+  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save } from
 'lucide-react';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
