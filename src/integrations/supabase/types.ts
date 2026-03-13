@@ -3711,6 +3711,7 @@ export type Database = {
           seating_preference: string | null
           seating_type_id: string | null
           special_requests: string | null
+          staff_memo: string | null
           status: string
           stripe_payment_intent_id: string | null
           ticket_credit_cents: number | null
@@ -3737,6 +3738,7 @@ export type Database = {
           seating_preference?: string | null
           seating_type_id?: string | null
           special_requests?: string | null
+          staff_memo?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           ticket_credit_cents?: number | null
@@ -3763,6 +3765,7 @@ export type Database = {
           seating_preference?: string | null
           seating_type_id?: string | null
           special_requests?: string | null
+          staff_memo?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           ticket_credit_cents?: number | null
