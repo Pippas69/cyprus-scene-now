@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid } from "lucide-react";
 import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const translations = {
     events: "Εκδηλώσεις",
     offers: "Προσφορές",
     reservations: "Κρατήσεις",
+    floorPlan: "Σχεδιάγραμμα",
     business: "Επιχείρηση",
     subscription: "Συνδρομή",
     boosts: "Προωθήσεις",
@@ -44,6 +45,7 @@ const translations = {
     events: "Events",
     offers: "Offers",
     reservations: "Reservations",
+    floorPlan: "Floor plan",
     business: "Business",
     subscription: "Subscription",
     boosts: "Boosts",
@@ -90,11 +92,13 @@ export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
+        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ]
     : [
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
+        { title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid },
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
       ];
 
