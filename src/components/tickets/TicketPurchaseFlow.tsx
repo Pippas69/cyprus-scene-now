@@ -147,6 +147,8 @@ const translations = {
     row: "Row",
     seat: "Seat",
     zone: "Zone",
+    specialRequests: "Special requests",
+    optional: "optional",
   },
 };
 

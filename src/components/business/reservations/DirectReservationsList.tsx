@@ -959,8 +959,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <div className="flex flex-col gap-0.5 min-w-0">
                             <EditableCell
                             reservationId={reservation.id}
                             field="reservation_name"
