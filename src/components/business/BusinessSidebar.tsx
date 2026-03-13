@@ -56,9 +56,10 @@ const translations = {
 
 interface BusinessSidebarProps {
   businessCategories: string[];
+  floorPlanEnabled?: boolean;
 }
 
-export function BusinessSidebar({ businessCategories }: BusinessSidebarProps) {
+export function BusinessSidebar({ businessCategories, floorPlanEnabled }: BusinessSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
