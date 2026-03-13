@@ -135,7 +135,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ages: 'Ηλικίες',
       minCharge: 'Min. Charge',
       saved: 'Αποθηκεύτηκε!',
-      errorSaving: 'Σφάλμα αποθήκευσης'
+      errorSaving: 'Σφάλμα αποθήκευσης',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Σημείωση για το team...',
+      customerNote: 'Σχόλιο πελάτη',
     },
     en: {
       title: 'Profile & Offer Reservations',
