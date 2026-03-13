@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2, CreditCard, Wallet } from 'lucide-react';
+import { Download, Check, X, Users, Phone, MapPin, Calendar, MessageSquare, Building2, CreditCard, Wallet, StickyNote, Pencil, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { QRScanner } from './QRScanner';
 import { toastTranslations } from '@/translations/toastTranslations';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 
 interface ReservationWithEvent {
   id: string;
@@ -29,6 +31,7 @@ interface ReservationWithEvent {
   seating_preference: string | null;
   special_requests: string | null;
   business_notes: string | null;
+  staff_memo: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
@@ -58,6 +61,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
     reservation: null,
   });
   const [businessNotes, setBusinessNotes] = useState('');
+  const [editingMemo, setEditingMemo] = useState<string | null>(null);
+  const [memoValue, setMemoValue] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -98,7 +103,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         .select(`
           id, event_id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, confirmation_code, qr_code_token, checked_in_at,
+          business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           seating_type, prepaid_min_charge_cents, payment_status, stripe_payment_intent_id,
           events!inner(id, title, start_at, event_type),
           profiles(name, email)
@@ -121,7 +126,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       .select(`
         id, event_id, business_id, user_id, reservation_name, party_size, status,
         created_at, phone_number, preferred_time, seating_preference, special_requests,
-        business_notes, confirmation_code, qr_code_token, checked_in_at,
+        business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
         seating_type, prepaid_min_charge_cents, payment_status, stripe_payment_intent_id,
         profiles(name, email)
       `)
@@ -265,6 +270,25 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
     }
   };
 
+  const handleSaveMemo = async (reservationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
+        .eq('id', reservationId);
+
+      if (error) throw error;
+
+      toast.success(language === 'el' ? 'Αποθηκεύτηκε' : 'Saved');
+      setEditingMemo(null);
+      setMemoValue('');
+      fetchData();
+    } catch (error) {
+      console.error('Error saving memo:', error);
+      toast.error(toastTranslations[language].error);
+    }
+  };
+
   const exportToCSV = () => {
     const headers = [t.event, t.name, 'Email', t.contact, t.details, t.status];
     const rows = filteredReservations.map((r) => [
@@ -334,6 +358,9 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       table: 'Τραπέζι',
       vip: 'VIP',
       sofa: 'Καναπές',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Σημείωση για το team...',
+      customerNote: 'Σχόλιο πελάτη',
     },
     en: {
       title: 'Reservation Management',
@@ -383,6 +410,9 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
       table: 'Table',
       vip: 'VIP',
       sofa: 'Sofa',
+      staffMemo: 'Staff memo',
+      staffMemoPlaceholder: 'Note for the team...',
+      customerNote: 'Customer note',
     },
   };
 
@@ -629,6 +659,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                 <TableHead>{t.prepaidCredit}</TableHead>
                 <TableHead>{t.confirmationCode}</TableHead>
                 <TableHead>{t.status}</TableHead>
+                <TableHead>{t.staffMemo}</TableHead>
                 <TableHead>{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
@@ -647,9 +678,31 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{reservation.reservation_name}</div>
-                      <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="font-medium">{reservation.reservation_name}</div>
+                        <div className="text-sm text-muted-foreground">{reservation.profiles?.name || t.anonymous}</div>
+                      </div>
+                      {reservation.special_requests && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors" title={t.customerNote}>
+                              <MessageSquare className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-72 p-0" side="right">
+                            <div className="p-3 border-b border-border/50 bg-muted/30">
+                              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                                <MessageSquare className="h-3 w-3" />
+                                {t.customerNote}
+                              </div>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-sm leading-relaxed">{reservation.special_requests}</p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -679,11 +732,6 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                         <Calendar className="h-3 w-3" />
                         {getReservationDateTime(reservation)}
                       </div>
-                      {reservation.special_requests && (
-                        <div className="text-xs text-muted-foreground max-w-xs truncate">
-                          {reservation.special_requests}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -718,6 +766,47 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                     )}
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation.status)}</TableCell>
+                  <TableCell>
+                    {editingMemo === reservation.id ? (
+                      <div className="flex items-center gap-1.5 min-w-[160px]">
+                        <Input
+                          value={memoValue}
+                          onChange={(e) => setMemoValue(e.target.value)}
+                          placeholder={t.staffMemoPlaceholder}
+                          className="h-8 text-xs"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveMemo(reservation.id);
+                            if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); }
+                          }}
+                        />
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveMemo(reservation.id)}>
+                          <Save className="h-3.5 w-3.5 text-primary" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); }}>
+                          <X className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        className="flex items-center gap-1.5 text-left group min-w-[100px] hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+                        onClick={() => {
+                          setEditingMemo(reservation.id);
+                          setMemoValue((reservation as any).staff_memo || '');
+                        }}
+                      >
+                        {(reservation as any).staff_memo ? (
+                          <span className="text-xs text-foreground max-w-[140px] truncate">{(reservation as any).staff_memo}</span>
+                        ) : (
+                          <>
+                            <StickyNote className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                            <span className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">—</span>
+                          </>
+                        )}
+                        <Pencil className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors ml-auto" />
+                      </button>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       {reservation.status === 'pending' && (
