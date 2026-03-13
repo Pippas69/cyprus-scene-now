@@ -103,7 +103,7 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
         .select(`
           id, event_id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, confirmation_code, qr_code_token, checked_in_at,
+          business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           seating_type, prepaid_min_charge_cents, payment_status, stripe_payment_intent_id,
           events!inner(id, title, start_at, event_type),
           profiles(name, email)
