@@ -103,6 +103,8 @@ const translations = {
     row: "Σειρά",
     seat: "Θέση",
     zone: "Ζώνη",
+    specialRequests: "Ειδικά αιτήματα",
+    optional: "προαιρετικό",
   },
   en: {
     title: "Tickets",
