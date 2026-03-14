@@ -246,12 +246,29 @@ export function FloorPlanAssignmentDialog({
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
-              <div className="relative rounded-xl overflow-hidden bg-[#0a1628] shadow-xl border border-border/20 aspect-[4/3]">
-                {/* Grid pattern */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                  backgroundSize: '24px 24px',
-                }} />
+              <div
+                className="relative rounded-xl overflow-hidden bg-[#0a1628] shadow-xl border border-border/20"
+                style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(360px, 64vh, 760px)' }}
+              >
+                {floorPlanImageUrl ? (
+                  <>
+                    <img
+                      src={floorPlanImageUrl}
+                      alt="Venue floor plan reference"
+                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
+                      backgroundSize: '24px 24px',
+                    }}
+                  />
+                )}
 
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <defs>
