@@ -1085,7 +1085,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                                   onClick={(e) => { e.stopPropagation(); setSelectedTable(tb.id); }}
                                   onDoubleClick={(e) => { e.stopPropagation(); setEditTableDialog(tb); }}
                                 >
-                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: zt.color, opacity: 0.6 }} />
+                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SVG_THEME.seat }} />
                                   <span className="text-foreground font-medium">{tb.label}</span>
                                   <span className="text-muted-foreground">{tb.seats} {t.seats}</span>
                                 </div>
