@@ -474,6 +474,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <FloorPlanToolbar
             placingMode={placingMode}
             setPlacingMode={setPlacingMode}
+            calibrationMode={calibrationMode}
+            setCalibrationMode={setCalibrationMode}
             showLabels={showLabels}
             setShowLabels={setShowLabels}
             showBlueprint={showBlueprint}
