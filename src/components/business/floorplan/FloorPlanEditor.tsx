@@ -1125,8 +1125,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
-                <div className="h-6 w-6 rounded-md flex items-center justify-center text-xs"
-                  style={{ backgroundColor: `${(ZONE_TYPES[editZoneDialog.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).color}20` }}>
+                <div
+                  className="h-6 w-6 rounded-md flex items-center justify-center text-xs"
+                  style={{ backgroundColor: 'hsl(var(--primary) / 0.14)', color: SVG_THEME.zoneStroke }}
+                >
                   {(ZONE_TYPES[editZoneDialog.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).icon}
                 </div>
                 {t.editZone}
