@@ -48,7 +48,6 @@ type Geometry = {
 };
 
 const THEME = {
-  canvasGrid: 'hsl(var(--floorplan-neon) / 0.06)',
   wall: 'hsl(var(--floorplan-wall) / 0.75)',
   wallSecondary: 'hsl(var(--floorplan-wall) / 0.45)',
 
