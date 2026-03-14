@@ -858,22 +858,22 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <>
                             <rect
-                              x={zone.x_percent + 0.5}
-                              y={zone.y_percent + 0.5}
-                              width={Math.max(zone.label.length * 0.7 + 1.5, 5)}
-                              height={2.2}
-                              rx={0.4}
+                              x={zone.x_percent + 0.4}
+                              y={zone.y_percent + 0.4}
+                              width={Math.max(zone.label.length * 0.9 + 2.2, 7.8)}
+                              height={3.2}
+                              rx={0.55}
                               fill={zt.color}
-                              opacity={0.85}
+                              opacity={0.9}
                               className="pointer-events-none"
                             />
                             <text
-                              x={zone.x_percent + 1.2}
-                              y={zone.y_percent + 1.8}
+                              x={zone.x_percent + 1.3}
+                              y={zone.y_percent + 2.4}
                               fill="white"
-                              fontSize="1.1"
+                              fontSize="1.65"
                               fontWeight="700"
-                              letterSpacing="0.04"
+                              letterSpacing="0.03"
                               className="pointer-events-none"
                               style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                             >
