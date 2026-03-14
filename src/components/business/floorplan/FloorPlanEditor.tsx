@@ -69,6 +69,8 @@ const translations = {
     available: 'Διαθέσιμο',
     reserved: 'Κρατημένο',
     occupied: 'Κατειλημμένο',
+    calibrate: 'Βαθμονόμηση',
+    calibrationOn: 'Βαθμονόμηση...',
   },
   en: {
     title: 'Floor plan',
