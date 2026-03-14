@@ -158,7 +158,7 @@ After extraction, count all items. Compare against visible labels in the image. 
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract EVERY labeled object from this floor plan with precise bounding boxes (x, y, width, height as percentages). The width and height should match the actual visual size of each element. Scan the entire image carefully. Return ALL of them." },
+              { type: "text", text: "Extract EVERY labeled object from this floor plan. CRITICAL: The bounding box (x, y, width, height as percentages) MUST match the EXACT visual shape and size of each element. If a table is a narrow thin strip, its bbox must be narrow. If a bar is a large rectangle, its bbox must be large. Measure each element's actual proportions from the image pixels. Do NOT make everything the same size. Scan the entire image systematically and return ALL labeled objects." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },
