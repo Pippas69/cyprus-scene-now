@@ -923,12 +923,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <text
                             x={table.x_percent}
-                            y={table.y_percent - 0.1}
+                            y={table.y_percent - 0.2}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill="white"
-                            fontSize="1"
-                            fontWeight="600"
+                            fontSize="1.35"
+                            fontWeight="700"
                             className="pointer-events-none"
                             style={{ fontFamily: 'system-ui' }}
                           >
@@ -939,14 +939,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <text
                             x={table.x_percent}
-                            y={table.y_percent + 1.1}
+                            y={table.y_percent + 1.35}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill={zt.color}
-                            fontSize="0.75"
-                            fontWeight="500"
+                            fontSize="1.05"
+                            fontWeight="600"
                             className="pointer-events-none"
-                            opacity={0.8}
+                            opacity={0.95}
                           >
                             {table.seats}
                           </text>
@@ -954,7 +954,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {/* Seat dots around the table */}
                         {Array.from({ length: Math.min(table.seats, 8) }).map((_, si) => {
                           const angle = (si / Math.min(table.seats, 8)) * Math.PI * 2 - Math.PI / 2;
-                          const seatR = r + 0.7;
+                          const seatR = r + 0.95;
                           const sx = table.x_percent + Math.cos(angle) * seatR;
                           const sy = table.y_percent + Math.sin(angle) * seatR;
                           return (
