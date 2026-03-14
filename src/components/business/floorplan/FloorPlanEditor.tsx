@@ -37,7 +37,7 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
 const translations = {
   el: {
     title: 'Σχεδιάγραμμα χώρου',
-    subtitle: 'Αρχιτεκτονικό SVG floor plan με premium clickable τραπέζια',
+    subtitle: 'Setup mode με χειροκίνητη τοποθέτηση τραπεζιών πάνω στο blueprint',
     uploadBlueprint: 'Ανέβασμα blueprint',
     uploading: 'Ανέβασμα...',
     addTable: 'Νέο τραπέζι',
@@ -77,7 +77,7 @@ const translations = {
   },
   en: {
     title: 'Floor plan',
-    subtitle: 'Architectural SVG floor plan with premium clickable tables',
+    subtitle: 'Setup mode with manual table mapping over blueprint',
     uploadBlueprint: 'Upload blueprint',
     uploading: 'Uploading...',
     addTable: 'New table',
@@ -129,7 +129,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [editDialog, setEditDialog] = useState<FloorPlanItem | null>(null);
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
-  const [setupMode, setSetupMode] = useState(false);
+  const [setupMode, setSetupMode] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
@@ -534,18 +534,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             t={t}
           />
 
-          <div className={`grid gap-4 ${setupMode ? 'grid-cols-1 lg:grid-cols-[280px_1fr]' : 'grid-cols-1'}`}>
-            {setupMode && (
-              <FloorPlanSidebar
-                tableItems={tableItems}
-                selectedItem={selectedItem}
-                reservationStatuses={reservationStatuses}
-                setupMode={setupMode}
-                onItemSelect={setSelectedItem}
-                onItemEdit={setEditDialog}
-                t={t}
-              />
-            )}
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+            <FloorPlanSidebar
+              tableItems={tableItems}
+              selectedItem={selectedItem}
+              reservationStatuses={reservationStatuses}
+              setupMode={setupMode}
+              onItemSelect={setSelectedItem}
+              onItemEdit={setEditDialog}
+              t={t}
+            />
 
             <FloorPlanCanvas
               items={items}
