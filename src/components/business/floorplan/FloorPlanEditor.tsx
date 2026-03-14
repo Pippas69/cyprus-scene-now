@@ -1107,7 +1107,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                       .filter(([key]) => zones.some(z => z.zone_type === key))
                       .map(([key, val]) => (
                         <div key={key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: val.color }} />
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: SVG_THEME.zoneStroke, opacity: val.strokeOpacity }} />
                           <span>{t[key as keyof typeof t] as string}</span>
                         </div>
                       ))}
