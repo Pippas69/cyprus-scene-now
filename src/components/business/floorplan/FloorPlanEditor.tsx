@@ -37,7 +37,7 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
 const translations = {
   el: {
     title: 'Σχεδιάγραμμα χώρου',
-    subtitle: 'Setup mode με χειροκίνητη τοποθέτηση τραπεζιών πάνω στο blueprint',
+    subtitle: 'Αρχιτεκτονικό SVG floor plan με premium clickable τραπέζια',
     uploadBlueprint: 'Ανέβασμα blueprint',
     uploading: 'Ανέβασμα...',
     addTable: 'Νέο τραπέζι',
