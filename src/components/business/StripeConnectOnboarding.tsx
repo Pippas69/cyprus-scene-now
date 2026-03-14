@@ -36,6 +36,11 @@ const translations = {
     idVerification: 'Ταυτότητα για επαλήθευση',
     businessInfo: 'Φορολογικά στοιχεία επιχείρησης',
     commissionNote: 'Η προμήθεια πλατφόρμας αφαιρείται αυτόματα από κάθε πώληση',
+    selectBusinessType: 'Τύπος λογαριασμού:',
+    individualLabel: 'Ιδιώτης',
+    individualDesc: 'Δεν έχω εγγεγραμμένη εταιρεία. Χρειάζομαι μόνο ταυτότητα, διεύθυνση και IBAN.',
+    companyLabel: 'Εγγεγραμμένη Εταιρεία',
+    companyDesc: 'Έχω αριθμό εγγραφής εταιρείας (HE) στην Κύπρο.',
   },
   en: {
     title: 'Payments & Payouts',
