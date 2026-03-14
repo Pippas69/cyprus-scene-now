@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, ArrowRight } from 'lucide-react';
+import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, ArrowRight, User, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface StripeConnectOnboardingProps {

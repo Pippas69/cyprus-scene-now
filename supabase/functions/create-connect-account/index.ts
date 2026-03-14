@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      business_type: "company",
+      business_type: businessType,
       metadata: {
         business_id: business.id,
         user_id: user.id,
