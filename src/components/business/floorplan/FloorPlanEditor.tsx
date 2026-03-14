@@ -129,7 +129,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [editDialog, setEditDialog] = useState<FloorPlanItem | null>(null);
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
-  const [setupMode, setSetupMode] = useState(true);
+  const [setupMode, setSetupMode] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
