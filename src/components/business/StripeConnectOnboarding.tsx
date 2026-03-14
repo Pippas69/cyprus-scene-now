@@ -84,6 +84,7 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
+  const [businessType, setBusinessType] = useState<'individual' | 'company'>('individual');
 
   const t = translations[language];
 
