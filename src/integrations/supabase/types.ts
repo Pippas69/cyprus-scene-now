@@ -2145,6 +2145,70 @@ export type Database = {
         }
         Relationships: []
       }
+      floor_plan_tables: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          label: string
+          seats: number
+          shape: string
+          sort_order: number
+          updated_at: string | null
+          x_percent: number
+          y_percent: number
+          zone_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          label: string
+          seats?: number
+          shape?: string
+          sort_order?: number
+          updated_at?: string | null
+          x_percent?: number
+          y_percent?: number
+          zone_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          seats?: number
+          shape?: string
+          sort_order?: number
+          updated_at?: string | null
+          x_percent?: number
+          y_percent?: number
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_tables_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_tables_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plan_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       floor_plan_zones: {
         Row: {
           business_id: string
