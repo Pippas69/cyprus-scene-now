@@ -285,13 +285,7 @@ export function VenueSVGCanvas({
 
   return (
     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <pattern id="floor-grid" width="4" height="4" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="0.1" fill={THEME.canvasGrid} />
-        </pattern>
-      </defs>
-
-      <rect x={0} y={0} width={100} height={100} fill="url(#floor-grid)" />
+      <rect x={0} y={0} width={100} height={100} fill="transparent" />
       <ArchitecturalWalls enabled={hasBlueprintSignature} />
 
       {/* Fixtures */}
