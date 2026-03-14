@@ -108,6 +108,8 @@ export function FloorPlanAssignmentDialog({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
+  const [canvasAspect, setCanvasAspect] = useState<number>(DEFAULT_CANVAS_ASPECT);
 
   useEffect(() => { if (open) loadData(); }, [open, businessId]);
 
