@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Upload, Plus, Trash2, Save, MapPin, MousePointer, Edit3, Users, X, Eye, EyeOff, Wand2, Loader2 } from 'lucide-react';
+import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface FloorPlanItem {
