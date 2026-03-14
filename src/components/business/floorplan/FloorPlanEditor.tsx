@@ -294,6 +294,7 @@ const translations = {
     no: 'No',
     aiSuccess: 'AI generated the floor plan!',
     aiError: 'AI analysis error',
+    sameImage: 'This exact layout is already loaded — keeping the same floor plan.',
     addTable: 'New table',
     clickToPlaceTable: 'Click inside a zone to place table',
     round: 'Round',
