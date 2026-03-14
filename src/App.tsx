@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AnimatePresence } from "framer-motion";
-import { SplashScreen } from "@/components/ui/splash-screen";
+// Inline splash is now in index.html for instant display
 import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
