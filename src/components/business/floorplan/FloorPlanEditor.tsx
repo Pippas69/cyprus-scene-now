@@ -6,103 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Upload, Plus, Trash2, Save, MapPin, MousePointer, Edit3, Users, X, Eye, EyeOff, Wand2, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Save, MapPin, Wand2, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
-interface FloorPlanItem {
-  id: string;
-  zone_id: string | null;
-  business_id: string;
-  label: string;
-  x_percent: number;
-  y_percent: number;
-  seats: number;
-  shape: string;
-  sort_order: number;
-  fixture_type: string | null;
-}
-
-interface FloorPlanZone {
-  id: string;
-  label: string;
-  zone_type: string;
-  shape: string;
-  x_percent: number;
-  y_percent: number;
-  width_percent: number;
-  height_percent: number;
-  capacity: number;
-  sort_order: number;
-  metadata?: {
-    analysis_hash?: string;
-    image_width?: number;
-    image_height?: number;
-    fixture_bboxes?: Record<string, { w: number; h: number }>;
-    table_bboxes?: Record<string, { w: number; h: number }>;
-    [key: string]: unknown;
-  } | null;
-}
+import { FloorPlanItem, FloorPlanZone, AiFixture, AiTable, TableReservationStatus } from './floorPlanTypes';
+import { DEFAULT_CANVAS_ASPECT, DEFAULT_TABLE_SIZE, clamp } from './floorPlanTheme';
+import { FloorPlanCanvas } from './FloorPlanCanvas';
+import { FloorPlanToolbar } from './FloorPlanToolbar';
+import { FloorPlanSidebar } from './FloorPlanSidebar';
 
 interface FloorPlanEditorProps {
   businessId: string;
 }
-
-interface AiFixture {
-  label: string;
-  fixture_type: string;
-  x_percent: number;
-  y_percent: number;
-  width_percent: number;
-  height_percent: number;
-}
-
-interface AiTable {
-  label: string;
-  seats: number;
-  shape: string;
-  x_percent: number;
-  y_percent: number;
-  width_percent: number;
-  height_percent: number;
-}
-
-const FIXTURE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  bar: { bg: 'hsl(var(--primary) / 0.12)', border: 'hsl(var(--primary) / 0.5)', text: 'hsl(var(--primary))' },
-  dj: { bg: 'hsl(var(--accent) / 0.12)', border: 'hsl(var(--accent) / 0.5)', text: 'hsl(var(--accent))' },
-  stage: { bg: 'hsl(var(--accent) / 0.10)', border: 'hsl(var(--accent) / 0.4)', text: 'hsl(var(--accent))' },
-  entrance: { bg: 'hsl(var(--muted) / 0.2)', border: 'hsl(var(--muted-foreground) / 0.3)', text: 'hsl(var(--muted-foreground))' },
-  other: { bg: 'hsl(var(--muted) / 0.15)', border: 'hsl(var(--muted-foreground) / 0.25)', text: 'hsl(var(--muted-foreground))' },
-};
-
-const SVG_THEME = {
-  tableStroke: 'hsl(var(--primary))',
-  tableFill: 'hsl(var(--primary) / 0.14)',
-  tableText: 'hsl(var(--primary-foreground))',
-  tableMeta: 'hsl(var(--accent))',
-  selectionGlow: 'hsl(var(--accent) / 0.65)',
-};
-
-const DEFAULT_CANVAS_ASPECT = 4 / 3;
-const DEFAULT_TABLE_SIZE = { w: 4, h: 4 };
-
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-const getRenderTableBox = (item: FloorPlanItem, rawBox: { w: number; h: number }) => {
-  const safeW = clamp(rawBox.w || DEFAULT_TABLE_SIZE.w, 1.2, 18);
-  const safeH = clamp(rawBox.h || DEFAULT_TABLE_SIZE.h, 1.2, 18);
-
-  if (item.shape === 'round') {
-    const size = clamp((safeW + safeH) / 2, 1.4, 18);
-    return { w: size, h: size };
-  }
-
-  if (item.shape === 'square') {
-    const side = clamp((safeW + safeH) / 2, 1.2, 18);
-    return { w: side, h: side };
-  }
-
-  return { w: safeW, h: safeH };
-};
 
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   new Promise((resolve, reject) => {
@@ -151,6 +66,9 @@ const translations = {
     square: 'Τετράγωνο',
     rectangle: 'Ορθογώνιο',
     shape: 'Σχήμα',
+    available: 'Διαθέσιμο',
+    reserved: 'Κρατημένο',
+    occupied: 'Κατειλημμένο',
   },
   en: {
     title: 'Floor plan',
@@ -184,13 +102,15 @@ const translations = {
     square: 'Square',
     rectangle: 'Rectangle',
     shape: 'Shape',
+    available: 'Available',
+    reserved: 'Reserved',
+    occupied: 'Occupied',
   },
 };
 
 export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItem[]>([]);
@@ -200,20 +120,31 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [editDialog, setEditDialog] = useState<FloorPlanItem | null>(null);
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
-  const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [showLabels, setShowLabels] = useState(true);
+  const [showBlueprint, setShowBlueprint] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
   const [analysisHash, setAnalysisHash] = useState<string | null>(null);
+  const [blueprintUrl, setBlueprintUrl] = useState<string | null>(null);
+  const [reservationStatuses, setReservationStatuses] = useState<Map<string, TableReservationStatus>>(new Map());
 
   useEffect(() => { loadFloorPlan(); }, [businessId]);
 
+  // Poll reservation statuses every 5 seconds
+  useEffect(() => {
+    if (!hasFloorPlan || items.length === 0) return;
+    loadReservationStatuses();
+    const interval = setInterval(loadReservationStatuses, 5000);
+    return () => clearInterval(interval);
+  }, [hasFloorPlan, items.length, businessId]);
+
   const loadFloorPlan = async () => {
     setLoading(true);
-    const [itemsResult, zonesResult] = await Promise.all([
+    const [itemsResult, zonesResult, businessResult] = await Promise.all([
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order').limit(1),
+      supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
 
     const loadedItems = (itemsResult.data || []) as FloorPlanItem[];
@@ -221,6 +152,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setItems(loadedItems);
     setZones(loadedZones);
     setHasFloorPlan(loadedItems.length > 0);
+    setBlueprintUrl(businessResult.data?.floor_plan_image_url || null);
 
     const meta = loadedZones[0]?.metadata;
     if (meta?.image_width && meta?.image_height) {
@@ -230,6 +162,64 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (meta?.analysis_hash) setAnalysisHash(meta.analysis_hash as string);
 
     setLoading(false);
+  };
+
+  const loadReservationStatuses = async () => {
+    if (zones.length === 0) return;
+    const zoneIds = zones.map(z => z.id);
+    const { data } = await supabase
+      .from('reservation_zone_assignments')
+      .select('zone_id, reservation_id, reservations(reservation_name, party_size, status, checked_in_at)')
+      .in('zone_id', zoneIds);
+
+    if (!data) return;
+
+    const statusMap = new Map<string, TableReservationStatus>();
+    for (const item of items) {
+      if (item.fixture_type) continue;
+      const assignment = data.find((a: any) => a.zone_id === item.zone_id);
+      if (assignment) {
+        const res = (assignment as any).reservations;
+        statusMap.set(item.id, {
+          tableId: item.id,
+          status: res?.checked_in_at ? 'occupied' : 'reserved',
+          reservationName: res?.reservation_name || '',
+          partySize: res?.party_size || 0,
+          reservationId: (assignment as any).reservation_id,
+        });
+      } else {
+        statusMap.set(item.id, { tableId: item.id, status: 'available' });
+      }
+    }
+    setReservationStatuses(statusMap);
+  };
+
+  // Upload blueprint image to storage
+  const uploadBlueprint = async (file: File): Promise<string | null> => {
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `floor-plans/${businessId}/blueprint.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('floor-plans')
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+      if (uploadError) {
+        console.error('Blueprint upload error:', uploadError);
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage.from('floor-plans').getPublicUrl(path);
+      const url = urlData?.publicUrl || null;
+
+      if (url) {
+        await supabase.from('businesses').update({ floor_plan_image_url: url }).eq('id', businessId);
+        setBlueprintUrl(url);
+      }
+      return url;
+    } catch (err) {
+      console.error('Blueprint upload failed:', err);
+      return null;
+    }
   };
 
   // AI Analysis
@@ -254,9 +244,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('analyze-floor-plan', {
-        body: { imageBase64: base64 },
-      });
+      // Upload blueprint in parallel with AI analysis
+      const [aiResult] = await Promise.all([
+        supabase.functions.invoke('analyze-floor-plan', { body: { imageBase64: base64 } }),
+        uploadBlueprint(file),
+      ]);
+
+      const { data, error } = aiResult;
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -271,13 +265,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       const userId = authData.user?.id;
       if (!userId) throw new Error('Not authenticated');
 
-      // Clean existing data
+      // Clean existing
       await Promise.all([
         supabase.from('floor_plan_tables').delete().eq('business_id', businessId),
         supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
       ]);
 
-      // Build bbox maps for rendering
+      // Build bbox maps
       const fixtureBboxes: Record<string, { w: number; h: number }> = {};
       fixtures.forEach(f => { fixtureBboxes[f.label] = { w: f.width_percent, h: f.height_percent }; });
       const tableBboxes: Record<string, { w: number; h: number }> = {};
@@ -301,33 +295,32 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         },
       }).select().single();
 
-      // Insert fixtures
-      const fixtureRows = fixtures.map((f, i) => ({
-        business_id: businessId,
-        zone_id: metaZone?.id || null,
-        label: f.label,
-        x_percent: f.x_percent,
-        y_percent: f.y_percent,
-        seats: 0,
-        shape: 'rect',
-        sort_order: i,
-        fixture_type: f.fixture_type,
-      }));
+      // Insert all items
+      const allRows = [
+        ...fixtures.map((f, i) => ({
+          business_id: businessId,
+          zone_id: metaZone?.id || null,
+          label: f.label,
+          x_percent: f.x_percent,
+          y_percent: f.y_percent,
+          seats: 0,
+          shape: 'rect',
+          sort_order: i,
+          fixture_type: f.fixture_type,
+        })),
+        ...tables.map((tb, i) => ({
+          business_id: businessId,
+          zone_id: metaZone?.id || null,
+          label: tb.label,
+          x_percent: tb.x_percent,
+          y_percent: tb.y_percent,
+          seats: tb.seats,
+          shape: tb.shape,
+          sort_order: fixtures.length + i,
+          fixture_type: null,
+        })),
+      ];
 
-      // Insert tables
-      const tableRows = tables.map((tb, i) => ({
-        business_id: businessId,
-        zone_id: metaZone?.id || null,
-        label: tb.label,
-        x_percent: tb.x_percent,
-        y_percent: tb.y_percent,
-        seats: tb.seats,
-        shape: tb.shape,
-        sort_order: fixtures.length + i,
-        fixture_type: null,
-      }));
-
-      const allRows = [...fixtureRows, ...tableRows];
       if (allRows.length > 0) {
         const { error: insertError } = await supabase.from('floor_plan_tables').insert(allRows);
         if (insertError) console.error('Insert error:', insertError);
@@ -353,23 +346,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   };
 
   // CRUD
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current || !placingMode) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    if (placingMode === 'table') {
-      saveItem({
-        label: `T${items.filter(i => !i.fixture_type).length + 1}`,
-        x_percent: x,
-        y_percent: y,
-        seats: 4,
-        shape: 'square',
-        fixture_type: null,
-      });
-      setPlacingMode(null);
-    }
+  const handleCanvasClick = useCallback((xPercent: number, yPercent: number) => {
+    if (!placingMode) return;
+    saveItem({
+      label: `T${items.filter(i => !i.fixture_type).length + 1}`,
+      x_percent: xPercent,
+      y_percent: yPercent,
+      seats: 4,
+      shape: 'square',
+      fixture_type: null,
+    });
+    setPlacingMode(null);
   }, [placingMode, items]);
 
   const saveItem = async (item: Partial<FloorPlanItem>) => {
@@ -408,39 +395,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.deleted);
   };
 
-  // Drag
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
-    if (placingMode) return;
-    e.stopPropagation();
-    const item = items.find(i => i.id === id);
-    if (!item) return;
-    setDragging({ id, startX: e.clientX, startY: e.clientY, origX: item.x_percent, origY: item.y_percent });
-    setSelectedItem(id);
-  };
+  const handleItemDrag = useCallback((id: string, xPercent: number, yPercent: number) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, x_percent: xPercent, y_percent: yPercent } : i));
+  }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
-    const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
-    const newX = clamp(dragging.origX + dx, 0, 100);
-    const newY = clamp(dragging.origY + dy, 0, 100);
-    setItems(prev => prev.map(i => i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i));
-  }, [dragging]);
-
-  const handleMouseUp = useCallback(() => {
-    if (dragging) {
-      const item = items.find(i => i.id === dragging.id);
-      if (item) updateItem(item);
-      setDragging(null);
-    }
-  }, [dragging, items]);
+  const handleItemDragEnd = useCallback((item: FloorPlanItem) => {
+    updateItem(item);
+  }, []);
 
   const tableItems = items.filter(i => !i.fixture_type);
   const fixtureItems = items.filter(i => !!i.fixture_type);
   const totalCapacity = tableItems.reduce((sum, i) => sum + i.seats, 0);
 
-  // Get bboxes from metadata
   const meta = zones[0]?.metadata as any;
   const fixtureBboxes: Record<string, { w: number; h: number }> = meta?.fixture_bboxes || {};
   const tableBboxes: Record<string, { w: number; h: number }> = meta?.table_bboxes || {};
@@ -502,274 +468,52 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       ) : (
         <>
-          {/* Toolbar */}
-          <div className="flex items-center justify-between gap-3 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              {placingMode ? (
-                <>
-                  <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
-                    <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
-                    <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
-                    <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="default" size="sm" className="h-8 text-xs shadow-sm" onClick={() => setPlacingMode('table')}>
-                    <Plus className="h-3.5 w-3.5 mr-1" />{t.addTable}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)}>
-                    {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  </Button>
-                </>
-              )}
-            </div>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
 
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5">
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-muted-foreground">🪑 {tableItems.length}</span>
-                </div>
-                <div className="w-px h-3 bg-border" />
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Users className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">{totalCapacity}</span>
-                </div>
-                {fixtureItems.length > 0 && (
-                  <>
-                    <div className="w-px h-3 bg-border" />
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-muted-foreground">📍 {fixtureItems.length}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
-                <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
-              </Button>
-            </div>
-          </div>
+          <FloorPlanToolbar
+            placingMode={placingMode}
+            setPlacingMode={setPlacingMode}
+            showLabels={showLabels}
+            setShowLabels={setShowLabels}
+            showBlueprint={showBlueprint}
+            setShowBlueprint={setShowBlueprint}
+            hasBlueprint={!!blueprintUrl}
+            tableCount={tableItems.length}
+            fixtureCount={fixtureItems.length}
+            totalCapacity={totalCapacity}
+            aiAnalyzing={aiAnalyzing}
+            onUploadClick={() => fileInputRef.current?.click()}
+            t={t}
+          />
 
-          {/* Canvas + Side panel */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
-            {/* SVG Canvas */}
-            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-background shadow-2xl">
-              <div
-                ref={canvasRef}
-                className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-                style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 260px)' }}
-                onClick={handleCanvasClick}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              >
-                {/* Background */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.1) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.25) 100%)',
-                }} />
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.06) 1px, transparent 0)',
-                  backgroundSize: '20px 20px',
-                }} />
+            <FloorPlanCanvas
+              items={items}
+              canvasAspect={canvasAspect}
+              fixtureBboxes={fixtureBboxes}
+              tableBboxes={tableBboxes}
+              selectedItem={selectedItem}
+              showLabels={showLabels}
+              placingMode={placingMode}
+              blueprintUrl={blueprintUrl}
+              showBlueprint={showBlueprint}
+              reservationStatuses={reservationStatuses}
+              onCanvasClick={handleCanvasClick}
+              onItemSelect={setSelectedItem}
+              onItemDoubleClick={setEditDialog}
+              onItemDragEnd={handleItemDragEnd}
+              onItemDrag={handleItemDrag}
+            />
 
-                {/* SVG Layer */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  {/* Fixtures (bars, dj, etc.) */}
-                  {fixtureItems.map((item) => {
-                    const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-                    const colors = FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other;
-                    const isSelected = selectedItem === item.id;
-                    return (
-                      <g key={item.id}>
-                        <rect
-                          x={item.x_percent}
-                          y={item.y_percent}
-                          width={bbox.w}
-                          height={bbox.h}
-                          fill={colors.bg}
-                          stroke={colors.border}
-                          strokeWidth={isSelected ? 0.32 : 0.2}
-                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${colors.border})` : undefined }}
-                        />
-                        {showLabels && (
-                          <text
-                            x={item.x_percent + bbox.w / 2}
-                            y={item.y_percent + bbox.h / 2 + 0.4}
-                            textAnchor="middle"
-                            fill={colors.text}
-                            fontSize="1.5"
-                            fontWeight="700"
-                            className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                          >
-                            {item.label}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-
-                  {/* Tables — shape-aware render from extracted geometry */}
-                  {tableItems.map((item) => {
-                    const isSelected = selectedItem === item.id;
-                    const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                    const { w, h } = getRenderTableBox(item, rawBox);
-                    const commonProps = {
-                      fill: isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill,
-                      stroke: SVG_THEME.tableStroke,
-                      strokeOpacity: isSelected ? 1 : 0.88,
-                      strokeWidth: isSelected ? 0.28 : 0.17,
-                      style: { filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined },
-                    };
-
-                    return (
-                      <g key={item.id}>
-                        {item.shape === 'round' ? (
-                          <ellipse
-                            cx={item.x_percent + w / 2}
-                            cy={item.y_percent + h / 2}
-                            rx={w / 2}
-                            ry={h / 2}
-                            {...commonProps}
-                          />
-                        ) : (
-                          <rect
-                            x={item.x_percent}
-                            y={item.y_percent}
-                            width={w}
-                            height={h}
-                            {...commonProps}
-                          />
-                        )}
-                        {showLabels && (
-                          <text
-                            x={item.x_percent + w / 2}
-                            y={item.y_percent + h / 2}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fill={SVG_THEME.tableStroke}
-                            fontSize={Math.min(w, h) > 3 ? '1.25' : '0.95'}
-                            fontWeight="700"
-                            className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                          >
-                            {item.label}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-
-                {/* Hit areas for fixtures */}
-                {fixtureItems.map((item) => {
-                  const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-                  return (
-                    <div
-                      key={`hit-fix-${item.id}`}
-                      className={`absolute rounded transition-all duration-200 ${
-                        placingMode ? 'pointer-events-none' :
-                        `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
-                      }`}
-                      style={{ left: `${item.x_percent}%`, top: `${item.y_percent}%`, width: `${bbox.w}%`, height: `${bbox.h}%` }}
-                      onMouseDown={(e) => handleMouseDown(e, item.id)}
-                      onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
-                      onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
-                    />
-                  );
-                })}
-
-                {/* Hit areas for tables — sized to match actual bbox */}
-                {tableItems.map((item) => {
-                  const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                  const bbox = getRenderTableBox(item, rawBox);
-                  return (
-                    <div
-                      key={`hit-tbl-${item.id}`}
-                      className={`absolute transition-all duration-200 z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-[2px]'} ${
-                        placingMode ? 'pointer-events-none' :
-                        `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/30'}`
-                      }`}
-                      style={{
-                        left: `${item.x_percent}%`,
-                        top: `${item.y_percent}%`,
-                        width: `${bbox.w}%`,
-                        height: `${bbox.h}%`,
-                      }}
-                      onMouseDown={(e) => handleMouseDown(e, item.id)}
-                      onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
-                      onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Side panel */}
-            <div className="space-y-3 max-h-[calc(100vh-260px)] overflow-y-auto">
-              {/* Tables list */}
-              <div className="bg-card/80 backdrop-blur-md border border-border/40 rounded-xl overflow-hidden">
-                <div className="px-3 py-2.5 border-b border-border/30">
-                  <h3 className="text-xs font-semibold text-foreground">{t.tables} ({tableItems.length})</h3>
-                </div>
-                {tableItems.length === 0 ? (
-                  <div className="py-6 text-center">
-                    <p className="text-xs text-muted-foreground">{t.noItems}</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/20 max-h-[40vh] overflow-y-auto">
-                    {tableItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
-                        onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
-                      >
-                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: SVG_THEME.tableStroke }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground">{item.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.seats} {t.seats}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-50 hover:opacity-100"
-                          onClick={(e) => { e.stopPropagation(); setEditDialog(item); }}>
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Fixtures list */}
-              {fixtureItems.length > 0 && (
-                <div className="bg-card/80 backdrop-blur-md border border-border/40 rounded-xl overflow-hidden">
-                  <div className="px-3 py-2.5 border-b border-border/30">
-                    <h3 className="text-xs font-semibold text-foreground">{t.fixtures} ({fixtureItems.length})</h3>
-                  </div>
-                  <div className="divide-y divide-border/20 max-h-[20vh] overflow-y-auto">
-                    {fixtureItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
-                        onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
-                      >
-                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: (FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other).border }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground">{item.label}</p>
-                          <p className="text-[10px] text-muted-foreground capitalize">{item.fixture_type}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-50 hover:opacity-100"
-                          onClick={(e) => { e.stopPropagation(); setEditDialog(item); }}>
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <FloorPlanSidebar
+              tableItems={tableItems}
+              fixtureItems={fixtureItems}
+              selectedItem={selectedItem}
+              reservationStatuses={reservationStatuses}
+              onItemSelect={setSelectedItem}
+              onItemEdit={setEditDialog}
+              t={t}
+            />
           </div>
         </>
       )}
