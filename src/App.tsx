@@ -160,7 +160,27 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+
+    try {
+      return window.sessionStorage.getItem(SPLASH_SESSION_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+
+    if (typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem(SPLASH_SESSION_KEY, "1");
+      } catch {
+        // Ignore storage errors in private browsing modes
+      }
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -169,7 +189,7 @@ const App = () => {
           <LanguageProvider>
             <TooltipProvider>
               {showSplash && (
-                <SplashScreen onComplete={() => setShowSplash(false)} />
+                <SplashScreen minDisplayTime={450} onComplete={handleSplashComplete} />
               )}
               <Toaster />
               <Sonner />
