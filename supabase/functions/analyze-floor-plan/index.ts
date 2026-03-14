@@ -178,6 +178,7 @@ COORDINATE RULES:
 - All coordinates are PERCENTAGES of the image dimensions (0=top/left, 100=bottom/right).
 - x_percent and y_percent mark the TOP-LEFT corner of each element's bounding box.
 - PRESERVE the EXACT label/number from the image: "1", "2", "P1", "101", "Bar 1", etc.
+- If OCR is ambiguous between "P" and "n" for labels like n1/n2, use "P" (P1, P2, ...).
 
 EXTRACTION COMPLETENESS:
 - You MUST extract EVERY labeled item. If you see numbers 1 through 10, that's 10 separate entries.
