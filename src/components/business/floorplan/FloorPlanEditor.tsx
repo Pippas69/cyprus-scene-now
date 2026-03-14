@@ -791,7 +791,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <div className="relative rounded-xl overflow-hidden border border-border/30 bg-[#0a1628] shadow-2xl">
               <div
                 ref={canvasRef}
-                className={`relative select-none aspect-[4/3] ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(440px, 72vh, 860px)' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
