@@ -161,21 +161,36 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  // Keep splash visible for ~2s from first paint, then fade it out
+  // Keep splash visible long enough and remove only after page load to avoid white flash
   useEffect(() => {
     const splash = document.getElementById('inline-splash');
     if (!splash) return;
 
+    const MIN_SPLASH_MS = 2800;
     const splashStart = (window as { __fomoSplashStart?: number }).__fomoSplashStart ?? performance.now();
-    const elapsed = performance.now() - splashStart;
-    const remaining = Math.max(0, 2000 - elapsed);
+    let timer: number | undefined;
 
-    const timer = window.setTimeout(() => {
+    const removeSplash = () => {
       splash.classList.add('fade-out');
       window.setTimeout(() => splash.remove(), 400);
-    }, remaining);
+    };
 
-    return () => window.clearTimeout(timer);
+    const scheduleRemoval = () => {
+      const elapsed = performance.now() - splashStart;
+      const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
+      timer = window.setTimeout(removeSplash, remaining);
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleRemoval();
+    } else {
+      window.addEventListener('load', scheduleRemoval, { once: true });
+    }
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener('load', scheduleRemoval);
+    };
   }, []);
 
   return (
