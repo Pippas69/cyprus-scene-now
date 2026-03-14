@@ -557,7 +557,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           {/* Canvas + Side panel */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
             {/* SVG Canvas */}
-            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-background shadow-2xl">
+            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl">
               <div
                 ref={canvasRef}
                 className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -567,145 +567,28 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Background */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.1) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.25) 100%)',
-                }} />
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.06) 1px, transparent 0)',
-                  backgroundSize: '20px 20px',
+                {/* Dark architectural background */}
+                <div className="absolute inset-0" style={{
+                  background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--card)) 50%, hsl(var(--background)) 100%)',
                 }} />
 
-                {/* SVG Layer */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  {/* Fixtures (bars, dj, etc.) */}
-                  {fixtureItems.map((item) => {
-                    const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-                    const colors = FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other;
-                    const isSelected = selectedItem === item.id;
-                    return (
-                      <g key={item.id}>
-                        <rect
-                          x={item.x_percent}
-                          y={item.y_percent}
-                          width={bbox.w}
-                          height={bbox.h}
-                          fill={colors.bg}
-                          stroke={colors.border}
-                          strokeWidth={isSelected ? 0.32 : 0.2}
-                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${colors.border})` : undefined }}
-                        />
-                        {showLabels && (
-                          <text
-                            x={item.x_percent + bbox.w / 2}
-                            y={item.y_percent + bbox.h / 2 + 0.4}
-                            textAnchor="middle"
-                            fill={colors.text}
-                            fontSize="1.5"
-                            fontWeight="700"
-                            className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                          >
-                            {item.label}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-
-                  {/* Tables — shape-aware render from extracted geometry */}
-                  {tableItems.map((item) => {
-                    const isSelected = selectedItem === item.id;
-                    const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                    const { w, h } = getRenderTableBox(item, rawBox);
-                    const commonProps = {
-                      fill: isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill,
-                      stroke: SVG_THEME.tableStroke,
-                      strokeOpacity: isSelected ? 1 : 0.88,
-                      strokeWidth: isSelected ? 0.28 : 0.17,
-                      style: { filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined },
-                    };
-
-                    return (
-                      <g key={item.id}>
-                        {item.shape === 'round' ? (
-                          <ellipse
-                            cx={item.x_percent + w / 2}
-                            cy={item.y_percent + h / 2}
-                            rx={w / 2}
-                            ry={h / 2}
-                            {...commonProps}
-                          />
-                        ) : (
-                          <rect
-                            x={item.x_percent}
-                            y={item.y_percent}
-                            width={w}
-                            height={h}
-                            {...commonProps}
-                          />
-                        )}
-                        {showLabels && (
-                          <text
-                            x={item.x_percent + w / 2}
-                            y={item.y_percent + h / 2}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fill={SVG_THEME.tableStroke}
-                            fontSize={Math.min(w, h) > 3 ? '1.25' : '0.95'}
-                            fontWeight="700"
-                            className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                          >
-                            {item.label}
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-
-                {/* Hit areas for fixtures */}
-                {fixtureItems.map((item) => {
-                  const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-                  return (
-                    <div
-                      key={`hit-fix-${item.id}`}
-                      className={`absolute rounded transition-all duration-200 ${
-                        placingMode ? 'pointer-events-none' :
-                        `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
-                      }`}
-                      style={{ left: `${item.x_percent}%`, top: `${item.y_percent}%`, width: `${bbox.w}%`, height: `${bbox.h}%` }}
-                      onMouseDown={(e) => handleMouseDown(e, item.id)}
-                      onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
-                      onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
-                    />
-                  );
-                })}
-
-                {/* Hit areas for tables — sized to match actual bbox */}
-                {tableItems.map((item) => {
-                  const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                  const bbox = getRenderTableBox(item, rawBox);
-                  return (
-                    <div
-                      key={`hit-tbl-${item.id}`}
-                      className={`absolute transition-all duration-200 z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-[2px]'} ${
-                        placingMode ? 'pointer-events-none' :
-                        `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/30'}`
-                      }`}
-                      style={{
-                        left: `${item.x_percent}%`,
-                        top: `${item.y_percent}%`,
-                        width: `${bbox.w}%`,
-                        height: `${bbox.h}%`,
-                      }}
-                      onMouseDown={(e) => handleMouseDown(e, item.id)}
-                      onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
-                      onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
-                    />
-                  );
-                })}
+                {/* SVG Venue Renderer */}
+                <VenueSVGCanvas
+                  items={items}
+                  fixtureBboxes={fixtureBboxes}
+                  tableBboxes={tableBboxes}
+                  selectedItemId={selectedItem}
+                  showLabels={showLabels}
+                  onTableClick={(id) => {
+                    if (!placingMode) setSelectedItem(id === selectedItem ? null : id);
+                  }}
+                  onItemMouseDown={(e, id) => handleMouseDown(e, id)}
+                  onItemDoubleClick={(id) => {
+                    const item = items.find(i => i.id === id);
+                    if (item) setEditDialog(item);
+                  }}
+                  interactive={!placingMode}
+                />
               </div>
             </div>
 
