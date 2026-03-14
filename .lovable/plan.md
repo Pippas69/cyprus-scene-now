@@ -26,3 +26,12 @@
 - Backend: δημιουργία ατομικών tickets με QR codes (process-reservation-event-payment + create-free-reservation-event)
 - Απόκρυψη παρένθεσης ticket credit σε reservation-only events (DirectReservationsList)
 - User dashboard: ατομικά QR cards ανά καλεσμένο σε reservation-only events (MyReservations)
+
+### Μέρος 5: Floor Plan Overhaul — Object-First ✅
+- AI Edge Function: zone-first → object-first (fixtures + tables, χωρίς ζώνες)
+- Αφαίρεση zone clamping & re-normalization (πιστή γεωμετρία)
+- DB: fixture_type column σε floor_plan_tables, zone_id nullable
+- FloorPlanEditor: ξεχωριστό render για fixtures (bars/dj/stage) vs tables
+- FloorPlanAssignmentDialog: table-point assignment (μόνο tables clickable, fixtures non-assignable)
+- Fixture bboxes αποθηκεύονται σε zone metadata για ακριβές rendering
+- Deterministic extraction (temperature=0, no re-grouping)
