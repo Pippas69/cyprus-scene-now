@@ -77,7 +77,7 @@ const translations = {
   },
   en: {
     title: 'Floor plan',
-    subtitle: 'Setup mode with manual table mapping over blueprint',
+    subtitle: 'Architectural SVG floor plan with premium clickable tables',
     uploadBlueprint: 'Upload blueprint',
     uploading: 'Uploading...',
     addTable: 'New table',
