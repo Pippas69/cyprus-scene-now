@@ -87,7 +87,8 @@ const SVG_THEME = {
   selectionGlow: 'hsl(var(--accent) / 0.65)',
 };
 
-const TABLE_RADIUS = 2.6;
+const TABLE_RADIUS = 2.8;
+const TABLE_HIT_RADIUS = 3.6;
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
