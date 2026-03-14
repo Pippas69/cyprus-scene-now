@@ -1,6 +1,6 @@
-import { useRef, useCallback, useState } from 'react';
-import { FloorPlanItem, TableReservationStatus } from './floorPlanTypes';
-import { FIXTURE_COLORS, SVG_THEME, DEFAULT_TABLE_SIZE, getRenderTableBox, clamp } from './floorPlanTheme';
+import { useRef, useCallback, useState, useEffect } from 'react';
+import { FloorPlanItem, TableReservationStatus, ViewTransform } from './floorPlanTypes';
+import { FIXTURE_COLORS, SVG_THEME, DEFAULT_TABLE_SIZE, TABLE_HIT_PADDING, getRenderTableBox, clamp } from './floorPlanTheme';
 
 interface FloorPlanCanvasProps {
   items: FloorPlanItem[];
@@ -20,6 +20,10 @@ interface FloorPlanCanvasProps {
   onItemDrag: (id: string, xPercent: number, yPercent: number) => void;
 }
 
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.15;
+
 export function FloorPlanCanvas({
   items, canvasAspect, fixtureBboxes, tableBboxes,
   selectedItem, showLabels, placingMode, blueprintUrl, showBlueprint,
@@ -27,41 +31,124 @@ export function FloorPlanCanvas({
   onCanvasClick, onItemSelect, onItemDoubleClick, onItemDragEnd, onItemDrag,
 }: FloorPlanCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [transform, setTransform] = useState<ViewTransform>({ x: 0, y: 0, scale: 1 });
   const [dragging, setDragging] = useState<{
     id: string; startX: number; startY: number; origX: number; origY: number;
   } | null>(null);
+  const [panning, setPanning] = useState<{ startX: number; startY: number; origTx: number; origTy: number } | null>(null);
+  const [isPinching, setIsPinching] = useState(false);
+  const lastPinchDist = useRef(0);
 
   const tableItems = items.filter(i => !i.fixture_type);
   const fixtureItems = items.filter(i => !!i.fixture_type);
 
-  // Convert mouse event to % coordinates relative to the container
-  const eventToPercent = useCallback((e: React.MouseEvent | MouseEvent): { xPct: number; yPct: number } | null => {
-    if (!containerRef.current) return null;
-    const rect = containerRef.current.getBoundingClientRect();
-    const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-    const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-    return { xPct: clamp(xPct, 0, 100), yPct: clamp(yPct, 0, 100) };
+  // Wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    setTransform(prev => {
+      const newScale = clamp(prev.scale + delta, MIN_ZOOM, MAX_ZOOM);
+      // Zoom toward cursor
+      if (!containerRef.current) return { ...prev, scale: newScale };
+      const rect = containerRef.current.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const ratio = newScale / prev.scale;
+      return {
+        scale: newScale,
+        x: cx - (cx - prev.x) * ratio,
+        y: cy - (cy - prev.y) * ratio,
+      };
+    });
   }, []);
 
-  // Click on empty canvas area
-  const handleContainerClick = useCallback((e: React.MouseEvent) => {
-    if (dragging) return; // ignore click after drag
-    const target = e.target as HTMLElement;
-    // Only respond if clicking on the background, not on a table element
-    if (target.closest('[data-table-hit]') || target.closest('[data-fixture-hit]')) return;
-
-    if (placingMode) {
-      const pos = eventToPercent(e);
-      if (pos) onCanvasClick(pos.xPct, pos.yPct);
-    } else {
-      onItemSelect(null);
+  // Pan with middle mouse or space+click
+  const handleContainerMouseDown = useCallback((e: React.MouseEvent) => {
+    // Middle mouse button or alt key for pan
+    if (e.button === 1 || e.altKey) {
+      e.preventDefault();
+      setPanning({ startX: e.clientX, startY: e.clientY, origTx: transform.x, origTy: transform.y });
+      return;
     }
-  }, [placingMode, dragging, eventToPercent, onCanvasClick, onItemSelect]);
 
-  // Drag start
+    // Left click on canvas background
+    if (e.target === e.currentTarget || (e.target as HTMLElement).dataset?.canvasBg) {
+      if (placingMode && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const rawX = (e.clientX - rect.left - transform.x) / transform.scale;
+        const rawY = (e.clientY - rect.top - transform.y) / transform.scale;
+        const canvasW = rect.width;
+        const canvasH = rect.width / canvasAspect;
+        const xPct = (rawX / canvasW) * 100;
+        const yPct = (rawY / canvasH) * 100;
+        onCanvasClick(clamp(xPct, 0, 100), clamp(yPct, 0, 100));
+      } else {
+        onItemSelect(null);
+      }
+    }
+  }, [placingMode, transform, canvasAspect, onCanvasClick, onItemSelect]);
+
+  const handleContainerMouseMove = useCallback((e: React.MouseEvent) => {
+    if (panning) {
+      const dx = e.clientX - panning.startX;
+      const dy = e.clientY - panning.startY;
+      setTransform(prev => ({ ...prev, x: panning.origTx + dx, y: panning.origTy + dy }));
+      return;
+    }
+
+    if (dragging && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const rawX = (e.clientX - rect.left - transform.x) / transform.scale;
+      const rawY = (e.clientY - rect.top - transform.y) / transform.scale;
+      const canvasW = rect.width;
+      const canvasH = rect.width / canvasAspect;
+      const xPct = clamp((rawX / canvasW) * 100, 0, 100);
+      const yPct = clamp((rawY / canvasH) * 100, 0, 100);
+      onItemDrag(dragging.id, xPct, yPct);
+    }
+  }, [panning, dragging, transform, canvasAspect, onItemDrag]);
+
+  const handleContainerMouseUp = useCallback(() => {
+    if (panning) {
+      setPanning(null);
+      return;
+    }
+    if (dragging) {
+      const item = items.find(i => i.id === dragging.id);
+      if (item) onItemDragEnd(item);
+      setDragging(null);
+    }
+  }, [panning, dragging, items, onItemDragEnd]);
+
+  // Touch zoom (pinch)
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (!isPinching) {
+        setIsPinching(true);
+        lastPinchDist.current = dist;
+        return;
+      }
+      const delta = (dist - lastPinchDist.current) * 0.005;
+      lastPinchDist.current = dist;
+      setTransform(prev => ({
+        ...prev,
+        scale: clamp(prev.scale + delta, MIN_ZOOM, MAX_ZOOM),
+      }));
+    }
+  }, [isPinching]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsPinching(false);
+  }, []);
+
+  // Item drag start
   const handleItemMouseDown = useCallback((e: React.MouseEvent, id: string) => {
     if (placingMode) return;
-    e.preventDefault();
     e.stopPropagation();
     const item = items.find(i => i.id === id);
     if (!item) return;
@@ -69,25 +156,19 @@ export function FloorPlanCanvas({
     onItemSelect(id);
   }, [placingMode, items, onItemSelect]);
 
-  // Drag move
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const dxPct = ((e.clientX - dragging.startX) / rect.width) * 100;
-    const dyPct = ((e.clientY - dragging.startY) / rect.height) * 100;
-    const newX = clamp(dragging.origX + dxPct, 0, 100);
-    const newY = clamp(dragging.origY + dyPct, 0, 100);
-    onItemDrag(dragging.id, newX, newY);
-  }, [dragging, onItemDrag]);
+  // Reset zoom
+  const resetZoom = useCallback(() => {
+    setTransform({ x: 0, y: 0, scale: 1 });
+  }, []);
 
-  // Drag end
-  const handleMouseUp = useCallback(() => {
-    if (dragging) {
-      const item = items.find(i => i.id === dragging.id);
-      if (item) onItemDragEnd(item);
-      setDragging(null);
-    }
-  }, [dragging, items, onItemDragEnd]);
+  // Zoom controls
+  const zoomIn = useCallback(() => {
+    setTransform(prev => ({ ...prev, scale: clamp(prev.scale + ZOOM_STEP * 2, MIN_ZOOM, MAX_ZOOM) }));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setTransform(prev => ({ ...prev, scale: clamp(prev.scale - ZOOM_STEP * 2, MIN_ZOOM, MAX_ZOOM) }));
+  }, []);
 
   const getTableTheme = (item: FloorPlanItem) => {
     if (selectedItem === item.id) return SVG_THEME.selected;
@@ -97,194 +178,233 @@ export function FloorPlanCanvas({
     return SVG_THEME.available;
   };
 
+  const zoomPercent = Math.round(transform.scale * 100);
+
   return (
-    <div className="relative rounded-xl overflow-hidden border border-border/30 bg-muted/20 shadow-2xl">
+    <div className="relative rounded-xl overflow-hidden border border-border/30 bg-background shadow-2xl">
+      {/* Zoom controls overlay */}
+      <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-card/90 backdrop-blur-md border border-border/40 rounded-lg px-1.5 py-1 shadow-lg">
+        <button onClick={zoomOut} className="h-6 w-6 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-muted/50" title="Zoom out">−</button>
+        <button onClick={resetZoom} className="h-6 px-1.5 flex items-center justify-center text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-muted/50 tabular-nums">{zoomPercent}%</button>
+        <button onClick={zoomIn} className="h-6 w-6 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-muted/50" title="Zoom in">+</button>
+      </div>
+
       <div
         ref={containerRef}
-        className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-        style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 240px)' }}
-        onClick={handleContainerClick}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        className={`relative select-none w-full overflow-hidden ${placingMode ? 'cursor-crosshair' : panning ? 'cursor-grabbing' : 'cursor-default'}`}
+        style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 260px)' }}
+        onWheel={handleWheel}
+        onMouseDown={handleContainerMouseDown}
+        onMouseMove={handleContainerMouseMove}
+        onMouseUp={handleContainerMouseUp}
+        onMouseLeave={handleContainerMouseUp}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Blueprint background image — fixed, no zoom, preserves aspect ratio */}
-        {showBlueprint && blueprintUrl && (
-          <img
-            src={blueprintUrl}
-            alt="Floor plan blueprint"
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-            style={{ opacity: 0.35 }}
-            draggable={false}
-          />
-        )}
-
-        {/* Fallback grid when no blueprint */}
-        {(!showBlueprint || !blueprintUrl) && (
-          <div className="absolute inset-0 pointer-events-none" style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.06) 1px, transparent 0)`,
-            backgroundSize: '24px 24px',
-          }} />
-        )}
-
-        {/* Transparent SVG overlay — exact same dimensions as the container */}
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          style={{ pointerEvents: 'none' }}
+        {/* Transformable layer */}
+        <div
+          className="absolute inset-0 origin-top-left transition-none"
+          style={{
+            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+            willChange: 'transform',
+          }}
+          data-canvas-bg="true"
         >
-          {/* Fixtures */}
-          {fixtureItems.map((item) => {
-            const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-            const colors = FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other;
-            const isSelected = selectedItem === item.id;
-            return (
-              <g key={item.id}>
-                <rect
-                  x={item.x_percent} y={item.y_percent}
-                  width={bbox.w} height={bbox.h}
-                  rx={0.4}
-                  fill={isSelected ? colors.bg : 'transparent'}
-                  stroke={colors.border}
-                  strokeWidth={isSelected ? 0.35 : 0.2}
-                  strokeDasharray="1.2 0.6"
-                />
-                {showLabels && (
-                  <text
-                    x={item.x_percent + bbox.w / 2}
-                    y={item.y_percent + bbox.h / 2}
-                    textAnchor="middle" dominantBaseline="central"
-                    fill={colors.text}
-                    fontSize="1.3" fontWeight="600"
-                    className="pointer-events-none"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                  >
-                    {item.label}
-                  </text>
-                )}
-              </g>
-            );
-          })}
+          {/* Canvas background */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: SVG_THEME.canvasBg }} />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, ${SVG_THEME.gridDot} 1px, transparent 0)`,
+            backgroundSize: `${SVG_THEME.gridSize}px ${SVG_THEME.gridSize}px`,
+          }} />
 
-          {/* Tables — clean 1.5px outline style */}
-          {tableItems.map((item) => {
-            const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-            const { w, h } = getRenderTableBox(item.shape, rawBox);
-            const theme = getTableTheme(item);
-            const isSelected = selectedItem === item.id;
-            const status = reservationStatuses.get(item.id);
-            const isOccupied = status?.status === 'occupied';
-            const isReserved = status?.status === 'reserved';
+          {/* Blueprint overlay */}
+          {showBlueprint && blueprintUrl && (
+            <div className="absolute inset-0 pointer-events-none" style={{
+              backgroundImage: `url(${blueprintUrl})`,
+              backgroundSize: '100% 100%',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.18,
+              mixBlendMode: 'screen',
+            }} />
+          )}
 
-            // Clean fill: transparent when available, subtle color when reserved/occupied
-            const fillColor = isOccupied
-              ? 'hsl(var(--destructive) / 0.15)'
-              : isReserved
-                ? 'hsl(var(--accent) / 0.12)'
-                : isSelected
-                  ? 'hsl(var(--primary) / 0.1)'
-                  : 'transparent';
+          {/* SVG Layer */}
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              {/* Glow filters */}
+              <filter id="glow-available" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.4" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-reserved" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.6" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <filter id="glow-selected" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.8" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
 
-            // 1.5px stroke (in SVG viewBox 0-100, 0.15 ≈ 1.5px on a 1000px container)
-            const strokeW = isSelected ? 0.22 : 0.15;
-
-            return (
-              <g key={item.id}>
-                {item.shape === 'round' ? (
-                  <ellipse
-                    cx={item.x_percent + w / 2} cy={item.y_percent + h / 2}
-                    rx={w / 2} ry={h / 2}
-                    fill={fillColor} stroke={theme.stroke}
-                    strokeWidth={strokeW}
-                  />
-                ) : (
+            {/* Fixtures */}
+            {fixtureItems.map((item) => {
+              const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
+              const colors = FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other;
+              const isSelected = selectedItem === item.id;
+              return (
+                <g key={item.id} className="transition-opacity duration-200">
                   <rect
                     x={item.x_percent} y={item.y_percent}
-                    width={w} height={h}
-                    rx={item.shape === 'square' ? 0.3 : 0.2}
-                    fill={fillColor} stroke={theme.stroke}
-                    strokeWidth={strokeW}
+                    width={bbox.w} height={bbox.h}
+                    rx={0.5}
+                    fill={colors.bg} stroke={colors.border}
+                    strokeWidth={isSelected ? 0.3 : 0.18}
+                    strokeDasharray="1.5 0.8"
+                    style={{ filter: isSelected ? SVG_THEME.selected.glow : 'none' }}
                   />
-                )}
-
-                {/* Centered label */}
-                {showLabels && (
-                  <>
+                  {showLabels && (
                     <text
-                      x={item.x_percent + w / 2}
-                      y={item.y_percent + h / 2 - (status?.reservationName ? 0.4 : 0)}
-                      textAnchor="middle" dominantBaseline="central"
-                      fill={theme.text}
-                      fontSize={Math.min(w, h) > 3 ? '1.1' : '0.8'}
-                      fontWeight="700"
+                      x={item.x_percent + bbox.w / 2}
+                      y={item.y_percent + bbox.h / 2 + 0.4}
+                      textAnchor="middle" fill={colors.text}
+                      fontSize="1.4" fontWeight="700"
                       className="pointer-events-none"
                       style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                     >
                       {item.label}
                     </text>
-                    {status?.status === 'reserved' && status.reservationName && (
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Tables */}
+            {tableItems.map((item) => {
+              const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+              const { w, h } = getRenderTableBox(item.shape, rawBox);
+              const theme = getTableTheme(item);
+              const isSelected = selectedItem === item.id;
+              const status = reservationStatuses.get(item.id);
+              const filterRef = isSelected ? 'url(#glow-selected)' : status?.status === 'reserved' ? 'url(#glow-reserved)' : 'none';
+
+              return (
+                <g key={item.id} style={{ filter: filterRef }} className="transition-all duration-300">
+                  {/* Table shape */}
+                  {item.shape === 'round' ? (
+                    <ellipse
+                      cx={item.x_percent + w / 2} cy={item.y_percent + h / 2}
+                      rx={w / 2} ry={h / 2}
+                      fill={theme.fill} stroke={theme.stroke}
+                      strokeWidth={isSelected ? 0.28 : 0.18}
+                    />
+                  ) : (
+                    <rect
+                      x={item.x_percent} y={item.y_percent}
+                      width={w} height={h}
+                      rx={item.shape === 'round' ? w / 2 : 0.35}
+                      fill={theme.fill} stroke={theme.stroke}
+                      strokeWidth={isSelected ? 0.28 : 0.18}
+                    />
+                  )}
+
+                  {/* Seat dots around table */}
+                  {Array.from({ length: Math.min(item.seats, 10) }).map((_, si) => {
+                    const angle = (si / Math.min(item.seats, 10)) * Math.PI * 2 - Math.PI / 2;
+                    const cx = item.x_percent + w / 2;
+                    const cy = item.y_percent + h / 2;
+                    const seatDistX = w / 2 + 0.7;
+                    const seatDistY = h / 2 + 0.7;
+                    return (
+                      <circle key={si}
+                        cx={cx + Math.cos(angle) * seatDistX}
+                        cy={cy + Math.sin(angle) * seatDistY}
+                        r={0.3}
+                        fill={theme.stroke}
+                        opacity={0.5}
+                        className="pointer-events-none"
+                      />
+                    );
+                  })}
+
+                  {/* Label */}
+                  {showLabels && (
+                    <>
                       <text
                         x={item.x_percent + w / 2}
-                        y={item.y_percent + h / 2 + 0.9}
-                        textAnchor="middle" dominantBaseline="central"
+                        y={item.y_percent + h / 2 - (status ? 0.3 : 0)}
+                        textAnchor="middle" dominantBaseline="middle"
                         fill={theme.text}
-                        fontSize="0.65" fontWeight="500"
-                        opacity={0.75}
+                        fontSize={Math.min(w, h) > 3 ? '1.2' : '0.9'}
+                        fontWeight="700"
                         className="pointer-events-none"
+                        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                       >
-                        {status.reservationName.length > 10 ? status.reservationName.slice(0, 10) + '…' : status.reservationName}
+                        {item.label}
                       </text>
-                    )}
-                  </>
-                )}
-              </g>
+                      {/* Status or seat count */}
+                      {status?.status === 'reserved' && status.reservationName && (
+                        <text
+                          x={item.x_percent + w / 2}
+                          y={item.y_percent + h / 2 + 1}
+                          textAnchor="middle" dominantBaseline="middle"
+                          fill={theme.text}
+                          fontSize="0.7" fontWeight="500"
+                          opacity={0.8}
+                          className="pointer-events-none"
+                        >
+                          {status.reservationName.length > 8 ? status.reservationName.slice(0, 8) + '…' : status.reservationName}
+                        </text>
+                      )}
+                    </>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Hit areas for fixtures */}
+          {fixtureItems.map((item) => {
+            const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
+            return (
+              <div
+                key={`hit-fix-${item.id}`}
+                className={`absolute rounded transition-all duration-200 ${
+                  placingMode ? 'pointer-events-none' :
+                  `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
+                }`}
+                style={{ left: `${item.x_percent}%`, top: `${item.y_percent}%`, width: `${bbox.w}%`, height: `${bbox.h}%` }}
+                onMouseDown={(e) => handleItemMouseDown(e, item.id)}
+                onDoubleClick={(e) => { e.stopPropagation(); onItemDoubleClick(item); }}
+                onClick={(e) => { e.stopPropagation(); onItemSelect(item.id === selectedItem ? null : item.id); }}
+              />
             );
           })}
-        </svg>
 
-        {/* Hit areas for fixtures — HTML layer for pointer events */}
-        {fixtureItems.map((item) => {
-          const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
-          return (
-            <div
-              key={`hit-fix-${item.id}`}
-              data-fixture-hit="true"
-              className={`absolute rounded transition-all duration-150 ${
-                placingMode ? 'pointer-events-none' :
-                `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/40' : 'hover:ring-1 hover:ring-primary/15'}`
-              }`}
-              style={{ left: `${item.x_percent}%`, top: `${item.y_percent}%`, width: `${bbox.w}%`, height: `${bbox.h}%` }}
-              onMouseDown={(e) => handleItemMouseDown(e, item.id)}
-              onDoubleClick={(e) => { e.stopPropagation(); onItemDoubleClick(item); }}
-            />
-          );
-        })}
-
-        {/* Hit areas for tables — HTML layer for pointer events */}
-        {tableItems.map((item) => {
-          const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-          const bbox = getRenderTableBox(item.shape, rawBox);
-          const pad = 0.8; // small padding for easier grab
-          return (
-            <div
-              key={`hit-tbl-${item.id}`}
-              data-table-hit="true"
-              className={`absolute z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-sm'} transition-all duration-150 ${
-                placingMode ? 'pointer-events-none' :
-                `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
-              }`}
-              style={{
-                left: `${item.x_percent - pad}%`,
-                top: `${item.y_percent - pad}%`,
-                width: `${bbox.w + pad * 2}%`,
-                height: `${bbox.h + pad * 2}%`,
-              }}
-              onMouseDown={(e) => handleItemMouseDown(e, item.id)}
-              onDoubleClick={(e) => { e.stopPropagation(); onItemDoubleClick(item); }}
-            />
-          );
-        })}
+          {/* Hit areas for tables */}
+          {tableItems.map((item) => {
+            const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+            const bbox = getRenderTableBox(item.shape, rawBox);
+            return (
+              <div
+                key={`hit-tbl-${item.id}`}
+                className={`absolute transition-all duration-200 z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-[2px]'} ${
+                  placingMode ? 'pointer-events-none' :
+                  `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/5' : 'hover:ring-1 hover:ring-accent/25'}`
+                }`}
+                style={{
+                  left: `${item.x_percent - TABLE_HIT_PADDING}%`,
+                  top: `${item.y_percent - TABLE_HIT_PADDING}%`,
+                  width: `${bbox.w + TABLE_HIT_PADDING * 2}%`,
+                  height: `${bbox.h + TABLE_HIT_PADDING * 2}%`,
+                }}
+                onMouseDown={(e) => handleItemMouseDown(e, item.id)}
+                onDoubleClick={(e) => { e.stopPropagation(); onItemDoubleClick(item); }}
+                onClick={(e) => { e.stopPropagation(); onItemSelect(item.id === selectedItem ? null : item.id); }}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );
