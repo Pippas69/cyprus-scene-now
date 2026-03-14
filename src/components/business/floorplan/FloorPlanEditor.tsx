@@ -962,9 +962,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                               key={si}
                               cx={sx}
                               cy={sy}
-                              r={0.35}
+                              r={0.48}
                               fill={zt.color}
-                              opacity={0.5}
+                              opacity={0.65}
                               className="pointer-events-none"
                             />
                           );
