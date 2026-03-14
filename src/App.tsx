@@ -67,6 +67,11 @@ const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
 const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
 
 const queryClient = new QueryClient();
+const SPLASH_SESSION_KEY = "fomo:splash:seen";
+
+function RouteFallback() {
+  return <div className="min-h-screen bg-background" aria-busy="true" />;
+}
 
 // Component to conditionally render BottomNav
 function AppContent() {
