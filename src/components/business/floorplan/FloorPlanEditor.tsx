@@ -66,16 +66,29 @@ interface ParsedAiZone {
 }
 
 const ZONE_TYPES = {
-  vip: { color: '#F59E0B', bgAlpha: 0.15, icon: '⭐' },
-  table: { color: '#3B82F6', bgAlpha: 0.15, icon: '🪑' },
-  bar: { color: '#8B5CF6', bgAlpha: 0.15, icon: '🍸' },
-  stage: { color: '#EF4444', bgAlpha: 0.15, icon: '🎤' },
-  dj: { color: '#EC4899', bgAlpha: 0.15, icon: '🎧' },
-  lounge: { color: '#14B8A6', bgAlpha: 0.15, icon: '🛋️' },
-  other: { color: '#6B7280', bgAlpha: 0.15, icon: '📍' },
+  vip: { icon: 'VIP', color: 'hsl(var(--primary))', strokeOpacity: 0.95, fillOpacity: 0.24, dash: 'none' },
+  table: { icon: 'TB', color: 'hsl(var(--primary))', strokeOpacity: 0.84, fillOpacity: 0.18, dash: 'none' },
+  bar: { icon: 'BR', color: 'hsl(var(--primary))', strokeOpacity: 0.76, fillOpacity: 0.16, dash: '2 0.8' },
+  stage: { icon: 'ST', color: 'hsl(var(--primary))', strokeOpacity: 0.88, fillOpacity: 0.22, dash: '1.4 0.8' },
+  dj: { icon: 'DJ', color: 'hsl(var(--primary))', strokeOpacity: 0.78, fillOpacity: 0.17, dash: '1.2 0.7' },
+  lounge: { icon: 'LG', color: 'hsl(var(--primary))', strokeOpacity: 0.72, fillOpacity: 0.14, dash: '2.2 1' },
+  other: { icon: 'ZN', color: 'hsl(var(--primary))', strokeOpacity: 0.68, fillOpacity: 0.12, dash: '2.4 1.1' },
 } as const;
 
-const TABLE_RADIUS = 2.6;
+const SVG_THEME = {
+  zoneStroke: 'hsl(var(--primary))',
+  zoneLabel: 'hsl(var(--primary))',
+  zoneText: 'hsl(var(--primary-foreground))',
+  tableStroke: 'hsl(var(--primary))',
+  tableFill: 'hsl(var(--primary) / 0.16)',
+  tableText: 'hsl(var(--primary-foreground))',
+  tableMeta: 'hsl(var(--accent))',
+  seat: 'hsl(var(--accent) / 0.72)',
+  selectionGlow: 'hsl(var(--accent) / 0.65)',
+};
+
+const TABLE_RADIUS = 2.8;
+const TABLE_HIT_RADIUS = 3.6;
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -787,8 +800,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
           {/* Canvas + Side panel */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
-            {/* SVG Canvas - no background image */}
-            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-[#0a1628] shadow-2xl">
+            {/* SVG Canvas */}
+            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-background shadow-2xl">
               <div
                 ref={canvasRef}
                 className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -798,26 +811,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Uploaded reference floor plan image */}
-                {floorPlanImageUrl ? (
-                  <>
-                    <img
-                      src={floorPlanImageUrl}
-                      alt="Venue floor plan reference"
-                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
-                  </>
-                ) : (
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                      backgroundSize: '24px 24px',
-                    }}
-                  />
-                )}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.2) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.45) 100%)',
+                  }}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.12) 1px, transparent 0)',
+                    backgroundSize: '26px 26px',
+                  }}
+                />
 
                 {/* SVG floor plan */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -827,8 +833,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                       const isSelected = selectedZone === zone.id;
                       return (
                         <linearGradient key={`grad-${zone.id}`} id={`zone-grad-${zone.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor={zt.color} stopOpacity={isSelected ? 0.3 : 0.12} />
-                          <stop offset="100%" stopColor={zt.color} stopOpacity={isSelected ? 0.1 : 0.04} />
+                          <stop offset="0%" stopColor={SVG_THEME.zoneStroke} stopOpacity={isSelected ? Math.min(zt.fillOpacity + 0.12, 0.45) : zt.fillOpacity} />
+                          <stop offset="100%" stopColor={SVG_THEME.zoneStroke} stopOpacity={isSelected ? Math.max(zt.fillOpacity - 0.03, 0.08) : Math.max(zt.fillOpacity - 0.08, 0.05)} />
                         </linearGradient>
                       );
                     })}
@@ -847,14 +853,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                           height={zone.height_percent}
                           rx={0.8}
                           fill={`url(#zone-grad-${zone.id})`}
-                          stroke={zt.color}
-                          strokeWidth={isSelected ? 0.4 : 0.2}
-                          strokeDasharray={isSelected ? undefined : "1 0.5"}
-                          opacity={isSelected ? 1 : 0.9}
+                          stroke={SVG_THEME.zoneStroke}
+                          strokeOpacity={isSelected ? 1 : zt.strokeOpacity}
+                          strokeWidth={isSelected ? 0.42 : 0.24}
+                          strokeDasharray={isSelected || zt.dash === 'none' ? undefined : zt.dash}
                           className="transition-all duration-200"
-                          style={{ filter: isSelected ? `drop-shadow(0 0 6px ${zt.color}50)` : undefined }}
+                          style={{ filter: isSelected ? `drop-shadow(0 0 7px ${SVG_THEME.selectionGlow})` : undefined }}
                         />
-                        {/* Zone label at top */}
                         {showLabels && (
                           <>
                             <rect
@@ -863,14 +868,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                               width={Math.max(zone.label.length * 0.9 + 2.2, 7.8)}
                               height={3.2}
                               rx={0.55}
-                              fill={zt.color}
-                              opacity={0.9}
+                              fill={SVG_THEME.zoneLabel}
+                              fillOpacity={0.86}
                               className="pointer-events-none"
                             />
                             <text
                               x={zone.x_percent + 1.3}
                               y={zone.y_percent + 2.4}
-                              fill="white"
+                              fill={SVG_THEME.zoneText}
                               fontSize="1.65"
                               fontWeight="700"
                               letterSpacing="0.03"
@@ -887,8 +892,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
                   {/* Tables */}
                   {tables.map((table) => {
-                    const zone = zones.find(z => z.id === table.zone_id);
-                    const zt = zone ? (ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other) : ZONE_TYPES.other;
                     const isSelected = selectedTable === table.id;
                     const r = TABLE_RADIUS;
 
@@ -899,11 +902,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                             cx={table.x_percent}
                             cy={table.y_percent}
                             r={r}
-                            fill={isSelected ? `${zt.color}40` : `${zt.color}20`}
-                            stroke={zt.color}
-                            strokeWidth={isSelected ? 0.35 : 0.2}
+                            fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
+                            stroke={SVG_THEME.tableStroke}
+                            strokeOpacity={isSelected ? 1 : 0.85}
+                            strokeWidth={isSelected ? 0.36 : 0.24}
                             className="transition-all duration-200"
-                            style={{ filter: isSelected ? `drop-shadow(0 0 4px ${zt.color}60)` : undefined }}
+                            style={{ filter: isSelected ? `drop-shadow(0 0 5px ${SVG_THEME.selectionGlow})` : undefined }}
                           />
                         ) : (
                           <rect
@@ -912,21 +916,21 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                             width={r * 2}
                             height={table.shape === 'rectangle' ? r * 1.4 : r * 2}
                             rx={0.3}
-                            fill={isSelected ? `${zt.color}40` : `${zt.color}20`}
-                            stroke={zt.color}
-                            strokeWidth={isSelected ? 0.35 : 0.2}
+                            fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
+                            stroke={SVG_THEME.tableStroke}
+                            strokeOpacity={isSelected ? 1 : 0.85}
+                            strokeWidth={isSelected ? 0.36 : 0.24}
                             className="transition-all duration-200"
-                            style={{ filter: isSelected ? `drop-shadow(0 0 4px ${zt.color}60)` : undefined }}
+                            style={{ filter: isSelected ? `drop-shadow(0 0 5px ${SVG_THEME.selectionGlow})` : undefined }}
                           />
                         )}
-                        {/* Table label */}
                         {showLabels && (
                           <text
                             x={table.x_percent}
-                            y={table.y_percent - 0.2}
+                            y={table.y_percent - 0.22}
                             textAnchor="middle"
                             dominantBaseline="middle"
-                            fill="white"
+                            fill={SVG_THEME.tableText}
                             fontSize="1.35"
                             fontWeight="700"
                             className="pointer-events-none"
@@ -935,23 +939,21 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                             {table.label}
                           </text>
                         )}
-                        {/* Seat count */}
                         {showLabels && (
                           <text
                             x={table.x_percent}
                             y={table.y_percent + 1.35}
                             textAnchor="middle"
                             dominantBaseline="middle"
-                            fill={zt.color}
+                            fill={SVG_THEME.tableMeta}
                             fontSize="1.05"
                             fontWeight="600"
                             className="pointer-events-none"
-                            opacity={0.95}
+                            opacity={0.98}
                           >
                             {table.seats}
                           </text>
                         )}
-                        {/* Seat dots around the table */}
                         {Array.from({ length: Math.min(table.seats, 8) }).map((_, si) => {
                           const angle = (si / Math.min(table.seats, 8)) * Math.PI * 2 - Math.PI / 2;
                           const seatR = r + 0.95;
@@ -962,9 +964,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                               key={si}
                               cx={sx}
                               cy={sy}
-                              r={0.48}
-                              fill={zt.color}
-                              opacity={0.65}
+                              r={0.5}
+                              fill={SVG_THEME.seat}
                               className="pointer-events-none"
                             />
                           );
@@ -974,7 +975,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                   })}
                 </svg>
 
-                {/* Interactive hit areas for zones */}
                 {zones.map((zone) => {
                   const isSelected = selectedZone === zone.id;
                   return (
@@ -982,10 +982,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                       key={`hit-zone-${zone.id}`}
                       className={`absolute rounded-md transition-all duration-200 ${
                         placingMode === 'table'
-                          ? 'cursor-crosshair hover:bg-white/5'
+                          ? 'cursor-crosshair hover:bg-primary/5'
                           : placingMode
                             ? 'pointer-events-none'
-                            : `cursor-grab active:cursor-grabbing ${isSelected ? 'ring-1 ring-primary/40' : 'hover:ring-1 hover:ring-white/15'}`
+                            : `cursor-grab active:cursor-grabbing ${isSelected ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
                       }`}
                       style={{
                         left: `${zone.x_percent}%`,
@@ -1006,20 +1006,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                   );
                 })}
 
-                {/* Interactive hit areas for tables */}
                 {tables.map((table) => (
                   <div
                     key={`hit-table-${table.id}`}
                     className={`absolute rounded-full transition-all duration-200 z-10 ${
                       placingMode
                         ? 'pointer-events-none'
-                        : `cursor-grab active:cursor-grabbing ${selectedTable === table.id ? 'ring-1 ring-primary/60' : 'hover:ring-1 hover:ring-white/25'}`
+                        : `cursor-grab active:cursor-grabbing ${selectedTable === table.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/45'}`
                     }`}
                     style={{
-                      left: `${table.x_percent - TABLE_RADIUS}%`,
-                      top: `${table.y_percent - TABLE_RADIUS}%`,
-                      width: `${TABLE_RADIUS * 2}%`,
-                      height: `${TABLE_RADIUS * 2}%`,
+                      left: `${table.x_percent - TABLE_HIT_RADIUS}%`,
+                      top: `${table.y_percent - TABLE_HIT_RADIUS}%`,
+                      width: `${TABLE_HIT_RADIUS * 2}%`,
+                      height: `${TABLE_HIT_RADIUS * 2}%`,
                     }}
                     onMouseDown={(e) => handleMouseDown(e, table.id, 'table')}
                     onDoubleClick={(e) => { e.stopPropagation(); setEditTableDialog(table); }}
@@ -1056,7 +1055,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                             className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${isSelected ? 'bg-accent/60' : ''}`}
                             onClick={() => { setSelectedZone(zone.id === selectedZone ? null : zone.id); setSelectedTable(null); }}
                           >
-                            <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: zt.color }} />
+                            <div
+                              className="w-2 h-8 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: SVG_THEME.zoneStroke, opacity: zt.strokeOpacity }}
+                            />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-foreground truncate">{zone.label}</p>
                               <p className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -1083,7 +1085,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                                   onClick={(e) => { e.stopPropagation(); setSelectedTable(tb.id); }}
                                   onDoubleClick={(e) => { e.stopPropagation(); setEditTableDialog(tb); }}
                                 >
-                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: zt.color, opacity: 0.6 }} />
+                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SVG_THEME.seat }} />
                                   <span className="text-foreground font-medium">{tb.label}</span>
                                   <span className="text-muted-foreground">{tb.seats} {t.seats}</span>
                                 </div>
@@ -1105,7 +1107,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                       .filter(([key]) => zones.some(z => z.zone_type === key))
                       .map(([key, val]) => (
                         <div key={key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: val.color }} />
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: SVG_THEME.zoneStroke, opacity: val.strokeOpacity }} />
                           <span>{t[key as keyof typeof t] as string}</span>
                         </div>
                       ))}
@@ -1123,8 +1125,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
-                <div className="h-6 w-6 rounded-md flex items-center justify-center text-xs"
-                  style={{ backgroundColor: `${(ZONE_TYPES[editZoneDialog.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).color}20` }}>
+                <div
+                  className="h-6 w-6 rounded-md flex items-center justify-center text-xs"
+                  style={{ backgroundColor: 'hsl(var(--primary) / 0.14)', color: SVG_THEME.zoneStroke }}
+                >
                   {(ZONE_TYPES[editZoneDialog.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).icon}
                 </div>
                 {t.editZone}
