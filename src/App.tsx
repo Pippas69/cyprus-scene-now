@@ -152,7 +152,18 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  // Dismiss the inline HTML splash screen once React mounts
+  useEffect(() => {
+    const splash = document.getElementById('inline-splash');
+    if (splash) {
+      // Small delay so the transition feels smooth
+      const timer = setTimeout(() => {
+        splash.classList.add('fade-out');
+        setTimeout(() => splash.remove(), 400);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -160,9 +171,6 @@ const App = () => {
         <ThemeProvider>
           <LanguageProvider>
             <TooltipProvider>
-              {showSplash && (
-                <SplashScreen onComplete={() => setShowSplash(false)} />
-              )}
               <Toaster />
               <Sonner />
               <BrowserRouter>
