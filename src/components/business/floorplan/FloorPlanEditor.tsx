@@ -817,7 +817,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                       backgroundSize: '24px 24px',
                     }}
                   />
-                )
+                )}
 
                 {/* SVG floor plan */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
