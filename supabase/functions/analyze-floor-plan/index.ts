@@ -137,7 +137,7 @@ CRITICAL EXTRACTION RULES:
           {
             role: "user",
             content: [
-              { type: "text", text: "Transcribe every fixture and table from this floor plan. Return ALL labeled objects." },
+              { type: "text", text: "Extract EVERY labeled object from this floor plan. Scan the entire image carefully. List every table number, every bar, every DJ booth, every labeled area. Do not skip any. If you see numbers like 1,2,3...10 those are 10 separate tables. Return ALL of them." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },
