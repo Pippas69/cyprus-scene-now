@@ -612,45 +612,56 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     );
                   })}
 
-                  {/* Tables — rendered as actual-sized rectangles matching the blueprint */}
+                  {/* Tables — shape-aware render from extracted geometry */}
                   {tableItems.map((item) => {
                     const isSelected = selectedItem === item.id;
-                    const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                    const w = bbox.w;
-                    const h = bbox.h;
+                    const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                    const { w, h } = getRenderTableBox(item, rawBox);
+                    const commonProps = {
+                      fill: isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill,
+                      stroke: SVG_THEME.tableStroke,
+                      strokeOpacity: isSelected ? 1 : 0.88,
+                      strokeWidth: isSelected ? 0.28 : 0.17,
+                      style: { filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined },
+                    };
 
                     return (
                       <g key={item.id}>
-                        <rect
-                          x={item.x_percent}
-                          y={item.y_percent}
-                          width={w}
-                          height={h}
-                          rx={0.25}
-                          fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
-                          stroke={SVG_THEME.tableStroke}
-                          strokeOpacity={isSelected ? 1 : 0.85}
-                          strokeWidth={isSelected ? 0.3 : 0.18}
-                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined }}
-                        />
+                        {item.shape === 'round' ? (
+                          <ellipse
+                            cx={item.x_percent + w / 2}
+                            cy={item.y_percent + h / 2}
+                            rx={w / 2}
+                            ry={h / 2}
+                            {...commonProps}
+                          />
+                        ) : (
+                          <rect
+                            x={item.x_percent}
+                            y={item.y_percent}
+                            width={w}
+                            height={h}
+                            {...commonProps}
+                          />
+                        )}
                         {showLabels && (
                           <text
                             x={item.x_percent + w / 2}
-                            y={item.y_percent + h / 2 + 0.35}
+                            y={item.y_percent + h / 2}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill={SVG_THEME.tableStroke}
-                            fontSize={Math.min(w, h) > 3 ? '1.3' : '1.0'}
+                            fontSize={Math.min(w, h) > 3 ? '1.25' : '0.95'}
                             fontWeight="700"
                             className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui' }}
+                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                           >
                             {item.label}
                           </text>
                         )}
                       </g>
                     );
-                  })}
+                  })
                 </svg>
 
                 {/* Hit areas for fixtures */}
