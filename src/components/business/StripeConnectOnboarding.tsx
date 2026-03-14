@@ -413,6 +413,43 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
           <>
             <p className="text-xs sm:text-sm text-muted-foreground">{t.connectDescription}</p>
             
+            {/* Business Type Selector */}
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm font-medium">{t.selectBusinessType}</p>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBusinessType('individual')}
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                    businessType === 'individual'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <User className={`h-5 w-5 mt-0.5 shrink-0 ${businessType === 'individual' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium">{t.individualLabel}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{t.individualDesc}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBusinessType('company')}
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                    businessType === 'company'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <Building2 className={`h-5 w-5 mt-0.5 shrink-0 ${businessType === 'company' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium">{t.companyLabel}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{t.companyDesc}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
               <p className="text-xs sm:text-sm font-medium">{t.whatYouNeed}</p>
               <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
@@ -424,10 +461,12 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
                   <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.idVerification}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t.businessInfo}
-                </li>
+                {businessType === 'company' && (
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {t.businessInfo}
+                  </li>
+                )}
               </ul>
             </div>
             
