@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Upload, Trash2, Save, MapPin, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Save, MapPin, Wand2, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
-import { FloorPlanItem, FloorPlanZone, FloorPlanMetadata, TableReservationStatus } from './floorPlanTypes';
-import { DEFAULT_CANVAS_ASPECT, DEFAULT_TABLE_SIZE } from './floorPlanTheme';
+import { FloorPlanItem, FloorPlanZone, AiFixture, AiTable, TableReservationStatus } from './floorPlanTypes';
+import { DEFAULT_CANVAS_ASPECT, DEFAULT_TABLE_SIZE, clamp } from './floorPlanTheme';
 import { FloorPlanCanvas } from './FloorPlanCanvas';
 import { FloorPlanToolbar } from './FloorPlanToolbar';
 import { FloorPlanSidebar } from './FloorPlanSidebar';
@@ -23,40 +23,45 @@ const getImageDimensions = (file: File): Promise<{ width: number; height: number
   new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
-      resolve({ width: img.naturalWidth || 1200, height: img.naturalHeight || 900 });
-      URL.revokeObjectURL(url);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Cannot read image'));
-    };
+    img.onload = () => { resolve({ width: img.naturalWidth || 1200, height: img.naturalHeight || 900 }); URL.revokeObjectURL(url); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Cannot read image')); };
     img.src = url;
   });
+
+const hashDataUrl = async (dataUrl: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataUrl));
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+};
 
 const translations = {
   el: {
     title: 'Σχεδιάγραμμα χώρου',
-    subtitle: 'Setup mode με χειροκίνητη τοποθέτηση τραπεζιών πάνω στο blueprint',
-    uploadBlueprint: 'Ανέβασμα blueprint',
-    uploading: 'Ανέβασμα...',
+    subtitle: 'Ανεβάστε την κάτοψη και η AI θα δημιουργήσει το interactive floor plan',
+    uploadImage: 'Ανέβασμα κάτοψης',
+    analyzing: 'Η AI αναλύει...',
+    reAnalyze: 'Επανανάλυση AI',
     addTable: 'Νέο τραπέζι',
     editItem: 'Επεξεργασία',
     deleteItem: 'Διαγραφή',
     save: 'Αποθήκευση',
     label: 'Ονομασία',
     seats: 'Θέσεις',
-    tableList: 'Λίστα τραπεζιών',
-    noItems: 'Δεν υπάρχουν τραπέζια στη βάση',
-    clickToPlace: 'Κάντε κλικ στο blueprint για τοποθέτηση',
-    uploadFirst: 'Ανεβάστε πρώτα το blueprint του venue',
-    uploadHint: 'Το background παραμένει στατικό και η χαρτογράφηση γίνεται χειροκίνητα',
+    tables: 'Τραπέζια',
+    fixtures: 'Fixtures',
+    noItems: 'Ανεβάστε μια κάτοψη για να ξεκινήσετε',
+    clickToPlace: 'Κάντε κλικ στο σχεδιάγραμμα για τοποθέτηση',
+    uploadFirst: 'Ανεβάστε την κάτοψη του χώρου σας',
+    uploadHint: 'Η AI θα αναγνωρίσει αυτόματα τα τραπέζια & fixtures',
     saved: 'Αποθηκεύτηκε',
     deleted: 'Διαγράφηκε',
     cancel: 'Ακύρωση',
+    totalCapacity: 'Συνολική χωρητικότητα',
     confirmDelete: 'Σίγουρα;',
     yes: 'Ναι',
     no: 'Όχι',
+    aiSuccess: 'Η AI δημιούργησε το floor plan!',
+    aiError: 'Σφάλμα AI ανάλυσης',
+    sameImage: 'Η ίδια κάτοψη — κρατάω το υπάρχον σχεδιάγραμμα.',
     round: 'Στρογγυλό',
     square: 'Τετράγωνο',
     rectangle: 'Ορθογώνιο',
@@ -64,39 +69,37 @@ const translations = {
     available: 'Διαθέσιμο',
     reserved: 'Κρατημένο',
     occupied: 'Κατειλημμένο',
-    setupMode: 'Setup mode',
-    setupModeOn: 'Setup ενεργό',
-    setupModeHint: 'Ενεργοποιήστε setup mode για drag/drop & resize',
-    exitSetupMode: 'Έξοδος από setup mode',
-    showLabels: 'Εμφάνιση labels',
-    hideLabels: 'Απόκρυψη labels',
-    dragHint: 'Κάντε drag ένα table id πάνω στο blueprint και κάντε resize το hitbox.',
-    enableSetupHint: 'Ενεργοποιήστε setup mode για drag & drop mapping.',
-    blueprintUploaded: 'Το blueprint ανέβηκε επιτυχώς',
-    blueprintUploadError: 'Αποτυχία ανεβάσματος blueprint',
+    calibrate: 'Βαθμονόμηση',
+    calibrationOn: 'Βαθμονόμηση...',
   },
   en: {
     title: 'Floor plan',
-    subtitle: 'Setup mode with manual table mapping over blueprint',
-    uploadBlueprint: 'Upload blueprint',
-    uploading: 'Uploading...',
+    subtitle: 'Upload your layout and AI will create the interactive floor plan',
+    uploadImage: 'Upload layout',
+    analyzing: 'AI analyzing...',
+    reAnalyze: 'Re-analyze AI',
     addTable: 'New table',
     editItem: 'Edit',
     deleteItem: 'Delete',
     save: 'Save',
     label: 'Name',
     seats: 'Seats',
-    tableList: 'Table list',
-    noItems: 'No tables found in database',
-    clickToPlace: 'Click on blueprint to place',
-    uploadFirst: 'Upload your venue blueprint first',
-    uploadHint: 'Background stays static and mapping is done manually',
+    tables: 'Tables',
+    fixtures: 'Fixtures',
+    noItems: 'Upload a layout to get started',
+    clickToPlace: 'Click on the layout to place',
+    uploadFirst: 'Upload your venue layout',
+    uploadHint: 'AI will automatically detect tables & fixtures',
     saved: 'Saved',
     deleted: 'Deleted',
     cancel: 'Cancel',
+    totalCapacity: 'Total capacity',
     confirmDelete: 'Are you sure?',
     yes: 'Yes',
     no: 'No',
+    aiSuccess: 'AI generated the floor plan!',
+    aiError: 'AI analysis error',
+    sameImage: 'Same layout — keeping existing floor plan.',
     round: 'Round',
     square: 'Square',
     rectangle: 'Rectangle',
@@ -104,16 +107,8 @@ const translations = {
     available: 'Available',
     reserved: 'Reserved',
     occupied: 'Occupied',
-    setupMode: 'Setup mode',
-    setupModeOn: 'Setup on',
-    setupModeHint: 'Enable setup mode for drag/drop & resize',
-    exitSetupMode: 'Exit setup mode',
-    showLabels: 'Show labels',
-    hideLabels: 'Hide labels',
-    dragHint: 'Drag a table id onto blueprint and resize the hitbox.',
-    enableSetupHint: 'Enable setup mode for drag & drop mapping.',
-    blueprintUploaded: 'Blueprint uploaded successfully',
-    blueprintUploadError: 'Blueprint upload failed',
+    calibrate: 'Calibrate',
+    calibrationOn: 'Calibrating',
   },
 };
 
@@ -125,136 +120,58 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [items, setItems] = useState<FloorPlanItem[]>([]);
   const [zones, setZones] = useState<FloorPlanZone[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [editDialog, setEditDialog] = useState<FloorPlanItem | null>(null);
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
-  const [setupMode, setSetupMode] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
+  const [showBlueprint, setShowBlueprint] = useState(true);
+  const [calibrationMode, setCalibrationMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
+  const [analysisHash, setAnalysisHash] = useState<string | null>(null);
   const [blueprintUrl, setBlueprintUrl] = useState<string | null>(null);
-  const [tableBboxes, setTableBboxes] = useState<Record<string, { w: number; h: number }>>({});
-  const [fixtureBboxes, setFixtureBboxes] = useState<Record<string, { w: number; h: number }>>({});
   const [reservationStatuses, setReservationStatuses] = useState<Map<string, TableReservationStatus>>(new Map());
 
-  useEffect(() => {
-    loadFloorPlan();
-  }, [businessId]);
+  useEffect(() => { loadFloorPlan(); }, [businessId]);
 
+  // Poll reservation statuses every 5 seconds
   useEffect(() => {
-    if (!items.length) return;
+    if (!hasFloorPlan || items.length === 0) return;
     loadReservationStatuses();
     const interval = setInterval(loadReservationStatuses, 5000);
     return () => clearInterval(interval);
-  }, [items.length, businessId]);
-
-  const getMetaZone = useCallback((loadedZones: FloorPlanZone[]) => {
-    return loadedZones.find((z) => z.label === '_metadata') || loadedZones[0] || null;
-  }, []);
+  }, [hasFloorPlan, items.length, businessId]);
 
   const loadFloorPlan = async () => {
     setLoading(true);
-
     const [itemsResult, zonesResult, businessResult] = await Promise.all([
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
-      supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order').limit(1),
       supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
 
     const loadedItems = (itemsResult.data || []) as FloorPlanItem[];
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
-    const bpUrl = businessResult.data?.floor_plan_image_url || null;
-
     setItems(loadedItems);
     setZones(loadedZones);
-    setBlueprintUrl(bpUrl);
+    setHasFloorPlan(loadedItems.length > 0);
+    setBlueprintUrl(businessResult.data?.floor_plan_image_url || null);
 
-    const metaZone = getMetaZone(loadedZones);
-    const meta = (metaZone?.metadata || {}) as FloorPlanMetadata;
-
-    if (meta.image_width && meta.image_height) {
-      const ratio = meta.image_width / meta.image_height;
-      if (Number.isFinite(ratio) && ratio > 0) setCanvasAspect(ratio);
+    const meta = loadedZones[0]?.metadata;
+    if (meta?.image_width && meta?.image_height) {
+      const ratio = (meta.image_width as number) / (meta.image_height as number);
+      setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
     }
-
-    setFixtureBboxes(meta.fixture_bboxes || {});
-
-    const normalizedBboxes: Record<string, { w: number; h: number }> = {};
-    const rawBboxes = meta.table_bboxes || {};
-    for (const item of loadedItems.filter((i) => !i.fixture_type)) {
-      const box = rawBboxes[item.id] || rawBboxes[item.label];
-      if (box?.w && box?.h) {
-        normalizedBboxes[item.id] = { w: box.w, h: box.h };
-      }
-    }
-    setTableBboxes(normalizedBboxes);
+    if (meta?.analysis_hash) setAnalysisHash(meta.analysis_hash as string);
 
     setLoading(false);
   };
 
-  const ensureMetadataZone = async (): Promise<FloorPlanZone | null> => {
-    const existing = getMetaZone(zones);
-    if (existing) return existing;
-
-    const { data, error } = await supabase
-      .from('floor_plan_zones')
-      .insert({
-        business_id: businessId,
-        label: '_metadata',
-        zone_type: 'other',
-        shape: 'rect',
-        x_percent: 0,
-        y_percent: 0,
-        width_percent: 0,
-        height_percent: 0,
-        capacity: 0,
-        sort_order: 0,
-        metadata: {
-          table_bboxes: {},
-          fixture_bboxes: {},
-        },
-      })
-      .select()
-      .single();
-
-    if (error || !data) {
-      toast.error(error?.message || 'Failed to create metadata zone');
-      return null;
-    }
-
-    const zone = data as FloorPlanZone;
-    setZones((prev) => [zone, ...prev]);
-    return zone;
-  };
-
-  const saveZoneMetadata = async (patch: Partial<FloorPlanMetadata>) => {
-    const zone = await ensureMetadataZone();
-    if (!zone) return;
-
-    const currentMeta = (zone.metadata || {}) as FloorPlanMetadata;
-    const nextMeta: FloorPlanMetadata = {
-      ...currentMeta,
-      ...patch,
-    };
-
-    const { error } = await supabase
-      .from('floor_plan_zones')
-      .update({ metadata: nextMeta as any })
-      .eq('id', zone.id);
-
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
-    setZones((prev) => prev.map((z) => (z.id === zone.id ? { ...z, metadata: nextMeta } : z)));
-  };
-
   const loadReservationStatuses = async () => {
-    const zoneIds = Array.from(new Set(items.map((i) => i.zone_id).filter(Boolean))) as string[];
-    if (!zoneIds.length) return;
-
+    if (zones.length === 0) return;
+    const zoneIds = zones.map(z => z.id);
     const { data } = await supabase
       .from('reservation_zone_assignments')
       .select('zone_id, reservation_id, reservations(reservation_name, party_size, status, checked_in_at)')
@@ -263,8 +180,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (!data) return;
 
     const statusMap = new Map<string, TableReservationStatus>();
-
-    for (const item of items.filter((i) => !i.fixture_type)) {
+    for (const item of items) {
+      if (item.fixture_type) continue;
       const assignment = data.find((a: any) => a.zone_id === item.zone_id);
       if (assignment) {
         const res = (assignment as any).reservations;
@@ -279,10 +196,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         statusMap.set(item.id, { tableId: item.id, status: 'available' });
       }
     }
-
     setReservationStatuses(statusMap);
   };
 
+  // Upload blueprint image to storage
   const uploadBlueprint = async (file: File): Promise<string | null> => {
     try {
       const ext = file.name.split('.').pop() || 'jpg';
@@ -303,7 +220,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         await supabase.from('businesses').update({ floor_plan_image_url: url }).eq('id', businessId);
         setBlueprintUrl(url);
       }
-
       return url;
     } catch (err) {
       console.error('Blueprint upload failed:', err);
@@ -311,167 +227,194 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // AI Analysis
+  const handleAIAnalysis = async (file: File) => {
+    setAiAnalyzing(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const [{ width, height }, imageHash] = await Promise.all([
+        getImageDimensions(file),
+        hashDataUrl(base64),
+      ]);
+
+      if (analysisHash && analysisHash === imageHash) {
+        toast.info(t.sameImage);
+        setAiAnalyzing(false);
+        return;
+      }
+
+      // Upload blueprint in parallel with AI analysis
+      const [aiResult] = await Promise.all([
+        supabase.functions.invoke('analyze-floor-plan', { body: { imageBase64: base64 } }),
+        uploadBlueprint(file),
+      ]);
+
+      const { data, error } = aiResult;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const fixtures: AiFixture[] = data?.fixtures || [];
+      const tables: AiTable[] = data?.tables || [];
+
+      if (fixtures.length === 0 && tables.length === 0) {
+        throw new Error('AI did not detect any objects');
+      }
+
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
+      // Clean existing
+      await Promise.all([
+        supabase.from('floor_plan_tables').delete().eq('business_id', businessId),
+        supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
+      ]);
+
+      // Build bbox maps
+      const fixtureBboxes: Record<string, { w: number; h: number }> = {};
+      fixtures.forEach(f => { fixtureBboxes[f.label] = { w: f.width_percent, h: f.height_percent }; });
+      const tableBboxes: Record<string, { w: number; h: number }> = {};
+      tables.forEach(tb => { tableBboxes[tb.label] = { w: tb.width_percent, h: tb.height_percent }; });
+
+      // Create metadata zone
+      const { data: metaZone } = await supabase.from('floor_plan_zones').insert({
+        business_id: businessId,
+        label: '_metadata',
+        zone_type: 'other',
+        shape: 'rect',
+        x_percent: 0, y_percent: 0,
+        width_percent: 0, height_percent: 0,
+        capacity: 0, sort_order: 0,
+        metadata: {
+          analysis_hash: imageHash,
+          image_width: width,
+          image_height: height,
+          fixture_bboxes: fixtureBboxes,
+          table_bboxes: tableBboxes,
+        },
+      }).select().single();
+
+      // Insert all items
+      const allRows = [
+        ...fixtures.map((f, i) => ({
+          business_id: businessId,
+          zone_id: metaZone?.id || null,
+          label: f.label,
+          x_percent: f.x_percent,
+          y_percent: f.y_percent,
+          seats: 0,
+          shape: 'rect',
+          sort_order: i,
+          fixture_type: f.fixture_type,
+        })),
+        ...tables.map((tb, i) => ({
+          business_id: businessId,
+          zone_id: metaZone?.id || null,
+          label: tb.label,
+          x_percent: tb.x_percent,
+          y_percent: tb.y_percent,
+          seats: tb.seats,
+          shape: tb.shape,
+          sort_order: fixtures.length + i,
+          fixture_type: null,
+        })),
+      ];
+
+      if (allRows.length > 0) {
+        const { error: insertError } = await supabase.from('floor_plan_tables').insert(allRows);
+        if (insertError) console.error('Insert error:', insertError);
+      }
+
+      setCanvasAspect(width / height);
+      setAnalysisHash(imageHash);
+      await loadFloorPlan();
+      toast.success(t.aiSuccess);
+    } catch (err: any) {
+      console.error('AI analysis error:', err);
+      toast.error(t.aiError + ': ' + (err.message || 'Unknown error'));
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setUploading(true);
-    try {
-      const [{ width, height }, uploadedUrl] = await Promise.all([getImageDimensions(file), uploadBlueprint(file)]);
-      if (!uploadedUrl) throw new Error(t.blueprintUploadError);
-
-      const nextAspect = width / height;
-      if (Number.isFinite(nextAspect) && nextAspect > 0) setCanvasAspect(nextAspect);
-
-      await saveZoneMetadata({ image_width: width, image_height: height });
-      toast.success(t.blueprintUploaded);
-    } catch (err: any) {
-      toast.error(err.message || t.blueprintUploadError);
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
+    handleAIAnalysis(file);
+    e.target.value = '';
   };
 
-  const saveItem = async (item: Partial<FloorPlanItem>) => {
-    const zone = await ensureMetadataZone();
-    if (!zone) return;
-
-    const { data, error } = await supabase
-      .from('floor_plan_tables')
-      .insert({
-        business_id: businessId,
-        zone_id: zone.id,
-        label: item.label!,
-        x_percent: item.x_percent!,
-        y_percent: item.y_percent!,
-        seats: item.seats || 0,
-        shape: item.shape || 'square',
-        sort_order: items.length,
-        fixture_type: item.fixture_type || null,
-      })
-      .select()
-      .single();
-
-    if (error || !data) {
-      toast.error(error?.message || 'Failed to save item');
-      return;
-    }
-
-    setItems((prev) => [...prev, data as FloorPlanItem]);
-
-    const nextBboxes = {
-      ...tableBboxes,
-      [data.id]: { w: DEFAULT_TABLE_SIZE.w, h: DEFAULT_TABLE_SIZE.h },
-    };
-    setTableBboxes(nextBboxes);
-    await saveZoneMetadata({ table_bboxes: nextBboxes });
-
-    toast.success(t.saved);
-  };
-
-  const updateItem = async (item: FloorPlanItem) => {
-    const { error } = await supabase
-      .from('floor_plan_tables')
-      .update({
-        label: item.label,
-        x_percent: item.x_percent,
-        y_percent: item.y_percent,
-        seats: item.seats,
-        shape: item.shape,
-      })
-      .eq('id', item.id);
-
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
-    setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
-  };
-
-  const deleteItem = async (itemId: string) => {
-    const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
-    const item = items.find((i) => i.id === itemId);
-
-    setItems((prev) => prev.filter((i) => i.id !== itemId));
-    setSelectedItem(null);
-    setEditDialog(null);
-    setDeleteConfirm(false);
-
-    const nextBboxes = { ...tableBboxes };
-    delete nextBboxes[itemId];
-    if (item) delete nextBboxes[item.label];
-    setTableBboxes(nextBboxes);
-    await saveZoneMetadata({ table_bboxes: nextBboxes });
-
-    toast.success(t.deleted);
-  };
-
+  // CRUD
   const handleCanvasClick = useCallback((xPercent: number, yPercent: number) => {
     if (!placingMode) return;
-
-    const existingNumbers = items
-      .filter((i) => !i.fixture_type)
-      .map((i) => Number.parseInt(i.label, 10))
-      .filter((n) => Number.isFinite(n));
-
-    const nextNumber = existingNumbers.length ? Math.max(...existingNumbers) + 1 : items.filter((i) => !i.fixture_type).length + 1;
-
     saveItem({
-      label: String(nextNumber),
+      label: `T${items.filter(i => !i.fixture_type).length + 1}`,
       x_percent: xPercent,
       y_percent: yPercent,
       seats: 4,
       shape: 'square',
       fixture_type: null,
     });
-
     setPlacingMode(null);
   }, [placingMode, items]);
 
+  const saveItem = async (item: Partial<FloorPlanItem>) => {
+    const { data, error } = await supabase.from('floor_plan_tables').insert({
+      business_id: businessId,
+      zone_id: zones[0]?.id || null,
+      label: item.label!,
+      x_percent: item.x_percent!,
+      y_percent: item.y_percent!,
+      seats: item.seats || 0,
+      shape: item.shape || 'square',
+      sort_order: items.length,
+      fixture_type: item.fixture_type || null,
+    }).select().single();
+    if (error) { toast.error(error.message); return; }
+    setItems(prev => [...prev, data as FloorPlanItem]);
+    setHasFloorPlan(true);
+    toast.success(t.saved);
+  };
+
+  const updateItem = async (item: FloorPlanItem) => {
+    const { error } = await supabase.from('floor_plan_tables')
+      .update({ label: item.label, x_percent: item.x_percent, y_percent: item.y_percent, seats: item.seats, shape: item.shape })
+      .eq('id', item.id);
+    if (error) { toast.error(error.message); return; }
+    setItems(prev => prev.map(i => i.id === item.id ? item : i));
+  };
+
+  const deleteItem = async (itemId: string) => {
+    const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
+    if (error) { toast.error(error.message); return; }
+    setItems(prev => prev.filter(i => i.id !== itemId));
+    setSelectedItem(null);
+    setEditDialog(null);
+    setDeleteConfirm(false);
+    toast.success(t.deleted);
+  };
+
   const handleItemDrag = useCallback((id: string, xPercent: number, yPercent: number) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, x_percent: xPercent, y_percent: yPercent } : i)));
+    setItems(prev => prev.map(i => i.id === id ? { ...i, x_percent: xPercent, y_percent: yPercent } : i));
   }, []);
 
   const handleItemDragEnd = useCallback((item: FloorPlanItem) => {
     updateItem(item);
   }, []);
 
-  const handleTableDrop = useCallback(async (id: string, xPercent: number, yPercent: number) => {
-    const item = items.find((i) => i.id === id);
-    if (!item || item.fixture_type) return;
-
-    const updated = { ...item, x_percent: xPercent, y_percent: yPercent };
-    setItems((prev) => prev.map((i) => (i.id === id ? updated : i)));
-
-    const { error } = await supabase
-      .from('floor_plan_tables')
-      .update({ x_percent: xPercent, y_percent: yPercent })
-      .eq('id', id);
-
-    if (error) {
-      toast.error(error.message);
-    }
-  }, [items]);
-
-  const handleTableResize = useCallback((id: string, w: number, h: number) => {
-    setTableBboxes((prev) => ({ ...prev, [id]: { w, h } }));
-  }, []);
-
-  const handleTableResizeEnd = useCallback(async (id: string, w: number, h: number) => {
-    const nextBboxes = { ...tableBboxes, [id]: { w, h } };
-    setTableBboxes(nextBboxes);
-    await saveZoneMetadata({ table_bboxes: nextBboxes });
-  }, [tableBboxes, zones]);
-
-  const tableItems = items.filter((i) => !i.fixture_type);
+  const tableItems = items.filter(i => !i.fixture_type);
+  const fixtureItems = items.filter(i => !!i.fixture_type);
   const totalCapacity = tableItems.reduce((sum, i) => sum + i.seats, 0);
+
+  const meta = zones[0]?.metadata as any;
+  const fixtureBboxes: Record<string, { w: number; h: number }> = meta?.fixture_bboxes || {};
+  const tableBboxes: Record<string, { w: number; h: number }> = meta?.table_bboxes || {};
 
   if (loading) {
     return (
@@ -483,6 +426,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   return (
     <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -495,25 +439,37 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       </div>
 
-      {!blueprintUrl ? (
+      {!hasFloorPlan && !aiAnalyzing ? (
         <div
           className="relative border-2 border-dashed border-border/60 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 hover:border-primary/40 hover:from-primary/5 hover:to-primary/[0.02] transition-all duration-300 cursor-pointer group"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center justify-center py-24 gap-5">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
-              {uploading ? <Loader2 className="h-7 w-7 text-primary animate-spin" /> : <Upload className="h-7 w-7 text-primary/70" />}
+              <Wand2 className="h-7 w-7 text-primary/60 group-hover:text-primary transition-colors" />
             </div>
             <div className="text-center space-y-1.5">
               <p className="text-sm font-medium text-foreground">{t.uploadFirst}</p>
               <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
             </div>
-            <Button variant="outline" size="sm" className="group-hover:border-primary/40 group-hover:text-primary transition-colors" disabled={uploading}>
+            <Button variant="outline" size="sm" className="group-hover:border-primary/40 group-hover:text-primary transition-colors">
               <Upload className="h-3.5 w-3.5 mr-1.5" />
-              {uploading ? t.uploading : t.uploadBlueprint}
+              {t.uploadImage}
             </Button>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+        </div>
+      ) : aiAnalyzing ? (
+        <div className="border-2 border-primary/30 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/[0.02] animate-pulse">
+          <div className="flex flex-col items-center justify-center py-24 gap-5">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-7 w-7 text-primary animate-spin" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <p className="text-sm font-medium text-foreground">{t.analyzing}</p>
+              <p className="text-xs text-muted-foreground">AI Vision Analysis</p>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -522,29 +478,22 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <FloorPlanToolbar
             placingMode={placingMode}
             setPlacingMode={setPlacingMode}
-            setupMode={setupMode}
-            setSetupMode={setSetupMode}
+            calibrationMode={calibrationMode}
+            setCalibrationMode={setCalibrationMode}
             showLabels={showLabels}
             setShowLabels={setShowLabels}
+            showBlueprint={showBlueprint}
+            setShowBlueprint={setShowBlueprint}
             hasBlueprint={!!blueprintUrl}
             tableCount={tableItems.length}
+            fixtureCount={fixtureItems.length}
             totalCapacity={totalCapacity}
-            uploading={uploading}
+            aiAnalyzing={aiAnalyzing}
             onUploadClick={() => fileInputRef.current?.click()}
             t={t}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-            <FloorPlanSidebar
-              tableItems={tableItems}
-              selectedItem={selectedItem}
-              reservationStatuses={reservationStatuses}
-              setupMode={setupMode}
-              onItemSelect={setSelectedItem}
-              onItemEdit={setEditDialog}
-              t={t}
-            />
-
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
             <FloorPlanCanvas
               items={items}
               canvasAspect={canvasAspect}
@@ -552,65 +501,52 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               tableBboxes={tableBboxes}
               selectedItem={selectedItem}
               showLabels={showLabels}
-              setupMode={setupMode}
               placingMode={placingMode}
               blueprintUrl={blueprintUrl}
+              showBlueprint={showBlueprint}
               reservationStatuses={reservationStatuses}
               onCanvasClick={handleCanvasClick}
-              onTableDrop={handleTableDrop}
               onItemSelect={setSelectedItem}
               onItemDoubleClick={setEditDialog}
               onItemDragEnd={handleItemDragEnd}
               onItemDrag={handleItemDrag}
-              onTableResize={handleTableResize}
-              onTableResizeEnd={handleTableResizeEnd}
+            />
+
+            <FloorPlanSidebar
+              tableItems={tableItems}
+              fixtureItems={fixtureItems}
+              selectedItem={selectedItem}
+              reservationStatuses={reservationStatuses}
+              onItemSelect={setSelectedItem}
+              onItemEdit={setEditDialog}
+              t={t}
             />
           </div>
         </>
       )}
 
+      {/* Edit Dialog */}
       {editDialog && (
-        <Dialog
-          open={!!editDialog}
-          onOpenChange={() => {
-            setEditDialog(null);
-            setDeleteConfirm(false);
-          }}
-        >
+        <Dialog open={!!editDialog} onOpenChange={() => { setEditDialog(null); setDeleteConfirm(false); }}>
           <DialogContent className="sm:max-w-xs">
             <DialogHeader>
               <DialogTitle className="text-base">{t.editItem}</DialogTitle>
             </DialogHeader>
-
             <div className="space-y-3 py-1">
               <div>
                 <Label className="text-xs text-muted-foreground">{t.label}</Label>
-                <Input
-                  value={editDialog.label}
-                  onChange={(e) => setEditDialog({ ...editDialog, label: e.target.value })}
-                  className="h-9 mt-1"
-                />
+                <Input value={editDialog.label} onChange={(e) => setEditDialog({ ...editDialog, label: e.target.value })} className="h-9 mt-1" />
               </div>
-
               {!editDialog.fixture_type && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs text-muted-foreground">{t.seats}</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={editDialog.seats}
-                      onChange={(e) => setEditDialog({ ...editDialog, seats: parseInt(e.target.value) || 1 })}
-                      className="h-9 mt-1"
-                    />
+                    <Input type="number" min={1} max={20} value={editDialog.seats} onChange={(e) => setEditDialog({ ...editDialog, seats: parseInt(e.target.value) || 1 })} className="h-9 mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">{t.shape}</Label>
                     <Select value={editDialog.shape} onValueChange={(v) => setEditDialog({ ...editDialog, shape: v })}>
-                      <SelectTrigger className="h-9 mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="round">{t.round}</SelectItem>
                         <SelectItem value="square">{t.square}</SelectItem>
@@ -621,40 +557,20 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 </div>
               )}
             </div>
-
             <DialogFooter className="gap-2 sm:gap-2">
               {deleteConfirm ? (
                 <div className="flex items-center gap-2 w-full">
                   <span className="text-xs text-destructive flex-1">{t.confirmDelete}</span>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setDeleteConfirm(false)}>
-                    {t.no}
-                  </Button>
-                  <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={() => deleteItem(editDialog.id)}>
-                    {t.yes}
-                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setDeleteConfirm(false)}>{t.no}</Button>
+                  <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={() => deleteItem(editDialog.id)}>{t.yes}</Button>
                 </div>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs text-destructive hover:text-destructive border-destructive/20"
-                    onClick={() => setDeleteConfirm(true)}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    {t.deleteItem}
+                  <Button variant="outline" size="sm" className="h-8 text-xs text-destructive hover:text-destructive border-destructive/20" onClick={() => setDeleteConfirm(true)}>
+                    <Trash2 className="h-3 w-3 mr-1" />{t.deleteItem}
                   </Button>
-                  <Button
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => {
-                      updateItem(editDialog);
-                      setEditDialog(null);
-                      toast.success(t.saved);
-                    }}
-                  >
-                    <Save className="h-3 w-3 mr-1" />
-                    {t.save}
+                  <Button size="sm" className="h-8 text-xs" onClick={() => { updateItem(editDialog); setEditDialog(null); toast.success(t.saved); }}>
+                    <Save className="h-3 w-3 mr-1" />{t.save}
                   </Button>
                 </>
               )}
