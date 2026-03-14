@@ -90,7 +90,7 @@ export function UserLayout({ children }: UserLayoutProps) {
   }, [user]);
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-background">
         {/* Fixed Header spanning full width - Mobile optimized */}
         <header className="h-12 sm:h-14 border-b flex items-center px-2 sm:px-4 bg-background sticky top-0 z-50 overflow-visible">

@@ -203,16 +203,8 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         'star-intensity': MAPBOX_CONFIG.fog.starIntensity
       });
 
-      const applyThemeWhenIdle = () => {
-        if (map.current) {
-          applyOceanMapTheme(map.current);
-        }
-      };
-
-      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(applyThemeWhenIdle, { timeout: 600 });
-      } else {
-        globalThis.setTimeout(applyThemeWhenIdle, 0);
+      if (map.current) {
+        applyOceanMapTheme(map.current);
       }
     });
 

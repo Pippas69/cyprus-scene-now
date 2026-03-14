@@ -58,12 +58,6 @@ export function UserSidebar() {
   };
 
   useEffect(() => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  }, [location.pathname, location.search, isMobile, setOpenMobile]);
-
-  useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
