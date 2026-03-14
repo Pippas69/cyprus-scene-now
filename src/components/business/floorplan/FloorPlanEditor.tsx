@@ -1055,7 +1055,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                             className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${isSelected ? 'bg-accent/60' : ''}`}
                             onClick={() => { setSelectedZone(zone.id === selectedZone ? null : zone.id); setSelectedTable(null); }}
                           >
-                            <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: zt.color }} />
+                            <div
+                              className="w-2 h-8 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: SVG_THEME.zoneStroke, opacity: zt.strokeOpacity }}
+                            />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-foreground truncate">{zone.label}</p>
                               <p className="text-[10px] text-muted-foreground flex items-center gap-1">
