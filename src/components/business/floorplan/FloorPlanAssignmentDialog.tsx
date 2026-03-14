@@ -118,14 +118,24 @@ export function FloorPlanAssignmentDialog({
     setSelectedZoneId(null);
     setConfirming(false);
 
-    const [zonesResult, tablesResult] = await Promise.all([
+    const [zonesResult, tablesResult, businessResult] = await Promise.all([
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order'),
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
 
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setZones(loadedZones);
     setTables((tablesResult.data || []) as FloorPlanTable[]);
+    setFloorPlanImageUrl(businessResult.data?.floor_plan_image_url || null);
+
+    const metadataWithDimensions = loadedZones.find((zone) => zone.metadata?.image_width && zone.metadata?.image_height)?.metadata;
+    if (metadataWithDimensions?.image_width && metadataWithDimensions?.image_height) {
+      const ratio = metadataWithDimensions.image_width / metadataWithDimensions.image_height;
+      setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
+    } else {
+      setCanvasAspect(DEFAULT_CANVAS_ASPECT);
+    }
 
     if (loadedZones.length > 0) {
       const zoneIds = loadedZones.map(z => z.id);
