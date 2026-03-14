@@ -324,6 +324,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showLabels, setShowLabels] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
+  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
+  const [canvasAspect, setCanvasAspect] = useState<number>(DEFAULT_CANVAS_ASPECT);
 
   useEffect(() => { loadFloorPlan(); }, [businessId]);
 
