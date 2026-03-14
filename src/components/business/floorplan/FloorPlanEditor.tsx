@@ -33,10 +33,36 @@ interface FloorPlanZone {
   height_percent: number;
   capacity: number;
   sort_order: number;
+  metadata?: {
+    analysis_hash?: string;
+    image_width?: number;
+    image_height?: number;
+    source_image_url?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface FloorPlanEditorProps {
   businessId: string;
+}
+
+interface ParsedAiTable {
+  label: string;
+  seats: number;
+  shape: string;
+  x_percent: number;
+  y_percent: number;
+}
+
+interface ParsedAiZone {
+  label: string;
+  zone_type: string;
+  x_percent: number;
+  y_percent: number;
+  width_percent: number;
+  height_percent: number;
+  capacity: number;
+  tables: ParsedAiTable[];
 }
 
 const ZONE_TYPES = {
@@ -49,7 +75,129 @@ const ZONE_TYPES = {
   other: { color: '#6B7280', bgAlpha: 0.15, icon: '📍' },
 } as const;
 
-const TABLE_RADIUS = 1.8;
+const TABLE_RADIUS = 2.6;
+const DEFAULT_CANVAS_ASPECT = 4 / 3;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const toValidNumber = (value: unknown, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      resolve({ width: image.naturalWidth || 1200, height: image.naturalHeight || 900 });
+      URL.revokeObjectURL(objectUrl);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Unable to read image dimensions'));
+    };
+    image.src = objectUrl;
+  });
+};
+
+const hashDataUrl = async (dataUrl: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataUrl));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+};
+
+const getStoragePathFromPublicUrl = (url: string | null) => {
+  if (!url) return null;
+  const parts = url.split('/');
+  if (parts.length < 2) return null;
+  return parts.slice(-2).join('/');
+};
+
+const normalizeAiZones = (zonesInput: unknown): ParsedAiZone[] => {
+  const input = Array.isArray(zonesInput) ? zonesInput : [];
+
+  const zones: ParsedAiZone[] = input
+    .slice(0, 60)
+    .map((rawZone: any, zoneIndex): ParsedAiZone => {
+      const x = clamp(toValidNumber(rawZone?.x_percent, 0), 0, 100);
+      const y = clamp(toValidNumber(rawZone?.y_percent, 0), 0, 100);
+      const width = clamp(toValidNumber(rawZone?.width_percent, 16), 6, 96);
+      const height = clamp(toValidNumber(rawZone?.height_percent, 16), 6, 96);
+
+      const fixedWidth = Math.max(6, Math.min(width, 100 - x));
+      const fixedHeight = Math.max(6, Math.min(height, 100 - y));
+
+      const tables: ParsedAiTable[] = (Array.isArray(rawZone?.tables) ? rawZone.tables : [])
+        .slice(0, 160)
+        .map((rawTable: any, tableIndex): ParsedAiTable => ({
+          label: typeof rawTable?.label === 'string' && rawTable.label.trim().length > 0
+            ? rawTable.label.trim().slice(0, 24)
+            : `T${tableIndex + 1}`,
+          seats: clamp(Math.round(toValidNumber(rawTable?.seats, 4)), 1, 20),
+          shape: rawTable?.shape === 'square' || rawTable?.shape === 'rectangle' ? rawTable.shape : 'round',
+          x_percent: clamp(toValidNumber(rawTable?.x_percent, x + fixedWidth / 2), x + 0.8, x + fixedWidth - 0.8),
+          y_percent: clamp(toValidNumber(rawTable?.y_percent, y + fixedHeight / 2), y + 0.8, y + fixedHeight - 0.8),
+        }));
+
+      const totalSeats = tables.reduce((sum, table) => sum + table.seats, 0);
+      const fallbackCapacity = clamp(Math.round(toValidNumber(rawZone?.capacity, totalSeats || 4)), 0, 700);
+
+      return {
+        label: typeof rawZone?.label === 'string' && rawZone.label.trim().length > 0
+          ? rawZone.label.trim().slice(0, 48)
+          : `Zone ${zoneIndex + 1}`,
+        zone_type: Object.keys(ZONE_TYPES).includes(rawZone?.zone_type) ? rawZone.zone_type : 'other',
+        x_percent: x,
+        y_percent: y,
+        width_percent: fixedWidth,
+        height_percent: fixedHeight,
+        capacity: totalSeats > 0 ? totalSeats : fallbackCapacity,
+        tables,
+      };
+    })
+    .sort((a, b) => (a.y_percent - b.y_percent) || (a.x_percent - b.x_percent));
+
+  if (zones.length === 0) return [];
+
+  const minX = Math.min(...zones.map((z) => z.x_percent));
+  const minY = Math.min(...zones.map((z) => z.y_percent));
+  const maxX = Math.max(...zones.map((z) => z.x_percent + z.width_percent));
+  const maxY = Math.max(...zones.map((z) => z.y_percent + z.height_percent));
+
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const targetPadding = 4;
+  const targetSpan = 100 - targetPadding * 2;
+  const scale = Math.min(targetSpan / spanX, targetSpan / spanY, 2.2);
+
+  const scaledSpanX = spanX * scale;
+  const scaledSpanY = spanY * scale;
+  const offsetX = (100 - scaledSpanX) / 2 - minX * scale;
+  const offsetY = (100 - scaledSpanY) / 2 - minY * scale;
+
+  return zones.map((zone) => {
+    const width = clamp(zone.width_percent * scale, 6, 98);
+    const height = clamp(zone.height_percent * scale, 6, 98);
+    const xPos = clamp(zone.x_percent * scale + offsetX, 0, 100 - width);
+    const yPos = clamp(zone.y_percent * scale + offsetY, 0, 100 - height);
+
+    const tables = zone.tables.map((table) => ({
+      ...table,
+      x_percent: clamp(table.x_percent * scale + offsetX, xPos + 0.8, xPos + width - 0.8),
+      y_percent: clamp(table.y_percent * scale + offsetY, yPos + 0.8, yPos + height - 0.8),
+    }));
+
+    return {
+      ...zone,
+      x_percent: xPos,
+      y_percent: yPos,
+      width_percent: width,
+      height_percent: height,
+      capacity: tables.reduce((sum, table) => sum + table.seats, 0) || zone.capacity,
+      tables,
+    };
+  });
+};
 
 const translations = {
   el: {
@@ -95,6 +243,7 @@ const translations = {
     no: 'Όχι',
     aiSuccess: 'Η AI δημιούργησε το floor plan!',
     aiError: 'Σφάλμα AI ανάλυσης',
+    sameImage: 'Η ίδια κάτοψη είναι ήδη φορτωμένη — κρατάω ακριβώς το ίδιο σχεδιάγραμμα.',
     addTable: 'Νέο τραπέζι',
     clickToPlaceTable: 'Κάντε κλικ σε ζώνη για τοποθέτηση τραπεζιού',
     round: 'Στρογγυλό',
@@ -145,6 +294,7 @@ const translations = {
     no: 'No',
     aiSuccess: 'AI generated the floor plan!',
     aiError: 'AI analysis error',
+    sameImage: 'This exact layout is already loaded — keeping the same floor plan.',
     addTable: 'New table',
     clickToPlaceTable: 'Click inside a zone to place table',
     round: 'Round',
@@ -174,33 +324,63 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showLabels, setShowLabels] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
+  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
+  const [canvasAspect, setCanvasAspect] = useState<number>(DEFAULT_CANVAS_ASPECT);
 
   useEffect(() => { loadFloorPlan(); }, [businessId]);
 
   const loadFloorPlan = async () => {
     setLoading(true);
-    const [zonesResult, tablesResult] = await Promise.all([
+
+    const [zonesResult, tablesResult, businessResult] = await Promise.all([
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order'),
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
+
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
+    const loadedTables = (tablesResult.data || []) as FloorPlanTable[];
+
     setZones(loadedZones);
-    setTables((tablesResult.data || []) as FloorPlanTable[]);
+    setTables(loadedTables);
     setHasFloorPlan(loadedZones.length > 0);
+
+    const imageUrl = businessResult.data?.floor_plan_image_url || null;
+    setFloorPlanImageUrl(imageUrl);
+
+    const metadataWithDimensions = loadedZones.find((zone) => zone.metadata?.image_width && zone.metadata?.image_height)?.metadata;
+    if (metadataWithDimensions?.image_width && metadataWithDimensions?.image_height) {
+      const ratio = metadataWithDimensions.image_width / metadataWithDimensions.image_height;
+      setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
+    } else {
+      setCanvasAspect(DEFAULT_CANVAS_ASPECT);
+    }
+
     setLoading(false);
   };
 
   // AI Analysis
   const handleAIAnalysis = async (file: File) => {
     setAiAnalyzing(true);
+
     try {
-      // Convert to base64
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      const [{ width, height }, imageHash] = await Promise.all([
+        getImageDimensions(file),
+        hashDataUrl(base64),
+      ]);
+
+      const currentHash = zones.find((zone) => zone.metadata?.analysis_hash)?.metadata?.analysis_hash;
+      if (currentHash && currentHash === imageHash) {
+        toast.info(t.sameImage);
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke('analyze-floor-plan', {
         body: { imageBase64: base64 },
@@ -209,51 +389,89 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Clear existing zones and tables
+      const normalizedAiZones = normalizeAiZones(data?.zones || []);
+      if (normalizedAiZones.length === 0) {
+        throw new Error('AI did not detect valid zones');
+      }
+
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
+      const fileExt = (file.name.split('.').pop() || 'png').toLowerCase();
+      const newStoragePath = `${userId}/${businessId}-floorplan-${imageHash}.${fileExt}`;
+
+      const previousPath = getStoragePathFromPublicUrl(floorPlanImageUrl);
+      if (previousPath && previousPath !== newStoragePath) {
+        await supabase.storage.from('business-covers').remove([previousPath]);
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('business-covers')
+        .upload(newStoragePath, file, { upsert: true, contentType: file.type || undefined });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('business-covers').getPublicUrl(newStoragePath);
+      const uploadedImageUrl = publicUrlData.publicUrl;
+
       await Promise.all([
         supabase.from('floor_plan_tables').delete().eq('business_id', businessId),
         supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
+        supabase.from('businesses').update({ floor_plan_image_url: uploadedImageUrl }).eq('id', businessId),
       ]);
 
-      // Insert zones from AI
-      const aiZones = data.zones || [];
-      const insertedZones: FloorPlanZone[] = [];
+      for (let i = 0; i < normalizedAiZones.length; i++) {
+        const zone = normalizedAiZones[i];
+        const zoneCapacity = zone.tables.reduce((sum, table) => sum + table.seats, 0) || zone.capacity;
 
-      for (let i = 0; i < aiZones.length; i++) {
-        const az = aiZones[i];
-        const { data: zoneData, error: zoneError } = await supabase.from('floor_plan_zones').insert({
-          business_id: businessId,
-          label: az.label,
-          zone_type: az.zone_type || 'other',
-          shape: 'rect',
-          x_percent: az.x_percent,
-          y_percent: az.y_percent,
-          width_percent: az.width_percent,
-          height_percent: az.height_percent,
-          capacity: az.capacity || 0,
-          sort_order: i,
-        }).select().single();
-
-        if (zoneError) { console.error('Zone insert error:', zoneError); continue; }
-        insertedZones.push(zoneData as FloorPlanZone);
-
-        // Insert tables for this zone
-        if (az.tables && az.tables.length > 0) {
-          const tablesToInsert = az.tables.map((at: any, ti: number) => ({
-            zone_id: zoneData!.id,
+        const { data: zoneData, error: zoneError } = await supabase
+          .from('floor_plan_zones')
+          .insert({
             business_id: businessId,
-            label: at.label || `T${ti + 1}`,
-            x_percent: at.x_percent,
-            y_percent: at.y_percent,
-            seats: at.seats || 4,
-            shape: at.shape || 'round',
-            sort_order: ti,
+            label: zone.label,
+            zone_type: zone.zone_type,
+            shape: 'rect',
+            x_percent: zone.x_percent,
+            y_percent: zone.y_percent,
+            width_percent: zone.width_percent,
+            height_percent: zone.height_percent,
+            capacity: zoneCapacity,
+            sort_order: i,
+            metadata: {
+              analysis_hash: imageHash,
+              image_width: width,
+              image_height: height,
+              source_image_url: uploadedImageUrl,
+            },
+          })
+          .select()
+          .single();
+
+        if (zoneError || !zoneData) {
+          console.error('Zone insert error:', zoneError);
+          continue;
+        }
+
+        if (zone.tables.length > 0) {
+          const tablesToInsert = zone.tables.map((table, tableIndex) => ({
+            zone_id: zoneData.id,
+            business_id: businessId,
+            label: table.label,
+            x_percent: table.x_percent,
+            y_percent: table.y_percent,
+            seats: table.seats,
+            shape: table.shape,
+            sort_order: tableIndex,
           }));
-          await supabase.from('floor_plan_tables').insert(tablesToInsert);
+
+          const { error: tablesError } = await supabase.from('floor_plan_tables').insert(tablesToInsert);
+          if (tablesError) console.error('Table insert error:', tablesError);
         }
       }
 
-      // Reload data
+      setFloorPlanImageUrl(uploadedImageUrl);
+      setCanvasAspect(width / height);
       await loadFloorPlan();
       toast.success(t.aiSuccess);
     } catch (err: any) {
@@ -573,17 +791,33 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <div className="relative rounded-xl overflow-hidden border border-border/30 bg-[#0a1628] shadow-2xl">
               <div
                 ref={canvasRef}
-                className={`relative select-none aspect-[4/3] ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(440px, 72vh, 860px)' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Subtle grid pattern */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                  backgroundSize: '24px 24px',
-                }} />
+                {/* Uploaded reference floor plan image */}
+                {floorPlanImageUrl ? (
+                  <>
+                    <img
+                      src={floorPlanImageUrl}
+                      alt="Venue floor plan reference"
+                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
+                      backgroundSize: '24px 24px',
+                    }}
+                  />
+                )}
 
                 {/* SVG floor plan */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -624,22 +858,22 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <>
                             <rect
-                              x={zone.x_percent + 0.5}
-                              y={zone.y_percent + 0.5}
-                              width={Math.max(zone.label.length * 0.7 + 1.5, 5)}
-                              height={2.2}
-                              rx={0.4}
+                              x={zone.x_percent + 0.4}
+                              y={zone.y_percent + 0.4}
+                              width={Math.max(zone.label.length * 0.9 + 2.2, 7.8)}
+                              height={3.2}
+                              rx={0.55}
                               fill={zt.color}
-                              opacity={0.85}
+                              opacity={0.9}
                               className="pointer-events-none"
                             />
                             <text
-                              x={zone.x_percent + 1.2}
-                              y={zone.y_percent + 1.8}
+                              x={zone.x_percent + 1.3}
+                              y={zone.y_percent + 2.4}
                               fill="white"
-                              fontSize="1.1"
+                              fontSize="1.65"
                               fontWeight="700"
-                              letterSpacing="0.04"
+                              letterSpacing="0.03"
                               className="pointer-events-none"
                               style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                             >
@@ -689,12 +923,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <text
                             x={table.x_percent}
-                            y={table.y_percent - 0.1}
+                            y={table.y_percent - 0.2}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill="white"
-                            fontSize="1"
-                            fontWeight="600"
+                            fontSize="1.35"
+                            fontWeight="700"
                             className="pointer-events-none"
                             style={{ fontFamily: 'system-ui' }}
                           >
@@ -705,14 +939,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {showLabels && (
                           <text
                             x={table.x_percent}
-                            y={table.y_percent + 1.1}
+                            y={table.y_percent + 1.35}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill={zt.color}
-                            fontSize="0.75"
-                            fontWeight="500"
+                            fontSize="1.05"
+                            fontWeight="600"
                             className="pointer-events-none"
-                            opacity={0.8}
+                            opacity={0.95}
                           >
                             {table.seats}
                           </text>
@@ -720,7 +954,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         {/* Seat dots around the table */}
                         {Array.from({ length: Math.min(table.seats, 8) }).map((_, si) => {
                           const angle = (si / Math.min(table.seats, 8)) * Math.PI * 2 - Math.PI / 2;
-                          const seatR = r + 0.7;
+                          const seatR = r + 0.95;
                           const sx = table.x_percent + Math.cos(angle) * seatR;
                           const sy = table.y_percent + Math.sin(angle) * seatR;
                           return (
@@ -728,9 +962,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                               key={si}
                               cx={sx}
                               cy={sy}
-                              r={0.35}
+                              r={0.48}
                               fill={zt.color}
-                              opacity={0.5}
+                              opacity={0.65}
                               className="pointer-events-none"
                             />
                           );

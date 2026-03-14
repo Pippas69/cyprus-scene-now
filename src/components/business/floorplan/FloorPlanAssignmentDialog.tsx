@@ -16,6 +16,11 @@ interface FloorPlanZone {
   width_percent: number;
   height_percent: number;
   capacity: number;
+  metadata?: {
+    image_width?: number;
+    image_height?: number;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface FloorPlanTable {
@@ -56,7 +61,8 @@ const ZONE_TYPES = {
   other: { color: '#6B7280', icon: '📍' },
 } as const;
 
-const TABLE_RADIUS = 1.8;
+const TABLE_RADIUS = 2.4;
+const DEFAULT_CANVAS_ASPECT = 4 / 3;
 
 const translations = {
   el: {
@@ -102,6 +108,8 @@ export function FloorPlanAssignmentDialog({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
+  const [canvasAspect, setCanvasAspect] = useState<number>(DEFAULT_CANVAS_ASPECT);
 
   useEffect(() => { if (open) loadData(); }, [open, businessId]);
 
@@ -110,14 +118,24 @@ export function FloorPlanAssignmentDialog({
     setSelectedZoneId(null);
     setConfirming(false);
 
-    const [zonesResult, tablesResult] = await Promise.all([
+    const [zonesResult, tablesResult, businessResult] = await Promise.all([
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order'),
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
 
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setZones(loadedZones);
     setTables((tablesResult.data || []) as FloorPlanTable[]);
+    setFloorPlanImageUrl(businessResult.data?.floor_plan_image_url || null);
+
+    const metadataWithDimensions = loadedZones.find((zone) => zone.metadata?.image_width && zone.metadata?.image_height)?.metadata;
+    if (metadataWithDimensions?.image_width && metadataWithDimensions?.image_height) {
+      const ratio = metadataWithDimensions.image_width / metadataWithDimensions.image_height;
+      setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
+    } else {
+      setCanvasAspect(DEFAULT_CANVAS_ASPECT);
+    }
 
     if (loadedZones.length > 0) {
       const zoneIds = loadedZones.map(z => z.id);
@@ -228,12 +246,29 @@ export function FloorPlanAssignmentDialog({
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
-              <div className="relative rounded-xl overflow-hidden bg-[#0a1628] shadow-xl border border-border/20 aspect-[4/3]">
-                {/* Grid pattern */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                  backgroundSize: '24px 24px',
-                }} />
+              <div
+                className="relative rounded-xl overflow-hidden bg-[#0a1628] shadow-xl border border-border/20"
+                style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(360px, 64vh, 760px)' }}
+              >
+                {floorPlanImageUrl ? (
+                  <>
+                    <img
+                      src={floorPlanImageUrl}
+                      alt="Venue floor plan reference"
+                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
+                      backgroundSize: '24px 24px',
+                    }}
+                  />
+                )}
 
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <defs>
