@@ -16,6 +16,11 @@ interface FloorPlanZone {
   width_percent: number;
   height_percent: number;
   capacity: number;
+  metadata?: {
+    image_width?: number;
+    image_height?: number;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface FloorPlanTable {
@@ -56,7 +61,8 @@ const ZONE_TYPES = {
   other: { color: '#6B7280', icon: '📍' },
 } as const;
 
-const TABLE_RADIUS = 1.8;
+const TABLE_RADIUS = 2.4;
+const DEFAULT_CANVAS_ASPECT = 4 / 3;
 
 const translations = {
   el: {
