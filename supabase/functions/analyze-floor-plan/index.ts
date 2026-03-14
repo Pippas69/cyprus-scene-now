@@ -100,29 +100,28 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are an expert venue floor plan transcription engine.
-
-Your task: FAITHFULLY transcribe every labeled object from the uploaded floor plan image.
-Do NOT redesign, simplify, group, or rearrange. Preserve the EXACT layout.
+    const systemPrompt = `You are an expert venue floor plan transcription engine. You must extract EVERY SINGLE labeled object visible in the floor plan image.
 
 Return TWO arrays:
 
-1. "fixtures" — non-seating structural elements (bars, DJ booths, stages, entrances, kitchens, restrooms).
-   Each fixture has: label, fixture_type, x_percent, y_percent, width_percent, height_percent.
-   fixture_type: bar, dj, stage, entrance, kitchen, restroom, other.
+1. "fixtures" — non-seating structural elements like bars, DJ booths, stages, entrances.
+   Each has: label, fixture_type (bar|dj|stage|entrance|kitchen|restroom|other), x_percent, y_percent, width_percent, height_percent.
 
-2. "tables" — individual seating points (tables, booths, seats).
-   Each table has: label, seats, shape, x_percent, y_percent.
-   shape: round, square, rectangle.
+2. "tables" — EVERY individual table, booth, or seating position visible in the image.
+   Each has: label, seats, shape (round|square|rectangle), x_percent, y_percent.
 
-CRITICAL RULES:
-- All coordinates are ABSOLUTE percentages of the full image canvas (0-100).
-- Preserve the EXACT label from the image (e.g. "1", "2", "P1", "P2", "101", "Bar 1", "DJ").
-- Every single labeled table/seat in the image MUST appear as a separate entry.
-- Do NOT group tables into zones or areas.
-- Do NOT skip any labeled object.
-- If a table number is partially visible, include your best reading.
-- Seats count: estimate from the image (chairs around the table).`;
+CRITICAL EXTRACTION RULES:
+- Coordinates are ABSOLUTE percentages of the image (0=top/left, 100=bottom/right).
+- PRESERVE the EXACT label/number from the image: "1", "2", "P1", "101", "Bar 1", etc.
+- You MUST extract EVERY labeled item. If you see numbers 1 through 10, that's 10 separate table entries.
+- If you see labels like P1, P2, P3... P9, that's 9 separate entries.
+- If you see labels like 101, 102... 110, that's 10 separate entries.
+- If you see labels like 20, 21, 22... 29, that's 10 separate entries.
+- Tables typically have 2-6 seats. Use 4 as default if unclear.
+- Most tables are round unless clearly rectangular/square in the image.
+- Do NOT group or merge tables. Each labeled point = one entry.
+- Do NOT skip ANY visible labeled object. Count them carefully.
+- Scan the ENTIRE image systematically: top-left to bottom-right.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -131,14 +130,14 @@ CRITICAL RULES:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         temperature: 0,
         messages: [
           { role: "system", content: systemPrompt },
           {
             role: "user",
             content: [
-              { type: "text", text: "Transcribe every fixture and table from this floor plan. Return ALL labeled objects." },
+              { type: "text", text: "Extract EVERY labeled object from this floor plan. Scan the entire image carefully. List every table number, every bar, every DJ booth, every labeled area. Do not skip any. If you see numbers like 1,2,3...10 those are 10 separate tables. Return ALL of them." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },
