@@ -52,7 +52,7 @@ export function SplashScreen({ minDisplayTime = 1800, onComplete }: SplashScreen
               transition={{ delay: 0.3, duration: 0.4 }}
               className="text-center text-sand-white/80 text-sm mt-2 tracking-widest uppercase"
             >
-              Cyprus Events
+              Cyprus
             </motion.p>
           </motion.div>
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -15,25 +15,50 @@ import { useLanguage } from "@/hooks/useLanguage";
 const Index = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const [isLandingReady, setIsLandingReady] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuthAndRedirect = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-        if (profile?.role === "business") {
-          navigate("/dashboard-business");
-        } else {
-          navigate("/feed");
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+
+          if (!isMounted) return;
+
+          if (profile?.role === "business") {
+            navigate("/dashboard-business", { replace: true });
+          } else {
+            navigate("/feed", { replace: true });
+          }
+          return;
         }
+
+        setIsLandingReady(true);
+      } catch {
+        if (isMounted) setIsLandingReady(true);
       }
     };
+
     checkAuthAndRedirect();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
+
+  if (!isLandingReady) return null;
 
   return (
     <div className="min-h-screen bg-background">

@@ -161,17 +161,21 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  // Dismiss the inline HTML splash screen once React mounts
+  // Keep splash visible for ~2s from first paint, then fade it out
   useEffect(() => {
     const splash = document.getElementById('inline-splash');
-    if (splash) {
-      // Small delay so the transition feels smooth
-      const timer = setTimeout(() => {
-        splash.classList.add('fade-out');
-        setTimeout(() => splash.remove(), 400);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
+    if (!splash) return;
+
+    const splashStart = (window as { __fomoSplashStart?: number }).__fomoSplashStart ?? performance.now();
+    const elapsed = performance.now() - splashStart;
+    const remaining = Math.max(0, 2000 - elapsed);
+
+    const timer = window.setTimeout(() => {
+      splash.classList.add('fade-out');
+      window.setTimeout(() => splash.remove(), 400);
+    }, remaining);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
