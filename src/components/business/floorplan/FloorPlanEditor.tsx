@@ -661,7 +661,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         )}
                       </g>
                     );
-                  })
+                  })}
                 </svg>
 
                 {/* Hit areas for fixtures */}
