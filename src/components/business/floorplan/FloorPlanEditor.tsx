@@ -66,13 +66,13 @@ interface ParsedAiZone {
 }
 
 const ZONE_TYPES = {
-  vip: { icon: 'VIP', strokeOpacity: 0.95, fillOpacity: 0.24, dash: 'none' },
-  table: { icon: 'TB', strokeOpacity: 0.84, fillOpacity: 0.18, dash: 'none' },
-  bar: { icon: 'BR', strokeOpacity: 0.76, fillOpacity: 0.16, dash: '2 0.8' },
-  stage: { icon: 'ST', strokeOpacity: 0.88, fillOpacity: 0.22, dash: '1.4 0.8' },
-  dj: { icon: 'DJ', strokeOpacity: 0.78, fillOpacity: 0.17, dash: '1.2 0.7' },
-  lounge: { icon: 'LG', strokeOpacity: 0.72, fillOpacity: 0.14, dash: '2.2 1' },
-  other: { icon: 'ZN', strokeOpacity: 0.68, fillOpacity: 0.12, dash: '2.4 1.1' },
+  vip: { icon: 'VIP', color: 'hsl(var(--primary))', strokeOpacity: 0.95, fillOpacity: 0.24, dash: 'none' },
+  table: { icon: 'TB', color: 'hsl(var(--primary))', strokeOpacity: 0.84, fillOpacity: 0.18, dash: 'none' },
+  bar: { icon: 'BR', color: 'hsl(var(--primary))', strokeOpacity: 0.76, fillOpacity: 0.16, dash: '2 0.8' },
+  stage: { icon: 'ST', color: 'hsl(var(--primary))', strokeOpacity: 0.88, fillOpacity: 0.22, dash: '1.4 0.8' },
+  dj: { icon: 'DJ', color: 'hsl(var(--primary))', strokeOpacity: 0.78, fillOpacity: 0.17, dash: '1.2 0.7' },
+  lounge: { icon: 'LG', color: 'hsl(var(--primary))', strokeOpacity: 0.72, fillOpacity: 0.14, dash: '2.2 1' },
+  other: { icon: 'ZN', color: 'hsl(var(--primary))', strokeOpacity: 0.68, fillOpacity: 0.12, dash: '2.4 1.1' },
 } as const;
 
 const SVG_THEME = {
