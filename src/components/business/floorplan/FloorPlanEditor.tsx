@@ -200,7 +200,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       const ext = file.name.split('.').pop() || 'jpg';
       const path = `floor-plans/${businessId}/blueprint.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('business-assets')
+        .from('floor-plans')
         .upload(path, file, { upsert: true, contentType: file.type });
 
       if (uploadError) {
