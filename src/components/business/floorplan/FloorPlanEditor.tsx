@@ -243,6 +243,7 @@ const translations = {
     no: 'Όχι',
     aiSuccess: 'Η AI δημιούργησε το floor plan!',
     aiError: 'Σφάλμα AI ανάλυσης',
+    sameImage: 'Η ίδια κάτοψη είναι ήδη φορτωμένη — κρατάω ακριβώς το ίδιο σχεδιάγραμμα.',
     addTable: 'Νέο τραπέζι',
     clickToPlaceTable: 'Κάντε κλικ σε ζώνη για τοποθέτηση τραπεζιού',
     round: 'Στρογγυλό',
