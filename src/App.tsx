@@ -249,8 +249,8 @@ const App = () => {
       };
     }
 
-    const timeoutId = window.setTimeout(warmUpRoutes, 900);
-    return () => window.clearTimeout(timeoutId);
+    const timeoutId = globalThis.setTimeout(warmUpRoutes, 900);
+    return () => globalThis.clearTimeout(timeoutId);
   }, []);
 
   return (

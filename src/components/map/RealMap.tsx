@@ -212,7 +212,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
       if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
         (window as any).requestIdleCallback(applyThemeWhenIdle, { timeout: 600 });
       } else {
-        window.setTimeout(applyThemeWhenIdle, 0);
+        globalThis.setTimeout(applyThemeWhenIdle, 0);
       }
     });
 
