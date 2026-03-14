@@ -560,7 +560,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               <div
                 ref={canvasRef}
                 className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-                style={{ aspectRatio: `${canvasAspect}`, maxHeight: '72vh' }}
+                style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 260px)' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
