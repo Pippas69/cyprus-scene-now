@@ -69,6 +69,8 @@ const translations = {
     available: 'Διαθέσιμο',
     reserved: 'Κρατημένο',
     occupied: 'Κατειλημμένο',
+    calibrate: 'Βαθμονόμηση',
+    calibrationOn: 'Βαθμονόμηση...',
   },
   en: {
     title: 'Floor plan',
@@ -105,6 +107,8 @@ const translations = {
     available: 'Available',
     reserved: 'Reserved',
     occupied: 'Occupied',
+    calibrate: 'Calibrate',
+    calibrationOn: 'Calibrating',
   },
 };
 
@@ -122,6 +126,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [showBlueprint, setShowBlueprint] = useState(true);
+  const [calibrationMode, setCalibrationMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
@@ -473,6 +478,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <FloorPlanToolbar
             placingMode={placingMode}
             setPlacingMode={setPlacingMode}
+            calibrationMode={calibrationMode}
+            setCalibrationMode={setCalibrationMode}
             showLabels={showLabels}
             setShowLabels={setShowLabels}
             showBlueprint={showBlueprint}

@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Plus, MousePointer, X, Eye, EyeOff, Wand2, Users, Image, ImageOff } from 'lucide-react';
+import { Plus, MousePointer, X, Eye, EyeOff, Wand2, Users, Image, ImageOff, Move } from 'lucide-react';
 
 interface FloorPlanToolbarProps {
   placingMode: 'table' | null;
   setPlacingMode: (mode: 'table' | null) => void;
+  calibrationMode: boolean;
+  setCalibrationMode: (v: boolean) => void;
   showLabels: boolean;
   setShowLabels: (show: boolean) => void;
   showBlueprint: boolean;
@@ -18,7 +20,8 @@ interface FloorPlanToolbarProps {
 }
 
 export function FloorPlanToolbar({
-  placingMode, setPlacingMode, showLabels, setShowLabels,
+  placingMode, setPlacingMode, calibrationMode, setCalibrationMode,
+  showLabels, setShowLabels,
   showBlueprint, setShowBlueprint, hasBlueprint,
   tableCount, fixtureCount, totalCapacity,
   aiAnalyzing, onUploadClick, t,
@@ -40,6 +43,16 @@ export function FloorPlanToolbar({
           <>
             <Button variant="default" size="sm" className="h-8 text-xs shadow-sm" onClick={() => setPlacingMode('table')}>
               <Plus className="h-3.5 w-3.5 mr-1" />{t.addTable}
+            </Button>
+            <Button
+              variant={calibrationMode ? 'secondary' : 'ghost'}
+              size="sm"
+              className={`h-8 text-xs ${calibrationMode ? 'ring-1 ring-primary/40' : ''}`}
+              onClick={() => setCalibrationMode(!calibrationMode)}
+              title={calibrationMode ? 'Exit calibration' : 'Calibration mode — drag tables to match blueprint'}
+            >
+              <Move className="h-3.5 w-3.5 mr-1" />
+              {calibrationMode ? t.calibrationOn || 'Calibrating' : t.calibrate || 'Calibrate'}
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title={showLabels ? 'Hide labels' : 'Show labels'}>
               {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
