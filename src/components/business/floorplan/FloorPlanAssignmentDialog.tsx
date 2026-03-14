@@ -208,7 +208,7 @@ export function FloorPlanAssignmentDialog({
               <div className="bg-muted/30 rounded-xl p-5 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">{t.confirmMessage}</p>
                 <div className="flex items-center justify-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: '#00E5FF' }} />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: 'hsl(var(--floorplan-neon))' }} />
                   <span className="text-lg font-semibold text-foreground">{selectedItem?.label}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{selectedItem?.seats} {t.people}</p>

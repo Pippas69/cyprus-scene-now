@@ -535,7 +535,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               >
                 {/* Dark architectural background */}
                 <div className="absolute inset-0" style={{
-                  background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--card)) 50%, hsl(var(--background)) 100%)',
+                  background: 'linear-gradient(160deg, hsl(var(--floorplan-canvas)) 0%, hsl(var(--floorplan-canvas-elevated)) 56%, hsl(var(--floorplan-canvas)) 100%)',
                 }} />
 
                 {/* SVG Venue Renderer */}
