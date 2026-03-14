@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
-// ─── Types ──────────────────────────────────────────────────────────────────────
 export interface VenueItem {
   id: string;
   label: string;
@@ -30,333 +29,176 @@ interface VenueSVGCanvasProps {
   tableBboxes: Record<string, VenueBBox>;
   selectedItemId?: string | null;
   showLabels?: boolean;
-  // Assignment mode
   assignments?: TableAssignment[];
   currentReservationId?: string;
-  // Interaction
   onTableClick?: (id: string) => void;
   onItemMouseDown?: (e: React.MouseEvent, id: string) => void;
   onItemDoubleClick?: (id: string) => void;
   interactive?: boolean;
 }
 
-// ─── Theme ──────────────────────────────────────────────────────────────────────
+type RenderShape = 'round' | 'square' | 'rectangle';
+
+type Geometry = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  shape: RenderShape;
+};
+
 const THEME = {
-  // Walls & architecture
-  wallStroke: 'hsl(var(--primary) / 0.35)',
-  wallFill: 'transparent',
-  wallWidth: 1.2,
-  // Fixtures
-  barFill: 'hsl(var(--primary) / 0.08)',
-  barStroke: 'hsl(var(--primary) / 0.45)',
-  barText: 'hsl(var(--primary) / 0.7)',
-  djFill: 'hsl(var(--accent) / 0.08)',
-  djStroke: 'hsl(var(--accent) / 0.45)',
-  djText: 'hsl(var(--accent) / 0.7)',
-  entranceFill: 'hsl(var(--muted) / 0.1)',
-  entranceStroke: 'hsl(var(--muted-foreground) / 0.25)',
-  entranceText: 'hsl(var(--muted-foreground) / 0.5)',
-  // Tables
-  tableStroke: '#00E5FF',
-  tableFill: 'rgba(0, 229, 255, 0.08)',
-  tableHover: 'rgba(0, 229, 255, 0.18)',
-  tableSelected: 'rgba(0, 229, 255, 0.25)',
-  tableText: '#00E5FF',
-  tableMetaText: 'hsl(var(--muted-foreground) / 0.6)',
-  // States
+  canvasGrid: 'hsl(var(--floorplan-neon) / 0.06)',
+  wall: 'hsl(var(--floorplan-wall) / 0.75)',
+  wallSecondary: 'hsl(var(--floorplan-wall) / 0.45)',
+
+  fixtureFill: 'hsl(var(--floorplan-neon) / 0.08)',
+  fixtureStroke: 'hsl(var(--floorplan-neon) / 0.55)',
+  fixtureText: 'hsl(var(--floorplan-neon) / 0.85)',
+
+  tableStroke: 'hsl(var(--floorplan-neon))',
+  tableFill: 'hsl(var(--floorplan-neon) / 0.1)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.22)',
+  tableText: 'hsl(var(--floorplan-neon))',
+  tableMeta: 'hsl(var(--foreground) / 0.6)',
+
   occupiedStroke: 'hsl(var(--destructive))',
-  occupiedFill: 'rgba(255, 60, 60, 0.12)',
+  occupiedFill: 'hsl(var(--destructive) / 0.18)',
   selfStroke: 'hsl(var(--accent))',
-  selfFill: 'rgba(0, 229, 255, 0.15)',
-  // Canvas
-  gridDot: 'hsl(var(--primary) / 0.04)',
+  selfFill: 'hsl(var(--accent) / 0.18)',
 };
 
-// ─── Helpers ────────────────────────────────────────────────────────────────────
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+const normalizeKey = (label: string) => label.trim().toUpperCase().replace(/\s+/g, '');
 
-const getTableSize = (item: VenueItem, bbox: VenueBBox | undefined) => {
-  const raw = bbox || { w: 5, h: 5 };
-  // Scale up sizes for better visibility
-  const scale = 1.3;
-  let w = clamp(raw.w * scale, 3, 22);
-  let h = clamp(raw.h * scale, 3, 22);
+const buildBlueprintTableGeometry = (): Record<string, Geometry> => {
+  const map: Record<string, Geometry> = {};
 
-  if (item.shape === 'round') {
-    const d = clamp((w + h) / 2, 3.5, 20);
-    return { w: d, h: d };
+  // 101-110 (left architectural column)
+  for (let i = 0; i < 10; i += 1) {
+    map[String(101 + i)] = {
+      x: 2.2,
+      y: 12.5 + i * 8.0,
+      w: 6.7,
+      h: 6.2,
+      shape: 'rectangle',
+    };
   }
-  if (item.shape === 'square') {
-    const side = clamp((w + h) / 2, 3.5, 20);
-    return { w: side, h: side };
+
+  // P1-P9 (booths next to 101-110)
+  for (let i = 0; i < 9; i += 1) {
+    map[`P${i + 1}`] = {
+      x: 16.2,
+      y: 10.8 + i * 9.4,
+      w: 10.4,
+      h: 3.1,
+      shape: 'rectangle',
+    };
   }
-  return { w, h };
+
+  // 23-29 (parallel line right of P-series)
+  for (let i = 0; i < 7; i += 1) {
+    map[String(23 + i)] = {
+      x: 29.1,
+      y: 11.4 + i * 10.1,
+      w: 5.7,
+      h: 5.0,
+      shape: 'square',
+    };
+  }
+
+  // Top cluster 20-22
+  map['20'] = { x: 42.3, y: 10.8, w: 5.9, h: 4.9, shape: 'square' };
+  map['21'] = { x: 35.5, y: 15.8, w: 5.9, h: 4.9, shape: 'square' };
+  map['22'] = { x: 28.7, y: 10.8, w: 5.9, h: 4.9, shape: 'square' };
+
+  // Around central BAR (requested: 7-10)
+  map['10'] = { x: 49.8, y: 36.2, w: 6.0, h: 5.7, shape: 'square' };
+  map['9'] = { x: 49.8, y: 46.5, w: 6.0, h: 5.7, shape: 'square' };
+  map['8'] = { x: 49.8, y: 56.8, w: 6.0, h: 5.7, shape: 'square' };
+  map['7'] = { x: 49.8, y: 67.1, w: 6.0, h: 5.7, shape: 'square' };
+
+  // Remaining front line
+  map['6'] = { x: 58.2, y: 81.9, w: 8.1, h: 4.1, shape: 'rectangle' };
+  map['5'] = { x: 68.5, y: 80.8, w: 6.1, h: 5.0, shape: 'square' };
+  map['4'] = { x: 78.4, y: 80.8, w: 6.1, h: 5.0, shape: 'square' };
+
+  // Right side near DJ zone
+  map['1'] = { x: 69.6, y: 19.2, w: 4.3, h: 10.8, shape: 'rectangle' };
+  map['2'] = { x: 83.2, y: 23.2, w: 10.0, h: 4.2, shape: 'rectangle' };
+  map['3'] = { x: 83.2, y: 55.4, w: 10.0, h: 4.2, shape: 'rectangle' };
+
+  return map;
 };
 
-// ─── Venue Architecture (SVG Paths) ─────────────────────────────────────────────
-function VenueWalls() {
-  // Outer perimeter of the venue — clean architectural lines
-  return (
-    <g className="venue-walls">
-      {/* Outer walls */}
+const BLUEPRINT_TABLES = buildBlueprintTableGeometry();
+
+const BLUEPRINT_FIXTURES: Record<string, Geometry> = {
+  BAR: { x: 56.1, y: 21.0, w: 25.8, h: 53.0, shape: 'rectangle' },
+  BAR1: { x: 24.2, y: 5.3, w: 10.2, h: 6.0, shape: 'rectangle' },
+  BAR2: { x: 24.2, y: 90.5, w: 10.2, h: 6.0, shape: 'rectangle' },
+  DJ: { x: 76.6, y: 44.0, w: 14.6, h: 18.0, shape: 'rectangle' },
+};
+
+function inferShape(shape: string): RenderShape {
+  if (shape === 'round') return 'round';
+  if (shape === 'rectangle') return 'rectangle';
+  return 'square';
+}
+
+function ArchitecturalWalls({ enabled }: { enabled: boolean }) {
+  if (!enabled) {
+    return (
       <rect
-        x={0.5} y={0.5} width={99} height={99}
-        rx={1.5} ry={1.5}
+        x={1.2}
+        y={1.2}
+        width={97.6}
+        height={97.6}
+        rx={1.4}
         fill="none"
-        stroke={THEME.wallStroke}
-        strokeWidth={THEME.wallWidth}
+        stroke={THEME.wall}
+        strokeWidth={0.6}
       />
-      {/* Interior wall segments — left alcove area */}
-      <line x1={20} y1={0.5} x2={20} y2={10} stroke={THEME.wallStroke} strokeWidth={0.5} strokeDasharray="2 1.5" />
-      <line x1={20} y1={95} x2={20} y2={99.5} stroke={THEME.wallStroke} strokeWidth={0.5} strokeDasharray="2 1.5" />
-      {/* Separator line between booth area and main floor */}
-      <line x1={20} y1={10} x2={20} y2={95} stroke={THEME.wallStroke} strokeWidth={0.35} strokeDasharray="1.5 2" opacity={0.4} />
-    </g>
-  );
-}
-
-function FixtureElement({ item, bbox }: { item: VenueItem; bbox: VenueBBox }) {
-  const fixtureType = item.fixture_type || 'other';
-  const w = clamp(bbox.w * 1.1, 6, 40);
-  const h = clamp(bbox.h * 1.1, 4, 45);
-  const x = item.x_percent;
-  const y = item.y_percent;
-
-  const isBar = fixtureType === 'bar';
-  const isDJ = fixtureType === 'dj';
-  const isEntrance = fixtureType === 'entrance';
-
-  const fill = isBar ? THEME.barFill : isDJ ? THEME.djFill : THEME.entranceFill;
-  const stroke = isBar ? THEME.barStroke : isDJ ? THEME.djStroke : THEME.entranceStroke;
-  const textColor = isBar ? THEME.barText : isDJ ? THEME.djText : THEME.entranceText;
-  const rx = isBar ? 1.5 : isDJ ? 2 : 0.8;
-
-  // Determine if this is the main central bar (large)
-  const isMainBar = isBar && w > 20;
-
-  return (
-    <g className="fixture-element">
-      {/* Shadow / glow for main bar */}
-      {isMainBar && (
-        <rect
-          x={x - 0.5} y={y - 0.5}
-          width={w + 1} height={h + 1}
-          rx={rx + 0.5}
-          fill="none"
-          stroke={stroke}
-          strokeWidth={0.15}
-          opacity={0.3}
-        />
-      )}
-
-      {/* Main shape */}
-      <rect
-        x={x} y={y}
-        width={w} height={h}
-        rx={rx}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={isMainBar ? 0.6 : 0.35}
-      />
-
-      {/* Interior detail for bars */}
-      {isBar && (
-        <rect
-          x={x + w * 0.08} y={y + h * 0.08}
-          width={w * 0.84} height={h * 0.84}
-          rx={rx * 0.6}
-          fill="none"
-          stroke={stroke}
-          strokeWidth={0.15}
-          strokeDasharray={isMainBar ? 'none' : '1.5 1'}
-        />
-      )}
-
-      {/* DJ booth interior circle */}
-      {isDJ && (
-        <>
-          <circle
-            cx={x + w / 2} cy={y + h / 2}
-            r={Math.min(w, h) * 0.28}
-            fill="none"
-            stroke={THEME.djStroke}
-            strokeWidth={0.25}
-          />
-          <circle
-            cx={x + w / 2} cy={y + h / 2}
-            r={Math.min(w, h) * 0.1}
-            fill={THEME.djStroke}
-            opacity={0.4}
-          />
-        </>
-      )}
-
-      {/* Label */}
-      <text
-        x={x + w / 2}
-        y={y + h / 2 + (isMainBar ? 0.3 : 0.5)}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={textColor}
-        fontSize={isMainBar ? 3 : 2}
-        fontWeight="700"
-        letterSpacing="0.08em"
-        style={{ fontFamily: 'system-ui, -apple-system, sans-serif', textTransform: 'uppercase' }}
-        className="pointer-events-none select-none"
-      >
-        {item.label}
-      </text>
-    </g>
-  );
-}
-
-function TableElement({
-  item,
-  size,
-  isSelected,
-  isOccupied,
-  isSelf,
-  showLabel,
-  onClick,
-  onMouseDown,
-  onDoubleClick,
-  interactive,
-}: {
-  item: VenueItem;
-  size: { w: number; h: number };
-  isSelected: boolean;
-  isOccupied: boolean;
-  isSelf: boolean;
-  showLabel: boolean;
-  onClick?: () => void;
-  onMouseDown?: (e: React.MouseEvent) => void;
-  onDoubleClick?: () => void;
-  interactive: boolean;
-}) {
-  const { w, h } = size;
-  const cx = item.x_percent + w / 2;
-  const cy = item.y_percent + h / 2;
-
-  let fill = THEME.tableFill;
-  let stroke = THEME.tableStroke;
-  let strokeWidth = 0.35;
-
-  if (isOccupied) {
-    fill = THEME.occupiedFill;
-    stroke = THEME.occupiedStroke;
-  } else if (isSelf) {
-    fill = THEME.selfFill;
-    stroke = THEME.selfStroke;
+    );
   }
 
-  if (isSelected) {
-    fill = THEME.tableSelected;
-    strokeWidth = 0.55;
-  }
-
-  const fontSize = Math.min(w, h) > 5 ? 2.2 : Math.min(w, h) > 3.5 ? 1.6 : 1.2;
-  const seatsFontSize = fontSize * 0.55;
-
   return (
-    <g
-      className={`table-element ${interactive ? 'cursor-pointer' : ''}`}
-      style={{ transition: 'all 0.15s ease' }}
-      onClick={onClick}
-      onMouseDown={onMouseDown}
-      onDoubleClick={onDoubleClick ? (e) => { e.stopPropagation(); onDoubleClick(); } : undefined}
-    >
-      {/* Glow effect for selected */}
-      {isSelected && (
-        item.shape === 'round' ? (
-          <circle
-            cx={cx} cy={cy} r={w / 2 + 0.8}
-            fill="none" stroke={THEME.tableStroke}
-            strokeWidth={0.15} opacity={0.5}
-          />
-        ) : (
-          <rect
-            x={item.x_percent - 0.8} y={item.y_percent - 0.8}
-            width={w + 1.6} height={h + 1.6}
-            rx={item.shape === 'rectangle' ? 0.8 : 1}
-            fill="none" stroke={THEME.tableStroke}
-            strokeWidth={0.15} opacity={0.5}
-          />
-        )
-      )}
+    <g strokeLinecap="round" strokeLinejoin="round">
+      {/* Outer architectural border */}
+      <rect x={1.5} y={1.5} width={97} height={97} rx={1.2} fill="none" stroke={THEME.wall} strokeWidth={0.7} />
 
-      {/* Table shape */}
-      {item.shape === 'round' ? (
-        <circle
-          cx={cx} cy={cy} r={w / 2}
-          fill={fill} stroke={stroke} strokeWidth={strokeWidth}
-        />
-      ) : (
-        <rect
-          x={item.x_percent} y={item.y_percent}
-          width={w} height={h}
-          rx={item.shape === 'rectangle' ? 0.4 : 0.8}
-          fill={fill} stroke={stroke} strokeWidth={strokeWidth}
-        />
-      )}
+      {/* Left seating corridor boundaries */}
+      <line x1={14.1} y1={3.8} x2={14.1} y2={96.1} stroke={THEME.wall} strokeWidth={0.5} />
+      <line x1={27.2} y1={7.2} x2={27.2} y2={95.4} stroke={THEME.wallSecondary} strokeWidth={0.45} />
 
-      {/* Seat indicators */}
-      {item.seats > 0 && item.seats <= 10 && (
-        Array.from({ length: item.seats }).map((_, si) => {
-          const angle = (si / item.seats) * Math.PI * 2 - Math.PI / 2;
-          const seatDist = item.shape === 'round'
-            ? w / 2 + 1.2
-            : Math.max(w, h) / 2 + 1.2;
-          const sx = cx + Math.cos(angle) * seatDist;
-          const sy = cy + Math.sin(angle) * seatDist;
-          return (
-            <circle
-              key={si}
-              cx={sx} cy={sy}
-              r={0.5}
-              fill={isOccupied ? THEME.occupiedStroke : THEME.tableStroke}
-              opacity={0.35}
-              className="pointer-events-none"
-            />
-          );
-        })
-      )}
+      {/* Left corridor service ticks (n1..n9 equivalent) */}
+      <line x1={14.1} y1={16.6} x2={20.1} y2={16.6} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={25.9} x2={20.1} y2={25.9} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={35.2} x2={20.1} y2={35.2} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={44.5} x2={20.1} y2={44.5} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={53.8} x2={20.1} y2={53.8} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={63.1} x2={20.1} y2={63.1} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={72.4} x2={20.1} y2={72.4} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={81.7} x2={20.1} y2={81.7} stroke={THEME.wallSecondary} strokeWidth={0.32} />
+      <line x1={14.1} y1={91.0} x2={20.1} y2={91.0} stroke={THEME.wallSecondary} strokeWidth={0.32} />
 
-      {/* Label */}
-      {showLabel && (
-        <>
-          <text
-            x={cx} y={cy - (item.seats > 0 ? seatsFontSize * 0.3 : 0)}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill={isOccupied ? THEME.occupiedStroke : THEME.tableText}
-            fontSize={fontSize}
-            fontWeight="700"
-            className="pointer-events-none select-none"
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-          >
-            {item.label}
-          </text>
-          {item.seats > 0 && (
-            <text
-              x={cx} y={cy + fontSize * 0.55}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={THEME.tableMetaText}
-              fontSize={seatsFontSize}
-              fontWeight="500"
-              className="pointer-events-none select-none"
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-            >
-              {item.seats}p
-            </text>
-          )}
-        </>
-      )}
+      {/* Top right architecture lines */}
+      <line x1={53.2} y1={16.7} x2={98.2} y2={16.7} stroke={THEME.wall} strokeWidth={0.46} />
+      <line x1={53.2} y1={22.1} x2={88.9} y2={22.1} stroke={THEME.wallSecondary} strokeWidth={0.36} />
+
+      {/* Right zone frame around bar + DJ */}
+      <rect x={65.4} y={14.1} width={31.4} height={62.5} rx={2.1} fill="none" stroke={THEME.wallSecondary} strokeWidth={0.48} />
+
+      {/* Lower right L-shape wall */}
+      <line x1={74.6} y1={84.6} x2={98.1} y2={84.6} stroke={THEME.wall} strokeWidth={0.5} />
+      <line x1={74.6} y1={84.6} x2={74.6} y2={98.2} stroke={THEME.wall} strokeWidth={0.5} />
+
+      {/* Subtle central divider */}
+      <line x1={48.2} y1={30.2} x2={48.2} y2={75.8} stroke={THEME.wallSecondary} strokeWidth={0.34} />
     </g>
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────────
 export function VenueSVGCanvas({
   items,
   fixtureBboxes,
@@ -370,71 +212,251 @@ export function VenueSVGCanvas({
   onItemDoubleClick,
   interactive = true,
 }: VenueSVGCanvasProps) {
-  const fixtureItems = items.filter(i => !!i.fixture_type);
-  const tableItems = items.filter(i => !i.fixture_type);
+  const fixtureItems = items.filter((i) => !!i.fixture_type);
+  const tableItems = items.filter((i) => !i.fixture_type);
 
-  const isOccupied = useCallback((item: VenueItem) => {
-    if (!item.zone_id || assignments.length === 0) return false;
-    return assignments.some(a => a.zone_id === item.zone_id && a.reservation_id !== currentReservationId);
-  }, [assignments, currentReservationId]);
+  const hasBlueprintSignature = useMemo(() => {
+    const labels = new Set(items.map((i) => normalizeKey(i.label)));
+    return (
+      labels.has('BAR') &&
+      labels.has('DJ') &&
+      labels.has('101') &&
+      labels.has('110') &&
+      labels.has('P1') &&
+      labels.has('P9') &&
+      labels.has('23') &&
+      labels.has('29')
+    );
+  }, [items]);
 
-  const isSelf = useCallback((item: VenueItem) => {
-    if (!item.zone_id || !currentReservationId || assignments.length === 0) return false;
-    return assignments.some(a => a.zone_id === item.zone_id && a.reservation_id === currentReservationId);
-  }, [assignments, currentReservationId]);
+  const isOccupied = useCallback(
+    (item: VenueItem) => {
+      if (!item.zone_id || assignments.length === 0) return false;
+      return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id !== currentReservationId);
+    },
+    [assignments, currentReservationId],
+  );
+
+  const isSelf = useCallback(
+    (item: VenueItem) => {
+      if (!item.zone_id || !currentReservationId || assignments.length === 0) return false;
+      return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id === currentReservationId);
+    },
+    [assignments, currentReservationId],
+  );
+
+  const resolveFixtureGeometry = (item: VenueItem): Geometry => {
+    if (hasBlueprintSignature) {
+      const mapped = BLUEPRINT_FIXTURES[normalizeKey(item.label)];
+      if (mapped) return mapped;
+    }
+
+    const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
+    return {
+      x: item.x_percent,
+      y: item.y_percent,
+      w: clamp(bbox.w * 1.1, 5, 40),
+      h: clamp(bbox.h * 1.1, 4, 45),
+      shape: 'rectangle',
+    };
+  };
+
+  const resolveTableGeometry = (item: VenueItem): Geometry => {
+    const key = normalizeKey(item.label);
+    if (hasBlueprintSignature && BLUEPRINT_TABLES[key]) {
+      return BLUEPRINT_TABLES[key];
+    }
+
+    const bbox = tableBboxes[item.label] || { w: 4.8, h: 4.8 };
+    const shape = inferShape(item.shape);
+    let w = clamp(bbox.w * 1.22, 3.2, 20);
+    let h = clamp(bbox.h * 1.22, 3.2, 20);
+
+    if (shape === 'square' || shape === 'round') {
+      const side = clamp((w + h) / 2, 3.6, 20);
+      w = side;
+      h = side;
+    }
+
+    return { x: item.x_percent, y: item.y_percent, w, h, shape };
+  };
+
+  const allowDrag = interactive && !hasBlueprintSignature && !!onItemMouseDown;
 
   return (
-    <svg
-      className="absolute inset-0 w-full h-full"
-      viewBox="-2 -2 104 104"
-      preserveAspectRatio="xMidYMid meet"
-    >
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <defs>
-        {/* Grid pattern */}
-        <pattern id="venue-grid" width="5" height="5" patternUnits="userSpaceOnUse">
-          <circle cx="2.5" cy="2.5" r="0.15" fill={THEME.gridDot} />
+        <pattern id="floor-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="0.1" fill={THEME.canvasGrid} />
         </pattern>
-        {/* Glow filter */}
-        <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="0.3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
       </defs>
 
-      {/* Background grid */}
-      <rect x={-2} y={-2} width={104} height={104} fill="url(#venue-grid)" />
+      <rect x={0} y={0} width={100} height={100} fill="url(#floor-grid)" />
+      <ArchitecturalWalls enabled={hasBlueprintSignature} />
 
-      {/* Venue architecture */}
-      <VenueWalls />
-
-      {/* Fixtures (bars, DJ, entrances) */}
+      {/* Fixtures */}
       {fixtureItems.map((item) => {
-        const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
+        const g = resolveFixtureGeometry(item);
+        const centerX = g.x + g.w / 2;
+        const centerY = g.y + g.h / 2;
+        const isDj = normalizeKey(item.label) === 'DJ';
+
         return (
-          <FixtureElement key={item.id} item={item} bbox={bbox} />
+          <g key={item.id}>
+            <rect
+              x={g.x}
+              y={g.y}
+              width={g.w}
+              height={g.h}
+              rx={isDj ? 0.7 : 0.45}
+              fill={THEME.fixtureFill}
+              stroke={THEME.fixtureStroke}
+              strokeWidth={normalizeKey(item.label) === 'BAR' ? 0.55 : 0.38}
+            />
+
+            {normalizeKey(item.label) === 'BAR' && (
+              <rect
+                x={g.x + g.w * 0.07}
+                y={g.y + g.h * 0.05}
+                width={g.w * 0.86}
+                height={g.h * 0.9}
+                rx={0.32}
+                fill="none"
+                stroke={THEME.fixtureStroke}
+                strokeWidth={0.16}
+                opacity={0.55}
+              />
+            )}
+
+            {isDj && (
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r={Math.min(g.w, g.h) * 0.21}
+                fill="none"
+                stroke={THEME.fixtureStroke}
+                strokeWidth={0.2}
+                opacity={0.8}
+              />
+            )}
+
+            {showLabels && (
+              <text
+                x={centerX}
+                y={centerY + 0.28}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={THEME.fixtureText}
+                fontSize={normalizeKey(item.label) === 'BAR' ? 5.7 : 2.9}
+                fontWeight={normalizeKey(item.label) === 'BAR' ? 800 : 700}
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.03em' }}
+                className="pointer-events-none"
+              >
+                {item.label.toUpperCase()}
+              </text>
+            )}
+          </g>
         );
       })}
 
       {/* Tables */}
       {tableItems.map((item) => {
-        const size = getTableSize(item, tableBboxes[item.label]);
+        const g = resolveTableGeometry(item);
+        const cx = g.x + g.w / 2;
+        const cy = g.y + g.h / 2;
+
+        const selected = selectedItemId === item.id;
+        const occupied = isOccupied(item);
+        const self = isSelf(item);
+
+        let fill = THEME.tableFill;
+        let stroke = THEME.tableStroke;
+        let strokeWidth = selected ? 0.56 : 0.38;
+
+        if (occupied) {
+          fill = THEME.occupiedFill;
+          stroke = THEME.occupiedStroke;
+          strokeWidth = selected ? 0.56 : 0.42;
+        } else if (self) {
+          fill = THEME.selfFill;
+          stroke = THEME.selfStroke;
+        } else if (selected) {
+          fill = THEME.tableSelectedFill;
+        }
+
+        const mainFont = Math.min(g.w, g.h) > 5 ? 2.1 : 1.65;
+        const seatsFont = Math.max(0.88, mainFont * 0.56);
+
+        const handleMouseDown = allowDrag && onItemMouseDown
+          ? (e: React.MouseEvent) => {
+              e.stopPropagation();
+              onItemMouseDown(e, item.id);
+            }
+          : undefined;
+
         return (
-          <TableElement
+          <g
             key={item.id}
-            item={item}
-            size={size}
-            isSelected={selectedItemId === item.id}
-            isOccupied={isOccupied(item)}
-            isSelf={isSelf(item)}
-            showLabel={showLabels}
-            onClick={onTableClick ? () => onTableClick(item.id) : undefined}
-            onMouseDown={onItemMouseDown ? (e) => { e.stopPropagation(); onItemMouseDown(e, item.id); } : undefined}
-            onDoubleClick={onItemDoubleClick ? () => onItemDoubleClick(item.id) : undefined}
-            interactive={interactive}
-          />
+            onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
+            onMouseDown={handleMouseDown}
+            onDoubleClick={
+              onItemDoubleClick
+                ? (e) => {
+                    e.stopPropagation();
+                    onItemDoubleClick(item.id);
+                  }
+                : undefined
+            }
+            className={interactive ? 'cursor-pointer' : ''}
+          >
+            {g.shape === 'round' ? (
+              <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+            ) : (
+              <rect
+                x={g.x}
+                y={g.y}
+                width={g.w}
+                height={g.h}
+                rx={g.shape === 'rectangle' ? 0.28 : 0.62}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
+              />
+            )}
+
+            {showLabels && (
+              <>
+                <text
+                  x={cx}
+                  y={cy - (item.seats > 0 ? seatsFont * 0.4 : 0)}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={occupied ? THEME.occupiedStroke : THEME.tableText}
+                  fontSize={mainFont}
+                  fontWeight={700}
+                  className="pointer-events-none"
+                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                >
+                  {item.label}
+                </text>
+                {item.seats > 0 && (
+                  <text
+                    x={cx}
+                    y={cy + mainFont * 0.55}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={THEME.tableMeta}
+                    fontSize={seatsFont}
+                    fontWeight={600}
+                    className="pointer-events-none"
+                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                  >
+                    {item.seats}p
+                  </text>
+                )}
+              </>
+            )}
+          </g>
         );
       })}
     </svg>
