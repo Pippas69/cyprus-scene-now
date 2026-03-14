@@ -65,7 +65,16 @@ import ForVisitors from "./pages/ForVisitors";
 import ForBusinesses from "./pages/ForBusinesses";
 import VerifyStudent from "./pages/VerifyStudent";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes default
+      gcTime: 1000 * 60 * 10, // Keep in cache 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Component to conditionally render BottomNav
 function AppContent() {
