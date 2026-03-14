@@ -250,7 +250,7 @@ export function FloorPlanAssignmentDialog({
               {/* Legend */}
               <div className="flex items-center justify-center gap-5 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-sm border border-[#00E5FF]/60 bg-[#00E5FF]/10" />
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ border: '1px solid hsl(var(--floorplan-neon) / 0.6)', background: 'hsl(var(--floorplan-neon) / 0.12)' }} />
                   {t.available}
                 </div>
                 <div className="flex items-center gap-1.5">
