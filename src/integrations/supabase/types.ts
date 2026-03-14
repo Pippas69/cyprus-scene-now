@@ -2149,6 +2149,7 @@ export type Database = {
         Row: {
           business_id: string
           created_at: string | null
+          fixture_type: string | null
           id: string
           label: string
           seats: number
@@ -2157,11 +2158,12 @@ export type Database = {
           updated_at: string | null
           x_percent: number
           y_percent: number
-          zone_id: string
+          zone_id: string | null
         }
         Insert: {
           business_id: string
           created_at?: string | null
+          fixture_type?: string | null
           id?: string
           label: string
           seats?: number
@@ -2170,11 +2172,12 @@ export type Database = {
           updated_at?: string | null
           x_percent?: number
           y_percent?: number
-          zone_id: string
+          zone_id?: string | null
         }
         Update: {
           business_id?: string
           created_at?: string | null
+          fixture_type?: string | null
           id?: string
           label?: string
           seats?: number
@@ -2183,7 +2186,7 @@ export type Database = {
           updated_at?: string | null
           x_percent?: number
           y_percent?: number
-          zone_id?: string
+          zone_id?: string | null
         }
         Relationships: [
           {
