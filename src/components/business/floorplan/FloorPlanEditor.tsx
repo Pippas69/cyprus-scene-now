@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -20,7 +19,7 @@ interface FloorPlanItem {
   seats: number;
   shape: string;
   sort_order: number;
-  fixture_type: string | null; // null = table, 'bar'|'dj'|'stage'|etc = fixture
+  fixture_type: string | null;
 }
 
 interface FloorPlanZone {
@@ -38,6 +37,8 @@ interface FloorPlanZone {
     analysis_hash?: string;
     image_width?: number;
     image_height?: number;
+    fixture_bboxes?: Record<string, { w: number; h: number }>;
+    table_bboxes?: Record<string, { w: number; h: number }>;
     [key: string]: unknown;
   } | null;
 }
@@ -61,6 +62,8 @@ interface AiTable {
   shape: string;
   x_percent: number;
   y_percent: number;
+  width_percent: number;
+  height_percent: number;
 }
 
 const FIXTURE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
@@ -76,13 +79,11 @@ const SVG_THEME = {
   tableFill: 'hsl(var(--primary) / 0.14)',
   tableText: 'hsl(var(--primary-foreground))',
   tableMeta: 'hsl(var(--accent))',
-  seat: 'hsl(var(--accent) / 0.72)',
   selectionGlow: 'hsl(var(--accent) / 0.65)',
 };
 
-const TABLE_RADIUS = 2.8;
-const TABLE_HIT_RADIUS = 3.6;
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
+const DEFAULT_TABLE_SIZE = { w: 4, h: 4 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -108,7 +109,6 @@ const translations = {
     analyzing: 'Η AI αναλύει...',
     reAnalyze: 'Επανανάλυση AI',
     addTable: 'Νέο τραπέζι',
-    addFixture: 'Νέο fixture',
     editItem: 'Επεξεργασία',
     deleteItem: 'Διαγραφή',
     save: 'Αποθήκευση',
@@ -123,7 +123,6 @@ const translations = {
     saved: 'Αποθηκεύτηκε',
     deleted: 'Διαγράφηκε',
     cancel: 'Ακύρωση',
-    people: 'άτομα',
     totalCapacity: 'Συνολική χωρητικότητα',
     confirmDelete: 'Σίγουρα;',
     yes: 'Ναι',
@@ -135,9 +134,6 @@ const translations = {
     square: 'Τετράγωνο',
     rectangle: 'Ορθογώνιο',
     shape: 'Σχήμα',
-    type: 'Τύπος',
-    width: 'Πλάτος',
-    height: 'Ύψος',
   },
   en: {
     title: 'Floor plan',
@@ -146,7 +142,6 @@ const translations = {
     analyzing: 'AI analyzing...',
     reAnalyze: 'Re-analyze AI',
     addTable: 'New table',
-    addFixture: 'New fixture',
     editItem: 'Edit',
     deleteItem: 'Delete',
     save: 'Save',
@@ -161,7 +156,6 @@ const translations = {
     saved: 'Saved',
     deleted: 'Deleted',
     cancel: 'Cancel',
-    people: 'people',
     totalCapacity: 'Total capacity',
     confirmDelete: 'Are you sure?',
     yes: 'Yes',
@@ -173,9 +167,6 @@ const translations = {
     square: 'Square',
     rectangle: 'Rectangle',
     shape: 'Shape',
-    type: 'Type',
-    width: 'Width',
-    height: 'Height',
   },
 };
 
@@ -186,7 +177,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItem[]>([]);
-  const [zones, setZones] = useState<FloorPlanZone[]>([]); // kept for legacy/metadata
+  const [zones, setZones] = useState<FloorPlanZone[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -224,7 +215,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setLoading(false);
   };
 
-  // AI Analysis — object-first
+  // AI Analysis
   const handleAIAnalysis = async (file: File) => {
     setAiAnalyzing(true);
     try {
@@ -269,7 +260,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
       ]);
 
-      // Create one metadata zone for canvas info
+      // Build bbox maps for rendering
+      const fixtureBboxes: Record<string, { w: number; h: number }> = {};
+      fixtures.forEach(f => { fixtureBboxes[f.label] = { w: f.width_percent, h: f.height_percent }; });
+      const tableBboxes: Record<string, { w: number; h: number }> = {};
+      tables.forEach(tb => { tableBboxes[tb.label] = { w: tb.width_percent, h: tb.height_percent }; });
+
+      // Create metadata zone
       const { data: metaZone } = await supabase.from('floor_plan_zones').insert({
         business_id: businessId,
         label: '_metadata',
@@ -278,10 +275,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         x_percent: 0, y_percent: 0,
         width_percent: 0, height_percent: 0,
         capacity: 0, sort_order: 0,
-        metadata: { analysis_hash: imageHash, image_width: width, image_height: height },
+        metadata: {
+          analysis_hash: imageHash,
+          image_width: width,
+          image_height: height,
+          fixture_bboxes: fixtureBboxes,
+          table_bboxes: tableBboxes,
+        },
       }).select().single();
 
-      // Insert fixtures as floor_plan_tables with fixture_type
+      // Insert fixtures
       const fixtureRows = fixtures.map((f, i) => ({
         business_id: businessId,
         zone_id: metaZone?.id || null,
@@ -294,7 +297,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         fixture_type: f.fixture_type,
       }));
 
-      // Insert tables as floor_plan_tables with fixture_type = null
+      // Insert tables
       const tableRows = tables.map((tb, i) => ({
         business_id: businessId,
         zone_id: metaZone?.id || null,
@@ -311,22 +314,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       if (allRows.length > 0) {
         const { error: insertError } = await supabase.from('floor_plan_tables').insert(allRows);
         if (insertError) console.error('Insert error:', insertError);
-      }
-
-      // Store fixture dimensions in a separate metadata structure on the zone
-      // We store fixture bboxes as JSON in metadata for rendering
-      if (fixtures.length > 0 && metaZone?.id) {
-        await supabase.from('floor_plan_zones').update({
-          metadata: {
-            analysis_hash: imageHash,
-            image_width: width,
-            image_height: height,
-            fixture_bboxes: fixtures.reduce((acc, f) => {
-              acc[f.label] = { w: f.width_percent, h: f.height_percent };
-              return acc;
-            }, {} as Record<string, { w: number; h: number }>),
-          },
-        }).eq('id', metaZone.id);
       }
 
       setCanvasAspect(width / height);
@@ -361,7 +348,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         x_percent: x,
         y_percent: y,
         seats: 4,
-        shape: 'round',
+        shape: 'square',
         fixture_type: null,
       });
       setPlacingMode(null);
@@ -376,7 +363,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       x_percent: item.x_percent!,
       y_percent: item.y_percent!,
       seats: item.seats || 0,
-      shape: item.shape || 'round',
+      shape: item.shape || 'square',
       sort_order: items.length,
       fixture_type: item.fixture_type || null,
     }).select().single();
@@ -436,8 +423,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const fixtureItems = items.filter(i => !!i.fixture_type);
   const totalCapacity = tableItems.reduce((sum, i) => sum + i.seats, 0);
 
-  // Get fixture bboxes from metadata
-  const fixtureBboxes: Record<string, { w: number; h: number }> = (zones[0]?.metadata as any)?.fixture_bboxes || {};
+  // Get bboxes from metadata
+  const meta = zones[0]?.metadata as any;
+  const fixtureBboxes: Record<string, { w: number; h: number }> = meta?.fixture_bboxes || {};
+  const tableBboxes: Record<string, { w: number; h: number }> = meta?.table_bboxes || {};
 
   if (loading) {
     return (
@@ -548,13 +537,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
 
           {/* Canvas + Side panel */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
             {/* SVG Canvas */}
             <div className="relative rounded-xl overflow-hidden border border-border/30 bg-background shadow-2xl">
               <div
                 ref={canvasRef}
                 className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-                style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(440px, 72vh, 860px)' }}
+                style={{ aspectRatio: `${canvasAspect}`, maxHeight: '72vh' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -562,16 +551,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               >
                 {/* Background */}
                 <div className="absolute inset-0 pointer-events-none" style={{
-                  background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.15) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.35) 100%)',
+                  background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.1) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.25) 100%)',
                 }} />
                 <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.08) 1px, transparent 0)',
-                  backgroundSize: '26px 26px',
+                  backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.06) 1px, transparent 0)',
+                  backgroundSize: '20px 20px',
                 }} />
 
-                {/* SVG */}
+                {/* SVG Layer */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  {/* Fixtures (non-seating) */}
+                  {/* Fixtures (bars, dj, etc.) */}
                   {fixtureItems.map((item) => {
                     const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
                     const colors = FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other;
@@ -583,21 +572,20 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                           y={item.y_percent}
                           width={bbox.w}
                           height={bbox.h}
-                          rx={0.6}
+                          rx={0.4}
                           fill={colors.bg}
                           stroke={colors.border}
-                          strokeWidth={isSelected ? 0.4 : 0.22}
-                          strokeDasharray="2 1"
-                          className="transition-all duration-200"
-                          style={{ filter: isSelected ? `drop-shadow(0 0 6px ${colors.border})` : undefined }}
+                          strokeWidth={isSelected ? 0.35 : 0.2}
+                          strokeDasharray="1.5 0.8"
+                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${colors.border})` : undefined }}
                         />
                         {showLabels && (
                           <text
                             x={item.x_percent + bbox.w / 2}
-                            y={item.y_percent + bbox.h / 2 + 0.5}
+                            y={item.y_percent + bbox.h / 2 + 0.4}
                             textAnchor="middle"
                             fill={colors.text}
-                            fontSize="1.6"
+                            fontSize="1.5"
                             fontWeight="700"
                             className="pointer-events-none"
                             style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
@@ -609,70 +597,42 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     );
                   })}
 
-                  {/* Tables (seating) */}
+                  {/* Tables — rendered as actual-sized rectangles matching the blueprint */}
                   {tableItems.map((item) => {
                     const isSelected = selectedItem === item.id;
-                    const r = TABLE_RADIUS;
+                    const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                    const w = bbox.w;
+                    const h = bbox.h;
+
                     return (
                       <g key={item.id}>
-                        {item.shape === 'round' ? (
-                          <circle
-                            cx={item.x_percent} cy={item.y_percent} r={r}
-                            fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
-                            stroke={SVG_THEME.tableStroke}
-                            strokeOpacity={isSelected ? 1 : 0.85}
-                            strokeWidth={isSelected ? 0.36 : 0.22}
-                            style={{ filter: isSelected ? `drop-shadow(0 0 5px ${SVG_THEME.selectionGlow})` : undefined }}
-                          />
-                        ) : (
-                          <rect
-                            x={item.x_percent - r} y={item.y_percent - r}
-                            width={r * 2} height={item.shape === 'rectangle' ? r * 1.4 : r * 2}
-                            rx={0.3}
-                            fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
-                            stroke={SVG_THEME.tableStroke}
-                            strokeOpacity={isSelected ? 1 : 0.85}
-                            strokeWidth={isSelected ? 0.36 : 0.22}
-                            style={{ filter: isSelected ? `drop-shadow(0 0 5px ${SVG_THEME.selectionGlow})` : undefined }}
-                          />
-                        )}
+                        <rect
+                          x={item.x_percent}
+                          y={item.y_percent}
+                          width={w}
+                          height={h}
+                          rx={0.25}
+                          fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
+                          stroke={SVG_THEME.tableStroke}
+                          strokeOpacity={isSelected ? 1 : 0.85}
+                          strokeWidth={isSelected ? 0.3 : 0.18}
+                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined }}
+                        />
                         {showLabels && (
-                          <>
-                            <text
-                              x={item.x_percent} y={item.y_percent - 0.2}
-                              textAnchor="middle" dominantBaseline="middle"
-                              fill={SVG_THEME.tableText}
-                              fontSize="1.4" fontWeight="700"
-                              className="pointer-events-none"
-                              style={{ fontFamily: 'system-ui' }}
-                            >
-                              {item.label}
-                            </text>
-                            <text
-                              x={item.x_percent} y={item.y_percent + 1.4}
-                              textAnchor="middle" dominantBaseline="middle"
-                              fill={SVG_THEME.tableMeta}
-                              fontSize="1.0" fontWeight="600"
-                              className="pointer-events-none" opacity={0.9}
-                            >
-                              {item.seats}
-                            </text>
-                          </>
+                          <text
+                            x={item.x_percent + w / 2}
+                            y={item.y_percent + h / 2 + 0.35}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill={SVG_THEME.tableStroke}
+                            fontSize={Math.min(w, h) > 3 ? '1.3' : '1.0'}
+                            fontWeight="700"
+                            className="pointer-events-none"
+                            style={{ fontFamily: 'system-ui' }}
+                          >
+                            {item.label}
+                          </text>
                         )}
-                        {/* Seat dots */}
-                        {Array.from({ length: Math.min(item.seats, 8) }).map((_, si) => {
-                          const angle = (si / Math.min(item.seats, 8)) * Math.PI * 2 - Math.PI / 2;
-                          const seatR = r + 0.95;
-                          return (
-                            <circle
-                              key={si}
-                              cx={item.x_percent + Math.cos(angle) * seatR}
-                              cy={item.y_percent + Math.sin(angle) * seatR}
-                              r={0.45} fill={SVG_THEME.seat}
-                              className="pointer-events-none"
-                            />
-                          );
-                        })}
                       </g>
                     );
                   })}
@@ -684,7 +644,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                   return (
                     <div
                       key={`hit-fix-${item.id}`}
-                      className={`absolute rounded-md transition-all duration-200 ${
+                      className={`absolute rounded transition-all duration-200 ${
                         placingMode ? 'pointer-events-none' :
                         `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-primary/50' : 'hover:ring-1 hover:ring-primary/20'}`
                       }`}
@@ -696,30 +656,33 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                   );
                 })}
 
-                {/* Hit areas for tables */}
-                {tableItems.map((item) => (
-                  <div
-                    key={`hit-tbl-${item.id}`}
-                    className={`absolute rounded-full transition-all duration-200 z-10 ${
-                      placingMode ? 'pointer-events-none' :
-                      `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/45'}`
-                    }`}
-                    style={{
-                      left: `${item.x_percent - TABLE_HIT_RADIUS}%`,
-                      top: `${item.y_percent - TABLE_HIT_RADIUS}%`,
-                      width: `${TABLE_HIT_RADIUS * 2}%`,
-                      height: `${TABLE_HIT_RADIUS * 2}%`,
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e, item.id)}
-                    onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
-                    onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
-                  />
-                ))}
+                {/* Hit areas for tables — sized to match actual bbox */}
+                {tableItems.map((item) => {
+                  const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                  return (
+                    <div
+                      key={`hit-tbl-${item.id}`}
+                      className={`absolute rounded transition-all duration-200 z-10 ${
+                        placingMode ? 'pointer-events-none' :
+                        `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/30'}`
+                      }`}
+                      style={{
+                        left: `${item.x_percent}%`,
+                        top: `${item.y_percent}%`,
+                        width: `${bbox.w}%`,
+                        height: `${bbox.h}%`,
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, item.id)}
+                      onDoubleClick={(e) => { e.stopPropagation(); setEditDialog(item); }}
+                      onClick={(e) => { e.stopPropagation(); setSelectedItem(item.id === selectedItem ? null : item.id); }}
+                    />
+                  );
+                })}
               </div>
             </div>
 
             {/* Side panel */}
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[72vh] overflow-y-auto">
               {/* Tables list */}
               <div className="bg-card/80 backdrop-blur-md border border-border/40 rounded-xl overflow-hidden">
                 <div className="px-3 py-2.5 border-b border-border/30">
@@ -734,15 +697,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     {tableItems.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
                         onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
                       >
-                        <div className="w-2 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: SVG_THEME.tableStroke }} />
+                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: SVG_THEME.tableStroke }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground">{item.label}</p>
                           <p className="text-[10px] text-muted-foreground">{item.seats} {t.seats}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0 opacity-50 hover:opacity-100"
+                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-50 hover:opacity-100"
                           onClick={(e) => { e.stopPropagation(); setEditDialog(item); }}>
                           <Edit3 className="h-3 w-3" />
                         </Button>
@@ -762,15 +725,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     {fixtureItems.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-all hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
                         onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
                       >
-                        <div className="w-2 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: (FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other).border }} />
+                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: (FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other).border }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground">{item.label}</p>
                           <p className="text-[10px] text-muted-foreground capitalize">{item.fixture_type}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0 opacity-50 hover:opacity-100"
+                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-50 hover:opacity-100"
                           onClick={(e) => { e.stopPropagation(); setEditDialog(item); }}>
                           <Edit3 className="h-3 w-3" />
                         </Button>

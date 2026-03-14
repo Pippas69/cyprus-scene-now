@@ -20,6 +20,8 @@ type RawTable = {
   shape?: string;
   x_percent?: number;
   y_percent?: number;
+  width_percent?: number;
+  height_percent?: number;
 };
 
 const ALLOWED_FIXTURE_TYPES = new Set(["bar", "dj", "stage", "entrance", "kitchen", "restroom", "other"]);
@@ -52,6 +54,8 @@ interface NormalizedTable {
   shape: string;
   x_percent: number;
   y_percent: number;
+  width_percent: number;
+  height_percent: number;
 }
 
 const normalizeResult = (fixtures: RawFixture[], tables: RawTable[]) => {
@@ -73,9 +77,11 @@ const normalizeResult = (fixtures: RawFixture[], tables: RawTable[]) => {
     .map((t, i) => ({
       label: normalizeLabel(t.label, `${i + 1}`),
       seats: clamp(Math.round(toNumber(t.seats, 4)), 1, 20),
-      shape: typeof t.shape === "string" && ALLOWED_TABLE_SHAPES.has(t.shape) ? t.shape : "round",
+      shape: typeof t.shape === "string" && ALLOWED_TABLE_SHAPES.has(t.shape) ? t.shape : "square",
       x_percent: clamp(toNumber(t.x_percent, 50), 0, 100),
       y_percent: clamp(toNumber(t.y_percent, 50), 0, 100),
+      width_percent: clamp(toNumber(t.width_percent, 4), 1.5, 15),
+      height_percent: clamp(toNumber(t.height_percent, 4), 1.5, 15),
     }));
 
   // Deduplicate tables at same position (within 1.5% threshold)
@@ -100,7 +106,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are an expert venue floor plan transcription engine. You must extract EVERY SINGLE labeled object visible in the floor plan image.
+    const systemPrompt = `You are an expert venue floor plan transcription engine. You must extract EVERY SINGLE labeled object visible in the floor plan image with PRECISE bounding boxes.
 
 Return TWO arrays:
 
@@ -108,17 +114,22 @@ Return TWO arrays:
    Each has: label, fixture_type (bar|dj|stage|entrance|kitchen|restroom|other), x_percent, y_percent, width_percent, height_percent.
 
 2. "tables" — EVERY individual table, booth, or seating position visible in the image.
-   Each has: label, seats, shape (round|square|rectangle), x_percent, y_percent.
+   Each has: label, seats, shape (round|square|rectangle), x_percent, y_percent, width_percent, height_percent.
+   - width_percent and height_percent represent the ACTUAL SIZE of the table as a percentage of the image.
+   - Small square tables should have width ≈ 3-5%, height ≈ 3-5%.
+   - Narrow/thin tables (like booth numbers along a wall) should have width ≈ 2-4%, height ≈ 2-3% (or vice versa).
+   - The shape and proportions MUST match what you see in the image.
 
 CRITICAL EXTRACTION RULES:
 - Coordinates are ABSOLUTE percentages of the image (0=top/left, 100=bottom/right).
+- x_percent and y_percent are the TOP-LEFT corner of the object's bounding box.
 - PRESERVE the EXACT label/number from the image: "1", "2", "P1", "101", "Bar 1", etc.
 - You MUST extract EVERY labeled item. If you see numbers 1 through 10, that's 10 separate table entries.
 - If you see labels like P1, P2, P3... P9, that's 9 separate entries.
 - If you see labels like 101, 102... 110, that's 10 separate entries.
 - If you see labels like 20, 21, 22... 29, that's 10 separate entries.
 - Tables typically have 2-6 seats. Use 4 as default if unclear.
-- Most tables are round unless clearly rectangular/square in the image.
+- IMPORTANT: Look at the ACTUAL SHAPE of each table in the image. Most are square. Use "rectangle" only for clearly elongated shapes.
 - Do NOT group or merge tables. Each labeled point = one entry.
 - Do NOT skip ANY visible labeled object. Count them carefully.
 - Scan the ENTIRE image systematically: top-left to bottom-right.`;
@@ -137,7 +148,7 @@ CRITICAL EXTRACTION RULES:
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract EVERY labeled object from this floor plan. Scan the entire image carefully. List every table number, every bar, every DJ booth, every labeled area. Do not skip any. If you see numbers like 1,2,3...10 those are 10 separate tables. Return ALL of them." },
+              { type: "text", text: "Extract EVERY labeled object from this floor plan with precise bounding boxes (x, y, width, height as percentages). The width and height should match the actual visual size of each element. Scan the entire image carefully. Return ALL of them." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },
@@ -147,7 +158,7 @@ CRITICAL EXTRACTION RULES:
             type: "function",
             function: {
               name: "return_floor_plan",
-              description: "Return extracted floor plan as fixtures (non-seating) and tables (seating points).",
+              description: "Return extracted floor plan as fixtures (non-seating) and tables (seating points) with precise bounding boxes.",
               parameters: {
                 type: "object",
                 properties: {
@@ -177,8 +188,10 @@ CRITICAL EXTRACTION RULES:
                         shape: { type: "string", enum: ["round", "square", "rectangle"] },
                         x_percent: { type: "number" },
                         y_percent: { type: "number" },
+                        width_percent: { type: "number" },
+                        height_percent: { type: "number" },
                       },
-                      required: ["label", "seats", "shape", "x_percent", "y_percent"],
+                      required: ["label", "seats", "shape", "x_percent", "y_percent", "width_percent", "height_percent"],
                       additionalProperties: false,
                     },
                   },
