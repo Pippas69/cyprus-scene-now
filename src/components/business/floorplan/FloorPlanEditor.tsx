@@ -684,11 +684,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
                 {/* Hit areas for tables — sized to match actual bbox */}
                 {tableItems.map((item) => {
-                  const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                  const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                  const bbox = getRenderTableBox(item, rawBox);
                   return (
                     <div
                       key={`hit-tbl-${item.id}`}
-                      className={`absolute rounded transition-all duration-200 z-10 ${
+                      className={`absolute transition-all duration-200 z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-[2px]'} ${
                         placingMode ? 'pointer-events-none' :
                         `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/30'}`
                       }`}
