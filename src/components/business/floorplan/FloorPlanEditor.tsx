@@ -66,14 +66,26 @@ interface ParsedAiZone {
 }
 
 const ZONE_TYPES = {
-  vip: { color: '#F59E0B', bgAlpha: 0.15, icon: '⭐' },
-  table: { color: '#3B82F6', bgAlpha: 0.15, icon: '🪑' },
-  bar: { color: '#8B5CF6', bgAlpha: 0.15, icon: '🍸' },
-  stage: { color: '#EF4444', bgAlpha: 0.15, icon: '🎤' },
-  dj: { color: '#EC4899', bgAlpha: 0.15, icon: '🎧' },
-  lounge: { color: '#14B8A6', bgAlpha: 0.15, icon: '🛋️' },
-  other: { color: '#6B7280', bgAlpha: 0.15, icon: '📍' },
+  vip: { icon: 'VIP', strokeOpacity: 0.95, fillOpacity: 0.24, dash: 'none' },
+  table: { icon: 'TB', strokeOpacity: 0.84, fillOpacity: 0.18, dash: 'none' },
+  bar: { icon: 'BR', strokeOpacity: 0.76, fillOpacity: 0.16, dash: '2 0.8' },
+  stage: { icon: 'ST', strokeOpacity: 0.88, fillOpacity: 0.22, dash: '1.4 0.8' },
+  dj: { icon: 'DJ', strokeOpacity: 0.78, fillOpacity: 0.17, dash: '1.2 0.7' },
+  lounge: { icon: 'LG', strokeOpacity: 0.72, fillOpacity: 0.14, dash: '2.2 1' },
+  other: { icon: 'ZN', strokeOpacity: 0.68, fillOpacity: 0.12, dash: '2.4 1.1' },
 } as const;
+
+const SVG_THEME = {
+  zoneStroke: 'hsl(var(--primary))',
+  zoneLabel: 'hsl(var(--primary))',
+  zoneText: 'hsl(var(--primary-foreground))',
+  tableStroke: 'hsl(var(--primary))',
+  tableFill: 'hsl(var(--primary) / 0.16)',
+  tableText: 'hsl(var(--primary-foreground))',
+  tableMeta: 'hsl(var(--accent))',
+  seat: 'hsl(var(--accent) / 0.72)',
+  selectionGlow: 'hsl(var(--accent) / 0.65)',
+};
 
 const TABLE_RADIUS = 2.6;
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
