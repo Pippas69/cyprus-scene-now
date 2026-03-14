@@ -93,22 +93,52 @@ const normalizeResult = (fixtures: RawFixture[], tables: RawTable[]) => {
   const normTables: NormalizedTable[] = tables
     .filter(Boolean)
     .slice(0, 200)
-    .map((t, i) => ({
-      label: normalizeLabel(t.label, `${i + 1}`),
-      seats: clamp(Math.round(toNumber(t.seats, 4)), 1, 20),
-      shape: typeof t.shape === "string" && ALLOWED_TABLE_SHAPES.has(t.shape) ? t.shape : "square",
-      x_percent: clamp(toNumber(t.x_percent, 50), 0, 100),
-      y_percent: clamp(toNumber(t.y_percent, 50), 0, 100),
-      width_percent: clamp(toNumber(t.width_percent, 4), 1.5, 15),
-      height_percent: clamp(toNumber(t.height_percent, 4), 1.5, 15),
-    }));
+    .map((t, i) => {
+      const widthPercent = clamp(toNumber(t.width_percent, 4), 1.2, 18);
+      const heightPercent = clamp(toNumber(t.height_percent, 4), 1.2, 18);
 
-  // Deduplicate tables at same position (within 1.5% threshold)
+      return {
+        label: normalizeTableLabel(t.label, `${i + 1}`),
+        seats: clamp(Math.round(toNumber(t.seats, 4)), 1, 20),
+        shape: inferShapeFromBox(t.shape, widthPercent, heightPercent),
+        x_percent: clamp(toNumber(t.x_percent, 50), 0, 100),
+        y_percent: clamp(toNumber(t.y_percent, 50), 0, 100),
+        width_percent: widthPercent,
+        height_percent: heightPercent,
+      };
+    });
+
+  // Stabilize geometry for repeated label families (e.g. P1..P9, 101..110)
+  const harmonizeGroup = (matcher: (label: string) => boolean) => {
+    const group = normTables.filter((t) => matcher(t.label));
+    if (group.length < 3) return;
+
+    const sortedW = group.map((g) => g.width_percent).sort((a, b) => a - b);
+    const sortedH = group.map((g) => g.height_percent).sort((a, b) => a - b);
+    const medianW = sortedW[Math.floor(sortedW.length / 2)];
+    const medianH = sortedH[Math.floor(sortedH.length / 2)];
+
+    for (const table of normTables) {
+      if (!matcher(table.label)) continue;
+      table.width_percent = clamp(table.width_percent * 0.35 + medianW * 0.65, 1.2, 18);
+      table.height_percent = clamp(table.height_percent * 0.35 + medianH * 0.65, 1.2, 18);
+      table.shape = inferShapeFromBox(table.shape, table.width_percent, table.height_percent);
+    }
+  };
+
+  harmonizeGroup((label) => /^P\d{1,3}$/i.test(label));
+  harmonizeGroup((label) => /^10\d$/.test(label));
+
+  // Deduplicate only truly overlapping duplicates (stricter than before)
   const dedupedTables: NormalizedTable[] = [];
   for (const table of normTables) {
-    const duplicate = dedupedTables.find(
-      (t) => Math.abs(t.x_percent - table.x_percent) < 1.5 && Math.abs(t.y_percent - table.y_percent) < 1.5
-    );
+    const duplicate = dedupedTables.find((t) => {
+      const sameLabel = t.label.toLowerCase() === table.label.toLowerCase();
+      const veryClose = Math.abs(t.x_percent - table.x_percent) < 0.55 && Math.abs(t.y_percent - table.y_percent) < 0.55;
+      const similarSize = Math.abs(t.width_percent - table.width_percent) < 0.9 && Math.abs(t.height_percent - table.height_percent) < 0.9;
+      return sameLabel || (veryClose && similarSize);
+    });
+
     if (!duplicate) dedupedTables.push(table);
   }
 
