@@ -1,37 +1,33 @@
 
-## Υλοποίηση - Ολοκληρώθηκε ✅
 
-### Μέρος 1: Αφαίρεση Feed & Map ✅
-- Αφαιρέθηκαν Feed/Map από BusinessSidebar και DashboardBusiness routes
-- Τα Analytics είναι πλέον η default σελίδα του dashboard
+# Fix: Stripe Connect Business Type Selection
 
-### Μέρος 2: Δυναμικό Sidebar ✅
-- useBusinessOwner επιστρέφει πλέον και categories
-- Clubs, Events, Theatre, Music, Dance, Kids → δεν βλέπουν Προσφορές
-- Bars, Pubs, Fine/Casual Dining → βλέπουν τα πάντα
+## Problem
+The `create-connect-account` edge function hardcodes `business_type: "company"`, which forces Stripe to require a company registration number (HE number) during onboarding. Many of your clients are individuals/sole proprietors without formal registration in Cyprus.
 
-### Μέρος 3: Ticket → Auto Reservation ✅
-- DB: linked_reservation_id σε ticket_orders, ticket_credit_cents + auto_created_from_tickets σε reservations
-- process-ticket-payment: αυτόματη δημιουργία reservation μετά πληρωμή ticket_and_reservation event
-- validate-qr: auto check-in linked reservation κατά scan εισιτηρίου
-- EventCreationForm: hint για ticket_and_reservation
-- EventDetail: αντί ξεχωριστού CTA κράτησης, info message ότι το εισιτήριο δημιουργεί αυτόματα κράτηση
-- QR Scanner: εμφάνιση linked reservation info (party size, credit)
-- DirectReservationsList: badge "Μέσω Εισιτηρίων" με πίστωση
+## Solution
+Add a business type selection step before initiating Stripe Connect onboarding. The business chooses whether they are an **Individual** or a **Registered Company**, and we pass the correct `business_type` to Stripe.
 
-### Μέρος 4: Reservation-Only Events & QR Σύστημα Καλεσμένων ✅
-- Φιλτράρισμα free/free_entry events από ReservationDashboard dropdown
-- Συλλογή ονομάτων & ηλικιών καλεσμένων στο ReservationEventCheckout (ίδιο UI με KalivaTicketReservationFlow)
-- Backend: guests array σε Stripe metadata (create-reservation-event-checkout)
-- Backend: δημιουργία ατομικών tickets με QR codes (process-reservation-event-payment + create-free-reservation-event)
-- Απόκρυψη παρένθεσης ticket credit σε reservation-only events (DirectReservationsList)
-- User dashboard: ατομικά QR cards ανά καλεσμένο σε reservation-only events (MyReservations)
+## Changes
 
-### Μέρος 5: Floor Plan Overhaul — Object-First ✅
-- AI Edge Function: zone-first → object-first (fixtures + tables, χωρίς ζώνες)
-- Αφαίρεση zone clamping & re-normalization (πιστή γεωμετρία)
-- DB: fixture_type column σε floor_plan_tables, zone_id nullable
-- FloorPlanEditor: ξεχωριστό render για fixtures (bars/dj/stage) vs tables
-- FloorPlanAssignmentDialog: table-point assignment (μόνο tables clickable, fixtures non-assignable)
-- Fixture bboxes αποθηκεύονται σε zone metadata για ακριβές rendering
-- Deterministic extraction (temperature=0, no re-grouping)
+### 1. Frontend — `StripeConnectOnboarding.tsx`
+- Add a selection UI (two cards/buttons) before the "Connect Bank Account" button:
+  - **Ιδιώτης / Individual** — "Δεν έχω εγγεγραμμένη εταιρεία. Θα χρειαστώ μόνο ταυτότητα, διεύθυνση και IBAN."
+  - **Εγγεγραμμένη Εταιρεία / Registered Company** — "Έχω αριθμό εγγραφής εταιρείας (HE) στην Κύπρο."
+- Store the selection in component state
+- Pass `business_type` as a body parameter when invoking `create-connect-account`
+- Update the "What you'll need" checklist dynamically based on selection (individuals don't need business registration info)
+
+### 2. Edge Function — `create-connect-account/index.ts`
+- Parse `business_type` from the request body (default to `"individual"` if not provided)
+- Pass it to `stripe.accounts.create()`:
+  ```
+  business_type: businessType,  // "individual" or "company"
+  ```
+- This single change means Stripe's hosted onboarding will adapt its form fields automatically — individuals won't be asked for company registration numbers
+
+### 3. Translations
+- Add Greek/English labels for the new selection UI in the existing `translations` object
+
+No database changes needed — Stripe handles the rest based on the `business_type` parameter.
+
