@@ -589,11 +589,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                           y={item.y_percent}
                           width={bbox.w}
                           height={bbox.h}
-                          rx={0.4}
                           fill={colors.bg}
                           stroke={colors.border}
-                          strokeWidth={isSelected ? 0.35 : 0.2}
-                          strokeDasharray="1.5 0.8"
+                          strokeWidth={isSelected ? 0.32 : 0.2}
                           style={{ filter: isSelected ? `drop-shadow(0 0 4px ${colors.border})` : undefined }}
                         />
                         {showLabels && (
