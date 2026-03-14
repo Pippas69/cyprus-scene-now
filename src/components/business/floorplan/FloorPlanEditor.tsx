@@ -67,43 +67,9 @@ interface AiTable {
   height_percent: number;
 }
 
-const FIXTURE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  bar: { bg: 'hsl(var(--primary) / 0.12)', border: 'hsl(var(--primary) / 0.5)', text: 'hsl(var(--primary))' },
-  dj: { bg: 'hsl(var(--accent) / 0.12)', border: 'hsl(var(--accent) / 0.5)', text: 'hsl(var(--accent))' },
-  stage: { bg: 'hsl(var(--accent) / 0.10)', border: 'hsl(var(--accent) / 0.4)', text: 'hsl(var(--accent))' },
-  entrance: { bg: 'hsl(var(--muted) / 0.2)', border: 'hsl(var(--muted-foreground) / 0.3)', text: 'hsl(var(--muted-foreground))' },
-  other: { bg: 'hsl(var(--muted) / 0.15)', border: 'hsl(var(--muted-foreground) / 0.25)', text: 'hsl(var(--muted-foreground))' },
-};
-
-const SVG_THEME = {
-  tableStroke: 'hsl(var(--primary))',
-  tableFill: 'hsl(var(--primary) / 0.14)',
-  tableText: 'hsl(var(--primary-foreground))',
-  tableMeta: 'hsl(var(--accent))',
-  selectionGlow: 'hsl(var(--accent) / 0.65)',
-};
-
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
-const DEFAULT_TABLE_SIZE = { w: 4, h: 4 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-const getRenderTableBox = (item: FloorPlanItem, rawBox: { w: number; h: number }) => {
-  const safeW = clamp(rawBox.w || DEFAULT_TABLE_SIZE.w, 1.2, 18);
-  const safeH = clamp(rawBox.h || DEFAULT_TABLE_SIZE.h, 1.2, 18);
-
-  if (item.shape === 'round') {
-    const size = clamp((safeW + safeH) / 2, 1.4, 18);
-    return { w: size, h: size };
-  }
-
-  if (item.shape === 'square') {
-    const side = clamp((safeW + safeH) / 2, 1.2, 18);
-    return { w: side, h: side };
-  }
-
-  return { w: safeW, h: safeH };
-};
 
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   new Promise((resolve, reject) => {
