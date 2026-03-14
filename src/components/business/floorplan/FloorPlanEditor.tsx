@@ -605,7 +605,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
                         onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
                       >
-                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: (FIXTURE_COLORS[item.fixture_type || 'other'] || FIXTURE_COLORS.other).border }} />
+                        <div className="w-1.5 h-5 rounded-full flex-shrink-0 bg-primary/50" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground">{item.label}</p>
                           <p className="text-[10px] text-muted-foreground capitalize">{item.fixture_type}</p>
