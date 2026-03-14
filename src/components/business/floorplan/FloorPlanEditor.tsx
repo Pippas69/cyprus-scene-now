@@ -709,7 +709,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </div>
 
             {/* Side panel */}
-            <div className="space-y-3 max-h-[72vh] overflow-y-auto">
+            <div className="space-y-3 max-h-[calc(100vh-260px)] overflow-y-auto">
               {/* Tables list */}
               <div className="bg-card/80 backdrop-blur-md border border-border/40 rounded-xl overflow-hidden">
                 <div className="px-3 py-2.5 border-b border-border/30">
