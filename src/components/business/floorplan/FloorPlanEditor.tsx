@@ -240,7 +240,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
     const { error } = await supabase
       .from('floor_plan_zones')
-      .update({ metadata: nextMeta })
+      .update({ metadata: nextMeta as any })
       .eq('id', zone.id);
 
     if (error) {
