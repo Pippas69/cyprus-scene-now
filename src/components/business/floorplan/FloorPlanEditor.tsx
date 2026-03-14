@@ -107,6 +107,8 @@ const translations = {
     available: 'Available',
     reserved: 'Reserved',
     occupied: 'Occupied',
+    calibrate: 'Calibrate',
+    calibrationOn: 'Calibrating',
   },
 };
 
