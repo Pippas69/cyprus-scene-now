@@ -1,5 +1,5 @@
 // App entry point
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,65 +16,56 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
-
-// Lazy-loaded pages for code splitting
-const Index = lazy(() => import("./pages/Index"));
-const Feed = lazy(() => import("./pages/Feed"));
-const Ekdiloseis = lazy(() => import("./pages/Ekdiloseis"));
-const Xartis = lazy(() => import("./pages/Xartis"));
-const Signup = lazy(() => import("./pages/Signup"));
-const Login = lazy(() => import("./pages/Login"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const SignupBusiness = lazy(() => import("./pages/SignupBusiness"));
-const DashboardBusiness = lazy(() => import("./pages/DashboardBusiness"));
-const DashboardUser = lazy(() => import("./pages/DashboardUser"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminVerification = lazy(() => import("./pages/AdminVerification"));
-const AdminGeocoding = lazy(() => import("./pages/AdminGeocoding"));
-const AdminUsers = lazy(() => import("./pages/AdminUsers"));
-const AdminReports = lazy(() => import("./pages/AdminReports"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
-const AdminSettings = lazy(() => import("./pages/AdminSettings"));
-const AdminDatabaseMonitoring = lazy(() => import("./pages/AdminDatabaseMonitoring"));
-const AdminBetaManagement = lazy(() => import("./pages/AdminBetaManagement"));
-const AdminWaitlist = lazy(() => import("./pages/AdminWaitlist"));
-const AdminStudentVerification = lazy(() => import("./pages/AdminStudentVerification"));
-const AdminStudentPartners = lazy(() => import("./pages/AdminStudentPartners"));
-const AdminStudentSubsidies = lazy(() => import("./pages/AdminStudentSubsidies"));
-const AdminForbidden = lazy(() => import("./pages/AdminForbidden"));
-const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
-const EventDetail = lazy(() => import("./pages/EventDetail"));
-const SubscriptionPlans = lazy(() => import("./pages/SubscriptionPlans"));
-const Features = lazy(() => import("./pages/Features"));
-const PricingPublic = lazy(() => import("./pages/PricingPublic"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Messages = lazy(() => import("./pages/Messages"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const TicketSuccess = lazy(() => import("./pages/TicketSuccess"));
-const TicketView = lazy(() => import("./pages/TicketView"));
-const ReservationView = lazy(() => import("./pages/ReservationView"));
-const OfferView = lazy(() => import("./pages/OfferView"));
-const ReservationSuccess = lazy(() => import("./pages/ReservationSuccess"));
-const OfferPurchaseSuccess = lazy(() => import("./pages/OfferPurchaseSuccess"));
-const Offers = lazy(() => import("./pages/Offers"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
-const ForVisitors = lazy(() => import("./pages/ForVisitors"));
-const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
-const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
+import Index from "./pages/Index";
+import Feed from "./pages/Feed";
+import Ekdiloseis from "./pages/Ekdiloseis";
+import Xartis from "./pages/Xartis";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import SignupBusiness from "./pages/SignupBusiness";
+import DashboardBusiness from "./pages/DashboardBusiness";
+import DashboardUser from "./pages/DashboardUser";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminVerification from "./pages/AdminVerification";
+import AdminGeocoding from "./pages/AdminGeocoding";
+import AdminUsers from "./pages/AdminUsers";
+import AdminReports from "./pages/AdminReports";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
+import AdminDatabaseMonitoring from "./pages/AdminDatabaseMonitoring";
+import AdminBetaManagement from "./pages/AdminBetaManagement";
+import AdminWaitlist from "./pages/AdminWaitlist";
+import AdminStudentVerification from "./pages/AdminStudentVerification";
+import AdminStudentPartners from "./pages/AdminStudentPartners";
+import AdminStudentSubsidies from "./pages/AdminStudentSubsidies";
+import AdminForbidden from "./pages/AdminForbidden";
+import BusinessProfile from "./pages/BusinessProfile";
+import EventDetail from "./pages/EventDetail";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
+import Features from "./pages/Features";
+import PricingPublic from "./pages/PricingPublic";
+import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import Messages from "./pages/Messages";
+import NotFound from "./pages/NotFound";
+import TicketSuccess from "./pages/TicketSuccess";
+import TicketView from "./pages/TicketView";
+import ReservationView from "./pages/ReservationView";
+import OfferView from "./pages/OfferView";
+import ReservationSuccess from "./pages/ReservationSuccess";
+import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
+import Offers from "./pages/Offers";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiesPolicy from "./pages/CookiesPolicy";
+import ForVisitors from "./pages/ForVisitors";
+import ForBusinesses from "./pages/ForBusinesses";
+import VerifyStudent from "./pages/VerifyStudent";
 
 const queryClient = new QueryClient();
-
-// Minimal loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-  </div>
-);
 
 // Component to conditionally render BottomNav
 function AppContent() {
@@ -95,70 +86,70 @@ function AppContent() {
     <>
       <ScrollToTop />
       <div className={`min-h-screen ${hideBottomNav ? '' : 'pb-16'} md:pb-0`}>
-        <Suspense fallback={<PageLoader />}>
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={routesKey}>
-            <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-            <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
-            <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
-            <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-            <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
-            <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
-            <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
-            <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
-            <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
-            <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
-            <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
-            <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
-            <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
-            <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
-            <Route path="/offers" element={<PageTransition><UserLayout><Offers /></UserLayout></PageTransition>} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-student" element={<VerifyStudent />} />
-            <Route path="/signup-business" element={<SignupBusiness />} />
-            <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
-            <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
-            <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
-            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
-            <Route path="/ticket-success" element={<PageTransition><TicketSuccess /></PageTransition>} />
-            <Route path="/ticket-view/:token" element={<PageTransition><TicketView /></PageTransition>} />
-            <Route path="/reservation-view/:token" element={<PageTransition><ReservationView /></PageTransition>} />
-            <Route path="/offer-view/:token" element={<PageTransition><OfferView /></PageTransition>} />
-            <Route path="/reservation-success" element={<PageTransition><ReservationSuccess /></PageTransition>} />
-            <Route path="/offer-purchase-success" element={<PageTransition><OfferPurchaseSuccess /></PageTransition>} />
-            
-            {/* Admin Routes - Protected */}
-            <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="verification" element={<AdminVerification />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="geocoding" element={<AdminGeocoding />} />
-              <Route path="database" element={<AdminDatabaseMonitoring />} />
-              <Route path="beta" element={<AdminBetaManagement />} />
-              <Route path="waitlist" element={<AdminWaitlist />} />
-              <Route path="student-verification" element={<AdminStudentVerification />} />
-              <Route path="student-partners" element={<AdminStudentPartners />} />
-              <Route path="student-subsidies" element={<AdminStudentSubsidies />} />
-            </Route>
-            <Route path="/admin/forbidden" element={<AdminForbidden />} />
-            
-            <Route path="/business/:businessId" element={<BusinessProfile />} />
-            <Route path="/event/:eventId" element={<EventDetail />} />
-            <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-          </Routes>
-          </AnimatePresence>
-        </Suspense>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={routesKey}>
+          <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+          <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
+          <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+          <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+          <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
+          <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
+          <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
+          <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
+          <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
+          <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
+          <Route path="/offers" element={<PageTransition><UserLayout><Offers /></UserLayout></PageTransition>} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-student" element={<VerifyStudent />} />
+          <Route path="/signup-business" element={<SignupBusiness />} />
+          <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
+          <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
+          <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
+          <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+          <Route path="/ticket-success" element={<PageTransition><TicketSuccess /></PageTransition>} />
+          <Route path="/ticket-view/:token" element={<PageTransition><TicketView /></PageTransition>} />
+          <Route path="/reservation-view/:token" element={<PageTransition><ReservationView /></PageTransition>} />
+          <Route path="/offer-view/:token" element={<PageTransition><OfferView /></PageTransition>} />
+          <Route path="/reservation-success" element={<PageTransition><ReservationSuccess /></PageTransition>} />
+          <Route path="/offer-purchase-success" element={<PageTransition><OfferPurchaseSuccess /></PageTransition>} />
+          
+          {/* Admin Routes - Protected */}
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="verification" element={<AdminVerification />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="geocoding" element={<AdminGeocoding />} />
+            <Route path="database" element={<AdminDatabaseMonitoring />} />
+            <Route path="beta" element={<AdminBetaManagement />} />
+            <Route path="waitlist" element={<AdminWaitlist />} />
+            <Route path="student-verification" element={<AdminStudentVerification />} />
+            <Route path="student-partners" element={<AdminStudentPartners />} />
+            <Route path="student-subsidies" element={<AdminStudentSubsidies />} />
+          </Route>
+          <Route path="/admin/forbidden" element={<AdminForbidden />} />
+          
+          <Route path="/business/:businessId" element={<BusinessProfile />} />
+          <Route path="/event/:eventId" element={<EventDetail />} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Routes>
+        </AnimatePresence>
       </div>
       {!hideBottomNav && <BottomNav />}
     </>
   );
 }
+
+// PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
