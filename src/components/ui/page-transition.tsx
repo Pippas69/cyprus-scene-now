@@ -57,8 +57,8 @@ export function PageTransition({
       exit="exit"
       variants={selectedVariants}
       transition={{
-        duration: prefersReducedMotion ? 0.15 : 0.3,
-        ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for smooth feel
+        duration: prefersReducedMotion ? 0.12 : 0.2,
+        ease: [0.22, 1, 0.36, 1], // Snappier ease-out for faster route feel
       }}
       className={className}
     >
