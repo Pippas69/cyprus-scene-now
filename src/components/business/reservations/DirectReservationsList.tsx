@@ -180,9 +180,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
-    // Check if business has floor plan enabled AND has an image
-    supabase.from('businesses').select('floor_plan_image_url, floor_plan_enabled').eq('id', businessId).single().then(({ data }) => {
-      setHasFloorPlan(!!data?.floor_plan_enabled && !!data?.floor_plan_image_url);
+    // Check if business has floor plan enabled AND has zones
+    supabase.from('businesses').select('floor_plan_enabled').eq('id', businessId).single().then(async ({ data }) => {
+      if (!data?.floor_plan_enabled) { setHasFloorPlan(false); return; }
+      const { count } = await supabase.from('floor_plan_zones').select('id', { count: 'exact', head: true }).eq('business_id', businessId);
+      setHasFloorPlan((count || 0) > 0);
     });
     const channel = supabase.
     channel('direct_reservations_changes').
