@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, ArrowRight } from 'lucide-react';
+import { Loader2, CreditCard, CheckCircle2, ExternalLink, AlertCircle, ArrowRight, User, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface StripeConnectOnboardingProps {
@@ -36,6 +36,11 @@ const translations = {
     idVerification: 'Ταυτότητα για επαλήθευση',
     businessInfo: 'Φορολογικά στοιχεία επιχείρησης',
     commissionNote: 'Η προμήθεια πλατφόρμας αφαιρείται αυτόματα από κάθε πώληση',
+    selectBusinessType: 'Τύπος λογαριασμού:',
+    individualLabel: 'Ιδιώτης',
+    individualDesc: 'Δεν έχω εγγεγραμμένη εταιρεία. Χρειάζομαι μόνο ταυτότητα, διεύθυνση και IBAN.',
+    companyLabel: 'Εγγεγραμμένη Εταιρεία',
+    companyDesc: 'Έχω αριθμό εγγραφής εταιρείας (HE) στην Κύπρο.',
   },
   en: {
     title: 'Payments & Payouts',
@@ -60,6 +65,11 @@ const translations = {
     idVerification: 'ID for verification',
     businessInfo: 'Business tax information',
     commissionNote: 'Platform commission is automatically deducted from each sale',
+    selectBusinessType: 'Account type:',
+    individualLabel: 'Individual',
+    individualDesc: 'I don\'t have a registered company. I only need my ID, address, and IBAN.',
+    companyLabel: 'Registered Company',
+    companyDesc: 'I have a company registration number (HE) in Cyprus.',
   },
 };
 
@@ -74,6 +84,7 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [showFallback, setShowFallback] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
+  const [businessType, setBusinessType] = useState<'individual' | 'company'>('individual');
 
   const t = translations[language];
 
@@ -173,7 +184,9 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       setRedirectUrl(null);
       setShowFallback(false);
 
-      const { data, error } = await supabase.functions.invoke('create-connect-account');
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: { business_type: businessType },
+      });
 
       if (error) throw error;
 
@@ -400,6 +413,43 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
           <>
             <p className="text-xs sm:text-sm text-muted-foreground">{t.connectDescription}</p>
             
+            {/* Business Type Selector */}
+            <div className="space-y-2">
+              <p className="text-xs sm:text-sm font-medium">{t.selectBusinessType}</p>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBusinessType('individual')}
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                    businessType === 'individual'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <User className={`h-5 w-5 mt-0.5 shrink-0 ${businessType === 'individual' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium">{t.individualLabel}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{t.individualDesc}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBusinessType('company')}
+                  className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                    businessType === 'company'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <Building2 className={`h-5 w-5 mt-0.5 shrink-0 ${businessType === 'company' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium">{t.companyLabel}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{t.companyDesc}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
               <p className="text-xs sm:text-sm font-medium">{t.whatYouNeed}</p>
               <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
@@ -411,10 +461,12 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
                   <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   {t.idVerification}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t.businessInfo}
-                </li>
+                {businessType === 'company' && (
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {t.businessInfo}
+                  </li>
+                )}
               </ul>
             </div>
             

@@ -18,6 +18,18 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Parse request body for business_type
+    let businessType: "individual" | "company" = "individual";
+    try {
+      const body = await req.json();
+      if (body?.business_type === "company") {
+        businessType = "company";
+      }
+    } catch {
+      // No body or invalid JSON — default to individual
+    }
+    logStep("Business type selected", { businessType });
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -109,7 +121,7 @@ Deno.serve(async (req) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      business_type: "company",
+      business_type: businessType,
       metadata: {
         business_id: business.id,
         user_id: user.id,
