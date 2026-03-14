@@ -122,6 +122,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [placingMode, setPlacingMode] = useState<'table' | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [showBlueprint, setShowBlueprint] = useState(true);
+  const [calibrationMode, setCalibrationMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
