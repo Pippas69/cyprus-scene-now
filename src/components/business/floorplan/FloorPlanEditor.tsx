@@ -87,6 +87,23 @@ const DEFAULT_TABLE_SIZE = { w: 4, h: 4 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
+const getRenderTableBox = (item: FloorPlanItem, rawBox: { w: number; h: number }) => {
+  const safeW = clamp(rawBox.w || DEFAULT_TABLE_SIZE.w, 1.2, 18);
+  const safeH = clamp(rawBox.h || DEFAULT_TABLE_SIZE.h, 1.2, 18);
+
+  if (item.shape === 'round') {
+    const size = clamp((safeW + safeH) / 2, 1.4, 18);
+    return { w: size, h: size };
+  }
+
+  if (item.shape === 'square') {
+    const side = clamp((safeW + safeH) / 2, 1.2, 18);
+    return { w: side, h: side };
+  }
+
+  return { w: safeW, h: safeH };
+};
+
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   new Promise((resolve, reject) => {
     const img = new Image();
@@ -543,7 +560,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               <div
                 ref={canvasRef}
                 className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-                style={{ aspectRatio: `${canvasAspect}`, maxHeight: '72vh' }}
+                style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 260px)' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -572,11 +589,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                           y={item.y_percent}
                           width={bbox.w}
                           height={bbox.h}
-                          rx={0.4}
                           fill={colors.bg}
                           stroke={colors.border}
-                          strokeWidth={isSelected ? 0.35 : 0.2}
-                          strokeDasharray="1.5 0.8"
+                          strokeWidth={isSelected ? 0.32 : 0.2}
                           style={{ filter: isSelected ? `drop-shadow(0 0 4px ${colors.border})` : undefined }}
                         />
                         {showLabels && (
@@ -597,38 +612,49 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     );
                   })}
 
-                  {/* Tables — rendered as actual-sized rectangles matching the blueprint */}
+                  {/* Tables — shape-aware render from extracted geometry */}
                   {tableItems.map((item) => {
                     const isSelected = selectedItem === item.id;
-                    const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
-                    const w = bbox.w;
-                    const h = bbox.h;
+                    const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                    const { w, h } = getRenderTableBox(item, rawBox);
+                    const commonProps = {
+                      fill: isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill,
+                      stroke: SVG_THEME.tableStroke,
+                      strokeOpacity: isSelected ? 1 : 0.88,
+                      strokeWidth: isSelected ? 0.28 : 0.17,
+                      style: { filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined },
+                    };
 
                     return (
                       <g key={item.id}>
-                        <rect
-                          x={item.x_percent}
-                          y={item.y_percent}
-                          width={w}
-                          height={h}
-                          rx={0.25}
-                          fill={isSelected ? 'hsl(var(--primary) / 0.28)' : SVG_THEME.tableFill}
-                          stroke={SVG_THEME.tableStroke}
-                          strokeOpacity={isSelected ? 1 : 0.85}
-                          strokeWidth={isSelected ? 0.3 : 0.18}
-                          style={{ filter: isSelected ? `drop-shadow(0 0 4px ${SVG_THEME.selectionGlow})` : undefined }}
-                        />
+                        {item.shape === 'round' ? (
+                          <ellipse
+                            cx={item.x_percent + w / 2}
+                            cy={item.y_percent + h / 2}
+                            rx={w / 2}
+                            ry={h / 2}
+                            {...commonProps}
+                          />
+                        ) : (
+                          <rect
+                            x={item.x_percent}
+                            y={item.y_percent}
+                            width={w}
+                            height={h}
+                            {...commonProps}
+                          />
+                        )}
                         {showLabels && (
                           <text
                             x={item.x_percent + w / 2}
-                            y={item.y_percent + h / 2 + 0.35}
+                            y={item.y_percent + h / 2}
                             textAnchor="middle"
                             dominantBaseline="middle"
                             fill={SVG_THEME.tableStroke}
-                            fontSize={Math.min(w, h) > 3 ? '1.3' : '1.0'}
+                            fontSize={Math.min(w, h) > 3 ? '1.25' : '0.95'}
                             fontWeight="700"
                             className="pointer-events-none"
-                            style={{ fontFamily: 'system-ui' }}
+                            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                           >
                             {item.label}
                           </text>
@@ -658,11 +684,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
                 {/* Hit areas for tables — sized to match actual bbox */}
                 {tableItems.map((item) => {
-                  const bbox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                  const rawBox = tableBboxes[item.label] || DEFAULT_TABLE_SIZE;
+                  const bbox = getRenderTableBox(item, rawBox);
                   return (
                     <div
                       key={`hit-tbl-${item.id}`}
-                      className={`absolute rounded transition-all duration-200 z-10 ${
+                      className={`absolute transition-all duration-200 z-10 ${item.shape === 'round' ? 'rounded-full' : 'rounded-[2px]'} ${
                         placingMode ? 'pointer-events-none' :
                         `cursor-grab active:cursor-grabbing ${selectedItem === item.id ? 'ring-1 ring-accent/70 bg-accent/10' : 'hover:ring-1 hover:ring-accent/30'}`
                       }`}
@@ -682,7 +709,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </div>
 
             {/* Side panel */}
-            <div className="space-y-3 max-h-[72vh] overflow-y-auto">
+            <div className="space-y-3 max-h-[calc(100vh-260px)] overflow-y-auto">
               {/* Tables list */}
               <div className="bg-card/80 backdrop-blur-md border border-border/40 rounded-xl overflow-hidden">
                 <div className="px-3 py-2.5 border-b border-border/30">
