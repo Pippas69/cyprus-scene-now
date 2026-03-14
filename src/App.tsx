@@ -148,7 +148,8 @@ function AppContent() {
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-        </Routes>
+            </Routes>
+          </Suspense>
         </AnimatePresence>
       </div>
       {!hideBottomNav && <BottomNav />}
