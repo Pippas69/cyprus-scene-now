@@ -1,6 +1,7 @@
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { Loader2 } from 'lucide-react';
-import RealMap from './RealMap';
+
+const RealMap = lazy(() => import('./RealMap'));
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface MapWrapperProps {

@@ -12,7 +12,7 @@ export function SplashScreen({ minDisplayTime = 700, onComplete }: SplashScreenP
   useEffect(() => {
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const displayTime = prefersReducedMotion ? Math.min(minDisplayTime, 280) : minDisplayTime;
+    const displayTime = prefersReducedMotion ? Math.min(minDisplayTime, 1200) : minDisplayTime;
 
     const timer = setTimeout(() => {
       setIsVisible(false);
