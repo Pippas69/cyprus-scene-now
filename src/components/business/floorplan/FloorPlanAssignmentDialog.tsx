@@ -52,24 +52,38 @@ interface FloorPlanAssignmentDialogProps {
 }
 
 const ZONE_TYPES = {
-  vip: { color: '#F59E0B', icon: '⭐' },
-  table: { color: '#3B82F6', icon: '🪑' },
-  bar: { color: '#8B5CF6', icon: '🍸' },
-  stage: { color: '#EF4444', icon: '🎤' },
-  dj: { color: '#EC4899', icon: '🎧' },
-  lounge: { color: '#14B8A6', icon: '🛋️' },
-  other: { color: '#6B7280', icon: '📍' },
+  vip: { icon: 'VIP', strokeOpacity: 0.95, fillOpacity: 0.24, dash: 'none' },
+  table: { icon: 'TB', strokeOpacity: 0.84, fillOpacity: 0.18, dash: 'none' },
+  bar: { icon: 'BR', strokeOpacity: 0.76, fillOpacity: 0.16, dash: '2 0.8' },
+  stage: { icon: 'ST', strokeOpacity: 0.88, fillOpacity: 0.22, dash: '1.4 0.8' },
+  dj: { icon: 'DJ', strokeOpacity: 0.78, fillOpacity: 0.17, dash: '1.2 0.7' },
+  lounge: { icon: 'LG', strokeOpacity: 0.72, fillOpacity: 0.14, dash: '2.2 1' },
+  other: { icon: 'ZN', strokeOpacity: 0.68, fillOpacity: 0.12, dash: '2.4 1.1' },
 } as const;
 
-const TABLE_RADIUS = 2.4;
+const SVG_THEME = {
+  zoneStroke: 'hsl(var(--primary))',
+  zoneLabel: 'hsl(var(--primary))',
+  zoneText: 'hsl(var(--primary-foreground))',
+  tableStroke: 'hsl(var(--primary))',
+  tableFill: 'hsl(var(--primary) / 0.16)',
+  tableText: 'hsl(var(--primary-foreground))',
+  tableMeta: 'hsl(var(--accent))',
+  seat: 'hsl(var(--accent) / 0.72)',
+  occupied: 'hsl(var(--destructive))',
+  self: 'hsl(var(--accent))',
+};
+
+const TABLE_RADIUS = 2.6;
+const TABLE_HIT_RADIUS = 3.5;
 const DEFAULT_CANVAS_ASPECT = 4 / 3;
 
 const translations = {
   el: {
     title: 'Τοποθέτηση κράτησης',
-    selectZone: 'Επιλέξτε ζώνη ή τραπέζι στο σχεδιάγραμμα',
+    selectZone: 'Επιλέξτε τραπέζι ή ζώνη στο σχεδιάγραμμα',
     confirmTitle: 'Επιβεβαίωση τοποθέτησης',
-    confirmMessage: 'Τοποθέτηση κράτησης στη ζώνη:',
+    confirmMessage: 'Τοποθέτηση κράτησης στη θέση:',
     people: 'άτομα',
     cancel: 'Ακύρωση',
     yes: 'Τοποθέτηση',
@@ -81,9 +95,9 @@ const translations = {
   },
   en: {
     title: 'Place reservation',
-    selectZone: 'Select a zone or table on the floor plan',
+    selectZone: 'Select table or zone on the floor plan',
     confirmTitle: 'Confirm placement',
-    confirmMessage: 'Place reservation in zone:',
+    confirmMessage: 'Place reservation at:',
     people: 'people',
     cancel: 'Cancel',
     yes: 'Place it',
@@ -106,9 +120,9 @@ export function FloorPlanAssignmentDialog({
   const [assignments, setAssignments] = useState<ZoneAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [floorPlanImageUrl, setFloorPlanImageUrl] = useState<string | null>(null);
   const [canvasAspect, setCanvasAspect] = useState<number>(DEFAULT_CANVAS_ASPECT);
 
   useEffect(() => { if (open) loadData(); }, [open, businessId]);
@@ -116,18 +130,17 @@ export function FloorPlanAssignmentDialog({
   const loadData = async () => {
     setLoading(true);
     setSelectedZoneId(null);
+    setSelectedTableId(null);
     setConfirming(false);
 
-    const [zonesResult, tablesResult, businessResult] = await Promise.all([
+    const [zonesResult, tablesResult] = await Promise.all([
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order'),
       supabase.from('floor_plan_tables').select('*').eq('business_id', businessId).order('sort_order'),
-      supabase.from('businesses').select('floor_plan_image_url').eq('id', businessId).single(),
     ]);
 
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setZones(loadedZones);
     setTables((tablesResult.data || []) as FloorPlanTable[]);
-    setFloorPlanImageUrl(businessResult.data?.floor_plan_image_url || null);
 
     const metadataWithDimensions = loadedZones.find((zone) => zone.metadata?.image_width && zone.metadata?.image_height)?.metadata;
     if (metadataWithDimensions?.image_width && metadataWithDimensions?.image_height) {
@@ -155,10 +168,11 @@ export function FloorPlanAssignmentDialog({
     setLoading(false);
   };
 
-  const handleZoneClick = (zoneId: string) => {
+  const handleZoneClick = (zoneId: string, tableId?: string) => {
     const isOccupied = assignments.some(a => a.zone_id === zoneId && a.reservation_id !== reservationId);
     if (isOccupied) return;
     setSelectedZoneId(zoneId);
+    setSelectedTableId(tableId || null);
     setConfirming(true);
   };
 
@@ -185,6 +199,7 @@ export function FloorPlanAssignmentDialog({
   };
 
   const selectedZone = zones.find(z => z.id === selectedZoneId);
+  const selectedTable = tables.find(tb => tb.id === selectedTableId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,7 +222,7 @@ export function FloorPlanAssignmentDialog({
             {confirming && selectedZone && (
               <Badge variant="outline" className="border-primary/30 text-primary text-[10px] gap-1">
                 <span>{(ZONE_TYPES[selectedZone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).icon}</span>
-                {selectedZone.label}
+                {selectedTable ? `${selectedTable.label} · ${selectedZone.label}` : selectedZone.label}
               </Badge>
             )}
           </div>
@@ -228,10 +243,12 @@ export function FloorPlanAssignmentDialog({
               <div className="bg-muted/30 rounded-xl p-5 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">{t.confirmMessage}</p>
                 <div className="flex items-center justify-center gap-2">
-                  <div className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: (ZONE_TYPES[selectedZone?.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other).color }} />
-                  <span className="text-lg font-semibold text-foreground">{selectedZone?.label}</span>
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: SVG_THEME.zoneStroke }} />
+                  <span className="text-lg font-semibold text-foreground">{selectedTable ? selectedTable.label : selectedZone?.label}</span>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedTable ? `${selectedZone?.label} · ${selectedTable.seats} ${t.people}` : selectedZone?.label}
+                </p>
                 <p className="text-xs text-muted-foreground">{reservationName} · {partySize} {t.people}</p>
               </div>
               <div className="flex gap-2 justify-end">
@@ -247,28 +264,22 @@ export function FloorPlanAssignmentDialog({
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
               <div
-                className="relative rounded-xl overflow-hidden bg-[#0a1628] shadow-xl border border-border/20"
+                className="relative rounded-xl overflow-hidden bg-background shadow-xl border border-border/20"
                 style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(360px, 64vh, 760px)' }}
               >
-                {floorPlanImageUrl ? (
-                  <>
-                    <img
-                      src={floorPlanImageUrl}
-                      alt="Venue floor plan reference"
-                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
-                  </>
-                ) : (
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                      backgroundSize: '24px 24px',
-                    }}
-                  />
-                )}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle at 12% 14%, hsl(var(--primary) / 0.2) 0%, transparent 52%), linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.45) 100%)',
+                  }}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.12) 1px, transparent 0)',
+                    backgroundSize: '26px 26px',
+                  }}
+                />
 
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <defs>
@@ -277,68 +288,140 @@ export function FloorPlanAssignmentDialog({
                       const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
                       const isSelf = assignment?.reservation_id === reservationId;
                       const zt = ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other;
-                      const color = isOccupied ? '#EF4444' : isSelf ? '#22C55E' : zt.color;
+                      const color = isOccupied ? SVG_THEME.occupied : isSelf ? SVG_THEME.self : SVG_THEME.zoneStroke;
                       return (
                         <linearGradient key={`grad-${zone.id}`} id={`assign-grad-${zone.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor={color} stopOpacity={isOccupied ? 0.25 : 0.15} />
-                          <stop offset="100%" stopColor={color} stopOpacity={isOccupied ? 0.08 : 0.04} />
+                          <stop offset="0%" stopColor={color} stopOpacity={isOccupied ? 0.3 : isSelf ? 0.24 : zt.fillOpacity} />
+                          <stop offset="100%" stopColor={color} stopOpacity={isOccupied ? 0.12 : isSelf ? 0.1 : Math.max(zt.fillOpacity - 0.08, 0.05)} />
                         </linearGradient>
                       );
                     })}
                   </defs>
+
                   {zones.map((zone) => {
                     const zt = ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other;
                     const assignment = assignments.find(a => a.zone_id === zone.id);
                     const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
                     const isSelf = assignment?.reservation_id === reservationId;
-                    const color = isOccupied ? '#EF4444' : isSelf ? '#22C55E' : zt.color;
+                    const color = isOccupied ? SVG_THEME.occupied : isSelf ? SVG_THEME.self : SVG_THEME.zoneStroke;
                     return (
                       <g key={zone.id}>
-                        <rect x={zone.x_percent} y={zone.y_percent} width={zone.width_percent} height={zone.height_percent}
-                          rx={0.8} fill={`url(#assign-grad-${zone.id})`} stroke={color} strokeWidth={0.25}
-                          strokeDasharray={isOccupied ? undefined : "1 0.5"} className="transition-all duration-200" />
-                        <rect x={zone.x_percent + 0.5} y={zone.y_percent + 0.5}
-                          width={Math.max(zone.label.length * 0.7 + 1.5, 5)} height={2.2} rx={0.4}
-                          fill={color} opacity={0.85} className="pointer-events-none" />
-                        <text x={zone.x_percent + 1.2} y={zone.y_percent + 1.8}
-                          fill="white" fontSize="1.1" fontWeight="700" className="pointer-events-none"
-                          style={{ fontFamily: 'system-ui' }}>{zone.label}</text>
+                        <rect
+                          x={zone.x_percent}
+                          y={zone.y_percent}
+                          width={zone.width_percent}
+                          height={zone.height_percent}
+                          rx={0.8}
+                          fill={`url(#assign-grad-${zone.id})`}
+                          stroke={color}
+                          strokeOpacity={isOccupied ? 0.95 : zt.strokeOpacity}
+                          strokeWidth={0.26}
+                          strokeDasharray={isOccupied || isSelf || zt.dash === 'none' ? undefined : zt.dash}
+                          className="transition-all duration-200"
+                        />
+                        <rect
+                          x={zone.x_percent + 0.5}
+                          y={zone.y_percent + 0.5}
+                          width={Math.max(zone.label.length * 0.74 + 1.8, 5.2)}
+                          height={2.3}
+                          rx={0.4}
+                          fill={color}
+                          fillOpacity={0.85}
+                          className="pointer-events-none"
+                        />
+                        <text
+                          x={zone.x_percent + 1.2}
+                          y={zone.y_percent + 1.82}
+                          fill={SVG_THEME.zoneText}
+                          fontSize="1.12"
+                          fontWeight="700"
+                          className="pointer-events-none"
+                          style={{ fontFamily: 'system-ui' }}
+                        >
+                          {zone.label}
+                        </text>
                         {isOccupied && (
-                          <text x={zone.x_percent + zone.width_percent / 2} y={zone.y_percent + zone.height_percent / 2 + 1}
-                            textAnchor="middle" fill="#EF4444" fontSize="0.9" className="pointer-events-none">
+                          <text
+                            x={zone.x_percent + zone.width_percent / 2}
+                            y={zone.y_percent + zone.height_percent / 2 + 1}
+                            textAnchor="middle"
+                            fill={SVG_THEME.occupied}
+                            fontSize="0.95"
+                            className="pointer-events-none"
+                          >
                             {assignment.reservation_name}
                           </text>
                         )}
                       </g>
                     );
                   })}
-                  {/* Tables */}
+
                   {tables.map((table) => {
                     const zone = zones.find(z => z.id === table.zone_id);
-                    const zt = zone ? (ZONE_TYPES[zone.zone_type as keyof typeof ZONE_TYPES] || ZONE_TYPES.other) : ZONE_TYPES.other;
                     const assignment = zone ? assignments.find(a => a.zone_id === zone.id) : null;
                     const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
-                    const color = isOccupied ? '#EF4444' : zt.color;
+                    const isSelf = assignment?.reservation_id === reservationId;
+                    const isSelected = selectedTableId === table.id;
+                    const color = isOccupied ? SVG_THEME.occupied : isSelf ? SVG_THEME.self : SVG_THEME.tableStroke;
+
                     return (
                       <g key={table.id}>
                         {table.shape === 'round' ? (
-                          <circle cx={table.x_percent} cy={table.y_percent} r={TABLE_RADIUS}
-                            fill={`${color}20`} stroke={color} strokeWidth={0.2} />
+                          <circle
+                            cx={table.x_percent}
+                            cy={table.y_percent}
+                            r={TABLE_RADIUS}
+                            fill={isSelected ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--primary) / 0.18)'}
+                            stroke={color}
+                            strokeWidth={isSelected ? 0.3 : 0.22}
+                          />
                         ) : (
-                          <rect x={table.x_percent - TABLE_RADIUS} y={table.y_percent - TABLE_RADIUS}
-                            width={TABLE_RADIUS * 2} height={TABLE_RADIUS * 2} rx={0.3}
-                            fill={`${color}20`} stroke={color} strokeWidth={0.2} />
+                          <rect
+                            x={table.x_percent - TABLE_RADIUS}
+                            y={table.y_percent - TABLE_RADIUS}
+                            width={TABLE_RADIUS * 2}
+                            height={table.shape === 'rectangle' ? TABLE_RADIUS * 1.4 : TABLE_RADIUS * 2}
+                            rx={0.3}
+                            fill={isSelected ? 'hsl(var(--primary) / 0.3)' : 'hsl(var(--primary) / 0.18)'}
+                            stroke={color}
+                            strokeWidth={isSelected ? 0.3 : 0.22}
+                          />
                         )}
-                        <text x={table.x_percent} y={table.y_percent + 0.3} textAnchor="middle"
-                          fill="white" fontSize="0.9" fontWeight="600" className="pointer-events-none"
-                          style={{ fontFamily: 'system-ui' }}>{table.label}</text>
+                        <text
+                          x={table.x_percent}
+                          y={table.y_percent - 0.18}
+                          textAnchor="middle"
+                          fill={SVG_THEME.tableText}
+                          fontSize="0.98"
+                          fontWeight="700"
+                          className="pointer-events-none"
+                          style={{ fontFamily: 'system-ui' }}
+                        >
+                          {table.label}
+                        </text>
+                        <text
+                          x={table.x_percent}
+                          y={table.y_percent + 1.15}
+                          textAnchor="middle"
+                          fill={SVG_THEME.tableMeta}
+                          fontSize="0.82"
+                          fontWeight="600"
+                          className="pointer-events-none"
+                        >
+                          {table.seats}
+                        </text>
                         {Array.from({ length: Math.min(table.seats, 8) }).map((_, si) => {
                           const angle = (si / Math.min(table.seats, 8)) * Math.PI * 2 - Math.PI / 2;
-                          const seatR = TABLE_RADIUS + 0.7;
+                          const seatR = TABLE_RADIUS + 0.82;
                           return (
-                            <circle key={si} cx={table.x_percent + Math.cos(angle) * seatR}
-                              cy={table.y_percent + Math.sin(angle) * seatR} r={0.35}
-                              fill={color} opacity={0.4} className="pointer-events-none" />
+                            <circle
+                              key={si}
+                              cx={table.x_percent + Math.cos(angle) * seatR}
+                              cy={table.y_percent + Math.sin(angle) * seatR}
+                              r={0.34}
+                              fill={SVG_THEME.seat}
+                              className="pointer-events-none"
+                            />
                           );
                         })}
                       </g>
@@ -346,15 +429,52 @@ export function FloorPlanAssignmentDialog({
                   })}
                 </svg>
 
-                {/* Clickable zone hit areas */}
+                {/* Clickable table hit areas (primary) */}
+                {tables.map((table) => {
+                  const assignment = assignments.find(a => a.zone_id === table.zone_id);
+                  const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
+                  const isSelected = selectedTableId === table.id;
+                  return (
+                    <div
+                      key={`hit-table-${table.id}`}
+                      className={`absolute rounded-full transition-all duration-200 z-20 ${
+                        isOccupied
+                          ? 'cursor-not-allowed'
+                          : isSelected
+                            ? 'cursor-pointer ring-1 ring-accent/80 bg-accent/10'
+                            : 'cursor-pointer hover:ring-1 hover:ring-accent/40 hover:bg-accent/5'
+                      }`}
+                      style={{
+                        left: `${table.x_percent - TABLE_HIT_RADIUS}%`,
+                        top: `${table.y_percent - TABLE_HIT_RADIUS}%`,
+                        width: `${TABLE_HIT_RADIUS * 2}%`,
+                        height: `${TABLE_HIT_RADIUS * 2}%`,
+                      }}
+                      onClick={() => handleZoneClick(table.zone_id, table.id)}
+                    />
+                  );
+                })}
+
+                {/* Clickable zone hit areas (fallback for zones without tables) */}
                 {zones.map((zone) => {
                   const assignment = assignments.find(a => a.zone_id === zone.id);
                   const isOccupied = !!assignment && assignment.reservation_id !== reservationId;
+                  const hasTables = tables.some(tb => tb.zone_id === zone.id);
                   return (
-                    <div key={`hit-${zone.id}`}
-                      className={`absolute rounded-md transition-all duration-200 ${isOccupied ? 'cursor-not-allowed' : 'cursor-pointer hover:ring-1 hover:ring-white/30 hover:bg-white/5'}`}
+                    <div
+                      key={`hit-zone-${zone.id}`}
+                      className={`absolute rounded-md transition-all duration-200 z-10 ${
+                        isOccupied
+                          ? 'cursor-not-allowed'
+                          : hasTables
+                            ? 'cursor-default'
+                            : 'cursor-pointer hover:ring-1 hover:ring-primary/30 hover:bg-primary/5'
+                      }`}
                       style={{ left: `${zone.x_percent}%`, top: `${zone.y_percent}%`, width: `${zone.width_percent}%`, height: `${zone.height_percent}%` }}
-                      onClick={() => handleZoneClick(zone.id)} />
+                      onClick={() => {
+                        if (!hasTables) handleZoneClick(zone.id);
+                      }}
+                    />
                   );
                 })}
               </div>
@@ -362,15 +482,15 @@ export function FloorPlanAssignmentDialog({
               {/* Legend */}
               <div className="flex items-center justify-center gap-5 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-sm border border-blue-500/60 bg-blue-500/10" />
+                  <div className="w-2.5 h-2.5 rounded-sm border border-primary/60 bg-primary/10" />
                   {t.available}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-sm border border-red-500/60 bg-red-500/10" />
+                  <div className="w-2.5 h-2.5 rounded-sm border border-destructive/60 bg-destructive/10" />
                   {t.occupied}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-sm border border-green-500/60 bg-green-500/10" />
+                  <div className="w-2.5 h-2.5 rounded-sm border border-accent/70 bg-accent/20" />
                   {t.alreadyAssigned}
                 </div>
               </div>
