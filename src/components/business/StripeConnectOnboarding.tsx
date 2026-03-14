@@ -65,6 +65,11 @@ const translations = {
     idVerification: 'ID for verification',
     businessInfo: 'Business tax information',
     commissionNote: 'Platform commission is automatically deducted from each sale',
+    selectBusinessType: 'Account type:',
+    individualLabel: 'Individual',
+    individualDesc: 'I don\'t have a registered company. I only need my ID, address, and IBAN.',
+    companyLabel: 'Registered Company',
+    companyDesc: 'I have a company registration number (HE) in Cyprus.',
   },
 };
 
