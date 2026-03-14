@@ -87,6 +87,23 @@ const DEFAULT_TABLE_SIZE = { w: 4, h: 4 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
+const getRenderTableBox = (item: FloorPlanItem, rawBox: { w: number; h: number }) => {
+  const safeW = clamp(rawBox.w || DEFAULT_TABLE_SIZE.w, 1.2, 18);
+  const safeH = clamp(rawBox.h || DEFAULT_TABLE_SIZE.h, 1.2, 18);
+
+  if (item.shape === 'round') {
+    const size = clamp((safeW + safeH) / 2, 1.4, 18);
+    return { w: size, h: size };
+  }
+
+  if (item.shape === 'square') {
+    const side = clamp((safeW + safeH) / 2, 1.2, 18);
+    return { w: side, h: side };
+  }
+
+  return { w: safeW, h: safeH };
+};
+
 const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
   new Promise((resolve, reject) => {
     const img = new Image();
