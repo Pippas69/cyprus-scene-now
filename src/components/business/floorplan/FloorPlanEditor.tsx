@@ -798,11 +798,26 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Subtle grid pattern */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
-                  backgroundSize: '24px 24px',
-                }} />
+                {/* Uploaded reference floor plan image */}
+                {floorPlanImageUrl ? (
+                  <>
+                    <img
+                      src={floorPlanImageUrl}
+                      alt="Venue floor plan reference"
+                      className="absolute inset-0 h-full w-full object-fill pointer-events-none"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-background/15 pointer-events-none" />
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(62,195,183,0.06) 1px, transparent 0)',
+                      backgroundSize: '24px 24px',
+                    }}
+                  />
+                )
 
                 {/* SVG floor plan */}
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
