@@ -33,10 +33,36 @@ interface FloorPlanZone {
   height_percent: number;
   capacity: number;
   sort_order: number;
+  metadata?: {
+    analysis_hash?: string;
+    image_width?: number;
+    image_height?: number;
+    source_image_url?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 interface FloorPlanEditorProps {
   businessId: string;
+}
+
+interface ParsedAiTable {
+  label: string;
+  seats: number;
+  shape: string;
+  x_percent: number;
+  y_percent: number;
+}
+
+interface ParsedAiZone {
+  label: string;
+  zone_type: string;
+  x_percent: number;
+  y_percent: number;
+  width_percent: number;
+  height_percent: number;
+  capacity: number;
+  tables: ParsedAiTable[];
 }
 
 const ZONE_TYPES = {
@@ -49,7 +75,129 @@ const ZONE_TYPES = {
   other: { color: '#6B7280', bgAlpha: 0.15, icon: '📍' },
 } as const;
 
-const TABLE_RADIUS = 1.8;
+const TABLE_RADIUS = 2.6;
+const DEFAULT_CANVAS_ASPECT = 4 / 3;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const toValidNumber = (value: unknown, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      resolve({ width: image.naturalWidth || 1200, height: image.naturalHeight || 900 });
+      URL.revokeObjectURL(objectUrl);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Unable to read image dimensions'));
+    };
+    image.src = objectUrl;
+  });
+};
+
+const hashDataUrl = async (dataUrl: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataUrl));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+};
+
+const getStoragePathFromPublicUrl = (url: string | null) => {
+  if (!url) return null;
+  const parts = url.split('/');
+  if (parts.length < 2) return null;
+  return parts.slice(-2).join('/');
+};
+
+const normalizeAiZones = (zonesInput: unknown): ParsedAiZone[] => {
+  const input = Array.isArray(zonesInput) ? zonesInput : [];
+
+  const zones: ParsedAiZone[] = input
+    .slice(0, 60)
+    .map((rawZone: any, zoneIndex): ParsedAiZone => {
+      const x = clamp(toValidNumber(rawZone?.x_percent, 0), 0, 100);
+      const y = clamp(toValidNumber(rawZone?.y_percent, 0), 0, 100);
+      const width = clamp(toValidNumber(rawZone?.width_percent, 16), 6, 96);
+      const height = clamp(toValidNumber(rawZone?.height_percent, 16), 6, 96);
+
+      const fixedWidth = Math.max(6, Math.min(width, 100 - x));
+      const fixedHeight = Math.max(6, Math.min(height, 100 - y));
+
+      const tables: ParsedAiTable[] = (Array.isArray(rawZone?.tables) ? rawZone.tables : [])
+        .slice(0, 160)
+        .map((rawTable: any, tableIndex): ParsedAiTable => ({
+          label: typeof rawTable?.label === 'string' && rawTable.label.trim().length > 0
+            ? rawTable.label.trim().slice(0, 24)
+            : `T${tableIndex + 1}`,
+          seats: clamp(Math.round(toValidNumber(rawTable?.seats, 4)), 1, 20),
+          shape: rawTable?.shape === 'square' || rawTable?.shape === 'rectangle' ? rawTable.shape : 'round',
+          x_percent: clamp(toValidNumber(rawTable?.x_percent, x + fixedWidth / 2), x + 0.8, x + fixedWidth - 0.8),
+          y_percent: clamp(toValidNumber(rawTable?.y_percent, y + fixedHeight / 2), y + 0.8, y + fixedHeight - 0.8),
+        }));
+
+      const totalSeats = tables.reduce((sum, table) => sum + table.seats, 0);
+      const fallbackCapacity = clamp(Math.round(toValidNumber(rawZone?.capacity, totalSeats || 4)), 0, 700);
+
+      return {
+        label: typeof rawZone?.label === 'string' && rawZone.label.trim().length > 0
+          ? rawZone.label.trim().slice(0, 48)
+          : `Zone ${zoneIndex + 1}`,
+        zone_type: Object.keys(ZONE_TYPES).includes(rawZone?.zone_type) ? rawZone.zone_type : 'other',
+        x_percent: x,
+        y_percent: y,
+        width_percent: fixedWidth,
+        height_percent: fixedHeight,
+        capacity: totalSeats > 0 ? totalSeats : fallbackCapacity,
+        tables,
+      };
+    })
+    .sort((a, b) => (a.y_percent - b.y_percent) || (a.x_percent - b.x_percent));
+
+  if (zones.length === 0) return [];
+
+  const minX = Math.min(...zones.map((z) => z.x_percent));
+  const minY = Math.min(...zones.map((z) => z.y_percent));
+  const maxX = Math.max(...zones.map((z) => z.x_percent + z.width_percent));
+  const maxY = Math.max(...zones.map((z) => z.y_percent + z.height_percent));
+
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const targetPadding = 4;
+  const targetSpan = 100 - targetPadding * 2;
+  const scale = Math.min(targetSpan / spanX, targetSpan / spanY, 2.2);
+
+  const scaledSpanX = spanX * scale;
+  const scaledSpanY = spanY * scale;
+  const offsetX = (100 - scaledSpanX) / 2 - minX * scale;
+  const offsetY = (100 - scaledSpanY) / 2 - minY * scale;
+
+  return zones.map((zone) => {
+    const width = clamp(zone.width_percent * scale, 6, 98);
+    const height = clamp(zone.height_percent * scale, 6, 98);
+    const xPos = clamp(zone.x_percent * scale + offsetX, 0, 100 - width);
+    const yPos = clamp(zone.y_percent * scale + offsetY, 0, 100 - height);
+
+    const tables = zone.tables.map((table) => ({
+      ...table,
+      x_percent: clamp(table.x_percent * scale + offsetX, xPos + 0.8, xPos + width - 0.8),
+      y_percent: clamp(table.y_percent * scale + offsetY, yPos + 0.8, yPos + height - 0.8),
+    }));
+
+    return {
+      ...zone,
+      x_percent: xPos,
+      y_percent: yPos,
+      width_percent: width,
+      height_percent: height,
+      capacity: tables.reduce((sum, table) => sum + table.seats, 0) || zone.capacity,
+      tables,
+    };
+  });
+};
 
 const translations = {
   el: {
