@@ -1,6 +1,8 @@
 project_id = "iasahlgurfxufrtdigcr"
 
 [functions]
+  [functions.analyze-floor-plan]
+    verify_jwt = true
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.calculate-monthly-commission]
