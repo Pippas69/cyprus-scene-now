@@ -208,7 +208,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         return null;
       }
 
-      const { data: urlData } = supabase.storage.from('business-assets').getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from('floor-plans').getPublicUrl(path);
       const url = urlData?.publicUrl || null;
 
       if (url) {
