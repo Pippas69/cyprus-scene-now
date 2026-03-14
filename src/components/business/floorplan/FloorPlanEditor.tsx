@@ -362,14 +362,25 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   // AI Analysis
   const handleAIAnalysis = async (file: File) => {
     setAiAnalyzing(true);
+
     try {
-      // Convert to base64
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      const [{ width, height }, imageHash] = await Promise.all([
+        getImageDimensions(file),
+        hashDataUrl(base64),
+      ]);
+
+      const currentHash = zones.find((zone) => zone.metadata?.analysis_hash)?.metadata?.analysis_hash;
+      if (currentHash && currentHash === imageHash) {
+        toast.info(t.sameImage);
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke('analyze-floor-plan', {
         body: { imageBase64: base64 },
@@ -378,51 +389,89 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Clear existing zones and tables
+      const normalizedAiZones = normalizeAiZones(data?.zones || []);
+      if (normalizedAiZones.length === 0) {
+        throw new Error('AI did not detect valid zones');
+      }
+
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData.user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
+      const fileExt = (file.name.split('.').pop() || 'png').toLowerCase();
+      const newStoragePath = `${userId}/${businessId}-floorplan-${imageHash}.${fileExt}`;
+
+      const previousPath = getStoragePathFromPublicUrl(floorPlanImageUrl);
+      if (previousPath && previousPath !== newStoragePath) {
+        await supabase.storage.from('business-covers').remove([previousPath]);
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('business-covers')
+        .upload(newStoragePath, file, { upsert: true, contentType: file.type || undefined });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('business-covers').getPublicUrl(newStoragePath);
+      const uploadedImageUrl = publicUrlData.publicUrl;
+
       await Promise.all([
         supabase.from('floor_plan_tables').delete().eq('business_id', businessId),
         supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
+        supabase.from('businesses').update({ floor_plan_image_url: uploadedImageUrl }).eq('id', businessId),
       ]);
 
-      // Insert zones from AI
-      const aiZones = data.zones || [];
-      const insertedZones: FloorPlanZone[] = [];
+      for (let i = 0; i < normalizedAiZones.length; i++) {
+        const zone = normalizedAiZones[i];
+        const zoneCapacity = zone.tables.reduce((sum, table) => sum + table.seats, 0) || zone.capacity;
 
-      for (let i = 0; i < aiZones.length; i++) {
-        const az = aiZones[i];
-        const { data: zoneData, error: zoneError } = await supabase.from('floor_plan_zones').insert({
-          business_id: businessId,
-          label: az.label,
-          zone_type: az.zone_type || 'other',
-          shape: 'rect',
-          x_percent: az.x_percent,
-          y_percent: az.y_percent,
-          width_percent: az.width_percent,
-          height_percent: az.height_percent,
-          capacity: az.capacity || 0,
-          sort_order: i,
-        }).select().single();
-
-        if (zoneError) { console.error('Zone insert error:', zoneError); continue; }
-        insertedZones.push(zoneData as FloorPlanZone);
-
-        // Insert tables for this zone
-        if (az.tables && az.tables.length > 0) {
-          const tablesToInsert = az.tables.map((at: any, ti: number) => ({
-            zone_id: zoneData!.id,
+        const { data: zoneData, error: zoneError } = await supabase
+          .from('floor_plan_zones')
+          .insert({
             business_id: businessId,
-            label: at.label || `T${ti + 1}`,
-            x_percent: at.x_percent,
-            y_percent: at.y_percent,
-            seats: at.seats || 4,
-            shape: at.shape || 'round',
-            sort_order: ti,
+            label: zone.label,
+            zone_type: zone.zone_type,
+            shape: 'rect',
+            x_percent: zone.x_percent,
+            y_percent: zone.y_percent,
+            width_percent: zone.width_percent,
+            height_percent: zone.height_percent,
+            capacity: zoneCapacity,
+            sort_order: i,
+            metadata: {
+              analysis_hash: imageHash,
+              image_width: width,
+              image_height: height,
+              source_image_url: uploadedImageUrl,
+            },
+          })
+          .select()
+          .single();
+
+        if (zoneError || !zoneData) {
+          console.error('Zone insert error:', zoneError);
+          continue;
+        }
+
+        if (zone.tables.length > 0) {
+          const tablesToInsert = zone.tables.map((table, tableIndex) => ({
+            zone_id: zoneData.id,
+            business_id: businessId,
+            label: table.label,
+            x_percent: table.x_percent,
+            y_percent: table.y_percent,
+            seats: table.seats,
+            shape: table.shape,
+            sort_order: tableIndex,
           }));
-          await supabase.from('floor_plan_tables').insert(tablesToInsert);
+
+          const { error: tablesError } = await supabase.from('floor_plan_tables').insert(tablesToInsert);
+          if (tablesError) console.error('Table insert error:', tablesError);
         }
       }
 
-      // Reload data
+      setFloorPlanImageUrl(uploadedImageUrl);
+      setCanvasAspect(width / height);
       await loadFloorPlan();
       toast.success(t.aiSuccess);
     } catch (err: any) {
