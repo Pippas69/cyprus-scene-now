@@ -1,5 +1,5 @@
 // App entry point
-import { lazy, Suspense, useCallback, useState } from "react";
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,62 +16,56 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
-
-const Index = lazy(() => import("./pages/Index"));
-const Feed = lazy(() => import("./pages/Feed"));
-const Ekdiloseis = lazy(() => import("./pages/Ekdiloseis"));
-const Xartis = lazy(() => import("./pages/Xartis"));
-const Signup = lazy(() => import("./pages/Signup"));
-const Login = lazy(() => import("./pages/Login"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const SignupBusiness = lazy(() => import("./pages/SignupBusiness"));
-const DashboardBusiness = lazy(() => import("./pages/DashboardBusiness"));
-const DashboardUser = lazy(() => import("./pages/DashboardUser"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminVerification = lazy(() => import("./pages/AdminVerification"));
-const AdminGeocoding = lazy(() => import("./pages/AdminGeocoding"));
-const AdminUsers = lazy(() => import("./pages/AdminUsers"));
-const AdminReports = lazy(() => import("./pages/AdminReports"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
-const AdminSettings = lazy(() => import("./pages/AdminSettings"));
-const AdminDatabaseMonitoring = lazy(() => import("./pages/AdminDatabaseMonitoring"));
-const AdminBetaManagement = lazy(() => import("./pages/AdminBetaManagement"));
-const AdminWaitlist = lazy(() => import("./pages/AdminWaitlist"));
-const AdminStudentVerification = lazy(() => import("./pages/AdminStudentVerification"));
-const AdminStudentPartners = lazy(() => import("./pages/AdminStudentPartners"));
-const AdminStudentSubsidies = lazy(() => import("./pages/AdminStudentSubsidies"));
-const AdminForbidden = lazy(() => import("./pages/AdminForbidden"));
-const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
-const EventDetail = lazy(() => import("./pages/EventDetail"));
-const SubscriptionPlans = lazy(() => import("./pages/SubscriptionPlans"));
-const Features = lazy(() => import("./pages/Features"));
-const PricingPublic = lazy(() => import("./pages/PricingPublic"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Messages = lazy(() => import("./pages/Messages"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const TicketSuccess = lazy(() => import("./pages/TicketSuccess"));
-const TicketView = lazy(() => import("./pages/TicketView"));
-const ReservationView = lazy(() => import("./pages/ReservationView"));
-const OfferView = lazy(() => import("./pages/OfferView"));
-const ReservationSuccess = lazy(() => import("./pages/ReservationSuccess"));
-const OfferPurchaseSuccess = lazy(() => import("./pages/OfferPurchaseSuccess"));
-const Offers = lazy(() => import("./pages/Offers"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
-const ForVisitors = lazy(() => import("./pages/ForVisitors"));
-const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
-const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
+import Index from "./pages/Index";
+import Feed from "./pages/Feed";
+import Ekdiloseis from "./pages/Ekdiloseis";
+import Xartis from "./pages/Xartis";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import SignupBusiness from "./pages/SignupBusiness";
+import DashboardBusiness from "./pages/DashboardBusiness";
+import DashboardUser from "./pages/DashboardUser";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminVerification from "./pages/AdminVerification";
+import AdminGeocoding from "./pages/AdminGeocoding";
+import AdminUsers from "./pages/AdminUsers";
+import AdminReports from "./pages/AdminReports";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
+import AdminDatabaseMonitoring from "./pages/AdminDatabaseMonitoring";
+import AdminBetaManagement from "./pages/AdminBetaManagement";
+import AdminWaitlist from "./pages/AdminWaitlist";
+import AdminStudentVerification from "./pages/AdminStudentVerification";
+import AdminStudentPartners from "./pages/AdminStudentPartners";
+import AdminStudentSubsidies from "./pages/AdminStudentSubsidies";
+import AdminForbidden from "./pages/AdminForbidden";
+import BusinessProfile from "./pages/BusinessProfile";
+import EventDetail from "./pages/EventDetail";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
+import Features from "./pages/Features";
+import PricingPublic from "./pages/PricingPublic";
+import Contact from "./pages/Contact";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import Messages from "./pages/Messages";
+import NotFound from "./pages/NotFound";
+import TicketSuccess from "./pages/TicketSuccess";
+import TicketView from "./pages/TicketView";
+import ReservationView from "./pages/ReservationView";
+import OfferView from "./pages/OfferView";
+import ReservationSuccess from "./pages/ReservationSuccess";
+import OfferPurchaseSuccess from "./pages/OfferPurchaseSuccess";
+import Offers from "./pages/Offers";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiesPolicy from "./pages/CookiesPolicy";
+import ForVisitors from "./pages/ForVisitors";
+import ForBusinesses from "./pages/ForBusinesses";
+import VerifyStudent from "./pages/VerifyStudent";
 
 const queryClient = new QueryClient();
-const SPLASH_SESSION_KEY = "fomo:splash:seen";
-
-function RouteFallback() {
-  return <div className="min-h-screen bg-background" aria-busy="true" />;
-}
 
 // Component to conditionally render BottomNav
 function AppContent() {
@@ -93,8 +87,7 @@ function AppContent() {
       <ScrollToTop />
       <div className={`min-h-screen ${hideBottomNav ? '' : 'pb-16'} md:pb-0`}>
         <AnimatePresence mode="wait">
-          <Suspense fallback={<RouteFallback />}>
-            <Routes location={location} key={routesKey}>
+          <Routes location={location} key={routesKey}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
           <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
@@ -148,8 +141,7 @@ function AppContent() {
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
-            </Routes>
-          </Suspense>
+        </Routes>
         </AnimatePresence>
       </div>
       {!hideBottomNav && <BottomNav />}
@@ -160,27 +152,7 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(() => {
-    if (typeof window === "undefined") return false;
-
-    try {
-      return window.sessionStorage.getItem(SPLASH_SESSION_KEY) !== "1";
-    } catch {
-      return true;
-    }
-  });
-
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false);
-
-    if (typeof window !== "undefined") {
-      try {
-        window.sessionStorage.setItem(SPLASH_SESSION_KEY, "1");
-      } catch {
-        // Ignore storage errors in private browsing modes
-      }
-    }
-  }, []);
+  const [showSplash, setShowSplash] = useState(true);
 
   return (
     <ErrorBoundary>
@@ -189,7 +161,7 @@ const App = () => {
           <LanguageProvider>
             <TooltipProvider>
               {showSplash && (
-                <SplashScreen minDisplayTime={450} onComplete={handleSplashComplete} />
+                <SplashScreen onComplete={() => setShowSplash(false)} />
               )}
               <Toaster />
               <Sonner />

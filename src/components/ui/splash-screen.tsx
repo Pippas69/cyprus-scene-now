@@ -6,13 +6,13 @@ interface SplashScreenProps {
   onComplete?: () => void;
 }
 
-export function SplashScreen({ minDisplayTime = 700, onComplete }: SplashScreenProps) {
+export function SplashScreen({ minDisplayTime = 1800, onComplete }: SplashScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const displayTime = prefersReducedMotion ? Math.min(minDisplayTime, 280) : minDisplayTime;
+    const displayTime = prefersReducedMotion ? 500 : minDisplayTime;
 
     const timer = setTimeout(() => {
       setIsVisible(false);
