@@ -1,5 +1,5 @@
 // App entry point
-import { useState } from "react";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +11,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AnimatePresence } from "framer-motion";
-import { SplashScreen } from "@/components/ui/splash-screen";
+// Inline splash is now in index.html for instant display
 import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
@@ -65,7 +65,16 @@ import ForVisitors from "./pages/ForVisitors";
 import ForBusinesses from "./pages/ForBusinesses";
 import VerifyStudent from "./pages/VerifyStudent";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes default
+      gcTime: 1000 * 60 * 10, // Keep in cache 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Component to conditionally render BottomNav
 function AppContent() {
@@ -152,7 +161,18 @@ function AppContent() {
 // PageTransition is now imported from @/components/ui/page-transition
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  // Dismiss the inline HTML splash screen once React mounts
+  useEffect(() => {
+    const splash = document.getElementById('inline-splash');
+    if (splash) {
+      // Small delay so the transition feels smooth
+      const timer = setTimeout(() => {
+        splash.classList.add('fade-out');
+        setTimeout(() => splash.remove(), 400);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -160,9 +180,6 @@ const App = () => {
         <ThemeProvider>
           <LanguageProvider>
             <TooltipProvider>
-              {showSplash && (
-                <SplashScreen onComplete={() => setShowSplash(false)} />
-              )}
               <Toaster />
               <Sonner />
               <BrowserRouter>
