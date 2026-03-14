@@ -39,6 +39,25 @@ const normalizeLabel = (value: unknown, fallback: string) => {
   return text.length > 0 ? text.slice(0, 42) : fallback;
 };
 
+const normalizeTableLabel = (value: unknown, fallback: string) => {
+  const base = normalizeLabel(value, fallback).replace(/\s+/g, "");
+
+  const pMatch = base.match(/^[pP](\d{1,3})$/);
+  if (pMatch) return `P${pMatch[1]}`;
+
+  // OCR συχνά διαβάζει το P ως n
+  const nMatch = base.match(/^[nN](\d{1,3})$/);
+  if (nMatch) return `P${nMatch[1]}`;
+
+  return base;
+};
+
+const inferShapeFromBox = (shape: unknown, widthPercent: number, heightPercent: number) => {
+  if (shape === "round") return "round";
+  const ratio = widthPercent / Math.max(heightPercent, 0.01);
+  return ratio > 1.35 || ratio < 0.74 ? "rectangle" : "square";
+};
+
 interface NormalizedFixture {
   label: string;
   fixture_type: string;
