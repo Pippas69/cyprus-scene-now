@@ -13,34 +13,100 @@
     <meta name="author" content="ΦΟΜΟ" />
     <meta name="keywords" content="cyprus, events, nightlife, cafes, social, discovery, discounts, nicosia, limassol, larnaca">
 
-    
-    
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/27fyxXqqeydrZw2P7CSCHJOL87l2/social-images/social-1767203160982-56088760-CDC5-4AA8-B35B-50634359C45E.jpeg">
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/27fyxXqqeydrZw2P7CSCHJOL87l2/social-images/social-1767203160982-56088760-CDC5-4AA8-B35B-50634359C45E.jpeg">
-    
-    <!-- Google Fonts -->
+    <meta property="og:title" content="ΦOMO">
+    <meta name="twitter:title" content="ΦOMO">
+    <meta property="og:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
+    <meta name="twitter:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
+
+    <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    
-  
-  
-  
-  <meta property="og:title" content="ΦOMO">
-  <meta name="twitter:title" content="ΦOMO">
-  <meta property="og:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
-  <meta name="twitter:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
-</head>
+    <!-- Critical fonts only (Inter + Cinzel for splash) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    <!-- Non-critical fonts async (non-render-blocking) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Cinzel+Decorative:wght@900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Cinzel+Decorative:wght@900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"></noscript>
+
+    <!-- Inline splash screen - shows INSTANTLY before any JS loads -->
+    <style>
+      #inline-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0C4A6E 0%, #155E75 30%, #0E7490 60%, #0891B2 100%);
+        transition: opacity 0.4s ease-out;
+      }
+      #inline-splash.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #inline-splash h1 {
+        font-family: 'Cinzel Decorative', serif;
+        font-size: clamp(3rem, 8vw, 5rem);
+        font-weight: 700;
+        color: #FEFAF6;
+        letter-spacing: 0.1em;
+        margin: 0;
+        animation: splash-in 0.5s ease-out;
+      }
+      #inline-splash p {
+        color: rgba(254, 250, 246, 0.8);
+        font-size: 0.875rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-top: 0.5rem;
+        animation: splash-in 0.5s ease-out 0.2s both;
+      }
+      .splash-dots {
+        position: absolute;
+        bottom: 5rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .splash-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: rgba(254, 250, 246, 0.6);
+        animation: splash-pulse 1s infinite;
+      }
+      .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+      .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes splash-in {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.6; }
+        50% { transform: scale(1.5); opacity: 1; }
+      }
+    </style>
+  </head>
 
   <body>
+    <!-- Inline splash visible immediately -->
+    <div id="inline-splash">
+      <h1>ΦΟΜΟ</h1>
+      <p>Cyprus Events</p>
+      <div class="splash-dots">
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Register service worker for push notifications
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
