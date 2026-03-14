@@ -534,16 +534,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             t={t}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-            <FloorPlanSidebar
-              tableItems={tableItems}
-              selectedItem={selectedItem}
-              reservationStatuses={reservationStatuses}
-              setupMode={setupMode}
-              onItemSelect={setSelectedItem}
-              onItemEdit={setEditDialog}
-              t={t}
-            />
+          <div className={`grid gap-4 ${setupMode ? 'grid-cols-1 lg:grid-cols-[280px_1fr]' : 'grid-cols-1'}`}>
+            {setupMode && (
+              <FloorPlanSidebar
+                tableItems={tableItems}
+                selectedItem={selectedItem}
+                reservationStatuses={reservationStatuses}
+                setupMode={setupMode}
+                onItemSelect={setSelectedItem}
+                onItemEdit={setEditDialog}
+                t={t}
+              />
+            )}
 
             <FloorPlanCanvas
               items={items}
