@@ -34,6 +34,14 @@
 
     <!-- Inline splash screen - shows INSTANTLY before any JS loads -->
     <style>
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(135deg, #0C4A6E 0%, #155E75 30%, #0E7490 60%, #0891B2 100%);
+      }
+      #root {
+        min-height: 100vh;
+      }
       #inline-splash {
         position: fixed;
         inset: 0;
@@ -93,10 +101,15 @@
   </head>
 
   <body>
+    <!-- Splash start marker -->
+    <script>
+      window.__fomoSplashStart = performance.now();
+    </script>
+
     <!-- Inline splash visible immediately -->
     <div id="inline-splash">
       <h1>ΦΟΜΟ</h1>
-      <p>Cyprus Events</p>
+      <p>Cyprus</p>
       <div class="splash-dots">
         <div class="splash-dot"></div>
         <div class="splash-dot"></div>
