@@ -208,7 +208,7 @@ export function FloorPlanAssignmentDialog({
               <div className="bg-muted/30 rounded-xl p-5 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">{t.confirmMessage}</p>
                 <div className="flex items-center justify-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: '#00E5FF' }} />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: 'hsl(var(--floorplan-neon))' }} />
                   <span className="text-lg font-semibold text-foreground">{selectedItem?.label}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{selectedItem?.seats} {t.people}</p>
@@ -231,7 +231,7 @@ export function FloorPlanAssignmentDialog({
                 style={{ aspectRatio: `${canvasAspect}`, minHeight: 'clamp(360px, 64vh, 760px)' }}
               >
                 <div className="absolute inset-0" style={{
-                  background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--card)) 50%, hsl(var(--background)) 100%)',
+                  background: 'linear-gradient(160deg, hsl(var(--floorplan-canvas)) 0%, hsl(var(--floorplan-canvas-elevated)) 56%, hsl(var(--floorplan-canvas)) 100%)',
                 }} />
 
                 <VenueSVGCanvas
@@ -250,7 +250,7 @@ export function FloorPlanAssignmentDialog({
               {/* Legend */}
               <div className="flex items-center justify-center gap-5 text-[10px] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-sm border border-[#00E5FF]/60 bg-[#00E5FF]/10" />
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ border: '1px solid hsl(var(--floorplan-neon) / 0.6)', background: 'hsl(var(--floorplan-neon) / 0.12)' }} />
                   {t.available}
                 </div>
                 <div className="flex items-center gap-1.5">

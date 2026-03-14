@@ -535,7 +535,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               >
                 {/* Dark architectural background */}
                 <div className="absolute inset-0" style={{
-                  background: 'linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--card)) 50%, hsl(var(--background)) 100%)',
+                  background: 'linear-gradient(160deg, hsl(var(--floorplan-canvas)) 0%, hsl(var(--floorplan-canvas-elevated)) 56%, hsl(var(--floorplan-canvas)) 100%)',
                 }} />
 
                 {/* SVG Venue Renderer */}
@@ -577,7 +577,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                         className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all duration-150 hover:bg-accent/40 ${selectedItem === item.id ? 'bg-accent/60' : ''}`}
                         onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
                       >
-                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: '#00E5FF' }} />
+                        <div className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: 'hsl(var(--floorplan-neon))' }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground">{item.label}</p>
                           <p className="text-[10px] text-muted-foreground">{item.seats} {t.seats}</p>
