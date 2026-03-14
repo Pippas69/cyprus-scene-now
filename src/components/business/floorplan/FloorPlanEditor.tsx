@@ -559,7 +559,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 }} />
 
                 {/* SVG Layer */}
-                <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${canvasAspect * 100} 100`} preserveAspectRatio="xMidYMid meet">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                   {/* Fixtures (bars, dj, etc.) */}
                   {fixtureItems.map((item) => {
                     const bbox = fixtureBboxes[item.label] || { w: 8, h: 5 };
