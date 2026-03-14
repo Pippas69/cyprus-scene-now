@@ -184,7 +184,9 @@ export const StripeConnectOnboarding = ({ businessId, language }: StripeConnectO
       setRedirectUrl(null);
       setShowFallback(false);
 
-      const { data, error } = await supabase.functions.invoke('create-connect-account');
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: { business_type: businessType },
+      });
 
       if (error) throw error;
 
