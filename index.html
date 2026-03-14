@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0C4A6E" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3">
     <link rel="icon" type="image/png" href="/fomo-logo-new.png?v=3">
     <link rel="shortcut icon" href="/favicon.ico?v=3">
@@ -26,9 +27,9 @@
     <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Critical fonts only (Inter + Cinzel for splash) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
-    <!-- Non-critical fonts async (non-render-blocking) -->
+    <!-- Fonts async (avoid render-blocking white screen before splash) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet"></noscript>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Cinzel+Decorative:wght@900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Cinzel+Decorative:wght@900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet"></noscript>
 
@@ -41,6 +42,7 @@
       }
       #root {
         min-height: 100vh;
+        background: linear-gradient(135deg, #0C4A6E 0%, #155E75 30%, #0E7490 60%, #0891B2 100%);
       }
       #inline-splash {
         position: fixed;
