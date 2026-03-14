@@ -184,6 +184,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 30 75% 98%;
     --sidebar-border: 207 40% 25%;
     --sidebar-ring: 174 62% 56%;
+
+    /* Floor plan architectural neon system (dark mode) */
+    --floorplan-neon: 188 100% 62%;
+    --floorplan-canvas: 212 82% 10%;
+    --floorplan-canvas-elevated: 210 72% 14%;
+    --floorplan-wall: 188 82% 48%;
   }
 }
 
