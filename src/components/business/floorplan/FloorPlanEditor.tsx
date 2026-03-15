@@ -400,6 +400,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  const clearAllItems = async () => {
+    if (!window.confirm(t.clearAllConfirm)) return;
+    const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
+    if (error) { toast.error(error.message); return; }
+    history.pushState(items, 'clear all');
+    setItems([]);
+    setSelectedItem(null);
+    toast.success(t.cleared);
+  };
+
   // Save layout and exit design mode
   const handleSaveLayout = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
