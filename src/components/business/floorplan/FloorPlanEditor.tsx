@@ -534,26 +534,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   return (
     <div className="space-y-0">
-      {/* ═══ MAIN LAYOUT: Properties LEFT + Canvas ═══ */}
+      {/* ═══ MAIN LAYOUT: Canvas + Properties RIGHT ═══ */}
       <div className="flex flex-col md:flex-row gap-0">
-        
-        {/* LEFT: Properties Panel (desktop/tablet only) */}
-        {isDesignMode && (
-          <div className="hidden md:block w-[260px] xl:w-[280px] flex-shrink-0 border-r border-border/20 bg-card/60 backdrop-blur-sm rounded-l-xl overflow-hidden" style={{ minHeight: '500px' }}>
-            {selectedItemData ? (
-              <ItemPropertiesPanel
-                item={selectedItemData}
-                onChange={handlePropertyChange}
-                onDelete={deleteItem}
-                onDuplicate={duplicateItem}
-              />
-            ) : (
-              <EmptyPropertiesPanel />
-            )}
-          </div>
-        )}
 
-        {/* CENTER: Canvas area */}
+        {/* LEFT: Canvas area — fills available space */}
         <div className="flex-1 flex flex-col min-w-0">
           
           {/* Floating Toolbar — Canva-style centered pill */}
@@ -576,13 +560,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                     </>
                   ) : (
                     <>
-                      {/* Undo / Redo */}
                       <ToolbarButton icon={<Undo2 className="h-4 w-4" />} disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo" />
                       <ToolbarButton icon={<Redo2 className="h-4 w-4" />} disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo" />
-
                       <ToolbarDivider />
-
-                      {/* Shape buttons */}
                       {TOOLBAR_SHAPES.map((shape) => (
                         <ToolbarButton
                           key={shape.id}
@@ -592,46 +572,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                           label={undefined}
                         />
                       ))}
-
                       <ToolbarDivider />
-
-                      {/* Grid snap */}
-                      <ToolbarButton
-                        icon={<Magnet className="h-4 w-4" />}
-                        active={gridSnap}
-                        onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }}
-                        title={t.gridSnap}
-                      />
-
-                      {/* Reference image */}
+                      <ToolbarButton icon={<Magnet className="h-4 w-4" />} active={gridSnap} onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap} />
                       {referenceImageUrl && (
-                        <ToolbarButton
-                          icon={showReferenceImage ? <Eye className="h-4 w-4" /> : <ImageOff className="h-4 w-4" />}
-                          active={showReferenceImage}
-                          onClick={() => setShowReferenceImage(!showReferenceImage)}
-                          title={t.uploadReference}
-                        />
+                        <ToolbarButton icon={showReferenceImage ? <Eye className="h-4 w-4" /> : <ImageOff className="h-4 w-4" />} active={showReferenceImage} onClick={() => setShowReferenceImage(!showReferenceImage)} title={t.uploadReference} />
                       )}
-
-                      {/* Upload reference */}
                       {!referenceImageUrl && (
-                        <ToolbarButton
-                          icon={<Upload className="h-4 w-4" />}
-                          onClick={() => fileInputRef.current?.click()}
-                          title={t.uploadReference}
-                        />
+                        <ToolbarButton icon={<Upload className="h-4 w-4" />} onClick={() => fileInputRef.current?.click()} title={t.uploadReference} />
                       )}
-
-                      {/* Clear all */}
                       {items.length > 0 && (
                         <>
                           <ToolbarDivider />
-                          <ToolbarButton
-                            icon={<Eraser className="h-4 w-4" />}
-                            onClick={clearAllItems}
-                            title={t.clearAll}
-                            destructive
-                          />
+                          <ToolbarButton icon={<Eraser className="h-4 w-4" />} onClick={clearAllItems} title={t.clearAll} destructive />
                         </>
                       )}
                     </>
@@ -654,8 +606,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </div>
           )}
 
-          {/* Canvas */}
-          <div className="relative rounded-xl overflow-hidden border border-border/20 shadow-2xl mx-2 md:mx-0 md:rounded-l-none" style={{ aspectRatio: '4 / 3' }}>
+          {/* Canvas — full screen height */}
+          <div className="relative overflow-hidden border border-border/20 shadow-2xl mx-0 rounded-lg" style={{ height: 'calc(100vh - 140px)', minHeight: '400px' }}>
             <div
               ref={canvasRef}
               className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -664,18 +616,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               onMouseUp={isDesignMode ? handleMouseUp : undefined}
               onMouseLeave={isDesignMode ? handleMouseUp : undefined}
             >
-              {/* Premium dark background */}
               <div className="absolute inset-0" style={{
                 background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
               }} />
               <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
 
-              {/* Reference image */}
               {isDesignMode && referenceImageUrl && showReferenceImage && (
                 <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
               )}
 
-              {/* Empty state */}
               {items.length === 0 && isDesignMode && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center space-y-3">
@@ -687,7 +636,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 </div>
               )}
 
-              {/* SVG Canvas */}
               <VenueSVGCanvas
                 svgRef={svgRef}
                 items={items}
@@ -701,12 +649,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                   if (isDesignMode && !placingMode) setSelectedItem(id === selectedItem ? null : id);
                 }}
                 onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
-                onItemDoubleClick={isDesignMode ? (id) => setSelectedItem(id) : undefined}
                 onResizeStart={isDesignMode ? handleResizeStart : undefined}
                 interactive={isDesignMode && !placingMode}
               />
 
-              {/* Drag tooltip */}
               {isDesignMode && dragging && dragCoords && (
                 <div
                   className="absolute bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 text-[10px] text-white/80 pointer-events-none z-20 font-mono"
@@ -717,31 +663,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               )}
             </div>
 
-            {/* Bottom bar with save button */}
+            {/* Save button bottom-right */}
             {isDesignMode && (
               <div className="absolute bottom-0 left-0 right-0 flex items-center justify-end p-3 z-10">
-                <Button
-                  size="sm"
-                  className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90"
-                  onClick={handleSaveLayout}
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  {t.saveLayout}
+                <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout}>
+                  <Save className="h-3.5 w-3.5" />{t.saveLayout}
                 </Button>
               </div>
             )}
-
-            {/* Edit button when not in design mode */}
             {!isDesignMode && (
               <div className="absolute bottom-0 left-0 right-0 flex items-center justify-end p-3 z-10">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40"
-                  onClick={() => setIsDesignMode(true)}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  {t.editLayout}
+                <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
+                  <Pencil className="h-3.5 w-3.5" />{t.editLayout}
                 </Button>
               </div>
             )}
@@ -759,6 +692,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </div>
           )}
         </div>
+
+        {/* RIGHT: Properties Panel (desktop/tablet) — compact */}
+        {isDesignMode && selectedItemData && (
+          <div className="hidden md:block w-[200px] xl:w-[220px] flex-shrink-0 border-l border-border/20 bg-card/60 backdrop-blur-sm overflow-hidden">
+            <ItemPropertiesPanel
+              item={selectedItemData}
+              onChange={handlePropertyChange}
+              onDelete={deleteItem}
+              onDuplicate={duplicateItem}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
