@@ -37,6 +37,7 @@ interface VenueSVGCanvasProps {
   onTableClick?: (id: string) => void;
   onItemMouseDown?: (e: React.MouseEvent, id: string) => void;
   onItemDoubleClick?: (id: string) => void;
+  onResizeStart?: (e: React.MouseEvent, id: string, handle: string) => void;
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
@@ -69,6 +70,8 @@ const THEME = {
   selfStroke: 'hsl(var(--accent))',
   selfFill: 'hsl(var(--accent) / 0.18)',
   grid: 'hsl(var(--floorplan-wall) / 0.15)',
+  handleFill: 'hsl(var(--primary))',
+  handleStroke: 'hsl(var(--background))',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -90,6 +93,65 @@ function GridOverlay({ snap }: { snap: number }) {
   return <g>{lines}</g>;
 }
 
+// Resize handles component
+function ResizeHandles({ g, itemId, onResizeStart }: {
+  g: Geometry;
+  itemId: string;
+  onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
+}) {
+  const hs = 0.7; // handle size (half)
+  const cx = g.x + g.w / 2;
+  const cy = g.y + g.h / 2;
+
+  const handles = [
+    { id: 'nw', x: g.x, y: g.y, cursor: 'nw-resize' },
+    { id: 'n', x: cx, y: g.y, cursor: 'n-resize' },
+    { id: 'ne', x: g.x + g.w, y: g.y, cursor: 'ne-resize' },
+    { id: 'e', x: g.x + g.w, y: cy, cursor: 'e-resize' },
+    { id: 'se', x: g.x + g.w, y: g.y + g.h, cursor: 'se-resize' },
+    { id: 's', x: cx, y: g.y + g.h, cursor: 's-resize' },
+    { id: 'sw', x: g.x, y: g.y + g.h, cursor: 'sw-resize' },
+    { id: 'w', x: g.x, y: cy, cursor: 'w-resize' },
+  ];
+
+  return (
+    <g>
+      {/* Selection outline */}
+      {g.shape === 'round' ? (
+        <circle
+          cx={cx} cy={cy} r={g.w / 2 + 0.3}
+          fill="none" stroke={THEME.handleFill} strokeWidth={0.25}
+          strokeDasharray="0.8 0.4"
+        />
+      ) : (
+        <rect
+          x={g.x - 0.3} y={g.y - 0.3}
+          width={g.w + 0.6} height={g.h + 0.6}
+          rx={0.2} fill="none"
+          stroke={THEME.handleFill} strokeWidth={0.25}
+          strokeDasharray="0.8 0.4"
+        />
+      )}
+
+      {/* Handles */}
+      {handles.map(h => (
+        <rect
+          key={h.id}
+          x={h.x - hs} y={h.y - hs}
+          width={hs * 2} height={hs * 2}
+          rx={0.15}
+          fill={THEME.handleFill}
+          stroke={THEME.handleStroke}
+          strokeWidth={0.2}
+          style={{ cursor: h.cursor }}
+          onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
+          className="pointer-events-auto"
+        />
+      ))}
+    </g>
+  );
+}
+
 export function VenueSVGCanvas({
   items,
   fixtureBboxes,
@@ -101,6 +163,7 @@ export function VenueSVGCanvas({
   onTableClick,
   onItemMouseDown,
   onItemDoubleClick,
+  onResizeStart,
   interactive = true,
   showGrid = false,
   gridSnap = 2,
@@ -129,17 +192,16 @@ export function VenueSVGCanvas({
     const bbox = bboxMap[item.label];
     const rotation = item.rotation || 0;
 
-    // Use per-row width/height if available, fallback to bbox, then defaults
-    let w = item.width_percent || bbox?.w || (isFixture ? 8 : 4.8);
-    let h = item.height_percent || bbox?.h || (isFixture ? 5 : 4.8);
+    let w = item.width_percent || bbox?.w || (isFixture ? 8 : 5);
+    let h = item.height_percent || bbox?.h || (isFixture ? 5 : 5);
 
     if (isFixture) {
-      w = clamp(w, 3, 45);
-      h = clamp(h, 3, 50);
+      w = clamp(w, 2, 45);
+      h = clamp(h, 1, 50);
     } else {
       const shape = inferShape(item.shape);
-      w = clamp(w, 2.5, 20);
-      h = clamp(h, 2.5, 20);
+      w = clamp(w, 2, 25);
+      h = clamp(h, 2, 25);
       if (shape === 'square' || shape === 'round') {
         const side = (w + h) / 2;
         w = side;
@@ -158,12 +220,12 @@ export function VenueSVGCanvas({
   };
 
   const allowDrag = interactive && !!onItemMouseDown;
+  const showHandles = interactive && !!onResizeStart;
 
   return (
     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <rect x={0} y={0} width={100} height={100} fill="transparent" />
 
-      {/* Optional grid */}
       {showGrid && <GridOverlay snap={gridSnap} />}
 
       {/* Fixtures */}
@@ -176,10 +238,7 @@ export function VenueSVGCanvas({
 
         const selected = selectedItemId === item.id;
         const fixtureHandleMouseDown = allowDrag
-          ? (e: React.MouseEvent) => {
-              e.stopPropagation();
-              onItemMouseDown!(e, item.id);
-            }
+          ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
 
         return (
@@ -188,11 +247,7 @@ export function VenueSVGCanvas({
             transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
             onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
             onMouseDown={fixtureHandleMouseDown}
-            onDoubleClick={
-              onItemDoubleClick
-                ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); }
-                : undefined
-            }
+            onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
             <rect
@@ -230,6 +285,11 @@ export function VenueSVGCanvas({
                 {item.label.toUpperCase()}
               </text>
             )}
+
+            {/* Resize handles for selected fixture */}
+            {selected && showHandles && onResizeStart && (
+              <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
+            )}
           </g>
         );
       })}
@@ -263,10 +323,7 @@ export function VenueSVGCanvas({
         const seatsFont = Math.max(0.88, mainFont * 0.56);
 
         const handleMouseDown = allowDrag
-          ? (e: React.MouseEvent) => {
-              e.stopPropagation();
-              onItemMouseDown!(e, item.id);
-            }
+          ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
 
         return (
@@ -275,11 +332,7 @@ export function VenueSVGCanvas({
             transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
             onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
             onMouseDown={handleMouseDown}
-            onDoubleClick={
-              onItemDoubleClick
-                ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); }
-                : undefined
-            }
+            onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
             {g.shape === 'round' ? (
@@ -317,6 +370,11 @@ export function VenueSVGCanvas({
                   </text>
                 )}
               </>
+            )}
+
+            {/* Resize handles for selected table */}
+            {selected && showHandles && onResizeStart && (
+              <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
           </g>
         );
