@@ -683,8 +683,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = ((e.clientX - resizing.startX) / rect.width) * 100 / zoom.scale;
-      const dy = ((e.clientY - resizing.startY) / rect.height) * 100 / zoom.scale;
+      const dx = ((e.clientX - resizing.startX) / rect.width) * 100;
+      const dy = ((e.clientY - resizing.startY) / rect.height) * 100;
       const h = resizing.handle;
       let newW = resizing.origW, newH = resizing.origH;
       let newX = resizing.origXP, newY = resizing.origYP;
