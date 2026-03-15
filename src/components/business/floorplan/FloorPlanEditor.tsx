@@ -334,10 +334,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   // Canvas click for placing
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current || !placingMode) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    let x = (e.clientX - rect.left) / rect.width * 100;
-    let y = (e.clientY - rect.top) / rect.height * 100;
+    if (!placingMode) return;
+    const svgPt = screenToSVG(e.clientX, e.clientY);
+    let x = svgPt.x;
+    let y = svgPt.y;
     if (gridSnap) {x = snapValue(x, SNAP_INCREMENT);y = snapValue(y, SNAP_INCREMENT);}
 
     const existingTables = items.filter((i) => !i.fixture_type).length;
