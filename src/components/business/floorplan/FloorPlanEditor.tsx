@@ -7,7 +7,7 @@ import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil } from
+  Sofa, Beer, Music, Landmark, Save, Pencil, Eraser } from
 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
@@ -87,7 +87,10 @@ const translations = {
     editLayout: 'Επεξεργασία',
     layoutSaved: 'Το σχεδιάγραμμα αποθηκεύτηκε',
     assignMode: 'Διαχείριση θέσεων',
-    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης'
+    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης',
+    clearAll: 'Καθαρισμός όλων',
+    clearAllConfirm: 'Σίγουρα; Θα διαγραφούν όλα τα στοιχεία.',
+    cleared: 'Ο χώρος καθαρίστηκε'
   },
   en: {
     title: 'Layout Studio',
@@ -112,7 +115,10 @@ const translations = {
     editLayout: 'Edit',
     layoutSaved: 'Layout saved',
     assignMode: 'Manage seats',
-    assignHint: 'Click a seat to assign a reservation'
+    assignHint: 'Click a seat to assign a reservation',
+    clearAll: 'Clear all',
+    clearAllConfirm: 'Are you sure? All items will be deleted.',
+    cleared: 'Canvas cleared'
   }
 };
 
@@ -394,6 +400,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  const clearAllItems = async () => {
+    if (!window.confirm(t.clearAllConfirm)) return;
+    const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
+    if (error) { toast.error(error.message); return; }
+    history.pushState(items, 'clear all');
+    setItems([]);
+    setSelectedItem(null);
+    toast.success(t.cleared);
+  };
+
   // Save layout and exit design mode
   const handleSaveLayout = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -648,7 +664,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
                   {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
                 </Button>
-          }
+           }
+
+              <div className="w-px h-5 bg-border/40 mx-1" />
+
+              {/* Clear all */}
+              {items.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 px-2.5 text-destructive hover:text-destructive" onClick={clearAllItems} title={t.clearAll}>
+                  <Eraser className="h-3.5 w-3.5" />
+                  <span className="hidden lg:inline">{t.clearAll}</span>
+                </Button>
+              )}
 
               <div className="flex-1" />
 
@@ -657,7 +683,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
               </Button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-              
 
           
             </>
@@ -680,7 +705,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       {/* ═══ CANVAS + PROPERTIES ═══ */}
       <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ minHeight: '400px' }}>
         {/* Canvas - uses aspect-ratio to maintain proportions across devices */}
-        <div className="flex-1 relative" style={{ aspectRatio: '4 / 3' }}>
+        <div className="flex-1 relative" style={{ aspectRatio: '1 / 1' }}>
           <div
             ref={canvasRef}
             className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}

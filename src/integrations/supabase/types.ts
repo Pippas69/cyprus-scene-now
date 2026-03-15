@@ -2145,10 +2145,53 @@ export type Database = {
         }
         Relationships: []
       }
+      floor_plan_rooms: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_rooms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_rooms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       floor_plan_tables: {
         Row: {
           business_id: string
           color: string | null
+          combined_with: string[] | null
           created_at: string | null
           fixture_type: string | null
           height_percent: number | null
@@ -2156,8 +2199,10 @@ export type Database = {
           is_locked: boolean | null
           item_type: string | null
           label: string
+          room_id: string | null
           rotation: number | null
           seats: number
+          section_label: string | null
           shape: string
           sort_order: number
           updated_at: string | null
@@ -2169,6 +2214,7 @@ export type Database = {
         Insert: {
           business_id: string
           color?: string | null
+          combined_with?: string[] | null
           created_at?: string | null
           fixture_type?: string | null
           height_percent?: number | null
@@ -2176,8 +2222,10 @@ export type Database = {
           is_locked?: boolean | null
           item_type?: string | null
           label: string
+          room_id?: string | null
           rotation?: number | null
           seats?: number
+          section_label?: string | null
           shape?: string
           sort_order?: number
           updated_at?: string | null
@@ -2189,6 +2237,7 @@ export type Database = {
         Update: {
           business_id?: string
           color?: string | null
+          combined_with?: string[] | null
           created_at?: string | null
           fixture_type?: string | null
           height_percent?: number | null
@@ -2196,8 +2245,10 @@ export type Database = {
           is_locked?: boolean | null
           item_type?: string | null
           label?: string
+          room_id?: string | null
           rotation?: number | null
           seats?: number
+          section_label?: string | null
           shape?: string
           sort_order?: number
           updated_at?: string | null
@@ -2219,6 +2270,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_tables_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plan_rooms"
             referencedColumns: ["id"]
           },
           {
