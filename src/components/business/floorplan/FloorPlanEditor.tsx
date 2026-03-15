@@ -126,6 +126,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItemFull[]>([]);
