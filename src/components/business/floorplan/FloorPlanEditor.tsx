@@ -133,7 +133,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
-  const zoomContainerRef = useRef<HTMLDivElement>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItemFull[]>([]);
