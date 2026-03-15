@@ -59,13 +59,13 @@ const THEME = {
   // Canvas
   grid: 'hsl(var(--floorplan-wall) / 0.18)',
   // Fixtures — premium white
-  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.06)',
-  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.55)',
-  fixtureText: 'hsl(var(--floorplan-fixture) / 0.9)',
+  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
+  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.7)',
+  fixtureText: 'hsl(var(--floorplan-fixture))',
   // Tables — premium white
   tableStroke: 'hsl(var(--floorplan-neon))',
-  tableFill: 'hsl(var(--floorplan-neon) / 0.06)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.15)',
+  tableFill: 'hsl(var(--floorplan-neon) / 0.08)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
   tableText: 'hsl(var(--floorplan-neon))',
   tableMeta: 'hsl(var(--foreground) / 0.45)',
   // Reservation states
@@ -227,7 +227,7 @@ export function VenueSVGCanvas({
   const showHandles = interactive && !!onResizeStart;
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none">
+    <svg className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
 
       {showGrid && <GridOverlay snap={gridSnap} />}
@@ -259,7 +259,7 @@ export function VenueSVGCanvas({
               rx={isDj ? 0.7 : 0.45}
               fill={item.color ? `${item.color}10` : THEME.fixtureFill}
               stroke={selected ? (item.color || THEME.tableStroke) : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.65 : (isBar ? 0.55 : 0.38)}
+              strokeWidth={selected ? 0.8 : (isBar ? 0.65 : 0.5)}
             />
             {isBar && (
               <rect
@@ -311,12 +311,12 @@ export function VenueSVGCanvas({
         const customColor = item.color || null;
         let fill = customColor ? `${customColor}12` : THEME.tableFill;
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = selected ? 0.56 : 0.38;
+        let strokeWidth = selected ? 0.7 : 0.5;
 
         if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
-          strokeWidth = selected ? 0.56 : 0.42;
+          strokeWidth = selected ? 0.7 : 0.55;
         } else if (self) {
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
@@ -351,30 +351,17 @@ export function VenueSVGCanvas({
             )}
 
             {showLabels && (
-              <>
-                <text
-                  x={cx}
-                  y={cy - (item.seats > 0 ? seatsFont * 0.4 : 0)}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
-                  fontSize={mainFont} fontWeight={700}
-                  className="pointer-events-none"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                >
-                  {item.label}
-                </text>
-                {item.seats > 0 && (
-                  <text
-                    x={cx} y={cy + mainFont * 0.55}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fill={THEME.tableMeta} fontSize={seatsFont} fontWeight={600}
-                    className="pointer-events-none"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                  >
-                    {item.seats}p
-                  </text>
-                )}
-              </>
+              <text
+                x={cx}
+                y={cy}
+                textAnchor="middle" dominantBaseline="central"
+                fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
+                fontSize={mainFont} fontWeight={700}
+                className="pointer-events-none"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+              >
+                {item.label}
+              </text>
             )}
 
             {/* Resize handles for selected table */}

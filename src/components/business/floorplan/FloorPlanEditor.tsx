@@ -7,7 +7,7 @@ import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   Wand2, Loader2, ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark,
+  Sofa, Beer, Music, Landmark, Save, Pencil,
 } from 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
@@ -106,6 +106,11 @@ const translations = {
     duplicated: 'Αντιγράφηκε',
     noItems: 'Προσθέστε ένα σχήμα από τη γραμμή εργαλείων',
     startBlank: 'Ξεκινήστε κενό',
+    saveLayout: 'Αποθήκευση',
+    editLayout: 'Επεξεργασία',
+    layoutSaved: 'Το σχεδιάγραμμα αποθηκεύτηκε',
+    assignMode: 'Διαχείριση θέσεων',
+    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης',
   },
   en: {
     title: 'Layout Studio',
@@ -130,6 +135,11 @@ const translations = {
     duplicated: 'Duplicated',
     noItems: 'Add a shape from the toolbar above',
     startBlank: 'Start blank',
+    saveLayout: 'Save',
+    editLayout: 'Edit',
+    layoutSaved: 'Layout saved',
+    assignMode: 'Manage seats',
+    assignHint: 'Click a seat to assign a reservation',
   },
 };
 
@@ -158,6 +168,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
 
+  const [isDesignMode, setIsDesignMode] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
@@ -255,6 +266,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setItems(loadedItems);
     setZones(loadedZones);
     setHasFloorPlan(loadedItems.length > 0);
+    // If items already exist, start in view mode (design is complete)
+    if (loadedItems.length > 0) setIsDesignMode(true);
     history.reset(loadedItems);
 
     const meta = loadedZones[0]?.metadata;
@@ -468,6 +481,27 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  // Save layout and exit design mode
+  const handleSaveLayout = useCallback(async () => {
+    // Force save all pending changes
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    
+    // Batch update all items
+    for (const item of items) {
+      await supabase.from('floor_plan_tables').update({
+        label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
+        seats: item.seats, shape: item.shape, rotation: item.rotation,
+        width_percent: item.width_percent, height_percent: item.height_percent,
+        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+      } as any).eq('id', item.id);
+    }
+    
+    setIsDesignMode(false);
+    setSelectedItem(null);
+    setPlacingMode(null);
+    toast.success(t.layoutSaved);
+  }, [items, t.layoutSaved]);
+
   // Drag to move
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
@@ -638,90 +672,105 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">{t.title}</h2>
-            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+            <p className="text-xs text-muted-foreground">
+              {isDesignMode ? t.subtitle : t.assignHint}
+            </p>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
-          <span>🪑 {tableItems.length}</span>
-          <div className="w-px h-3 bg-border" />
-          <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
-          {fixtureItems.length > 0 && <>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
+            <span>🪑 {tableItems.length}</span>
             <div className="w-px h-3 bg-border" />
-            <span>📍 {fixtureItems.length}</span>
-          </>}
+            <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
+            {fixtureItems.length > 0 && <>
+              <div className="w-px h-3 bg-border" />
+              <span>📍 {fixtureItems.length}</span>
+            </>}
+          </div>
+          {isDesignMode ? (
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleSaveLayout}>
+              <Save className="h-3.5 w-3.5" />{t.saveLayout}
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setIsDesignMode(true)}>
+              <Pencil className="h-3.5 w-3.5" />{t.editLayout}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* ═══ TOOLBAR ═══ */}
-      <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
-        {placingMode ? (
-          <>
-            <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
-              <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
-            </div>
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
-              <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
-            </Button>
-          </>
-        ) : (
-          <>
-            {/* Undo / Redo */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
-              <Undo2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
-              <Redo2 className="h-3.5 w-3.5" />
-            </Button>
-
-            <div className="w-px h-5 bg-border/40 mx-1" />
-
-            {/* Shape buttons */}
-            {TOOLBAR_SHAPES.map(shape => (
-              <Button
-                key={shape.id}
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs gap-1.5 px-2.5"
-                onClick={() => setPlacingMode(shape)}
-                title={language === 'el' ? shape.label_el : shape.label_en}
-              >
-                {shape.icon}
-                <span className="hidden lg:inline">{language === 'el' ? shape.label_el : shape.label_en}</span>
+      {/* ═══ TOOLBAR (design mode only) ═══ */}
+      {isDesignMode && (
+        <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
+          {placingMode ? (
+            <>
+              <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
+                <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
+                <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
+                <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
               </Button>
-            ))}
-
-            <div className="w-px h-5 bg-border/40 mx-1" />
-
-            {/* Grid & Labels */}
-            <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
-              <Magnet className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
-              {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-            </Button>
-            {referenceImageUrl && (
-              <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
-                {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
+            </>
+          ) : (
+            <>
+              {/* Undo / Redo */}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
+                <Undo2 className="h-3.5 w-3.5" />
               </Button>
-            )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
 
-            <div className="flex-1" />
+              <div className="w-px h-5 bg-border/40 mx-1" />
 
-            {/* Right side */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
-              {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
-            </Button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
-              <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
-            </Button>
-          </>
-        )}
-      </div>
+              {/* Shape buttons */}
+              {TOOLBAR_SHAPES.map(shape => (
+                <Button
+                  key={shape.id}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 px-2.5"
+                  onClick={() => setPlacingMode(shape)}
+                  title={language === 'el' ? shape.label_el : shape.label_en}
+                >
+                  {shape.icon}
+                  <span className="hidden lg:inline">{language === 'el' ? shape.label_el : shape.label_en}</span>
+                </Button>
+              ))}
 
-      {/* Reference image opacity */}
-      {referenceImageUrl && showReferenceImage && (
+              <div className="w-px h-5 bg-border/40 mx-1" />
+
+              {/* Grid & Labels */}
+              <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
+                <Magnet className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
+                {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </Button>
+              {referenceImageUrl && (
+                <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
+                  {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {/* Right side */}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
+                {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
+                <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Reference image opacity (design mode only) */}
+      {isDesignMode && referenceImageUrl && showReferenceImage && (
         <div className="flex items-center gap-3 bg-card/60 border border-border/30 rounded-lg px-3 py-1.5">
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">{t.opacity}</span>
           <Slider value={[referenceOpacity]} onValueChange={([v]) => setReferenceOpacity(v)} min={5} max={90} step={5} className="flex-1 max-w-[200px]" />
@@ -738,11 +787,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         <div className="flex-1 relative">
           <div
             ref={canvasRef}
-            className={`relative select-none w-full h-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-            onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            className={`relative select-none w-full h-full ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+            onClick={isDesignMode ? handleCanvasClick : undefined}
+            onMouseMove={isDesignMode ? handleMouseMove : undefined}
+            onMouseUp={isDesignMode ? handleMouseUp : undefined}
+            onMouseLeave={isDesignMode ? handleMouseUp : undefined}
           >
             {/* Premium dark background */}
             <div className="absolute inset-0" style={{
@@ -750,13 +799,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             }} />
             <div className="absolute inset-0 border border-white/[0.03] rounded-none pointer-events-none" />
 
-            {/* Reference image */}
-            {referenceImageUrl && showReferenceImage && (
+            {/* Reference image (design mode only) */}
+            {isDesignMode && referenceImageUrl && showReferenceImage && (
               <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
             )}
 
             {/* Empty state */}
-            {items.length === 0 && (
+            {items.length === 0 && isDesignMode && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <p className="text-sm text-muted-foreground/40 text-center px-8">{t.noItems}</p>
               </div>
@@ -767,19 +816,23 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               items={items}
               fixtureBboxes={fixtureBboxes}
               tableBboxes={tableBboxes}
-              selectedItemId={selectedItem}
+              selectedItemId={isDesignMode ? selectedItem : null}
               showLabels={showLabels}
-              showGrid={showGrid}
+              showGrid={isDesignMode && showGrid}
               gridSnap={SNAP_INCREMENT}
-              onTableClick={(id) => { if (!placingMode) setSelectedItem(id === selectedItem ? null : id); }}
-              onItemMouseDown={(e, id) => handleMouseDown(e, id)}
-              onItemDoubleClick={(id) => setSelectedItem(id)}
-              onResizeStart={handleResizeStart}
-              interactive={!placingMode}
+              onTableClick={(id) => {
+                if (isDesignMode) {
+                  if (!placingMode) setSelectedItem(id === selectedItem ? null : id);
+                }
+              }}
+              onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
+              onItemDoubleClick={isDesignMode ? (id) => setSelectedItem(id) : undefined}
+              onResizeStart={isDesignMode ? handleResizeStart : undefined}
+              interactive={isDesignMode && !placingMode}
             />
 
             {/* Drag tooltip */}
-            {dragging && dragCoords && (
+            {isDesignMode && dragging && dragCoords && (
               <div
                 className="absolute bg-card/90 backdrop-blur-sm border border-border/50 rounded px-1.5 py-0.5 text-[10px] text-foreground pointer-events-none z-20"
                 style={{ left: `${dragCoords.x}%`, top: `${Math.max(0, dragCoords.y - 5)}%`, transform: 'translate(-50%, -100%)' }}
@@ -790,8 +843,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
         </div>
 
-        {/* Right: Properties Panel */}
-        {showRightPanel && (
+        {/* Right: Properties Panel (design mode only) */}
+        {isDesignMode && showRightPanel && (
           <div className="w-[260px] xl:w-[300px] flex-shrink-0">
             {selectedItemData ? (
               <ItemPropertiesPanel
