@@ -2148,6 +2148,7 @@ export type Database = {
       floor_plan_tables: {
         Row: {
           business_id: string
+          color: string | null
           created_at: string | null
           fixture_type: string | null
           height_percent: number | null
@@ -2167,6 +2168,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          color?: string | null
           created_at?: string | null
           fixture_type?: string | null
           height_percent?: number | null
@@ -2186,6 +2188,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          color?: string | null
           created_at?: string | null
           fixture_type?: string | null
           height_percent?: number | null

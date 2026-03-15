@@ -1,0 +1,1 @@
+ALTER TABLE public.floor_plan_tables ADD COLUMN IF NOT EXISTS color text DEFAULT null;
