@@ -510,6 +510,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       startX: svgPt.x, startY: svgPt.y,
       origW: item.width_percent, origH: item.height_percent,
       origXP: item.x_percent, origYP: item.y_percent,
+      origRotation: item.rotation || 0,
     });
   }, [items, history, screenToSVG]);
 
