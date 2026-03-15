@@ -365,12 +365,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         shape: 'rect',
         sort_order: i,
         fixture_type: f.fixture_type,
-        rotation: 0,
-        width_percent: f.width_percent,
-        height_percent: f.height_percent,
       }));
 
-      // Insert tables with width/height
+      // Insert tables
       const tableRows = tables.map((tb, i) => ({
         business_id: businessId,
         zone_id: metaZone?.id || null,
@@ -381,14 +378,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         shape: tb.shape,
         sort_order: fixtures.length + i,
         fixture_type: null,
-        rotation: 0,
-        width_percent: tb.width_percent,
-        height_percent: tb.height_percent,
       }));
 
       const allRows = [...fixtureRows, ...tableRows];
       if (allRows.length > 0) {
-        const { error: insertError } = await supabase.from('floor_plan_tables').insert(allRows);
+        const { error: insertError } = await supabase.from('floor_plan_tables').insert(allRows as any);
         if (insertError) console.error('Insert error:', insertError);
       }
 
@@ -454,10 +448,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       shape: item.shape || 'square',
       sort_order: items.length,
       fixture_type: item.fixture_type || null,
-      rotation: item.rotation || 0,
-      width_percent: item.width_percent || 5,
-      height_percent: item.height_percent || 5,
-    }).select().single();
+    } as any).select().single();
     if (error) { toast.error(error.message); return; }
     const newItem = { ...(data as unknown as FloorPlanItem), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5 };
     setItems(prev => [...prev, newItem]);
@@ -473,10 +464,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         y_percent: item.y_percent,
         seats: item.seats,
         shape: item.shape,
-        rotation: item.rotation,
-        width_percent: item.width_percent,
-        height_percent: item.height_percent,
-      })
+      } as any)
       .eq('id', item.id);
     if (error) { toast.error(error.message); return; }
     setItems(prev => prev.map(i => i.id === item.id ? item : i));
