@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil, ZoomIn, ZoomOut, Maximize,
+  Sofa, Beer, Music, Landmark, Save, Pencil,
   LayoutTemplate, Layers
 } from 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
