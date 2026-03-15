@@ -249,6 +249,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       height_percent: (i as any).height_percent ?? 5,
       is_locked: (i as any).is_locked ?? false,
       item_type: (i as any).item_type ?? 'table',
+      color: (i as any).color ?? null,
     }));
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setItems(loadedItems);
