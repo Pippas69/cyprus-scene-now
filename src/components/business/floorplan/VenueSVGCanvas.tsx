@@ -351,30 +351,17 @@ export function VenueSVGCanvas({
             )}
 
             {showLabels && (
-              <>
-                <text
-                  x={cx}
-                  y={cy - (item.seats > 0 ? seatsFont * 0.4 : 0)}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
-                  fontSize={mainFont} fontWeight={700}
-                  className="pointer-events-none"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                >
-                  {item.label}
-                </text>
-                {item.seats > 0 && (
-                  <text
-                    x={cx} y={cy + mainFont * 0.55}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fill={THEME.tableMeta} fontSize={seatsFont} fontWeight={600}
-                    className="pointer-events-none"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                  >
-                    {item.seats}p
-                  </text>
-                )}
-              </>
+              <text
+                x={cx}
+                y={cy}
+                textAnchor="middle" dominantBaseline="central"
+                fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
+                fontSize={mainFont} fontWeight={700}
+                className="pointer-events-none"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+              >
+                {item.label}
+              </text>
             )}
 
             {/* Resize handles for selected table */}
