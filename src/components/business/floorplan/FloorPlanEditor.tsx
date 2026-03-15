@@ -374,7 +374,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
         seats: item.seats, shape: item.shape, rotation: item.rotation,
         width_percent: item.width_percent, height_percent: item.height_percent,
-        is_locked: item.is_locked, item_type: item.item_type,
+        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
       } as any).eq('id', item.id).then(({ error }) => {
         if (error) console.error('Save error:', error);
       });
