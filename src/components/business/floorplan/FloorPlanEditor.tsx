@@ -249,6 +249,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       height_percent: (i as any).height_percent ?? 5,
       is_locked: (i as any).is_locked ?? false,
       item_type: (i as any).item_type ?? 'table',
+      color: (i as any).color ?? null,
     }));
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setItems(loadedItems);
@@ -374,7 +375,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
         seats: item.seats, shape: item.shape, rotation: item.rotation,
         width_percent: item.width_percent, height_percent: item.height_percent,
-        is_locked: item.is_locked, item_type: item.item_type,
+        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
       } as any).eq('id', item.id).then(({ error }) => {
         if (error) console.error('Save error:', error);
       });
@@ -395,7 +396,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       is_locked: false, item_type: item.item_type || 'table',
     } as any).select().single();
     if (error) { toast.error(error.message); return null; }
-    return { ...(data as unknown as FloorPlanItemFull), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5, is_locked: false, item_type: item.item_type || 'table' };
+    return { ...(data as unknown as FloorPlanItemFull), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5, is_locked: false, item_type: item.item_type || 'table', color: item.color || null };
   };
 
   // Canvas click for placing

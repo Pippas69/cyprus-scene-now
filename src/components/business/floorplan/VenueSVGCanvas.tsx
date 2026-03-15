@@ -12,6 +12,7 @@ export interface VenueItem {
   rotation?: number;
   width_percent?: number;
   height_percent?: number;
+  color?: string | null;
 }
 
 export interface VenueBBox {
@@ -57,14 +58,14 @@ type Geometry = {
 const THEME = {
   // Canvas
   grid: 'hsl(var(--floorplan-wall) / 0.18)',
-  // Fixtures — cool blue tone
-  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
-  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.6)',
+  // Fixtures — premium white
+  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.06)',
+  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.55)',
   fixtureText: 'hsl(var(--floorplan-fixture) / 0.9)',
-  // Tables — warm gold tone
+  // Tables — premium white
   tableStroke: 'hsl(var(--floorplan-neon))',
   tableFill: 'hsl(var(--floorplan-neon) / 0.06)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.15)',
   tableText: 'hsl(var(--floorplan-neon))',
   tableMeta: 'hsl(var(--foreground) / 0.45)',
   // Reservation states
@@ -73,7 +74,7 @@ const THEME = {
   selfStroke: 'hsl(var(--floorplan-accent))',
   selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
   // Handles
-  handleFill: 'hsl(var(--floorplan-neon))',
+  handleFill: 'hsl(0 0% 100%)',
   handleStroke: 'hsl(var(--floorplan-canvas))',
 };
 
@@ -256,8 +257,8 @@ export function VenueSVGCanvas({
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
               rx={isDj ? 0.7 : 0.45}
-              fill={THEME.fixtureFill}
-              stroke={selected ? THEME.tableStroke : THEME.fixtureStroke}
+              fill={item.color ? `${item.color}10` : THEME.fixtureFill}
+              stroke={selected ? (item.color || THEME.tableStroke) : (item.color || THEME.fixtureStroke)}
               strokeWidth={selected ? 0.65 : (isBar ? 0.55 : 0.38)}
             />
             {isBar && (
@@ -279,7 +280,7 @@ export function VenueSVGCanvas({
               <text
                 x={cx} y={cy + 0.28}
                 textAnchor="middle" dominantBaseline="middle"
-                fill={THEME.fixtureText}
+                fill={item.color || THEME.fixtureText}
                 fontSize={isBar && g.w > 15 ? 5.7 : 2.9}
                 fontWeight={isBar ? 800 : 700}
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.03em' }}
@@ -307,8 +308,9 @@ export function VenueSVGCanvas({
         const occupied = isOccupied(item);
         const self = isSelf(item);
 
-        let fill = THEME.tableFill;
-        let stroke = THEME.tableStroke;
+        const customColor = item.color || null;
+        let fill = customColor ? `${customColor}12` : THEME.tableFill;
+        let stroke = customColor || THEME.tableStroke;
         let strokeWidth = selected ? 0.56 : 0.38;
 
         if (occupied) {
@@ -319,7 +321,7 @@ export function VenueSVGCanvas({
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
         } else if (selected) {
-          fill = THEME.tableSelectedFill;
+          fill = customColor ? `${customColor}28` : THEME.tableSelectedFill;
         }
 
         const mainFont = Math.min(g.w, g.h) > 5 ? 2.1 : 1.65;
@@ -354,7 +356,7 @@ export function VenueSVGCanvas({
                   x={cx}
                   y={cy - (item.seats > 0 ? seatsFont * 0.4 : 0)}
                   textAnchor="middle" dominantBaseline="middle"
-                  fill={occupied ? THEME.occupiedStroke : THEME.tableText}
+                  fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                   fontSize={mainFont} fontWeight={700}
                   className="pointer-events-none"
                   style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
