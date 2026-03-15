@@ -128,7 +128,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
-  const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number; origRotation: number } | null>(null);
+  const [resizing, setResizing] = useState<{
+    id: string; handle: string;
+    // Anchor = the opposite edge/corner that stays fixed
+    anchorX: number; anchorY: number;
+    // Which axes this handle controls
+    movesLeft: boolean; movesRight: boolean;
+    movesTop: boolean; movesBottom: boolean;
+  } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -504,15 +511,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'resize');
-    const svgPt = screenToSVG(e.clientX, e.clientY);
-    setResizing({
-      id, handle,
-      startX: svgPt.x, startY: svgPt.y,
-      origW: item.width_percent, origH: item.height_percent,
-      origXP: item.x_percent, origYP: item.y_percent,
-      origRotation: item.rotation || 0,
-    });
-  }, [items, history, screenToSVG]);
+
+    // Determine which edges this handle moves
+    const movesLeft = handle.includes('w');
+    const movesRight = handle.includes('e');
+    const movesTop = handle.includes('n');
+    const movesBottom = handle.includes('s');
+
+    // Anchor = the opposite edge that stays fixed
+    const anchorX = movesRight ? item.x_percent : (movesLeft ? item.x_percent + item.width_percent : item.x_percent);
+    const anchorY = movesBottom ? item.y_percent : (movesTop ? item.y_percent + item.height_percent : item.y_percent);
+
+    setResizing({ id, handle, anchorX, anchorY, movesLeft, movesRight, movesTop, movesBottom });
+  }, [items, history]);
 
   const updatePointer = useCallback((clientX: number, clientY: number) => {
     const svgPt = screenToSVG(clientX, clientY);
@@ -531,31 +542,38 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const rawDx = svgPt.x - resizing.startX;
-      const rawDy = svgPt.y - resizing.startY;
-      const angle = (resizing.origRotation * Math.PI) / 180;
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
+      // Absolute position approach: compute new edges directly from mouse position
+      // The anchor (opposite edge) stays fixed; the grabbed edge follows the mouse
+      const mouseX = svgPt.x;
+      const mouseY = svgPt.y;
 
-      // Convert pointer movement to local (item) axes so resize direction feels correct when rotated
-      const dx = rawDx * cos + rawDy * sin;
-      const dy = -rawDx * sin + rawDy * cos;
+      const item = items.find((i) => i.id === resizing.id);
+      if (!item) return;
 
-      const h = resizing.handle;
-      let newW = resizing.origW;
-      let newH = resizing.origH;
-      let newX = resizing.origXP;
-      let newY = resizing.origYP;
+      let newX = item.x_percent;
+      let newY = item.y_percent;
+      let newW = item.width_percent;
+      let newH = item.height_percent;
 
-      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 80);
-      if (h.includes('w')) {
-        newW = clamp(resizing.origW - dx, 1, 80);
-        newX = resizing.origXP + (resizing.origW - newW);
+      if (resizing.movesRight) {
+        // Right edge follows mouse, left edge (anchorX) stays fixed
+        newW = clamp(mouseX - resizing.anchorX, 1, 80);
+        newX = resizing.anchorX;
       }
-      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 80);
-      if (h.includes('n')) {
-        newH = clamp(resizing.origH - dy, 1, 80);
-        newY = resizing.origYP + (resizing.origH - newH);
+      if (resizing.movesLeft) {
+        // Left edge follows mouse, right edge (anchorX) stays fixed
+        newW = clamp(resizing.anchorX - mouseX, 1, 80);
+        newX = resizing.anchorX - newW;
+      }
+      if (resizing.movesBottom) {
+        // Bottom edge follows mouse, top edge (anchorY) stays fixed
+        newH = clamp(mouseY - resizing.anchorY, 1, 80);
+        newY = resizing.anchorY;
+      }
+      if (resizing.movesTop) {
+        // Top edge follows mouse, bottom edge (anchorY) stays fixed
+        newH = clamp(resizing.anchorY - mouseY, 1, 80);
+        newY = resizing.anchorY - newH;
       }
 
       if (gridSnap) {
