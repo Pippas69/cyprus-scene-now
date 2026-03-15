@@ -280,7 +280,7 @@ export function VenueSVGCanvas({
               <text
                 x={cx} y={cy + 0.28}
                 textAnchor="middle" dominantBaseline="middle"
-                fill={THEME.fixtureText}
+                fill={item.color || THEME.fixtureText}
                 fontSize={isBar && g.w > 15 ? 5.7 : 2.9}
                 fontWeight={isBar ? 800 : 700}
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.03em' }}
