@@ -511,15 +511,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'resize');
-    const svgPt = screenToSVG(e.clientX, e.clientY);
-    setResizing({
-      id, handle,
-      startX: svgPt.x, startY: svgPt.y,
-      origW: item.width_percent, origH: item.height_percent,
-      origXP: item.x_percent, origYP: item.y_percent,
-      origRotation: item.rotation || 0,
-    });
-  }, [items, history, screenToSVG]);
+
+    // Determine which edges this handle moves
+    const movesLeft = handle.includes('w');
+    const movesRight = handle.includes('e');
+    const movesTop = handle.includes('n');
+    const movesBottom = handle.includes('s');
+
+    // Anchor = the opposite edge that stays fixed
+    const anchorX = movesRight ? item.x_percent : (movesLeft ? item.x_percent + item.width_percent : item.x_percent);
+    const anchorY = movesBottom ? item.y_percent : (movesTop ? item.y_percent + item.height_percent : item.y_percent);
+
+    setResizing({ id, handle, anchorX, anchorY, movesLeft, movesRight, movesTop, movesBottom });
+  }, [items, history]);
 
   const updatePointer = useCallback((clientX: number, clientY: number) => {
     const svgPt = screenToSVG(clientX, clientY);
