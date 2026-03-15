@@ -413,8 +413,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
     const newItem: Partial<FloorPlanItemFull> = {
       label,
-      x_percent: clamp(x, 2, 98),
-      y_percent: clamp(y, 2, 98),
+      x_percent: clamp(x, -3, 103),
+      y_percent: clamp(y, -3, 103),
       seats: placingMode.seats,
       shape: placingMode.shape,
       fixture_type: placingMode.fixture_type,
