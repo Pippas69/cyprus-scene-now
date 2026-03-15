@@ -48,6 +48,8 @@ const translations = {
     height: 'Ύψος',
     locked: 'Κλειδωμένο',
     type: 'Τύπος',
+    color: 'Χρώμα',
+    resetColor: 'Επαναφορά',
     duplicate: 'Αντιγραφή',
     delete: 'Διαγραφή',
     confirmDelete: 'Σίγουρα;',
