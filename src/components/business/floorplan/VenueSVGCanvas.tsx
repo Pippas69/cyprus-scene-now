@@ -105,7 +105,7 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
   itemId: string;
   onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
 }) {
-  const hs = 0.55;
+  const hs = 0.85;
   const cx = g.x + g.w / 2;
   const cy = g.y + g.h / 2;
 
@@ -125,30 +125,30 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
 
   return (
     <g>
-      {/* Selection bounding box — clean blue line */}
+      {/* Selection bounding box */}
       {g.shape === 'round' ? (
         <circle
           cx={cx} cy={cy} r={g.w / 2 + 0.4}
-          fill="none" stroke={THEME.selectionStroke} strokeWidth={0.2}
+          fill="none" stroke={THEME.selectionStroke} strokeWidth={0.26}
         />
       ) : (
         <rect
           x={g.x - 0.4} y={g.y - 0.4}
           width={g.w + 0.8} height={g.h + 0.8}
           rx={0.15} fill="none"
-          stroke={THEME.selectionStroke} strokeWidth={0.2}
+          stroke={THEME.selectionStroke} strokeWidth={0.26}
         />
       )}
 
-      {/* Edge handles — small lines for midpoints */}
+      {/* Edge handles */}
       {edgeHandles.map(h => (
         <rect
           key={h.id}
-          x={h.x - (h.id === 'n' || h.id === 's' ? 1.2 : 0.3)}
-          y={h.y - (h.id === 'e' || h.id === 'w' ? 1.2 : 0.3)}
-          width={h.id === 'n' || h.id === 's' ? 2.4 : 0.6}
-          height={h.id === 'e' || h.id === 'w' ? 2.4 : 0.6}
-          rx={0.15}
+          x={h.x - (h.id === 'n' || h.id === 's' ? 1.7 : 0.45)}
+          y={h.y - (h.id === 'e' || h.id === 'w' ? 1.7 : 0.45)}
+          width={h.id === 'n' || h.id === 's' ? 3.4 : 0.9}
+          height={h.id === 'e' || h.id === 'w' ? 3.4 : 0.9}
+          rx={0.2}
           fill={THEME.handleFill}
           stroke={THEME.handleBorder}
           strokeWidth={0.12}
@@ -158,7 +158,7 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
         />
       ))}
 
-      {/* Corner handles — circles like Canva */}
+      {/* Corner handles */}
       {handles.map(h => (
         <circle
           key={h.id}
