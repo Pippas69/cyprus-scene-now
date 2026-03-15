@@ -188,11 +188,14 @@ All colors MUST be HSL.
     --sidebar-border: 207 40% 25%;
     --sidebar-ring: 174 62% 56%;
 
-    /* Floor plan architectural neon system (dark mode) */
-    --floorplan-neon: 188 100% 62%;
-    --floorplan-canvas: 212 82% 10%;
-    --floorplan-canvas-elevated: 210 72% 14%;
-    --floorplan-wall: 188 82% 48%;
+    /* Floor plan premium studio system (dark mode) */
+    --floorplan-neon: 45 90% 65%;
+    --floorplan-neon-secondary: 200 70% 58%;
+    --floorplan-canvas: 220 32% 7%;
+    --floorplan-canvas-elevated: 220 28% 10%;
+    --floorplan-wall: 220 15% 25%;
+    --floorplan-accent: 160 60% 48%;
+    --floorplan-fixture: 200 55% 55%;
   }
 }
 
