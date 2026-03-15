@@ -739,8 +739,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         {/* Save / Edit button — bottom right inside canvas */}
         {isDesignMode ? (
           <div className="absolute bottom-3 right-3 z-10">
-            <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout}>
-              <Save className="h-3.5 w-3.5" />{t.saveLayout}
+            <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}{isSaving ? 'Saving...' : t.saveLayout}
             </Button>
           </div>
         ) : (
