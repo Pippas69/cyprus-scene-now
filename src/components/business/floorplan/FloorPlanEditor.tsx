@@ -575,12 +575,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               <Button variant="default" size="sm" onClick={() => setHasFloorPlan(true)}>
                 {t.startBlank}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => {
-                setHasFloorPlan(true);
-                setTimeout(() => fileInputRef.current?.click(), 100);
-              }}>
-                <Upload className="h-3.5 w-3.5 mr-1.5" />{t.withReference}
-              </Button>
+              
+
+
+
+
+              
             </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
