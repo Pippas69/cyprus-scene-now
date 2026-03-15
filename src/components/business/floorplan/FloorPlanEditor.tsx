@@ -87,7 +87,10 @@ const translations = {
     editLayout: 'Επεξεργασία',
     layoutSaved: 'Το σχεδιάγραμμα αποθηκεύτηκε',
     assignMode: 'Διαχείριση θέσεων',
-    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης'
+    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης',
+    clearAll: 'Καθαρισμός όλων',
+    clearAllConfirm: 'Σίγουρα; Θα διαγραφούν όλα τα στοιχεία.',
+    cleared: 'Ο χώρος καθαρίστηκε'
   },
   en: {
     title: 'Layout Studio',
