@@ -13,6 +13,8 @@ export interface VenueItem {
   width_percent?: number;
   height_percent?: number;
   color?: string | null;
+  section_label?: string | null;
+  combined_with?: string[];
 }
 
 export interface VenueBBox {
@@ -32,7 +34,9 @@ interface VenueSVGCanvasProps {
   fixtureBboxes: Record<string, VenueBBox>;
   tableBboxes: Record<string, VenueBBox>;
   selectedItemId?: string | null;
+  selectedItemIds?: string[];
   showLabels?: boolean;
+  showSeatDots?: boolean;
   assignments?: TableAssignment[];
   currentReservationId?: string;
   onTableClick?: (id: string) => void;
@@ -42,6 +46,7 @@ interface VenueSVGCanvasProps {
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
+  showSections?: boolean;
 }
 
 type RenderShape = 'round' | 'square' | 'rectangle';
@@ -56,26 +61,26 @@ type Geometry = {
 };
 
 const THEME = {
-  // Canvas
   grid: 'hsl(var(--floorplan-wall) / 0.18)',
-  // Fixtures — premium white
   fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
   fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.7)',
   fixtureText: 'hsl(var(--floorplan-fixture))',
-  // Tables — premium white
   tableStroke: 'hsl(var(--floorplan-neon))',
   tableFill: 'hsl(var(--floorplan-neon) / 0.08)',
   tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
   tableText: 'hsl(var(--floorplan-neon))',
   tableMeta: 'hsl(var(--foreground) / 0.45)',
-  // Reservation states
   occupiedStroke: 'hsl(0 72% 55%)',
   occupiedFill: 'hsl(0 72% 55% / 0.12)',
   selfStroke: 'hsl(var(--floorplan-accent))',
   selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
-  // Handles
   handleFill: 'hsl(0 0% 100%)',
   handleStroke: 'hsl(var(--floorplan-canvas))',
+  seatDot: 'hsl(var(--floorplan-neon) / 0.4)',
+  combinedLine: 'hsl(var(--floorplan-accent) / 0.5)',
+  sectionFill: 'hsl(var(--floorplan-neon) / 0.03)',
+  sectionStroke: 'hsl(var(--floorplan-neon) / 0.15)',
+  sectionText: 'hsl(var(--floorplan-neon) / 0.35)',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -97,16 +102,14 @@ function GridOverlay({ snap }: { snap: number }) {
   return <g>{lines}</g>;
 }
 
-// Resize handles component
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
   onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
 }) {
-  const hs = 0.7; // handle size (half)
+  const hs = 0.7;
   const cx = g.x + g.w / 2;
   const cy = g.y + g.h / 2;
-
   const handles = [
     { id: 'nw', x: g.x, y: g.y, cursor: 'nw-resize' },
     { id: 'n', x: cx, y: g.y, cursor: 'n-resize' },
@@ -120,24 +123,11 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
 
   return (
     <g>
-      {/* Selection outline */}
       {g.shape === 'round' ? (
-        <circle
-          cx={cx} cy={cy} r={g.w / 2 + 0.3}
-          fill="none" stroke={THEME.handleFill} strokeWidth={0.25}
-          strokeDasharray="0.8 0.4"
-        />
+        <circle cx={cx} cy={cy} r={g.w / 2 + 0.3} fill="none" stroke={THEME.handleFill} strokeWidth={0.25} strokeDasharray="0.8 0.4" />
       ) : (
-        <rect
-          x={g.x - 0.3} y={g.y - 0.3}
-          width={g.w + 0.6} height={g.h + 0.6}
-          rx={0.2} fill="none"
-          stroke={THEME.handleFill} strokeWidth={0.25}
-          strokeDasharray="0.8 0.4"
-        />
+        <rect x={g.x - 0.3} y={g.y - 0.3} width={g.w + 0.6} height={g.h + 0.6} rx={0.2} fill="none" stroke={THEME.handleFill} strokeWidth={0.25} strokeDasharray="0.8 0.4" />
       )}
-
-      {/* Handles */}
       {handles.map(h => (
         <rect
           key={h.id}
@@ -156,12 +146,157 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
   );
 }
 
+// Seat dots positioned around a table
+function SeatDots({ g, seats, color }: { g: Geometry; seats: number; color: string }) {
+  if (seats <= 0) return null;
+  const cx = g.x + g.w / 2;
+  const cy = g.y + g.h / 2;
+  const dotR = 0.35;
+  const dots: JSX.Element[] = [];
+
+  if (g.shape === 'round') {
+    const r = g.w / 2 + 1;
+    for (let i = 0; i < seats; i++) {
+      const angle = (2 * Math.PI * i) / seats - Math.PI / 2;
+      dots.push(
+        <circle
+          key={i}
+          cx={cx + r * Math.cos(angle)}
+          cy={cy + r * Math.sin(angle)}
+          r={dotR}
+          fill={color}
+          opacity={0.6}
+        />
+      );
+    }
+  } else {
+    // Distribute around rectangle perimeter
+    const perimeter = 2 * (g.w + g.h);
+    const gap = perimeter / seats;
+    for (let i = 0; i < seats; i++) {
+      let d = gap * i + gap / 2;
+      let dx = 0, dy = 0;
+      const offset = 1;
+      if (d < g.w) {
+        dx = g.x + d; dy = g.y - offset;
+      } else if (d < g.w + g.h) {
+        d -= g.w; dx = g.x + g.w + offset; dy = g.y + d;
+      } else if (d < 2 * g.w + g.h) {
+        d -= (g.w + g.h); dx = g.x + g.w - d; dy = g.y + g.h + offset;
+      } else {
+        d -= (2 * g.w + g.h); dx = g.x - offset; dy = g.y + g.h - d;
+      }
+      dots.push(<circle key={i} cx={dx} cy={dy} r={dotR} fill={color} opacity={0.6} />);
+    }
+  }
+  return <g className="pointer-events-none">{dots}</g>;
+}
+
+// Section overlays
+function SectionOverlays({ items, resolveGeometry }: { 
+  items: VenueItem[]; 
+  resolveGeometry: (item: VenueItem, isFixture: boolean) => Geometry;
+}) {
+  const sections = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
+  
+  for (const item of items) {
+    if (!item.section_label || item.fixture_type) continue;
+    const g = resolveGeometry(item, false);
+    const existing = sections.get(item.section_label);
+    const padding = 2;
+    if (existing) {
+      existing.minX = Math.min(existing.minX, g.x - padding);
+      existing.minY = Math.min(existing.minY, g.y - padding);
+      existing.maxX = Math.max(existing.maxX, g.x + g.w + padding);
+      existing.maxY = Math.max(existing.maxY, g.y + g.h + padding);
+    } else {
+      sections.set(item.section_label, {
+        minX: g.x - padding,
+        minY: g.y - padding,
+        maxX: g.x + g.w + padding,
+        maxY: g.y + g.h + padding,
+      });
+    }
+  }
+
+  return (
+    <g className="pointer-events-none">
+      {Array.from(sections.entries()).map(([label, bounds]) => (
+        <g key={label}>
+          <rect
+            x={bounds.minX} y={bounds.minY}
+            width={bounds.maxX - bounds.minX}
+            height={bounds.maxY - bounds.minY}
+            rx={1}
+            fill={THEME.sectionFill}
+            stroke={THEME.sectionStroke}
+            strokeWidth={0.2}
+            strokeDasharray="1 0.5"
+          />
+          <text
+            x={bounds.minX + 0.8}
+            y={bounds.minY + 1.6}
+            fill={THEME.sectionText}
+            fontSize={1.4}
+            fontWeight={600}
+            style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '0.05em' }}
+          >
+            {label.toUpperCase()}
+          </text>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+// Combined table link lines
+function CombinedLinks({ items, resolveGeometry }: {
+  items: VenueItem[];
+  resolveGeometry: (item: VenueItem, isFixture: boolean) => Geometry;
+}) {
+  const lines: JSX.Element[] = [];
+  const seen = new Set<string>();
+
+  for (const item of items) {
+    if (!item.combined_with?.length) continue;
+    const g1 = resolveGeometry(item, false);
+    const c1x = g1.x + g1.w / 2;
+    const c1y = g1.y + g1.h / 2;
+
+    for (const linkedId of item.combined_with) {
+      const key = [item.id, linkedId].sort().join('-');
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const linked = items.find(i => i.id === linkedId);
+      if (!linked) continue;
+      const g2 = resolveGeometry(linked, false);
+      const c2x = g2.x + g2.w / 2;
+      const c2y = g2.y + g2.h / 2;
+
+      lines.push(
+        <line
+          key={key}
+          x1={c1x} y1={c1y} x2={c2x} y2={c2y}
+          stroke={THEME.combinedLine}
+          strokeWidth={0.3}
+          strokeDasharray="0.6 0.3"
+          className="pointer-events-none"
+        />
+      );
+    }
+  }
+  return <g>{lines}</g>;
+}
+
 export function VenueSVGCanvas({
   items,
   fixtureBboxes,
   tableBboxes,
   selectedItemId,
+  selectedItemIds = [],
   showLabels = true,
+  showSeatDots = true,
   assignments = [],
   currentReservationId,
   onTableClick,
@@ -171,9 +306,15 @@ export function VenueSVGCanvas({
   interactive = true,
   showGrid = false,
   gridSnap = 2,
+  showSections = true,
 }: VenueSVGCanvasProps) {
   const fixtureItems = items.filter((i) => !!i.fixture_type);
   const tableItems = items.filter((i) => !i.fixture_type);
+
+  const isSelected = useCallback(
+    (id: string) => id === selectedItemId || selectedItemIds.includes(id),
+    [selectedItemId, selectedItemIds],
+  );
 
   const isOccupied = useCallback(
     (item: VenueItem) => {
@@ -191,7 +332,7 @@ export function VenueSVGCanvas({
     [assignments, currentReservationId],
   );
 
-  const resolveGeometry = (item: VenueItem, isFixture: boolean): Geometry => {
+  const resolveGeometry = useCallback((item: VenueItem, isFixture: boolean): Geometry => {
     const bboxMap = isFixture ? fixtureBboxes : tableBboxes;
     const bbox = bboxMap[item.label];
     const rotation = item.rotation || 0;
@@ -213,15 +354,8 @@ export function VenueSVGCanvas({
       }
     }
 
-    return {
-      x: item.x_percent,
-      y: item.y_percent,
-      w,
-      h,
-      shape: isFixture ? 'rectangle' : inferShape(item.shape),
-      rotation,
-    };
-  };
+    return { x: item.x_percent, y: item.y_percent, w, h, shape: isFixture ? 'rectangle' : inferShape(item.shape), rotation };
+  }, [fixtureBboxes, tableBboxes]);
 
   const allowDrag = interactive && !!onItemMouseDown;
   const showHandles = interactive && !!onResizeStart;
@@ -229,8 +363,13 @@ export function VenueSVGCanvas({
   return (
     <svg className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
-
       {showGrid && <GridOverlay snap={gridSnap} />}
+
+      {/* Section overlays */}
+      {showSections && <SectionOverlays items={items} resolveGeometry={resolveGeometry} />}
+
+      {/* Combined table links */}
+      <CombinedLinks items={items} resolveGeometry={resolveGeometry} />
 
       {/* Fixtures */}
       {fixtureItems.map((item) => {
@@ -239,8 +378,7 @@ export function VenueSVGCanvas({
         const cy = g.y + g.h / 2;
         const isDj = item.fixture_type === 'dj_booth' || item.label.toUpperCase().includes('DJ');
         const isBar = item.fixture_type === 'bar' || item.label.toUpperCase().includes('BAR');
-
-        const selected = selectedItemId === item.id;
+        const selected = isSelected(item.id);
         const fixtureHandleMouseDown = allowDrag
           ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
@@ -270,11 +408,7 @@ export function VenueSVGCanvas({
               />
             )}
             {isDj && (
-              <circle
-                cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.21}
-                fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.2} opacity={0.8}
-              />
+              <circle cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.21} fill="none" stroke={THEME.fixtureStroke} strokeWidth={0.2} opacity={0.8} />
             )}
             {showLabels && (
               <text
@@ -289,8 +423,6 @@ export function VenueSVGCanvas({
                 {item.label.toUpperCase()}
               </text>
             )}
-
-            {/* Resize handles for selected fixture */}
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
@@ -304,7 +436,7 @@ export function VenueSVGCanvas({
         const cx = g.x + g.w / 2;
         const cy = g.y + g.h / 2;
 
-        const selected = selectedItemId === item.id;
+        const selected = isSelected(item.id);
         const occupied = isOccupied(item);
         const self = isSelf(item);
 
@@ -325,7 +457,6 @@ export function VenueSVGCanvas({
         }
 
         const mainFont = Math.min(g.w, g.h) > 5 ? 2.1 : 1.65;
-        const seatsFont = Math.max(0.88, mainFont * 0.56);
 
         const handleMouseDown = allowDrag
           ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
@@ -340,6 +471,11 @@ export function VenueSVGCanvas({
             onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
+            {/* Seat dots */}
+            {showSeatDots && item.seats > 0 && (
+              <SeatDots g={g} seats={item.seats} color={occupied ? THEME.occupiedStroke : (item.color || THEME.seatDot)} />
+            )}
+
             {g.shape === 'round' ? (
               <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
             ) : (
@@ -352,8 +488,7 @@ export function VenueSVGCanvas({
 
             {showLabels && (
               <text
-                x={cx}
-                y={cy}
+                x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                 fontSize={mainFont} fontWeight={700}
@@ -364,7 +499,6 @@ export function VenueSVGCanvas({
               </text>
             )}
 
-            {/* Resize handles for selected table */}
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
