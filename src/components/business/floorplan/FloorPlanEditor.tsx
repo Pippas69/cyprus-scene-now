@@ -700,7 +700,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         i.id === resizing.id ? { ...i, width_percent: newW, height_percent: newH, x_percent: newX, y_percent: newY } : i
       ));
     }
-  }, [dragging, resizing, gridSnap, zoom.scale]);
+  }, [dragging, resizing, gridSnap]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
