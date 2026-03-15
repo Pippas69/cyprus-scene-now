@@ -12,7 +12,7 @@ import {
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
-import { useFloorPlanZoom } from './useFloorPlanZoom';
+
 import { FloorPlanRoomTabs, type FloorPlanRoom } from './FloorPlanRoomTabs';
 import { FloorPlanTemplates, type VenueTemplate } from './FloorPlanTemplates';
 import { useLanguage } from '@/hooks/useLanguage';
