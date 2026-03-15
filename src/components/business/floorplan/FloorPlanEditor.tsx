@@ -5,7 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
-  Wand2, Loader2, ImageOff, Magnet, Undo2, Redo2,
+  ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
   Sofa, Beer, Music, Landmark, Save, Pencil,
 } from 'lucide-react';
@@ -26,11 +26,6 @@ interface FloorPlanZone {
   capacity: number;
   sort_order: number;
   metadata?: {
-    analysis_hash?: string;
-    image_width?: number;
-    image_height?: number;
-    fixture_bboxes?: Record<string, { w: number; h: number }>;
-    table_bboxes?: Record<string, { w: number; h: number }>;
     reference_image_url?: string;
     [key: string]: unknown;
   } | null;
@@ -43,20 +38,6 @@ interface FloorPlanEditorProps {
 const SNAP_INCREMENT = 2;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const snapValue = (v: number, snap: number) => Math.round(v / snap) * snap;
-
-const getImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => { resolve({ width: img.naturalWidth || 1200, height: img.naturalHeight || 900 }); URL.revokeObjectURL(url); };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Cannot read image')); };
-    img.src = url;
-  });
-
-const hashDataUrl = async (dataUrl: string) => {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataUrl));
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-};
 
 // Shape presets for toolbar
 type PlaceShape = {
@@ -86,26 +67,22 @@ const translations = {
   el: {
     title: 'Layout Studio',
     subtitle: 'Σχεδιάστε το ψηφιακό δίδυμο του χώρου σας',
-    uploadImage: 'Ανέβασμα κάτοψης',
-    analyzing: 'Η AI αναλύει...',
-    reAnalyze: 'AI Ανάλυση',
+    uploadReference: 'Ανέβασμα εικόνας αναφοράς',
     clickToPlace: 'Κάντε κλικ στο σχεδιάγραμμα',
-    uploadFirst: 'Ανεβάστε την κάτοψη του χώρου σας',
-    uploadHint: 'Η AI θα αναγνωρίσει αυτόματα τα τραπέζια & fixtures',
+    startDesign: 'Ξεκινήστε το σχεδιασμό',
+    startDesignHint: 'Τοποθετήστε τραπέζια, bar, σκηνή και άλλα στοιχεία στον χώρο σας',
     saved: 'Αποθηκεύτηκε',
     deleted: 'Διαγράφηκε',
     cancel: 'Ακύρωση',
     totalCapacity: 'Χωρητικότητα',
-    aiSuccess: 'Η AI δημιούργησε το floor plan! Σύρετε τα στοιχεία στη σωστή θέση.',
-    aiError: 'Σφάλμα AI ανάλυσης',
-    sameImage: 'Η ίδια κάτοψη — κρατάω το υπάρχον.',
     opacity: 'Αδιαφάνεια',
     gridSnap: 'Πλέγμα',
     deleteReference: 'Διαγραφή εικόνας',
     referenceDeleted: 'Εικόνα αναφοράς διαγράφηκε',
     duplicated: 'Αντιγράφηκε',
     noItems: 'Προσθέστε ένα σχήμα από τη γραμμή εργαλείων',
-    startBlank: 'Ξεκινήστε κενό',
+    startBlank: 'Σχεδιάστε τον χώρο',
+    withReference: 'Με εικόνα αναφοράς',
     saveLayout: 'Αποθήκευση',
     editLayout: 'Επεξεργασία',
     layoutSaved: 'Το σχεδιάγραμμα αποθηκεύτηκε',
@@ -115,26 +92,22 @@ const translations = {
   en: {
     title: 'Layout Studio',
     subtitle: 'Design the digital twin of your venue',
-    uploadImage: 'Upload layout',
-    analyzing: 'AI analyzing...',
-    reAnalyze: 'AI Analysis',
+    uploadReference: 'Upload reference image',
     clickToPlace: 'Click on the layout to place',
-    uploadFirst: 'Upload your venue layout',
-    uploadHint: 'AI will detect tables & fixtures — you refine positions',
+    startDesign: 'Start designing',
+    startDesignHint: 'Place tables, bar, stage and other elements in your venue',
     saved: 'Saved',
     deleted: 'Deleted',
     cancel: 'Cancel',
     totalCapacity: 'Capacity',
-    aiSuccess: 'AI generated the floor plan! Drag items to position.',
-    aiError: 'AI analysis error',
-    sameImage: 'Same layout — keeping existing.',
     opacity: 'Opacity',
     gridSnap: 'Snap to grid',
     deleteReference: 'Delete image',
     referenceDeleted: 'Reference image deleted',
     duplicated: 'Duplicated',
     noItems: 'Add a shape from the toolbar above',
-    startBlank: 'Start blank',
+    startBlank: 'Design your venue',
+    withReference: 'With reference image',
     saveLayout: 'Save',
     editLayout: 'Edit',
     layoutSaved: 'Layout saved',
@@ -152,14 +125,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [items, setItems] = useState<FloorPlanItemFull[]>([]);
   const [zones, setZones] = useState<FloorPlanZone[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number } | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
-  const [analysisHash, setAnalysisHash] = useState<string | null>(null);
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [showReferenceImage, setShowReferenceImage] = useState(true);
@@ -266,12 +237,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setItems(loadedItems);
     setZones(loadedZones);
     setHasFloorPlan(loadedItems.length > 0);
-    // If items already exist, start in view mode (design is complete)
     if (loadedItems.length > 0) setIsDesignMode(true);
     history.reset(loadedItems);
 
     const meta = loadedZones[0]?.metadata;
-    if (meta?.analysis_hash) setAnalysisHash(meta.analysis_hash as string);
     if (meta?.reference_image_url) setReferenceImageUrl(meta.reference_image_url as string);
     setLoading(false);
   };
@@ -299,86 +268,30 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.referenceDeleted);
   };
 
-  const handleAIAnalysis = async (file: File) => {
-    setAiAnalyzing(true);
-    try {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const [{ width, height }, imageHash] = await Promise.all([getImageDimensions(file), hashDataUrl(base64)]);
-      if (analysisHash && analysisHash === imageHash) { toast.info(t.sameImage); setAiAnalyzing(false); return; }
-
-      const [aiResult, refUrl] = await Promise.all([
-        supabase.functions.invoke('analyze-floor-plan', { body: { imageBase64: base64 } }),
-        uploadReferenceImage(file),
-      ]);
-      const { data, error } = aiResult;
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const fixtures = data?.fixtures || [];
-      const tables = data?.tables || [];
-      if (fixtures.length === 0 && tables.length === 0) throw new Error('AI did not detect any objects');
-
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData.user?.id;
-      if (!userId) throw new Error('Not authenticated');
-
-      await Promise.all([
-        supabase.from('floor_plan_tables').delete().eq('business_id', businessId),
-        supabase.from('floor_plan_zones').delete().eq('business_id', businessId),
-      ]);
-
-      const fixtureBboxes: Record<string, { w: number; h: number }> = {};
-      fixtures.forEach((f: any) => { fixtureBboxes[f.label] = { w: f.width_percent, h: f.height_percent }; });
-      const tableBboxes: Record<string, { w: number; h: number }> = {};
-      tables.forEach((tb: any) => { tableBboxes[tb.label] = { w: tb.width_percent, h: tb.height_percent }; });
-
-      const { data: metaZone } = await supabase.from('floor_plan_zones').insert({
-        business_id: businessId, label: '_metadata', zone_type: 'other', shape: 'rect',
-        x_percent: 0, y_percent: 0, width_percent: 0, height_percent: 0, capacity: 0, sort_order: 0,
-        metadata: { analysis_hash: imageHash, image_width: width, image_height: height, fixture_bboxes: fixtureBboxes, table_bboxes: tableBboxes, reference_image_url: refUrl },
-      }).select().single();
-
-      const fixtureRows = fixtures.map((f: any, i: number) => ({
-        business_id: businessId, zone_id: metaZone?.id || null, label: f.label,
-        x_percent: f.x_percent, y_percent: f.y_percent, seats: 0, shape: 'rect',
-        sort_order: i, fixture_type: f.fixture_type,
-        width_percent: f.width_percent, height_percent: f.height_percent,
-        item_type: 'fixture',
-      }));
-      const tableRows = tables.map((tb: any, i: number) => ({
-        business_id: businessId, zone_id: metaZone?.id || null, label: tb.label,
-        x_percent: tb.x_percent, y_percent: tb.y_percent, seats: tb.seats, shape: tb.shape,
-        sort_order: fixtures.length + i, fixture_type: null,
-        width_percent: tb.width_percent, height_percent: tb.height_percent,
-        item_type: 'table',
-      }));
-
-      const allRows = [...fixtureRows, ...tableRows];
-      if (allRows.length > 0) {
-        await supabase.from('floor_plan_tables').insert(allRows as any);
-      }
-
-      setAnalysisHash(imageHash);
-      if (refUrl) { setReferenceImageUrl(refUrl); setShowReferenceImage(true); }
-      await loadFloorPlan();
-      toast.success(t.aiSuccess);
-    } catch (err: any) {
-      toast.error(t.aiError + ': ' + (err.message || 'Unknown'));
-    } finally {
-      setAiAnalyzing(false);
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload reference image only (no AI)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    handleAIAnalysis(file);
     e.target.value = '';
+    
+    const refUrl = await uploadReferenceImage(file);
+    if (refUrl) {
+      // Save reference URL to zone metadata
+      if (zones[0]) {
+        const meta = { ...(zones[0].metadata || {}), reference_image_url: refUrl };
+        await supabase.from('floor_plan_zones').update({ metadata: meta as any }).eq('id', zones[0].id);
+      } else {
+        await supabase.from('floor_plan_zones').insert({
+          business_id: businessId, label: '_metadata', zone_type: 'other', shape: 'rect',
+          x_percent: 0, y_percent: 0, width_percent: 0, height_percent: 0, capacity: 0, sort_order: 0,
+          metadata: { reference_image_url: refUrl } as any,
+        });
+        await loadFloorPlan();
+      }
+      setReferenceImageUrl(refUrl);
+      setShowReferenceImage(true);
+      toast.success(t.saved);
+    }
   };
 
   const debouncedSave = useCallback((item: FloorPlanItemFull) => {
@@ -483,10 +396,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   // Save layout and exit design mode
   const handleSaveLayout = useCallback(async () => {
-    // Force save all pending changes
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     
-    // Batch update all items
     for (const item of items) {
       await supabase.from('floor_plan_tables').update({
         label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
@@ -551,16 +462,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       let newX = resizing.origXP;
       let newY = resizing.origYP;
 
-      // Right handles
       if (h.includes('e')) newW = clamp(resizing.origW + dx, 1.5, 40);
-      // Left handles
       if (h.includes('w')) {
         newW = clamp(resizing.origW - dx, 1.5, 40);
         newX = resizing.origXP + (resizing.origW - newW);
       }
-      // Bottom handles
       if (h.includes('s')) newH = clamp(resizing.origH + dy, 1.5, 40);
-      // Top handles
       if (h.includes('n')) {
         newH = clamp(resizing.origH - dy, 1.5, 40);
         newY = resizing.origYP + (resizing.origH - newH);
@@ -610,8 +517,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     );
   }
 
-  // Upload screen
-  if (!hasFloorPlan && !aiAnalyzing) {
+  // Welcome screen - no AI, just start designing
+  if (!hasFloorPlan) {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-3">
@@ -624,39 +531,28 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
         </div>
 
-        <div
-          className="relative border-2 border-dashed border-border/60 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 hover:border-primary/40 transition-all cursor-pointer group"
-          onClick={() => fileInputRef.current?.click()}
-        >
+        <div className="relative border-2 border-dashed border-border/60 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 hover:border-primary/40 transition-all">
           <div className="flex flex-col items-center justify-center py-24 gap-5">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
-              <Wand2 className="h-7 w-7 text-primary/60 group-hover:text-primary transition-colors" />
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <MapPin className="h-7 w-7 text-primary/60" />
             </div>
             <div className="text-center space-y-1.5">
-              <p className="text-sm font-medium text-foreground">{t.uploadFirst}</p>
-              <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+              <p className="text-sm font-medium text-foreground">{t.startDesign}</p>
+              <p className="text-xs text-muted-foreground">{t.startDesignHint}</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="group-hover:border-primary/40 group-hover:text-primary">
-                <Upload className="h-3.5 w-3.5 mr-1.5" />{t.uploadImage}
-              </Button>
-              <Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); setHasFloorPlan(true); }}>
+              <Button variant="default" size="sm" onClick={() => setHasFloorPlan(true)}>
                 {t.startBlank}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                setHasFloorPlan(true);
+                setTimeout(() => fileInputRef.current?.click(), 100);
+              }}>
+                <Upload className="h-3.5 w-3.5 mr-1.5" />{t.withReference}
               </Button>
             </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-        </div>
-      </div>
-    );
-  }
-
-  if (aiAnalyzing) {
-    return (
-      <div className="border-2 border-primary/30 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/[0.02] animate-pulse">
-        <div className="flex flex-col items-center justify-center py-24 gap-5">
-          <Loader2 className="h-10 w-10 text-primary animate-spin" />
-          <p className="text-sm font-medium text-foreground">{t.analyzing}</p>
         </div>
       </div>
     );
@@ -761,8 +657,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
               </Button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
-                <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-3.5 w-3.5 mr-1" />{t.uploadReference}
               </Button>
             </>
           )}
@@ -782,12 +678,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* ═══ CANVAS + PROPERTIES ═══ */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
-        {/* Canvas */}
-        <div className="flex-1 relative">
+      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ minHeight: '400px' }}>
+        {/* Canvas - uses aspect-ratio to maintain proportions across devices */}
+        <div className="flex-1 relative" style={{ aspectRatio: '4 / 3' }}>
           <div
             ref={canvasRef}
-            className={`relative select-none w-full h-full ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+            className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
             onClick={isDesignMode ? handleCanvasClick : undefined}
             onMouseMove={isDesignMode ? handleMouseMove : undefined}
             onMouseUp={isDesignMode ? handleMouseUp : undefined}
@@ -845,7 +741,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
         {/* Right: Properties Panel (design mode only) */}
         {isDesignMode && showRightPanel && (
-          <div className="w-[260px] xl:w-[300px] flex-shrink-0">
+          <div className="w-[260px] xl:w-[300px] flex-shrink-0 hidden md:block">
             {selectedItemData ? (
               <ItemPropertiesPanel
                 item={selectedItemData}
