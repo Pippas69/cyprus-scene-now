@@ -4,15 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
-  Upload, Plus, Trash2, MapPin, MousePointer, Eye, EyeOff,
-  Wand2, Loader2, RotateCw, ImageOff, Magnet, Undo2, Redo2,
-  PanelLeftOpen, PanelLeftClose, PanelRightOpen, PanelRightClose, X, Users,
+  Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
+  Wand2, Loader2, ImageOff, Magnet, Undo2, Redo2,
+  PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
+  Sofa, Beer, Music, Landmark,
 } from 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
-import { AssetLibrarySidebar } from './AssetLibrarySidebar';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
-import { type AssetDefinition } from './constants';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface FloorPlanZone {
@@ -41,7 +40,6 @@ interface FloorPlanEditorProps {
   businessId: string;
 }
 
-const DEFAULT_CANVAS_ASPECT = 4 / 3;
 const SNAP_INCREMENT = 2;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const snapValue = (v: number, snap: number) => Math.round(v / snap) * snap;
@@ -60,14 +58,37 @@ const hashDataUrl = async (dataUrl: string) => {
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
+// Shape presets for toolbar
+type PlaceShape = {
+  id: string;
+  icon: React.ReactNode;
+  label_el: string;
+  label_en: string;
+  shape: string;
+  seats: number;
+  width_percent: number;
+  height_percent: number;
+  fixture_type: string | null;
+  item_type: string;
+};
+
+const TOOLBAR_SHAPES: PlaceShape[] = [
+  { id: 'circle', icon: <Circle className="h-3.5 w-3.5" />, label_el: 'Κύκλος', label_en: 'Circle', shape: 'round', seats: 4, width_percent: 5, height_percent: 5, fixture_type: null, item_type: 'table' },
+  { id: 'square', icon: <Square className="h-3.5 w-3.5" />, label_el: 'Τετράγωνο', label_en: 'Square', shape: 'square', seats: 4, width_percent: 5, height_percent: 5, fixture_type: null, item_type: 'table' },
+  { id: 'rect', icon: <RectangleHorizontal className="h-3.5 w-3.5" />, label_el: 'Ορθογώνιο', label_en: 'Rectangle', shape: 'rectangle', seats: 6, width_percent: 8, height_percent: 4, fixture_type: null, item_type: 'table' },
+  { id: 'booth', icon: <Sofa className="h-3.5 w-3.5" />, label_el: 'Booth', label_en: 'Booth', shape: 'rectangle', seats: 6, width_percent: 7, height_percent: 5, fixture_type: 'booth', item_type: 'seating' },
+  { id: 'bar', icon: <Beer className="h-3.5 w-3.5" />, label_el: 'Bar', label_en: 'Bar', shape: 'rect', seats: 0, width_percent: 18, height_percent: 4, fixture_type: 'bar', item_type: 'fixture' },
+  { id: 'dj', icon: <Music className="h-3.5 w-3.5" />, label_el: 'DJ', label_en: 'DJ', shape: 'rect', seats: 0, width_percent: 6, height_percent: 4, fixture_type: 'dj_booth', item_type: 'fixture' },
+  { id: 'stage', icon: <Landmark className="h-3.5 w-3.5" />, label_el: 'Stage', label_en: 'Stage', shape: 'rect', seats: 0, width_percent: 16, height_percent: 7, fixture_type: 'stage', item_type: 'fixture' },
+];
+
 const translations = {
   el: {
     title: 'Layout Studio',
     subtitle: 'Σχεδιάστε το ψηφιακό δίδυμο του χώρου σας',
     uploadImage: 'Ανέβασμα κάτοψης',
     analyzing: 'Η AI αναλύει...',
-    reAnalyze: 'Επανανάλυση AI',
-    addTable: 'Νέο τραπέζι',
+    reAnalyze: 'AI Ανάλυση',
     clickToPlace: 'Κάντε κλικ στο σχεδιάγραμμα',
     uploadFirst: 'Ανεβάστε την κάτοψη του χώρου σας',
     uploadHint: 'Η AI θα αναγνωρίσει αυτόματα τα τραπέζια & fixtures',
@@ -80,19 +101,18 @@ const translations = {
     sameImage: 'Η ίδια κάτοψη — κρατάω το υπάρχον.',
     opacity: 'Αδιαφάνεια',
     gridSnap: 'Πλέγμα',
-    cleanView: 'Καθαρή προβολή',
     deleteReference: 'Διαγραφή εικόνας',
     referenceDeleted: 'Εικόνα αναφοράς διαγράφηκε',
     duplicated: 'Αντιγράφηκε',
-    noItems: 'Σύρτε ένα στοιχείο από αριστερά ή πατήστε "Νέο τραπέζι"',
+    noItems: 'Προσθέστε ένα σχήμα από τη γραμμή εργαλείων',
+    startBlank: 'Ξεκινήστε κενό',
   },
   en: {
     title: 'Layout Studio',
     subtitle: 'Design the digital twin of your venue',
     uploadImage: 'Upload layout',
     analyzing: 'AI analyzing...',
-    reAnalyze: 'Re-analyze AI',
-    addTable: 'New table',
+    reAnalyze: 'AI Analysis',
     clickToPlace: 'Click on the layout to place',
     uploadFirst: 'Upload your venue layout',
     uploadHint: 'AI will detect tables & fixtures — you refine positions',
@@ -105,11 +125,11 @@ const translations = {
     sameImage: 'Same layout — keeping existing.',
     opacity: 'Opacity',
     gridSnap: 'Snap to grid',
-    cleanView: 'Clean view',
     deleteReference: 'Delete image',
     referenceDeleted: 'Reference image deleted',
     duplicated: 'Duplicated',
-    noItems: 'Drag an asset from the left or click "New table"',
+    noItems: 'Add a shape from the toolbar above',
+    startBlank: 'Start blank',
   },
 };
 
@@ -124,11 +144,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [loading, setLoading] = useState(true);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const [placingMode, setPlacingMode] = useState<'table' | null>(null);
+  const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number } | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
-  const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
   const [analysisHash, setAnalysisHash] = useState<string | null>(null);
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -138,14 +158,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
 
-  // Panels
-  const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
 
-  // History
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
-
-  // Auto-save timer
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { loadFloorPlan(); }, [businessId]);
@@ -200,7 +215,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           if (item) duplicateItem(item);
         }
       }
-      // Arrow keys
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedItem) {
         e.preventDefault();
         const item = items.find(i => i.id === selectedItem);
@@ -243,16 +257,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     history.reset(loadedItems);
 
     const meta = loadedZones[0]?.metadata;
-    if (meta?.image_width && meta?.image_height) {
-      const ratio = (meta.image_width as number) / (meta.image_height as number);
-      setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
-    }
     if (meta?.analysis_hash) setAnalysisHash(meta.analysis_hash as string);
     if (meta?.reference_image_url) setReferenceImageUrl(meta.reference_image_url as string);
     setLoading(false);
   };
 
-  // Upload reference image
   const uploadReferenceImage = async (file: File): Promise<string | null> => {
     const ext = file.name.split('.').pop() || 'png';
     const path = `${businessId}/reference.${ext}`;
@@ -276,7 +285,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.referenceDeleted);
   };
 
-  // AI Analysis
   const handleAIAnalysis = async (file: File) => {
     setAiAnalyzing(true);
     try {
@@ -341,7 +349,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         await supabase.from('floor_plan_tables').insert(allRows as any);
       }
 
-      setCanvasAspect(width / height);
       setAnalysisHash(imageHash);
       if (refUrl) { setReferenceImageUrl(refUrl); setShowReferenceImage(true); }
       await loadFloorPlan();
@@ -360,7 +367,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     e.target.value = '';
   };
 
-  // Debounced save to DB
   const debouncedSave = useCallback((item: FloorPlanItemFull) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
@@ -375,12 +381,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }, 800);
   }, []);
 
-  // Local-only update (no DB)
   const updateItemLocal = (item: FloorPlanItemFull) => {
     setItems(prev => prev.map(i => i.id === item.id ? item : i));
   };
 
-  // Save item to DB immediately
   const saveItemToDB = async (item: Partial<FloorPlanItemFull>) => {
     const { data, error } = await supabase.from('floor_plan_tables').insert({
       business_id: businessId, zone_id: zones[0]?.id || null,
@@ -402,50 +406,34 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     let y = ((e.clientY - rect.top) / rect.height) * 100;
     if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
 
-    if (placingMode === 'table') {
-      const newItem: Partial<FloorPlanItemFull> = {
-        label: `T${items.filter(i => !i.fixture_type).length + 1}`,
-        x_percent: x, y_percent: y, seats: 4, shape: 'square',
-        fixture_type: null, rotation: 0, width_percent: 5, height_percent: 5, item_type: 'table',
-      };
-      saveItemToDB(newItem).then(saved => {
-        if (saved) {
-          history.pushState(items, 'add table');
-          setItems(prev => [...prev, saved]);
-          setHasFloorPlan(true);
-          setSelectedItem(saved.id);
-          toast.success(t.saved);
-        }
-      });
-      setPlacingMode(null);
-    }
-  }, [placingMode, items, gridSnap, zones]);
-
-  // Asset drop from sidebar
-  const handleAssetDrop = useCallback(async (asset: AssetDefinition, x: number, y: number) => {
-    const existingCount = items.filter(i =>
-      asset.fixture_type ? i.fixture_type === asset.fixture_type : !i.fixture_type
-    ).length;
-    const label = asset.fixture_type
-      ? asset.label.toUpperCase()
-      : `T${items.filter(i => !i.fixture_type).length + 1}`;
+    const existingTables = items.filter(i => !i.fixture_type).length;
+    const label = placingMode.fixture_type
+      ? placingMode.label_en.toUpperCase()
+      : `T${existingTables + 1}`;
 
     const newItem: Partial<FloorPlanItemFull> = {
-      label, x_percent: x, y_percent: y,
-      seats: asset.seats, shape: asset.shape,
-      fixture_type: asset.fixture_type, rotation: 0,
-      width_percent: asset.width_percent, height_percent: asset.height_percent,
-      item_type: asset.item_type,
+      label,
+      x_percent: clamp(x, 2, 98),
+      y_percent: clamp(y, 2, 98),
+      seats: placingMode.seats,
+      shape: placingMode.shape,
+      fixture_type: placingMode.fixture_type,
+      rotation: 0,
+      width_percent: placingMode.width_percent,
+      height_percent: placingMode.height_percent,
+      item_type: placingMode.item_type,
     };
-    const saved = await saveItemToDB(newItem);
-    if (saved) {
-      history.pushState(items, 'drop asset');
-      setItems(prev => [...prev, saved]);
-      setHasFloorPlan(true);
-      setSelectedItem(saved.id);
-      toast.success(t.saved);
-    }
-  }, [items, zones]);
+    saveItemToDB(newItem).then(saved => {
+      if (saved) {
+        history.pushState(items, 'add item');
+        setItems(prev => [...prev, saved]);
+        setHasFloorPlan(true);
+        setSelectedItem(saved.id);
+        toast.success(t.saved);
+      }
+    });
+    setPlacingMode(null);
+  }, [placingMode, items, gridSnap, zones]);
 
   // Properties panel change
   const handlePropertyChange = useCallback((updated: FloorPlanItemFull) => {
@@ -454,7 +442,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     debouncedSave(updated);
   }, [items, debouncedSave]);
 
-  // Delete
   const deleteItem = async (itemId: string) => {
     history.pushState(items, 'delete');
     const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
@@ -464,7 +451,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.deleted);
   };
 
-  // Duplicate
   const duplicateItem = async (item: FloorPlanItemFull) => {
     const newItem: Partial<FloorPlanItemFull> = {
       ...item,
@@ -481,7 +467,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
-  // Drag
+  // Drag to move
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
     e.stopPropagation();
@@ -492,17 +478,71 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setSelectedItem(id);
   };
 
+  // Resize handle start
+  const handleResizeStart = useCallback((e: React.MouseEvent, id: string, handle: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const item = items.find(i => i.id === id);
+    if (!item || item.is_locked) return;
+    history.pushState(items, 'resize');
+    setResizing({
+      id, handle,
+      startX: e.clientX, startY: e.clientY,
+      origW: item.width_percent, origH: item.height_percent,
+      origXP: item.x_percent, origYP: item.y_percent,
+    });
+  }, [items, history]);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
-    const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
-    let newX = clamp(dragging.origX + dx, 0, 100);
-    let newY = clamp(dragging.origY + dy, 0, 100);
-    if (gridSnap) { newX = snapValue(newX, SNAP_INCREMENT); newY = snapValue(newY, SNAP_INCREMENT); }
-    setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
-    setItems(prev => prev.map(i => i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i));
-  }, [dragging, gridSnap]);
+
+    if (dragging) {
+      const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
+      const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
+      let newX = clamp(dragging.origX + dx, 0, 100);
+      let newY = clamp(dragging.origY + dy, 0, 100);
+      if (gridSnap) { newX = snapValue(newX, SNAP_INCREMENT); newY = snapValue(newY, SNAP_INCREMENT); }
+      setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
+      setItems(prev => prev.map(i => i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i));
+    }
+
+    if (resizing) {
+      const dx = ((e.clientX - resizing.startX) / rect.width) * 100;
+      const dy = ((e.clientY - resizing.startY) / rect.height) * 100;
+      const h = resizing.handle;
+      let newW = resizing.origW;
+      let newH = resizing.origH;
+      let newX = resizing.origXP;
+      let newY = resizing.origYP;
+
+      // Right handles
+      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1.5, 40);
+      // Left handles
+      if (h.includes('w')) {
+        newW = clamp(resizing.origW - dx, 1.5, 40);
+        newX = resizing.origXP + (resizing.origW - newW);
+      }
+      // Bottom handles
+      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1.5, 40);
+      // Top handles
+      if (h.includes('n')) {
+        newH = clamp(resizing.origH - dy, 1.5, 40);
+        newY = resizing.origYP + (resizing.origH - newH);
+      }
+
+      if (gridSnap) {
+        newW = snapValue(newW, SNAP_INCREMENT);
+        newH = snapValue(newH, SNAP_INCREMENT);
+      }
+
+      setItems(prev => prev.map(i =>
+        i.id === resizing.id
+          ? { ...i, width_percent: newW, height_percent: newH, x_percent: newX, y_percent: newY }
+          : i
+      ));
+    }
+  }, [dragging, resizing, gridSnap]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
@@ -511,30 +551,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       setDragging(null);
       setDragCoords(null);
     }
-  }, [dragging, items, debouncedSave]);
-
-  // Canvas drag-over for sidebar assets
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!canvasRef.current) return;
-    try {
-      const assetData = e.dataTransfer.getData('application/json');
-      if (!assetData) return;
-      const asset: AssetDefinition = JSON.parse(assetData);
-      const rect = canvasRef.current.getBoundingClientRect();
-      let x = ((e.clientX - rect.left) / rect.width) * 100;
-      let y = ((e.clientY - rect.top) / rect.height) * 100;
-      if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
-      handleAssetDrop(asset, clamp(x, 2, 98), clamp(y, 2, 98));
-    } catch (err) {
-      console.error('Drop parse error', err);
+    if (resizing) {
+      const item = items.find(i => i.id === resizing.id);
+      if (item) debouncedSave(item);
+      setResizing(null);
     }
-  }, [handleAssetDrop, gridSnap]);
+  }, [dragging, resizing, items, debouncedSave]);
 
   const tableItems = items.filter(i => !i.fixture_type);
   const fixtureItems = items.filter(i => !!i.fixture_type);
@@ -584,7 +606,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 <Upload className="h-3.5 w-3.5 mr-1.5" />{t.uploadImage}
               </Button>
               <Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); setHasFloorPlan(true); }}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" />{language === 'el' ? 'Ξεκινήστε κενό' : 'Start blank'}
+                {t.startBlank}
               </Button>
             </div>
           </div>
@@ -594,7 +616,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     );
   }
 
-  // AI analyzing
   if (aiAnalyzing) {
     return (
       <div className="border-2 border-primary/30 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/[0.02] animate-pulse">
@@ -619,77 +640,83 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <p className="text-xs text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
-            <span>🪑 {tableItems.length}</span>
+        <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
+          <span>🪑 {tableItems.length}</span>
+          <div className="w-px h-3 bg-border" />
+          <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
+          {fixtureItems.length > 0 && <>
             <div className="w-px h-3 bg-border" />
-            <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
-            {fixtureItems.length > 0 && <>
-              <div className="w-px h-3 bg-border" />
-              <span>📍 {fixtureItems.length}</span>
-            </>}
-          </div>
+            <span>📍 {fixtureItems.length}</span>
+          </>}
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {placingMode ? (
-            <>
-              <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
-                <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
-                <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
-              </div>
-              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
-                <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
-              </Button>
-            </>
-          ) : (
-            <>
-              {/* Undo / Redo */}
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
-                <Undo2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
-                <Redo2 className="h-3.5 w-3.5" />
-              </Button>
+      {/* ═══ TOOLBAR ═══ */}
+      <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
+        {placingMode ? (
+          <>
+            <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
+              <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
+              <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
+              <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
+            </Button>
+          </>
+        ) : (
+          <>
+            {/* Undo / Redo */}
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
+              <Undo2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
+              <Redo2 className="h-3.5 w-3.5" />
+            </Button>
 
-              <div className="w-px h-5 bg-border/40 mx-1" />
+            <div className="w-px h-5 bg-border/40 mx-1" />
 
-              <Button variant="default" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode('table')}>
-                <Plus className="h-3.5 w-3.5 mr-1" />{t.addTable}
+            {/* Shape buttons */}
+            {TOOLBAR_SHAPES.map(shape => (
+              <Button
+                key={shape.id}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs gap-1.5 px-2.5"
+                onClick={() => setPlacingMode(shape)}
+                title={language === 'el' ? shape.label_el : shape.label_en}
+              >
+                {shape.icon}
+                <span className="hidden lg:inline">{language === 'el' ? shape.label_el : shape.label_en}</span>
               </Button>
+            ))}
 
-              <div className="w-px h-5 bg-border/40 mx-1" />
+            <div className="w-px h-5 bg-border/40 mx-1" />
 
-              <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
-                <Magnet className="h-3.5 w-3.5" />
+            {/* Grid & Labels */}
+            <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
+              <Magnet className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
+              {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            </Button>
+            {referenceImageUrl && (
+              <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
+                {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
               </Button>
-              <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
-                {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-              </Button>
-              {referenceImageUrl && (
-                <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
-                  {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowLeftPanel(!showLeftPanel)} title="Asset Library">
-            {showLeftPanel ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
-            {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
-          </Button>
-          <div className="w-px h-5 bg-border/40 mx-1" />
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
-            <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
-          </Button>
-        </div>
+            )}
+
+            <div className="flex-1" />
+
+            {/* Right side */}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
+              {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+            </Button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
+              <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Reference image opacity */}
@@ -704,17 +731,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       )}
 
-      {/* ═══ 3-COLUMN LAYOUT ═══ */}
+      {/* ═══ CANVAS + PROPERTIES ═══ */}
       <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
-        {/* Left: Asset Library */}
-        {showLeftPanel && (
-          <div className="w-[220px] xl:w-[240px] flex-shrink-0 border-r-0">
-            <AssetLibrarySidebar onAssetDrop={handleAssetDrop} />
-          </div>
-        )}
-
-        {/* Center: Canvas */}
-        <div className="flex-1 relative" >
+        {/* Canvas */}
+        <div className="flex-1 relative">
           <div
             ref={canvasRef}
             className={`relative select-none w-full h-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -722,8 +742,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
           >
             {/* Dark background */}
             <div className="absolute inset-0" style={{
@@ -754,6 +772,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               onTableClick={(id) => { if (!placingMode) setSelectedItem(id === selectedItem ? null : id); }}
               onItemMouseDown={(e, id) => handleMouseDown(e, id)}
               onItemDoubleClick={(id) => setSelectedItem(id)}
+              onResizeStart={handleResizeStart}
               interactive={!placingMode}
             />
 
@@ -771,7 +790,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
         {/* Right: Properties Panel */}
         {showRightPanel && (
-          <div className="w-[240px] xl:w-[280px] flex-shrink-0">
+          <div className="w-[260px] xl:w-[300px] flex-shrink-0">
             {selectedItemData ? (
               <ItemPropertiesPanel
                 item={selectedItemData}
