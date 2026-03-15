@@ -743,10 +743,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            {/* Dark background */}
+            {/* Premium dark background */}
             <div className="absolute inset-0" style={{
-              background: 'linear-gradient(160deg, hsl(var(--floorplan-canvas)) 0%, hsl(var(--floorplan-canvas-elevated)) 56%, hsl(var(--floorplan-canvas)) 100%)',
+              background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
             }} />
+            <div className="absolute inset-0 border border-white/[0.03] rounded-none pointer-events-none" />
 
             {/* Reference image */}
             {referenceImageUrl && showReferenceImage && (
