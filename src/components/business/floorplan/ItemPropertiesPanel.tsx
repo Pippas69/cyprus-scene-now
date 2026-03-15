@@ -70,6 +70,8 @@ const translations = {
     height: 'Height',
     locked: 'Locked',
     type: 'Type',
+    color: 'Color',
+    resetColor: 'Reset',
     duplicate: 'Duplicate',
     delete: 'Delete',
     confirmDelete: 'Are you sure?',
