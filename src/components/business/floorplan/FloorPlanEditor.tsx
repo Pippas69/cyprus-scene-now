@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
-  Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
+  Upload, Trash2, MapPin, MousePointer, Eye, EyeOff, ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
   Sofa, Beer, Music, Landmark, Save, Pencil,
   LayoutTemplate, Layers
