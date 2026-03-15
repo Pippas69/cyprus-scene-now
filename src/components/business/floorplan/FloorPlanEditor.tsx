@@ -685,7 +685,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 showGrid={isDesignMode && showGrid}
                 gridSnap={SNAP_INCREMENT}
                 onTableClick={(id) => {
-                  if (isDesignMode && !placingMode) setSelectedItem(id === selectedItem ? null : id);
+                  if (isDesignMode && !placingMode) setSelectedItem(id);
                 }}
                 onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
                 onResizeStart={isDesignMode ? handleResizeStart : undefined}
@@ -732,15 +732,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           )}
         </div>
 
-        {/* RIGHT: Properties Panel (desktop/tablet) — compact */}
-        {isDesignMode && selectedItemData && (
-          <div className="hidden md:block w-[200px] xl:w-[220px] flex-shrink-0 border-l border-border/20 bg-card/60 backdrop-blur-sm overflow-hidden">
-            <ItemPropertiesPanel
-              item={selectedItemData}
-              onChange={handlePropertyChange}
-              onDelete={deleteItem}
-              onDuplicate={duplicateItem}
-            />
+        {/* RIGHT: Properties Panel (desktop/tablet) — compact and stable width */}
+        {isDesignMode && (
+          <div className="hidden md:block w-[176px] lg:w-[188px] xl:w-[200px] flex-shrink-0 border-l border-border/20 bg-card/60 backdrop-blur-sm overflow-hidden">
+            {selectedItemData ? (
+              <ItemPropertiesPanel
+                item={selectedItemData}
+                onChange={handlePropertyChange}
+                onDelete={deleteItem}
+                onDuplicate={duplicateItem}
+              />
+            ) : (
+              <EmptyPropertiesPanel />
+            )}
           </div>
         )}
       </div>
