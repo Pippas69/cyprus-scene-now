@@ -311,7 +311,7 @@ export function VenueSVGCanvas({
         const customColor = item.color || null;
         let fill = customColor ? `${customColor}12` : THEME.tableFill;
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = selected ? 0.56 : 0.38;
+        let strokeWidth = selected ? 0.7 : 0.5;
 
         if (occupied) {
           fill = THEME.occupiedFill;
