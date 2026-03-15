@@ -213,7 +213,7 @@ SPACING ACCURACY:
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract EVERY labeled object from this floor plan. CRITICAL: The bounding box (x, y, width, height as percentages) MUST match the EXACT visual shape and size of each element. If a table is a narrow thin strip, its bbox must be narrow. If a bar is a large rectangle, its bbox must be large. Measure each element's actual proportions from the image pixels. Do NOT make everything the same size. Keep exact labels (P1 not n1). Scan the entire image systematically and return ALL labeled objects." },
+              { type: "text", text: "Digitize this floor plan with PIXEL-PERFECT accuracy. Measure each element's actual position and size as percentages of the image. The output will be rendered as an interactive SVG — positions and proportions must match the original image exactly. Extract ALL labeled objects. Correct OCR errors (n→P for table labels). Return via the return_floor_plan function." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },
