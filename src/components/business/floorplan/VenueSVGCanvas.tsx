@@ -56,27 +56,28 @@ type Geometry = {
   rotation: number;
 };
 
+/* ═══ Canva/Figma-inspired theme ═══ */
 const THEME = {
-  // Canvas
-  grid: 'hsl(var(--floorplan-wall) / 0.18)',
-  // Fixtures — premium white
-  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
-  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.7)',
-  fixtureText: 'hsl(var(--floorplan-fixture))',
-  // Tables — premium white
-  tableStroke: 'hsl(var(--floorplan-neon))',
-  tableFill: 'hsl(var(--floorplan-neon) / 0.08)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
-  tableText: 'hsl(var(--floorplan-neon))',
-  tableMeta: 'hsl(var(--foreground) / 0.45)',
+  grid: 'rgba(255,255,255,0.06)',
+  // Fixtures
+  fixtureFill: 'rgba(255,255,255,0.04)',
+  fixtureStroke: 'rgba(255,255,255,0.35)',
+  fixtureText: 'rgba(255,255,255,0.5)',
+  // Tables
+  tableStroke: 'rgba(255,255,255,0.4)',
+  tableFill: 'rgba(255,255,255,0.05)',
+  tableSelectedStroke: 'hsl(var(--primary))',
+  tableSelectedFill: 'hsl(var(--primary) / 0.12)',
+  tableText: 'rgba(255,255,255,0.6)',
   // Reservation states
   occupiedStroke: 'hsl(0 72% 55%)',
   occupiedFill: 'hsl(0 72% 55% / 0.12)',
   selfStroke: 'hsl(var(--floorplan-accent))',
   selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
-  // Handles
-  handleFill: 'hsl(0 0% 100%)',
-  handleStroke: 'hsl(var(--floorplan-canvas))',
+  // Selection handles — Canva blue
+  selectionStroke: 'hsl(var(--primary))',
+  handleFill: 'hsl(var(--primary))',
+  handleBorder: '#fff',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -98,56 +99,74 @@ function GridOverlay({ snap }: { snap: number }) {
   return <g>{lines}</g>;
 }
 
-// Resize handles component
+/* ═══ Canva-style resize handles ═══ */
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
   onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
 }) {
-  const hs = 0.7; // handle size (half)
+  const hs = 0.55;
   const cx = g.x + g.w / 2;
   const cy = g.y + g.h / 2;
 
   const handles = [
     { id: 'nw', x: g.x, y: g.y, cursor: 'nw-resize' },
-    { id: 'n', x: cx, y: g.y, cursor: 'n-resize' },
     { id: 'ne', x: g.x + g.w, y: g.y, cursor: 'ne-resize' },
-    { id: 'e', x: g.x + g.w, y: cy, cursor: 'e-resize' },
     { id: 'se', x: g.x + g.w, y: g.y + g.h, cursor: 'se-resize' },
-    { id: 's', x: cx, y: g.y + g.h, cursor: 's-resize' },
     { id: 'sw', x: g.x, y: g.y + g.h, cursor: 'sw-resize' },
+  ];
+
+  const edgeHandles = [
+    { id: 'n', x: cx, y: g.y, cursor: 'n-resize' },
+    { id: 'e', x: g.x + g.w, y: cy, cursor: 'e-resize' },
+    { id: 's', x: cx, y: g.y + g.h, cursor: 's-resize' },
     { id: 'w', x: g.x, y: cy, cursor: 'w-resize' },
   ];
 
   return (
     <g>
-      {/* Selection outline */}
+      {/* Selection bounding box — clean blue line */}
       {g.shape === 'round' ? (
         <circle
-          cx={cx} cy={cy} r={g.w / 2 + 0.3}
-          fill="none" stroke={THEME.handleFill} strokeWidth={0.25}
-          strokeDasharray="0.8 0.4"
+          cx={cx} cy={cy} r={g.w / 2 + 0.4}
+          fill="none" stroke={THEME.selectionStroke} strokeWidth={0.2}
         />
       ) : (
         <rect
-          x={g.x - 0.3} y={g.y - 0.3}
-          width={g.w + 0.6} height={g.h + 0.6}
-          rx={0.2} fill="none"
-          stroke={THEME.handleFill} strokeWidth={0.25}
-          strokeDasharray="0.8 0.4"
+          x={g.x - 0.4} y={g.y - 0.4}
+          width={g.w + 0.8} height={g.h + 0.8}
+          rx={0.15} fill="none"
+          stroke={THEME.selectionStroke} strokeWidth={0.2}
         />
       )}
 
-      {/* Handles */}
-      {handles.map(h => (
+      {/* Edge handles — small lines for midpoints */}
+      {edgeHandles.map(h => (
         <rect
           key={h.id}
-          x={h.x - hs} y={h.y - hs}
-          width={hs * 2} height={hs * 2}
+          x={h.x - (h.id === 'n' || h.id === 's' ? 1.2 : 0.3)}
+          y={h.y - (h.id === 'e' || h.id === 'w' ? 1.2 : 0.3)}
+          width={h.id === 'n' || h.id === 's' ? 2.4 : 0.6}
+          height={h.id === 'e' || h.id === 'w' ? 2.4 : 0.6}
           rx={0.15}
           fill={THEME.handleFill}
-          stroke={THEME.handleStroke}
-          strokeWidth={0.2}
+          stroke={THEME.handleBorder}
+          strokeWidth={0.12}
+          style={{ cursor: h.cursor }}
+          onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
+          className="pointer-events-auto"
+        />
+      ))}
+
+      {/* Corner handles — circles like Canva */}
+      {handles.map(h => (
+        <circle
+          key={h.id}
+          cx={h.x} cy={h.y}
+          r={hs}
+          fill={THEME.handleFill}
+          stroke={THEME.handleBorder}
+          strokeWidth={0.15}
           style={{ cursor: h.cursor }}
           onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
           className="pointer-events-auto"
@@ -162,7 +181,7 @@ export function VenueSVGCanvas({
   fixtureBboxes,
   tableBboxes,
   selectedItemId,
-  showLabels = true,
+  showLabels = false,
   assignments = [],
   currentReservationId,
   onTableClick,
@@ -218,8 +237,7 @@ export function VenueSVGCanvas({
     return {
       x: item.x_percent,
       y: item.y_percent,
-      w,
-      h,
+      w, h,
       shape: isFixture ? 'rectangle' : inferShape(item.shape),
       rotation,
     };
@@ -231,7 +249,6 @@ export function VenueSVGCanvas({
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="xMidYMid meet" shapeRendering="geometricPrecision">
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
-
       {showGrid && <GridOverlay snap={gridSnap} />}
 
       {/* Fixtures */}
@@ -241,8 +258,8 @@ export function VenueSVGCanvas({
         const cy = g.y + g.h / 2;
         const isDj = item.fixture_type === 'dj_booth' || item.label.toUpperCase().includes('DJ');
         const isBar = item.fixture_type === 'bar' || item.label.toUpperCase().includes('BAR');
-
         const selected = selectedItemId === item.id;
+
         const fixtureHandleMouseDown = allowDrag
           ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
@@ -258,24 +275,24 @@ export function VenueSVGCanvas({
           >
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
-              rx={isDj ? 0.7 : 0.45}
-              fill={item.color ? `${item.color}10` : THEME.fixtureFill}
-              stroke={selected ? (item.color || THEME.tableStroke) : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.8 : (isBar ? 0.65 : 0.5)}
+              rx={isDj ? 0.6 : 0.35}
+              fill={item.color ? `${item.color}08` : THEME.fixtureFill}
+              stroke={selected ? THEME.selectionStroke : (item.color || THEME.fixtureStroke)}
+              strokeWidth={selected ? 0.5 : 0.35}
             />
             {isBar && (
               <rect
                 x={g.x + g.w * 0.07} y={g.y + g.h * 0.05}
                 width={g.w * 0.86} height={g.h * 0.9}
-                rx={0.32} fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.16} opacity={0.55}
+                rx={0.28} fill="none" stroke={THEME.fixtureStroke}
+                strokeWidth={0.12} opacity={0.4}
               />
             )}
             {isDj && (
               <circle
-                cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.21}
+                cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.18}
                 fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.2} opacity={0.8}
+                strokeWidth={0.15} opacity={0.6}
               />
             )}
             {showLabels && (
@@ -283,16 +300,15 @@ export function VenueSVGCanvas({
                 x={cx} y={cy + 0.28}
                 textAnchor="middle" dominantBaseline="middle"
                 fill={item.color || THEME.fixtureText}
-                fontSize={isBar && g.w > 15 ? 5.7 : 2.9}
-                fontWeight={isBar ? 800 : 700}
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.03em' }}
+                fontSize={isBar && g.w > 15 ? 4.5 : 2.4}
+                fontWeight={600}
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.04em' }}
                 className="pointer-events-none"
               >
                 {item.label.toUpperCase()}
               </text>
             )}
 
-            {/* Resize handles for selected fixture */}
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
@@ -305,29 +321,27 @@ export function VenueSVGCanvas({
         const g = resolveGeometry(item, false);
         const cx = g.x + g.w / 2;
         const cy = g.y + g.h / 2;
-
         const selected = selectedItemId === item.id;
         const occupied = isOccupied(item);
         const self = isSelf(item);
 
         const customColor = item.color || null;
-        let fill = customColor ? `${customColor}12` : THEME.tableFill;
+        let fill = customColor ? `${customColor}0A` : THEME.tableFill;
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = selected ? 0.7 : 0.5;
+        let strokeWidth = 0.35;
 
         if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
-          strokeWidth = selected ? 0.7 : 0.55;
+          strokeWidth = 0.45;
         } else if (self) {
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
         } else if (selected) {
-          fill = customColor ? `${customColor}28` : THEME.tableSelectedFill;
+          fill = THEME.tableSelectedFill;
+          stroke = THEME.tableSelectedStroke;
+          strokeWidth = 0.45;
         }
-
-        const mainFont = Math.min(g.w, g.h) > 5 ? 2.1 : 1.65;
-        const seatsFont = Math.max(0.88, mainFont * 0.56);
 
         const handleMouseDown = allowDrag
           ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
@@ -347,18 +361,18 @@ export function VenueSVGCanvas({
             ) : (
               <rect
                 x={g.x} y={g.y} width={g.w} height={g.h}
-                rx={g.shape === 'rectangle' ? 0.28 : 0.62}
+                rx={g.shape === 'rectangle' ? 0.25 : 0.5}
                 fill={fill} stroke={stroke} strokeWidth={strokeWidth}
               />
             )}
 
             {showLabels && (
               <text
-                x={cx}
-                y={cy}
+                x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
-                fontSize={mainFont} fontWeight={700}
+                fontSize={Math.min(g.w, g.h) > 5 ? 1.8 : 1.4}
+                fontWeight={600}
                 className="pointer-events-none"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
               >
@@ -366,7 +380,6 @@ export function VenueSVGCanvas({
               </text>
             )}
 
-            {/* Resize handles for selected table */}
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
