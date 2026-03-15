@@ -221,10 +221,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         if (item && !item.is_locked) {
           const step = e.shiftKey ? 5 : 1;
           let { x_percent, y_percent } = item;
-          if (e.key === 'ArrowUp') y_percent = clamp(y_percent - step, 0, 100);
-          if (e.key === 'ArrowDown') y_percent = clamp(y_percent + step, 0, 100);
-          if (e.key === 'ArrowLeft') x_percent = clamp(x_percent - step, 0, 100);
-          if (e.key === 'ArrowRight') x_percent = clamp(x_percent + step, 0, 100);
+          if (e.key === 'ArrowUp') y_percent = clamp(y_percent - step, -5, 105);
+          if (e.key === 'ArrowDown') y_percent = clamp(y_percent + step, -5, 105);
+          if (e.key === 'ArrowLeft') x_percent = clamp(x_percent - step, -5, 105);
+          if (e.key === 'ArrowRight') x_percent = clamp(x_percent + step, -5, 105);
           const updated = { ...item, x_percent, y_percent };
           updateItemLocal(updated);
           debouncedSave(updated);
