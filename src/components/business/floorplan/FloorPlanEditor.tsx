@@ -556,10 +556,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           
 
           
-          <div>
-            
-            
-          </div>
+          
+
+
+          
         </div>
 
         <div className="relative border-2 border-dashed border-border/60 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 hover:border-primary/40 transition-all">
