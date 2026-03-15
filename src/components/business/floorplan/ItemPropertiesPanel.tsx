@@ -266,6 +266,43 @@ export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate }: I
           />
         </div>
 
+        {/* Color picker */}
+        <div>
+          <Label className="text-[10px] text-muted-foreground uppercase">{t.color}</Label>
+          <div className="flex items-center gap-2 mt-1.5">
+            {['#ffffff', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#06b6d4'].map(c => (
+              <button
+                key={c}
+                onClick={() => update({ color: c })}
+                disabled={item.is_locked}
+                className={`w-5 h-5 rounded-full border-2 transition-all ${
+                  item.color === c ? 'border-foreground scale-125' : 'border-border/40 hover:scale-110'
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+          {item.color && (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="color"
+                value={item.color}
+                onChange={e => update({ color: e.target.value })}
+                disabled={item.is_locked}
+                className="w-6 h-6 rounded cursor-pointer border border-border/40"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px] text-muted-foreground"
+                onClick={() => update({ color: null })}
+              >
+                {t.resetColor}
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Divider */}
         <div className="border-t border-border/30" />
 
