@@ -161,7 +161,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showTemplates, setShowTemplates] = useState(false);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
-  const zoom = useFloorPlanZoom(zoomContainerRef);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Filter items by active room
