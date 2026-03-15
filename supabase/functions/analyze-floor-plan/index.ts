@@ -155,44 +155,49 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `You are an expert venue floor plan transcription engine. You must extract EVERY SINGLE labeled object visible in the floor plan image with PIXEL-PERFECT bounding boxes that match the EXACT visual appearance.
+    const systemPrompt = `You are a professional venue floor plan digitization engine that produces PIXEL-PERFECT transcriptions. Your output will be rendered as an interactive SVG blueprint overlay — accuracy is critical.
 
-Return TWO arrays:
+COORDINATE SYSTEM:
+- All values are PERCENTAGES of the full image (0 = top/left edge, 100 = bottom/right edge).
+- x_percent, y_percent = TOP-LEFT corner of each element's bounding box.
+- Measure coordinates by examining where each element STARTS (top-left pixel) relative to the full image dimensions.
 
-1. "fixtures" — non-seating structural elements like bars, DJ booths, stages, entrances.
-   Each has: label, fixture_type (bar|dj|stage|entrance|kitchen|restroom|other), x_percent, y_percent, width_percent, height_percent.
+BOUNDING BOX ACCURACY — THIS IS THE MOST CRITICAL REQUIREMENT:
+- You MUST measure the ACTUAL pixel dimensions of each element as rendered in the image.
+- Convert pixel measurements to percentages: (element_pixels / image_total_pixels) × 100.
+- A bar counter spanning half the image width = width_percent ≈ 50, NOT 20.
+- A small table label occupying roughly 3% of image width = width_percent ≈ 3-4.
+- Narrow booth-style seating stacked vertically: each is wide but short (e.g., width 6%, height 2%).
+- The ASPECT RATIO of each element must precisely match the visual. If something is 3× wider than tall, width must be 3× height.
+- Do NOT normalize or equalize sizes. Each element has its own unique measured dimensions.
 
-2. "tables" — EVERY individual table, booth, or seating position visible in the image.
-   Each has: label, seats, shape (round|square|rectangle), x_percent, y_percent, width_percent, height_percent.
+FIXTURE TYPES:
+- "bar" = bar counters, bars labeled BAR, BAR 1, BAR 2, etc.
+- "dj" = DJ booth
+- "stage" = stage, performance area
+- "entrance" = entry points
+- "kitchen" = kitchen area
+- "restroom" = WC, toilets
+- "other" = any other non-seating structural element (walls, columns, etc.)
 
-CRITICAL SHAPE & SIZE RULES:
-- You MUST measure the ACTUAL visual dimensions of each element as it appears in the image.
-- If a table appears as a narrow thin strip (e.g., booths along a wall), width_percent and height_percent must reflect that narrow shape. Do NOT make them square if they are thin rectangles.
-- If a table appears as a small square, keep it small and square (e.g., width ≈ 3-5%, height ≈ 3-5%).
-- If an element is a large rectangle (like a bar counter), measure its FULL extent accurately. A bar that spans 30% of the image width should have width_percent ≈ 30.
-- The aspect ratio of each element MUST match what you see. If something is 3x wider than tall, the width must be 3x the height.
-- For narrow booth-style tables stacked vertically along a wall: they are typically wide and very short (e.g., width ≈ 5-8%, height ≈ 2-3%).
-- For narrow booth-style tables stacked horizontally: they are typically tall and very narrow (e.g., width ≈ 2-3%, height ≈ 5-8%).
+TABLE EXTRACTION:
+- Extract EVERY individually labeled table/seat position.
+- Preserve EXACT labels from the image: "1", "2", "P1", "P2", "101", "102" etc.
+- If OCR reads "n1", "n2"... these are likely "P1", "P2" — correct to P.
+- Default seats = 4 unless label or context suggests otherwise.
+- SHAPES: Look at the ACTUAL drawn shape. "round" = circle/oval. "square" = roughly equal sides. "rectangle" = clearly longer in one dimension.
+- If tables appear grouped in a line/column with similar sizes, measure ONE precisely and apply consistent sizing to all in that group.
 
-COORDINATE RULES:
-- All coordinates are PERCENTAGES of the image dimensions (0=top/left, 100=bottom/right).
-- x_percent and y_percent mark the TOP-LEFT corner of each element's bounding box.
-- PRESERVE the EXACT label/number from the image: "1", "2", "P1", "101", "Bar 1", etc.
-- If OCR is ambiguous between "P" and "n" for labels like n1/n2, use "P" (P1, P2, ...).
+SYSTEMATIC SCANNING:
+1. Scan TOP-LEFT to BOTTOM-RIGHT in a grid pattern.
+2. Then scan BOTTOM-RIGHT to TOP-LEFT to catch missed items.
+3. Count extracted items. Compare with visible labels. Add any missing.
+4. Final verification: ensure no two items have identical coordinates (they would overlap).
 
-EXTRACTION COMPLETENESS:
-- You MUST extract EVERY labeled item. If you see numbers 1 through 10, that's 10 separate entries.
-- If you see P1, P2, P3... P9, that's 9 separate entries.
-- If you see 101, 102... 110, that's 10 separate entries.
-- If you see 20, 21, 22... 29, that's 10 separate entries.
-- Tables typically have 2-6 seats. Use 4 as default if unclear.
-- Look at the ACTUAL shape: most small tables are "square". Use "rectangle" for clearly elongated shapes. Use "round" only for circular tables.
-- Do NOT group or merge tables. Each labeled point = one entry.
-- Do NOT skip ANY visible labeled object.
-- Scan the ENTIRE image systematically: top-left to bottom-right, then verify by scanning right-to-left.
+SPACING ACCURACY:
+- Pay special attention to the GAPS between tables. If tables are tightly packed, their coordinates should reflect that.
+- If a column of tables (e.g., 101-110) spans from y=8% to y=85%, distribute them evenly across that range.`;
 
-VERIFICATION STEP:
-After extraction, count all items. Compare against visible labels in the image. If any are missing, add them.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -208,7 +213,7 @@ After extraction, count all items. Compare against visible labels in the image. 
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract EVERY labeled object from this floor plan. CRITICAL: The bounding box (x, y, width, height as percentages) MUST match the EXACT visual shape and size of each element. If a table is a narrow thin strip, its bbox must be narrow. If a bar is a large rectangle, its bbox must be large. Measure each element's actual proportions from the image pixels. Do NOT make everything the same size. Keep exact labels (P1 not n1). Scan the entire image systematically and return ALL labeled objects." },
+              { type: "text", text: "Digitize this floor plan with PIXEL-PERFECT accuracy. Measure each element's actual position and size as percentages of the image. The output will be rendered as an interactive SVG — positions and proportions must match the original image exactly. Extract ALL labeled objects. Correct OCR errors (n→P for table labels). Return via the return_floor_plan function." },
               { type: "image_url", image_url: { url: imageBase64 } },
             ],
           },

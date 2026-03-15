@@ -55,23 +55,26 @@ type Geometry = {
 };
 
 const THEME = {
-  wall: 'hsl(var(--floorplan-wall) / 0.75)',
-  wallSecondary: 'hsl(var(--floorplan-wall) / 0.45)',
-  fixtureFill: 'hsl(var(--floorplan-neon) / 0.08)',
-  fixtureStroke: 'hsl(var(--floorplan-neon) / 0.55)',
-  fixtureText: 'hsl(var(--floorplan-neon) / 0.85)',
+  // Canvas
+  grid: 'hsl(var(--floorplan-wall) / 0.18)',
+  // Fixtures — cool blue tone
+  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
+  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.6)',
+  fixtureText: 'hsl(var(--floorplan-fixture) / 0.9)',
+  // Tables — warm gold tone
   tableStroke: 'hsl(var(--floorplan-neon))',
-  tableFill: 'hsl(var(--floorplan-neon) / 0.1)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.22)',
+  tableFill: 'hsl(var(--floorplan-neon) / 0.06)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
   tableText: 'hsl(var(--floorplan-neon))',
-  tableMeta: 'hsl(var(--foreground) / 0.6)',
-  occupiedStroke: 'hsl(var(--destructive))',
-  occupiedFill: 'hsl(var(--destructive) / 0.18)',
-  selfStroke: 'hsl(var(--accent))',
-  selfFill: 'hsl(var(--accent) / 0.18)',
-  grid: 'hsl(var(--floorplan-wall) / 0.15)',
-  handleFill: 'hsl(var(--primary))',
-  handleStroke: 'hsl(var(--background))',
+  tableMeta: 'hsl(var(--foreground) / 0.45)',
+  // Reservation states
+  occupiedStroke: 'hsl(0 72% 55%)',
+  occupiedFill: 'hsl(0 72% 55% / 0.12)',
+  selfStroke: 'hsl(var(--floorplan-accent))',
+  selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
+  // Handles
+  handleFill: 'hsl(var(--floorplan-neon))',
+  handleStroke: 'hsl(var(--floorplan-canvas))',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
