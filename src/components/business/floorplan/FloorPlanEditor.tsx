@@ -557,7 +557,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <MapPin className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{t.title}</h2>
+            
             <p className="text-xs text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>
