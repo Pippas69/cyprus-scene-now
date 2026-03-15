@@ -316,7 +316,7 @@ export function VenueSVGCanvas({
         if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
-          strokeWidth = selected ? 0.56 : 0.42;
+          strokeWidth = selected ? 0.7 : 0.55;
         } else if (self) {
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
