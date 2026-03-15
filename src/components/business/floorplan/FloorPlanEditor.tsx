@@ -148,7 +148,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number } | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [showSections, setShowSections] = useState(true);
-  const [showSections, setShowSections] = useState(true);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [showReferenceImage, setShowReferenceImage] = useState(true);
