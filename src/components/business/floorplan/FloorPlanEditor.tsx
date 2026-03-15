@@ -4,16 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import {
-  Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
-  ImageOff, Magnet, Undo2, Redo2,
+  Upload, Trash2, MapPin, MousePointer, Eye, EyeOff, ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil, ZoomIn, ZoomOut, Maximize,
+  Sofa, Beer, Music, Landmark, Save, Pencil,
   LayoutTemplate, Layers
 } from 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
-import { useFloorPlanZoom } from './useFloorPlanZoom';
+
 import { FloorPlanRoomTabs, type FloorPlanRoom } from './FloorPlanRoomTabs';
 import { FloorPlanTemplates, type VenueTemplate } from './FloorPlanTemplates';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -134,7 +133,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
-  const zoomContainerRef = useRef<HTMLDivElement>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItemFull[]>([]);
@@ -162,7 +161,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showTemplates, setShowTemplates] = useState(false);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
-  const zoom = useFloorPlanZoom(zoomContainerRef);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Filter items by active room
@@ -242,9 +240,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         }
       }
       // Zoom shortcuts
-      if ((e.ctrlKey || e.metaKey) && e.key === '=') { e.preventDefault(); zoom.zoomIn(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoom.zoomOut(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); zoom.resetZoom(); }
       // Select all
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();
@@ -254,7 +249,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedItem, selectedItems, items, history, visibleItems, zoom]);
+  }, [selectedItem, selectedItems, items, history, visibleItems]);
 
   const loadFloorPlan = async () => {
     setLoading(true);
@@ -666,8 +661,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const rect = canvasRef.current.getBoundingClientRect();
 
     if (dragging) {
-      const dx = ((e.clientX - dragging.startX) / rect.width) * 100 / zoom.scale;
-      const dy = ((e.clientY - dragging.startY) / rect.height) * 100 / zoom.scale;
+      const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
+      const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
 
       setItems(prev => prev.map(i => {
         const orig = dragging.origPositions.get(i.id);
@@ -688,8 +683,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = ((e.clientX - resizing.startX) / rect.width) * 100 / zoom.scale;
-      const dy = ((e.clientY - resizing.startY) / rect.height) * 100 / zoom.scale;
+      const dx = ((e.clientX - resizing.startX) / rect.width) * 100;
+      const dy = ((e.clientY - resizing.startY) / rect.height) * 100;
       const h = resizing.handle;
       let newW = resizing.origW, newH = resizing.origH;
       let newX = resizing.origXP, newY = resizing.origYP;
@@ -705,7 +700,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         i.id === resizing.id ? { ...i, width_percent: newW, height_percent: newH, x_percent: newX, y_percent: newY } : i
       ));
     }
-  }, [dragging, resizing, gridSnap, zoom.scale]);
+  }, [dragging, resizing, gridSnap]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
@@ -924,19 +919,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* CANVAS + PROPERTIES */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ minHeight: '400px' }}>
+      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl">
         {/* Canvas */}
-        <div className="flex-1 relative overflow-hidden" ref={zoomContainerRef}>
-          <div className="absolute inset-0" style={{ aspectRatio: '4 / 3' }}>
+        <div className="flex-1 relative" style={{ aspectRatio: '4 / 3' }}>
             <div
               ref={canvasRef}
               className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-              style={zoom.transformStyle}
               onClick={isDesignMode ? handleCanvasClick : undefined}
               onMouseMove={isDesignMode ? handleMouseMove : undefined}
               onMouseUp={isDesignMode ? handleMouseUp : undefined}
               onMouseLeave={isDesignMode ? handleMouseUp : undefined}
-              onMouseDown={zoom.handlePanStart}
             >
               {/* Background */}
               <div className="absolute inset-0" style={{
@@ -988,24 +980,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Zoom controls */}
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border/30 rounded-lg px-1.5 py-1 z-10">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.zoomOut} title="Zoom out (Ctrl+-)">
-              <ZoomOut className="h-3.5 w-3.5" />
-            </Button>
-            <span className="text-[10px] text-muted-foreground w-10 text-center font-mono">
-              {Math.round(zoom.scale * 100)}%
-            </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.zoomIn} title="Zoom in (Ctrl+=)">
-              <ZoomIn className="h-3.5 w-3.5" />
-            </Button>
-            <div className="w-px h-4 bg-border/40" />
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.resetZoom} title="Reset zoom (Ctrl+0)">
-              <Maximize className="h-3.5 w-3.5" />
-            </Button>
-          </div>
         </div>
 
         {/* Right: Properties Panel */}
