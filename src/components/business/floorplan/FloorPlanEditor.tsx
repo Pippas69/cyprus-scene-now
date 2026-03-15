@@ -798,7 +798,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             fixtureBboxes={fixtureBboxes}
             tableBboxes={tableBboxes}
             selectedItemId={isDesignMode ? selectedItem : null}
-            showLabels={false}
+            showLabels={true}
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
             onTableClick={(id) => {
