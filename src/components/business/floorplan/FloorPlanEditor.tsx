@@ -7,7 +7,7 @@ import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   ImageOff, Magnet, Undo2, Redo2,
   PanelRightOpen, PanelRightClose, X, Users, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil } from
+  Sofa, Beer, Music, Landmark, Save, Pencil, Eraser } from
 'lucide-react';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
