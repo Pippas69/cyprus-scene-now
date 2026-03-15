@@ -106,6 +106,11 @@ const translations = {
     duplicated: 'Αντιγράφηκε',
     noItems: 'Προσθέστε ένα σχήμα από τη γραμμή εργαλείων',
     startBlank: 'Ξεκινήστε κενό',
+    saveLayout: 'Αποθήκευση',
+    editLayout: 'Επεξεργασία',
+    layoutSaved: 'Το σχεδιάγραμμα αποθηκεύτηκε',
+    assignMode: 'Διαχείριση θέσεων',
+    assignHint: 'Πατήστε σε μια θέση για ανάθεση κράτησης',
   },
   en: {
     title: 'Layout Studio',
@@ -130,6 +135,11 @@ const translations = {
     duplicated: 'Duplicated',
     noItems: 'Add a shape from the toolbar above',
     startBlank: 'Start blank',
+    saveLayout: 'Save',
+    editLayout: 'Edit',
+    layoutSaved: 'Layout saved',
+    assignMode: 'Manage seats',
+    assignHint: 'Click a seat to assign a reservation',
   },
 };
 
