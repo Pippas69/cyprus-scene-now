@@ -985,24 +985,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Zoom controls */}
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border/30 rounded-lg px-1.5 py-1 z-10">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.zoomOut} title="Zoom out (Ctrl+-)">
-              <ZoomOut className="h-3.5 w-3.5" />
-            </Button>
-            <span className="text-[10px] text-muted-foreground w-10 text-center font-mono">
-              {Math.round(zoom.scale * 100)}%
-            </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.zoomIn} title="Zoom in (Ctrl+=)">
-              <ZoomIn className="h-3.5 w-3.5" />
-            </Button>
-            <div className="w-px h-4 bg-border/40" />
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoom.resetZoom} title="Reset zoom (Ctrl+0)">
-              <Maximize className="h-3.5 w-3.5" />
-            </Button>
-          </div>
         </div>
 
         {/* Right: Properties Panel */}
