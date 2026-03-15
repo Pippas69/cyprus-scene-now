@@ -404,7 +404,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const clearAllItems = async () => {
     if (!window.confirm(t.clearAllConfirm)) return;
     const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
-    if (error) { toast.error(error.message); return; }
+    if (error) {toast.error(error.message);return;}
     history.pushState(items, 'clear all');
     setItems([]);
     setSelectedItem(null);
@@ -598,7 +598,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <MapPin className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{t.title}</h2>
+            
             <p className="text-xs text-muted-foreground">
               {isDesignMode ? t.subtitle : t.assignHint}
             </p>
@@ -679,17 +679,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
                   {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
                 </Button>
-           }
+          }
 
               <div className="w-px h-5 bg-border/40 mx-1" />
 
               {/* Clear all */}
-              {items.length > 0 && (
-                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 px-2.5 text-destructive hover:text-destructive" onClick={clearAllItems} title={t.clearAll}>
+              {items.length > 0 &&
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 px-2.5 text-destructive hover:text-destructive" onClick={clearAllItems} title={t.clearAll}>
                   <Eraser className="h-3.5 w-3.5" />
                   <span className="hidden lg:inline">{t.clearAll}</span>
                 </Button>
-              )}
+          }
 
               <div className="flex-1" />
 
