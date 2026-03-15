@@ -59,13 +59,13 @@ const THEME = {
   // Canvas
   grid: 'hsl(var(--floorplan-wall) / 0.18)',
   // Fixtures — premium white
-  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.06)',
-  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.55)',
-  fixtureText: 'hsl(var(--floorplan-fixture) / 0.9)',
+  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
+  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.7)',
+  fixtureText: 'hsl(var(--floorplan-fixture))',
   // Tables — premium white
   tableStroke: 'hsl(var(--floorplan-neon))',
-  tableFill: 'hsl(var(--floorplan-neon) / 0.06)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.15)',
+  tableFill: 'hsl(var(--floorplan-neon) / 0.08)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
   tableText: 'hsl(var(--floorplan-neon))',
   tableMeta: 'hsl(var(--foreground) / 0.45)',
   // Reservation states
