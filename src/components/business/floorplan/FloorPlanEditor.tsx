@@ -670,17 +670,30 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">{t.title}</h2>
-            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+            <p className="text-xs text-muted-foreground">
+              {isDesignMode ? t.subtitle : t.assignHint}
+            </p>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
-          <span>🪑 {tableItems.length}</span>
-          <div className="w-px h-3 bg-border" />
-          <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
-          {fixtureItems.length > 0 && <>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-1.5 text-xs text-muted-foreground">
+            <span>🪑 {tableItems.length}</span>
             <div className="w-px h-3 bg-border" />
-            <span>📍 {fixtureItems.length}</span>
-          </>}
+            <span><Users className="h-3 w-3 inline mr-1" />{totalCapacity}</span>
+            {fixtureItems.length > 0 && <>
+              <div className="w-px h-3 bg-border" />
+              <span>📍 {fixtureItems.length}</span>
+            </>}
+          </div>
+          {isDesignMode ? (
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleSaveLayout}>
+              <Save className="h-3.5 w-3.5" />{t.saveLayout}
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => setIsDesignMode(true)}>
+              <Pencil className="h-3.5 w-3.5" />{t.editLayout}
+            </Button>
+          )}
         </div>
       </div>
 
