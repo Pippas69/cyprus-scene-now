@@ -219,7 +219,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       supabase.from('floor_plan_zones').select('*').eq('business_id', businessId).order('sort_order').limit(1),
     ]);
 
-    const loadedItems = (itemsResult.data || []) as FloorPlanItem[];
+    const loadedItems = ((itemsResult.data || []) as unknown as FloorPlanItem[]).map(i => ({
+      ...i,
+      rotation: (i as any).rotation ?? 0,
+      width_percent: (i as any).width_percent ?? 5,
+      height_percent: (i as any).height_percent ?? 5,
+    }));
     const loadedZones = (zonesResult.data || []) as FloorPlanZone[];
     setItems(loadedItems);
     setZones(loadedZones);
