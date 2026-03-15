@@ -432,12 +432,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
     e.stopPropagation();
+    setSelectedItem(id); // Single click selects immediately
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'move');
     const svgPt = screenToSVG(e.clientX, e.clientY);
     setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
-    setSelectedItem(id);
   };
 
   const handleResizeStart = useCallback((e: React.MouseEvent, id: string, handle: string) => {
