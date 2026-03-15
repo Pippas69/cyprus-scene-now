@@ -459,7 +459,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       height_percent: item.height_percent || 5,
     }).select().single();
     if (error) { toast.error(error.message); return; }
-    setItems(prev => [...prev, data as FloorPlanItem]);
+    const newItem = { ...(data as unknown as FloorPlanItem), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5 };
+    setItems(prev => [...prev, newItem]);
     setHasFloorPlan(true);
     toast.success(t.saved);
   };
