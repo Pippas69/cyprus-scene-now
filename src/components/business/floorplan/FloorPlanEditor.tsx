@@ -462,13 +462,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'resize');
+    const svgPt = screenToSVG(e.clientX, e.clientY);
     setResizing({
       id, handle,
-      startX: e.clientX, startY: e.clientY,
+      startX: svgPt.x, startY: svgPt.y,
       origW: item.width_percent, origH: item.height_percent,
       origXP: item.x_percent, origYP: item.y_percent
     });
-  }, [items, history]);
+  }, [items, history, screenToSVG]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
