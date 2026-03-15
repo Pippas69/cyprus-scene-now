@@ -238,7 +238,7 @@ export function VenueSVGCanvas({
 
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="xMidYMid meet" shapeRendering="geometricPrecision">
-      <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
+      <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
 
       {/* Fixtures */}
