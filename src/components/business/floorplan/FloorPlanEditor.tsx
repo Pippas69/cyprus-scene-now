@@ -500,8 +500,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (dragging) {
       const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
       const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
-      let newX = clamp(dragging.origX + dx, 0, 100);
-      let newY = clamp(dragging.origY + dy, 0, 100);
+      let newX = clamp(dragging.origX + dx, -5, 105);
+      let newY = clamp(dragging.origY + dy, -5, 105);
       if (gridSnap) { newX = snapValue(newX, SNAP_INCREMENT); newY = snapValue(newY, SNAP_INCREMENT); }
       setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
       setItems(prev => prev.map(i => i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i));
