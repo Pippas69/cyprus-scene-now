@@ -686,10 +686,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           {/* Canvas + Side panel */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
             {/* SVG Canvas */}
-            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 300px)' }}>
+            <div className="relative rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl">
               <div
                 ref={canvasRef}
-                className={`absolute inset-0 select-none ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                className={`relative select-none w-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+                style={{ aspectRatio: `${canvasAspect}`, maxHeight: 'calc(100vh - 300px)' }}
                 onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
