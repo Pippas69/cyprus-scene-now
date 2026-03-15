@@ -705,7 +705,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       {/* ═══ CANVAS + PROPERTIES ═══ */}
       <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ minHeight: '400px' }}>
         {/* Canvas - uses aspect-ratio to maintain proportions across devices */}
-        <div className="flex-1 relative" style={{ aspectRatio: '4 / 3' }}>
+        <div className="flex-1 relative" style={{ aspectRatio: '1 / 1' }}>
           <div
             ref={canvasRef}
             className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
