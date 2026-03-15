@@ -308,8 +308,9 @@ export function VenueSVGCanvas({
         const occupied = isOccupied(item);
         const self = isSelf(item);
 
-        let fill = THEME.tableFill;
-        let stroke = THEME.tableStroke;
+        const customColor = item.color || null;
+        let fill = customColor ? `${customColor}12` : THEME.tableFill;
+        let stroke = customColor || THEME.tableStroke;
         let strokeWidth = selected ? 0.56 : 0.38;
 
         if (occupied) {
@@ -320,7 +321,7 @@ export function VenueSVGCanvas({
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
         } else if (selected) {
-          fill = THEME.tableSelectedFill;
+          fill = customColor ? `${customColor}28` : THEME.tableSelectedFill;
         }
 
         const mainFont = Math.min(g.w, g.h) > 5 ? 2.1 : 1.65;
