@@ -697,73 +697,75 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       </div>
 
-      {/* ═══ TOOLBAR ═══ */}
-      <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
-        {placingMode ? (
-          <>
-            <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
-              <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
-            </div>
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
-              <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
-            </Button>
-          </>
-        ) : (
-          <>
-            {/* Undo / Redo */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
-              <Undo2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
-              <Redo2 className="h-3.5 w-3.5" />
-            </Button>
-
-            <div className="w-px h-5 bg-border/40 mx-1" />
-
-            {/* Shape buttons */}
-            {TOOLBAR_SHAPES.map(shape => (
-              <Button
-                key={shape.id}
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs gap-1.5 px-2.5"
-                onClick={() => setPlacingMode(shape)}
-                title={language === 'el' ? shape.label_el : shape.label_en}
-              >
-                {shape.icon}
-                <span className="hidden lg:inline">{language === 'el' ? shape.label_el : shape.label_en}</span>
+      {/* ═══ TOOLBAR (design mode only) ═══ */}
+      {isDesignMode && (
+        <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-md border border-border/40 rounded-xl px-3 py-2 flex-wrap">
+          {placingMode ? (
+            <>
+              <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5">
+                <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
+                <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setPlacingMode(null)}>
+                <X className="h-3.5 w-3.5 mr-1" />{t.cancel}
               </Button>
-            ))}
-
-            <div className="w-px h-5 bg-border/40 mx-1" />
-
-            {/* Grid & Labels */}
-            <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
-              <Magnet className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
-              {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-            </Button>
-            {referenceImageUrl && (
-              <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
-                {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
+            </>
+          ) : (
+            <>
+              {/* Undo / Redo */}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo (Ctrl+Z)">
+                <Undo2 className="h-3.5 w-3.5" />
               </Button>
-            )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo (Ctrl+Shift+Z)">
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
 
-            <div className="flex-1" />
+              <div className="w-px h-5 bg-border/40 mx-1" />
 
-            {/* Right side */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
-              {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
-            </Button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
-              <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
-            </Button>
-          </>
-        )}
-      </div>
+              {/* Shape buttons */}
+              {TOOLBAR_SHAPES.map(shape => (
+                <Button
+                  key={shape.id}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 px-2.5"
+                  onClick={() => setPlacingMode(shape)}
+                  title={language === 'el' ? shape.label_el : shape.label_en}
+                >
+                  {shape.icon}
+                  <span className="hidden lg:inline">{language === 'el' ? shape.label_el : shape.label_en}</span>
+                </Button>
+              ))}
+
+              <div className="w-px h-5 bg-border/40 mx-1" />
+
+              {/* Grid & Labels */}
+              <Button variant={gridSnap ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap}>
+                <Magnet className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant={showLabels ? 'ghost' : 'outline'} size="icon" className="h-8 w-8" onClick={() => setShowLabels(!showLabels)} title="Labels">
+                {showLabels ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </Button>
+              {referenceImageUrl && (
+                <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
+                  {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {/* Right side */}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowRightPanel(!showRightPanel)} title="Properties">
+                {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => fileInputRef.current?.click()} disabled={aiAnalyzing}>
+                <Wand2 className="h-3.5 w-3.5 mr-1" />{t.reAnalyze}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Reference image opacity */}
       {referenceImageUrl && showReferenceImage && (
