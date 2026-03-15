@@ -128,7 +128,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
-  const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number } | null>(null);
+  const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number; origRotation: number } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -138,7 +138,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
 
-  const [isDesignMode, setIsDesignMode] = useState(true);
+  const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
@@ -236,7 +236,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setItems(loadedItems);
     setZones(loadedZones);
     setHasFloorPlan(loadedItems.length > 0);
-    if (loadedItems.length > 0) setIsDesignMode(true);
     history.reset(loadedItems);
 
     const meta = loadedZones[0]?.metadata;
@@ -443,27 +442,37 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setIsSaving(true);
 
-    // Save all items to DB
-    for (const item of items) {
-      await supabase.from('floor_plan_tables').update({
-        label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
-        seats: item.seats, shape: item.shape, rotation: item.rotation,
-        width_percent: item.width_percent, height_percent: item.height_percent,
-        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
-      } as any).eq('id', item.id);
-    }
+    try {
+      const updateResults = await Promise.all(items.map((item) =>
+        supabase.from('floor_plan_tables').update({
+          label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
+          seats: item.seats, shape: item.shape, rotation: item.rotation,
+          width_percent: item.width_percent, height_percent: item.height_percent,
+          is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+        } as any).eq('id', item.id),
+      ));
 
-    // Capture screenshot and save to business
-    const screenshotUrl = await captureCanvasScreenshot();
-    if (screenshotUrl) {
-      await supabase.from('businesses').update({
-        floor_plan_image_url: screenshotUrl,
-      }).eq('id', businessId);
-    }
+      const failedUpdate = updateResults.find((r) => r.error);
+      if (failedUpdate?.error) {
+        toast.error(failedUpdate.error.message);
+        return;
+      }
 
-    setIsDesignMode(false);
-    setIsSaving(false);
-    toast.success(t.layoutSaved);
+      const screenshotUrl = await captureCanvasScreenshot();
+      if (screenshotUrl) {
+        const { error: businessSaveError } = await supabase.from('businesses').update({
+          floor_plan_image_url: screenshotUrl,
+        }).eq('id', businessId);
+        if (businessSaveError) console.error('Business screenshot save error:', businessSaveError);
+      }
+
+      setSelectedItem(null);
+      setPlacingMode(null);
+      setIsDesignMode(false);
+      toast.success(t.layoutSaved);
+    } finally {
+      setIsSaving(false);
+    }
   }, [items, t.layoutSaved, captureCanvasScreenshot, businessId]);
 
   const screenToSVG = useCallback((clientX: number, clientY: number) => {
@@ -501,6 +510,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       startX: svgPt.x, startY: svgPt.y,
       origW: item.width_percent, origH: item.height_percent,
       origXP: item.x_percent, origYP: item.y_percent,
+      origRotation: item.rotation || 0,
     });
   }, [items, history, screenToSVG]);
 
@@ -521,22 +531,30 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = svgPt.x - resizing.startX;
-      const dy = svgPt.y - resizing.startY;
+      const rawDx = svgPt.x - resizing.startX;
+      const rawDy = svgPt.y - resizing.startY;
+      const angle = (resizing.origRotation * Math.PI) / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      // Convert pointer movement to local (item) axes so resize direction feels correct when rotated
+      const dx = rawDx * cos + rawDy * sin;
+      const dy = -rawDx * sin + rawDy * cos;
+
       const h = resizing.handle;
       let newW = resizing.origW;
       let newH = resizing.origH;
       let newX = resizing.origXP;
       let newY = resizing.origYP;
 
-      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 70);
+      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 80);
       if (h.includes('w')) {
-        newW = clamp(resizing.origW - dx, 1, 70);
+        newW = clamp(resizing.origW - dx, 1, 80);
         newX = resizing.origXP + (resizing.origW - newW);
       }
-      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 70);
+      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 80);
       if (h.includes('n')) {
-        newH = clamp(resizing.origH - dy, 1, 70);
+        newH = clamp(resizing.origH - dy, 1, 80);
         newY = resizing.origYP + (resizing.origH - newH);
       }
 
@@ -611,7 +629,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <div className="text-center space-y-1.5">
               <p className="text-xs text-muted-foreground">{t.startDesignHint}</p>
             </div>
-            <Button variant="default" size="sm" onClick={() => setHasFloorPlan(true)}>
+            <Button variant="default" size="sm" onClick={() => { setHasFloorPlan(true); setIsDesignMode(true); }}>
               {t.startBlank}
             </Button>
           </div>
