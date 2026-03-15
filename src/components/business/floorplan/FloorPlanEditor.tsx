@@ -8,8 +8,9 @@ import {
   ImageOff, Magnet, Undo2, Redo2,
   X, Circle, Square, RectangleHorizontal,
   Sofa, Beer, Music, Landmark, Save, Pencil, Eraser,
-  Plus
+  Plus, Loader2
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
