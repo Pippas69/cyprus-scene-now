@@ -472,12 +472,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   }, [items, history, screenToSVG]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
+    const svgPt = screenToSVG(e.clientX, e.clientY);
 
     if (dragging) {
-      const dx = (e.clientX - dragging.startX) / rect.width * 100;
-      const dy = (e.clientY - dragging.startY) / rect.height * 100;
+      const dx = svgPt.x - dragging.startX;
+      const dy = svgPt.y - dragging.startY;
       let newX = clamp(dragging.origX + dx, -5, 105);
       let newY = clamp(dragging.origY + dy, -5, 105);
       if (gridSnap) {newX = snapValue(newX, SNAP_INCREMENT);newY = snapValue(newY, SNAP_INCREMENT);}
@@ -486,8 +485,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = (e.clientX - resizing.startX) / rect.width * 100;
-      const dy = (e.clientY - resizing.startY) / rect.height * 100;
+      const dx = svgPt.x - resizing.startX;
+      const dy = svgPt.y - resizing.startY;
       const h = resizing.handle;
       let newW = resizing.origW;
       let newH = resizing.origH;
