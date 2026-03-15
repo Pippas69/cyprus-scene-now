@@ -126,6 +126,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<FloorPlanItemFull[]>([]);
@@ -135,7 +136,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{id: string;startX: number;startY: number;origX: number;origY: number;} | null>(null);
   const [resizing, setResizing] = useState<{id: string;handle: string;startX: number;startY: number;origW: number;origH: number;origXP: number;origYP: number;} | null>(null);
-  const [showLabels, setShowLabels] = useState(true);
+  const [showLabels, setShowLabels] = useState(false);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -333,10 +334,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   // Canvas click for placing
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current || !placingMode) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    let x = (e.clientX - rect.left) / rect.width * 100;
-    let y = (e.clientY - rect.top) / rect.height * 100;
+    if (!placingMode) return;
+    const svgPt = screenToSVG(e.clientX, e.clientY);
+    let x = svgPt.x;
+    let y = svgPt.y;
     if (gridSnap) {x = snapValue(x, SNAP_INCREMENT);y = snapValue(y, SNAP_INCREMENT);}
 
     const existingTables = items.filter((i) => !i.fixture_type).length;
@@ -429,6 +430,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.layoutSaved);
   }, [items, t.layoutSaved]);
 
+  // Convert screen coords to SVG viewBox coords
+  const screenToSVG = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
+
   // Drag to move
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
@@ -436,7 +450,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'move');
-    setDragging({ id, startX: e.clientX, startY: e.clientY, origX: item.x_percent, origY: item.y_percent });
+    const svgPt = screenToSVG(e.clientX, e.clientY);
+    setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
     setSelectedItem(id);
   };
 
@@ -447,21 +462,21 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'resize');
+    const svgPt = screenToSVG(e.clientX, e.clientY);
     setResizing({
       id, handle,
-      startX: e.clientX, startY: e.clientY,
+      startX: svgPt.x, startY: svgPt.y,
       origW: item.width_percent, origH: item.height_percent,
       origXP: item.x_percent, origYP: item.y_percent
     });
-  }, [items, history]);
+  }, [items, history, screenToSVG]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
+    const svgPt = screenToSVG(e.clientX, e.clientY);
 
     if (dragging) {
-      const dx = (e.clientX - dragging.startX) / rect.width * 100;
-      const dy = (e.clientY - dragging.startY) / rect.height * 100;
+      const dx = svgPt.x - dragging.startX;
+      const dy = svgPt.y - dragging.startY;
       let newX = clamp(dragging.origX + dx, -5, 105);
       let newY = clamp(dragging.origY + dy, -5, 105);
       if (gridSnap) {newX = snapValue(newX, SNAP_INCREMENT);newY = snapValue(newY, SNAP_INCREMENT);}
@@ -470,8 +485,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = (e.clientX - resizing.startX) / rect.width * 100;
-      const dy = (e.clientY - resizing.startY) / rect.height * 100;
+      const dx = svgPt.x - resizing.startX;
+      const dy = svgPt.y - resizing.startY;
       const h = resizing.handle;
       let newW = resizing.origW;
       let newH = resizing.origH;
@@ -500,7 +515,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       i
       ));
     }
-  }, [dragging, resizing, gridSnap]);
+  }, [dragging, resizing, gridSnap, screenToSVG]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
@@ -734,6 +749,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
             {/* SVG Canvas */}
             <VenueSVGCanvas
+              svgRef={svgRef}
               items={items}
               fixtureBboxes={fixtureBboxes}
               tableBboxes={tableBboxes}

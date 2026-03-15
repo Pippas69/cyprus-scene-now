@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, forwardRef } from 'react';
 
 export interface VenueItem {
   id: string;
@@ -42,6 +42,7 @@ interface VenueSVGCanvasProps {
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
+  svgRef?: React.Ref<SVGSVGElement>;
 }
 
 type RenderShape = 'round' | 'square' | 'rectangle';
@@ -171,6 +172,7 @@ export function VenueSVGCanvas({
   interactive = true,
   showGrid = false,
   gridSnap = 2,
+  svgRef,
 }: VenueSVGCanvasProps) {
   const fixtureItems = items.filter((i) => !!i.fixture_type);
   const tableItems = items.filter((i) => !i.fixture_type);
@@ -227,7 +229,7 @@ export function VenueSVGCanvas({
   const showHandles = interactive && !!onResizeStart;
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="xMidYMid meet" shapeRendering="geometricPrecision">
+    <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="xMidYMid meet" shapeRendering="geometricPrecision">
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
 
       {showGrid && <GridOverlay snap={gridSnap} />}
