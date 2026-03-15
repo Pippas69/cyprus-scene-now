@@ -664,7 +664,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <Button variant={showReferenceImage ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setShowReferenceImage(!showReferenceImage)} title="Reference Image">
                   {showReferenceImage ? <Eye className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
                 </Button>
-          }
+           }
+
+              <div className="w-px h-5 bg-border/40 mx-1" />
+
+              {/* Clear all */}
+              {items.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 px-2.5 text-destructive hover:text-destructive" onClick={clearAllItems} title={t.clearAll}>
+                  <Eraser className="h-3.5 w-3.5" />
+                  <span className="hidden lg:inline">{t.clearAll}</span>
+                </Button>
+              )}
 
               <div className="flex-1" />
 
@@ -673,7 +683,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 {showRightPanel ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
               </Button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-              
 
           
             </>
