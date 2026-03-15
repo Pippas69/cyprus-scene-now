@@ -403,8 +403,47 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.cleared);
   };
 
+  const captureCanvasScreenshot = useCallback(async (): Promise<string | null> => {
+    const el = canvasRef.current;
+    if (!el) return null;
+    try {
+      // Temporarily hide selection handles & overlays for clean screenshot
+      setSelectedItem(null);
+      setPlacingMode(null);
+      // Wait for re-render
+      await new Promise((r) => setTimeout(r, 100));
+
+      const canvas = await html2canvas(el, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+      if (!blob) return null;
+
+      const path = `${businessId}/floor-plan-screenshot.png`;
+      await supabase.storage.from('floor-plan-references').remove([path]);
+      const { error } = await supabase.storage.from('floor-plan-references').upload(path, blob, {
+        upsert: true,
+        contentType: 'image/png',
+      });
+      if (error) { console.error('Screenshot upload error:', error); return null; }
+
+      const { data: urlData } = supabase.storage.from('floor-plan-references').getPublicUrl(path);
+      return urlData?.publicUrl || null;
+    } catch (err) {
+      console.error('Screenshot capture error:', err);
+      return null;
+    }
+  }, [businessId]);
+
   const handleSaveLayout = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setIsSaving(true);
+
+    // Save all items to DB
     for (const item of items) {
       await supabase.from('floor_plan_tables').update({
         label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
@@ -413,11 +452,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         is_locked: item.is_locked, item_type: item.item_type, color: item.color,
       } as any).eq('id', item.id);
     }
+
+    // Capture screenshot and save to business
+    const screenshotUrl = await captureCanvasScreenshot();
+    if (screenshotUrl) {
+      await supabase.from('businesses').update({
+        floor_plan_image_url: screenshotUrl,
+      }).eq('id', businessId);
+    }
+
     setIsDesignMode(false);
-    setSelectedItem(null);
-    setPlacingMode(null);
+    setIsSaving(false);
     toast.success(t.layoutSaved);
-  }, [items, t.layoutSaved]);
+  }, [items, t.layoutSaved, captureCanvasScreenshot, businessId]);
 
   const screenToSVG = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
