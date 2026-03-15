@@ -515,7 +515,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       i
       ));
     }
-  }, [dragging, resizing, gridSnap]);
+  }, [dragging, resizing, gridSnap, screenToSVG]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
