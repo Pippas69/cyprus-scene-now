@@ -163,12 +163,6 @@ export function VenueSVGCanvas({
     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <rect x={0} y={0} width={100} height={100} fill="transparent" />
 
-      {/* Border */}
-      <rect
-        x={1.2} y={1.2} width={97.6} height={97.6} rx={1.4}
-        fill="none" stroke={THEME.wall} strokeWidth={0.6}
-      />
-
       {/* Optional grid */}
       {showGrid && <GridOverlay snap={gridSnap} />}
 
