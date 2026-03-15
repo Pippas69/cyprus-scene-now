@@ -654,7 +654,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               onClick={isDesignMode ? handleCanvasClick : undefined}
               onMouseMove={isDesignMode ? handleMouseMove : undefined}
               onMouseUp={isDesignMode ? handleMouseUp : undefined}
-              onMouseLeave={isDesignMode ? handleMouseUp : undefined}
             >
               <div className="absolute inset-0" style={{
                 background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
