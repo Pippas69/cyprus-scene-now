@@ -616,7 +616,25 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (placingMode) return;
     e.stopPropagation();
     const item = items.find(i => i.id === id);
-    if (!item || item.is_locked) return;
+    if (!item || item.is_locked) {
+      // Still select locked items on click
+      setSelectedItem(id);
+      setSelectedItems([]);
+      return;
+    }
+
+    // Handle shift+click for multi-select
+    if (e.shiftKey) {
+      setSelectedItems(prev => {
+        if (prev.includes(id)) return prev.filter(x => x !== id);
+        const next = [...prev, id];
+        if (selectedItem && !prev.includes(selectedItem)) next.push(selectedItem);
+        return next;
+      });
+      setSelectedItem(null);
+      return;
+    }
+
     history.pushState(items, 'move');
 
     const dragIds = selectedItems.includes(id) ? selectedItems : [id];
