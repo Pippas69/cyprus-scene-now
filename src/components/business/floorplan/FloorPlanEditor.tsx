@@ -129,12 +129,24 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{
-    id: string; handle: string;
-    // Anchor = the opposite edge/corner that stays fixed
-    anchorX: number; anchorY: number;
-    // Which axes this handle controls
-    movesLeft: boolean; movesRight: boolean;
-    movesTop: boolean; movesBottom: boolean;
+    id: string;
+    handle: string;
+    // World-space anchor point (opposite edge/corner) that stays fixed during resize
+    anchorX: number;
+    anchorY: number;
+    // Local basis vectors in world space (item rotation aware)
+    uxX: number;
+    uxY: number;
+    uyX: number;
+    uyY: number;
+    // Starting dimensions (avoid drift while dragging)
+    startW: number;
+    startH: number;
+    // Which edges this handle controls
+    movesLeft: boolean;
+    movesRight: boolean;
+    movesTop: boolean;
+    movesBottom: boolean;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
 
@@ -508,9 +520,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const handleResizeStart = useCallback((e: React.MouseEvent, id: string, handle: string) => {
     e.stopPropagation();
     e.preventDefault();
+
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'resize');
+
+    const startW = clamp(item.width_percent, 1, 80);
+    const startH = clamp(item.height_percent, 1, 80);
 
     // Determine which edges this handle moves
     const movesLeft = handle.includes('w');
@@ -518,11 +534,42 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const movesTop = handle.includes('n');
     const movesBottom = handle.includes('s');
 
-    // Anchor = the opposite edge that stays fixed
-    const anchorX = movesRight ? item.x_percent : (movesLeft ? item.x_percent + item.width_percent : item.x_percent);
-    const anchorY = movesBottom ? item.y_percent : (movesTop ? item.y_percent + item.height_percent : item.y_percent);
+    const angle = ((item.rotation || 0) * Math.PI) / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
 
-    setResizing({ id, handle, anchorX, anchorY, movesLeft, movesRight, movesTop, movesBottom });
+    // Local basis vectors (x-axis and y-axis in world coordinates)
+    const uxX = cos;
+    const uxY = sin;
+    const uyX = -sin;
+    const uyY = cos;
+
+    const centerX = item.x_percent + startW / 2;
+    const centerY = item.y_percent + startH / 2;
+
+    // Opposite edge/corner local coordinates (fixed anchor)
+    const anchorLocalX = movesRight ? -startW / 2 : (movesLeft ? startW / 2 : 0);
+    const anchorLocalY = movesBottom ? -startH / 2 : (movesTop ? startH / 2 : 0);
+
+    const anchorX = centerX + anchorLocalX * uxX + anchorLocalY * uyX;
+    const anchorY = centerY + anchorLocalX * uxY + anchorLocalY * uyY;
+
+    setResizing({
+      id,
+      handle,
+      anchorX,
+      anchorY,
+      uxX,
+      uxY,
+      uyX,
+      uyY,
+      startW,
+      startH,
+      movesLeft,
+      movesRight,
+      movesTop,
+      movesBottom,
+    });
   }, [items, history]);
 
   const updatePointer = useCallback((clientX: number, clientY: number) => {
@@ -542,44 +589,34 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      // Absolute position approach: compute new edges directly from mouse position
-      // The anchor (opposite edge) stays fixed; the grabbed edge follows the mouse
-      const mouseX = svgPt.x;
-      const mouseY = svgPt.y;
+      const worldDx = svgPt.x - resizing.anchorX;
+      const worldDy = svgPt.y - resizing.anchorY;
 
-      const item = items.find((i) => i.id === resizing.id);
-      if (!item) return;
+      // Convert pointer to item-local coordinates relative to fixed anchor
+      const localX = worldDx * resizing.uxX + worldDy * resizing.uxY;
+      const localY = worldDx * resizing.uyX + worldDy * resizing.uyY;
 
-      let newX = item.x_percent;
-      let newY = item.y_percent;
-      let newW = item.width_percent;
-      let newH = item.height_percent;
+      let newW = resizing.startW;
+      let newH = resizing.startH;
 
-      if (resizing.movesRight) {
-        // Right edge follows mouse, left edge (anchorX) stays fixed
-        newW = clamp(mouseX - resizing.anchorX, 1, 80);
-        newX = resizing.anchorX;
-      }
-      if (resizing.movesLeft) {
-        // Left edge follows mouse, right edge (anchorX) stays fixed
-        newW = clamp(resizing.anchorX - mouseX, 1, 80);
-        newX = resizing.anchorX - newW;
-      }
-      if (resizing.movesBottom) {
-        // Bottom edge follows mouse, top edge (anchorY) stays fixed
-        newH = clamp(mouseY - resizing.anchorY, 1, 80);
-        newY = resizing.anchorY;
-      }
-      if (resizing.movesTop) {
-        // Top edge follows mouse, bottom edge (anchorY) stays fixed
-        newH = clamp(resizing.anchorY - mouseY, 1, 80);
-        newY = resizing.anchorY - newH;
-      }
+      if (resizing.movesRight) newW = clamp(localX, 1, 80);
+      if (resizing.movesLeft) newW = clamp(-localX, 1, 80);
+      if (resizing.movesBottom) newH = clamp(localY, 1, 80);
+      if (resizing.movesTop) newH = clamp(-localY, 1, 80);
 
       if (gridSnap) {
         newW = snapValue(newW, SNAP_INCREMENT);
         newH = snapValue(newH, SNAP_INCREMENT);
       }
+
+      const offsetLocalX = resizing.movesRight ? newW / 2 : (resizing.movesLeft ? -newW / 2 : 0);
+      const offsetLocalY = resizing.movesBottom ? newH / 2 : (resizing.movesTop ? -newH / 2 : 0);
+
+      const centerX = resizing.anchorX + offsetLocalX * resizing.uxX + offsetLocalY * resizing.uyX;
+      const centerY = resizing.anchorY + offsetLocalX * resizing.uxY + offsetLocalY * resizing.uyY;
+
+      const newX = centerX - newW / 2;
+      const newY = centerY - newH / 2;
 
       setItems((prev) => prev.map((i) =>
         i.id === resizing.id
