@@ -558,7 +558,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
           <div>
             
-            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+            
           </div>
         </div>
 
