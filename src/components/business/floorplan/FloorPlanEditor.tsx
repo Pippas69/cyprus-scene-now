@@ -455,8 +455,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const newItem: Partial<FloorPlanItemFull> = {
       ...item,
       label: item.label + ' (copy)',
-      x_percent: clamp(item.x_percent + 3, 0, 95),
-      y_percent: clamp(item.y_percent + 3, 0, 95),
+      x_percent: clamp(item.x_percent + 3, -5, 100),
+      y_percent: clamp(item.y_percent + 3, -5, 100),
     };
     const saved = await saveItemToDB(newItem);
     if (saved) {
