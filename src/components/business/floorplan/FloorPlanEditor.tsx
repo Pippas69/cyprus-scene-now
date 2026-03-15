@@ -531,22 +531,30 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
 
     if (resizing) {
-      const dx = svgPt.x - resizing.startX;
-      const dy = svgPt.y - resizing.startY;
+      const rawDx = svgPt.x - resizing.startX;
+      const rawDy = svgPt.y - resizing.startY;
+      const angle = (resizing.origRotation * Math.PI) / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      // Convert pointer movement to local (item) axes so resize direction feels correct when rotated
+      const dx = rawDx * cos + rawDy * sin;
+      const dy = -rawDx * sin + rawDy * cos;
+
       const h = resizing.handle;
       let newW = resizing.origW;
       let newH = resizing.origH;
       let newX = resizing.origXP;
       let newY = resizing.origYP;
 
-      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 70);
+      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 80);
       if (h.includes('w')) {
-        newW = clamp(resizing.origW - dx, 1, 70);
+        newW = clamp(resizing.origW - dx, 1, 80);
         newX = resizing.origXP + (resizing.origW - newW);
       }
-      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 70);
+      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 80);
       if (h.includes('n')) {
-        newH = clamp(resizing.origH - dy, 1, 70);
+        newH = clamp(resizing.origH - dy, 1, 80);
         newY = resizing.origYP + (resizing.origH - newH);
       }
 
