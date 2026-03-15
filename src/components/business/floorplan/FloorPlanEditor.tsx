@@ -430,6 +430,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.layoutSaved);
   }, [items, t.layoutSaved]);
 
+  // Convert screen coords to SVG viewBox coords
+  const screenToSVG = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
+
   // Drag to move
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
@@ -437,7 +450,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'move');
-    setDragging({ id, startX: e.clientX, startY: e.clientY, origX: item.x_percent, origY: item.y_percent });
+    const svgPt = screenToSVG(e.clientX, e.clientY);
+    setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
     setSelectedItem(id);
   };
 
