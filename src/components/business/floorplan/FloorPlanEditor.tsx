@@ -959,7 +959,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 selectedItemId={isDesignMode ? selectedItem : null}
                 selectedItemIds={isDesignMode ? selectedItems : []}
                 showLabels={showLabels}
-                showSeatDots={showSeatDots}
+                
                 showGrid={isDesignMode && showGrid}
                 gridSnap={SNAP_INCREMENT}
                 showSections={showSections}
