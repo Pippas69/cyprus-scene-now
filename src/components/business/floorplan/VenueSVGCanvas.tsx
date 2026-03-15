@@ -160,7 +160,7 @@ export function VenueSVGCanvas({
   const allowDrag = interactive && !!onItemMouseDown;
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
       <rect x={0} y={0} width={100} height={100} fill="transparent" />
 
       {/* Optional grid */}
