@@ -396,7 +396,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       is_locked: false, item_type: item.item_type || 'table',
     } as any).select().single();
     if (error) { toast.error(error.message); return null; }
-    return { ...(data as unknown as FloorPlanItemFull), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5, is_locked: false, item_type: item.item_type || 'table' };
+    return { ...(data as unknown as FloorPlanItemFull), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5, is_locked: false, item_type: item.item_type || 'table', color: item.color || null };
   };
 
   // Canvas click for placing
