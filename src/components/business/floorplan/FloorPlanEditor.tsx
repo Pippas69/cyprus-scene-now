@@ -661,8 +661,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const rect = canvasRef.current.getBoundingClientRect();
 
     if (dragging) {
-      const dx = ((e.clientX - dragging.startX) / rect.width) * 100 / zoom.scale;
-      const dy = ((e.clientY - dragging.startY) / rect.height) * 100 / zoom.scale;
+      const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
+      const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
 
       setItems(prev => prev.map(i => {
         const orig = dragging.origPositions.get(i.id);
