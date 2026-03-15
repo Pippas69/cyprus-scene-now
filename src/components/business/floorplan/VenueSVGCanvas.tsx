@@ -223,8 +223,8 @@ export function VenueSVGCanvas({
   const showHandles = interactive && !!onResizeStart;
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <rect x={0} y={0} width={100} height={100} fill="transparent" />
+    <svg className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="xMidYMid meet">
+      <rect x={-5} y={-5} width={110} height={110} fill="transparent" />
 
       {showGrid && <GridOverlay snap={gridSnap} />}
 

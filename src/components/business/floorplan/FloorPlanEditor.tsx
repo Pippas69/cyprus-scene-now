@@ -221,10 +221,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         if (item && !item.is_locked) {
           const step = e.shiftKey ? 5 : 1;
           let { x_percent, y_percent } = item;
-          if (e.key === 'ArrowUp') y_percent = clamp(y_percent - step, 0, 100);
-          if (e.key === 'ArrowDown') y_percent = clamp(y_percent + step, 0, 100);
-          if (e.key === 'ArrowLeft') x_percent = clamp(x_percent - step, 0, 100);
-          if (e.key === 'ArrowRight') x_percent = clamp(x_percent + step, 0, 100);
+          if (e.key === 'ArrowUp') y_percent = clamp(y_percent - step, -5, 105);
+          if (e.key === 'ArrowDown') y_percent = clamp(y_percent + step, -5, 105);
+          if (e.key === 'ArrowLeft') x_percent = clamp(x_percent - step, -5, 105);
+          if (e.key === 'ArrowRight') x_percent = clamp(x_percent + step, -5, 105);
           const updated = { ...item, x_percent, y_percent };
           updateItemLocal(updated);
           debouncedSave(updated);
@@ -413,8 +413,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
     const newItem: Partial<FloorPlanItemFull> = {
       label,
-      x_percent: clamp(x, 2, 98),
-      y_percent: clamp(y, 2, 98),
+      x_percent: clamp(x, -3, 103),
+      y_percent: clamp(y, -3, 103),
       seats: placingMode.seats,
       shape: placingMode.shape,
       fixture_type: placingMode.fixture_type,
@@ -455,8 +455,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     const newItem: Partial<FloorPlanItemFull> = {
       ...item,
       label: item.label + ' (copy)',
-      x_percent: clamp(item.x_percent + 3, 0, 95),
-      y_percent: clamp(item.y_percent + 3, 0, 95),
+      x_percent: clamp(item.x_percent + 3, -5, 100),
+      y_percent: clamp(item.y_percent + 3, -5, 100),
     };
     const saved = await saveItemToDB(newItem);
     if (saved) {
@@ -500,8 +500,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (dragging) {
       const dx = ((e.clientX - dragging.startX) / rect.width) * 100;
       const dy = ((e.clientY - dragging.startY) / rect.height) * 100;
-      let newX = clamp(dragging.origX + dx, 0, 100);
-      let newY = clamp(dragging.origY + dy, 0, 100);
+      let newX = clamp(dragging.origX + dx, -5, 105);
+      let newY = clamp(dragging.origY + dy, -5, 105);
       if (gridSnap) { newX = snapValue(newX, SNAP_INCREMENT); newY = snapValue(newY, SNAP_INCREMENT); }
       setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
       setItems(prev => prev.map(i => i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i));
