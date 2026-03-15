@@ -42,6 +42,7 @@ interface VenueSVGCanvasProps {
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
+  svgRef?: React.Ref<SVGSVGElement>;
 }
 
 type RenderShape = 'round' | 'square' | 'rectangle';
