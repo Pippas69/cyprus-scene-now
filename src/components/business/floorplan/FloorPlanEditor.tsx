@@ -767,8 +767,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       )}
 
-      {/* Reference image opacity */}
-      {referenceImageUrl && showReferenceImage && (
+      {/* Reference image opacity (design mode only) */}
+      {isDesignMode && referenceImageUrl && showReferenceImage && (
         <div className="flex items-center gap-3 bg-card/60 border border-border/30 rounded-lg px-3 py-1.5">
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">{t.opacity}</span>
           <Slider value={[referenceOpacity]} onValueChange={([v]) => setReferenceOpacity(v)} min={5} max={90} step={5} className="flex-1 max-w-[200px]" />
@@ -785,11 +785,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         <div className="flex-1 relative">
           <div
             ref={canvasRef}
-            className={`relative select-none w-full h-full ${placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-            onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            className={`relative select-none w-full h-full ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+            onClick={isDesignMode ? handleCanvasClick : undefined}
+            onMouseMove={isDesignMode ? handleMouseMove : undefined}
+            onMouseUp={isDesignMode ? handleMouseUp : undefined}
+            onMouseLeave={isDesignMode ? handleMouseUp : undefined}
           >
             {/* Premium dark background */}
             <div className="absolute inset-0" style={{
@@ -797,13 +797,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             }} />
             <div className="absolute inset-0 border border-white/[0.03] rounded-none pointer-events-none" />
 
-            {/* Reference image */}
-            {referenceImageUrl && showReferenceImage && (
+            {/* Reference image (design mode only) */}
+            {isDesignMode && referenceImageUrl && showReferenceImage && (
               <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
             )}
 
             {/* Empty state */}
-            {items.length === 0 && (
+            {items.length === 0 && isDesignMode && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <p className="text-sm text-muted-foreground/40 text-center px-8">{t.noItems}</p>
               </div>
@@ -814,19 +814,23 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               items={items}
               fixtureBboxes={fixtureBboxes}
               tableBboxes={tableBboxes}
-              selectedItemId={selectedItem}
+              selectedItemId={isDesignMode ? selectedItem : null}
               showLabels={showLabels}
-              showGrid={showGrid}
+              showGrid={isDesignMode && showGrid}
               gridSnap={SNAP_INCREMENT}
-              onTableClick={(id) => { if (!placingMode) setSelectedItem(id === selectedItem ? null : id); }}
-              onItemMouseDown={(e, id) => handleMouseDown(e, id)}
-              onItemDoubleClick={(id) => setSelectedItem(id)}
-              onResizeStart={handleResizeStart}
-              interactive={!placingMode}
+              onTableClick={(id) => {
+                if (isDesignMode) {
+                  if (!placingMode) setSelectedItem(id === selectedItem ? null : id);
+                }
+              }}
+              onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
+              onItemDoubleClick={isDesignMode ? (id) => setSelectedItem(id) : undefined}
+              onResizeStart={isDesignMode ? handleResizeStart : undefined}
+              interactive={isDesignMode && !placingMode}
             />
 
             {/* Drag tooltip */}
-            {dragging && dragCoords && (
+            {isDesignMode && dragging && dragCoords && (
               <div
                 className="absolute bg-card/90 backdrop-blur-sm border border-border/50 rounded px-1.5 py-0.5 text-[10px] text-foreground pointer-events-none z-20"
                 style={{ left: `${dragCoords.x}%`, top: `${Math.max(0, dragCoords.y - 5)}%`, transform: 'translate(-50%, -100%)' }}
@@ -837,8 +841,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </div>
         </div>
 
-        {/* Right: Properties Panel */}
-        {showRightPanel && (
+        {/* Right: Properties Panel (design mode only) */}
+        {isDesignMode && showRightPanel && (
           <div className="w-[260px] xl:w-[300px] flex-shrink-0">
             {selectedItemData ? (
               <ItemPropertiesPanel
