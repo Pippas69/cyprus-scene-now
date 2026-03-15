@@ -356,7 +356,7 @@ export function VenueSVGCanvas({
                   x={cx}
                   y={cy - (item.seats > 0 ? seatsFont * 0.4 : 0)}
                   textAnchor="middle" dominantBaseline="middle"
-                  fill={occupied ? THEME.occupiedStroke : THEME.tableText}
+                  fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                   fontSize={mainFont} fontWeight={700}
                   className="pointer-events-none"
                   style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}

@@ -24,6 +24,7 @@ export interface FloorPlanItemFull {
   height_percent: number;
   is_locked: boolean;
   item_type: string;
+  color: string | null;
 }
 
 interface ItemPropertiesPanelProps {
