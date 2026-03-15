@@ -236,7 +236,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setItems(loadedItems);
     setZones(loadedZones);
     setHasFloorPlan(loadedItems.length > 0);
-    if (loadedItems.length > 0) setIsDesignMode(true);
     history.reset(loadedItems);
 
     const meta = loadedZones[0]?.metadata;
