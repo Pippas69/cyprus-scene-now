@@ -454,10 +454,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       shape: item.shape || 'square',
       sort_order: items.length,
       fixture_type: item.fixture_type || null,
-      rotation: item.rotation || 0,
-      width_percent: item.width_percent || 5,
-      height_percent: item.height_percent || 5,
-    }).select().single();
+    } as any).select().single();
     if (error) { toast.error(error.message); return; }
     const newItem = { ...(data as unknown as FloorPlanItem), rotation: item.rotation || 0, width_percent: item.width_percent || 5, height_percent: item.height_percent || 5 };
     setItems(prev => [...prev, newItem]);
