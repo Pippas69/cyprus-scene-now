@@ -685,7 +685,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         <div
           ref={canvasRef}
           className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-          onClick={isDesignMode ? handleCanvasClick : undefined}
+          onClick={(e) => {
+            if (isDesignMode && placingMode) {
+              handleCanvasClick(e);
+            }
+          }}
+          onMouseDown={(e) => {
+            // Click on empty canvas area → deselect (like Canva)
+            if (isDesignMode && !placingMode && e.target === e.currentTarget) {
+              setSelectedItem(null);
+            }
+          }}
           onMouseMove={isDesignMode ? handleMouseMove : undefined}
           onMouseUp={isDesignMode ? handleMouseUp : undefined}
         >
@@ -719,7 +729,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
             onTableClick={(id) => {
-              if (isDesignMode && !placingMode) setSelectedItem(id);
+              if (isDesignMode && !placingMode) setSelectedItem(id || null);
             }}
             onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
             onResizeStart={isDesignMode ? handleResizeStart : undefined}
