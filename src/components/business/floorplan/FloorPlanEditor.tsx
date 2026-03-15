@@ -455,17 +455,22 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     });
   }, [items, history, screenToSVG]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const svgPt = screenToSVG(e.clientX, e.clientY);
+  const updatePointer = useCallback((clientX: number, clientY: number) => {
+    const svgPt = screenToSVG(clientX, clientY);
+
     if (dragging) {
       const dx = svgPt.x - dragging.startX;
       const dy = svgPt.y - dragging.startY;
       let newX = clamp(dragging.origX + dx, -5, 105);
       let newY = clamp(dragging.origY + dy, -5, 105);
-      if (gridSnap) { newX = snapValue(newX, SNAP_INCREMENT); newY = snapValue(newY, SNAP_INCREMENT); }
+      if (gridSnap) {
+        newX = snapValue(newX, SNAP_INCREMENT);
+        newY = snapValue(newY, SNAP_INCREMENT);
+      }
       setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
       setItems((prev) => prev.map((i) => (i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i)));
     }
+
     if (resizing) {
       const dx = svgPt.x - resizing.startX;
       const dy = svgPt.y - resizing.startY;
@@ -474,14 +479,34 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       let newH = resizing.origH;
       let newX = resizing.origXP;
       let newY = resizing.origYP;
-      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1.5, 40);
-      if (h.includes('w')) { newW = clamp(resizing.origW - dx, 1.5, 40); newX = resizing.origXP + (resizing.origW - newW); }
-      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1.5, 40);
-      if (h.includes('n')) { newH = clamp(resizing.origH - dy, 1.5, 40); newY = resizing.origYP + (resizing.origH - newH); }
-      if (gridSnap) { newW = snapValue(newW, SNAP_INCREMENT); newH = snapValue(newH, SNAP_INCREMENT); }
-      setItems((prev) => prev.map((i) => (i.id === resizing.id ? { ...i, width_percent: newW, height_percent: newH, x_percent: newX, y_percent: newY } : i)));
+
+      if (h.includes('e')) newW = clamp(resizing.origW + dx, 1, 70);
+      if (h.includes('w')) {
+        newW = clamp(resizing.origW - dx, 1, 70);
+        newX = resizing.origXP + (resizing.origW - newW);
+      }
+      if (h.includes('s')) newH = clamp(resizing.origH + dy, 1, 70);
+      if (h.includes('n')) {
+        newH = clamp(resizing.origH - dy, 1, 70);
+        newY = resizing.origYP + (resizing.origH - newH);
+      }
+
+      if (gridSnap) {
+        newW = snapValue(newW, SNAP_INCREMENT);
+        newH = snapValue(newH, SNAP_INCREMENT);
+      }
+
+      setItems((prev) => prev.map((i) =>
+        i.id === resizing.id
+          ? { ...i, width_percent: newW, height_percent: newH, x_percent: newX, y_percent: newY }
+          : i,
+      ));
     }
   }, [dragging, resizing, gridSnap, screenToSVG]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    updatePointer(e.clientX, e.clientY);
+  }, [updatePointer]);
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
@@ -496,6 +521,21 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       setResizing(null);
     }
   }, [dragging, resizing, items, debouncedSave]);
+
+  useEffect(() => {
+    if (!dragging && !resizing) return;
+
+    const onMove = (e: MouseEvent) => updatePointer(e.clientX, e.clientY);
+    const onUp = () => handleMouseUp();
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [dragging, resizing, updatePointer, handleMouseUp]);
 
   const selectedItemData = selectedItem ? items.find((i) => i.id === selectedItem) || null : null;
   const meta = zones[0]?.metadata as any;
