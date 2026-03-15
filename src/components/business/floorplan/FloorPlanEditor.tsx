@@ -749,6 +749,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
             {/* SVG Canvas */}
             <VenueSVGCanvas
+              svgRef={svgRef}
               items={items}
               fixtureBboxes={fixtureBboxes}
               tableBboxes={tableBboxes}
