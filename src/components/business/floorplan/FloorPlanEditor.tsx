@@ -129,12 +129,24 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [placingMode, setPlacingMode] = useState<PlaceShape | null>(null);
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [resizing, setResizing] = useState<{
-    id: string; handle: string;
-    // Anchor = the opposite edge/corner that stays fixed
-    anchorX: number; anchorY: number;
-    // Which axes this handle controls
-    movesLeft: boolean; movesRight: boolean;
-    movesTop: boolean; movesBottom: boolean;
+    id: string;
+    handle: string;
+    // World-space anchor point (opposite edge/corner) that stays fixed during resize
+    anchorX: number;
+    anchorY: number;
+    // Local basis vectors in world space (item rotation aware)
+    uxX: number;
+    uxY: number;
+    uyX: number;
+    uyY: number;
+    // Starting dimensions (avoid drift while dragging)
+    startW: number;
+    startH: number;
+    // Which edges this handle controls
+    movesLeft: boolean;
+    movesRight: boolean;
+    movesTop: boolean;
+    movesBottom: boolean;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
 
