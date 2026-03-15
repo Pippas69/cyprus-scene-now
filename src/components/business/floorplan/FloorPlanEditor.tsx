@@ -924,19 +924,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* CANVAS + PROPERTIES */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl" style={{ minHeight: '400px' }}>
+      <div className="flex gap-0 rounded-xl overflow-hidden border border-border/30 bg-card shadow-2xl">
         {/* Canvas */}
-        <div className="flex-1 relative overflow-hidden" ref={zoomContainerRef}>
-          <div className="absolute inset-0" style={{ aspectRatio: '4 / 3' }}>
+        <div className="flex-1 relative" ref={zoomContainerRef} style={{ aspectRatio: '4 / 3' }}>
             <div
               ref={canvasRef}
               className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-              style={zoom.transformStyle}
               onClick={isDesignMode ? handleCanvasClick : undefined}
               onMouseMove={isDesignMode ? handleMouseMove : undefined}
               onMouseUp={isDesignMode ? handleMouseUp : undefined}
               onMouseLeave={isDesignMode ? handleMouseUp : undefined}
-              onMouseDown={zoom.handlePanStart}
             >
               {/* Background */}
               <div className="absolute inset-0" style={{
