@@ -259,7 +259,7 @@ export function VenueSVGCanvas({
               rx={isDj ? 0.7 : 0.45}
               fill={item.color ? `${item.color}10` : THEME.fixtureFill}
               stroke={selected ? (item.color || THEME.tableStroke) : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.65 : (isBar ? 0.55 : 0.38)}
+              strokeWidth={selected ? 0.8 : (isBar ? 0.65 : 0.5)}
             />
             {isBar && (
               <rect
