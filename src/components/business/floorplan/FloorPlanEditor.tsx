@@ -629,7 +629,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             <div className="text-center space-y-1.5">
               <p className="text-xs text-muted-foreground">{t.startDesignHint}</p>
             </div>
-            <Button variant="default" size="sm" onClick={() => setHasFloorPlan(true)}>
+            <Button variant="default" size="sm" onClick={() => { setHasFloorPlan(true); setIsDesignMode(true); }}>
               {t.startBlank}
             </Button>
           </div>
