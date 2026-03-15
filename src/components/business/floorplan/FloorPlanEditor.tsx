@@ -115,7 +115,10 @@ const translations = {
     editLayout: 'Edit',
     layoutSaved: 'Layout saved',
     assignMode: 'Manage seats',
-    assignHint: 'Click a seat to assign a reservation'
+    assignHint: 'Click a seat to assign a reservation',
+    clearAll: 'Clear all',
+    clearAllConfirm: 'Are you sure? All items will be deleted.',
+    cleared: 'Canvas cleared'
   }
 };
 
