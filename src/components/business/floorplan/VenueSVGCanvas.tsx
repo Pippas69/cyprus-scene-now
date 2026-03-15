@@ -287,12 +287,13 @@ export function VenueSVGCanvas({
             )}
             {showLabels && (
               <text
-                x={cx} y={cy + 0.28}
-                textAnchor="middle" dominantBaseline="middle"
+                x={cx} y={cy}
+                textAnchor="middle" dominantBaseline="central"
+                transform={g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={item.color || THEME.fixtureText}
-                fontSize={isBar && g.w > 15 ? 4.5 : 2.4}
-                fontWeight={600}
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.04em' }}
+                fontSize={Math.min(g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28, g.h > g.w * 1.3 ? g.w * 0.7 : g.h * 0.7, 6)}
+                fontWeight={700}
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.08em' }}
                 className="pointer-events-none"
               >
                 {item.label.toUpperCase()}
@@ -360,11 +361,16 @@ export function VenueSVGCanvas({
               <text
                 x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
+                transform={g.shape !== 'round' && g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
-                fontSize={Math.min(g.w, g.h) > 5 ? 1.8 : 1.4}
-                fontWeight={600}
+                fontSize={Math.min(
+                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.h * 0.3 : g.w * 0.3),
+                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.w * 0.7 : g.h * 0.65),
+                  5
+                )}
+                fontWeight={700}
                 className="pointer-events-none"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.04em' }}
               >
                 {item.label}
               </text>
