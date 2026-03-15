@@ -240,9 +240,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         }
       }
       // Zoom shortcuts
-      if ((e.ctrlKey || e.metaKey) && e.key === '=') { e.preventDefault(); zoom.zoomIn(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoom.zoomOut(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); zoom.resetZoom(); }
       // Select all
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();
