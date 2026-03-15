@@ -568,7 +568,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               <MapPin className="h-7 w-7 text-primary/60" />
             </div>
             <div className="text-center space-y-1.5">
-              <p className="text-sm font-medium text-foreground">{t.startDesign}</p>
+              
               <p className="text-xs text-muted-foreground">{t.startDesignHint}</p>
             </div>
             <div className="flex gap-2">
