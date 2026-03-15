@@ -249,7 +249,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedItem, selectedItems, items, history, visibleItems, zoom]);
+  }, [selectedItem, selectedItems, items, history, visibleItems]);
 
   const loadFloorPlan = async () => {
     setLoading(true);
