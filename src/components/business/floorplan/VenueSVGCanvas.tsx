@@ -58,14 +58,14 @@ type Geometry = {
 const THEME = {
   // Canvas
   grid: 'hsl(var(--floorplan-wall) / 0.18)',
-  // Fixtures — cool blue tone
-  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.08)',
-  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.6)',
+  // Fixtures — premium white
+  fixtureFill: 'hsl(var(--floorplan-fixture) / 0.06)',
+  fixtureStroke: 'hsl(var(--floorplan-fixture) / 0.55)',
   fixtureText: 'hsl(var(--floorplan-fixture) / 0.9)',
-  // Tables — warm gold tone
+  // Tables — premium white
   tableStroke: 'hsl(var(--floorplan-neon))',
   tableFill: 'hsl(var(--floorplan-neon) / 0.06)',
-  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.18)',
+  tableSelectedFill: 'hsl(var(--floorplan-neon) / 0.15)',
   tableText: 'hsl(var(--floorplan-neon))',
   tableMeta: 'hsl(var(--foreground) / 0.45)',
   // Reservation states
@@ -74,7 +74,7 @@ const THEME = {
   selfStroke: 'hsl(var(--floorplan-accent))',
   selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
   // Handles
-  handleFill: 'hsl(var(--floorplan-neon))',
+  handleFill: 'hsl(0 0% 100%)',
   handleStroke: 'hsl(var(--floorplan-canvas))',
 };
 
