@@ -172,6 +172,7 @@ export function VenueSVGCanvas({
   interactive = true,
   showGrid = false,
   gridSnap = 2,
+  svgRef,
 }: VenueSVGCanvasProps) {
   const fixtureItems = items.filter((i) => !!i.fixture_type);
   const tableItems = items.filter((i) => !i.fixture_type);
