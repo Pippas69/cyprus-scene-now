@@ -486,22 +486,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   }, [placingMode, items, gridSnap, zones, activeRoomId, visibleItems]);
 
   // Handle table click with multi-select support
-  const handleTableClick = useCallback((id: string, e?: React.MouseEvent) => {
+  const handleTableClick = useCallback((id: string) => {
     if (!isDesignMode || placingMode) return;
-    // Note: e is not available from SVG click handler, so we check window event
-    const shiftKey = (window.event as KeyboardEvent)?.shiftKey || false;
-
-    if (shiftKey) {
-      setSelectedItems(prev => {
-        if (prev.includes(id)) return prev.filter(x => x !== id);
-        return [...prev, id];
-      });
-      setSelectedItem(null);
-    } else {
-      setSelectedItem(id === selectedItem ? null : id);
-      setSelectedItems([]);
-    }
-  }, [isDesignMode, placingMode, selectedItem]);
+    // Selection is handled in handleMouseDown for better UX
+    // This only fires when there's no drag, so just select
+    setSelectedItem(prev => prev === id ? null : id);
+    setSelectedItems([]);
+  }, [isDesignMode, placingMode]);
 
   const handlePropertyChange = useCallback((updated: FloorPlanItemFull) => {
     history.pushState(items, 'edit properties');
