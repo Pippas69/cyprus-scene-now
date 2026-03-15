@@ -479,6 +479,27 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  // Save layout and exit design mode
+  const handleSaveLayout = useCallback(async () => {
+    // Force save all pending changes
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    
+    // Batch update all items
+    for (const item of items) {
+      await supabase.from('floor_plan_tables').update({
+        label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
+        seats: item.seats, shape: item.shape, rotation: item.rotation,
+        width_percent: item.width_percent, height_percent: item.height_percent,
+        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+      } as any).eq('id', item.id);
+    }
+    
+    setIsDesignMode(false);
+    setSelectedItem(null);
+    setPlacingMode(null);
+    toast.success(t.layoutSaved);
+  }, [items, t.layoutSaved]);
+
   // Drag to move
   const handleMouseDown = (e: React.MouseEvent, id: string) => {
     if (placingMode) return;
