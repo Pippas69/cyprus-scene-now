@@ -8,8 +8,9 @@ import {
   ImageOff, Magnet, Undo2, Redo2,
   X, Circle, Square, RectangleHorizontal,
   Sofa, Beer, Music, Landmark, Save, Pencil, Eraser,
-  Plus
+  Plus, Loader2
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
@@ -138,6 +139,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
 
   const [isDesignMode, setIsDesignMode] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -401,8 +403,47 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     toast.success(t.cleared);
   };
 
+  const captureCanvasScreenshot = useCallback(async (): Promise<string | null> => {
+    const el = canvasRef.current;
+    if (!el) return null;
+    try {
+      // Temporarily hide selection handles & overlays for clean screenshot
+      setSelectedItem(null);
+      setPlacingMode(null);
+      // Wait for re-render
+      await new Promise((r) => setTimeout(r, 100));
+
+      const canvas = await html2canvas(el, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+      if (!blob) return null;
+
+      const path = `${businessId}/floor-plan-screenshot.png`;
+      await supabase.storage.from('floor-plan-references').remove([path]);
+      const { error } = await supabase.storage.from('floor-plan-references').upload(path, blob, {
+        upsert: true,
+        contentType: 'image/png',
+      });
+      if (error) { console.error('Screenshot upload error:', error); return null; }
+
+      const { data: urlData } = supabase.storage.from('floor-plan-references').getPublicUrl(path);
+      return urlData?.publicUrl || null;
+    } catch (err) {
+      console.error('Screenshot capture error:', err);
+      return null;
+    }
+  }, [businessId]);
+
   const handleSaveLayout = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setIsSaving(true);
+
+    // Save all items to DB
     for (const item of items) {
       await supabase.from('floor_plan_tables').update({
         label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
@@ -411,11 +452,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         is_locked: item.is_locked, item_type: item.item_type, color: item.color,
       } as any).eq('id', item.id);
     }
+
+    // Capture screenshot and save to business
+    const screenshotUrl = await captureCanvasScreenshot();
+    if (screenshotUrl) {
+      await supabase.from('businesses').update({
+        floor_plan_image_url: screenshotUrl,
+      }).eq('id', businessId);
+    }
+
     setIsDesignMode(false);
-    setSelectedItem(null);
-    setPlacingMode(null);
+    setIsSaving(false);
     toast.success(t.layoutSaved);
-  }, [items, t.layoutSaved]);
+  }, [items, t.layoutSaved, captureCanvasScreenshot, businessId]);
 
   const screenToSVG = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
@@ -690,8 +739,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         {/* Save / Edit button — bottom right inside canvas */}
         {isDesignMode ? (
           <div className="absolute bottom-3 right-3 z-10">
-            <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout}>
-              <Save className="h-3.5 w-3.5" />{t.saveLayout}
+            <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}{isSaving ? 'Saving...' : t.saveLayout}
             </Button>
           </div>
         ) : (
