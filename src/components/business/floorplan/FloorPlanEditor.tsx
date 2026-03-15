@@ -138,7 +138,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
 
-  const [isDesignMode, setIsDesignMode] = useState(true);
+  const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
