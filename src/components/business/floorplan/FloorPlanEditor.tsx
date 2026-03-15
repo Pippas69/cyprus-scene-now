@@ -573,181 +573,159 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   }
 
   return (
-    <div className="space-y-0">
-      {/* ═══ MAIN LAYOUT: Canvas + Properties RIGHT ═══ */}
-      <div className="flex flex-col md:flex-row gap-0">
-
-        {/* LEFT: Canvas area — fills available space */}
-        <div className="flex-1 flex flex-col min-w-0">
-          
-          {/* Floating Toolbar — Canva-style centered pill */}
-          {isDesignMode && (
-            <div className="relative z-10">
-              <div className="flex items-center justify-center py-2 px-2">
-                <div className="inline-flex items-center gap-1 bg-[hsl(var(--floorplan-canvas))] border border-white/10 rounded-full px-2 py-1.5 shadow-xl backdrop-blur-xl">
-                  {placingMode ? (
+    <div className="relative">
+      {/* Toolbar */}
+      {isDesignMode && (
+        <div className="relative z-20">
+          <div className="flex items-center justify-center py-2 px-2">
+            <div className="inline-flex items-center gap-1 bg-[hsl(var(--floorplan-canvas))] border border-white/10 rounded-full px-2 py-1.5 shadow-xl backdrop-blur-xl">
+              {placingMode ? (
+                <>
+                  <div className="flex items-center gap-1.5 px-3 py-1">
+                    <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
+                    <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
+                  </div>
+                  <button onClick={() => setPlacingMode(null)} className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <ToolbarButton icon={<Undo2 className="h-4 w-4" />} disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo" />
+                  <ToolbarButton icon={<Redo2 className="h-4 w-4" />} disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo" />
+                  <ToolbarDivider />
+                  {TOOLBAR_SHAPES.map((shape) => (
+                    <ToolbarButton key={shape.id} icon={shape.icon} onClick={() => setPlacingMode(shape)} title={language === 'el' ? shape.label_el : shape.label_en} />
+                  ))}
+                  <ToolbarDivider />
+                  <ToolbarButton icon={<Magnet className="h-4 w-4" />} active={gridSnap} onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap} />
+                  {referenceImageUrl && (
+                    <ToolbarButton icon={showReferenceImage ? <Eye className="h-4 w-4" /> : <ImageOff className="h-4 w-4" />} active={showReferenceImage} onClick={() => setShowReferenceImage(!showReferenceImage)} title={t.uploadReference} />
+                  )}
+                  {!referenceImageUrl && (
+                    <ToolbarButton icon={<Upload className="h-4 w-4" />} onClick={() => fileInputRef.current?.click()} title={t.uploadReference} />
+                  )}
+                  {items.length > 0 && (
                     <>
-                      <div className="flex items-center gap-1.5 px-3 py-1">
-                        <MousePointer className="h-3.5 w-3.5 text-primary animate-pulse" />
-                        <span className="text-xs font-medium text-primary">{t.clickToPlace}</span>
-                      </div>
-                      <button
-                        onClick={() => setPlacingMode(null)}
-                        className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <ToolbarButton icon={<Undo2 className="h-4 w-4" />} disabled={!history.canUndo} onClick={() => { const prev = history.undo(); if (prev) setItems(prev); }} title="Undo" />
-                      <ToolbarButton icon={<Redo2 className="h-4 w-4" />} disabled={!history.canRedo} onClick={() => { const next = history.redo(); if (next) setItems(next); }} title="Redo" />
                       <ToolbarDivider />
-                      {TOOLBAR_SHAPES.map((shape) => (
-                        <ToolbarButton
-                          key={shape.id}
-                          icon={shape.icon}
-                          onClick={() => setPlacingMode(shape)}
-                          title={language === 'el' ? shape.label_el : shape.label_en}
-                          label={undefined}
-                        />
-                      ))}
-                      <ToolbarDivider />
-                      <ToolbarButton icon={<Magnet className="h-4 w-4" />} active={gridSnap} onClick={() => { setGridSnap(!gridSnap); setShowGrid(!showGrid); }} title={t.gridSnap} />
-                      {referenceImageUrl && (
-                        <ToolbarButton icon={showReferenceImage ? <Eye className="h-4 w-4" /> : <ImageOff className="h-4 w-4" />} active={showReferenceImage} onClick={() => setShowReferenceImage(!showReferenceImage)} title={t.uploadReference} />
-                      )}
-                      {!referenceImageUrl && (
-                        <ToolbarButton icon={<Upload className="h-4 w-4" />} onClick={() => fileInputRef.current?.click()} title={t.uploadReference} />
-                      )}
-                      {items.length > 0 && (
-                        <>
-                          <ToolbarDivider />
-                          <ToolbarButton icon={<Eraser className="h-4 w-4" />} onClick={clearAllItems} title={t.clearAll} destructive />
-                        </>
-                      )}
+                      <ToolbarButton icon={<Eraser className="h-4 w-4" />} onClick={clearAllItems} title={t.clearAll} destructive />
                     </>
                   )}
-                </div>
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-            </div>
-          )}
-
-          {/* Reference image opacity slider */}
-          {isDesignMode && referenceImageUrl && showReferenceImage && (
-            <div className="flex items-center gap-2 justify-center pb-2 px-4">
-              <span className="text-[10px] text-muted-foreground/60">{t.opacity}</span>
-              <Slider value={[referenceOpacity]} onValueChange={([v]) => setReferenceOpacity(v)} min={5} max={90} step={5} className="w-[140px]" />
-              <span className="text-[10px] text-muted-foreground/60 w-7">{referenceOpacity}%</span>
-              <button onClick={deleteReferenceImage} className="text-destructive/60 hover:text-destructive text-[10px] ml-2">
-                <Trash2 className="h-3 w-3" />
-              </button>
-            </div>
-          )}
-
-          {/* Canvas — full screen height */}
-          <div className="relative overflow-hidden border border-border/20 shadow-2xl mx-0 rounded-lg" style={{ height: 'calc(100vh - 140px)', minHeight: '400px' }}>
-            <div
-              ref={canvasRef}
-              className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
-              onClick={isDesignMode ? handleCanvasClick : undefined}
-              onMouseMove={isDesignMode ? handleMouseMove : undefined}
-              onMouseUp={isDesignMode ? handleMouseUp : undefined}
-            >
-              <div className="absolute inset-0" style={{
-                background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
-              }} />
-              <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
-
-              {isDesignMode && referenceImageUrl && showReferenceImage && (
-                <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
-              )}
-
-              {items.length === 0 && isDesignMode && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto h-12 w-12 rounded-full border border-white/10 flex items-center justify-center">
-                      <Plus className="h-5 w-5 text-white/20" />
-                    </div>
-                    <p className="text-sm text-white/20">{t.noItems}</p>
-                  </div>
-                </div>
-              )}
-
-              <VenueSVGCanvas
-                svgRef={svgRef}
-                items={items}
-                fixtureBboxes={fixtureBboxes}
-                tableBboxes={tableBboxes}
-                selectedItemId={isDesignMode ? selectedItem : null}
-                showLabels={false}
-                showGrid={isDesignMode && showGrid}
-                gridSnap={SNAP_INCREMENT}
-                onTableClick={(id) => {
-                  if (isDesignMode && !placingMode) setSelectedItem(id);
-                }}
-                onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
-                onResizeStart={isDesignMode ? handleResizeStart : undefined}
-                interactive={isDesignMode && !placingMode}
-              />
-
-              {isDesignMode && dragging && dragCoords && (
-                <div
-                  className="absolute bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 text-[10px] text-white/80 pointer-events-none z-20 font-mono"
-                  style={{ left: `${dragCoords.x}%`, top: `${Math.max(0, dragCoords.y - 5)}%`, transform: 'translate(-50%, -100%)' }}
-                >
-                  {dragCoords.x}%, {dragCoords.y}%
-                </div>
+                </>
               )}
             </div>
-
-            {/* Save button bottom-right */}
-            {isDesignMode && (
-              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-end p-3 z-10">
-                <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout}>
-                  <Save className="h-3.5 w-3.5" />{t.saveLayout}
-                </Button>
-              </div>
-            )}
-            {!isDesignMode && (
-              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-end p-3 z-10">
-                <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
-                  <Pencil className="h-3.5 w-3.5" />{t.editLayout}
-                </Button>
-              </div>
-            )}
           </div>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+        </div>
+      )}
 
-          {/* MOBILE: Properties Panel below canvas */}
-          {isDesignMode && selectedItemData && (
-            <div className="md:hidden mt-3 mx-2 rounded-xl overflow-hidden border border-border/20 bg-card/80 backdrop-blur-sm">
-              <ItemPropertiesPanel
-                item={selectedItemData}
-                onChange={handlePropertyChange}
-                onDelete={deleteItem}
-                onDuplicate={duplicateItem}
-              />
+      {/* Reference opacity */}
+      {isDesignMode && referenceImageUrl && showReferenceImage && (
+        <div className="flex items-center gap-2 justify-center pb-2 px-4 relative z-20">
+          <span className="text-[10px] text-muted-foreground/60">{t.opacity}</span>
+          <Slider value={[referenceOpacity]} onValueChange={([v]) => setReferenceOpacity(v)} min={5} max={90} step={5} className="w-[140px]" />
+          <span className="text-[10px] text-muted-foreground/60 w-7">{referenceOpacity}%</span>
+          <button onClick={deleteReferenceImage} className="text-destructive/60 hover:text-destructive text-[10px] ml-2">
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
+      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full" style={{ aspectRatio: '4 / 3' }}>
+        <div
+          ref={canvasRef}
+          className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+          onClick={isDesignMode ? handleCanvasClick : undefined}
+          onMouseMove={isDesignMode ? handleMouseMove : undefined}
+          onMouseUp={isDesignMode ? handleMouseUp : undefined}
+        >
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
+          }} />
+          <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
+
+          {isDesignMode && referenceImageUrl && showReferenceImage && (
+            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
+          )}
+
+          {items.length === 0 && isDesignMode && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <div className="mx-auto h-12 w-12 rounded-full border border-white/10 flex items-center justify-center">
+                  <Plus className="h-5 w-5 text-white/20" />
+                </div>
+                <p className="text-sm text-white/20">{t.noItems}</p>
+              </div>
+            </div>
+          )}
+
+          <VenueSVGCanvas
+            svgRef={svgRef}
+            items={items}
+            fixtureBboxes={fixtureBboxes}
+            tableBboxes={tableBboxes}
+            selectedItemId={isDesignMode ? selectedItem : null}
+            showLabels={false}
+            showGrid={isDesignMode && showGrid}
+            gridSnap={SNAP_INCREMENT}
+            onTableClick={(id) => {
+              if (isDesignMode && !placingMode) setSelectedItem(id);
+            }}
+            onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
+            onResizeStart={isDesignMode ? handleResizeStart : undefined}
+            interactive={isDesignMode && !placingMode}
+          />
+
+          {isDesignMode && dragging && dragCoords && (
+            <div
+              className="absolute bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 text-[10px] text-white/80 pointer-events-none z-20 font-mono"
+              style={{ left: `${dragCoords.x}%`, top: `${Math.max(0, dragCoords.y - 5)}%`, transform: 'translate(-50%, -100%)' }}
+            >
+              {dragCoords.x}%, {dragCoords.y}%
             </div>
           )}
         </div>
 
-        {/* RIGHT: Properties Panel (desktop/tablet) — compact and stable width */}
-        {isDesignMode && (
-          <div className="hidden md:block w-[176px] lg:w-[188px] xl:w-[200px] flex-shrink-0 border-l border-border/20 bg-card/60 backdrop-blur-sm overflow-hidden">
-            {selectedItemData ? (
-              <ItemPropertiesPanel
-                item={selectedItemData}
-                onChange={handlePropertyChange}
-                onDelete={deleteItem}
-                onDuplicate={duplicateItem}
-              />
-            ) : (
-              <EmptyPropertiesPanel />
-            )}
+        {/* Save / Edit button — bottom right inside canvas */}
+        {isDesignMode ? (
+          <div className="absolute bottom-3 right-3 z-10">
+            <Button size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-primary hover:bg-primary/90" onClick={handleSaveLayout}>
+              <Save className="h-3.5 w-3.5" />{t.saveLayout}
+            </Button>
+          </div>
+        ) : (
+          <div className="absolute bottom-3 right-3 z-10">
+            <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
+              <Pencil className="h-3.5 w-3.5" />{t.editLayout}
+            </Button>
+          </div>
+        )}
+
+        {/* Properties panel — OVERLAY on desktop/tablet, doesn't affect canvas */}
+        {isDesignMode && selectedItemData && (
+          <div className="absolute top-0 right-0 bottom-0 w-[180px] z-10 hidden md:block bg-card/95 backdrop-blur-md border-l border-border/30 overflow-y-auto">
+            <ItemPropertiesPanel
+              item={selectedItemData}
+              onChange={handlePropertyChange}
+              onDelete={deleteItem}
+              onDuplicate={duplicateItem}
+            />
           </div>
         )}
       </div>
+
+      {/* MOBILE: Properties below canvas */}
+      {isDesignMode && selectedItemData && (
+        <div className="md:hidden mt-3 rounded-xl overflow-hidden border border-border/20 bg-card/80 backdrop-blur-sm">
+          <ItemPropertiesPanel
+            item={selectedItemData}
+            onChange={handlePropertyChange}
+            onDelete={deleteItem}
+            onDuplicate={duplicateItem}
+          />
+        </div>
+      )}
     </div>
   );
 }
