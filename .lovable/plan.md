@@ -35,3 +35,20 @@
 - FloorPlanAssignmentDialog: table-point assignment (μόνο tables clickable, fixtures non-assignable)
 - Fixture bboxes αποθηκεύονται σε zone metadata για ακριβές rendering
 - Deterministic extraction (temperature=0, no re-grouping)
+
+### Μέρος 6: Interactive Blueprint Engine — Venue Layout Architect ✅
+- **DB Migration**: rotation, width_percent, height_percent columns σε floor_plan_tables
+- **Storage**: floor-plan-references bucket (private, RLS per business owner)
+- **VenueSVGCanvas**: Αφαίρεση hasBlueprintSignature, BLUEPRINT_TABLES, BLUEPRINT_FIXTURES, ArchitecturalWalls hardcoded geometry
+  - Όλα τα venues χρησιμοποιούν δυναμικό σύστημα: position/size/rotation από DB row
+  - SVG transform="rotate()" per item
+  - Optional grid overlay
+- **FloorPlanEditor**:
+  - Reference image tracing layer (background behind SVG, adjustable opacity 5-90%)
+  - Opacity slider + show/hide toggle + delete reference image
+  - Grid snapping (2% increments) with magnet toggle
+  - Rotation controls (0-315° σε 45° increments) + quick rotate button
+  - Width/height controls per item
+  - Drag coordinates tooltip (x%, y%) during drag
+  - AI analysis uploads reference image automatically
+- **FloorPlanAssignmentDialog**: Clean view by default (no reference image shown)
