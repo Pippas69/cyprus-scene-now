@@ -470,10 +470,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         y_percent: item.y_percent,
         seats: item.seats,
         shape: item.shape,
-        rotation: item.rotation,
-        width_percent: item.width_percent,
-        height_percent: item.height_percent,
-      })
+      } as any)
       .eq('id', item.id);
     if (error) { toast.error(error.message); return; }
     setItems(prev => prev.map(i => i.id === item.id ? item : i));
