@@ -729,7 +729,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
             onTableClick={(id) => {
-              if (isDesignMode && !placingMode) setSelectedItem(id);
+              if (isDesignMode && !placingMode) setSelectedItem(id || null);
             }}
             onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
             onResizeStart={isDesignMode ? handleResizeStart : undefined}
