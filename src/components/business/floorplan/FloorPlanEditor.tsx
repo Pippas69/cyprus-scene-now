@@ -442,27 +442,37 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setIsSaving(true);
 
-    // Save all items to DB
-    for (const item of items) {
-      await supabase.from('floor_plan_tables').update({
-        label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
-        seats: item.seats, shape: item.shape, rotation: item.rotation,
-        width_percent: item.width_percent, height_percent: item.height_percent,
-        is_locked: item.is_locked, item_type: item.item_type, color: item.color,
-      } as any).eq('id', item.id);
-    }
+    try {
+      const updateResults = await Promise.all(items.map((item) =>
+        supabase.from('floor_plan_tables').update({
+          label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
+          seats: item.seats, shape: item.shape, rotation: item.rotation,
+          width_percent: item.width_percent, height_percent: item.height_percent,
+          is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+        } as any).eq('id', item.id),
+      ));
 
-    // Capture screenshot and save to business
-    const screenshotUrl = await captureCanvasScreenshot();
-    if (screenshotUrl) {
-      await supabase.from('businesses').update({
-        floor_plan_image_url: screenshotUrl,
-      }).eq('id', businessId);
-    }
+      const failedUpdate = updateResults.find((r) => r.error);
+      if (failedUpdate?.error) {
+        toast.error(failedUpdate.error.message);
+        return;
+      }
 
-    setIsDesignMode(false);
-    setIsSaving(false);
-    toast.success(t.layoutSaved);
+      const screenshotUrl = await captureCanvasScreenshot();
+      if (screenshotUrl) {
+        const { error: businessSaveError } = await supabase.from('businesses').update({
+          floor_plan_image_url: screenshotUrl,
+        }).eq('id', businessId);
+        if (businessSaveError) console.error('Business screenshot save error:', businessSaveError);
+      }
+
+      setSelectedItem(null);
+      setPlacingMode(null);
+      setIsDesignMode(false);
+      toast.success(t.layoutSaved);
+    } finally {
+      setIsSaving(false);
+    }
   }, [items, t.layoutSaved, captureCanvasScreenshot, businessId]);
 
   const screenToSVG = useCallback((clientX: number, clientY: number) => {
