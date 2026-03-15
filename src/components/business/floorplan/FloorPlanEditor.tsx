@@ -553,9 +553,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <MapPin className="h-4 w-4 text-primary" />
-          </div>
+          
+
+          
           <div>
             
             
