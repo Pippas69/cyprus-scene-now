@@ -147,7 +147,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [dragging, setDragging] = useState<{ id: string; startX: number; startY: number; origPositions: Map<string, { x: number; y: number }> } | null>(null);
   const [resizing, setResizing] = useState<{ id: string; handle: string; startX: number; startY: number; origW: number; origH: number; origXP: number; origYP: number } | null>(null);
   const [showLabels, setShowLabels] = useState(true);
-  const [showSeatDots, setShowSeatDots] = useState(true);
   const [showSections, setShowSections] = useState(true);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -487,22 +486,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   }, [placingMode, items, gridSnap, zones, activeRoomId, visibleItems]);
 
   // Handle table click with multi-select support
-  const handleTableClick = useCallback((id: string, e?: React.MouseEvent) => {
+  const handleTableClick = useCallback((id: string) => {
     if (!isDesignMode || placingMode) return;
-    // Note: e is not available from SVG click handler, so we check window event
-    const shiftKey = (window.event as KeyboardEvent)?.shiftKey || false;
-
-    if (shiftKey) {
-      setSelectedItems(prev => {
-        if (prev.includes(id)) return prev.filter(x => x !== id);
-        return [...prev, id];
-      });
-      setSelectedItem(null);
-    } else {
-      setSelectedItem(id === selectedItem ? null : id);
-      setSelectedItems([]);
-    }
-  }, [isDesignMode, placingMode, selectedItem]);
+    // Selection is handled in handleMouseDown for better UX
+    // This only fires when there's no drag, so just select
+    setSelectedItem(prev => prev === id ? null : id);
+    setSelectedItems([]);
+  }, [isDesignMode, placingMode]);
 
   const handlePropertyChange = useCallback((updated: FloorPlanItemFull) => {
     history.pushState(items, 'edit properties');
@@ -626,7 +616,25 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (placingMode) return;
     e.stopPropagation();
     const item = items.find(i => i.id === id);
-    if (!item || item.is_locked) return;
+    if (!item || item.is_locked) {
+      // Still select locked items on click
+      setSelectedItem(id);
+      setSelectedItems([]);
+      return;
+    }
+
+    // Handle shift+click for multi-select
+    if (e.shiftKey) {
+      setSelectedItems(prev => {
+        if (prev.includes(id)) return prev.filter(x => x !== id);
+        const next = [...prev, id];
+        if (selectedItem && !prev.includes(selectedItem)) next.push(selectedItem);
+        return next;
+      });
+      setSelectedItem(null);
+      return;
+    }
+
     history.pushState(items, 'move');
 
     const dragIds = selectedItems.includes(id) ? selectedItems : [id];
@@ -959,7 +967,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
                 selectedItemId={isDesignMode ? selectedItem : null}
                 selectedItemIds={isDesignMode ? selectedItems : []}
                 showLabels={showLabels}
-                showSeatDots={showSeatDots}
+                
                 showGrid={isDesignMode && showGrid}
                 gridSnap={SNAP_INCREMENT}
                 showSections={showSections}
