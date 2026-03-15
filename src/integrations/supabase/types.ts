@@ -2150,12 +2150,17 @@ export type Database = {
           business_id: string
           created_at: string | null
           fixture_type: string | null
+          height_percent: number | null
           id: string
+          is_locked: boolean | null
+          item_type: string | null
           label: string
+          rotation: number | null
           seats: number
           shape: string
           sort_order: number
           updated_at: string | null
+          width_percent: number | null
           x_percent: number
           y_percent: number
           zone_id: string | null
@@ -2164,12 +2169,17 @@ export type Database = {
           business_id: string
           created_at?: string | null
           fixture_type?: string | null
+          height_percent?: number | null
           id?: string
+          is_locked?: boolean | null
+          item_type?: string | null
           label: string
+          rotation?: number | null
           seats?: number
           shape?: string
           sort_order?: number
           updated_at?: string | null
+          width_percent?: number | null
           x_percent?: number
           y_percent?: number
           zone_id?: string | null
@@ -2178,12 +2188,17 @@ export type Database = {
           business_id?: string
           created_at?: string | null
           fixture_type?: string | null
+          height_percent?: number | null
           id?: string
+          is_locked?: boolean | null
+          item_type?: string | null
           label?: string
+          rotation?: number | null
           seats?: number
           shape?: string
           sort_order?: number
           updated_at?: string | null
+          width_percent?: number | null
           x_percent?: number
           y_percent?: number
           zone_id?: string | null
@@ -2216,6 +2231,7 @@ export type Database = {
         Row: {
           business_id: string
           capacity: number | null
+          color: string | null
           created_at: string | null
           height_percent: number
           id: string
@@ -2232,6 +2248,7 @@ export type Database = {
         Insert: {
           business_id: string
           capacity?: number | null
+          color?: string | null
           created_at?: string | null
           height_percent?: number
           id?: string
@@ -2248,6 +2265,7 @@ export type Database = {
         Update: {
           business_id?: string
           capacity?: number | null
+          color?: string | null
           created_at?: string | null
           height_percent?: number
           id?: string
