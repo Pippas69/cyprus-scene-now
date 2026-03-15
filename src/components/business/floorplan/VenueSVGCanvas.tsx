@@ -12,6 +12,7 @@ export interface VenueItem {
   rotation?: number;
   width_percent?: number;
   height_percent?: number;
+  color?: string | null;
 }
 
 export interface VenueBBox {
