@@ -160,7 +160,7 @@ export function VenueSVGCanvas({
   const allowDrag = interactive && !!onItemMouseDown;
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <rect x={0} y={0} width={100} height={100} fill="transparent" />
 
       {/* Optional grid */}
@@ -174,14 +174,33 @@ export function VenueSVGCanvas({
         const isDj = item.fixture_type === 'dj_booth' || item.label.toUpperCase().includes('DJ');
         const isBar = item.fixture_type === 'bar' || item.label.toUpperCase().includes('BAR');
 
+        const selected = selectedItemId === item.id;
+        const fixtureHandleMouseDown = allowDrag
+          ? (e: React.MouseEvent) => {
+              e.stopPropagation();
+              onItemMouseDown!(e, item.id);
+            }
+          : undefined;
+
         return (
-          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}>
+          <g
+            key={item.id}
+            transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
+            onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
+            onMouseDown={fixtureHandleMouseDown}
+            onDoubleClick={
+              onItemDoubleClick
+                ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); }
+                : undefined
+            }
+            className={interactive ? 'cursor-pointer' : ''}
+          >
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
               rx={isDj ? 0.7 : 0.45}
               fill={THEME.fixtureFill}
-              stroke={THEME.fixtureStroke}
-              strokeWidth={isBar ? 0.55 : 0.38}
+              stroke={selected ? THEME.tableStroke : THEME.fixtureStroke}
+              strokeWidth={selected ? 0.65 : (isBar ? 0.55 : 0.38)}
             />
             {isBar && (
               <rect
