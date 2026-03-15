@@ -220,19 +220,9 @@ export function VenueSVGCanvas({
     let w = item.width_percent || bbox?.w || (isFixture ? 8 : 5);
     let h = item.height_percent || bbox?.h || (isFixture ? 5 : 5);
 
-    if (isFixture) {
-      w = clamp(w, 2, 45);
-      h = clamp(h, 1, 50);
-    } else {
-      const shape = inferShape(item.shape);
-      w = clamp(w, 2, 25);
-      h = clamp(h, 2, 25);
-      if (shape === 'square' || shape === 'round') {
-        const side = (w + h) / 2;
-        w = side;
-        h = side;
-      }
-    }
+    // Allow free resizing — no forced square constraint
+    w = clamp(w, 1, 80);
+    h = clamp(h, 1, 80);
 
     return {
       x: item.x_percent,
