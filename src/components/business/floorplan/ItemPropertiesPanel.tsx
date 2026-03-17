@@ -32,6 +32,8 @@ interface ItemPropertiesPanelProps {
   onChange: (updated: FloorPlanItemFull) => void;
   onDelete: (id: string) => void;
   onDuplicate: (item: FloorPlanItemFull) => void;
+  onBringForward?: (id: string) => void;
+  onSendBackward?: (id: string) => void;
 }
 
 const translations = {
