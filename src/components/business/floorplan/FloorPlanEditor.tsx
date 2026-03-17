@@ -413,6 +413,26 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  const bringForward = useCallback((itemId: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.id === itemId);
+      if (idx < 0 || idx >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next.map((item, i) => ({ ...item, sort_order: i }));
+    });
+  }, []);
+
+  const sendBackward = useCallback((itemId: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.id === itemId);
+      if (idx <= 0) return prev;
+      const next = [...prev];
+      [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
+      return next.map((item, i) => ({ ...item, sort_order: i }));
+    });
+  }, []);
+
   const clearAllItems = async () => {
     if (!window.confirm(t.clearAllConfirm)) return;
     const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
