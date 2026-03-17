@@ -103,7 +103,7 @@ function GridOverlay({ snap }: { snap: number }) {
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
-  onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
+  onResizeStart: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
 }) {
   const hs = 0.85;
   const cx = g.x + g.w / 2;
