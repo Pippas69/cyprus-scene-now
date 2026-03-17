@@ -413,6 +413,26 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
+  const bringForward = useCallback((itemId: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.id === itemId);
+      if (idx < 0 || idx >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next.map((item, i) => ({ ...item, sort_order: i }));
+    });
+  }, []);
+
+  const sendBackward = useCallback((itemId: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.id === itemId);
+      if (idx <= 0) return prev;
+      const next = [...prev];
+      [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
+      return next.map((item, i) => ({ ...item, sort_order: i }));
+    });
+  }, []);
+
   const clearAllItems = async () => {
     if (!window.confirm(t.clearAllConfirm)) return;
     const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
@@ -470,6 +490,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           seats: item.seats, shape: item.shape, rotation: item.rotation,
           width_percent: item.width_percent, height_percent: item.height_percent,
           is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+          sort_order: item.sort_order,
         } as any).eq('id', item.id),
       ));
 
@@ -865,6 +886,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               onChange={handlePropertyChange}
               onDelete={deleteItem}
               onDuplicate={duplicateItem}
+              onBringForward={bringForward}
+              onSendBackward={sendBackward}
             />
           </div>
         )}
@@ -878,6 +901,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             onChange={handlePropertyChange}
             onDelete={deleteItem}
             onDuplicate={duplicateItem}
+            onBringForward={bringForward}
+            onSendBackward={sendBackward}
           />
         </div>
       )}

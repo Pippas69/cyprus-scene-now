@@ -32,6 +32,8 @@ interface ItemPropertiesPanelProps {
   onChange: (updated: FloorPlanItemFull) => void;
   onDelete: (id: string) => void;
   onDuplicate: (item: FloorPlanItemFull) => void;
+  onBringForward?: (id: string) => void;
+  onSendBackward?: (id: string) => void;
 }
 
 const translations = {
@@ -54,6 +56,8 @@ const translations = {
     delete: 'Διαγραφή',
     confirmDelete: 'Σίγουρα;',
     position: 'Θέση',
+    bringForward: 'Μπροστά',
+    sendBackward: 'Πίσω',
     noSelection: 'Επιλέξτε ένα στοιχείο',
     noSelectionHint: 'Κάντε κλικ σε κάποιο τραπέζι ή στοιχείο στον καμβά',
   },
@@ -76,12 +80,14 @@ const translations = {
     delete: 'Delete',
     confirmDelete: 'Are you sure?',
     position: 'Position',
+    bringForward: 'Forward',
+    sendBackward: 'Backward',
     noSelection: 'Select an item',
     noSelectionHint: 'Click on a table or element on the canvas',
   },
 };
 
-export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate }: ItemPropertiesPanelProps) {
+export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate, onBringForward, onSendBackward }: ItemPropertiesPanelProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -305,6 +311,30 @@ export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate }: I
 
         {/* Divider */}
         <div className="border-t border-border/30" />
+
+        {/* Layer order */}
+        <div className="flex gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={() => onBringForward?.(item.id)}
+            disabled={item.is_locked}
+          >
+            <ArrowUp className="h-3 w-3 mr-1" />
+            {t.bringForward}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={() => onSendBackward?.(item.id)}
+            disabled={item.is_locked}
+          >
+            <ArrowDown className="h-3 w-3 mr-1" />
+            {t.sendBackward}
+          </Button>
+        </div>
 
         {/* Actions */}
         <div className="space-y-1.5">
