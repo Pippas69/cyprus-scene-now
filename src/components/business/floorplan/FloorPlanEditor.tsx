@@ -604,6 +604,48 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     });
   }, [items, history]);
 
+  // ═══ Smart alignment guides (Canva-style) ═══
+  const ALIGN_THRESHOLD = 1.2; // percentage threshold for snapping
+
+  const computeAlignGuides = useCallback((dragId: string, newX: number, newY: number, itemW: number, itemH: number) => {
+    const guides: { x: number[]; y: number[] } = { x: [], y: [] };
+    const dragCx = newX + itemW / 2;
+    const dragCy = newY + itemH / 2;
+    const dragRight = newX + itemW;
+    const dragBottom = newY + itemH;
+
+    for (const other of items) {
+      if (other.id === dragId) continue;
+      const ox = other.x_percent;
+      const oy = other.y_percent;
+      const ow = other.width_percent;
+      const oh = other.height_percent;
+      const ocx = ox + ow / 2;
+      const ocy = oy + oh / 2;
+      const oRight = ox + ow;
+      const oBottom = oy + oh;
+
+      // Vertical guides (x-axis alignment)
+      if (Math.abs(newX - ox) < ALIGN_THRESHOLD) guides.x.push(ox);
+      if (Math.abs(dragRight - oRight) < ALIGN_THRESHOLD) guides.x.push(oRight);
+      if (Math.abs(dragCx - ocx) < ALIGN_THRESHOLD) guides.x.push(ocx);
+      if (Math.abs(newX - oRight) < ALIGN_THRESHOLD) guides.x.push(oRight);
+      if (Math.abs(dragRight - ox) < ALIGN_THRESHOLD) guides.x.push(ox);
+
+      // Horizontal guides (y-axis alignment)
+      if (Math.abs(newY - oy) < ALIGN_THRESHOLD) guides.y.push(oy);
+      if (Math.abs(dragBottom - oBottom) < ALIGN_THRESHOLD) guides.y.push(oBottom);
+      if (Math.abs(dragCy - ocy) < ALIGN_THRESHOLD) guides.y.push(ocy);
+      if (Math.abs(newY - oBottom) < ALIGN_THRESHOLD) guides.y.push(oBottom);
+      if (Math.abs(dragBottom - oy) < ALIGN_THRESHOLD) guides.y.push(oy);
+    }
+
+    // Deduplicate
+    guides.x = [...new Set(guides.x)];
+    guides.y = [...new Set(guides.y)];
+    return guides;
+  }, [items]);
+
   const updatePointer = useCallback((clientX: number, clientY: number) => {
     const svgPt = screenToSVG(clientX, clientY);
 
@@ -616,6 +658,31 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         newX = snapValue(newX, SNAP_INCREMENT);
         newY = snapValue(newY, SNAP_INCREMENT);
       }
+
+      // Compute alignment guides
+      const dragItem = items.find(i => i.id === dragging.id);
+      if (dragItem) {
+        const guides = computeAlignGuides(dragging.id, newX, newY, dragItem.width_percent, dragItem.height_percent);
+        setAlignGuides(guides);
+
+        // Snap to guides
+        const dragCx = newX + dragItem.width_percent / 2;
+        const dragRight = newX + dragItem.width_percent;
+        const dragCy = newY + dragItem.height_percent / 2;
+        const dragBottom = newY + dragItem.height_percent;
+
+        for (const gx of guides.x) {
+          if (Math.abs(newX - gx) < ALIGN_THRESHOLD) { newX = gx; break; }
+          if (Math.abs(dragRight - gx) < ALIGN_THRESHOLD) { newX = gx - dragItem.width_percent; break; }
+          if (Math.abs(dragCx - gx) < ALIGN_THRESHOLD) { newX = gx - dragItem.width_percent / 2; break; }
+        }
+        for (const gy of guides.y) {
+          if (Math.abs(newY - gy) < ALIGN_THRESHOLD) { newY = gy; break; }
+          if (Math.abs(dragBottom - gy) < ALIGN_THRESHOLD) { newY = gy - dragItem.height_percent; break; }
+          if (Math.abs(dragCy - gy) < ALIGN_THRESHOLD) { newY = gy - dragItem.height_percent / 2; break; }
+        }
+      }
+
       setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
       setItems((prev) => prev.map((i) => (i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i)));
     }
