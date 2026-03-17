@@ -344,9 +344,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     };
   };
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!placingMode) return;
-    const svgPt = screenToSVG(e.clientX, e.clientY);
+    const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY;
+    const svgPt = screenToSVG(clientX, clientY);
     let x = svgPt.x;
     let y = svgPt.y;
     if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
