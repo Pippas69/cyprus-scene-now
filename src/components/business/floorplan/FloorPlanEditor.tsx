@@ -508,14 +508,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     return { x: svgPt.x, y: svgPt.y };
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, id: string) => {
     if (placingMode) return;
     e.stopPropagation();
-    setSelectedItem(id); // Single click selects immediately
+    setSelectedItem(id); // Single click/tap selects immediately
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'move');
-    const svgPt = screenToSVG(e.clientX, e.clientY);
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const svgPt = screenToSVG(clientX, clientY);
     setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
   };
 
