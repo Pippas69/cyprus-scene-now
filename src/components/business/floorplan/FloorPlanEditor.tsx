@@ -490,6 +490,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           seats: item.seats, shape: item.shape, rotation: item.rotation,
           width_percent: item.width_percent, height_percent: item.height_percent,
           is_locked: item.is_locked, item_type: item.item_type, color: item.color,
+          sort_order: item.sort_order,
         } as any).eq('id', item.id),
       ));
 
