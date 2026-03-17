@@ -735,11 +735,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       if (item) debouncedSave(item);
       setDragging(null);
       setDragCoords(null);
+      setAlignGuides({ x: [], y: [] });
     }
     if (resizing) {
       const item = items.find((i) => i.id === resizing.id);
       if (item) debouncedSave(item);
       setResizing(null);
+      setAlignGuides({ x: [], y: [] });
     }
   }, [dragging, resizing, items, debouncedSave]);
 
