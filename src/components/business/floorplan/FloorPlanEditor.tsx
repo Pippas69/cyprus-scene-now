@@ -652,14 +652,24 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (!dragging && !resizing) return;
 
     const onMove = (e: MouseEvent) => updatePointer(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault(); // prevent scroll while dragging/resizing
+      updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+    };
     const onUp = () => handleMouseUp();
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
 
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('touchcancel', onUp);
     };
   }, [dragging, resizing, updatePointer, handleMouseUp]);
 
