@@ -61,9 +61,8 @@ const TOOLBAR_SHAPES: PlaceShape[] = [
   { id: 'square', icon: <Square className="h-4 w-4" />, label_el: 'Τετράγωνο', label_en: 'Square', shape: 'square', seats: 4, width_percent: 5, height_percent: 5, fixture_type: null, item_type: 'table' },
   { id: 'rect', icon: <RectangleHorizontal className="h-4 w-4" />, label_el: 'Ορθογώνιο', label_en: 'Rectangle', shape: 'rectangle', seats: 6, width_percent: 8, height_percent: 4, fixture_type: null, item_type: 'table' },
   { id: 'booth', icon: <Sofa className="h-4 w-4" />, label_el: 'Booth', label_en: 'Booth', shape: 'rectangle', seats: 6, width_percent: 7, height_percent: 5, fixture_type: 'booth', item_type: 'seating' },
-  { id: 'bar', icon: <Beer className="h-4 w-4" />, label_el: 'Bar', label_en: 'Bar', shape: 'rect', seats: 0, width_percent: 18, height_percent: 4, fixture_type: 'bar', item_type: 'fixture' },
-  { id: 'dj', icon: <Music className="h-4 w-4" />, label_el: 'DJ', label_en: 'DJ', shape: 'rect', seats: 0, width_percent: 6, height_percent: 4, fixture_type: 'dj_booth', item_type: 'fixture' },
-  { id: 'stage', icon: <Landmark className="h-4 w-4" />, label_el: 'Stage', label_en: 'Stage', shape: 'rect', seats: 0, width_percent: 16, height_percent: 7, fixture_type: 'stage', item_type: 'fixture' },
+  { id: 'line', icon: <Minus className="h-4 w-4" />, label_el: 'Γραμμή', label_en: 'Line', shape: 'rectangle', seats: 0, width_percent: 15, height_percent: 0.4, fixture_type: 'line', item_type: 'line' },
+  { id: 'text', icon: <Type className="h-4 w-4" />, label_el: 'Κείμενο', label_en: 'Text', shape: 'rectangle', seats: 0, width_percent: 8, height_percent: 4, fixture_type: 'text', item_type: 'text' },
 ];
 
 const translations = {
