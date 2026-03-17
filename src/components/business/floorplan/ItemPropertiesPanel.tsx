@@ -80,6 +80,8 @@ const translations = {
     delete: 'Delete',
     confirmDelete: 'Are you sure?',
     position: 'Position',
+    bringForward: 'Forward',
+    sendBackward: 'Backward',
     noSelection: 'Select an item',
     noSelectionHint: 'Click on a table or element on the canvas',
   },
