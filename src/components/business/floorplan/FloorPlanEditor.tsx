@@ -768,17 +768,26 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
-      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full" style={{ aspectRatio: '4 / 3' }}>
+      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
           ref={canvasRef}
-          className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+          className={`absolute inset-0 select-none touch-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
           onClick={(e) => {
             if (isDesignMode && placingMode) {
               handleCanvasClick(e);
             }
           }}
+          onTouchEnd={(e) => {
+            if (isDesignMode && placingMode) {
+              handleCanvasClick(e);
+            }
+          }}
           onMouseDown={(e) => {
-            // Click on empty canvas area → deselect (like Canva)
+            if (isDesignMode && !placingMode && e.target === e.currentTarget) {
+              setSelectedItem(null);
+            }
+          }}
+          onTouchStart={(e) => {
             if (isDesignMode && !placingMode && e.target === e.currentTarget) {
               setSelectedItem(null);
             }
@@ -792,7 +801,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
-            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
+            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
           )}
 
           {items.length === 0 && isDesignMode && (
