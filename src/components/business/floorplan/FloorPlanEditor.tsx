@@ -521,9 +521,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
   };
 
-  const handleResizeStart = useCallback((e: React.MouseEvent, id: string, handle: string) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => {
     e.stopPropagation();
-    e.preventDefault();
+    if ('preventDefault' in e) e.preventDefault();
 
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
