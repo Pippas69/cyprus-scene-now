@@ -352,9 +352,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
 
     const existingTables = items.filter((i) => !i.fixture_type).length;
-    const label = placingMode.fixture_type
-      ? placingMode.label_en.toUpperCase()
-      : `T${existingTables + 1}`;
+    const existingLines = items.filter((i) => i.fixture_type === 'line').length;
+    const existingTexts = items.filter((i) => i.fixture_type === 'text').length;
+    let label: string;
+    if (placingMode.fixture_type === 'line') {
+      label = `L${existingLines + 1}`;
+    } else if (placingMode.fixture_type === 'text') {
+      label = language === 'el' ? 'Κείμενο' : 'Text';
+    } else if (placingMode.fixture_type) {
+      label = placingMode.label_en.toUpperCase();
+    } else {
+      label = `T${existingTables + 1}`;
+    }
 
     const newItem: Partial<FloorPlanItemFull> = {
       label,
