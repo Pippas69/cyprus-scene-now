@@ -56,6 +56,8 @@ const translations = {
     delete: 'Διαγραφή',
     confirmDelete: 'Σίγουρα;',
     position: 'Θέση',
+    bringForward: 'Μπροστά',
+    sendBackward: 'Πίσω',
     noSelection: 'Επιλέξτε ένα στοιχείο',
     noSelectionHint: 'Κάντε κλικ σε κάποιο τραπέζι ή στοιχείο στον καμβά',
   },
