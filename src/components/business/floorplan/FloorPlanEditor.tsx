@@ -801,7 +801,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
-            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
+            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-fill pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
           )}
 
           {items.length === 0 && isDesignMode && (
