@@ -253,7 +253,7 @@ export function VenueSVGCanvas({
         const selected = selectedItemId === item.id;
 
         const fixtureHandleMouseDown = allowDrag
-          ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
+          ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
 
         return (
@@ -262,6 +262,7 @@ export function VenueSVGCanvas({
             transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
             onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
             onMouseDown={fixtureHandleMouseDown}
+            onTouchStart={fixtureHandleMouseDown}
             onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
