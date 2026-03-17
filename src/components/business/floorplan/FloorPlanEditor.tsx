@@ -885,6 +885,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
               onChange={handlePropertyChange}
               onDelete={deleteItem}
               onDuplicate={duplicateItem}
+              onBringForward={bringForward}
+              onSendBackward={sendBackward}
             />
           </div>
         )}
