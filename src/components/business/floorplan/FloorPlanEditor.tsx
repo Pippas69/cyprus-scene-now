@@ -7,8 +7,10 @@ import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   ImageOff, Magnet, Undo2, Redo2,
   X, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil, Eraser,
-  Plus, Loader2
+  Sofa, Minus, Type, Save, Pencil, Eraser,
+  Plus, Loader2, AlignHorizontalDistributeCenter,
+  AlignVerticalDistributeCenter, AlignStartVertical,
+  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
