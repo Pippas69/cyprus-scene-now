@@ -36,9 +36,9 @@ interface VenueSVGCanvasProps {
   assignments?: TableAssignment[];
   currentReservationId?: string;
   onTableClick?: (id: string) => void;
-  onItemMouseDown?: (e: React.MouseEvent, id: string) => void;
+  onItemMouseDown?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
   onItemDoubleClick?: (id: string) => void;
-  onResizeStart?: (e: React.MouseEvent, id: string, handle: string) => void;
+  onResizeStart?: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
