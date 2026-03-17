@@ -132,18 +132,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [resizing, setResizing] = useState<{
     id: string;
     handle: string;
-    // World-space anchor point (opposite edge/corner) that stays fixed during resize
     anchorX: number;
     anchorY: number;
-    // Local basis vectors in world space (item rotation aware)
     uxX: number;
     uxY: number;
     uyX: number;
     uyY: number;
-    // Starting dimensions (avoid drift while dragging)
     startW: number;
     startH: number;
-    // Which edges this handle controls
     movesLeft: boolean;
     movesRight: boolean;
     movesTop: boolean;
@@ -157,6 +153,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [gridSnap, setGridSnap] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
+  const [alignGuides, setAlignGuides] = useState<{ x: number[]; y: number[] }>({ x: [], y: [] });
 
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
