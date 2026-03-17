@@ -13,6 +13,7 @@ export interface VenueItem {
   width_percent?: number;
   height_percent?: number;
   color?: string | null;
+  item_type?: string;
 }
 
 export interface VenueBBox {
@@ -43,6 +44,7 @@ interface VenueSVGCanvasProps {
   showGrid?: boolean;
   gridSnap?: number;
   svgRef?: React.Ref<SVGSVGElement>;
+  alignGuides?: { x: number[]; y: number[] };
 }
 
 type RenderShape = 'round' | 'square' | 'rectangle';
@@ -59,25 +61,24 @@ type Geometry = {
 /* ═══ Canva/Figma-inspired theme ═══ */
 const THEME = {
   grid: 'rgba(255,255,255,0.06)',
-  // Fixtures
   fixtureFill: 'rgba(255,255,255,0.04)',
   fixtureStroke: 'rgba(255,255,255,0.35)',
   fixtureText: 'rgba(255,255,255,0.5)',
-  // Tables
   tableStroke: 'rgba(255,255,255,0.4)',
   tableFill: 'rgba(255,255,255,0.05)',
   tableSelectedStroke: 'hsl(var(--primary))',
   tableSelectedFill: 'hsl(var(--primary) / 0.12)',
   tableText: 'rgba(255,255,255,0.6)',
-  // Reservation states
   occupiedStroke: 'hsl(0 72% 55%)',
   occupiedFill: 'hsl(0 72% 55% / 0.12)',
   selfStroke: 'hsl(var(--floorplan-accent))',
   selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
-  // Selection handles — Canva blue
   selectionStroke: 'hsl(var(--primary))',
   handleFill: 'hsl(var(--primary))',
   handleBorder: '#fff',
+  alignGuide: 'hsl(var(--primary) / 0.7)',
+  lineStroke: 'rgba(255,255,255,0.6)',
+  textColor: 'rgba(255,255,255,0.8)',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -99,15 +100,27 @@ function GridOverlay({ snap }: { snap: number }) {
   return <g>{lines}</g>;
 }
 
+/* ═══ Alignment guide lines ═══ */
+function AlignGuideLines({ guides }: { guides: { x: number[]; y: number[] } }) {
+  return (
+    <g className="pointer-events-none">
+      {guides.x.map((x, i) => (
+        <line key={`ax${i}`} x1={x} y1={-5} x2={x} y2={105} stroke={THEME.alignGuide} strokeWidth={0.18} strokeDasharray="0.8 0.4" />
+      ))}
+      {guides.y.map((y, i) => (
+        <line key={`ay${i}`} x1={-5} y1={y} x2={105} y2={y} stroke={THEME.alignGuide} strokeWidth={0.18} strokeDasharray="0.8 0.4" />
+      ))}
+    </g>
+  );
+}
+
 /* ═══ Canva-style resize handles (touch-friendly) ═══ */
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
   onResizeStart: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
 }) {
-  // Visible handle size
   const hs = 1.1;
-  // Invisible touch target padding (much larger for fingers)
   const touchPad = 2.5;
   const cx = g.x + g.w / 2;
   const cy = g.y + g.h / 2;
@@ -134,7 +147,6 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
 
   return (
     <g>
-      {/* Selection bounding box */}
       {g.shape === 'round' ? (
         <circle
           cx={cx} cy={cy} r={g.w / 2 + 0.4}
@@ -149,7 +161,6 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
         />
       )}
 
-      {/* Edge handles — visible + invisible touch target */}
       {edgeHandles.map(h => {
         const isHoriz = h.id === 'n' || h.id === 's';
         const visW = isHoriz ? 3.4 : 0.9;
@@ -158,7 +169,6 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
         const touchH = isHoriz ? visH + touchPad * 2 : visH + touchPad * 2;
         return (
           <g key={h.id}>
-            {/* Invisible enlarged touch target */}
             <rect
               x={h.x - touchW / 2} y={h.y - touchH / 2}
               width={touchW} height={touchH}
@@ -168,7 +178,6 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
               onTouchStart={(e) => startResize(e, h.id)}
               className="pointer-events-auto"
             />
-            {/* Visible handle */}
             <rect
               x={h.x - visW / 2} y={h.y - visH / 2}
               width={visW} height={visH}
@@ -182,10 +191,8 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
         );
       })}
 
-      {/* Corner handles — visible + invisible touch target */}
       {handles.map(h => (
         <g key={h.id}>
-          {/* Invisible enlarged touch target */}
           <circle
             cx={h.x} cy={h.y} r={hs + touchPad}
             fill="transparent"
@@ -194,7 +201,6 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
             onTouchStart={(e) => startResize(e, h.id)}
             className="pointer-events-auto"
           />
-          {/* Visible handle */}
           <circle
             cx={h.x} cy={h.y} r={hs}
             fill={THEME.handleFill}
@@ -224,8 +230,12 @@ export function VenueSVGCanvas({
   showGrid = false,
   gridSnap = 2,
   svgRef,
+  alignGuides,
 }: VenueSVGCanvasProps) {
-  const fixtureItems = items.filter((i) => !!i.fixture_type);
+  // Separate items by type
+  const lineItems = items.filter((i) => i.fixture_type === 'line');
+  const textItems = items.filter((i) => i.fixture_type === 'text');
+  const fixtureItems = items.filter((i) => !!i.fixture_type && i.fixture_type !== 'line' && i.fixture_type !== 'text');
   const tableItems = items.filter((i) => !i.fixture_type);
 
   const isOccupied = useCallback(
@@ -252,7 +262,6 @@ export function VenueSVGCanvas({
     let w = item.width_percent || bbox?.w || (isFixture ? 8 : 5);
     let h = item.height_percent || bbox?.h || (isFixture ? 5 : 5);
 
-    // Allow free resizing — no forced square constraint
     w = clamp(w, 1, 80);
     h = clamp(h, 1, 80);
 
@@ -268,12 +277,49 @@ export function VenueSVGCanvas({
   const allowDrag = interactive && !!onItemMouseDown;
   const showHandles = interactive && !!onResizeStart;
 
+  const makeInteractionHandlers = (itemId: string) => {
+    const handleTouchMouseDown = allowDrag
+      ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, itemId); }
+      : undefined;
+    return {
+      onClick: interactive && onTableClick ? () => onTableClick(itemId) : undefined,
+      onMouseDown: handleTouchMouseDown,
+      onTouchStart: handleTouchMouseDown,
+      onDoubleClick: onItemDoubleClick ? (e: React.MouseEvent) => { e.stopPropagation(); onItemDoubleClick(itemId); } : undefined,
+      className: interactive ? 'cursor-pointer' : '',
+    };
+  };
+
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
 
-      {/* Fixtures */}
+      {/* ═══ Lines ═══ */}
+      {lineItems.map((item) => {
+        const g = resolveGeometry(item, true);
+        const cx = g.x + g.w / 2;
+        const cy = g.y + g.h / 2;
+        const selected = selectedItemId === item.id;
+        const handlers = makeInteractionHandlers(item.id);
+
+        return (
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
+            <rect
+              x={g.x} y={g.y} width={g.w} height={g.h}
+              rx={0.15}
+              fill={item.color || THEME.lineStroke}
+              stroke={selected ? THEME.selectionStroke : 'none'}
+              strokeWidth={selected ? 0.3 : 0}
+            />
+            {selected && showHandles && onResizeStart && (
+              <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
+            )}
+          </g>
+        );
+      })}
+
+      {/* ═══ Fixtures ═══ */}
       {fixtureItems.map((item) => {
         const g = resolveGeometry(item, true);
         const cx = g.x + g.w / 2;
@@ -281,21 +327,10 @@ export function VenueSVGCanvas({
         const isDj = item.fixture_type === 'dj_booth' || item.label.toUpperCase().includes('DJ');
         const isBar = item.fixture_type === 'bar' || item.label.toUpperCase().includes('BAR');
         const selected = selectedItemId === item.id;
-
-        const fixtureHandleMouseDown = allowDrag
-          ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
-          : undefined;
+        const handlers = makeInteractionHandlers(item.id);
 
         return (
-          <g
-            key={item.id}
-            transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
-            onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
-            onMouseDown={fixtureHandleMouseDown}
-            onTouchStart={fixtureHandleMouseDown}
-            onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
-            className={interactive ? 'cursor-pointer' : ''}
-          >
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
               rx={isDj ? 0.6 : 0.35}
@@ -332,7 +367,6 @@ export function VenueSVGCanvas({
                 {item.label.toUpperCase()}
               </text>
             )}
-
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
             )}
@@ -340,7 +374,7 @@ export function VenueSVGCanvas({
         );
       })}
 
-      {/* Tables */}
+      {/* ═══ Tables ═══ */}
       {tableItems.map((item) => {
         const g = resolveGeometry(item, false);
         const cx = g.x + g.w / 2;
@@ -367,20 +401,10 @@ export function VenueSVGCanvas({
           strokeWidth = 0.45;
         }
 
-        const handleTouchMouseDown = allowDrag
-          ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
-          : undefined;
+        const handlers = makeInteractionHandlers(item.id);
 
         return (
-          <g
-            key={item.id}
-            transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
-            onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
-            onMouseDown={handleTouchMouseDown}
-            onTouchStart={handleTouchMouseDown}
-            onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
-            className={interactive ? 'cursor-pointer' : ''}
-          >
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
             {g.shape === 'round' ? (
               <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
             ) : (
@@ -416,6 +440,50 @@ export function VenueSVGCanvas({
           </g>
         );
       })}
+
+      {/* ═══ Text items ═══ */}
+      {textItems.map((item) => {
+        const g = resolveGeometry(item, true);
+        const cx = g.x + g.w / 2;
+        const cy = g.y + g.h / 2;
+        const selected = selectedItemId === item.id;
+        const handlers = makeInteractionHandlers(item.id);
+
+        return (
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
+            {/* Invisible hit area */}
+            <rect
+              x={g.x} y={g.y} width={g.w} height={g.h}
+              fill={selected ? 'hsl(var(--primary) / 0.05)' : 'transparent'}
+              stroke={selected ? THEME.selectionStroke : 'none'}
+              strokeWidth={selected ? 0.2 : 0}
+              strokeDasharray={selected ? '0.6 0.3' : 'none'}
+              rx={0.2}
+            />
+            <text
+              x={cx} y={cy}
+              textAnchor="middle" dominantBaseline="central"
+              transform={g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
+              fill={item.color || THEME.textColor}
+              fontSize={Math.min(g.h * 0.65, g.w * 0.35, 6)}
+              fontWeight={600}
+              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+              className="pointer-events-none"
+            >
+              {item.label}
+            </text>
+
+            {selected && showHandles && onResizeStart && (
+              <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
+            )}
+          </g>
+        );
+      })}
+
+      {/* ═══ Alignment guides ═══ */}
+      {alignGuides && (alignGuides.x.length > 0 || alignGuides.y.length > 0) && (
+        <AlignGuideLines guides={alignGuides} />
+      )}
     </svg>
   );
 }
