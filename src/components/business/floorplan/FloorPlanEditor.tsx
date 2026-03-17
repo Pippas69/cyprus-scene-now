@@ -921,6 +921,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showLabels={true}
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
+            alignGuides={isDesignMode ? alignGuides : undefined}
             onTableClick={(id) => {
               if (isDesignMode && !placingMode) setSelectedItem(id || null);
             }}
