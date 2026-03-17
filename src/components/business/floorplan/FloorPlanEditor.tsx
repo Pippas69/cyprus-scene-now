@@ -344,9 +344,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     };
   };
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!placingMode) return;
-    const svgPt = screenToSVG(e.clientX, e.clientY);
+    const clientX = 'touches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.changedTouches[0].clientY : (e as React.MouseEvent).clientY;
+    const svgPt = screenToSVG(clientX, clientY);
     let x = svgPt.x;
     let y = svgPt.y;
     if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
@@ -506,20 +508,22 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     return { x: svgPt.x, y: svgPt.y };
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, id: string) => {
     if (placingMode) return;
     e.stopPropagation();
-    setSelectedItem(id); // Single click selects immediately
+    setSelectedItem(id); // Single click/tap selects immediately
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
     history.pushState(items, 'move');
-    const svgPt = screenToSVG(e.clientX, e.clientY);
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const svgPt = screenToSVG(clientX, clientY);
     setDragging({ id, startX: svgPt.x, startY: svgPt.y, origX: item.x_percent, origY: item.y_percent });
   };
 
-  const handleResizeStart = useCallback((e: React.MouseEvent, id: string, handle: string) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => {
     e.stopPropagation();
-    e.preventDefault();
+    if ('preventDefault' in e) e.preventDefault();
 
     const item = items.find((i) => i.id === id);
     if (!item || item.is_locked) return;
@@ -648,14 +652,24 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (!dragging && !resizing) return;
 
     const onMove = (e: MouseEvent) => updatePointer(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault(); // prevent scroll while dragging/resizing
+      updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+    };
     const onUp = () => handleMouseUp();
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
 
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('touchcancel', onUp);
     };
   }, [dragging, resizing, updatePointer, handleMouseUp]);
 
@@ -754,17 +768,26 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
-      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full" style={{ aspectRatio: '4 / 3' }}>
+      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
           ref={canvasRef}
-          className={`absolute inset-0 select-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
+          className={`absolute inset-0 select-none touch-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
           onClick={(e) => {
             if (isDesignMode && placingMode) {
               handleCanvasClick(e);
             }
           }}
+          onTouchEnd={(e) => {
+            if (isDesignMode && placingMode) {
+              handleCanvasClick(e);
+            }
+          }}
           onMouseDown={(e) => {
-            // Click on empty canvas area → deselect (like Canva)
+            if (isDesignMode && !placingMode && e.target === e.currentTarget) {
+              setSelectedItem(null);
+            }
+          }}
+          onTouchStart={(e) => {
             if (isDesignMode && !placingMode && e.target === e.currentTarget) {
               setSelectedItem(null);
             }
@@ -778,7 +801,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
-            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
+            <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
           )}
 
           {items.length === 0 && isDesignMode && (

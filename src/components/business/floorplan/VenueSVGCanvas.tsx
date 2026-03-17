@@ -36,9 +36,9 @@ interface VenueSVGCanvasProps {
   assignments?: TableAssignment[];
   currentReservationId?: string;
   onTableClick?: (id: string) => void;
-  onItemMouseDown?: (e: React.MouseEvent, id: string) => void;
+  onItemMouseDown?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
   onItemDoubleClick?: (id: string) => void;
-  onResizeStart?: (e: React.MouseEvent, id: string, handle: string) => void;
+  onResizeStart?: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
   interactive?: boolean;
   showGrid?: boolean;
   gridSnap?: number;
@@ -103,7 +103,7 @@ function GridOverlay({ snap }: { snap: number }) {
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
-  onResizeStart: (e: React.MouseEvent, id: string, handle: string) => void;
+  onResizeStart: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
 }) {
   const hs = 0.85;
   const cx = g.x + g.w / 2;
@@ -154,6 +154,7 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
           strokeWidth={0.12}
           style={{ cursor: h.cursor }}
           onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
+          onTouchStart={(e) => { e.stopPropagation(); onResizeStart(e, itemId, h.id); }}
           className="pointer-events-auto"
         />
       ))}
@@ -169,6 +170,7 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
           strokeWidth={0.15}
           style={{ cursor: h.cursor }}
           onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
+          onTouchStart={(e) => { e.stopPropagation(); onResizeStart(e, itemId, h.id); }}
           className="pointer-events-auto"
         />
       ))}
@@ -251,7 +253,7 @@ export function VenueSVGCanvas({
         const selected = selectedItemId === item.id;
 
         const fixtureHandleMouseDown = allowDrag
-          ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
+          ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
 
         return (
@@ -260,6 +262,7 @@ export function VenueSVGCanvas({
             transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
             onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
             onMouseDown={fixtureHandleMouseDown}
+            onTouchStart={fixtureHandleMouseDown}
             onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
@@ -334,8 +337,8 @@ export function VenueSVGCanvas({
           strokeWidth = 0.45;
         }
 
-        const handleMouseDown = allowDrag
-          ? (e: React.MouseEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
+        const handleTouchMouseDown = allowDrag
+          ? (e: React.MouseEvent | React.TouchEvent) => { e.stopPropagation(); onItemMouseDown!(e, item.id); }
           : undefined;
 
         return (
@@ -343,7 +346,8 @@ export function VenueSVGCanvas({
             key={item.id}
             transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined}
             onClick={interactive && onTableClick ? () => onTableClick(item.id) : undefined}
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleTouchMouseDown}
+            onTouchStart={handleTouchMouseDown}
             onDoubleClick={onItemDoubleClick ? (e) => { e.stopPropagation(); onItemDoubleClick(item.id); } : undefined}
             className={interactive ? 'cursor-pointer' : ''}
           >
