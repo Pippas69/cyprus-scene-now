@@ -154,6 +154,7 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
           strokeWidth={0.12}
           style={{ cursor: h.cursor }}
           onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
+          onTouchStart={(e) => { e.stopPropagation(); onResizeStart(e, itemId, h.id); }}
           className="pointer-events-auto"
         />
       ))}
