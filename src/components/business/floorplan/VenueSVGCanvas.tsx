@@ -99,13 +99,16 @@ function GridOverlay({ snap }: { snap: number }) {
   return <g>{lines}</g>;
 }
 
-/* ═══ Canva-style resize handles ═══ */
+/* ═══ Canva-style resize handles (touch-friendly) ═══ */
 function ResizeHandles({ g, itemId, onResizeStart }: {
   g: Geometry;
   itemId: string;
   onResizeStart: (e: React.MouseEvent | React.TouchEvent, id: string, handle: string) => void;
 }) {
-  const hs = 0.85;
+  // Visible handle size
+  const hs = 1.1;
+  // Invisible touch target padding (much larger for fingers)
+  const touchPad = 2.5;
   const cx = g.x + g.w / 2;
   const cy = g.y + g.h / 2;
 
@@ -122,6 +125,12 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
     { id: 's', x: cx, y: g.y + g.h, cursor: 's-resize' },
     { id: 'w', x: g.x, y: cy, cursor: 'w-resize' },
   ];
+
+  const startResize = (e: React.MouseEvent | React.TouchEvent, handleId: string) => {
+    e.stopPropagation();
+    if ('preventDefault' in e) e.preventDefault();
+    onResizeStart(e, itemId, handleId);
+  };
 
   return (
     <g>
@@ -140,39 +149,60 @@ function ResizeHandles({ g, itemId, onResizeStart }: {
         />
       )}
 
-      {/* Edge handles */}
-      {edgeHandles.map(h => (
-        <rect
-          key={h.id}
-          x={h.x - (h.id === 'n' || h.id === 's' ? 1.7 : 0.45)}
-          y={h.y - (h.id === 'e' || h.id === 'w' ? 1.7 : 0.45)}
-          width={h.id === 'n' || h.id === 's' ? 3.4 : 0.9}
-          height={h.id === 'e' || h.id === 'w' ? 3.4 : 0.9}
-          rx={0.2}
-          fill={THEME.handleFill}
-          stroke={THEME.handleBorder}
-          strokeWidth={0.12}
-          style={{ cursor: h.cursor }}
-          onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
-          onTouchStart={(e) => { e.stopPropagation(); onResizeStart(e, itemId, h.id); }}
-          className="pointer-events-auto"
-        />
-      ))}
+      {/* Edge handles — visible + invisible touch target */}
+      {edgeHandles.map(h => {
+        const isHoriz = h.id === 'n' || h.id === 's';
+        const visW = isHoriz ? 3.4 : 0.9;
+        const visH = isHoriz ? 0.9 : 3.4;
+        const touchW = isHoriz ? visW + touchPad * 2 : visW + touchPad * 2;
+        const touchH = isHoriz ? visH + touchPad * 2 : visH + touchPad * 2;
+        return (
+          <g key={h.id}>
+            {/* Invisible enlarged touch target */}
+            <rect
+              x={h.x - touchW / 2} y={h.y - touchH / 2}
+              width={touchW} height={touchH}
+              fill="transparent"
+              style={{ cursor: h.cursor }}
+              onMouseDown={(e) => startResize(e, h.id)}
+              onTouchStart={(e) => startResize(e, h.id)}
+              className="pointer-events-auto"
+            />
+            {/* Visible handle */}
+            <rect
+              x={h.x - visW / 2} y={h.y - visH / 2}
+              width={visW} height={visH}
+              rx={0.2}
+              fill={THEME.handleFill}
+              stroke={THEME.handleBorder}
+              strokeWidth={0.12}
+              className="pointer-events-none"
+            />
+          </g>
+        );
+      })}
 
-      {/* Corner handles */}
+      {/* Corner handles — visible + invisible touch target */}
       {handles.map(h => (
-        <circle
-          key={h.id}
-          cx={h.x} cy={h.y}
-          r={hs}
-          fill={THEME.handleFill}
-          stroke={THEME.handleBorder}
-          strokeWidth={0.15}
-          style={{ cursor: h.cursor }}
-          onMouseDown={(e) => onResizeStart(e, itemId, h.id)}
-          onTouchStart={(e) => { e.stopPropagation(); onResizeStart(e, itemId, h.id); }}
-          className="pointer-events-auto"
-        />
+        <g key={h.id}>
+          {/* Invisible enlarged touch target */}
+          <circle
+            cx={h.x} cy={h.y} r={hs + touchPad}
+            fill="transparent"
+            style={{ cursor: h.cursor }}
+            onMouseDown={(e) => startResize(e, h.id)}
+            onTouchStart={(e) => startResize(e, h.id)}
+            className="pointer-events-auto"
+          />
+          {/* Visible handle */}
+          <circle
+            cx={h.x} cy={h.y} r={hs}
+            fill={THEME.handleFill}
+            stroke={THEME.handleBorder}
+            strokeWidth={0.15}
+            className="pointer-events-none"
+          />
+        </g>
       ))}
     </g>
   );
