@@ -87,7 +87,7 @@ const translations = {
   },
 };
 
-export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate }: ItemPropertiesPanelProps) {
+export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate, onBringForward, onSendBackward }: ItemPropertiesPanelProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const [deleteConfirm, setDeleteConfirm] = useState(false);
