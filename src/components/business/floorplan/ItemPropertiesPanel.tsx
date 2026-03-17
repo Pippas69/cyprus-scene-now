@@ -312,6 +312,30 @@ export function ItemPropertiesPanel({ item, onChange, onDelete, onDuplicate, onB
         {/* Divider */}
         <div className="border-t border-border/30" />
 
+        {/* Layer order */}
+        <div className="flex gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={() => onBringForward?.(item.id)}
+            disabled={item.is_locked}
+          >
+            <ArrowUp className="h-3 w-3 mr-1" />
+            {t.bringForward}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={() => onSendBackward?.(item.id)}
+            disabled={item.is_locked}
+          >
+            <ArrowDown className="h-3 w-3 mr-1" />
+            {t.sendBackward}
+          </Button>
+        </div>
+
         {/* Actions */}
         <div className="space-y-1.5">
           <Button
