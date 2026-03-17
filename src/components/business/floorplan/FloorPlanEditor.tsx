@@ -7,8 +7,10 @@ import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
   ImageOff, Magnet, Undo2, Redo2,
   X, Circle, Square, RectangleHorizontal,
-  Sofa, Beer, Music, Landmark, Save, Pencil, Eraser,
-  Plus, Loader2
+  Sofa, Minus, Type, Save, Pencil, Eraser,
+  Plus, Loader2, AlignHorizontalDistributeCenter,
+  AlignVerticalDistributeCenter, AlignStartVertical,
+  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { VenueSVGCanvas } from './VenueSVGCanvas';
@@ -59,9 +61,8 @@ const TOOLBAR_SHAPES: PlaceShape[] = [
   { id: 'square', icon: <Square className="h-4 w-4" />, label_el: 'Τετράγωνο', label_en: 'Square', shape: 'square', seats: 4, width_percent: 5, height_percent: 5, fixture_type: null, item_type: 'table' },
   { id: 'rect', icon: <RectangleHorizontal className="h-4 w-4" />, label_el: 'Ορθογώνιο', label_en: 'Rectangle', shape: 'rectangle', seats: 6, width_percent: 8, height_percent: 4, fixture_type: null, item_type: 'table' },
   { id: 'booth', icon: <Sofa className="h-4 w-4" />, label_el: 'Booth', label_en: 'Booth', shape: 'rectangle', seats: 6, width_percent: 7, height_percent: 5, fixture_type: 'booth', item_type: 'seating' },
-  { id: 'bar', icon: <Beer className="h-4 w-4" />, label_el: 'Bar', label_en: 'Bar', shape: 'rect', seats: 0, width_percent: 18, height_percent: 4, fixture_type: 'bar', item_type: 'fixture' },
-  { id: 'dj', icon: <Music className="h-4 w-4" />, label_el: 'DJ', label_en: 'DJ', shape: 'rect', seats: 0, width_percent: 6, height_percent: 4, fixture_type: 'dj_booth', item_type: 'fixture' },
-  { id: 'stage', icon: <Landmark className="h-4 w-4" />, label_el: 'Stage', label_en: 'Stage', shape: 'rect', seats: 0, width_percent: 16, height_percent: 7, fixture_type: 'stage', item_type: 'fixture' },
+  { id: 'line', icon: <Minus className="h-4 w-4" />, label_el: 'Γραμμή', label_en: 'Line', shape: 'rectangle', seats: 0, width_percent: 15, height_percent: 0.4, fixture_type: 'line', item_type: 'line' },
+  { id: 'text', icon: <Type className="h-4 w-4" />, label_el: 'Κείμενο', label_en: 'Text', shape: 'rectangle', seats: 0, width_percent: 8, height_percent: 4, fixture_type: 'text', item_type: 'text' },
 ];
 
 const translations = {
@@ -131,18 +132,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [resizing, setResizing] = useState<{
     id: string;
     handle: string;
-    // World-space anchor point (opposite edge/corner) that stays fixed during resize
     anchorX: number;
     anchorY: number;
-    // Local basis vectors in world space (item rotation aware)
     uxX: number;
     uxY: number;
     uyX: number;
     uyY: number;
-    // Starting dimensions (avoid drift while dragging)
     startW: number;
     startH: number;
-    // Which edges this handle controls
     movesLeft: boolean;
     movesRight: boolean;
     movesTop: boolean;
@@ -156,6 +153,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [gridSnap, setGridSnap] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [dragCoords, setDragCoords] = useState<{ x: number; y: number } | null>(null);
+  const [alignGuides, setAlignGuides] = useState<{ x: number[]; y: number[] }>({ x: [], y: [] });
 
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -354,9 +352,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     if (gridSnap) { x = snapValue(x, SNAP_INCREMENT); y = snapValue(y, SNAP_INCREMENT); }
 
     const existingTables = items.filter((i) => !i.fixture_type).length;
-    const label = placingMode.fixture_type
-      ? placingMode.label_en.toUpperCase()
-      : `T${existingTables + 1}`;
+    const existingLines = items.filter((i) => i.fixture_type === 'line').length;
+    const existingTexts = items.filter((i) => i.fixture_type === 'text').length;
+    let label: string;
+    if (placingMode.fixture_type === 'line') {
+      label = `L${existingLines + 1}`;
+    } else if (placingMode.fixture_type === 'text') {
+      label = language === 'el' ? 'Κείμενο' : 'Text';
+    } else if (placingMode.fixture_type) {
+      label = placingMode.label_en.toUpperCase();
+    } else {
+      label = `T${existingTables + 1}`;
+    }
 
     const newItem: Partial<FloorPlanItemFull> = {
       label,
@@ -597,6 +604,48 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     });
   }, [items, history]);
 
+  // ═══ Smart alignment guides (Canva-style) ═══
+  const ALIGN_THRESHOLD = 1.2; // percentage threshold for snapping
+
+  const computeAlignGuides = useCallback((dragId: string, newX: number, newY: number, itemW: number, itemH: number) => {
+    const guides: { x: number[]; y: number[] } = { x: [], y: [] };
+    const dragCx = newX + itemW / 2;
+    const dragCy = newY + itemH / 2;
+    const dragRight = newX + itemW;
+    const dragBottom = newY + itemH;
+
+    for (const other of items) {
+      if (other.id === dragId) continue;
+      const ox = other.x_percent;
+      const oy = other.y_percent;
+      const ow = other.width_percent;
+      const oh = other.height_percent;
+      const ocx = ox + ow / 2;
+      const ocy = oy + oh / 2;
+      const oRight = ox + ow;
+      const oBottom = oy + oh;
+
+      // Vertical guides (x-axis alignment)
+      if (Math.abs(newX - ox) < ALIGN_THRESHOLD) guides.x.push(ox);
+      if (Math.abs(dragRight - oRight) < ALIGN_THRESHOLD) guides.x.push(oRight);
+      if (Math.abs(dragCx - ocx) < ALIGN_THRESHOLD) guides.x.push(ocx);
+      if (Math.abs(newX - oRight) < ALIGN_THRESHOLD) guides.x.push(oRight);
+      if (Math.abs(dragRight - ox) < ALIGN_THRESHOLD) guides.x.push(ox);
+
+      // Horizontal guides (y-axis alignment)
+      if (Math.abs(newY - oy) < ALIGN_THRESHOLD) guides.y.push(oy);
+      if (Math.abs(dragBottom - oBottom) < ALIGN_THRESHOLD) guides.y.push(oBottom);
+      if (Math.abs(dragCy - ocy) < ALIGN_THRESHOLD) guides.y.push(ocy);
+      if (Math.abs(newY - oBottom) < ALIGN_THRESHOLD) guides.y.push(oBottom);
+      if (Math.abs(dragBottom - oy) < ALIGN_THRESHOLD) guides.y.push(oy);
+    }
+
+    // Deduplicate
+    guides.x = [...new Set(guides.x)];
+    guides.y = [...new Set(guides.y)];
+    return guides;
+  }, [items]);
+
   const updatePointer = useCallback((clientX: number, clientY: number) => {
     const svgPt = screenToSVG(clientX, clientY);
 
@@ -609,6 +658,31 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         newX = snapValue(newX, SNAP_INCREMENT);
         newY = snapValue(newY, SNAP_INCREMENT);
       }
+
+      // Compute alignment guides
+      const dragItem = items.find(i => i.id === dragging.id);
+      if (dragItem) {
+        const guides = computeAlignGuides(dragging.id, newX, newY, dragItem.width_percent, dragItem.height_percent);
+        setAlignGuides(guides);
+
+        // Snap to guides
+        const dragCx = newX + dragItem.width_percent / 2;
+        const dragRight = newX + dragItem.width_percent;
+        const dragCy = newY + dragItem.height_percent / 2;
+        const dragBottom = newY + dragItem.height_percent;
+
+        for (const gx of guides.x) {
+          if (Math.abs(newX - gx) < ALIGN_THRESHOLD) { newX = gx; break; }
+          if (Math.abs(dragRight - gx) < ALIGN_THRESHOLD) { newX = gx - dragItem.width_percent; break; }
+          if (Math.abs(dragCx - gx) < ALIGN_THRESHOLD) { newX = gx - dragItem.width_percent / 2; break; }
+        }
+        for (const gy of guides.y) {
+          if (Math.abs(newY - gy) < ALIGN_THRESHOLD) { newY = gy; break; }
+          if (Math.abs(dragBottom - gy) < ALIGN_THRESHOLD) { newY = gy - dragItem.height_percent; break; }
+          if (Math.abs(dragCy - gy) < ALIGN_THRESHOLD) { newY = gy - dragItem.height_percent / 2; break; }
+        }
+      }
+
       setDragCoords({ x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 });
       setItems((prev) => prev.map((i) => (i.id === dragging.id ? { ...i, x_percent: newX, y_percent: newY } : i)));
     }
@@ -661,11 +735,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       if (item) debouncedSave(item);
       setDragging(null);
       setDragCoords(null);
+      setAlignGuides({ x: [], y: [] });
     }
     if (resizing) {
       const item = items.find((i) => i.id === resizing.id);
       if (item) debouncedSave(item);
       setResizing(null);
+      setAlignGuides({ x: [], y: [] });
     }
   }, [dragging, resizing, items, debouncedSave]);
 
@@ -845,6 +921,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showLabels={true}
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
+            alignGuides={isDesignMode ? alignGuides : undefined}
             onTableClick={(id) => {
               if (isDesignMode && !placingMode) setSelectedItem(id || null);
             }}
