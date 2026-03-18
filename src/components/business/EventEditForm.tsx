@@ -755,11 +755,23 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           }));
         } else {
           // Hybrid: reservation-linked tiers from seating configs + walk-in tiers
+          // Match existing ACTIVE reservation-linked tiers by name to preserve IDs (so updates work instead of creating duplicates)
+          const existingReservationLinked = (existingTiers || []).filter(t => t.quantity_total === 999999);
+          // Build a map: for each name, prefer the active tier ID
+          const existingByName = new Map<string, string>();
+          for (const t of existingReservationLinked) {
+            // Only set if we haven't seen this name yet, or this one could be the "current" one
+            if (!existingByName.has(t.name)) {
+              existingByName.set(t.name, t.id);
+            }
+          }
+
           const reservationLinked = formData.selectedSeatingTypes.map((seatingType, index) => {
             const config = formData.seatingConfigs[seatingType];
             const maxPartySize = Math.max(...config.tiers.map(t => t.maxPeople), 1);
             const autoName = seatingType === 'bar' ? 'Bar' : seatingType === 'table' ? 'Table' : seatingType === 'vip' ? 'VIP' : 'Sofa';
             return {
+              id: existingByName.get(autoName), // preserve existing tier ID for proper update
               event_id: event.id,
               name: autoName,
               description: null,
