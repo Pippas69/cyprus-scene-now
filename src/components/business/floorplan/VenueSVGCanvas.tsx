@@ -28,6 +28,13 @@ export interface TableAssignment {
   party_size: number;
 }
 
+export interface TableLevelAssignment {
+  table_id: string;
+  reservation_id: string;
+  reservation_name: string;
+  party_size: number;
+}
+
 interface VenueSVGCanvasProps {
   items: VenueItem[];
   fixtureBboxes: Record<string, VenueBBox>;
@@ -35,6 +42,7 @@ interface VenueSVGCanvasProps {
   selectedItemId?: string | null;
   showLabels?: boolean;
   assignments?: TableAssignment[];
+  tableAssignments?: TableLevelAssignment[];
   currentReservationId?: string;
   onTableClick?: (id: string) => void;
   onItemMouseDown?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
