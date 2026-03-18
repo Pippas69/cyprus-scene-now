@@ -31,7 +31,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   // Fetch user's tickets
   const { data: tickets, isLoading: ticketsLoading } = useQuery({
-    queryKey: ["my-tickets-events", userId, "seat-tier-fix-v3"],
+    queryKey: ["my-tickets-events", userId, "reservation-separation-v2"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tickets")
@@ -48,15 +48,21 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           seat_number,
           ticket_code,
           ticket_tiers(name, price_cents, currency),
-          events(id, title, start_at, end_at, location, cover_image_url, business_id, businesses(name)),
+          events(id, title, start_at, end_at, location, cover_image_url, business_id, accepts_reservations, businesses(name)),
           ticket_orders(customer_name, total_cents, linked_reservation_id)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      // Only show tickets NOT linked to a reservation (walk-in / direct ticket purchases)
-      return (data || []).filter(t => !(t.ticket_orders as any)?.linked_reservation_id);
+
+      // Ticket section should contain only ticket-only / walk-in tickets.
+      // Reservation-enabled events must appear under "My Reservations".
+      return (data || []).filter((ticket) => {
+        const hasLinkedReservation = Boolean((ticket.ticket_orders as any)?.linked_reservation_id);
+        const isReservationEnabledEvent = Boolean((ticket.events as any)?.accepts_reservations);
+        return !hasLinkedReservation && !isReservationEnabledEvent;
+      });
     },
   });
 
