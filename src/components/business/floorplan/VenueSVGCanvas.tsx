@@ -532,7 +532,6 @@ export function VenueSVGCanvas({
                   </text>
                 )}
               </g>
-              </>
             ) : showLabels ? (
               <text
                 x={cx} y={cy}
