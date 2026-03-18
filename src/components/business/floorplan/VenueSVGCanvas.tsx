@@ -1,5 +1,14 @@
 import { useCallback, forwardRef } from 'react';
 
+function getDisplayName(name: string): { lines: string[]; isMultiLine: boolean } {
+  const trimmed = name.trim();
+  const parts = trimmed.split(/\s+/);
+  if (parts.length >= 2) {
+    return { lines: [parts[0], parts.slice(1).join(' ')], isMultiLine: true };
+  }
+  return { lines: [trimmed], isMultiLine: false };
+}
+
 function getInitialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -437,17 +446,23 @@ export function VenueSVGCanvas({
 
         const handlers = makeInteractionHandlers(item.id);
 
-        // Get initials for assigned reservation
-        const initials = tableAssign ? getInitialsFromName(tableAssign.reservation_name) : null;
+        // Get display name for assigned reservation
+        const displayName = tableAssign ? getDisplayName(tableAssign.reservation_name) : null;
+        const isVertical = g.shape !== 'round' && g.h > g.w * 1.3;
+        
+        // For name display: use the available space (width or height if vertical)
+        const availW = isVertical ? g.h : g.w;
+        const availH = isVertical ? g.w : g.h;
+        
+        const nameFontSize = Math.min(
+          availW * 0.18,
+          availH * (displayName?.isMultiLine ? 0.18 : 0.28),
+          3.2
+        );
         const labelFontSize = Math.min(
           g.shape === 'round' ? g.w * 0.25 : (g.h > g.w * 1.3 ? g.h * 0.22 : g.w * 0.22),
           g.shape === 'round' ? g.w * 0.25 : (g.h > g.w * 1.3 ? g.w * 0.55 : g.h * 0.5),
           3.5
-        );
-        const initialsFontSize = Math.min(
-          g.shape === 'round' ? g.w * 0.3 : g.w * 0.28,
-          g.h * 0.4,
-          4
         );
 
         return (
@@ -462,34 +477,61 @@ export function VenueSVGCanvas({
               />
             )}
 
-            {/* Show initials when assigned, or label when not */}
-            {hasTableAssignment && initials ? (
-              <>
+            {/* Show full name when assigned, or label when not */}
+            {hasTableAssignment && displayName ? (
+              <g transform={isVertical ? `rotate(-90 ${cx} ${cy})` : undefined}>
                 {/* Table number small at top */}
                 <text
-                  x={cx} y={g.y + g.h * 0.22}
+                  x={cx} y={cy - availH * (displayName.isMultiLine ? 0.28 : 0.22)}
                   textAnchor="middle" dominantBaseline="central"
                   fill="hsl(142 60% 45% / 0.7)"
-                  fontSize={labelFontSize * 0.7}
+                  fontSize={labelFontSize * 0.65}
                   fontWeight={600}
                   className="pointer-events-none"
                   style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
                 >
                   {item.label}
                 </text>
-                {/* Initials large centered */}
-                <text
-                  x={cx} y={cy + g.h * 0.08}
-                  textAnchor="middle" dominantBaseline="central"
-                  fill="hsl(142 60% 55%)"
-                  fontSize={initialsFontSize}
-                  fontWeight={800}
-                  className="pointer-events-none"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.06em' }}
-                >
-                  {initials}
-                </text>
-              </>
+                {/* Full name centered */}
+                {displayName.isMultiLine ? (
+                  <>
+                    <text
+                      x={cx} y={cy - nameFontSize * 0.15}
+                      textAnchor="middle" dominantBaseline="central"
+                      fill="hsl(142 60% 55%)"
+                      fontSize={nameFontSize}
+                      fontWeight={700}
+                      className="pointer-events-none"
+                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                    >
+                      {displayName.lines[0]}
+                    </text>
+                    <text
+                      x={cx} y={cy + nameFontSize * 1.15}
+                      textAnchor="middle" dominantBaseline="central"
+                      fill="hsl(142 60% 55%)"
+                      fontSize={nameFontSize}
+                      fontWeight={700}
+                      className="pointer-events-none"
+                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                    >
+                      {displayName.lines[1]}
+                    </text>
+                  </>
+                ) : (
+                  <text
+                    x={cx} y={cy + nameFontSize * 0.4}
+                    textAnchor="middle" dominantBaseline="central"
+                    fill="hsl(142 60% 55%)"
+                    fontSize={nameFontSize}
+                    fontWeight={700}
+                    className="pointer-events-none"
+                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                  >
+                    {displayName.lines[0]}
+                  </text>
+                )}
+              </g>
             ) : showLabels ? (
               <text
                 x={cx} y={cy}
