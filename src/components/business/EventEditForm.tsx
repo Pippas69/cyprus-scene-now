@@ -755,9 +755,16 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           }));
         } else {
           // Hybrid: reservation-linked tiers from seating configs + walk-in tiers
-          // Match existing reservation-linked tiers by name to preserve IDs (so updates work instead of creating duplicates)
-          const existingReservationLinked = existingTiers?.filter(t => t.quantity_total === 999999) || [];
-          const existingByName = new Map(existingReservationLinked.map(t => [t.name, t.id]));
+          // Match existing ACTIVE reservation-linked tiers by name to preserve IDs (so updates work instead of creating duplicates)
+          const existingReservationLinked = (existingTiers || []).filter(t => t.quantity_total === 999999);
+          // Build a map: for each name, prefer the active tier ID
+          const existingByName = new Map<string, string>();
+          for (const t of existingReservationLinked) {
+            // Only set if we haven't seen this name yet, or this one could be the "current" one
+            if (!existingByName.has(t.name)) {
+              existingByName.set(t.name, t.id);
+            }
+          }
 
           const reservationLinked = formData.selectedSeatingTypes.map((seatingType, index) => {
             const config = formData.seatingConfigs[seatingType];
