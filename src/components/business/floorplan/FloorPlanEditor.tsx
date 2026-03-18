@@ -268,7 +268,79 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
     const meta = loadedZones[0]?.metadata;
     if (meta?.reference_image_url) setReferenceImageUrl(meta.reference_image_url as string);
+
+    // Load table-level assignments
+    if (loadedItems.length > 0) {
+      await loadTableAssignments(loadedItems.map(i => i.id));
+    }
     setLoading(false);
+  };
+
+  const loadTableAssignments = async (tableIds: string[]) => {
+    const { data } = await supabase
+      .from('reservation_table_assignments')
+      .select('table_id, reservation_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
+      .in('table_id', tableIds);
+
+    if (data) {
+      setTableAssignments(data.map((a: any) => ({
+        table_id: a.table_id,
+        reservation_id: a.reservation_id,
+        reservation_name: a.reservations?.reservation_name || '',
+        party_size: a.reservations?.party_size || 0,
+      })));
+    }
+  };
+
+  const handlePreviewTableClick = (tableId: string) => {
+    if (!tableId) return;
+    const item = items.find(i => i.id === tableId);
+    if (!item || item.fixture_type) return; // Only tables, not fixtures
+
+    const existing = tableAssignments.find(a => a.table_id === tableId);
+    if (existing) {
+      // Show detail popover with full reservation info
+      loadReservationDetail(existing.reservation_id, item.label, tableId);
+    } else {
+      // Open assignment dialog
+      setAssignTargetTableId(tableId);
+      setAssignDialogOpen(true);
+    }
+  };
+
+  const loadReservationDetail = async (reservationId: string, tableLabel: string, tableId: string) => {
+    const { data } = await supabase
+      .from('reservations')
+      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo')
+      .eq('id', reservationId)
+      .single();
+
+    if (data) {
+      setDetailReservation(data);
+      setDetailTableLabel(tableLabel);
+      setDetailTableId(tableId);
+      setDetailDialogOpen(true);
+    }
+  };
+
+  const handleRemoveAssignment = async () => {
+    if (!detailTableId) return;
+    await supabase.from('reservation_table_assignments').delete().eq('table_id', detailTableId);
+    toast.success(language === 'el' ? 'Η κράτηση αφαιρέθηκε' : 'Assignment removed');
+    setDetailDialogOpen(false);
+    await loadTableAssignments(items.map(i => i.id));
+  };
+
+  const handleReassign = () => {
+    setDetailDialogOpen(false);
+    if (detailTableId) {
+      setAssignTargetTableId(detailTableId);
+      setAssignDialogOpen(true);
+    }
+  };
+
+  const handleAssignmentComplete = async () => {
+    await loadTableAssignments(items.map(i => i.id));
   };
 
   const uploadReferenceImage = async (file: File): Promise<string | null> => {
