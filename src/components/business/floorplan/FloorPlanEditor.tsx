@@ -1036,7 +1036,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </Button>
           </div>
         ) : (
-          <div className="absolute bottom-3 right-3 z-10">
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
+            {/* Legend */}
+            <div className="flex items-center gap-3 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border/30 shadow-lg">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ border: '1px solid hsl(142 60% 45%)', background: 'hsl(142 60% 50% / 0.15)' }} />
+                {language === 'el' ? 'Τοποθετημένη' : 'Assigned'}
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm border border-white/40 bg-white/5" />
+                {language === 'el' ? 'Διαθέσιμη' : 'Available'}
+              </div>
+            </div>
             <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
               <Pencil className="h-3.5 w-3.5" />{t.editLayout}
             </Button>
