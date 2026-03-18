@@ -13,10 +13,12 @@ import {
   AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { VenueSVGCanvas } from './VenueSVGCanvas';
+import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
 import { useLanguage } from '@/hooks/useLanguage';
+import { FloorPlanTableAssignmentDialog } from './FloorPlanTableAssignmentDialog';
+import { FloorPlanReservationDetailPopover } from './FloorPlanReservationDetailPopover';
 
 interface FloorPlanZone {
   id: string;
