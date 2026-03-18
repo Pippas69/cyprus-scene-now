@@ -1071,6 +1071,40 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           />
         </div>
       )}
+
+      {/* Assignment dialog (preview mode) */}
+      {assignTargetTableId && (() => {
+        const targetItem = items.find(i => i.id === assignTargetTableId);
+        const currentAssign = tableAssignments.find(a => a.table_id === assignTargetTableId);
+        const assignedIds = new Set(tableAssignments.map(a => a.reservation_id));
+        return (
+          <FloorPlanTableAssignmentDialog
+            open={assignDialogOpen}
+            onOpenChange={setAssignDialogOpen}
+            businessId={businessId}
+            tableId={assignTargetTableId}
+            tableLabel={targetItem?.label || ''}
+            tableSeats={targetItem?.seats || 0}
+            currentAssignment={currentAssign ? {
+              reservation_id: currentAssign.reservation_id,
+              reservation_name: currentAssign.reservation_name,
+              party_size: currentAssign.party_size,
+            } : null}
+            assignedReservationIds={assignedIds}
+            onAssigned={handleAssignmentComplete}
+          />
+        );
+      })()}
+
+      {/* Reservation detail dialog (preview mode) */}
+      <FloorPlanReservationDetailPopover
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        reservation={detailReservation}
+        tableLabel={detailTableLabel}
+        onRemove={handleRemoveAssignment}
+        onReassign={handleReassign}
+      />
     </div>
   );
 }
