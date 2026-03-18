@@ -95,9 +95,10 @@ export const MyTickets = () => {
           ticket_code,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, location, cover_image_url, businesses(name)),
-          ticket_orders(customer_name, total_cents)
+          ticket_orders!inner(customer_name, total_cents, linked_reservation_id)
         `)
         .eq("user_id", user.id)
+        .is("ticket_orders.linked_reservation_id", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
