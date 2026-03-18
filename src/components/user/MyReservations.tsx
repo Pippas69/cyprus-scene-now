@@ -142,7 +142,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const fetchReservations = async () => {
     setLoading(true);
-    const now = new Date().toISOString();
+    const nowIso = new Date().toISOString();
 
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
@@ -151,82 +151,184 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
     `;
 
-    // Fetch offer_purchases to identify offer-based reservations (we'll exclude them)
-    const { data: offerPurchases } = await supabase.
-    from('offer_purchases').
-    select('reservation_id').
-    eq('user_id', userId).
-    not('reservation_id', 'is', null);
+    const [
+      offerPurchasesResult,
+      upcomingEventResResult,
+      pastEventResResult,
+      upcomingDirectResResult,
+      pastDirectResResult,
+      orphanReservationOrdersResult,
+    ] = await Promise.all([
+      supabase
+        .from('offer_purchases')
+        .select('reservation_id')
+        .eq('user_id', userId)
+        .not('reservation_id', 'is', null),
+      supabase
+        .from('reservations')
+        .select(`
+          ${reservationFields},
+          events!inner(
+            id, title, start_at, end_at, location, event_type,
+            businesses(id, name, logo_url)
+          )
+        `)
+        .eq('user_id', userId)
+        .not('event_id', 'is', null)
+        .neq('status', 'cancelled')
+        .gte('events.end_at', nowIso),
+      supabase
+        .from('reservations')
+        .select(`
+          ${reservationFields},
+          events!inner(
+            id, title, start_at, end_at, location, event_type,
+            businesses(id, name, logo_url)
+          )
+        `)
+        .eq('user_id', userId)
+        .not('event_id', 'is', null)
+        .lt('events.end_at', nowIso),
+      supabase
+        .from('reservations')
+        .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
+        .eq('user_id', userId)
+        .is('event_id', null)
+        .not('business_id', 'is', null)
+        .neq('status', 'cancelled')
+        .gte('preferred_time', nowIso),
+      supabase
+        .from('reservations')
+        .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
+        .eq('user_id', userId)
+        .is('event_id', null)
+        .not('business_id', 'is', null)
+        .lt('preferred_time', nowIso),
+      // Fallback for legacy/missing linkage:
+      // completed ticket orders for reservation-enabled events without linked_reservation_id.
+      supabase
+        .from('ticket_orders')
+        .select(`
+          id,
+          user_id,
+          event_id,
+          customer_name,
+          total_cents,
+          created_at,
+          events!inner(
+            id, title, start_at, end_at, location, event_type,
+            businesses(id, name, logo_url)
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .is('linked_reservation_id', null)
+        .eq('events.accepts_reservations', true),
+    ]);
+
+    const offerPurchases = offerPurchasesResult.data || [];
+    const upcomingEventRes = (upcomingEventResResult.data as unknown as ReservationData[]) || [];
+    const pastEventRes = (pastEventResResult.data as unknown as ReservationData[]) || [];
+    const upcomingDirectRes = (upcomingDirectResResult.data as unknown as ReservationData[]) || [];
+    const pastDirectRes = (pastDirectResResult.data as unknown as ReservationData[]) || [];
+    const orphanReservationOrders = (orphanReservationOrdersResult.data as any[]) || [];
 
     const offerReservationIds = new Set(
-      (offerPurchases || []).map((p) => p.reservation_id).filter(Boolean)
+      offerPurchases.map((p) => p.reservation_id).filter(Boolean)
     );
 
-    // 1. Event-based reservations (upcoming)
-    const { data: upcomingEventRes } = await supabase.
-    from('reservations').
-    select(`
-        ${reservationFields},
-        events!inner(
-          id, title, start_at, end_at, location, event_type,
-          businesses(id, name, logo_url)
-        )
-      `).
-    eq('user_id', userId).
-    not('event_id', 'is', null).
-    neq('status', 'cancelled').
-    gte('events.end_at', now);
+    const orphanOrderIds = orphanReservationOrders.map((o) => o.id);
+    const { data: orphanTickets } = orphanOrderIds.length > 0
+      ? await supabase
+          .from('tickets')
+          .select('order_id')
+          .in('order_id', orphanOrderIds)
+      : { data: [] as { order_id: string }[] };
 
-    // 2. Event-based reservations (past)
-    const { data: pastEventRes } = await supabase.
-    from('reservations').
-    select(`
-        ${reservationFields},
-        events!inner(
-          id, title, start_at, end_at, location, event_type,
-          businesses(id, name, logo_url)
-        )
-      `).
-    eq('user_id', userId).
-    not('event_id', 'is', null).
-    lt('events.end_at', now);
+    const orphanTicketCountByOrder: Record<string, number> = {};
+    (orphanTickets || []).forEach((ticket) => {
+      orphanTicketCountByOrder[ticket.order_id] = (orphanTicketCountByOrder[ticket.order_id] || 0) + 1;
+    });
 
-    // 3. Direct business reservations (upcoming)
-    const { data: upcomingDirectRes } = await supabase.
-    from('reservations').
-    select(`${reservationFields}, businesses(id, name, logo_url, address)`).
-    eq('user_id', userId).
-    is('event_id', null).
-    not('business_id', 'is', null).
-    neq('status', 'cancelled').
-    gte('preferred_time', now);
+    const existingEventReservations = [...upcomingEventRes, ...pastEventRes];
+    const syntheticOrderToReservationId: Record<string, string> = {};
+    const syntheticReservationTotals: Record<string, number> = {};
 
-    // 4. Direct business reservations (past)
-    const { data: pastDirectRes } = await supabase.
-    from('reservations').
-    select(`${reservationFields}, businesses(id, name, logo_url, address)`).
-    eq('user_id', userId).
-    is('event_id', null).
-    not('business_id', 'is', null).
-    lt('preferred_time', now);
+    const syntheticEventReservations: ReservationData[] = orphanReservationOrders
+      .filter((order) => {
+        const duplicateWindowMs = 10 * 60 * 1000;
+        return !existingEventReservations.some((reservation) => {
+          if (!reservation.event_id || reservation.event_id !== order.event_id) return false;
+          const reservationTs = new Date(reservation.created_at).getTime();
+          const orderTs = new Date(order.created_at).getTime();
+          return Math.abs(reservationTs - orderTs) <= duplicateWindowMs;
+        });
+      })
+      .map((order) => {
+        const syntheticId = `order-${order.id}`;
+        syntheticOrderToReservationId[order.id] = syntheticId;
+        syntheticReservationTotals[syntheticId] = order.total_cents || 0;
 
-    // Filter out offer-based reservations
+        return {
+          id: syntheticId,
+          event_id: order.event_id,
+          business_id: order.events?.businesses?.id || null,
+          user_id: order.user_id,
+          reservation_name: order.customer_name || '-',
+          party_size: orphanTicketCountByOrder[order.id] || 1,
+          status: 'completed',
+          created_at: order.created_at,
+          checked_in_at: null,
+          phone_number: null,
+          preferred_time: order.events?.start_at || null,
+          seating_preference: null,
+          special_requests: null,
+          business_notes: null,
+          confirmation_code: null,
+          qr_code_token: null,
+          seating_type_id: null,
+          prepaid_min_charge_cents: null,
+          prepaid_charge_status: null,
+          events: order.events
+            ? {
+                id: order.events.id,
+                title: order.events.title,
+                start_at: order.events.start_at,
+                end_at: order.events.end_at,
+                location: order.events.location,
+                event_type: order.events.event_type,
+                businesses: order.events.businesses,
+              }
+            : null,
+          businesses: null,
+        };
+      });
+
+    const syntheticUpcoming = syntheticEventReservations.filter(
+      (r) => r.events && new Date(r.events.end_at) >= new Date(nowIso)
+    );
+    const syntheticPast = syntheticEventReservations.filter(
+      (r) => !r.events || new Date(r.events.end_at) < new Date(nowIso)
+    );
+
     const filterOutOffers = (reservations: ReservationData[]) =>
-    reservations.filter((r) => !offerReservationIds.has(r.id));
+      reservations.filter((r) => !offerReservationIds.has(r.id));
 
     const allUpcoming = filterOutOffers([
-    ...(upcomingEventRes as unknown as ReservationData[] || []),
-    ...(upcomingDirectRes as unknown as ReservationData[] || [])]
-    ).sort((a, b) => {
+      ...upcomingEventRes,
+      ...upcomingDirectRes,
+      ...syntheticUpcoming,
+    ]).sort((a, b) => {
       const dateA = a.events?.start_at || a.preferred_time || '';
       const dateB = b.events?.start_at || b.preferred_time || '';
       return new Date(dateA).getTime() - new Date(dateB).getTime();
     });
 
     const allPast = filterOutOffers([
-    ...(pastEventRes as unknown as ReservationData[] || []),
-    ...(pastDirectRes as unknown as ReservationData[] || [])]
-    ).sort((a, b) => {
+      ...pastEventRes,
+      ...pastDirectRes,
+      ...syntheticPast,
+    ]).sort((a, b) => {
       const dateA = a.events?.end_at || a.preferred_time || '';
       const dateB = b.events?.end_at || b.preferred_time || '';
       return new Date(dateB).getTime() - new Date(dateA).getTime();
@@ -234,7 +336,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     // Preview-only seeding
     try {
-      const hasAnyEventReservations = (upcomingEventRes?.length || 0) + (pastEventRes?.length || 0) > 0;
+      const hasAnyEventReservations =
+        (upcomingEventRes?.length || 0) + (pastEventRes?.length || 0) > 0;
       const seedKey = `seeded_event_reservation_${userId}`;
       if (isPreviewOrigin && !hasAnyEventReservations && !localStorage.getItem(seedKey)) {
         localStorage.setItem(seedKey, '1');
@@ -248,13 +351,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
+
     const allRes = [...allUpcoming, ...allPast];
     await Promise.all([
       generateQRCodes(allRes),
-      fetchGuestTickets(allRes),
+      fetchGuestTickets(allRes, syntheticOrderToReservationId, syntheticReservationTotals),
       fetchDirectReservationGuests(allRes),
       fetchSeatingMinCharges(allRes),
     ]);
+
     setLoading(false);
   };
 
@@ -285,16 +390,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
-    const directResIds = reservations.
-    filter((r) => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending')).
-    map((r) => r.id);
+    const directResIds = reservations
+      .filter((r) => !r.event_id && r.business_id && (r.status === 'accepted' || r.status === 'pending'))
+      .map((r) => r.id);
 
     if (directResIds.length === 0) return;
 
-    const { data: guests, error } = await supabase.
-    from('reservation_guests').
-    select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at').
-    in('reservation_id', directResIds);
+    const { data: guests, error } = await supabase
+      .from('reservation_guests')
+      .select('id, reservation_id, guest_name, qr_code_token, status, checked_in_at')
+      .in('reservation_id', directResIds);
 
     if (error || !guests) return;
 
@@ -326,56 +431,78 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setDirectGuestQrCodes(codes);
   };
 
-  const fetchGuestTickets = async (reservations: ReservationData[]) => {
-    // For all event-based reservations (reservation-only AND hybrid)
-    const eventResIds = reservations.
-    filter((r) => !!r.events && (r.status === 'accepted' || r.status === 'pending')).
-    map((r) => r.id);
+  const fetchGuestTickets = async (
+    reservations: ReservationData[],
+    syntheticOrderToReservationId: Record<string, string> = {},
+    syntheticReservationTotals: Record<string, number> = {}
+  ) => {
+    const realEventResIds = reservations
+      .filter((r) => !!r.events && !r.id.startsWith('order-'))
+      .map((r) => r.id);
 
-    if (eventResIds.length === 0) return;
+    const mergedOrderMappings: { orderId: string; reservationId: string; totalCents: number }[] = [];
 
-    const { data: orders } = await supabase.
-    from('ticket_orders').
-    select('id, linked_reservation_id, total_cents').
-    in('linked_reservation_id', eventResIds);
+    if (realEventResIds.length > 0) {
+      const { data: linkedOrders } = await supabase
+        .from('ticket_orders')
+        .select('id, linked_reservation_id, total_cents')
+        .in('linked_reservation_id', realEventResIds);
 
-    if (!orders || orders.length === 0) return;
+      (linkedOrders || []).forEach((order) => {
+        if (!order.linked_reservation_id) return;
+        mergedOrderMappings.push({
+          orderId: order.id,
+          reservationId: order.linked_reservation_id,
+          totalCents: (order as any).total_cents || 0,
+        });
+      });
+    }
 
-    const orderIds = orders.map((o) => o.id);
-    const orderToRes: Record<string, string> = {};
-    const resTotalMap: Record<string, number> = {};
-    orders.forEach((o) => {
-      if (o.linked_reservation_id) {
-        orderToRes[o.id] = o.linked_reservation_id;
-        resTotalMap[o.linked_reservation_id] = (o as any).total_cents || 0;
-      }
+    Object.entries(syntheticOrderToReservationId).forEach(([orderId, reservationId]) => {
+      mergedOrderMappings.push({
+        orderId,
+        reservationId,
+        totalCents: syntheticReservationTotals[reservationId] || 0,
+      });
     });
-    setTicketOrderTotals(resTotalMap);
 
-    const { data: tickets } = await supabase.
-    from('tickets').
-    select('id, order_id, guest_name, guest_age, qr_code_token, status').
-    in('order_id', orderIds);
+    if (mergedOrderMappings.length === 0) return;
+
+    const orderIds = mergedOrderMappings.map((m) => m.orderId);
+    const orderToReservation: Record<string, string> = {};
+    const reservationTotals: Record<string, number> = {};
+
+    mergedOrderMappings.forEach((mapping) => {
+      orderToReservation[mapping.orderId] = mapping.reservationId;
+      reservationTotals[mapping.reservationId] = mapping.totalCents;
+    });
+
+    setTicketOrderTotals(reservationTotals);
+
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('id, order_id, guest_name, guest_age, qr_code_token, status')
+      .in('order_id', orderIds);
 
     if (!tickets) return;
 
-    const ticketsByRes: Record<string, typeof tickets> = {};
+    const ticketsByReservation: Record<string, typeof tickets> = {};
     const qrCodesToGenerate: Record<string, string> = {};
 
-    tickets.forEach((t) => {
-      const resId = orderToRes[t.order_id];
-      if (resId) {
-        if (!ticketsByRes[resId]) ticketsByRes[resId] = [];
-        ticketsByRes[resId].push(t);
-        if (t.qr_code_token) {
-          qrCodesToGenerate[t.id] = t.qr_code_token;
-        }
+    tickets.forEach((ticket) => {
+      const reservationId = orderToReservation[ticket.order_id];
+      if (!reservationId) return;
+
+      if (!ticketsByReservation[reservationId]) ticketsByReservation[reservationId] = [];
+      ticketsByReservation[reservationId].push(ticket);
+
+      if (ticket.qr_code_token) {
+        qrCodesToGenerate[ticket.id] = ticket.qr_code_token;
       }
     });
 
-    setGuestTickets(ticketsByRes);
+    setGuestTickets(ticketsByReservation);
 
-    // Generate QR codes for guest tickets
     const codes: Record<string, string> = {};
     for (const [ticketId, token] of Object.entries(qrCodesToGenerate)) {
       try {
@@ -388,6 +515,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         console.error('Error generating guest QR code:', e);
       }
     }
+
     setGuestQrCodes(codes);
   };
 
