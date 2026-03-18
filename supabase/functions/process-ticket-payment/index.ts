@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       .eq("id", orderId);
     logStep("Order completed");
 
-    // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS (Kaliva-only) ====================
+    // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS ====================
     try {
       const { data: eventInfo } = await supabaseClient
         .from("events")
@@ -198,14 +198,59 @@ Deno.serve(async (req) => {
       if (eventInfo?.event_type === "ticket_and_reservation") {
         const { data: businessInfo } = await supabaseClient
           .from("businesses")
-          .select("ticket_reservation_linked")
+          .select("ticket_reservation_linked, category")
           .eq("id", eventInfo.business_id)
           .single();
 
-        const seatingTypeIdRaw = session.metadata?.seating_type_id || "";
-        const seatingTypeId = seatingTypeIdRaw.trim().length > 0 ? seatingTypeIdRaw.trim() : null;
+        const linkedCategories = new Set(["clubs", "events", "theatre", "music", "dance", "kids"]);
+        const businessCategories = Array.isArray(businessInfo?.category)
+          ? (businessInfo?.category || []).map((c: string) => c.toLowerCase())
+          : [];
 
-        if (businessInfo?.ticket_reservation_linked && seatingTypeId) {
+        const usesLinkedReservations =
+          !!businessInfo?.ticket_reservation_linked ||
+          businessCategories.some((category: string) => linkedCategories.has(category));
+
+        // Validate/resolve seating type id
+        let seatingTypeId = (session.metadata?.seating_type_id || "").trim() || null;
+        const { data: eventSeatingTypes } = await supabaseClient
+          .from("reservation_seating_types")
+          .select("id, seating_type")
+          .eq("event_id", order.event_id);
+
+        const seatingTypeIdSet = new Set((eventSeatingTypes || []).map((st) => st.id));
+        if (seatingTypeId && !seatingTypeIdSet.has(seatingTypeId)) {
+          logStep("Provided seating_type_id is invalid for event", { seatingTypeId });
+          seatingTypeId = null;
+        }
+
+        // Fallback: infer seating type from purchased ticket tier name
+        if (!seatingTypeId) {
+          const { data: orderTickets } = await supabaseClient
+            .from("tickets")
+            .select("tier_id, ticket_tiers(name)")
+            .eq("order_id", orderId);
+
+          const tierNames = Array.from(
+            new Set(
+              (orderTickets || [])
+                .map((ticket) => (ticket.ticket_tiers as { name?: string } | null)?.name?.trim().toLowerCase())
+                .filter((name): name is string => !!name)
+            )
+          );
+
+          if (tierNames.length === 1) {
+            const seatingByName = new Map(
+              (eventSeatingTypes || []).map((st) => [String(st.seating_type || "").trim().toLowerCase(), st.id])
+            );
+            seatingTypeId = seatingByName.get(tierNames[0]) || null;
+            if (seatingTypeId) {
+              logStep("Resolved seating_type_id from tier name", { tierName: tierNames[0], seatingTypeId });
+            }
+          }
+        }
+
+        if (usesLinkedReservations && seatingTypeId) {
           logStep("Creating linked reservation for ticket+reservation purchase", { seatingTypeId });
 
           const totalTicketCreditCents = order.total_cents || 0;
@@ -253,14 +298,16 @@ Deno.serve(async (req) => {
               seatingTypeId,
             });
           }
-        } else if (businessInfo?.ticket_reservation_linked) {
+        } else if (usesLinkedReservations) {
           logStep("Walk-in ticket purchase detected, skipping linked reservation auto-create");
         } else {
-          logStep("Business does NOT have ticket_reservation_linked, skipping auto-reservation");
+          logStep("Business/event does not use linked reservations, skipping auto-reservation");
         }
       }
     } catch (autoResError) {
-      logStep("Auto-reservation creation error (non-fatal)", { error: autoResError instanceof Error ? autoResError.message : String(autoResError) });
+      logStep("Auto-reservation creation error (non-fatal)", {
+        error: autoResError instanceof Error ? autoResError.message : String(autoResError),
+      });
     }
 
     // Fetch tickets with their QR tokens for email
