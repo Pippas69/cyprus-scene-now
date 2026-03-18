@@ -160,6 +160,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Assignment mode state (preview mode)
+  const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignTargetTableId, setAssignTargetTableId] = useState<string | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailReservation, setDetailReservation] = useState<any>(null);
+  const [detailTableLabel, setDetailTableLabel] = useState('');
+  const [detailTableId, setDetailTableId] = useState<string | null>(null);
+
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
