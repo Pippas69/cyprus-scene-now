@@ -247,12 +247,23 @@ export function VenueSVGCanvas({
   const fixtureItems = items.filter((i) => !!i.fixture_type && i.fixture_type !== 'line' && i.fixture_type !== 'text');
   const tableItems = items.filter((i) => !i.fixture_type);
 
+  // Build table-level assignment map
+  const tableAssignmentMap = useCallback(() => {
+    const map = new Map<string, TableLevelAssignment>();
+    for (const ta of tableAssignments) {
+      map.set(ta.table_id, ta);
+    }
+    return map;
+  }, [tableAssignments])();
+
   const isOccupied = useCallback(
     (item: VenueItem) => {
+      // Check table-level assignments first
+      if (tableAssignmentMap.has(item.id)) return true;
       if (!item.zone_id || assignments.length === 0) return false;
       return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id !== currentReservationId);
     },
-    [assignments, currentReservationId],
+    [assignments, currentReservationId, tableAssignmentMap],
   );
 
   const isSelf = useCallback(
