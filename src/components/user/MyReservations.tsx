@@ -241,13 +241,18 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const { data: orphanTickets } = orphanOrderIds.length > 0
       ? await supabase
           .from('tickets')
-          .select('order_id')
+          .select('order_id, ticket_tiers(quantity_total)')
           .in('order_id', orphanOrderIds)
-      : { data: [] as { order_id: string }[] };
+      : { data: [] as any[] };
 
     const orphanTicketCountByOrder: Record<string, number> = {};
-    (orphanTickets || []).forEach((ticket) => {
+    const orphanOrderHasReservationTier: Record<string, boolean> = {};
+    (orphanTickets || []).forEach((ticket: any) => {
       orphanTicketCountByOrder[ticket.order_id] = (orphanTicketCountByOrder[ticket.order_id] || 0) + 1;
+      const quantityTotal = ticket?.ticket_tiers?.quantity_total;
+      if (quantityTotal === 999999) {
+        orphanOrderHasReservationTier[ticket.order_id] = true;
+      }
     });
 
     const existingEventReservations = [...upcomingEventRes, ...pastEventRes];
@@ -255,6 +260,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const syntheticReservationTotals: Record<string, number> = {};
 
     const syntheticEventReservations: ReservationData[] = orphanReservationOrders
+      .filter((order) => orphanOrderHasReservationTier[order.id])
       .filter((order) => {
         const duplicateWindowMs = 10 * 60 * 1000;
         return !existingEventReservations.some((reservation) => {
