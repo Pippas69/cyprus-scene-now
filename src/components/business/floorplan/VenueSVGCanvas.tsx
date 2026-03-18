@@ -1,5 +1,14 @@
 import { useCallback, forwardRef } from 'react';
 
+function getDisplayName(name: string): { lines: string[]; isMultiLine: boolean } {
+  const trimmed = name.trim();
+  const parts = trimmed.split(/\s+/);
+  if (parts.length >= 2) {
+    return { lines: [parts[0], parts.slice(1).join(' ')], isMultiLine: true };
+  }
+  return { lines: [trimmed], isMultiLine: false };
+}
+
 function getInitialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
