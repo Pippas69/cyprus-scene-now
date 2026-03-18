@@ -229,6 +229,7 @@ export function VenueSVGCanvas({
   selectedItemId,
   showLabels = false,
   assignments = [],
+  tableAssignments = [],
   currentReservationId,
   onTableClick,
   onItemMouseDown,
