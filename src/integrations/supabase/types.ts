@@ -3797,6 +3797,45 @@ export type Database = {
           },
         ]
       }
+      reservation_table_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          reservation_id: string
+          table_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          reservation_id: string
+          table_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          reservation_id?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_table_assignments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: true
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_table_assignments_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: true
+            referencedRelation: "floor_plan_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_zone_assignments: {
         Row: {
           assigned_at: string | null
