@@ -1005,12 +1005,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
             alignGuides={isDesignMode ? alignGuides : undefined}
+            tableAssignments={!isDesignMode ? tableAssignments : []}
             onTableClick={(id) => {
-              if (isDesignMode && !placingMode) setSelectedItem(id || null);
+              if (isDesignMode && !placingMode) {
+                setSelectedItem(id || null);
+              } else if (!isDesignMode && id) {
+                handlePreviewTableClick(id);
+              }
             }}
             onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
             onResizeStart={isDesignMode ? handleResizeStart : undefined}
-            interactive={isDesignMode && !placingMode}
+            interactive={true}
           />
 
           {isDesignMode && dragging && dragCoords && (
