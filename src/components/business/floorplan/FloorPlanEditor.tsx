@@ -13,10 +13,12 @@ import {
   AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { VenueSVGCanvas } from './VenueSVGCanvas';
+import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
 import { useLanguage } from '@/hooks/useLanguage';
+import { FloorPlanTableAssignmentDialog } from './FloorPlanTableAssignmentDialog';
+import { FloorPlanReservationDetailPopover } from './FloorPlanReservationDetailPopover';
 
 interface FloorPlanZone {
   id: string;
@@ -158,6 +160,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Assignment mode state (preview mode)
+  const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignTargetTableId, setAssignTargetTableId] = useState<string | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailReservation, setDetailReservation] = useState<any>(null);
+  const [detailTableLabel, setDetailTableLabel] = useState('');
+  const [detailTableId, setDetailTableId] = useState<string | null>(null);
+
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -257,7 +268,79 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
     const meta = loadedZones[0]?.metadata;
     if (meta?.reference_image_url) setReferenceImageUrl(meta.reference_image_url as string);
+
+    // Load table-level assignments
+    if (loadedItems.length > 0) {
+      await loadTableAssignments(loadedItems.map(i => i.id));
+    }
     setLoading(false);
+  };
+
+  const loadTableAssignments = async (tableIds: string[]) => {
+    const { data } = await supabase
+      .from('reservation_table_assignments')
+      .select('table_id, reservation_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
+      .in('table_id', tableIds);
+
+    if (data) {
+      setTableAssignments(data.map((a: any) => ({
+        table_id: a.table_id,
+        reservation_id: a.reservation_id,
+        reservation_name: a.reservations?.reservation_name || '',
+        party_size: a.reservations?.party_size || 0,
+      })));
+    }
+  };
+
+  const handlePreviewTableClick = (tableId: string) => {
+    if (!tableId) return;
+    const item = items.find(i => i.id === tableId);
+    if (!item || item.fixture_type) return; // Only tables, not fixtures
+
+    const existing = tableAssignments.find(a => a.table_id === tableId);
+    if (existing) {
+      // Show detail popover with full reservation info
+      loadReservationDetail(existing.reservation_id, item.label, tableId);
+    } else {
+      // Open assignment dialog
+      setAssignTargetTableId(tableId);
+      setAssignDialogOpen(true);
+    }
+  };
+
+  const loadReservationDetail = async (reservationId: string, tableLabel: string, tableId: string) => {
+    const { data } = await supabase
+      .from('reservations')
+      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo')
+      .eq('id', reservationId)
+      .single();
+
+    if (data) {
+      setDetailReservation(data);
+      setDetailTableLabel(tableLabel);
+      setDetailTableId(tableId);
+      setDetailDialogOpen(true);
+    }
+  };
+
+  const handleRemoveAssignment = async () => {
+    if (!detailTableId) return;
+    await supabase.from('reservation_table_assignments').delete().eq('table_id', detailTableId);
+    toast.success(language === 'el' ? 'Η κράτηση αφαιρέθηκε' : 'Assignment removed');
+    setDetailDialogOpen(false);
+    await loadTableAssignments(items.map(i => i.id));
+  };
+
+  const handleReassign = () => {
+    setDetailDialogOpen(false);
+    if (detailTableId) {
+      setAssignTargetTableId(detailTableId);
+      setAssignDialogOpen(true);
+    }
+  };
+
+  const handleAssignmentComplete = async () => {
+    await loadTableAssignments(items.map(i => i.id));
   };
 
   const uploadReferenceImage = async (file: File): Promise<string | null> => {
@@ -922,12 +1005,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             showGrid={isDesignMode && showGrid}
             gridSnap={SNAP_INCREMENT}
             alignGuides={isDesignMode ? alignGuides : undefined}
+            tableAssignments={!isDesignMode ? tableAssignments : []}
             onTableClick={(id) => {
-              if (isDesignMode && !placingMode) setSelectedItem(id || null);
+              if (isDesignMode && !placingMode) {
+                setSelectedItem(id || null);
+              } else if (!isDesignMode && id) {
+                handlePreviewTableClick(id);
+              }
             }}
             onItemMouseDown={isDesignMode ? (e, id) => handleMouseDown(e, id) : undefined}
             onResizeStart={isDesignMode ? handleResizeStart : undefined}
-            interactive={isDesignMode && !placingMode}
+            interactive={true}
           />
 
           {isDesignMode && dragging && dragCoords && (
@@ -948,7 +1036,18 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             </Button>
           </div>
         ) : (
-          <div className="absolute bottom-3 right-3 z-10">
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
+            {/* Legend */}
+            <div className="flex items-center gap-3 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border/30 shadow-lg">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ border: '1px solid hsl(142 60% 45%)', background: 'hsl(142 60% 50% / 0.15)' }} />
+                {language === 'el' ? 'Τοποθετημένη' : 'Assigned'}
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm border border-white/40 bg-white/5" />
+                {language === 'el' ? 'Διαθέσιμη' : 'Available'}
+              </div>
+            </div>
             <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
               <Pencil className="h-3.5 w-3.5" />{t.editLayout}
             </Button>
@@ -983,6 +1082,40 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           />
         </div>
       )}
+
+      {/* Assignment dialog (preview mode) */}
+      {assignTargetTableId && (() => {
+        const targetItem = items.find(i => i.id === assignTargetTableId);
+        const currentAssign = tableAssignments.find(a => a.table_id === assignTargetTableId);
+        const assignedIds = new Set(tableAssignments.map(a => a.reservation_id));
+        return (
+          <FloorPlanTableAssignmentDialog
+            open={assignDialogOpen}
+            onOpenChange={setAssignDialogOpen}
+            businessId={businessId}
+            tableId={assignTargetTableId}
+            tableLabel={targetItem?.label || ''}
+            tableSeats={targetItem?.seats || 0}
+            currentAssignment={currentAssign ? {
+              reservation_id: currentAssign.reservation_id,
+              reservation_name: currentAssign.reservation_name,
+              party_size: currentAssign.party_size,
+            } : null}
+            assignedReservationIds={assignedIds}
+            onAssigned={handleAssignmentComplete}
+          />
+        );
+      })()}
+
+      {/* Reservation detail dialog (preview mode) */}
+      <FloorPlanReservationDetailPopover
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        reservation={detailReservation}
+        tableLabel={detailTableLabel}
+        onRemove={handleRemoveAssignment}
+        onReassign={handleReassign}
+      />
     </div>
   );
 }

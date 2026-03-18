@@ -1,5 +1,13 @@
 import { useCallback, forwardRef } from 'react';
 
+function getInitialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
 export interface VenueItem {
   id: string;
   label: string;
@@ -28,6 +36,13 @@ export interface TableAssignment {
   party_size: number;
 }
 
+export interface TableLevelAssignment {
+  table_id: string;
+  reservation_id: string;
+  reservation_name: string;
+  party_size: number;
+}
+
 interface VenueSVGCanvasProps {
   items: VenueItem[];
   fixtureBboxes: Record<string, VenueBBox>;
@@ -35,6 +50,7 @@ interface VenueSVGCanvasProps {
   selectedItemId?: string | null;
   showLabels?: boolean;
   assignments?: TableAssignment[];
+  tableAssignments?: TableLevelAssignment[];
   currentReservationId?: string;
   onTableClick?: (id: string) => void;
   onItemMouseDown?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
@@ -221,6 +237,7 @@ export function VenueSVGCanvas({
   selectedItemId,
   showLabels = false,
   assignments = [],
+  tableAssignments = [],
   currentReservationId,
   onTableClick,
   onItemMouseDown,
@@ -238,12 +255,23 @@ export function VenueSVGCanvas({
   const fixtureItems = items.filter((i) => !!i.fixture_type && i.fixture_type !== 'line' && i.fixture_type !== 'text');
   const tableItems = items.filter((i) => !i.fixture_type);
 
+  // Build table-level assignment map
+  const tableAssignmentMap = useCallback(() => {
+    const map = new Map<string, TableLevelAssignment>();
+    for (const ta of tableAssignments) {
+      map.set(ta.table_id, ta);
+    }
+    return map;
+  }, [tableAssignments])();
+
   const isOccupied = useCallback(
     (item: VenueItem) => {
+      // Check table-level assignments first
+      if (tableAssignmentMap.has(item.id)) return true;
       if (!item.zone_id || assignments.length === 0) return false;
       return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id !== currentReservationId);
     },
-    [assignments, currentReservationId],
+    [assignments, currentReservationId, tableAssignmentMap],
   );
 
   const isSelf = useCallback(
@@ -380,6 +408,8 @@ export function VenueSVGCanvas({
         const cx = g.x + g.w / 2;
         const cy = g.y + g.h / 2;
         const selected = selectedItemId === item.id;
+        const tableAssign = tableAssignmentMap.get(item.id);
+        const hasTableAssignment = !!tableAssign;
         const occupied = isOccupied(item);
         const self = isSelf(item);
 
@@ -388,7 +418,11 @@ export function VenueSVGCanvas({
         let stroke = customColor || THEME.tableStroke;
         let strokeWidth = 0.35;
 
-        if (occupied) {
+        if (hasTableAssignment) {
+          fill = 'hsl(142 60% 50% / 0.15)';
+          stroke = 'hsl(142 60% 45%)';
+          strokeWidth = 0.5;
+        } else if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
           strokeWidth = 0.45;
@@ -403,6 +437,19 @@ export function VenueSVGCanvas({
 
         const handlers = makeInteractionHandlers(item.id);
 
+        // Get initials for assigned reservation
+        const initials = tableAssign ? getInitialsFromName(tableAssign.reservation_name) : null;
+        const labelFontSize = Math.min(
+          g.shape === 'round' ? g.w * 0.25 : (g.h > g.w * 1.3 ? g.h * 0.22 : g.w * 0.22),
+          g.shape === 'round' ? g.w * 0.25 : (g.h > g.w * 1.3 ? g.w * 0.55 : g.h * 0.5),
+          3.5
+        );
+        const initialsFontSize = Math.min(
+          g.shape === 'round' ? g.w * 0.3 : g.w * 0.28,
+          g.h * 0.4,
+          4
+        );
+
         return (
           <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
             {g.shape === 'round' ? (
@@ -415,7 +462,35 @@ export function VenueSVGCanvas({
               />
             )}
 
-            {showLabels && (
+            {/* Show initials when assigned, or label when not */}
+            {hasTableAssignment && initials ? (
+              <>
+                {/* Table number small at top */}
+                <text
+                  x={cx} y={g.y + g.h * 0.22}
+                  textAnchor="middle" dominantBaseline="central"
+                  fill="hsl(142 60% 45% / 0.7)"
+                  fontSize={labelFontSize * 0.7}
+                  fontWeight={600}
+                  className="pointer-events-none"
+                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                >
+                  {item.label}
+                </text>
+                {/* Initials large centered */}
+                <text
+                  x={cx} y={cy + g.h * 0.08}
+                  textAnchor="middle" dominantBaseline="central"
+                  fill="hsl(142 60% 55%)"
+                  fontSize={initialsFontSize}
+                  fontWeight={800}
+                  className="pointer-events-none"
+                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.06em' }}
+                >
+                  {initials}
+                </text>
+              </>
+            ) : showLabels ? (
               <text
                 x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
@@ -432,7 +507,7 @@ export function VenueSVGCanvas({
               >
                 {item.label}
               </text>
-            )}
+            ) : null}
 
             {selected && showHandles && onResizeStart && (
               <ResizeHandles g={g} itemId={item.id} onResizeStart={onResizeStart} />
