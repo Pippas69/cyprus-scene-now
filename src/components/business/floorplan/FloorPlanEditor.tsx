@@ -164,6 +164,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Event selection state
+  interface FloorPlanEvent { id: string; title: string; start_at: string; }
+  const [events, setEvents] = useState<FloorPlanEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
   // Assignment mode state (preview mode)
   const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -176,7 +181,33 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadFloorPlan(); }, [businessId]);
+  useEffect(() => { loadFloorPlan(); loadEvents(); }, [businessId]);
+
+  const loadEvents = async () => {
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from('events')
+      .select('id, title, start_at')
+      .eq('business_id', businessId)
+      .gte('end_at', now)
+      .order('start_at', { ascending: true });
+    
+    const loadedEvents = (data || []) as FloorPlanEvent[];
+    setEvents(loadedEvents);
+    // Auto-select nearest event
+    if (loadedEvents.length > 0 && !selectedEventId) {
+      setSelectedEventId(loadedEvents[0].id);
+    }
+  };
+
+  // Reload assignments when event changes
+  useEffect(() => {
+    if (items.length > 0 && selectedEventId) {
+      loadTableAssignments(items.map(i => i.id));
+    } else if (!selectedEventId) {
+      setTableAssignments([]);
+    }
+  }, [selectedEventId]);
 
   // Keyboard shortcuts
   useEffect(() => {
