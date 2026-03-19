@@ -107,17 +107,18 @@ export function FloorPlanTableAssignmentDialog({
   const handleAssign = async (reservationId: string) => {
     setSaving(true);
     try {
-      // Remove any existing assignment for this table
-      await supabase.from('reservation_table_assignments').delete().eq('table_id', tableId);
-      // Remove any existing assignment for this reservation (one reservation = one table)
-      await supabase.from('reservation_table_assignments').delete().eq('reservation_id', reservationId);
+      // Remove any existing assignment for this table in this event
+      await supabase.from('reservation_table_assignments').delete().eq('table_id', tableId).eq('event_id', eventId);
+      // Remove any existing assignment for this reservation in this event
+      await supabase.from('reservation_table_assignments').delete().eq('reservation_id', reservationId).eq('event_id', eventId);
 
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from('reservation_table_assignments').insert({
         table_id: tableId,
         reservation_id: reservationId,
         assigned_by: user?.id || null,
-      });
+        event_id: eventId,
+      } as any);
       if (error) throw error;
       toast.success(t.assigned);
       onAssigned();
