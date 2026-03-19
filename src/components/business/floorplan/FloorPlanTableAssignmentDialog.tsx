@@ -90,14 +90,11 @@ export function FloorPlanTableAssignmentDialog({
     setLoading(true);
     setSearch('');
 
-    // Get today's date in Cyprus timezone for filtering
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const { data, error } = await supabase
       .from('reservations')
       .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at')
       .eq('business_id', businessId)
+      .eq('event_id', eventId)
       .in('status', ['pending', 'accepted', 'confirmed'])
       .order('created_at', { ascending: false });
 
