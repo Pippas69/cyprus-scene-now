@@ -71,7 +71,7 @@ const translations = {
 
 export function FloorPlanTableAssignmentDialog({
   open, onOpenChange, businessId, tableId, tableLabel, tableSeats,
-  currentAssignment, assignedReservationIds, onAssigned,
+  currentAssignment, assignedReservationIds, onAssigned, eventId,
 }: FloorPlanTableAssignmentDialogProps) {
   const { language } = useLanguage();
   const t = translations[language];
