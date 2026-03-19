@@ -1142,7 +1142,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* Assignment dialog (preview mode) */}
-      {assignTargetTableId && (() => {
+      {assignTargetTableId && selectedEventId && (() => {
         const targetItem = items.find(i => i.id === assignTargetTableId);
         const currentAssign = tableAssignments.find(a => a.table_id === assignTargetTableId);
         const assignedIds = new Set(tableAssignments.map(a => a.reservation_id));
@@ -1161,6 +1161,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             } : null}
             assignedReservationIds={assignedIds}
             onAssigned={handleAssignmentComplete}
+            eventId={selectedEventId}
           />
         );
       })()}
