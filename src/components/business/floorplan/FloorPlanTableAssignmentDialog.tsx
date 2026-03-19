@@ -37,6 +37,7 @@ interface FloorPlanTableAssignmentDialogProps {
   currentAssignment: { reservation_id: string; reservation_name: string; party_size: number } | null;
   assignedReservationIds: Set<string>;
   onAssigned: () => void;
+  eventId: string;
 }
 
 const translations = {
