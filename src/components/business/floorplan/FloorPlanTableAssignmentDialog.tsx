@@ -133,7 +133,7 @@ export function FloorPlanTableAssignmentDialog({
   const handleRemove = async () => {
     setSaving(true);
     try {
-      await supabase.from('reservation_table_assignments').delete().eq('table_id', tableId);
+      await supabase.from('reservation_table_assignments').delete().eq('table_id', tableId).eq('event_id', eventId);
       toast.success(t.removed);
       onAssigned();
       onOpenChange(false);
