@@ -3833,7 +3833,7 @@ export type Database = {
           {
             foreignKeyName: "reservation_table_assignments_reservation_id_fkey"
             columns: ["reservation_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
