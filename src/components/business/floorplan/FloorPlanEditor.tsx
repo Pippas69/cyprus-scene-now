@@ -987,6 +987,25 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       )}
 
+      {/* Event selector (preview mode only) */}
+      {!isDesignMode && events.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <Select value={selectedEventId || ''} onValueChange={(val) => setSelectedEventId(val)}>
+            <SelectTrigger className="h-9 text-xs bg-card/80 border-border/30">
+              <SelectValue placeholder={language === 'el' ? 'Επιλέξτε εκδήλωση...' : 'Select event...'} />
+            </SelectTrigger>
+            <SelectContent>
+              {events.map((ev) => (
+                <SelectItem key={ev.id} value={ev.id} className="text-xs">
+                  {format(new Date(ev.start_at), 'EEE d MMM', { locale: language === 'el' ? elLocale : enUS })} · {ev.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
       <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
