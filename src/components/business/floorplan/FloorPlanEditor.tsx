@@ -1028,6 +1028,19 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           )}
         </div>
 
+        {/* Properties panel — OVERLAY on desktop/tablet, doesn't affect canvas */}
+        {isDesignMode && selectedItemData && (
+          <div className="absolute top-0 right-0 bottom-0 w-[180px] z-10 hidden md:block bg-card/95 backdrop-blur-md border-l border-border/30 overflow-y-auto">
+            <ItemPropertiesPanel
+              item={selectedItemData}
+              onChange={handlePropertyChange}
+              onDelete={deleteItem}
+              onDuplicate={duplicateItem}
+              onBringForward={bringForward}
+              onSendBackward={sendBackward}
+            />
+          </div>
+        )}
       </div>
 
       {/* Legend & action buttons — below the canvas */}
@@ -1054,21 +1067,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           </Button>
         </div>
       )}
-
-        {/* Properties panel — OVERLAY on desktop/tablet, doesn't affect canvas */}
-        {isDesignMode && selectedItemData && (
-          <div className="absolute top-0 right-0 bottom-0 w-[180px] z-10 hidden md:block bg-card/95 backdrop-blur-md border-l border-border/30 overflow-y-auto">
-            <ItemPropertiesPanel
-              item={selectedItemData}
-              onChange={handlePropertyChange}
-              onDelete={deleteItem}
-              onDuplicate={duplicateItem}
-              onBringForward={bringForward}
-              onSendBackward={sendBackward}
-            />
-          </div>
-        )}
-      </div>
 
       {/* MOBILE: Properties below canvas */}
       {isDesignMode && selectedItemData && (
