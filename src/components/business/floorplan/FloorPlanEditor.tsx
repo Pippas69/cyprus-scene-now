@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
@@ -10,9 +11,12 @@ import {
   Sofa, Minus, Type, Save, Pencil, Eraser,
   Plus, Loader2, AlignHorizontalDistributeCenter,
   AlignVerticalDistributeCenter, AlignStartVertical,
-  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
+  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical,
+  CalendarDays
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { format } from 'date-fns';
+import { el as elLocale, enUS } from 'date-fns/locale';
 import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
