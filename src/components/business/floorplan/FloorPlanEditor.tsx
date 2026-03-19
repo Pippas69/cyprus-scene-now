@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Upload, Trash2, MapPin, MousePointer, Eye, EyeOff,
@@ -10,9 +11,12 @@ import {
   Sofa, Minus, Type, Save, Pencil, Eraser,
   Plus, Loader2, AlignHorizontalDistributeCenter,
   AlignVerticalDistributeCenter, AlignStartVertical,
-  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical
+  AlignEndVertical, AlignCenterHorizontal, AlignCenterVertical,
+  CalendarDays
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { format } from 'date-fns';
+import { el as elLocale, enUS } from 'date-fns/locale';
 import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 import { ItemPropertiesPanel, EmptyPropertiesPanel, type FloorPlanItemFull } from './ItemPropertiesPanel';
 import { useFloorPlanHistory } from './useFloorPlanHistory';
@@ -160,6 +164,11 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Event selection state
+  interface FloorPlanEvent { id: string; title: string; start_at: string; }
+  const [events, setEvents] = useState<FloorPlanEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
   // Assignment mode state (preview mode)
   const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -172,7 +181,33 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadFloorPlan(); }, [businessId]);
+  useEffect(() => { loadFloorPlan(); loadEvents(); }, [businessId]);
+
+  const loadEvents = async () => {
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from('events')
+      .select('id, title, start_at')
+      .eq('business_id', businessId)
+      .gte('end_at', now)
+      .order('start_at', { ascending: true });
+    
+    const loadedEvents = (data || []) as FloorPlanEvent[];
+    setEvents(loadedEvents);
+    // Auto-select nearest event
+    if (loadedEvents.length > 0 && !selectedEventId) {
+      setSelectedEventId(loadedEvents[0].id);
+    }
+  };
+
+  // Reload assignments when event changes
+  useEffect(() => {
+    if (items.length > 0 && selectedEventId) {
+      loadTableAssignments(items.map(i => i.id));
+    } else if (!selectedEventId) {
+      setTableAssignments([]);
+    }
+  }, [selectedEventId]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -277,10 +312,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   };
 
   const loadTableAssignments = async (tableIds: string[]) => {
+    if (!selectedEventId) { setTableAssignments([]); return; }
+    
     const { data } = await supabase
       .from('reservation_table_assignments')
-      .select('table_id, reservation_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
-      .in('table_id', tableIds);
+      .select('table_id, reservation_id, event_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
+      .in('table_id', tableIds)
+      .eq('event_id', selectedEventId);
 
     if (data) {
       setTableAssignments(data.map((a: any) => ({
@@ -294,8 +332,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   const handlePreviewTableClick = (tableId: string) => {
     if (!tableId) return;
+    if (!selectedEventId) {
+      toast.error(language === 'el' ? 'Επιλέξτε πρώτα εκδήλωση' : 'Select an event first');
+      return;
+    }
     const item = items.find(i => i.id === tableId);
-    if (!item || item.fixture_type) return; // Only tables, not fixtures
+    if (!item || item.fixture_type) return;
 
     const existing = tableAssignments.find(a => a.table_id === tableId);
     if (existing) {
@@ -324,8 +366,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   };
 
   const handleRemoveAssignment = async () => {
-    if (!detailTableId) return;
-    await supabase.from('reservation_table_assignments').delete().eq('table_id', detailTableId);
+    if (!detailTableId || !selectedEventId) return;
+    await supabase.from('reservation_table_assignments').delete()
+      .eq('table_id', detailTableId)
+      .eq('event_id', selectedEventId);
     toast.success(language === 'el' ? 'Η κράτηση αφαιρέθηκε' : 'Assignment removed');
     setDetailDialogOpen(false);
     await loadTableAssignments(items.map(i => i.id));
@@ -947,6 +991,25 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       )}
 
+      {/* Event selector (preview mode only) */}
+      {!isDesignMode && events.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <Select value={selectedEventId || ''} onValueChange={(val) => setSelectedEventId(val)}>
+            <SelectTrigger className="h-9 text-xs bg-card/80 border-border/30">
+              <SelectValue placeholder={language === 'el' ? 'Επιλέξτε εκδήλωση...' : 'Select event...'} />
+            </SelectTrigger>
+            <SelectContent>
+              {events.map((ev) => (
+                <SelectItem key={ev.id} value={ev.id} className="text-xs">
+                  {format(new Date(ev.start_at), 'EEE d MMM', { locale: language === 'el' ? elLocale : enUS })} · {ev.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
       <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
@@ -1083,7 +1146,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* Assignment dialog (preview mode) */}
-      {assignTargetTableId && (() => {
+      {assignTargetTableId && selectedEventId && (() => {
         const targetItem = items.find(i => i.id === assignTargetTableId);
         const currentAssign = tableAssignments.find(a => a.table_id === assignTargetTableId);
         const assignedIds = new Set(tableAssignments.map(a => a.reservation_id));
@@ -1102,6 +1165,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
             } : null}
             assignedReservationIds={assignedIds}
             onAssigned={handleAssignmentComplete}
+            eventId={selectedEventId}
           />
         );
       })()}

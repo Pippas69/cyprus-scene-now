@@ -3801,6 +3801,7 @@ export type Database = {
         Row: {
           assigned_at: string | null
           assigned_by: string | null
+          event_id: string | null
           id: string
           reservation_id: string
           table_id: string
@@ -3808,6 +3809,7 @@ export type Database = {
         Insert: {
           assigned_at?: string | null
           assigned_by?: string | null
+          event_id?: string | null
           id?: string
           reservation_id: string
           table_id: string
@@ -3815,11 +3817,19 @@ export type Database = {
         Update: {
           assigned_at?: string | null
           assigned_by?: string | null
+          event_id?: string | null
           id?: string
           reservation_id?: string
           table_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservation_table_assignments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservation_table_assignments_reservation_id_fkey"
             columns: ["reservation_id"]
@@ -3830,7 +3840,7 @@ export type Database = {
           {
             foreignKeyName: "reservation_table_assignments_table_id_fkey"
             columns: ["table_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "floor_plan_tables"
             referencedColumns: ["id"]
           },
