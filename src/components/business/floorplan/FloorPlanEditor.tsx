@@ -362,8 +362,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   };
 
   const handleRemoveAssignment = async () => {
-    if (!detailTableId) return;
-    await supabase.from('reservation_table_assignments').delete().eq('table_id', detailTableId);
+    if (!detailTableId || !selectedEventId) return;
+    await supabase.from('reservation_table_assignments').delete()
+      .eq('table_id', detailTableId)
+      .eq('event_id', selectedEventId);
     toast.success(language === 'el' ? 'Η κράτηση αφαιρέθηκε' : 'Assignment removed');
     setDetailDialogOpen(false);
     await loadTableAssignments(items.map(i => i.id));
