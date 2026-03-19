@@ -332,8 +332,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   const handlePreviewTableClick = (tableId: string) => {
     if (!tableId) return;
+    if (!selectedEventId) {
+      toast.error(language === 'el' ? 'Επιλέξτε πρώτα εκδήλωση' : 'Select an event first');
+      return;
+    }
     const item = items.find(i => i.id === tableId);
-    if (!item || item.fixture_type) return; // Only tables, not fixtures
+    if (!item || item.fixture_type) return;
 
     const existing = tableAssignments.find(a => a.table_id === tableId);
     if (existing) {
