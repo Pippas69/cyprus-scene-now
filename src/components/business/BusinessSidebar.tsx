@@ -21,7 +21,7 @@ const translations = {
     overview: "Επισκόπηση",
     feed: "Feed",
     map: "Χάρτης",
-    analytics: "Αναλυτικά",
+    analytics: "Insights & CRM",
     content: "Περιεχόμενο",
     posts: "Posts",
     events: "Εκδηλώσεις",
