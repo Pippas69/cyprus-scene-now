@@ -10,13 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   X, Star, MapPin, Phone, Mail, Cake, Instagram, Building2,
-  Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send,
+  Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-
-interface CrmGuestProfileProps {
+import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
   guest: CrmGuest;
   businessId: string;
   onClose: () => void;
