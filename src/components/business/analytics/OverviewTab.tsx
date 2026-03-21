@@ -200,7 +200,7 @@ export const OverviewTab = ({
                       <div className="hidden lg:flex items-start justify-between">
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">{label}</p>
-                          <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <div className="p-2 bg-primary/10 rounded-lg">
