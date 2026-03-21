@@ -528,7 +528,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // (e.g. "Offer claim: ..."), so we exclude those too.
       const offerMarkedReservationIds = new Set(
         (directResCheckins || [])
-          .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
+          .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
           .map((r) => r.id)
       );
 
