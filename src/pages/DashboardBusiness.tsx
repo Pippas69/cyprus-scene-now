@@ -20,7 +20,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingTour } from "@/components/business/OnboardingTour";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
-import { CrmDashboard } from "@/components/business/crm/CrmDashboard";
+// CrmDashboard now embedded in AnalyticsDashboard
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import SubscriptionPlans from "@/pages/SubscriptionPlans";
 import BoostManagement from "@/components/business/BoostManagement";
