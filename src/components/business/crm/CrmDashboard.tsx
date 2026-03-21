@@ -15,7 +15,6 @@ interface CrmDashboardProps {
   floorPlanEnabled?: boolean;
 }
 
-type SortField = "guest_name" | "total_visits" | "last_visit" | "total_spend_cents" | "total_no_shows" | "internal_rating";
 type SortDir = "asc" | "desc";
 type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
 
@@ -41,8 +40,6 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
 
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
-  const [sortField, setSortField] = useState<SortField>("total_visits");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -97,51 +94,16 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
     );
   }, [segmentedGuests, search]);
 
-  // Sort
+  // Fixed multi-criteria sort: visits desc → spend desc → last visit desc
   const sortedGuests = useMemo(() => {
     return [...filteredGuests].sort((a, b) => {
-      let aVal: string | number = 0;
-      let bVal: string | number = 0;
-      switch (sortField) {
-        case "guest_name":
-          aVal = a.guest_name.toLowerCase();
-          bVal = b.guest_name.toLowerCase();
-          break;
-        case "total_visits":
-          aVal = a.total_visits;
-          bVal = b.total_visits;
-          break;
-        case "last_visit":
-          aVal = a.last_visit ? new Date(a.last_visit).getTime() : 0;
-          bVal = b.last_visit ? new Date(b.last_visit).getTime() : 0;
-          break;
-        case "total_spend_cents":
-          aVal = a.total_spend_cents;
-          bVal = b.total_spend_cents;
-          break;
-        case "total_no_shows":
-          aVal = a.total_no_shows;
-          bVal = b.total_no_shows;
-          break;
-        case "internal_rating":
-          aVal = a.internal_rating || 0;
-          bVal = b.internal_rating || 0;
-          break;
-      }
-      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
-      return 0;
+      if (b.total_visits !== a.total_visits) return b.total_visits - a.total_visits;
+      if (b.total_spend_cents !== a.total_spend_cents) return b.total_spend_cents - a.total_spend_cents;
+      const aTime = a.last_visit ? new Date(a.last_visit).getTime() : 0;
+      const bTime = b.last_visit ? new Date(b.last_visit).getTime() : 0;
+      return bTime - aTime;
     });
-  }, [filteredGuests, sortField, sortDir]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDir("desc");
-    }
-  };
+  }, [filteredGuests]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -184,9 +146,6 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
         ) : (
           <CrmGuestTable
             guests={sortedGuests}
-            sortField={sortField}
-            sortDir={sortDir}
-            onSort={handleSort}
             onSelectGuest={setSelectedGuest}
             floorPlanEnabled={floorPlanEnabled}
           />
