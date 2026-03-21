@@ -146,9 +146,6 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
         ) : (
           <CrmGuestTable
             guests={sortedGuests}
-            sortField={sortField}
-            sortDir={sortDir}
-            onSort={handleSort}
             onSelectGuest={setSelectedGuest}
             floorPlanEnabled={floorPlanEnabled}
           />
