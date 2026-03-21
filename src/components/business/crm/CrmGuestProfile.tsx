@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
+import { CrmSendMessageDialog } from "./CrmSendMessageDialog";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
