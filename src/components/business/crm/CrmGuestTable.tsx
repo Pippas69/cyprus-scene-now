@@ -8,9 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, ArrowUp, ArrowDown, Star, MessageSquare } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Star, MessageSquare, Ghost } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -36,7 +35,6 @@ const translations = {
     tags: "Tags",
     loyalty: "Loyalty",
     table: "Τραπέζι",
-    rating: "Βαθμός",
     never: "Ποτέ",
     ghost: "Ghost",
   },
@@ -49,7 +47,6 @@ const translations = {
     tags: "Tags",
     loyalty: "Loyalty",
     table: "Table",
-    rating: "Rating",
     never: "Never",
     ghost: "Ghost",
   },
@@ -71,8 +68,36 @@ const loyaltyStyles = {
 };
 
 function SortIcon({ field, currentField, dir }: { field: SortField; currentField: SortField; dir: SortDir }) {
-  if (field !== currentField) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
+  if (field !== currentField) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />;
   return dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+}
+
+function HeaderCell({
+  children,
+  field,
+  sortField,
+  sortDir,
+  onSort,
+  className = "",
+}: {
+  children: React.ReactNode;
+  field?: SortField;
+  sortField: SortField;
+  sortDir: SortDir;
+  onSort: (f: SortField) => void;
+  className?: string;
+}) {
+  return (
+    <TableHead
+      className={`${field ? "cursor-pointer select-none" : ""} ${className}`}
+      onClick={field ? () => onSort(field) : undefined}
+    >
+      <div className={`flex items-center gap-1.5 text-[11px] tracking-wide font-medium text-muted-foreground ${className.includes("justify-center") ? "justify-center" : className.includes("justify-end") ? "justify-end" : ""}`}>
+        {children}
+        {field && <SortIcon field={field} currentField={sortField} dir={sortDir} />}
+      </div>
+    </TableHead>
+  );
 }
 
 export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGuest, floorPlanEnabled }: CrmGuestTableProps) {
@@ -83,48 +108,33 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
   return (
     <Table>
       <TableHeader>
-        <TableRow className="hover:bg-transparent border-border/50">
-          <TableHead className="cursor-pointer select-none min-w-[160px]" onClick={() => onSort("guest_name")}>
-            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              {t.guest}
-              <SortIcon field="guest_name" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
-          <TableHead className="cursor-pointer select-none text-center w-20" onClick={() => onSort("total_visits")}>
-            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              {t.visits}
-              <SortIcon field="total_visits" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
-          <TableHead className="cursor-pointer select-none min-w-[100px]" onClick={() => onSort("last_visit")}>
-            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              {t.lastVisit}
-              <SortIcon field="last_visit" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
-          <TableHead className="cursor-pointer select-none text-right w-24" onClick={() => onSort("total_spend_cents")}>
-            <div className="flex items-center justify-end gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              {t.spend}
-              <SortIcon field="total_spend_cents" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
-          <TableHead className="cursor-pointer select-none text-center w-20" onClick={() => onSort("total_no_shows")}>
-            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              {t.noShows}
-              <SortIcon field="total_no_shows" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
+        <TableRow className="hover:bg-transparent border-border/40">
+          <HeaderCell field="guest_name" sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[180px]">
+            {t.guest}
+          </HeaderCell>
+          <HeaderCell field="total_visits" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-center w-20 justify-center">
+            {t.visits}
+          </HeaderCell>
+          <HeaderCell field="last_visit" sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[100px]">
+            {t.lastVisit}
+          </HeaderCell>
+          <HeaderCell field="total_spend_cents" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-right w-24 justify-end">
+            {t.spend}
+          </HeaderCell>
+          <HeaderCell field="total_no_shows" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-center w-20 justify-center">
+            {t.noShows}
+          </HeaderCell>
           {floorPlanEnabled && (
-            <TableHead className="min-w-[80px] text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.table}</TableHead>
+            <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[80px]">
+              {t.table}
+            </HeaderCell>
           )}
-          <TableHead className="min-w-[120px] text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.tags}</TableHead>
-          <TableHead className="w-24 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.loyalty}</TableHead>
-          <TableHead className="cursor-pointer select-none text-center w-16" onClick={() => onSort("internal_rating")}>
-            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-              <Star className="h-3 w-3" />
-              <SortIcon field="internal_rating" currentField={sortField} dir={sortDir} />
-            </div>
-          </TableHead>
+          <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[120px]">
+            {t.tags}
+          </HeaderCell>
+          <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="w-24">
+            {t.loyalty}
+          </HeaderCell>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -144,6 +154,8 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
             .slice(0, 2)
             .toUpperCase();
 
+          const isGhost = guest.profile_type === "ghost";
+
           return (
             <TableRow
               key={guest.id}
@@ -153,26 +165,36 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
               {/* Guest name */}
               <TableCell className="py-2.5">
                 <div className="flex items-center gap-2.5">
-                  <Avatar className="h-8 w-8 flex-shrink-0 ring-1 ring-border/50">
-                    <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
-                      {initials}
+                  <Avatar className={`h-8 w-8 flex-shrink-0 ring-1 ${isGhost ? "ring-muted-foreground/30" : "ring-primary/30"}`}>
+                    <AvatarFallback className={`text-[10px] font-medium ${isGhost ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
+                      {isGhost ? <Ghost className="h-3.5 w-3.5" /> : initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-foreground truncate">{guest.guest_name}</span>
-                      {guest.profile_type === "ghost" && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
-                          {t.ghost}
+                      {loyaltyLabel && loyaltyVariant && (
+                        <span className={`hidden sm:inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
+                          {loyaltyLabel}
                         </span>
                       )}
                       {guest.notes_count > 0 && (
-                        <MessageSquare className="h-3 w-3 text-primary flex-shrink-0" />
+                        <MessageSquare className="h-3 w-3 text-primary/60 flex-shrink-0" />
                       )}
                     </div>
-                    {guest.phone && guest.profile_type !== "ghost" && (
-                      <p className="text-[10px] text-muted-foreground truncate">{guest.phone}</p>
-                    )}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {isGhost && (
+                        <span className="text-[9px] text-muted-foreground/70 italic">
+                          {t.ghost}
+                        </span>
+                      )}
+                      {!isGhost && guest.phone && (
+                        <span className="text-[10px] text-muted-foreground truncate">{guest.phone}</span>
+                      )}
+                      {!isGhost && guest.email && !guest.phone && (
+                        <span className="text-[10px] text-muted-foreground truncate">{guest.email}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </TableCell>
@@ -239,24 +261,20 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
                 </div>
               </TableCell>
 
-              {/* Loyalty */}
-              <TableCell className="py-2.5">
+              {/* Loyalty (mobile-visible duplicate) */}
+              <TableCell className="py-2.5 sm:hidden">
                 {loyaltyLabel && loyaltyVariant && (
                   <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
                     {loyaltyLabel}
                   </span>
                 )}
               </TableCell>
-
-              {/* Rating */}
-              <TableCell className="text-center py-2.5">
-                {guest.internal_rating ? (
-                  <div className="flex items-center justify-center gap-0.5">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs font-medium">{guest.internal_rating}</span>
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground/40">—</span>
+              {/* Loyalty (desktop — hidden since it's inline with name) */}
+              <TableCell className="py-2.5 hidden sm:table-cell">
+                {loyaltyLabel && loyaltyVariant && (
+                  <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
+                    {loyaltyLabel}
+                  </span>
                 )}
               </TableCell>
             </TableRow>
