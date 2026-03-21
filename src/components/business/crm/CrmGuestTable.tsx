@@ -55,13 +55,20 @@ const translations = {
   },
 };
 
-function getLoyaltyLevel(visits: number, spendCents: number): { label: string; emoji: string; color: string } | null {
-  if (visits >= 20 && spendCents >= 100000) return { label: "Platinum", emoji: "💎", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" };
-  if (visits >= 10 && spendCents >= 50000) return { label: "Gold", emoji: "🥇", color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300" };
-  if (visits >= 5 && spendCents >= 20000) return { label: "Silver", emoji: "🥈", color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" };
-  if (visits >= 3) return { label: "Bronze", emoji: "🥉", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" };
+function getLoyaltyLevel(visits: number, spendCents: number): { label: string; emoji: string; variant: "platinum" | "gold" | "silver" | "bronze" } | null {
+  if (visits >= 20 && spendCents >= 100000) return { label: "Platinum", emoji: "💎", variant: "platinum" };
+  if (visits >= 10 && spendCents >= 50000) return { label: "Gold", emoji: "🥇", variant: "gold" };
+  if (visits >= 5 && spendCents >= 20000) return { label: "Silver", emoji: "🥈", variant: "silver" };
+  if (visits >= 3) return { label: "Bronze", emoji: "🥉", variant: "bronze" };
   return null;
 }
+
+const loyaltyStyles = {
+  platinum: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  gold: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  silver: "bg-slate-400/15 text-slate-300 border-slate-400/30",
+  bronze: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+};
 
 function SortIcon({ field, currentField, dir }: { field: SortField; currentField: SortField; dir: SortDir }) {
   if (field !== currentField) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
@@ -76,44 +83,44 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
   return (
     <Table>
       <TableHeader>
-        <TableRow className="hover:bg-transparent">
+        <TableRow className="hover:bg-transparent border-border/50">
           <TableHead className="cursor-pointer select-none min-w-[160px]" onClick={() => onSort("guest_name")}>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               {t.guest}
               <SortIcon field="guest_name" currentField={sortField} dir={sortDir} />
             </div>
           </TableHead>
           <TableHead className="cursor-pointer select-none text-center w-20" onClick={() => onSort("total_visits")}>
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               {t.visits}
               <SortIcon field="total_visits" currentField={sortField} dir={sortDir} />
             </div>
           </TableHead>
           <TableHead className="cursor-pointer select-none min-w-[100px]" onClick={() => onSort("last_visit")}>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               {t.lastVisit}
               <SortIcon field="last_visit" currentField={sortField} dir={sortDir} />
             </div>
           </TableHead>
           <TableHead className="cursor-pointer select-none text-right w-24" onClick={() => onSort("total_spend_cents")}>
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               {t.spend}
               <SortIcon field="total_spend_cents" currentField={sortField} dir={sortDir} />
             </div>
           </TableHead>
           <TableHead className="cursor-pointer select-none text-center w-20" onClick={() => onSort("total_no_shows")}>
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               {t.noShows}
               <SortIcon field="total_no_shows" currentField={sortField} dir={sortDir} />
             </div>
           </TableHead>
           {floorPlanEnabled && (
-            <TableHead className="min-w-[80px]">{t.table}</TableHead>
+            <TableHead className="min-w-[80px] text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.table}</TableHead>
           )}
-          <TableHead className="min-w-[120px]">{t.tags}</TableHead>
-          <TableHead className="w-24">{t.loyalty}</TableHead>
+          <TableHead className="min-w-[120px] text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.tags}</TableHead>
+          <TableHead className="w-24 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{t.loyalty}</TableHead>
           <TableHead className="cursor-pointer select-none text-center w-16" onClick={() => onSort("internal_rating")}>
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
               <Star className="h-3 w-3" />
               <SortIcon field="internal_rating" currentField={sortField} dir={sortDir} />
             </div>
@@ -123,6 +130,13 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
       <TableBody>
         {guests.map((guest) => {
           const loyalty = getLoyaltyLevel(guest.total_visits, guest.total_spend_cents);
+          const loyaltyVariant = guest.vip_level_override
+            ? (guest.vip_level_override as "platinum" | "gold" | "silver" | "bronze")
+            : loyalty?.variant;
+          const loyaltyLabel = guest.vip_level_override
+            ? `${guest.vip_level_override === "platinum" ? "💎" : guest.vip_level_override === "gold" ? "🥇" : guest.vip_level_override === "silver" ? "🥈" : "🥉"} ${guest.vip_level_override}`
+            : loyalty ? `${loyalty.emoji} ${loyalty.label}` : null;
+
           const initials = guest.guest_name
             .split(" ")
             .map((n) => n[0])
@@ -133,13 +147,13 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
           return (
             <TableRow
               key={guest.id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              className="cursor-pointer hover:bg-accent/50 transition-colors border-border/30"
               onClick={() => onSelectGuest(guest)}
             >
               {/* Guest name */}
-              <TableCell>
+              <TableCell className="py-2.5">
                 <div className="flex items-center gap-2.5">
-                  <Avatar className="h-8 w-8 flex-shrink-0">
+                  <Avatar className="h-8 w-8 flex-shrink-0 ring-1 ring-border/50">
                     <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
                       {initials}
                     </AvatarFallback>
@@ -148,12 +162,12 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium text-foreground truncate">{guest.guest_name}</span>
                       {guest.profile_type === "ghost" && (
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-muted-foreground">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
                           {t.ghost}
-                        </Badge>
+                        </span>
                       )}
                       {guest.notes_count > 0 && (
-                        <MessageSquare className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                        <MessageSquare className="h-3 w-3 text-primary flex-shrink-0" />
                       )}
                     </div>
                     {guest.phone && (
@@ -164,12 +178,12 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
               </TableCell>
 
               {/* Visits */}
-              <TableCell className="text-center">
+              <TableCell className="text-center py-2.5">
                 <span className="text-sm font-semibold text-foreground">{guest.total_visits}</span>
               </TableCell>
 
               {/* Last visit */}
-              <TableCell>
+              <TableCell className="py-2.5">
                 <span className="text-xs text-muted-foreground">
                   {guest.last_visit
                     ? formatDistanceToNow(new Date(guest.last_visit), { addSuffix: true, locale })
@@ -178,14 +192,14 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
               </TableCell>
 
               {/* Spend */}
-              <TableCell className="text-right">
+              <TableCell className="text-right py-2.5">
                 <span className="text-sm font-medium text-foreground">
                   €{(guest.total_spend_cents / 100).toFixed(0)}
                 </span>
               </TableCell>
 
               {/* No-shows */}
-              <TableCell className="text-center">
+              <TableCell className="text-center py-2.5">
                 <span className={`text-sm ${guest.total_no_shows >= 2 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {guest.total_no_shows}
                 </span>
@@ -193,11 +207,11 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
 
               {/* Favorite table */}
               {floorPlanEnabled && (
-                <TableCell>
+                <TableCell className="py-2.5">
                   {guest.favorite_table ? (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted text-foreground font-medium">
                       {guest.favorite_table}
-                    </Badge>
+                    </span>
                   ) : (
                     <span className="text-xs text-muted-foreground/50">—</span>
                   )}
@@ -205,42 +219,37 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
               )}
 
               {/* Tags */}
-              <TableCell>
+              <TableCell className="py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {guest.tags.slice(0, 3).map((tag) => (
-                    <Badge
+                    <span
                       key={tag.id}
-                      className="text-[9px] px-1.5 py-0 h-4 font-normal"
-                      style={{ backgroundColor: tag.color + "20", color: tag.color, borderColor: tag.color + "40" }}
-                      variant="outline"
+                      className="inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-medium border"
+                      style={{ backgroundColor: tag.color + "15", color: tag.color, borderColor: tag.color + "30" }}
                     >
                       {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
                       {tag.name}
-                    </Badge>
+                    </span>
                   ))}
                   {guest.tags.length > 3 && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-muted-foreground">
+                    <span className="text-[9px] px-1 py-0.5 rounded-full text-muted-foreground bg-muted">
                       +{guest.tags.length - 3}
-                    </Badge>
+                    </span>
                   )}
                 </div>
               </TableCell>
 
               {/* Loyalty */}
-              <TableCell>
-                {(guest.vip_level_override || loyalty) && (
-                  <Badge className={`text-[10px] px-1.5 py-0 h-5 font-normal ${loyalty?.color || "bg-primary/10 text-primary"}`} variant="outline">
-                    {guest.vip_level_override
-                      ? `${guest.vip_level_override === "platinum" ? "💎" : guest.vip_level_override === "gold" ? "🥇" : guest.vip_level_override === "silver" ? "🥈" : "🥉"} ${guest.vip_level_override}`
-                      : loyalty
-                      ? `${loyalty.emoji} ${loyalty.label}`
-                      : ""}
-                  </Badge>
+              <TableCell className="py-2.5">
+                {loyaltyLabel && loyaltyVariant && (
+                  <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
+                    {loyaltyLabel}
+                  </span>
                 )}
               </TableCell>
 
               {/* Rating */}
-              <TableCell className="text-center">
+              <TableCell className="text-center py-2.5">
                 {guest.internal_rating ? (
                   <div className="flex items-center justify-center gap-0.5">
                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
