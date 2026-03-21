@@ -163,7 +163,7 @@ export const OverviewTab = ({
   }
   return <div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         {metrics.map(({
         key,
         icon: Icon,
