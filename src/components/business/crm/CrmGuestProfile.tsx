@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,12 +114,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
-  const [businessName, setBusinessName] = useState("");
-
-  useEffect(() => {
-    supabase.from("businesses").select("name").eq("id", businessId).single()
-      .then(({ data }) => { if (data) setBusinessName(data.name); });
-  }, [businessId]);
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
@@ -381,9 +375,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           open={showMessageDialog}
           onOpenChange={setShowMessageDialog}
           guestName={guest.guest_name}
-          guestUserId={guest.user_id}
+          guestId={guest.id}
           businessId={businessId}
-          businessName={businessName}
         />
       )}
     </div>
