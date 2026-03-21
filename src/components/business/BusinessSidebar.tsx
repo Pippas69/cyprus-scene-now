@@ -60,7 +60,7 @@ interface BusinessSidebarProps {
   planSlug?: string;
 }
 
-export function BusinessSidebar({ businessCategories, floorPlanEnabled }: BusinessSidebarProps) {
+export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug }: BusinessSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
