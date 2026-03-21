@@ -15,7 +15,6 @@ interface CrmDashboardProps {
   floorPlanEnabled?: boolean;
 }
 
-type SortField = "guest_name" | "total_visits" | "last_visit" | "total_spend_cents" | "total_no_shows" | "internal_rating";
 type SortDir = "asc" | "desc";
 type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
 
