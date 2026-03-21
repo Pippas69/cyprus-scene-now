@@ -75,136 +75,242 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const totalViews = (profileViews || 0) + offerViews + eventViews;
 
       // =====================================================
-      // 2. CUSTOMERS (unique users who CHECKED IN at venue)
-      // Only count users with verified visits (QR scan):
-      // - Offer redemptions (redeemed_at IS NOT NULL)
-      // - Ticket check-ins (checked_in_at IS NOT NULL)
-      // - Reservation check-ins (checked_in_at IS NOT NULL)
+      // 2. CUSTOMERS + RETURNING (Unified CRM definition)
+      // Customer = unique person with a QR from any source:
+      // - Event tickets
+      // - Reservations (profile / offer / event)
+      // - Offer claims (walk-in or standalone)
       // - Student discount redemptions
+      // Returning = registered users with 2+ actions (not limited to check-ins)
       // =====================================================
-      
-      // A. Users from offer redemptions (verified at venue)
-      let offerCheckinUsers: { user_id: string }[] = [];
-      if (discountIds.length > 0) {
-        const { data } = await supabase
-          .from("offer_purchases")
-          .select("user_id")
-          .in("discount_id", discountIds)
-          .not("redeemed_at", "is", null)
-          .gte("redeemed_at", startDate.toISOString())
-          .lte("redeemed_at", endDate.toISOString());
-        offerCheckinUsers = data || [];
-      }
 
-      // B. Users from ticket check-ins
-      // Each ticket = a different person, use ticket ID as unique identifier
-      let ticketCheckinUsers: { user_id: string }[] = [];
+      const customerKeys = new Set<string>();
+      const registeredActionCounts: Record<string, number> = {};
+      const seenRegisteredActions = new Set<string>();
+
+      const normalizeName = (value: string | null | undefined) => {
+        if (!value) return null;
+        const normalized = value.trim().toLowerCase().replace(/\s+/g, " ");
+        return normalized.length > 0 ? normalized : null;
+      };
+
+      const buildCustomerKey = ({
+        guestName,
+        userId,
+        fallback,
+      }: {
+        guestName?: string | null;
+        userId?: string | null;
+        fallback: string;
+      }) => {
+        const normalizedName = normalizeName(guestName);
+        if (normalizedName) return `ghost:${normalizedName}`;
+        if (userId) return `user:${userId}`;
+        return fallback;
+      };
+
+      const countRegisteredAction = (userId: string | null | undefined, actionKey: string) => {
+        if (!userId) return;
+        const dedupeKey = `${userId}:${actionKey}`;
+        if (seenRegisteredActions.has(dedupeKey)) return;
+        seenRegisteredActions.add(dedupeKey);
+        registeredActionCounts[userId] = (registeredActionCounts[userId] || 0) + 1;
+      };
+
+      // A) Tickets sold (event QR holders)
+      let ticketsData: { id: string; user_id: string; guest_name: string | null; order_id: string }[] = [];
       if (eventIds.length > 0) {
         const { data } = await supabase
           .from("tickets")
-          .select("id, user_id")
+          .select("id, user_id, guest_name, order_id")
           .in("event_id", eventIds)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", startDate.toISOString())
-          .lte("checked_in_at", endDate.toISOString());
-        // Use ticket ID as unique customer identifier to avoid counting
-        // multiple tickets from same order as same person
-        ticketCheckinUsers = (data || []).map((t: any) => ({ user_id: `ticket_${t.id}` }));
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+
+        ticketsData = (data || []) as { id: string; user_id: string; guest_name: string | null; order_id: string }[];
+
+        ticketsData.forEach((ticket) => {
+          customerKeys.add(
+            buildCustomerKey({
+              guestName: ticket.guest_name,
+              userId: ticket.user_id,
+              fallback: `ticket:${ticket.id}`,
+            })
+          );
+          countRegisteredAction(ticket.user_id, `ticket_order:${ticket.order_id}`);
+        });
       }
 
-      // C. Users from direct reservation check-ins (profile reservations)
-      const { data: directReservationCheckinUsers } = await supabase
+      // B) Reservations (profile / offer / event), excluding synthetic ticket-linked rows
+      const { data: directReservations } = await supabase
         .from("reservations")
-        .select("user_id")
+        .select("id, user_id, reservation_name")
         .eq("business_id", businessId)
         .is("event_id", null)
-        .not("checked_in_at", "is", null)
-        .gte("checked_in_at", startDate.toISOString())
-        .lte("checked_in_at", endDate.toISOString());
+        .eq("status", "accepted")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
 
-      // D. Users from event reservation check-ins
-      let eventReservationCheckinUsers: { user_id: string | null }[] = [];
+      let eventReservations: { id: string; user_id: string; reservation_name: string }[] = [];
       if (eventIds.length > 0) {
         const { data } = await supabase
           .from("reservations")
-          .select("user_id")
+          .select("id, user_id, reservation_name")
           .in("event_id", eventIds)
-          .not("checked_in_at", "is", null)
-          .neq("auto_created_from_tickets", true)
-          .gte("checked_in_at", startDate.toISOString())
-          .lte("checked_in_at", endDate.toISOString());
-        eventReservationCheckinUsers = data || [];
+          .eq("status", "accepted")
+          .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+
+        eventReservations = (data || []) as { id: string; user_id: string; reservation_name: string }[];
       }
 
-      // E. Users from student discount redemptions
-      // IMPORTANT: 1 redemption = 1 verified check-in.
-      // NOTE: scanned_by is the staff user who scans (NOT the student), so we always resolve via student_verifications.
-      const { data: studentDiscountData } = await supabase
+      const reservations = [
+        ...((directReservations || []) as { id: string; user_id: string; reservation_name: string }[]),
+        ...eventReservations,
+      ];
+
+      const reservationIds = reservations.map((r) => r.id);
+      const reservationGuestsByReservation = new Map<string, { id: string; guest_name: string | null }[]>();
+
+      if (reservationIds.length > 0) {
+        const { data: reservationGuests } = await supabase
+          .from("reservation_guests")
+          .select("id, reservation_id, guest_name")
+          .in("reservation_id", reservationIds);
+
+        (reservationGuests || []).forEach((guest) => {
+          const existing = reservationGuestsByReservation.get(guest.reservation_id) || [];
+          existing.push({ id: guest.id, guest_name: guest.guest_name });
+          reservationGuestsByReservation.set(guest.reservation_id, existing);
+        });
+      }
+
+      reservations.forEach((reservation) => {
+        const guests = reservationGuestsByReservation.get(reservation.id) || [];
+
+        if (guests.length > 0) {
+          guests.forEach((guest) => {
+            customerKeys.add(
+              buildCustomerKey({
+                guestName: guest.guest_name,
+                userId: null,
+                fallback: `reservation_guest:${guest.id}`,
+              })
+            );
+          });
+        } else {
+          customerKeys.add(
+            buildCustomerKey({
+              guestName: reservation.reservation_name,
+              userId: reservation.user_id,
+              fallback: `reservation:${reservation.id}`,
+            })
+          );
+        }
+
+        countRegisteredAction(reservation.user_id, `reservation:${reservation.id}`);
+      });
+
+      // C) Offer claims (standalone / walk-in), avoid double-counting offer-linked reservations
+      const { data: offerPurchases } = await supabase
+        .from("offer_purchases")
+        .select("id, user_id, reservation_id, claim_type")
+        .eq("business_id", businessId)
+        .in("status", ["paid", "redeemed"])
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      const standaloneOfferPurchases = (offerPurchases || []).filter(
+        (purchase) => !purchase.reservation_id || purchase.claim_type === "walk_in"
+      );
+
+      const offerPurchaseIds = standaloneOfferPurchases.map((purchase) => purchase.id);
+      const offerGuestsByPurchase = new Map<string, { id: string; guest_name: string | null }[]>();
+
+      if (offerPurchaseIds.length > 0) {
+        const { data: offerGuests } = await supabase
+          .from("offer_purchase_guests")
+          .select("id, purchase_id, guest_name")
+          .in("purchase_id", offerPurchaseIds);
+
+        (offerGuests || []).forEach((guest) => {
+          const existing = offerGuestsByPurchase.get(guest.purchase_id) || [];
+          existing.push({ id: guest.id, guest_name: guest.guest_name });
+          offerGuestsByPurchase.set(guest.purchase_id, existing);
+        });
+      }
+
+      standaloneOfferPurchases.forEach((purchase) => {
+        const guests = offerGuestsByPurchase.get(purchase.id) || [];
+
+        if (guests.length > 0) {
+          guests.forEach((guest) => {
+            customerKeys.add(
+              buildCustomerKey({
+                guestName: guest.guest_name,
+                userId: null,
+                fallback: `offer_guest:${guest.id}`,
+              })
+            );
+          });
+        } else {
+          customerKeys.add(
+            buildCustomerKey({
+              userId: purchase.user_id,
+              fallback: `offer_purchase:${purchase.id}`,
+            })
+          );
+        }
+
+        countRegisteredAction(purchase.user_id, `offer_purchase:${purchase.id}`);
+      });
+
+      // D) Student discount redemptions
+      const { data: studentRedemptions } = await supabase
         .from("student_discount_redemptions")
-        .select("student_verification_id")
+        .select("id, student_verification_id")
         .eq("business_id", businessId)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
-      // Build a list of userIds PER redemption (keeps duplicates for repeat customers)
-      let studentDiscountUserIdsPerRedemption: string[] = [];
-      if (studentDiscountData && studentDiscountData.length > 0) {
-        const verificationIds = studentDiscountData
-          .map((s) => (s as { student_verification_id: string | null }).student_verification_id)
-          .filter(Boolean) as string[];
+      const studentVerificationIds = Array.from(
+        new Set(
+          (studentRedemptions || [])
+            .map((redemption) => redemption.student_verification_id)
+            .filter(Boolean)
+        )
+      );
 
-        const uniqueVerificationIds = Array.from(new Set(verificationIds));
-        if (uniqueVerificationIds.length > 0) {
-          const { data: verifications } = await supabase
-            .from("student_verifications")
-            .select("id, user_id")
-            .in("id", uniqueVerificationIds);
+      const studentUserByVerification = new Map<string, string>();
+      if (studentVerificationIds.length > 0) {
+        const { data: studentVerifications } = await supabase
+          .from("student_verifications")
+          .select("id, user_id")
+          .in("id", studentVerificationIds);
 
-          const mapByVerificationId = new Map<string, string>();
-          (verifications || []).forEach((v) => {
-            if (v.id && v.user_id) mapByVerificationId.set(v.id, v.user_id);
-          });
-
-          // Preserve multiplicity: one entry per redemption
-          studentDiscountUserIdsPerRedemption = verificationIds
-            .map((verificationId) => mapByVerificationId.get(verificationId))
-            .filter(Boolean) as string[];
-        }
+        (studentVerifications || []).forEach((verification) => {
+          if (verification.id && verification.user_id) {
+            studentUserByVerification.set(verification.id, verification.user_id);
+          }
+        });
       }
 
-      // Combine all unique customer user IDs (only verified check-ins)
-      const allCheckinUserIds = new Set([
-        ...(offerCheckinUsers?.map(o => o.user_id) || []),
-        ...(ticketCheckinUsers?.map(t => t.user_id) || []),
-        ...(directReservationCheckinUsers?.map(r => r.user_id) || []),
-        ...(eventReservationCheckinUsers?.map(r => r.user_id) || []),
-        ...studentDiscountUserIdsPerRedemption
-      ].filter(Boolean));
-      
-      const customersThruFomo = allCheckinUserIds.size;
+      (studentRedemptions || []).forEach((redemption) => {
+        const studentUserId = studentUserByVerification.get(redemption.student_verification_id);
 
-      // =====================================================
-      // 3. REPEAT CUSTOMERS (users with 2+ verified check-ins)
-      // =====================================================
-      const userCheckinCounts: Record<string, number> = {};
-      
-      offerCheckinUsers?.forEach(o => {
-        if (o.user_id) userCheckinCounts[o.user_id] = (userCheckinCounts[o.user_id] || 0) + 1;
+        customerKeys.add(
+          buildCustomerKey({
+            userId: studentUserId || null,
+            fallback: `student_redemption:${redemption.id}`,
+          })
+        );
+
+        countRegisteredAction(studentUserId || null, `student_redemption:${redemption.id}`);
       });
-      ticketCheckinUsers?.forEach(t => {
-        if (t.user_id) userCheckinCounts[t.user_id] = (userCheckinCounts[t.user_id] || 0) + 1;
-      });
-      directReservationCheckinUsers?.forEach(r => {
-        if (r.user_id) userCheckinCounts[r.user_id] = (userCheckinCounts[r.user_id] || 0) + 1;
-      });
-      eventReservationCheckinUsers?.forEach(r => {
-        if (r.user_id) userCheckinCounts[r.user_id] = (userCheckinCounts[r.user_id] || 0) + 1;
-      });
-      studentDiscountUserIdsPerRedemption.forEach(userId => {
-        userCheckinCounts[userId] = (userCheckinCounts[userId] || 0) + 1;
-      });
-      
-      const repeatCustomers = Object.values(userCheckinCounts).filter(c => c >= 2).length;
+
+      const customersThruFomo = customerKeys.size;
+      const repeatCustomers = Object.values(registeredActionCounts).filter((count) => count >= 2).length;
 
       // =====================================================
       // 4. BOOKINGS (all accepted reservations - 3 types)
