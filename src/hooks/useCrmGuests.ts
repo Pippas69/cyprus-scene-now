@@ -170,10 +170,11 @@ export function useCrmGuests(businessId: string | null) {
   });
 
   const updateGuestMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string } & Partial<CrmGuest>) => {
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, unknown>) => {
+      const { tags, notes_count, total_visits, total_spend_cents, total_no_shows, total_cancellations, first_visit, last_visit, avg_party_size, favorite_table, total_reservations, ...dbUpdates } = updates as Record<string, unknown>;
       const { data, error } = await supabase
         .from("crm_guests")
-        .update(updates)
+        .update(dbUpdates)
         .eq("id", id)
         .select()
         .single();
