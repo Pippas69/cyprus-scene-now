@@ -96,20 +96,20 @@ interface AudienceCardProps {
 const AudienceCard = ({ icon: Icon, title, explanation, details, children }: AudienceCardProps) => (
   <Dialog>
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1 pt-3 px-3 sm:px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-primary" />
-            <CardTitle className="text-base">{title}</CardTitle>
+            <Icon className="h-3.5 w-3.5 text-primary" />
+            <CardTitle className="text-sm">{title}</CardTitle>
           </div>
           <DialogTrigger asChild>
             <button className="p-1 hover:bg-muted rounded-full transition-colors">
-              <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
             </button>
           </DialogTrigger>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 pb-2 px-3 sm:px-4">
         {children}
       </CardContent>
     </Card>

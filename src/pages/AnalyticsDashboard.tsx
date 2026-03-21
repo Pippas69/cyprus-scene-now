@@ -90,28 +90,26 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
   return (
     <div className="px-3 sm:px-4 lg:container lg:mx-auto py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{t.title}</h1>
-        <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
-      </div>
-
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-xs">
-          <TabsTrigger value="overview" className="gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" />
-            {t.overview}
-          </TabsTrigger>
-          <TabsTrigger
-            value="crm"
-            className={`gap-1.5 ${!hasCrmAccess ? 'text-muted-foreground/60' : ''}`}
-            disabled={!hasCrmAccess}
-          >
-            {!hasCrmAccess && <Lock className="h-3 w-3 opacity-60" />}
-            <UserSearch className="h-3.5 w-3.5" />
-            {t.crm}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-3">
+          <TabsList className="grid grid-cols-2 w-auto min-w-[200px]">
+            <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+              <BarChart3 className="h-3.5 w-3.5" />
+              {t.overview}
+            </TabsTrigger>
+            <TabsTrigger
+              value="crm"
+              className={`gap-1.5 text-xs sm:text-sm ${!hasCrmAccess ? 'text-muted-foreground/60' : ''}`}
+              disabled={!hasCrmAccess}
+            >
+              {!hasCrmAccess && <Lock className="h-3 w-3 opacity-60" />}
+              {t.crm}
+            </TabsTrigger>
+          </TabsList>
+          <div className="ml-auto">
+            <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
+          </div>
+        </div>
 
         {/* Tab 1: Overview (KPIs + Performance Cards + Audience) */}
         <TabsContent value="overview" className="space-y-6 sm:space-y-8">

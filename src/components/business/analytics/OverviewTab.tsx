@@ -240,7 +240,7 @@ export const OverviewTab = ({
           </Dialog>)}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
+      
 
       {/* Upgrade prompt for free plan users */}
       {isFreePlan && <div className="p-2 md:p-3 lg:p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
