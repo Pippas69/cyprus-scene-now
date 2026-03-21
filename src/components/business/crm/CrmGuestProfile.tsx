@@ -70,6 +70,8 @@ const translations = {
     lastVisit: "last visit",
     addNote: "Add a note...",
     send: "Send",
+    sendMessage: "Send message",
+    noLinkedUser: "Cannot send message to ghost profile",
     noNotes: "No notes yet",
     alert: "Alert",
     pinned: "Pinned",
