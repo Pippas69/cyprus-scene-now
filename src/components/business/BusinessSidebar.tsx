@@ -89,6 +89,8 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
 
   // For bars/pubs/dining: Reservations → Events → Offers → Analytics
   // For clubs/events/performances: Events → Reservations → Analytics
+  const crmItem = planSlug === 'elite' ? [{ title: language === 'el' ? 'CRM' : 'CRM', url: "/dashboard-business/crm", icon: UserSearch }] : [];
+
   const contentItems = showOffers
     ? [
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
@@ -96,12 +98,14 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+        ...crmItem,
       ]
     : [
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+        ...crmItem,
       ];
 
   const businessItems = [
