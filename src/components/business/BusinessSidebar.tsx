@@ -89,7 +89,8 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
 
   // For bars/pubs/dining: Reservations → Events → Offers → Analytics
   // For clubs/events/performances: Events → Reservations → Analytics
-  const crmItem = planSlug === 'elite' ? [{ title: language === 'el' ? 'CRM' : 'CRM', url: "/dashboard-business/crm", icon: UserSearch }] : [];
+  // CRM is now integrated into the Insights & CRM page (analytics tab)
+  const crmItem: typeof contentItems = [];
 
   const contentItems = showOffers
     ? [
