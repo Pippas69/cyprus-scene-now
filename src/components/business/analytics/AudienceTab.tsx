@@ -177,15 +177,12 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
 
   if (!hasData) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
+      <div className="space-y-4">
+        <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.title}</h2>
         <Card>
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t.noData}</p>
+          <CardContent className="p-6 text-center">
+            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">{t.noData}</p>
           </CardContent>
         </Card>
       </div>
@@ -193,11 +190,8 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.title}</h2>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Gender */}
