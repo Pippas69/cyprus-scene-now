@@ -138,6 +138,7 @@ const DashboardBusiness = () => {
 
   // Onboarding tour
   const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);
+  const { data: subscriptionData } = useSubscriptionPlan(businessId);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Show onboarding tour for new businesses
