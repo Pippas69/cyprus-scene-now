@@ -16,6 +16,8 @@ import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
+
+interface CrmGuestProfileProps {
   guest: CrmGuest;
   businessId: string;
   onClose: () => void;
