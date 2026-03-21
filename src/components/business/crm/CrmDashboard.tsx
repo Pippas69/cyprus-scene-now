@@ -37,7 +37,7 @@ const translations = {
 export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  const { guests, isLoading, addGuest, refetch } = useCrmGuests(businessId);
+  const { guests, isLoading, addGuest, updateGuest, refetch } = useCrmGuests(businessId);
 
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
@@ -202,6 +202,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
               businessId={businessId}
               onClose={() => setSelectedGuest(null)}
               onUpdate={() => refetch()}
+              onUpdateGuest={updateGuest}
             />
           )}
         </SheetContent>

@@ -10,17 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   X, Star, MapPin, Phone, Mail, Cake, Instagram, Building2,
-  Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send,
+  Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
+import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
   businessId: string;
   onClose: () => void;
   onUpdate: () => void;
+  onUpdateGuest?: (data: { id: string } & Record<string, unknown>) => Promise<unknown>;
 }
 
 const translations = {
@@ -98,13 +100,14 @@ function getLoyaltyBadge(visits: number, spendCents: number, override?: string |
   return info ? { level, ...info } : null;
 }
 
-export function CrmGuestProfile({ guest, businessId, onClose, onUpdate }: CrmGuestProfileProps) {
+export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest }: CrmGuestProfileProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
   const [newNote, setNewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
@@ -160,9 +163,16 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate }: CrmGue
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {onUpdateGuest && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowEditDialog(true)}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Quick stats */}
@@ -330,6 +340,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate }: CrmGue
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Dialog */}
+      {onUpdateGuest && (
+        <CrmGuestEditDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          guest={guest}
+          onUpdate={onUpdateGuest}
+          onSuccess={onUpdate}
+        />
+      )}
     </div>
   );
 }
