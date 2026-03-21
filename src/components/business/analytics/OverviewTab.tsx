@@ -194,7 +194,7 @@ export const OverviewTab = ({
                         <div className="p-1.5 bg-primary/10 rounded-lg my-1">
                           <Icon className="h-4 w-4 text-primary" />
                         </div>
-                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                         <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                       </div>
                       {/* Desktop: Original horizontal layout */}
                       <div className="hidden lg:flex items-start justify-between">
