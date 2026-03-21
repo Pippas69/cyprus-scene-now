@@ -5990,6 +5990,10 @@ export type Database = {
         Args: { p_staff_user_id: string; p_ticket_id: string }
         Returns: Json
       }
+      backfill_crm_guests: {
+        Args: { p_business_id?: string }
+        Returns: undefined
+      }
       book_slot_atomically: {
         Args: {
           p_business_id: string
