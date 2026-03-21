@@ -16,7 +16,7 @@ const translations = {
     tapForDetails: "Πάτα για λεπτομέρειες",
     dataSource: "Πηγή δεδομένων",
     metrics: {
-      views: "Συνολικές Προβολές",
+      views: "Προβολές",
       viewsExplanation: "Προβολές προφίλ + προσφορών + εκδηλώσεων",
       viewsDetails: "Σύνολο όλων των προβολών: σελίδα προφίλ, σελίδες προσφορών και σελίδες εκδηλώσεων. Όσο πιο υψηλές, τόσο μεγαλύτερη η συνολική ορατότητά σου.",
       viewsSource: "Προφίλ, προσφορές, εκδηλώσεις",
@@ -51,7 +51,7 @@ const translations = {
     tapForDetails: "Tap for details",
     dataSource: "Data source",
     metrics: {
-      views: "Total Views",
+      views: "Views",
       viewsExplanation: "Profile + offers + events views",
       viewsDetails: "Sum of all views: profile page, offer pages, and event pages. Higher numbers mean greater overall visibility.",
       viewsSource: "Profile, offers, events",
@@ -176,40 +176,27 @@ export const OverviewTab = ({
             <DialogTrigger asChild>
               <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                 <CardContent className="p-4">
-                  {/* First card (views) - horizontal layout */}
-                  {key === "views" ? <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">{label}</p>
-                        <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
+                  {/* Mobile/Tablet: Centered vertical layout */}
+                  <div className="flex flex-col items-center text-center lg:hidden">
+                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{label}</p>
+                    <div className="p-1.5 bg-primary/10 rounded-lg my-1">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
+                  </div>
+                  {/* Desktop: Horizontal layout */}
+                  <div className="hidden lg:flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">{label}</p>
+                      <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Icon className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        
-                        <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div> : (/* Other cards (customers, recurring, etc.) - centered layout for tablet/mobile, horizontal for desktop */
-              <>
-                      {/* Mobile/Tablet: Centered vertical layout - label, icon, then number */}
-                      <div className="flex flex-col items-center text-center lg:hidden">
-                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{label}</p>
-                        <div className="p-1.5 bg-primary/10 rounded-lg my-1">
-                          <Icon className="h-4 w-4 text-primary" />
-                        </div>
-                         <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
-                      </div>
-                      {/* Desktop: Original horizontal layout */}
-                      <div className="hidden lg:flex items-start justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">{label}</p>
-                          <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <Icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </div>
-                    </>)}
+                      <Info className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </DialogTrigger>
