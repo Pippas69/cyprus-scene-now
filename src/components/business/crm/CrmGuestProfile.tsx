@@ -41,6 +41,8 @@ const translations = {
     lastVisit: "τελευταία",
     addNote: "Προσθήκη σημείωσης...",
     send: "Αποστολή",
+    sendMessage: "Στείλε μήνυμα",
+    noLinkedUser: "Δεν μπορεί να σταλεί μήνυμα σε ghost profile",
     noNotes: "Δεν υπάρχουν σημειώσεις",
     alert: "Ειδοποίηση",
     pinned: "Καρφιτσωμένο",
