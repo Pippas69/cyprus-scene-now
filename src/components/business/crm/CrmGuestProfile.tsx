@@ -375,9 +375,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           open={showMessageDialog}
           onOpenChange={setShowMessageDialog}
           guestName={guest.guest_name}
-          guestUserId={guest.user_id}
+          guestId={guest.id}
           businessId={businessId}
-          businessName={businessName}
         />
       )}
     </div>
