@@ -15,7 +15,7 @@ import {
 const translations = {
   el: {
     title: "Κοινό που επισκέφθηκε το μαγαζί",
-    subtitle: "Δημογραφικά από επαληθευμένες επισκέψεις (QR scan / check-in).",
+    subtitle: "",
     genderTitle: "Φύλο",
     ageTitle: "Ηλικία",
     regionTitle: "Πόλη",
