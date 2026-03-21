@@ -46,10 +46,10 @@ const translations = {
   },
 };
 
-function getLoyaltyLevel(visits: number, spendCents: number): { label: string; emoji: string; variant: "platinum" | "gold" | "silver" | "bronze" } | null {
-  if (visits >= 20 && spendCents >= 100000) return { label: "Platinum", emoji: "💎", variant: "platinum" };
-  if (visits >= 10 && spendCents >= 50000) return { label: "Gold", emoji: "🥇", variant: "gold" };
-  if (visits >= 5 && spendCents >= 20000) return { label: "Silver", emoji: "🥈", variant: "silver" };
+function getLoyaltyLevel(visits: number): { label: string; emoji: string; variant: "platinum" | "gold" | "silver" | "bronze" } | null {
+  if (visits >= 20) return { label: "Platinum", emoji: "💎", variant: "platinum" };
+  if (visits >= 10) return { label: "Gold", emoji: "🥇", variant: "gold" };
+  if (visits >= 5) return { label: "Silver", emoji: "🥈", variant: "silver" };
   if (visits >= 3) return { label: "Bronze", emoji: "🥉", variant: "bronze" };
   return null;
 }
@@ -70,7 +70,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent border-border/40">
-          <TableHead className="min-w-[180px]">
+          <TableHead className="min-w-[220px]">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.guest}</span>
           </TableHead>
           <TableHead className="text-center w-20">
@@ -100,13 +100,19 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
       </TableHeader>
       <TableBody>
         {guests.map((guest) => {
-          const loyalty = getLoyaltyLevel(guest.total_visits, guest.total_spend_cents);
+          const loyalty = getLoyaltyLevel(guest.total_visits);
           const loyaltyVariant = guest.vip_level_override
             ? (guest.vip_level_override as "platinum" | "gold" | "silver" | "bronze")
             : loyalty?.variant;
-          const loyaltyLabel = guest.vip_level_override
-            ? `${guest.vip_level_override === "platinum" ? "💎" : guest.vip_level_override === "gold" ? "🥇" : guest.vip_level_override === "silver" ? "🥈" : "🥉"} ${guest.vip_level_override}`
-            : loyalty ? `${loyalty.emoji} ${loyalty.label}` : null;
+          const loyaltyEmoji = guest.vip_level_override
+            ? guest.vip_level_override === "platinum"
+              ? "💎"
+              : guest.vip_level_override === "gold"
+                ? "🥇"
+                : guest.vip_level_override === "silver"
+                  ? "🥈"
+                  : "🥉"
+            : loyalty?.emoji;
 
           const initials = guest.guest_name
             .split(" ")
@@ -123,7 +129,6 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
               className="cursor-pointer hover:bg-accent/50 transition-colors border-border/30"
               onClick={() => onSelectGuest(guest)}
             >
-              {/* Guest name */}
               <TableCell className="py-2.5">
                 <div className="flex items-center gap-2.5">
                   <Avatar className={`h-8 w-8 flex-shrink-0 ring-1 ${isGhost ? "ring-muted-foreground/30" : "ring-primary/30"}`}>
@@ -131,12 +136,15 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                       {isGhost ? <Ghost className="h-3.5 w-3.5" /> : initials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-foreground truncate">{guest.guest_name}</span>
-                      {loyaltyLabel && loyaltyVariant && (
-                        <span className={`hidden sm:inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
-                          {loyaltyLabel}
+                      <span className="text-sm font-medium text-foreground whitespace-normal break-words">{guest.guest_name}</span>
+                      {loyaltyEmoji && loyaltyVariant && (
+                        <span
+                          className={`hidden sm:inline-flex items-center justify-center text-[11px] px-1.5 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}
+                          title={guest.vip_level_override || loyalty?.label || undefined}
+                        >
+                          {loyaltyEmoji}
                         </span>
                       )}
                       {guest.notes_count > 0 && (
@@ -160,12 +168,10 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                 </div>
               </TableCell>
 
-              {/* Visits */}
               <TableCell className="text-center py-2.5">
                 <span className="text-sm font-semibold text-foreground">{guest.total_visits}</span>
               </TableCell>
 
-              {/* Last visit */}
               <TableCell className="py-2.5">
                 <span className="text-xs text-muted-foreground">
                   {guest.last_visit
@@ -174,21 +180,18 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                 </span>
               </TableCell>
 
-              {/* Spend */}
               <TableCell className="text-right py-2.5">
                 <span className="text-sm font-medium text-foreground">
                   €{(guest.total_spend_cents / 100).toFixed(0)}
                 </span>
               </TableCell>
 
-              {/* No-shows */}
               <TableCell className="text-center py-2.5">
                 <span className={`text-sm ${guest.total_no_shows >= 2 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {guest.total_no_shows}
                 </span>
               </TableCell>
 
-              {/* Favorite table */}
               {floorPlanEnabled && (
                 <TableCell className="py-2.5">
                   {guest.favorite_table ? (
@@ -201,7 +204,6 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                 </TableCell>
               )}
 
-              {/* Tags */}
               <TableCell className="py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {guest.tags.slice(0, 3).map((tag) => (
@@ -222,10 +224,9 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                 </div>
               </TableCell>
 
-              {/* Email */}
               <TableCell className="py-2.5">
                 {!isGhost && guest.email ? (
-                  <span className="text-xs text-muted-foreground truncate block max-w-[180px]">{guest.email}</span>
+                  <span className="text-xs text-muted-foreground block max-w-[180px]">{guest.email}</span>
                 ) : (
                   <span className="text-xs text-muted-foreground/40">—</span>
                 )}

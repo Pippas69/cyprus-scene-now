@@ -15,7 +15,7 @@ interface CrmDashboardProps {
   floorPlanEnabled?: boolean;
 }
 
-type SortDir = "asc" | "desc";
+
 type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
 
 const translations = {
