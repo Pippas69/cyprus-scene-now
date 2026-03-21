@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Link } from "react-router-dom";
 const translations = {
   el: {
-    title: "Σύνοψη Δεδομένων",
+    title: "",
     subtitle: "Συνολικά στοιχεία από όλες τις πηγές.\n(προφίλ, προσφορές, εκδηλώσεις)",
     footer: "Τα δεδομένα ενημερώνονται σε πραγματικό χρόνο. Χρησιμοποίησε το φίλτρο για παρελθόντες μήνες.",
     upgradePrompt: "Θέλεις να δεις αναλυτικά ποιες ενέργειες αποδίδουν καλύτερα; Αναβάθμισε το πλάνο σου για πιο λεπτομερή δεδομένα και εξοικονόμηση χρημάτων.",
