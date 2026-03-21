@@ -113,6 +113,13 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [newNote, setNewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+
+  useEffect(() => {
+    supabase.from("businesses").select("name").eq("id", businessId).single()
+      .then(({ data }) => { if (data) setBusinessName(data.name); });
+  }, [businessId]);
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
