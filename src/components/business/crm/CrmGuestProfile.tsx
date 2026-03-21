@@ -82,11 +82,11 @@ const translations = {
   },
 };
 
-function getLoyaltyBadge(visits: number, spendCents: number, override?: string | null) {
+function getLoyaltyBadge(visits: number, _spendCents: number, override?: string | null) {
   const level = override || (
-    visits >= 20 && spendCents >= 100000 ? "platinum" :
-    visits >= 10 && spendCents >= 50000 ? "gold" :
-    visits >= 5 && spendCents >= 20000 ? "silver" :
+    visits >= 20 ? "platinum" :
+    visits >= 10 ? "gold" :
+    visits >= 5 ? "silver" :
     visits >= 3 ? "bronze" : null
   );
   if (!level) return null;
