@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -18,14 +19,14 @@ interface CrmSendMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   guestName: string;
-  guestUserId: string;
+  guestId: string;
   businessId: string;
-  businessName: string;
 }
 
 const translations = {
   el: {
     title: "Αποστολή μηνύματος",
+    description: "Στείλε μήνυμα στον πελάτη και ειδοποίηση push στο κινητό του.",
     to: "Προς",
     subject: "Θέμα",
     subjectPlaceholder: "π.χ. Ειδική πρόσκληση",
@@ -39,6 +40,7 @@ const translations = {
   },
   en: {
     title: "Send message",
+    description: "Send a customer message and a push notification to their phone.",
     to: "To",
     subject: "Subject",
     subjectPlaceholder: "e.g. Special invitation",
@@ -56,9 +58,8 @@ export function CrmSendMessageDialog({
   open,
   onOpenChange,
   guestName,
-  guestUserId,
+  guestId,
   businessId,
-  businessName,
 }: CrmSendMessageDialogProps) {
   const { language } = useLanguage();
   const t = translations[language];
@@ -70,6 +71,7 @@ export function CrmSendMessageDialog({
   const handleSend = async () => {
     const trimmedSubject = subject.trim();
     const trimmedMessage = message.trim();
+
     if (!trimmedSubject || !trimmedMessage) {
       toast.error(t.emptyFields);
       return;
@@ -77,18 +79,27 @@ export function CrmSendMessageDialog({
 
     setSending(true);
     try {
-      const { error } = await supabase.from("notifications").insert({
-        user_id: guestUserId,
-        title: `${businessName}: ${trimmedSubject}`,
-        message: trimmedMessage,
-        type: "personal",
-        event_type: "business_message",
-        entity_type: "business",
-        entity_id: businessId,
-        deep_link: `/business/${businessId}`,
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("Missing auth session");
+      }
+
+      const { data, error } = await supabase.functions.invoke("send-crm-message-notification", {
+        body: {
+          guestId,
+          businessId,
+          subject: trimmedSubject,
+          message: trimmedMessage,
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
       if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Send failed");
 
       toast.success(t.success);
       setSubject("");
@@ -108,12 +119,17 @@ export function CrmSendMessageDialog({
             <Send className="h-4 w-4" />
             {t.title}
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {t.description}
+          </DialogDescription>
         </DialogHeader>
+
         <div className="space-y-3 py-2">
           <div>
             <Label className="text-xs text-muted-foreground">{t.to}</Label>
             <Input value={guestName} disabled className="h-9 text-sm mt-1 bg-muted" />
           </div>
+
           <div>
             <Label className="text-xs text-muted-foreground">{t.subject}</Label>
             <Input
@@ -124,6 +140,7 @@ export function CrmSendMessageDialog({
               maxLength={100}
             />
           </div>
+
           <div>
             <Label className="text-xs text-muted-foreground">{t.message}</Label>
             <Textarea
@@ -133,11 +150,10 @@ export function CrmSendMessageDialog({
               className="text-sm mt-1 min-h-[100px] resize-none"
               maxLength={500}
             />
-            <p className="text-[10px] text-muted-foreground mt-1 text-right">
-              {message.length}/500
-            </p>
+            <p className="text-[10px] text-muted-foreground mt-1 text-right">{message.length}/500</p>
           </div>
         </div>
+
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             {t.cancel}
