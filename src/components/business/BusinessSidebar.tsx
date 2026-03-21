@@ -39,7 +39,7 @@ const translations = {
     overview: "Overview",
     feed: "Feed",
     map: "Map",
-    analytics: "Analytics",
+    analytics: "Insights & CRM",
     content: "Content",
     posts: "Posts",
     events: "Events",
