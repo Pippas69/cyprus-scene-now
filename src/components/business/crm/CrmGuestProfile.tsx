@@ -22,6 +22,7 @@ interface CrmGuestProfileProps {
   businessId: string;
   onClose: () => void;
   onUpdate: () => void;
+  onUpdateGuest?: (data: { id: string } & Record<string, unknown>) => Promise<unknown>;
 }
 
 const translations = {
