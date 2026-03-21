@@ -149,22 +149,19 @@ export const OverviewTab = ({
     details: t.metrics.visitsDetails,
     source: t.metrics.visitsSource
   }];
+  // Calculate returning percentage
+  const totalCustomers = data?.customersThruFomo || 0;
+  const repeatCount = data?.repeatCustomers || 0;
+  const returningPercent = totalCustomers > 0 ? Math.round((repeatCount / totalCustomers) * 100) : 0;
+
   if (isLoading) {
-    return <div className="space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28" />)}
+    return <div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
       </div>;
   }
-  return <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        
-      </div>
+  return <div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {metrics.map(({
