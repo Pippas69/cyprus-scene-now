@@ -130,9 +130,9 @@ export const DateRangePicker = ({ value, onChange, language }: DateRangePickerPr
               mode="range"
               selected={value}
               onSelect={onChange} 
-              numberOfMonths={typeof window !== 'undefined' && window.innerWidth < 640 ? 1 : 2}
+              numberOfMonths={1}
               locale={locale}
-              className="text-sm"
+              className="text-sm pointer-events-auto"
             />
           </div>
         </div>

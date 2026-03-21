@@ -15,7 +15,7 @@ import {
 const translations = {
   el: {
     title: "Κοινό που επισκέφθηκε το μαγαζί",
-    subtitle: "Δημογραφικά από επαληθευμένες επισκέψεις (QR scan / check-in).",
+    subtitle: "",
     genderTitle: "Φύλο",
     ageTitle: "Ηλικία",
     regionTitle: "Πόλη",
@@ -35,7 +35,7 @@ const translations = {
   },
   en: {
     title: "Your Audience",
-    subtitle: "Understand who your customers are.",
+    subtitle: "",
     genderTitle: "Gender",
     ageTitle: "Age",
     regionTitle: "Region",
@@ -71,20 +71,16 @@ const MetricItem = ({ label, value, total }: MetricItemProps) => {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   
   return (
-    <div className="py-3 border-b border-border last:border-0">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className="text-sm font-semibold text-foreground">{value}</span>
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="text-xs sm:text-sm text-muted-foreground flex-1 truncate">{label}</span>
+      <span className="text-xs sm:text-sm font-semibold text-foreground w-8 text-right">{value}</span>
+      <div className="w-16 sm:w-20 h-1.5 bg-muted rounded-full overflow-hidden flex-shrink-0">
+        <div 
+          className="h-full bg-primary rounded-full transition-all duration-500"
+          style={{ width: `${percentage}%` }}
+        />
       </div>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-        <span className="text-xs text-muted-foreground w-10 text-right">{percentage}%</span>
-      </div>
+      <span className="text-[10px] sm:text-xs text-muted-foreground w-8 text-right">{percentage}%</span>
     </div>
   );
 };
@@ -100,20 +96,20 @@ interface AudienceCardProps {
 const AudienceCard = ({ icon: Icon, title, explanation, details, children }: AudienceCardProps) => (
   <Dialog>
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1 pt-3 px-3 sm:px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-primary" />
-            <CardTitle className="text-base">{title}</CardTitle>
+            <Icon className="h-3.5 w-3.5 text-primary" />
+            <CardTitle className="text-sm">{title}</CardTitle>
           </div>
           <DialogTrigger asChild>
             <button className="p-1 hover:bg-muted rounded-full transition-colors">
-              <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
             </button>
           </DialogTrigger>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 pb-2 px-3 sm:px-4">
         {children}
       </CardContent>
     </Card>
@@ -181,15 +177,12 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
 
   if (!hasData) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
+      <div className="space-y-4">
+        <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.title}</h2>
         <Card>
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t.noData}</p>
+          <CardContent className="p-6 text-center">
+            <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">{t.noData}</p>
           </CardContent>
         </Card>
       </div>
@@ -197,13 +190,10 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        <p className="text-sm text-muted-foreground">{t.subtitle}</p>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.title}</h2>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-3 sm:gap-4">
         {/* Gender */}
         <AudienceCard
           icon={Users}

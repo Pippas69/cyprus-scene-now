@@ -218,7 +218,6 @@ export const PerformanceCards: React.FC<PerformanceCardsProps> = ({
   if (metricsLoading) {
     return (
       <div>
-        <h3 className="text-base sm:text-lg font-semibold mb-3">{t.title}</h3>
         <div className={`grid grid-cols-1 sm:grid-cols-2 ${hideOffers ? '' : 'lg:grid-cols-3'} gap-3`}>
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-40" />)}
         </div>
@@ -228,7 +227,6 @@ export const PerformanceCards: React.FC<PerformanceCardsProps> = ({
 
   return (
     <div>
-      <h3 className="text-base sm:text-lg font-semibold mb-3">{t.title}</h3>
       <div className={`grid grid-cols-1 sm:grid-cols-2 ${hideOffers ? '' : 'lg:grid-cols-3'} gap-3`}>
         <PerformanceCardItem
           icon={User}

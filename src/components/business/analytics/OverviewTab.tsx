@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Link } from "react-router-dom";
 const translations = {
   el: {
-    title: "Σύνοψη Δεδομένων",
+    title: "",
     subtitle: "Συνολικά στοιχεία από όλες τις πηγές.\n(προφίλ, προσφορές, εκδηλώσεις)",
     footer: "Τα δεδομένα ενημερώνονται σε πραγματικό χρόνο. Χρησιμοποίησε το φίλτρο για παρελθόντες μήνες.",
     upgradePrompt: "Θέλεις να δεις αναλυτικά ποιες ενέργειες αποδίδουν καλύτερα; Αναβάθμισε το πλάνο σου για πιο λεπτομερή δεδομένα και εξοικονόμηση χρημάτων.",
@@ -24,9 +24,9 @@ const translations = {
       customersExplanation: "Μοναδικοί πελάτες με επαληθευμένη επίσκεψη",
       customersDetails: "Όλοι οι μοναδικοί πελάτες που έκαναν check-in στο μαγαζί σου: κρατήσεις (προφίλ, προσφοράς ή εκδήλωσης), εισιτήρια, walk-in προσφορές και φοιτητική έκπτωση.",
       customersSource: "QR check-ins (κρατήσεις, εισιτήρια, προσφορές, φοιτητικά)",
-      recurring: "Επαναλαμβανόμενοι",
-      recurringExplanation: "Πελάτες με 2+ επισκέψεις",
-      recurringDetails: "Πελάτες που έκαναν check-in στο μαγαζί σου 2 ή περισσότερες φορές. Δείχνει αφοσίωση και επιστροφή πελατών.",
+      recurring: "Επιστρέφοντες",
+      recurringExplanation: "Ποσοστό πελατών με 2+ επισκέψεις",
+      recurringDetails: "Ποσοστό πελατών που έκαναν check-in στο μαγαζί σου 2 ή περισσότερες φορές. Δείχνει αφοσίωση και επιστροφή πελατών.",
       recurringSource: "Ιστορικό QR check-ins",
       reservations: "Κρατήσεις",
       reservationsExplanation: "Σύνολο όλων των κρατήσεων",
@@ -59,9 +59,9 @@ const translations = {
       customersExplanation: "Unique customers with verified visits",
       customersDetails: "All unique customers who checked in at your venue: reservations (profile, offer or event), tickets, walk-in offers and student discounts.",
       customersSource: "QR check-ins (reservations, tickets, offers, student)",
-      recurring: "Recurring",
-      recurringExplanation: "Customers with 2+ visits",
-      recurringDetails: "Customers who checked in at your venue 2 or more times. Shows loyalty and returning customers.",
+      recurring: "Returning",
+      recurringExplanation: "Percentage of customers with 2+ visits",
+      recurringDetails: "Percentage of customers who checked in at your venue 2 or more times. Shows loyalty and returning customers.",
       recurringSource: "QR check-in history",
       reservations: "Reservations",
       reservationsExplanation: "Total of all reservations",
@@ -119,7 +119,7 @@ export const OverviewTab = ({
   }, {
     key: "recurring",
     icon: Repeat,
-    value: data?.repeatCustomers || 0,
+    value: -1, // special marker for percentage display
     label: t.metrics.recurring,
     explanation: t.metrics.recurringExplanation,
     details: t.metrics.recurringDetails,
@@ -149,24 +149,21 @@ export const OverviewTab = ({
     details: t.metrics.visitsDetails,
     source: t.metrics.visitsSource
   }];
+  // Calculate returning percentage
+  const totalCustomers = data?.customersThruFomo || 0;
+  const repeatCount = data?.repeatCustomers || 0;
+  const returningPercent = totalCustomers > 0 ? Math.round((repeatCount / totalCustomers) * 100) : 0;
+
   if (isLoading) {
-    return <div className="space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28" />)}
+    return <div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
       </div>;
   }
-  return <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{t.title}</h2>
-        
-      </div>
+  return <div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         {metrics.map(({
         key,
         icon: Icon,
@@ -183,7 +180,7 @@ export const OverviewTab = ({
                   {key === "views" ? <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">{label}</p>
-                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         
@@ -197,13 +194,13 @@ export const OverviewTab = ({
                         <div className="p-1.5 bg-primary/10 rounded-lg my-1">
                           <Icon className="h-4 w-4 text-primary" />
                         </div>
-                        <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                         <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                       </div>
                       {/* Desktop: Original horizontal layout */}
                       <div className="hidden lg:flex items-start justify-between">
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">{label}</p>
-                          <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+                          <p className="text-2xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <div className="p-2 bg-primary/10 rounded-lg">
@@ -230,7 +227,7 @@ export const OverviewTab = ({
               </DialogHeader>
               <div className="space-y-2 sm:space-y-4 pt-1 sm:pt-2">
                 <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
-                  <p className="text-xl sm:text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                 </div>
                 <p className="text-[10px] sm:text-sm text-muted-foreground">{details}</p>
                 <div className="pt-1.5 sm:pt-2 border-t border-border">
@@ -243,7 +240,7 @@ export const OverviewTab = ({
           </Dialog>)}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">{t.footer}</p>
+      
 
       {/* Upgrade prompt for free plan users */}
       {isFreePlan && <div className="p-2 md:p-3 lg:p-4 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">

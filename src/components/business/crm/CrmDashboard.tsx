@@ -194,13 +194,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
           </Button>
         </div>
 
-        {/* Stats cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
-          <StatCard icon={Users} label={t.totalGuests} value={stats.total} />
-          <StatCard icon={TrendingUp} label={t.returningRate} value={`${stats.returningRate}%`} />
-          <StatCard icon={AlertTriangle} label={t.atRisk} value={stats.atRisk} variant="warning" />
-          <StatCard icon={Star} label={t.vips} value={stats.vips} variant="premium" />
-        </div>
+        
 
         {/* Search */}
         <div className="relative">
