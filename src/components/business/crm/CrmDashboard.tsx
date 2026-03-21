@@ -8,7 +8,8 @@ import { CrmAddGuestDialog } from "./CrmAddGuestDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, UserPlus, Users } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface CrmDashboardProps {
   businessId: string;
