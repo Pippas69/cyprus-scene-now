@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid, UserSearch } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid } from "lucide-react";
 import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import {
   Sidebar,
@@ -21,7 +21,7 @@ const translations = {
     overview: "Επισκόπηση",
     feed: "Feed",
     map: "Χάρτης",
-    analytics: "Αναλυτικά",
+    analytics: "Insights & CRM",
     content: "Περιεχόμενο",
     posts: "Posts",
     events: "Εκδηλώσεις",
@@ -39,7 +39,7 @@ const translations = {
     overview: "Overview",
     feed: "Feed",
     map: "Map",
-    analytics: "Analytics",
+    analytics: "Insights & CRM",
     content: "Content",
     posts: "Posts",
     events: "Events",
@@ -89,7 +89,8 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
 
   // For bars/pubs/dining: Reservations → Events → Offers → Analytics
   // For clubs/events/performances: Events → Reservations → Analytics
-  const crmItem = planSlug === 'elite' ? [{ title: language === 'el' ? 'CRM' : 'CRM', url: "/dashboard-business/crm", icon: UserSearch }] : [];
+  // CRM is now integrated into the Insights & CRM page (analytics tab)
+  const crmItem: { title: string; url: string; icon: React.ElementType }[] = [];
 
   const contentItems = showOffers
     ? [

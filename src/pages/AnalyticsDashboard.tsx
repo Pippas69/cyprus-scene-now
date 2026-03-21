@@ -3,45 +3,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/hooks/useLanguage';
 import { DateRangePicker } from '@/components/business/analytics/DateRangePicker';
 import { OverviewTab } from '@/components/business/analytics/OverviewTab';
-import { PerformanceTab } from '@/components/business/analytics/PerformanceTab';
-import { BoostValueTab } from '@/components/business/analytics/BoostValueTab';
-import { GuidanceTab } from '@/components/business/analytics/GuidanceTab';
+import { PerformanceCards } from '@/components/business/analytics/PerformanceCards';
+import { AudienceTab } from '@/components/business/analytics/AudienceTab';
 import { LockedSection } from '@/components/business/analytics/LockedSection';
+import { CrmDashboard } from '@/components/business/crm/CrmDashboard';
 import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Lock, Zap, Star, Crown } from 'lucide-react';
-// Prefetch hooks — called at mount so data is ready when user switches tabs
+import { Lock, BarChart3, UserSearch } from 'lucide-react';
 import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
-import { useGuidanceData } from '@/hooks/useGuidanceData';
-import { useGuidanceMetrics } from '@/hooks/useGuidanceMetrics';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldHideOffers } from '@/lib/shouldHideOffers';
 
 const translations = {
   el: {
-    title: 'Αναλυτικά',
+    title: 'Insights & CRM',
     overview: 'Επισκόπηση',
-    performance: 'Απόδοση',
-    boostValue: 'Αξία Προώθησης',
-    guidance: 'Καθοδήγηση',
-    basicPlan: 'Basic',
-    proPlan: 'Pro',
-    elitePlan: 'Elite',
+    crm: 'CRM',
   },
   en: {
-    title: 'Your Analytics',
+    title: 'Insights & CRM',
     overview: 'Overview',
-    performance: 'Performance',
-    boostValue: 'Boost Value',
-    guidance: 'Guidance',
-    basicPlan: 'Basic',
-    proPlan: 'Pro',
-    elitePlan: 'Elite',
+    crm: 'CRM',
   },
 };
 
@@ -58,11 +45,9 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     to: new Date(),
   });
 
-  // Get current subscription plan
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
   const currentPlan = subscriptionData?.plan || 'free';
 
-  // Fetch business categories to determine if offers should be hidden
   const { data: hideOffers } = useQuery({
     queryKey: ['business-hide-offers', businessId],
     queryFn: async () => {
@@ -76,99 +61,61 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
     staleTime: Infinity,
   });
 
+  const { data: floorPlanData } = useQuery({
+    queryKey: ['business-floor-plan', businessId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('floor_plan_enabled')
+        .eq('id', businessId)
+        .single();
+      return data?.floor_plan_enabled || false;
+    },
+    staleTime: Infinity,
+  });
+
   const convertedDateRange = dateRange?.from && dateRange?.to 
     ? { from: dateRange.from, to: dateRange.to }
     : undefined;
 
-  // Prefetch ALL tab data in parallel on mount — so switching tabs is instant
+  // Prefetch data
   useOverviewMetrics(businessId, convertedDateRange);
   usePerformanceMetrics(businessId, convertedDateRange);
   useAudienceMetrics(businessId, convertedDateRange);
   useBoostValueMetrics(businessId, convertedDateRange);
-  useGuidanceData(businessId, convertedDateRange);
-  useGuidanceMetrics(businessId, convertedDateRange);
 
-  // Check access for each tab
   const hasOverviewAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('overview'));
   const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
-  const hasBoostValueAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('boostValue'));
-  const hasGuidanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('guidance'));
-
-  const badgeByTab: Record<
-    string,
-    { label: string; Icon: React.ElementType; className: string } | undefined
-  > = {
-    performance: {
-      label: t.basicPlan,
-      Icon: Zap,
-      className:
-        "border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400",
-    },
-    boostValue: {
-      label: t.proPlan,
-      Icon: Star,
-      className:
-        "border-primary/40 bg-gradient-to-r from-primary/10 to-sunset-coral/10 text-primary",
-    },
-    guidance: {
-      label: t.elitePlan,
-      Icon: Crown,
-      className:
-        "border-purple-400/40 bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 dark:text-purple-400",
-    },
-  };
-
-  // Render tab trigger with lock icon if not accessible
-  const renderTabTrigger = (value: string, label: string, hasAccess: boolean) => {
-    const badge = badgeByTab[value];
-    const BadgeIcon = badge?.Icon;
-
-    return (
-    <TabsTrigger 
-      value={value} 
-      className={`relative pt-1 ${!hasAccess ? 'text-muted-foreground/60' : ''}`}
-      disabled={!hasAccess}
-    >
-      {badge && BadgeIcon && (
-        <span className="absolute -top-7 left-1/2 -translate-x-1/2 pointer-events-none z-10">
-          <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 sm:px-2.5 py-0.5 text-[8px] sm:text-[10px] font-bold tracking-wide shadow-md ${badge.className}`}
-          >
-            <BadgeIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-            {badge.label}
-          </span>
-        </span>
-      )}
-      <span className="flex items-center gap-1">
-        {!hasAccess && (
-          <Lock className="w-3 h-3 opacity-60" />
-        )}
-        {label}
-      </span>
-    </TabsTrigger>
-    );
-  };
+  const hasCrmAccess = currentPlan === 'elite';
 
   return (
     <div className="px-3 sm:px-4 lg:container lg:mx-auto py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
-      {/* Header - stacked on mobile, row on tablet+ */}
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{t.title}</h1>
         <DateRangePicker value={dateRange} onChange={setDateRange} language={language} />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-        {/* Tabs - scrollable on mobile */}
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 sm:overflow-visible pt-4 sm:pt-3">
-          <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 min-w-max sm:min-w-0 gap-1 sm:gap-0 overflow-visible mt-4">
-            {renderTabTrigger('overview', t.overview, hasOverviewAccess)}
-            {renderTabTrigger('performance', t.performance, hasPerformanceAccess)}
-            {renderTabTrigger('boostValue', t.boostValue, hasBoostValueAccess)}
-            {renderTabTrigger('guidance', t.guidance, hasGuidanceAccess)}
-          </TabsList>
-        </div>
+        <TabsList className="grid w-full grid-cols-2 max-w-xs">
+          <TabsTrigger value="overview" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" />
+            {t.overview}
+          </TabsTrigger>
+          <TabsTrigger
+            value="crm"
+            className={`gap-1.5 ${!hasCrmAccess ? 'text-muted-foreground/60' : ''}`}
+            disabled={!hasCrmAccess}
+          >
+            {!hasCrmAccess && <Lock className="h-3 w-3 opacity-60" />}
+            <UserSearch className="h-3.5 w-3.5" />
+            {t.crm}
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="overview">
+        {/* Tab 1: Overview (KPIs + Performance Cards + Audience) */}
+        <TabsContent value="overview" className="space-y-6 sm:space-y-8">
+          {/* KPI Cards */}
           {hasOverviewAccess ? (
             <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} />
           ) : (
@@ -176,34 +123,43 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
               <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} />
             </LockedSection>
           )}
-        </TabsContent>
 
-        <TabsContent value="performance">
+          {/* Performance Cards with Boost Modal */}
           {hasPerformanceAccess ? (
-            <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
+            <PerformanceCards
+              businessId={businessId}
+              dateRange={convertedDateRange}
+              language={language}
+              hideOffers={!!hideOffers}
+            />
           ) : (
             <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
-              <PerformanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
+              <PerformanceCards
+                businessId={businessId}
+                dateRange={convertedDateRange}
+                language={language}
+                hideOffers={!!hideOffers}
+              />
+            </LockedSection>
+          )}
+
+          {/* Audience (Age, Gender, City) */}
+          {hasPerformanceAccess ? (
+            <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
+          ) : (
+            <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
+              <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
             </LockedSection>
           )}
         </TabsContent>
 
-        <TabsContent value="boostValue">
-          {hasBoostValueAccess ? (
-            <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
+        {/* Tab 2: CRM */}
+        <TabsContent value="crm" className="min-h-[500px]">
+          {hasCrmAccess ? (
+            <CrmDashboard businessId={businessId} floorPlanEnabled={!!floorPlanData} />
           ) : (
-            <LockedSection requiredPlan={getSectionRequiredPlan('boostValue')} language={language}>
-              <BoostValueTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
-            </LockedSection>
-          )}
-        </TabsContent>
-
-        <TabsContent value="guidance">
-          {hasGuidanceAccess ? (
-            <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
-          ) : (
-            <LockedSection requiredPlan={getSectionRequiredPlan('guidance')} language={language}>
-              <GuidanceTab businessId={businessId} dateRange={convertedDateRange} language={language} hideOffers={!!hideOffers} />
+            <LockedSection requiredPlan="elite" language={language}>
+              <CrmDashboard businessId={businessId} floorPlanEnabled={!!floorPlanData} />
             </LockedSection>
           )}
         </TabsContent>
