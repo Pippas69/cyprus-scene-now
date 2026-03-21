@@ -10,7 +10,7 @@ import { CrmDashboard } from '@/components/business/crm/CrmDashboard';
 import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Lock, BarChart3, UserSearch } from 'lucide-react';
+import { Lock, BarChart3 } from 'lucide-react';
 import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
