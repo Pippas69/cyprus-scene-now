@@ -51,7 +51,7 @@ const translations = {
     tapForDetails: "Tap for details",
     dataSource: "Data source",
     metrics: {
-      views: "Total Views",
+      views: "Views",
       viewsExplanation: "Profile + offers + events views",
       viewsDetails: "Sum of all views: profile page, offer pages, and event pages. Higher numbers mean greater overall visibility.",
       viewsSource: "Profile, offers, events",
