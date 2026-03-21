@@ -285,7 +285,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate }: CrmGue
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
             <div className="space-y-2.5">
-              {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
+              {guest.phone && guest.profile_type !== "ghost" && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
               {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
               {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
               {guest.company && <DetailRow icon={Building2} label={t.company} value={guest.company} />}

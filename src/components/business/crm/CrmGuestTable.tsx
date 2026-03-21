@@ -170,7 +170,7 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
                         <MessageSquare className="h-3 w-3 text-primary flex-shrink-0" />
                       )}
                     </div>
-                    {guest.phone && (
+                    {guest.phone && guest.profile_type !== "ghost" && (
                       <p className="text-[10px] text-muted-foreground truncate">{guest.phone}</p>
                     )}
                   </div>
