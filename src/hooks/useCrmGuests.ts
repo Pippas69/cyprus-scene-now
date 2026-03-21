@@ -67,21 +67,14 @@ export function useCrmGuests(businessId: string | null) {
     queryFn: async () => {
       if (!businessId) return [];
 
-      // Fetch guests + their tag assignments + stats in parallel
-      const [guestsRes, statsRes, tagAssignRes] = await Promise.all([
+      // Fetch guests + stats in parallel
+      const [guestsRes, statsRes] = await Promise.all([
         supabase
           .from("crm_guests")
           .select("*")
           .eq("business_id", businessId)
           .order("created_at", { ascending: false }),
         supabase.rpc("get_crm_guest_stats", { p_business_id: businessId }),
-        supabase
-          .from("crm_guest_tag_assignments")
-          .select("guest_id, crm_guest_tags(id, name, color, emoji, is_system)")
-          .in(
-            "guest_id",
-            [] // will be populated after
-          ),
       ]);
 
       if (guestsRes.error) throw guestsRes.error;
