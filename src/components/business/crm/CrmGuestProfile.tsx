@@ -100,13 +100,14 @@ function getLoyaltyBadge(visits: number, spendCents: number, override?: string |
   return info ? { level, ...info } : null;
 }
 
-export function CrmGuestProfile({ guest, businessId, onClose, onUpdate }: CrmGuestProfileProps) {
+export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest }: CrmGuestProfileProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
   const [newNote, setNewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
