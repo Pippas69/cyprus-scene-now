@@ -35,7 +35,7 @@ const translations = {
   },
   en: {
     title: "Your Audience",
-    subtitle: "Understand who your customers are.",
+    subtitle: "",
     genderTitle: "Gender",
     ageTitle: "Age",
     regionTitle: "Region",
