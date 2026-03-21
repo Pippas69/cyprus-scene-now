@@ -150,8 +150,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                   <Badge variant="outline" className="text-[9px] h-4 px-1">Ghost</Badge>
                 )}
                 {loyalty && (
-                  <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${loyalty.color}`}>
-                    {loyalty.emoji} {loyalty.level}
+                  <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${loyalty.color}`} title={loyalty.level}>
+                    {loyalty.emoji}
                   </Badge>
                 )}
                 {guest.internal_rating && (

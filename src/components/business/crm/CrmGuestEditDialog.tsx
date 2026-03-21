@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { type CrmGuest } from "@/hooks/useCrmGuests";
 import {
@@ -60,23 +60,31 @@ const translations = {
   },
 };
 
+const getInitialForm = (guest: CrmGuest) => ({
+  guest_name: guest.guest_name,
+  phone: guest.phone || "",
+  email: guest.email || "",
+  birthday: guest.birthday || "",
+  company: guest.company || "",
+  instagram_handle: guest.instagram_handle || "",
+  dietary_preferences: guest.dietary_preferences?.join(", ") || "",
+  drink_preferences: guest.drink_preferences || "",
+  music_preferences: guest.music_preferences || "",
+  relationship_notes: guest.relationship_notes || "",
+});
+
 export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSuccess }: CrmGuestEditDialogProps) {
   const { language } = useLanguage();
   const t = translations[language];
 
-  const [form, setForm] = useState({
-    guest_name: guest.guest_name,
-    phone: guest.phone || "",
-    email: guest.email || "",
-    birthday: guest.birthday || "",
-    company: guest.company || "",
-    instagram_handle: guest.instagram_handle || "",
-    dietary_preferences: guest.dietary_preferences?.join(", ") || "",
-    drink_preferences: guest.drink_preferences || "",
-    music_preferences: guest.music_preferences || "",
-    relationship_notes: guest.relationship_notes || "",
-  });
+  const [form, setForm] = useState(() => getInitialForm(guest));
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setForm(getInitialForm(guest));
+    }
+  }, [guest, open]);
 
   const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 

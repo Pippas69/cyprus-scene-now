@@ -169,8 +169,7 @@ export function useCrmGuests(businessId: string | null) {
         "guest_name", "phone", "email", "birthday", "anniversary",
         "dietary_preferences", "drink_preferences", "music_preferences",
         "company", "instagram_handle", "relationship_notes",
-        "internal_rating", "vip_level_override", "profile_type",
-        "custom_fields", "merged_from", "user_id",
+        "internal_rating", "vip_level_override",
       ];
       const dbUpdates: Record<string, unknown> = {};
       for (const key of allowedKeys) {
