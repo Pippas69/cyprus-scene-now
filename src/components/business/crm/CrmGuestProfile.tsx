@@ -176,6 +176,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {guest.user_id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowMessageDialog(true)}
+                title={t.sendMessage}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {onUpdateGuest && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowEditDialog(true)}>
                 <Pencil className="h-3.5 w-3.5" />
