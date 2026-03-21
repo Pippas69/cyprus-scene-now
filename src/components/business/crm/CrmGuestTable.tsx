@@ -9,18 +9,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpDown, ArrowUp, ArrowDown, Star, MessageSquare, Ghost } from "lucide-react";
+import { MessageSquare, Ghost } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
-type SortField = "guest_name" | "total_visits" | "last_visit" | "total_spend_cents" | "total_no_shows" | "internal_rating";
-type SortDir = "asc" | "desc";
-
 interface CrmGuestTableProps {
   guests: CrmGuest[];
-  sortField: SortField;
-  sortDir: SortDir;
-  onSort: (field: SortField) => void;
   onSelectGuest: (guest: CrmGuest) => void;
   floorPlanEnabled?: boolean;
 }
@@ -33,7 +27,7 @@ const translations = {
     spend: "Έξοδα",
     noShows: "No-shows",
     tags: "Tags",
-    loyalty: "Loyalty",
+    email: "Email",
     table: "Τραπέζι",
     never: "Ποτέ",
     ghost: "Ghost",
@@ -45,7 +39,7 @@ const translations = {
     spend: "Spend",
     noShows: "No-shows",
     tags: "Tags",
-    loyalty: "Loyalty",
+    email: "Email",
     table: "Table",
     never: "Never",
     ghost: "Ghost",
@@ -67,40 +61,7 @@ const loyaltyStyles = {
   bronze: "bg-orange-500/15 text-orange-400 border-orange-500/30",
 };
 
-function SortIcon({ field, currentField, dir }: { field: SortField; currentField: SortField; dir: SortDir }) {
-  if (field !== currentField) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />;
-  return dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
-}
-
-function HeaderCell({
-  children,
-  field,
-  sortField,
-  sortDir,
-  onSort,
-  className = "",
-}: {
-  children: React.ReactNode;
-  field?: SortField;
-  sortField: SortField;
-  sortDir: SortDir;
-  onSort: (f: SortField) => void;
-  className?: string;
-}) {
-  return (
-    <TableHead
-      className={`${field ? "cursor-pointer select-none" : ""} ${className}`}
-      onClick={field ? () => onSort(field) : undefined}
-    >
-      <div className={`flex items-center gap-1.5 text-[11px] tracking-wide font-medium text-muted-foreground ${className.includes("justify-center") ? "justify-center" : className.includes("justify-end") ? "justify-end" : ""}`}>
-        {children}
-        {field && <SortIcon field={field} currentField={sortField} dir={sortDir} />}
-      </div>
-    </TableHead>
-  );
-}
-
-export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGuest, floorPlanEnabled }: CrmGuestTableProps) {
+export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGuestTableProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
@@ -109,32 +70,32 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent border-border/40">
-          <HeaderCell field="guest_name" sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[180px]">
-            {t.guest}
-          </HeaderCell>
-          <HeaderCell field="total_visits" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-center w-20 justify-center">
-            {t.visits}
-          </HeaderCell>
-          <HeaderCell field="last_visit" sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[100px]">
-            {t.lastVisit}
-          </HeaderCell>
-          <HeaderCell field="total_spend_cents" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-right w-24 justify-end">
-            {t.spend}
-          </HeaderCell>
-          <HeaderCell field="total_no_shows" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-center w-20 justify-center">
-            {t.noShows}
-          </HeaderCell>
+          <TableHead className="min-w-[180px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.guest}</span>
+          </TableHead>
+          <TableHead className="text-center w-20">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.visits}</span>
+          </TableHead>
+          <TableHead className="min-w-[100px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.lastVisit}</span>
+          </TableHead>
+          <TableHead className="text-right w-24">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.spend}</span>
+          </TableHead>
+          <TableHead className="text-center w-20">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.noShows}</span>
+          </TableHead>
           {floorPlanEnabled && (
-            <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[80px]">
-              {t.table}
-            </HeaderCell>
+            <TableHead className="min-w-[80px]">
+              <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.table}</span>
+            </TableHead>
           )}
-          <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="min-w-[120px]">
-            {t.tags}
-          </HeaderCell>
-          <HeaderCell sortField={sortField} sortDir={sortDir} onSort={onSort} className="w-24">
-            {t.loyalty}
-          </HeaderCell>
+          <TableHead className="min-w-[120px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.tags}</span>
+          </TableHead>
+          <TableHead className="min-w-[140px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.email}</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -261,20 +222,12 @@ export function CrmGuestTable({ guests, sortField, sortDir, onSort, onSelectGues
                 </div>
               </TableCell>
 
-              {/* Loyalty (mobile-visible duplicate) */}
-              <TableCell className="py-2.5 sm:hidden">
-                {loyaltyLabel && loyaltyVariant && (
-                  <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
-                    {loyaltyLabel}
-                  </span>
-                )}
-              </TableCell>
-              {/* Loyalty (desktop — hidden since it's inline with name) */}
-              <TableCell className="py-2.5 hidden sm:table-cell">
-                {loyaltyLabel && loyaltyVariant && (
-                  <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium border ${loyaltyStyles[loyaltyVariant]}`}>
-                    {loyaltyLabel}
-                  </span>
+              {/* Email */}
+              <TableCell className="py-2.5">
+                {!isGhost && guest.email ? (
+                  <span className="text-xs text-muted-foreground truncate block max-w-[180px]">{guest.email}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
                 )}
               </TableCell>
             </TableRow>
