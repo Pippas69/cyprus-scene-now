@@ -164,7 +164,20 @@ export function useCrmGuests(businessId: string | null) {
 
   const updateGuestMutation = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, unknown>) => {
-      const { tags, notes_count, total_visits, total_spend_cents, total_no_shows, total_cancellations, first_visit, last_visit, avg_party_size, favorite_table, total_reservations, ...dbUpdates } = updates as Record<string, unknown>;
+      // Allowlist: only send columns that exist on crm_guests table
+      const allowedKeys = [
+        "guest_name", "phone", "email", "birthday", "anniversary",
+        "dietary_preferences", "drink_preferences", "music_preferences",
+        "company", "instagram_handle", "relationship_notes",
+        "internal_rating", "vip_level_override", "profile_type",
+        "custom_fields", "merged_from", "user_id",
+      ];
+      const dbUpdates: Record<string, unknown> = {};
+      for (const key of allowedKeys) {
+        if (key in updates) {
+          dbUpdates[key] = updates[key];
+        }
+      }
       const { data, error } = await supabase
         .from("crm_guests")
         .update(dbUpdates)
