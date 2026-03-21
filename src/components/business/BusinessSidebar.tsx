@@ -90,7 +90,7 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
   // For bars/pubs/dining: Reservations → Events → Offers → Analytics
   // For clubs/events/performances: Events → Reservations → Analytics
   // CRM is now integrated into the Insights & CRM page (analytics tab)
-  const crmItem: typeof contentItems = [];
+  const crmItem: { title: string; url: string; icon: React.ElementType }[] = [];
 
   const contentItems = showOffers
     ? [
