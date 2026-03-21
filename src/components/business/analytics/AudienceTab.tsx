@@ -193,7 +193,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
     <div className="space-y-4">
       <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.title}</h2>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-3 sm:gap-4">
         {/* Gender */}
         <AudienceCard
           icon={Users}
