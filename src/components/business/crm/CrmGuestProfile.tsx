@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
+import { CrmSendMessageDialog } from "./CrmSendMessageDialog";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
@@ -40,6 +41,8 @@ const translations = {
     lastVisit: "τελευταία",
     addNote: "Προσθήκη σημείωσης...",
     send: "Αποστολή",
+    sendMessage: "Στείλε μήνυμα",
+    noLinkedUser: "Δεν μπορεί να σταλεί μήνυμα σε ghost profile",
     noNotes: "Δεν υπάρχουν σημειώσεις",
     alert: "Ειδοποίηση",
     pinned: "Καρφιτσωμένο",
@@ -67,6 +70,8 @@ const translations = {
     lastVisit: "last visit",
     addNote: "Add a note...",
     send: "Send",
+    sendMessage: "Send message",
+    noLinkedUser: "Cannot send message to ghost profile",
     noNotes: "No notes yet",
     alert: "Alert",
     pinned: "Pinned",
@@ -108,6 +113,13 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [newNote, setNewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [businessName, setBusinessName] = useState("");
+
+  useEffect(() => {
+    supabase.from("businesses").select("name").eq("id", businessId).single()
+      .then(({ data }) => { if (data) setBusinessName(data.name); });
+  }, [businessId]);
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
@@ -164,6 +176,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {guest.user_id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowMessageDialog(true)}
+                title={t.sendMessage}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {onUpdateGuest && (
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowEditDialog(true)}>
                 <Pencil className="h-3.5 w-3.5" />
@@ -349,6 +372,18 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           guest={guest}
           onUpdate={onUpdateGuest}
           onSuccess={onUpdate}
+        />
+      )}
+
+      {/* Send Message Dialog */}
+      {guest.user_id && (
+        <CrmSendMessageDialog
+          open={showMessageDialog}
+          onOpenChange={setShowMessageDialog}
+          guestName={guest.guest_name}
+          guestUserId={guest.user_id}
+          businessId={businessId}
+          businessName={businessName}
         />
       )}
     </div>
