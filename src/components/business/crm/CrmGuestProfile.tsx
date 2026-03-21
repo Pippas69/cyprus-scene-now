@@ -374,6 +374,18 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           onSuccess={onUpdate}
         />
       )}
+
+      {/* Send Message Dialog */}
+      {guest.user_id && (
+        <CrmSendMessageDialog
+          open={showMessageDialog}
+          onOpenChange={setShowMessageDialog}
+          guestName={guest.guest_name}
+          guestUserId={guest.user_id}
+          businessId={businessId}
+          businessName={businessName}
+        />
+      )}
     </div>
   );
 }
