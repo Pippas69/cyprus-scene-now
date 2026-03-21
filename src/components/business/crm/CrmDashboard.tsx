@@ -40,8 +40,6 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
 
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
-  const [sortField, setSortField] = useState<SortField>("total_visits");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
