@@ -340,6 +340,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Dialog */}
+      {onUpdateGuest && (
+        <CrmGuestEditDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          guest={guest}
+          onUpdate={onUpdateGuest}
+          onSuccess={onUpdate}
+        />
+      )}
     </div>
   );
 }
