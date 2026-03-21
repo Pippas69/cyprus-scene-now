@@ -20,6 +20,8 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingTour } from "@/components/business/OnboardingTour";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
+import { CrmDashboard } from "@/components/business/crm/CrmDashboard";
+import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import SubscriptionPlans from "@/pages/SubscriptionPlans";
 import BoostManagement from "@/components/business/BoostManagement";
 import BudgetTracker from "@/components/business/BudgetTracker";
@@ -136,6 +138,7 @@ const DashboardBusiness = () => {
 
   // Onboarding tour
   const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);
+  const { data: subscriptionData } = useSubscriptionPlan(businessId);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Show onboarding tour for new businesses
@@ -265,7 +268,7 @@ const DashboardBusiness = () => {
       />
       <SidebarProvider>
       <div className="h-screen w-full flex overflow-hidden">
-        <BusinessSidebar businessCategories={businessCategories} floorPlanEnabled={floorPlanEnabled} />
+        <BusinessSidebar businessCategories={businessCategories} floorPlanEnabled={floorPlanEnabled} planSlug={subscriptionData?.plan} />
         
         <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full">
           {/* Header - Mobile optimized */}
@@ -359,6 +362,7 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
               <Route path="offers/new" element={businessId ? <div className="px-3 sm:px-0"><OfferCreationForm businessId={businessId} /></div> : null} />
               <Route path="reservations" element={businessId ? <ReservationDashboard businessId={businessId} language={language} /> : null} />
               <Route path="floor-plan" element={businessId ? <div className="px-3 sm:px-0"><FloorPlanEditor businessId={businessId} /></div> : null} />
+              <Route path="crm" element={businessId && subscriptionData?.plan === 'elite' ? <CrmDashboard businessId={businessId} floorPlanEnabled={floorPlanEnabled} /> : null} />
               <Route path="subscription" element={<div className="px-3 sm:px-0"><SubscriptionPlans embedded /></div>} />
               <Route path="boosts" element={businessId ? <div className="px-3 sm:px-0"><BoostManagement businessId={businessId} /></div> : null} />
               <Route path="settings" element={userId && businessId ? <div className="px-3 sm:px-0"><BusinessAccountSettings userId={userId} businessId={businessId} language={language} /></div> : null} />

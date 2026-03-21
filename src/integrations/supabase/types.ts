@@ -1153,6 +1153,286 @@ export type Database = {
           },
         ]
       }
+      crm_guest_notes: {
+        Row: {
+          author_id: string
+          business_id: string
+          category: string
+          content: string
+          created_at: string
+          guest_id: string
+          id: string
+          is_alert: boolean | null
+          is_pinned: boolean | null
+          is_private: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          business_id: string
+          category?: string
+          content: string
+          created_at?: string
+          guest_id: string
+          id?: string
+          is_alert?: boolean | null
+          is_pinned?: boolean | null
+          is_private?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          business_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          guest_id?: string
+          id?: string
+          is_alert?: boolean | null
+          is_pinned?: boolean | null
+          is_private?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_guest_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "crm_guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_guest_tag_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          guest_id: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          guest_id: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          guest_id?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_guest_tag_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tag_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tag_assignments_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "crm_guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "crm_guest_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_guest_tags: {
+        Row: {
+          auto_rule: Json | null
+          business_id: string
+          color: string
+          created_at: string
+          emoji: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+        }
+        Insert: {
+          auto_rule?: Json | null
+          business_id: string
+          color?: string
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+        }
+        Update: {
+          auto_rule?: Json | null
+          business_id?: string
+          color?: string
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_guest_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_guests: {
+        Row: {
+          anniversary: string | null
+          birthday: string | null
+          business_id: string
+          company: string | null
+          created_at: string
+          custom_fields: Json | null
+          dietary_preferences: string[] | null
+          drink_preferences: string | null
+          email: string | null
+          guest_name: string
+          id: string
+          instagram_handle: string | null
+          internal_rating: number | null
+          merged_from: string[] | null
+          music_preferences: string | null
+          phone: string | null
+          profile_type: string
+          relationship_notes: string | null
+          updated_at: string
+          user_id: string | null
+          vip_level_override: string | null
+        }
+        Insert: {
+          anniversary?: string | null
+          birthday?: string | null
+          business_id: string
+          company?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          dietary_preferences?: string[] | null
+          drink_preferences?: string | null
+          email?: string | null
+          guest_name: string
+          id?: string
+          instagram_handle?: string | null
+          internal_rating?: number | null
+          merged_from?: string[] | null
+          music_preferences?: string | null
+          phone?: string | null
+          profile_type?: string
+          relationship_notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vip_level_override?: string | null
+        }
+        Update: {
+          anniversary?: string | null
+          birthday?: string | null
+          business_id?: string
+          company?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          dietary_preferences?: string[] | null
+          drink_preferences?: string | null
+          email?: string | null
+          guest_name?: string
+          id?: string
+          instagram_handle?: string | null
+          internal_rating?: number | null
+          merged_from?: string[] | null
+          music_preferences?: string | null
+          phone?: string | null
+          profile_type?: string
+          relationship_notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+          vip_level_override?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_guests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_analytics: {
         Row: {
           business_id: string
@@ -5919,6 +6199,21 @@ export type Database = {
       get_business_follower_count: {
         Args: { business_id_param: string }
         Returns: number
+      }
+      get_crm_guest_stats: {
+        Args: { p_business_id: string }
+        Returns: {
+          avg_party_size: number
+          favorite_table: string
+          first_visit: string
+          guest_id: string
+          last_visit: string
+          total_cancellations: number
+          total_no_shows: number
+          total_reservations: number
+          total_spend_cents: number
+          total_visits: number
+        }[]
       }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       get_event_attendees_with_similarity: {

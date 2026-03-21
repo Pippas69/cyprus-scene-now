@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid, UserSearch } from "lucide-react";
 import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import {
   Sidebar,
@@ -57,9 +57,10 @@ const translations = {
 interface BusinessSidebarProps {
   businessCategories: string[];
   floorPlanEnabled?: boolean;
+  planSlug?: string;
 }
 
-export function BusinessSidebar({ businessCategories, floorPlanEnabled }: BusinessSidebarProps) {
+export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug }: BusinessSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
@@ -88,6 +89,8 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled }: Busine
 
   // For bars/pubs/dining: Reservations → Events → Offers → Analytics
   // For clubs/events/performances: Events → Reservations → Analytics
+  const crmItem = planSlug === 'elite' ? [{ title: language === 'el' ? 'CRM' : 'CRM', url: "/dashboard-business/crm", icon: UserSearch }] : [];
+
   const contentItems = showOffers
     ? [
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
@@ -95,12 +98,14 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled }: Busine
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+        ...crmItem,
       ]
     : [
         { title: eventsLabel, url: "/dashboard-business/events", icon: Calendar },
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
+        ...crmItem,
       ];
 
   const businessItems = [
