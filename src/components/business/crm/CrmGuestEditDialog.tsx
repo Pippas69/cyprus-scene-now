@@ -121,6 +121,9 @@ export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSucc
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base">{t.title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {language === "el" ? "Φόρμα επεξεργασίας στοιχείων πελάτη" : "Guest profile editing form"}
+          </DialogDescription>
           {guest.profile_type === "ghost" && (
             <p className="text-xs text-muted-foreground mt-1">{t.enrichHint}</p>
           )}
