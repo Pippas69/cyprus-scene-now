@@ -10,7 +10,7 @@ import { CrmDashboard } from '@/components/business/crm/CrmDashboard';
 import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from '@/hooks/useSubscriptionPlan';
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Lock, BarChart3 } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
@@ -23,13 +23,13 @@ const translations = {
   el: {
     title: 'Insights & CRM',
     overview: 'Επισκόπηση',
-    crm: 'CRM',
+    crm: 'CRM'
   },
   en: {
     title: 'Insights & CRM',
     overview: 'Overview',
-    crm: 'CRM',
-  },
+    crm: 'CRM'
+  }
 };
 
 interface AnalyticsDashboardProps {
@@ -42,7 +42,7 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
-    to: new Date(),
+    to: new Date()
   });
 
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
@@ -51,32 +51,32 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   const { data: hideOffers } = useQuery({
     queryKey: ['business-hide-offers', businessId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('businesses')
-        .select('category')
-        .eq('id', businessId)
-        .single();
+      const { data } = await supabase.
+      from('businesses').
+      select('category').
+      eq('id', businessId).
+      single();
       return shouldHideOffers(data?.category || []);
     },
-    staleTime: Infinity,
+    staleTime: Infinity
   });
 
   const { data: floorPlanData } = useQuery({
     queryKey: ['business-floor-plan', businessId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('businesses')
-        .select('floor_plan_enabled')
-        .eq('id', businessId)
-        .single();
+      const { data } = await supabase.
+      from('businesses').
+      select('floor_plan_enabled').
+      eq('id', businessId).
+      single();
       return data?.floor_plan_enabled || false;
     },
-    staleTime: Infinity,
+    staleTime: Infinity
   });
 
-  const convertedDateRange = dateRange?.from && dateRange?.to 
-    ? { from: dateRange.from, to: dateRange.to }
-    : undefined;
+  const convertedDateRange = dateRange?.from && dateRange?.to ?
+  { from: dateRange.from, to: dateRange.to } :
+  undefined;
 
   // Prefetch data
   useOverviewMetrics(businessId, convertedDateRange);
@@ -94,14 +94,14 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         <div className="flex items-center gap-3">
           <TabsList className="grid grid-cols-2 w-auto min-w-[200px]">
             <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
-              <BarChart3 className="h-3.5 w-3.5" />
+              
               {t.overview}
             </TabsTrigger>
             <TabsTrigger
               value="crm"
               className={`gap-1.5 text-xs sm:text-sm ${!hasCrmAccess ? 'text-muted-foreground/60' : ''}`}
-              disabled={!hasCrmAccess}
-            >
+              disabled={!hasCrmAccess}>
+              
               {!hasCrmAccess && <Lock className="h-3 w-3 opacity-60" />}
               {t.crm}
             </TabsTrigger>
@@ -114,54 +114,54 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
         {/* Tab 1: Overview (KPIs + Performance Cards + Audience) */}
         <TabsContent value="overview" className="space-y-6 sm:space-y-8">
           {/* KPI Cards */}
-          {hasOverviewAccess ? (
-            <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-          ) : (
-            <LockedSection requiredPlan={getSectionRequiredPlan('overview')} language={language}>
+          {hasOverviewAccess ?
+          <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} /> :
+
+          <LockedSection requiredPlan={getSectionRequiredPlan('overview')} language={language}>
               <OverviewTab businessId={businessId} dateRange={convertedDateRange} language={language} />
             </LockedSection>
-          )}
+          }
 
           {/* Performance Cards with Boost Modal */}
-          {hasPerformanceAccess ? (
-            <PerformanceCards
+          {hasPerformanceAccess ?
+          <PerformanceCards
+            businessId={businessId}
+            dateRange={convertedDateRange}
+            language={language}
+            hideOffers={!!hideOffers} /> :
+
+
+          <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
+              <PerformanceCards
               businessId={businessId}
               dateRange={convertedDateRange}
               language={language}
-              hideOffers={!!hideOffers}
-            />
-          ) : (
-            <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
-              <PerformanceCards
-                businessId={businessId}
-                dateRange={convertedDateRange}
-                language={language}
-                hideOffers={!!hideOffers}
-              />
+              hideOffers={!!hideOffers} />
+            
             </LockedSection>
-          )}
+          }
 
           {/* Audience (Age, Gender, City) */}
-          {hasPerformanceAccess ? (
-            <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
-          ) : (
-            <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
+          {hasPerformanceAccess ?
+          <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} /> :
+
+          <LockedSection requiredPlan={getSectionRequiredPlan('performance')} language={language}>
               <AudienceTab businessId={businessId} dateRange={convertedDateRange} language={language} />
             </LockedSection>
-          )}
+          }
         </TabsContent>
 
         {/* Tab 2: CRM */}
         <TabsContent value="crm" className="min-h-[500px]">
-          {hasCrmAccess ? (
-            <CrmDashboard businessId={businessId} floorPlanEnabled={!!floorPlanData} />
-          ) : (
-            <LockedSection requiredPlan="elite" language={language}>
+          {hasCrmAccess ?
+          <CrmDashboard businessId={businessId} floorPlanEnabled={!!floorPlanData} /> :
+
+          <LockedSection requiredPlan="elite" language={language}>
               <CrmDashboard businessId={businessId} floorPlanEnabled={!!floorPlanData} />
             </LockedSection>
-          )}
+          }
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>);
+
 }
