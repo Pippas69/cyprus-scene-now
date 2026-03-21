@@ -6464,6 +6464,7 @@ export type Database = {
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
+      normalize_guest_identity: { Args: { p_value: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -7156,6 +7157,16 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      sync_crm_guest_from_ticket_data: {
+        Args: {
+          p_business_id: string
+          p_guest_name: string
+          p_order_id: string
+          p_ticket_status: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       update_boost_status: { Args: never; Returns: undefined }
       update_business_with_geo: {
@@ -7183,6 +7194,17 @@ export type Database = {
           new_srid_in: number
           schema_name: string
           table_name: string
+        }
+        Returns: string
+      }
+      upsert_crm_guest_identity: {
+        Args: {
+          p_business_id: string
+          p_email?: string
+          p_guest_name: string
+          p_phone?: string
+          p_profile_type?: string
+          p_user_id: string
         }
         Returns: string
       }
