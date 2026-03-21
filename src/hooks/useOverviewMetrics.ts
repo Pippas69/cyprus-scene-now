@@ -88,26 +88,55 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const registeredActionCounts: Record<string, number> = {};
       const seenRegisteredActions = new Set<string>();
 
+      type TicketCustomerRow = {
+        id: string;
+        user_id: string | null;
+        guest_name: string | null;
+        order_id: string;
+      };
+
+      type ReservationCustomerRow = {
+        id: string;
+        user_id: string | null;
+        reservation_name: string | null;
+        phone_number: string | null;
+      };
+
+      type OfferPurchaseCustomerRow = {
+        id: string;
+        user_id: string | null;
+        reservation_id: string | null;
+        claim_type: string | null;
+      };
+
       const normalizeName = (value: string | null | undefined) => {
         if (!value) return null;
         const normalized = value.trim().toLowerCase().replace(/\s+/g, " ");
         return normalized.length > 0 ? normalized : null;
       };
 
-      const buildCustomerKey = ({
+      const normalizePhone = (value: string | null | undefined) => {
+        if (!value) return null;
+        const normalized = value.replace(/\s+/g, "").replace(/[()-]/g, "");
+        return normalized.length > 0 ? normalized : null;
+      };
+
+      const buildGhostCustomerKey = ({
         guestName,
-        userId,
+        phone,
         fallback,
       }: {
         guestName?: string | null;
-        userId?: string | null;
+        phone?: string | null;
         fallback: string;
       }) => {
-        const normalizedName = normalizeName(guestName);
-        if (normalizedName) return `ghost:${normalizedName}`;
-        if (userId) return `user:${userId}`;
-        return fallback;
+        const nameKey = normalizeName(guestName);
+        const phoneKey = normalizePhone(phone) || "";
+        if (!nameKey && !phoneKey) return fallback;
+        return `ghost:${nameKey || "unknown"}:${phoneKey}`;
       };
+
+      const buildUserCustomerKey = (userId: string) => `user:${userId}`;
 
       const countRegisteredAction = (userId: string | null | undefined, actionKey: string) => {
         if (!userId) return;
@@ -117,166 +146,67 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         registeredActionCounts[userId] = (registeredActionCounts[userId] || 0) + 1;
       };
 
-      // A) Tickets sold (event QR holders)
-      let ticketsData: { id: string; user_id: string; guest_name: string | null; order_id: string }[] = [];
-      if (eventIds.length > 0) {
-        const { data } = await supabase
-          .from("tickets")
-          .select("id, user_id, guest_name, order_id")
-          .in("event_id", eventIds)
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-
-        ticketsData = (data || []) as { id: string; user_id: string; guest_name: string | null; order_id: string }[];
-
-        ticketsData.forEach((ticket) => {
-          customerKeys.add(
-            buildCustomerKey({
-              guestName: ticket.guest_name,
-              userId: ticket.user_id,
-              fallback: `ticket:${ticket.id}`,
-            })
-          );
-          countRegisteredAction(ticket.user_id, `ticket_order:${ticket.order_id}`);
-        });
-      }
-
-      // B) Reservations (profile / offer / event), excluding synthetic ticket-linked rows
-      const { data: directReservations } = await supabase
-        .from("reservations")
-        .select("id, user_id, reservation_name")
-        .eq("business_id", businessId)
-        .is("event_id", null)
-        .eq("status", "accepted")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      let eventReservations: { id: string; user_id: string; reservation_name: string }[] = [];
-      if (eventIds.length > 0) {
-        const { data } = await supabase
+      // A) Load all customer-producing sources first
+      const [ticketsRes, directReservationsRes, eventReservationsRes, offerPurchasesRes, studentRedemptionsRes] = await Promise.all([
+        eventIds.length > 0
+          ? supabase
+              .from("tickets")
+              .select("id, user_id, guest_name, order_id")
+              .in("event_id", eventIds)
+              .gte("created_at", startDate.toISOString())
+              .lte("created_at", endDate.toISOString())
+          : Promise.resolve({ data: [], error: null }),
+        supabase
           .from("reservations")
-          .select("id, user_id, reservation_name")
-          .in("event_id", eventIds)
+          .select("id, user_id, reservation_name, phone_number")
+          .eq("business_id", businessId)
+          .is("event_id", null)
           .eq("status", "accepted")
-          .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
           .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
+          .lte("created_at", endDate.toISOString()),
+        eventIds.length > 0
+          ? supabase
+              .from("reservations")
+              .select("id, user_id, reservation_name, phone_number")
+              .in("event_id", eventIds)
+              .eq("status", "accepted")
+              .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
+              .gte("created_at", startDate.toISOString())
+              .lte("created_at", endDate.toISOString())
+          : Promise.resolve({ data: [], error: null }),
+        supabase
+          .from("offer_purchases")
+          .select("id, user_id, reservation_id, claim_type")
+          .eq("business_id", businessId)
+          .in("status", ["paid", "redeemed"])
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString()),
+        supabase
+          .from("student_discount_redemptions")
+          .select("id, student_verification_id")
+          .eq("business_id", businessId)
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString()),
+      ]);
 
-        eventReservations = (data || []) as { id: string; user_id: string; reservation_name: string }[];
-      }
-
+      const ticketsData = (ticketsRes.data || []) as TicketCustomerRow[];
       const reservations = [
-        ...((directReservations || []) as { id: string; user_id: string; reservation_name: string }[]),
-        ...eventReservations,
+        ...((directReservationsRes.data || []) as ReservationCustomerRow[]),
+        ...((eventReservationsRes.data || []) as ReservationCustomerRow[]),
       ];
-
-      const reservationIds = reservations.map((r) => r.id);
-      const reservationGuestsByReservation = new Map<string, { id: string; guest_name: string | null }[]>();
-
-      if (reservationIds.length > 0) {
-        const { data: reservationGuests } = await supabase
-          .from("reservation_guests")
-          .select("id, reservation_id, guest_name")
-          .in("reservation_id", reservationIds);
-
-        (reservationGuests || []).forEach((guest) => {
-          const existing = reservationGuestsByReservation.get(guest.reservation_id) || [];
-          existing.push({ id: guest.id, guest_name: guest.guest_name });
-          reservationGuestsByReservation.set(guest.reservation_id, existing);
-        });
-      }
-
-      reservations.forEach((reservation) => {
-        const guests = reservationGuestsByReservation.get(reservation.id) || [];
-
-        if (guests.length > 0) {
-          guests.forEach((guest) => {
-            customerKeys.add(
-              buildCustomerKey({
-                guestName: guest.guest_name,
-                userId: null,
-                fallback: `reservation_guest:${guest.id}`,
-              })
-            );
-          });
-        } else {
-          customerKeys.add(
-            buildCustomerKey({
-              guestName: reservation.reservation_name,
-              userId: reservation.user_id,
-              fallback: `reservation:${reservation.id}`,
-            })
-          );
-        }
-
-        countRegisteredAction(reservation.user_id, `reservation:${reservation.id}`);
-      });
-
-      // C) Offer claims (standalone / walk-in), avoid double-counting offer-linked reservations
-      const { data: offerPurchases } = await supabase
-        .from("offer_purchases")
-        .select("id, user_id, reservation_id, claim_type")
-        .eq("business_id", businessId)
-        .in("status", ["paid", "redeemed"])
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      const standaloneOfferPurchases = (offerPurchases || []).filter(
+      const offerPurchases = (offerPurchasesRes.data || []) as OfferPurchaseCustomerRow[];
+      const standaloneOfferPurchases = offerPurchases.filter(
         (purchase) => !purchase.reservation_id || purchase.claim_type === "walk_in"
       );
+      const studentRedemptions = (studentRedemptionsRes.data || []) as {
+        id: string;
+        student_verification_id: string;
+      }[];
 
-      const offerPurchaseIds = standaloneOfferPurchases.map((purchase) => purchase.id);
-      const offerGuestsByPurchase = new Map<string, { id: string; guest_name: string | null }[]>();
-
-      if (offerPurchaseIds.length > 0) {
-        const { data: offerGuests } = await supabase
-          .from("offer_purchase_guests")
-          .select("id, purchase_id, guest_name")
-          .in("purchase_id", offerPurchaseIds);
-
-        (offerGuests || []).forEach((guest) => {
-          const existing = offerGuestsByPurchase.get(guest.purchase_id) || [];
-          existing.push({ id: guest.id, guest_name: guest.guest_name });
-          offerGuestsByPurchase.set(guest.purchase_id, existing);
-        });
-      }
-
-      standaloneOfferPurchases.forEach((purchase) => {
-        const guests = offerGuestsByPurchase.get(purchase.id) || [];
-
-        if (guests.length > 0) {
-          guests.forEach((guest) => {
-            customerKeys.add(
-              buildCustomerKey({
-                guestName: guest.guest_name,
-                userId: null,
-                fallback: `offer_guest:${guest.id}`,
-              })
-            );
-          });
-        } else {
-          customerKeys.add(
-            buildCustomerKey({
-              userId: purchase.user_id,
-              fallback: `offer_purchase:${purchase.id}`,
-            })
-          );
-        }
-
-        countRegisteredAction(purchase.user_id, `offer_purchase:${purchase.id}`);
-      });
-
-      // D) Student discount redemptions
-      const { data: studentRedemptions } = await supabase
-        .from("student_discount_redemptions")
-        .select("id, student_verification_id")
-        .eq("business_id", businessId)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
+      // B) Resolve student verification -> user
       const studentVerificationIds = Array.from(
         new Set(
-          (studentRedemptions || [])
+          studentRedemptions
             .map((redemption) => redemption.student_verification_id)
             .filter(Boolean)
         )
@@ -296,17 +226,190 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         });
       }
 
-      (studentRedemptions || []).forEach((redemption) => {
-        const studentUserId = studentUserByVerification.get(redemption.student_verification_id);
+      // C) Load related entities for identity resolution
+      const reservationIds = reservations.map((r) => r.id);
+      const offerPurchaseIds = standaloneOfferPurchases.map((purchase) => purchase.id);
+      const ticketOrderIds = Array.from(new Set(ticketsData.map((ticket) => ticket.order_id)));
 
-        customerKeys.add(
-          buildCustomerKey({
-            userId: studentUserId || null,
-            fallback: `student_redemption:${redemption.id}`,
-          })
-        );
+      const involvedUserIds = Array.from(
+        new Set(
+          [
+            ...ticketsData.map((ticket) => ticket.user_id),
+            ...reservations.map((reservation) => reservation.user_id),
+            ...standaloneOfferPurchases.map((purchase) => purchase.user_id),
+            ...Array.from(studentUserByVerification.values()),
+          ].filter(Boolean)
+        )
+      ) as string[];
 
-        countRegisteredAction(studentUserId || null, `student_redemption:${redemption.id}`);
+      const [reservationGuestsRes, offerGuestsRes, ticketOrdersRes, profilesRes] = await Promise.all([
+        reservationIds.length > 0
+          ? supabase
+              .from("reservation_guests")
+              .select("id, reservation_id, guest_name")
+              .in("reservation_id", reservationIds)
+          : Promise.resolve({ data: [], error: null }),
+        offerPurchaseIds.length > 0
+          ? supabase
+              .from("offer_purchase_guests")
+              .select("id, purchase_id, guest_name")
+              .in("purchase_id", offerPurchaseIds)
+          : Promise.resolve({ data: [], error: null }),
+        ticketOrderIds.length > 0
+          ? supabase
+              .from("ticket_orders")
+              .select("id, customer_name, customer_phone")
+              .in("id", ticketOrderIds)
+          : Promise.resolve({ data: [], error: null }),
+        involvedUserIds.length > 0
+          ? supabase
+              .from("profiles")
+              .select("id, name, first_name, last_name")
+              .in("id", involvedUserIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      const reservationGuestsByReservation = new Map<string, { id: string; guest_name: string | null }[]>();
+      (reservationGuestsRes.data || []).forEach((guest) => {
+        const existing = reservationGuestsByReservation.get(guest.reservation_id) || [];
+        existing.push({ id: guest.id, guest_name: guest.guest_name });
+        reservationGuestsByReservation.set(guest.reservation_id, existing);
+      });
+
+      const offerGuestsByPurchase = new Map<string, { id: string; guest_name: string | null }[]>();
+      (offerGuestsRes.data || []).forEach((guest) => {
+        const existing = offerGuestsByPurchase.get(guest.purchase_id) || [];
+        existing.push({ id: guest.id, guest_name: guest.guest_name });
+        offerGuestsByPurchase.set(guest.purchase_id, existing);
+      });
+
+      const ticketOrderById = new Map<string, { customer_name: string | null; customer_phone: string | null }>();
+      (ticketOrdersRes.data || []).forEach((order) => {
+        ticketOrderById.set(order.id, {
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+        });
+      });
+
+      const profileIdentityByUserId = new Map<string, { nameKey: string | null; fullNameKey: string | null }>();
+      (profilesRes.data || []).forEach((profile) => {
+        const first = profile.first_name?.trim() || "";
+        const last = profile.last_name?.trim() || "";
+        const fullName = `${first} ${last}`.trim();
+        profileIdentityByUserId.set(profile.id, {
+          nameKey: normalizeName(profile.name),
+          fullNameKey: normalizeName(fullName),
+        });
+      });
+
+      // D) Tickets: CRM-compatible identity (registered only when guest_name matches profile)
+      ticketsData.forEach((ticket) => {
+        const orderInfo = ticketOrderById.get(ticket.order_id);
+        const effectiveGuestName = ticket.guest_name || orderInfo?.customer_name || null;
+        const guestNameKey = normalizeName(effectiveGuestName);
+
+        let effectiveUserId: string | null = null;
+        if (ticket.user_id) {
+          const profileIdentity = profileIdentityByUserId.get(ticket.user_id);
+          if (
+            profileIdentity &&
+            (!guestNameKey ||
+              guestNameKey === profileIdentity.nameKey ||
+              guestNameKey === profileIdentity.fullNameKey)
+          ) {
+            effectiveUserId = ticket.user_id;
+          }
+        }
+
+        if (effectiveUserId) {
+          customerKeys.add(buildUserCustomerKey(effectiveUserId));
+          countRegisteredAction(effectiveUserId, `ticket_order:${ticket.order_id}`);
+        } else {
+          customerKeys.add(
+            buildGhostCustomerKey({
+              guestName: effectiveGuestName,
+              phone: orderInfo?.customer_phone,
+              fallback: `ticket:${ticket.id}`,
+            })
+          );
+        }
+      });
+
+      // E) Reservations: registered by user_id, ghost by reservation_name + phone
+      reservations.forEach((reservation) => {
+        const guests = reservationGuestsByReservation.get(reservation.id) || [];
+
+        if (guests.length > 0) {
+          guests.forEach((guest) => {
+            customerKeys.add(
+              buildGhostCustomerKey({
+                guestName: guest.guest_name,
+                fallback: `reservation_guest:${guest.id}`,
+              })
+            );
+          });
+          return;
+        }
+
+        const isRegistered = !!reservation.user_id && profileIdentityByUserId.has(reservation.user_id);
+        if (isRegistered && reservation.user_id) {
+          customerKeys.add(buildUserCustomerKey(reservation.user_id));
+          countRegisteredAction(reservation.user_id, `reservation:${reservation.id}`);
+        } else {
+          customerKeys.add(
+            buildGhostCustomerKey({
+              guestName: reservation.reservation_name,
+              phone: reservation.phone_number,
+              fallback: `reservation:${reservation.id}`,
+            })
+          );
+        }
+      });
+
+      // F) Offer claims (standalone / walk-in), avoid double-counting offer-linked reservations
+      standaloneOfferPurchases.forEach((purchase) => {
+        const guests = offerGuestsByPurchase.get(purchase.id) || [];
+
+        if (guests.length > 0) {
+          guests.forEach((guest) => {
+            customerKeys.add(
+              buildGhostCustomerKey({
+                guestName: guest.guest_name,
+                fallback: `offer_guest:${guest.id}`,
+              })
+            );
+          });
+          return;
+        }
+
+        const isRegistered = !!purchase.user_id && profileIdentityByUserId.has(purchase.user_id);
+        if (isRegistered && purchase.user_id) {
+          customerKeys.add(buildUserCustomerKey(purchase.user_id));
+          countRegisteredAction(purchase.user_id, `offer_purchase:${purchase.id}`);
+        } else {
+          customerKeys.add(
+            buildGhostCustomerKey({
+              fallback: `offer_purchase:${purchase.id}`,
+            })
+          );
+        }
+      });
+
+      // G) Student discount redemptions
+      studentRedemptions.forEach((redemption) => {
+        const studentUserId = studentUserByVerification.get(redemption.student_verification_id) || null;
+        const isRegistered = !!studentUserId && profileIdentityByUserId.has(studentUserId);
+
+        if (isRegistered && studentUserId) {
+          customerKeys.add(buildUserCustomerKey(studentUserId));
+          countRegisteredAction(studentUserId, `student_redemption:${redemption.id}`);
+        } else {
+          customerKeys.add(
+            buildGhostCustomerKey({
+              fallback: `student_redemption:${redemption.id}`,
+            })
+          );
+        }
       });
 
       const customersThruFomo = customerKeys.size;
@@ -425,7 +528,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // (e.g. "Offer claim: ..."), so we exclude those too.
       const offerMarkedReservationIds = new Set(
         (directResCheckins || [])
-          .filter((r) => ((r as any).special_requests || "").toLowerCase().includes("offer claim:"))
+          .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
           .map((r) => r.id)
       );
 
