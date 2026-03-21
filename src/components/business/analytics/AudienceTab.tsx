@@ -71,16 +71,9 @@ const MetricItem = ({ label, value, total }: MetricItemProps) => {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
   
   return (
-    <div className="flex items-center gap-2 py-1.5">
-      <span className="text-xs sm:text-sm text-muted-foreground flex-1 truncate">{label}</span>
-      <span className="text-xs sm:text-sm font-semibold text-foreground w-8 text-right">{value}</span>
-      <div className="w-16 sm:w-20 h-1.5 bg-muted rounded-full overflow-hidden flex-shrink-0">
-        <div 
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <span className="text-[10px] sm:text-xs text-muted-foreground w-8 text-right">{percentage}%</span>
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <span className="text-xs sm:text-sm text-muted-foreground">{label}</span>
+      <span className="text-xs sm:text-sm font-semibold text-foreground">{value}</span>
     </div>
   );
 };
