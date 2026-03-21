@@ -57,6 +57,7 @@ const translations = {
 interface BusinessSidebarProps {
   businessCategories: string[];
   floorPlanEnabled?: boolean;
+  planSlug?: string;
 }
 
 export function BusinessSidebar({ businessCategories, floorPlanEnabled }: BusinessSidebarProps) {
