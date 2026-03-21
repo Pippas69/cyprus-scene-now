@@ -227,7 +227,7 @@ export const OverviewTab = ({
               </DialogHeader>
               <div className="space-y-2 sm:space-y-4 pt-1 sm:pt-2">
                 <div className="p-2 sm:p-4 bg-muted/50 rounded-lg">
-                  <p className="text-xl sm:text-3xl font-bold text-foreground">{value.toLocaleString()}</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">{value === -1 ? `${returningPercent}%` : value.toLocaleString()}</p>
                 </div>
                 <p className="text-[10px] sm:text-sm text-muted-foreground">{details}</p>
                 <div className="pt-1.5 sm:pt-2 border-t border-border">
