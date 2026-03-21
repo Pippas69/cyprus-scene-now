@@ -156,6 +156,10 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
       {/* Guest Profile Slide-over */}
       <Sheet open={!!selectedGuest} onOpenChange={(open) => !open && setSelectedGuest(null)}>
         <SheetContent side="right" className="w-full sm:w-[480px] sm:max-w-[480px] p-0 overflow-hidden">
+          <VisuallyHidden>
+            <SheetTitle>Guest Profile</SheetTitle>
+            <SheetDescription>Guest profile details</SheetDescription>
+          </VisuallyHidden>
           {selectedGuest && (
             <CrmGuestProfile
               guest={selectedGuest}
