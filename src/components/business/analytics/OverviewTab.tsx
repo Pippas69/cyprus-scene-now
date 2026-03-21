@@ -119,7 +119,7 @@ export const OverviewTab = ({
   }, {
     key: "recurring",
     icon: Repeat,
-    value: data?.repeatCustomers || 0,
+    value: -1, // special marker for percentage display
     label: t.metrics.recurring,
     explanation: t.metrics.recurringExplanation,
     details: t.metrics.recurringDetails,
