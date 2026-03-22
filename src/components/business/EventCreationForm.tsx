@@ -434,6 +434,11 @@ const EventCreationForm = ({
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
 
+  // Deferred payment state (Asmatio only)
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
+
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
