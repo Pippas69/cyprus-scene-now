@@ -716,6 +716,23 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
+            {isDeferredPayment && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+                  <Shield className="h-4 w-4" />
+                  {language === 'el' ? 'Αναβαλλόμενη Πληρωμή' : 'Deferred Payment'}
+                </p>
+                <p className="text-amber-700 dark:text-amber-300 text-xs">
+                  {language === 'el'
+                    ? `Η κάρτα σας δεν θα χρεωθεί τώρα. Πρέπει να επιβεβαιώσετε την παρουσία σας ${deferredConfirmationHours} ώρες πριν την εκδήλωση. Σε περίπτωση μη επιβεβαίωσης, θα χρεωθεί τέλος ακύρωσης ${deferredCancellationFeePercent}% (${formatPrice(Math.round(total * deferredCancellationFeePercent / 100))}).`
+                    : `Your card will not be charged now. You must confirm attendance ${deferredConfirmationHours}h before the event. If you don't confirm, a cancellation fee of ${deferredCancellationFeePercent}% (${formatPrice(Math.round(total * deferredCancellationFeePercent / 100))}) will apply.`
+                  }
+                </p>
+              </div>
+            )}
+
+            <Separator />
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t.prepaidAmount}</span>
@@ -725,7 +742,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>{t.total}</span>
-                <span className="text-primary">{formatPrice(total)}</span>
+                <span className="text-primary">
+                  {isDeferredPayment
+                    ? (language === 'el' ? 'Δέσμευση ' : 'Hold ') + formatPrice(total)
+                    : formatPrice(total)
+                  }
+                </span>
               </div>
             </div>
           </div>
