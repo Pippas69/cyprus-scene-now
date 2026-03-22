@@ -598,6 +598,34 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     }
   };
 
+  // Confirm deferred reservation
+  const handleConfirmDeferred = async (reservationId: string) => {
+    setConfirmingDeferredId(reservationId);
+    try {
+      const { data, error } = await supabase.functions.invoke('confirm-deferred-reservation', {
+        body: { reservation_id: reservationId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(language === 'el' ? 'Η κράτηση επιβεβαιώθηκε!' : 'Reservation confirmed!');
+      fetchReservations();
+    } catch (err) {
+      console.error('Error confirming deferred reservation:', err);
+      toast.error(language === 'el' ? 'Σφάλμα επιβεβαίωσης' : 'Confirmation error');
+    } finally {
+      setConfirmingDeferredId(null);
+    }
+  };
+
+  const formatDeadlineCountdown = (deadline: string) => {
+    const diff = new Date(deadline).getTime() - Date.now();
+    if (diff <= 0) return language === 'el' ? 'Έληξε' : 'Expired';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
   const text = {
     el: {
       title: 'Οι Κρατήσεις Μου',
