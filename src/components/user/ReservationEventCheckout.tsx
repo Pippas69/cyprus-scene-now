@@ -377,7 +377,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-reservation-event-checkout', {
+      const edgeFunction = isDeferredPayment ? 'create-deferred-checkout' : 'create-reservation-event-checkout';
+
+      const { data, error } = await supabase.functions.invoke(edgeFunction, {
         body: {
           event_id: eventId,
           seating_type_id: selectedSeating.id,
