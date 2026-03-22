@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Loader2 } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
@@ -53,6 +53,9 @@ interface ReservationData {
   seating_type_id: string | null;
   prepaid_min_charge_cents: number | null;
   prepaid_charge_status: string | null;
+  deferred_status?: string | null;
+  deferred_confirmation_deadline?: string | null;
+  deferred_payment_mode?: string | null;
   events?: {
     id: string;
     title: string;
@@ -103,6 +106,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const [ticketOrderTotals, setTicketOrderTotals] = useState<Record<string, number>>({});
   const [seatingMinCharge, setSeatingMinCharge] = useState<Record<string, number>>({});
+  const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -148,7 +152,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
       business_notes, confirmation_code, qr_code_token,
-      seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
+      seating_type_id, prepaid_min_charge_cents, prepaid_charge_status,
+      deferred_status, deferred_confirmation_deadline, deferred_payment_mode
     `;
 
     const [
@@ -593,6 +598,34 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     }
   };
 
+  // Confirm deferred reservation
+  const handleConfirmDeferred = async (reservationId: string) => {
+    setConfirmingDeferredId(reservationId);
+    try {
+      const { data, error } = await supabase.functions.invoke('confirm-deferred-reservation', {
+        body: { reservation_id: reservationId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(language === 'el' ? 'Η κράτηση επιβεβαιώθηκε!' : 'Reservation confirmed!');
+      fetchReservations();
+    } catch (err) {
+      console.error('Error confirming deferred reservation:', err);
+      toast.error(language === 'el' ? 'Σφάλμα επιβεβαίωσης' : 'Confirmation error');
+    } finally {
+      setConfirmingDeferredId(null);
+    }
+  };
+
+  const formatDeadlineCountdown = (deadline: string) => {
+    const diff = new Date(deadline).getTime() - Date.now();
+    if (diff <= 0) return language === 'el' ? 'Έληξε' : 'Expired';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
   const text = {
     el: {
       title: 'Οι Κρατήσεις Μου',
@@ -657,6 +690,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         return <Badge variant="destructive" className="text-xs h-7 px-3">{t.noShow}</Badge>;
       }
       return <Badge className="bg-primary text-primary-foreground text-xs h-7 px-3">{t.confirmed}</Badge>;
+    }
+    if (reservation.deferred_status === 'awaiting_confirmation') {
+      return <Badge className="bg-amber-500 text-white text-xs h-7 px-3">{language === 'el' ? 'Αναμονή Επιβεβ.' : 'Awaiting Confirm'}</Badge>;
+    }
+    if (reservation.deferred_status === 'auto_charged') {
+      return <Badge variant="destructive" className="text-xs h-7 px-3">{language === 'el' ? 'Χρεώθηκε Ακύρωση' : 'Fee Charged'}</Badge>;
     }
     if (reservation.status === 'pending') {
       return <Badge variant="secondary" className="text-xs h-7 px-3">{t.pending}</Badge>;
@@ -732,6 +771,28 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               </div>
             );
           })()}
+
+          {/* Deferred Payment: Confirm Attendance */}
+          {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2 mt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                  ⏰ {language === 'el' ? 'Επιβεβαίωση σε' : 'Confirm in'}: {formatDeadlineCountdown(reservation.deferred_confirmation_deadline)}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                className="w-full h-8 text-xs"
+                disabled={confirmingDeferredId === reservation.id}
+                onClick={() => handleConfirmDeferred(reservation.id)}
+              >
+                {confirmingDeferredId === reservation.id
+                  ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                  : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
+                }
+              </Button>
+            </div>
+          )}
 
           {/* Row 5: Location */}
           {location && (

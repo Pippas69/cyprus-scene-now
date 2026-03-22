@@ -17,7 +17,7 @@ import {
   GlassWater, TableIcon, Crown, Sofa, Users, 
   Clock, Phone, User, MessageSquare, CreditCard, Mail,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
-  AlertCircle, Calendar
+  AlertCircle, Calendar, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -219,6 +219,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [submitting, setSubmitting] = useState(false);
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
   const [paymentsReady, setPaymentsReady] = useState<boolean | null>(null);
+  const [isDeferredPayment, setIsDeferredPayment] = useState(false);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
 
   // Success state for showing premium QR card
   const [successData, setSuccessData] = useState<{
@@ -270,6 +273,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     if (!silent) setLoading(true);
 
     try {
+      // Check deferred payment status
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours')
+        .eq('id', eventId)
+        .single();
+
+      if (eventData) {
+        setIsDeferredPayment(eventData.deferred_payment_enabled || false);
+        setDeferredCancellationFeePercent(eventData.deferred_cancellation_fee_percent || 50);
+        setDeferredConfirmationHours(eventData.deferred_confirmation_hours || 4);
+      }
+
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
         .select('*')
@@ -361,7 +377,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-reservation-event-checkout', {
+      const edgeFunction = isDeferredPayment ? 'create-deferred-checkout' : 'create-reservation-event-checkout';
+
+      const { data, error } = await supabase.functions.invoke(edgeFunction, {
         body: {
           event_id: eventId,
           seating_type_id: selectedSeating.id,
@@ -698,6 +716,23 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
+            {isDeferredPayment && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+                  <Shield className="h-4 w-4" />
+                  {language === 'el' ? 'Αναβαλλόμενη Πληρωμή' : 'Deferred Payment'}
+                </p>
+                <p className="text-amber-700 dark:text-amber-300 text-xs">
+                  {language === 'el'
+                    ? `Η κάρτα σας δεν θα χρεωθεί τώρα. Πρέπει να επιβεβαιώσετε την παρουσία σας ${deferredConfirmationHours} ώρες πριν την εκδήλωση. Σε περίπτωση μη επιβεβαίωσης, θα χρεωθεί τέλος ακύρωσης ${deferredCancellationFeePercent}% (${formatPrice(Math.round(total * deferredCancellationFeePercent / 100))}).`
+                    : `Your card will not be charged now. You must confirm attendance ${deferredConfirmationHours}h before the event. If you don't confirm, a cancellation fee of ${deferredCancellationFeePercent}% (${formatPrice(Math.round(total * deferredCancellationFeePercent / 100))}) will apply.`
+                  }
+                </p>
+              </div>
+            )}
+
+            <Separator />
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t.prepaidAmount}</span>
@@ -707,7 +742,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>{t.total}</span>
-                <span className="text-primary">{formatPrice(total)}</span>
+                <span className="text-primary">
+                  {isDeferredPayment
+                    ? (language === 'el' ? 'Δέσμευση ' : 'Hold ') + formatPrice(total)
+                    : formatPrice(total)
+                  }
+                </span>
               </div>
             </div>
           </div>
@@ -755,7 +795,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           ) : (
             <>
               <CreditCard className="h-4 w-4" />
-              {t.pay} {formatPrice(total)}
+              {isDeferredPayment
+                ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
+                : `${t.pay} ${formatPrice(total)}`
+              }
             </>
           )}
         </Button>

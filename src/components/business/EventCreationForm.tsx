@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DeferredPaymentSection } from "./DeferredPaymentSection";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -433,6 +434,11 @@ const EventCreationForm = ({
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
 
+  // Deferred payment state (Asmatio only)
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
+
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
@@ -649,7 +655,7 @@ const EventCreationForm = ({
       const endAt = formData.startAt ? new Date(formData.startAt.getTime() + 3 * 60 * 60 * 1000) : new Date();
 
       // Build event data
-      const eventData = {
+      const eventData: Record<string, any> = {
         business_id: businessId,
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -670,12 +676,15 @@ const EventCreationForm = ({
         dress_code: null,
         reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
-        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null
+        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
+        deferred_payment_enabled: deferredEnabled,
+        deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
+        deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
       };
       const {
         data: createdEvent,
         error: insertError
-      } = await supabase.from('events').insert(eventData).select().single();
+      } = await supabase.from('events').insert(eventData as any).select().single();
       if (insertError) throw insertError;
 
       // Save ticket tiers
@@ -1193,6 +1202,19 @@ const EventCreationForm = ({
               </div>}
           </>
         )}
+
+        {/* Deferred Payment (Asmatio only) */}
+        <DeferredPaymentSection
+          businessId={businessId}
+          enabled={deferredEnabled}
+          onEnabledChange={setDeferredEnabled}
+          confirmationHours={deferredConfirmationHours}
+          onConfirmationHoursChange={setDeferredConfirmationHours}
+          cancellationFeePercent={deferredCancellationFeePercent}
+          onCancellationFeePercentChange={setDeferredCancellationFeePercent}
+          language={language}
+          eventType={formData.eventType}
+        />
 
         {/* Terms & Conditions (Optional) */}
         <div className="space-y-1 sm:space-y-2">

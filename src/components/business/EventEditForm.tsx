@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DeferredPaymentSection } from "./DeferredPaymentSection";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -352,6 +353,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
 
   // Load existing event data
   useEffect(() => {
@@ -509,6 +513,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       setWalkInEnabled(hasWalkIn);
       setWalkInTicketTiers(walkInTiers);
       setExistingCoverUrl(event.cover_image_url || null);
+      setDeferredEnabled(event.deferred_payment_enabled || false);
+      setDeferredConfirmationHours(event.deferred_confirmation_hours || 4);
+      setDeferredCancellationFeePercent(event.deferred_cancellation_fee_percent || 50);
     } catch (error) {
       console.error('Error loading event data:', error);
       toast.error(t.eventUpdateFailed);
@@ -708,7 +715,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           reservation_hours_to: hasReservation ? formData.reservationToTime : null,
           dress_code: null,
           terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
-        })
+          deferred_payment_enabled: deferredEnabled,
+          deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
+          deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
+        } as any)
         .eq('id', event.id);
 
       if (updateError) throw updateError;
@@ -1461,6 +1471,19 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
               )}
             </>
           )}
+
+          {/* Deferred Payment (Asmatio only) */}
+          <DeferredPaymentSection
+            businessId={event?.business_id || ''}
+            enabled={deferredEnabled}
+            onEnabledChange={setDeferredEnabled}
+            confirmationHours={deferredConfirmationHours}
+            onConfirmationHoursChange={setDeferredConfirmationHours}
+            cancellationFeePercent={deferredCancellationFeePercent}
+            onCancellationFeePercentChange={setDeferredCancellationFeePercent}
+            language={language}
+            eventType={formData.eventType}
+          />
 
           {/* Terms & Conditions (Optional) */}
           <div className="space-y-1 sm:space-y-2">

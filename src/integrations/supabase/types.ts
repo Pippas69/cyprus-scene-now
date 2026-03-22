@@ -2135,6 +2135,9 @@ export type Database = {
           category: string[]
           cover_image_url: string | null
           created_at: string
+          deferred_cancellation_fee_percent: number | null
+          deferred_confirmation_hours: number | null
+          deferred_payment_enabled: boolean | null
           description: string | null
           dress_code: string | null
           end_at: string
@@ -2175,6 +2178,9 @@ export type Database = {
           category: string[]
           cover_image_url?: string | null
           created_at?: string
+          deferred_cancellation_fee_percent?: number | null
+          deferred_confirmation_hours?: number | null
+          deferred_payment_enabled?: boolean | null
           description?: string | null
           dress_code?: string | null
           end_at: string
@@ -2215,6 +2221,9 @@ export type Database = {
           category?: string[]
           cover_image_url?: string | null
           created_at?: string
+          deferred_cancellation_fee_percent?: number | null
+          deferred_confirmation_hours?: number | null
+          deferred_payment_enabled?: boolean | null
           description?: string | null
           dress_code?: string | null
           end_at?: string
@@ -4174,6 +4183,9 @@ export type Database = {
           checked_in_by: string | null
           confirmation_code: string | null
           created_at: string
+          deferred_confirmation_deadline: string | null
+          deferred_payment_mode: string | null
+          deferred_status: string | null
           event_id: string | null
           id: string
           party_size: number
@@ -4189,6 +4201,8 @@ export type Database = {
           staff_memo: string | null
           status: string
           stripe_payment_intent_id: string | null
+          stripe_payment_method_id: string | null
+          stripe_setup_intent_id: string | null
           ticket_credit_cents: number | null
           updated_at: string
           user_id: string
@@ -4201,6 +4215,9 @@ export type Database = {
           checked_in_by?: string | null
           confirmation_code?: string | null
           created_at?: string
+          deferred_confirmation_deadline?: string | null
+          deferred_payment_mode?: string | null
+          deferred_status?: string | null
           event_id?: string | null
           id?: string
           party_size: number
@@ -4216,6 +4233,8 @@ export type Database = {
           staff_memo?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
+          stripe_setup_intent_id?: string | null
           ticket_credit_cents?: number | null
           updated_at?: string
           user_id: string
@@ -4228,6 +4247,9 @@ export type Database = {
           checked_in_by?: string | null
           confirmation_code?: string | null
           created_at?: string
+          deferred_confirmation_deadline?: string | null
+          deferred_payment_mode?: string | null
+          deferred_status?: string | null
           event_id?: string | null
           id?: string
           party_size?: number
@@ -4243,6 +4265,8 @@ export type Database = {
           staff_memo?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
+          stripe_setup_intent_id?: string | null
           ticket_credit_cents?: number | null
           updated_at?: string
           user_id?: string
