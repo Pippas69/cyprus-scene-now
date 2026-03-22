@@ -795,7 +795,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           ) : (
             <>
               <CreditCard className="h-4 w-4" />
-              {t.pay} {formatPrice(total)}
+              {isDeferredPayment
+                ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
+                : `${t.pay} ${formatPrice(total)}`
+              }
             </>
           )}
         </Button>
