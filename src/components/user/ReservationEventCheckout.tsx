@@ -273,6 +273,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     if (!silent) setLoading(true);
 
     try {
+      // Check deferred payment status
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours')
+        .eq('id', eventId)
+        .single();
+
+      if (eventData) {
+        setIsDeferredPayment(eventData.deferred_payment_enabled || false);
+        setDeferredCancellationFeePercent(eventData.deferred_cancellation_fee_percent || 50);
+        setDeferredConfirmationHours(eventData.deferred_confirmation_hours || 4);
+      }
+
       const { data: seatingTypes, error: seatingError } = await supabase
         .from('reservation_seating_types')
         .select('*')
