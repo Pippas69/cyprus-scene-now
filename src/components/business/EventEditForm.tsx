@@ -715,7 +715,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           reservation_hours_to: hasReservation ? formData.reservationToTime : null,
           dress_code: null,
           terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
-        })
+          deferred_payment_enabled: deferredEnabled,
+          deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
+          deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
+        } as any)
         .eq('id', event.id);
 
       if (updateError) throw updateError;
