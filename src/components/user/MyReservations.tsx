@@ -691,6 +691,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       }
       return <Badge className="bg-primary text-primary-foreground text-xs h-7 px-3">{t.confirmed}</Badge>;
     }
+    if (reservation.deferred_status === 'awaiting_confirmation') {
+      return <Badge className="bg-amber-500 text-white text-xs h-7 px-3">{language === 'el' ? 'Αναμονή Επιβεβ.' : 'Awaiting Confirm'}</Badge>;
+    }
+    if (reservation.deferred_status === 'auto_charged') {
+      return <Badge variant="destructive" className="text-xs h-7 px-3">{language === 'el' ? 'Χρεώθηκε Ακύρωση' : 'Fee Charged'}</Badge>;
+    }
     if (reservation.status === 'pending') {
       return <Badge variant="secondary" className="text-xs h-7 px-3">{t.pending}</Badge>;
     }
