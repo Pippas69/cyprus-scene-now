@@ -151,7 +151,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
       business_notes, confirmation_code, qr_code_token,
-      seating_type_id, prepaid_min_charge_cents, prepaid_charge_status
+      seating_type_id, prepaid_min_charge_cents, prepaid_charge_status,
+      deferred_status, deferred_confirmation_deadline, deferred_payment_mode
     `;
 
     const [
