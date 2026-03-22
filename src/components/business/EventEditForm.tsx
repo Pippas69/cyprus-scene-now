@@ -1472,6 +1472,19 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             </>
           )}
 
+          {/* Deferred Payment (Asmatio only) */}
+          <DeferredPaymentSection
+            businessId={event?.business_id || ''}
+            enabled={deferredEnabled}
+            onEnabledChange={setDeferredEnabled}
+            confirmationHours={deferredConfirmationHours}
+            onConfirmationHoursChange={setDeferredConfirmationHours}
+            cancellationFeePercent={deferredCancellationFeePercent}
+            onCancellationFeePercentChange={setDeferredCancellationFeePercent}
+            language={language}
+            eventType={formData.eventType}
+          />
+
           {/* Terms & Conditions (Optional) */}
           <div className="space-y-1 sm:space-y-2">
             <Label className="text-xs sm:text-sm">{t.termsConditions}</Label>
