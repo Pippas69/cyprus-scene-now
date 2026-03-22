@@ -353,6 +353,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [tempImageFile, setTempImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deferredEnabled, setDeferredEnabled] = useState(false);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
 
   // Load existing event data
   useEffect(() => {
