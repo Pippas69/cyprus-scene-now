@@ -219,6 +219,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [submitting, setSubmitting] = useState(false);
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
   const [paymentsReady, setPaymentsReady] = useState<boolean | null>(null);
+  const [isDeferredPayment, setIsDeferredPayment] = useState(false);
+  const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
+  const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
 
   // Success state for showing premium QR card
   const [successData, setSuccessData] = useState<{
