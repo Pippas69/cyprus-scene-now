@@ -684,7 +684,7 @@ const EventCreationForm = ({
       const {
         data: createdEvent,
         error: insertError
-      } = await supabase.from('events').insert(eventData).select().single();
+      } = await supabase.from('events').insert(eventData as any).select().single();
       if (insertError) throw insertError;
 
       // Save ticket tiers
