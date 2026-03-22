@@ -53,6 +53,9 @@ interface ReservationData {
   seating_type_id: string | null;
   prepaid_min_charge_cents: number | null;
   prepaid_charge_status: string | null;
+  deferred_status?: string | null;
+  deferred_confirmation_deadline?: string | null;
+  deferred_payment_mode?: string | null;
   events?: {
     id: string;
     title: string;
