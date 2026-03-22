@@ -655,7 +655,7 @@ const EventCreationForm = ({
       const endAt = formData.startAt ? new Date(formData.startAt.getTime() + 3 * 60 * 60 * 1000) : new Date();
 
       // Build event data
-      const eventData = {
+      const eventData: Record<string, any> = {
         business_id: businessId,
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -676,7 +676,10 @@ const EventCreationForm = ({
         dress_code: null,
         reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
-        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null
+        terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
+        deferred_payment_enabled: deferredEnabled,
+        deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
+        deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
       };
       const {
         data: createdEvent,
