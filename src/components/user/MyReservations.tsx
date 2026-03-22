@@ -106,6 +106,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const [ticketOrderTotals, setTicketOrderTotals] = useState<Record<string, number>>({});
   const [seatingMinCharge, setSeatingMinCharge] = useState<Record<string, number>>({});
+  const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
