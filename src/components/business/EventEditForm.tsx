@@ -513,6 +513,9 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       setWalkInEnabled(hasWalkIn);
       setWalkInTicketTiers(walkInTiers);
       setExistingCoverUrl(event.cover_image_url || null);
+      setDeferredEnabled(event.deferred_payment_enabled || false);
+      setDeferredConfirmationHours(event.deferred_confirmation_hours || 4);
+      setDeferredCancellationFeePercent(event.deferred_cancellation_fee_percent || 50);
     } catch (error) {
       console.error('Error loading event data:', error);
       toast.error(t.eventUpdateFailed);
