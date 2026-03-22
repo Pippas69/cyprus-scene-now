@@ -766,6 +766,28 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             );
           })()}
 
+          {/* Deferred Payment: Confirm Attendance */}
+          {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2 mt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                  ⏰ {language === 'el' ? 'Επιβεβαίωση σε' : 'Confirm in'}: {formatDeadlineCountdown(reservation.deferred_confirmation_deadline)}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                className="w-full h-8 text-xs"
+                disabled={confirmingDeferredId === reservation.id}
+                onClick={() => handleConfirmDeferred(reservation.id)}
+              >
+                {confirmingDeferredId === reservation.id
+                  ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                  : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
+                }
+              </Button>
+            </div>
+          )}
+
           {/* Row 5: Location */}
           {location && (
           isEvent ?
