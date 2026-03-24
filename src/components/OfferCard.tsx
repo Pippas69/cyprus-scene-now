@@ -272,7 +272,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               </Badge>
             </div>
           )}
-        </Link>
+        </button>
 
         {/* Content section - compact spacing */}
         <div className="p-3 space-y-1">
