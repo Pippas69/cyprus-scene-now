@@ -408,12 +408,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           </Badge>
           
           {/* Price badge with gradient */}
-          <Badge className={cn(
-            "absolute bottom-3 right-3 backdrop-blur-md font-semibold z-10 border-0 shadow-md",
-            event.price_tier === 'free' 
-              ? "bg-gradient-to-r from-accent to-seafoam text-white" 
-              : "bg-accent/90 text-accent-foreground"
-          )}>
+          <span className="absolute bottom-3 right-3 text-white font-semibold text-xs z-10 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             {event.price ? (
               `€${event.price.toFixed(2)}`
             ) : event.price_tier === 'free' ? (
@@ -421,7 +416,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
             ) : (
               <span className="capitalize">{event.price_tier}</span>
             )}
-          </Badge>
+          </span>
         </div>
 
       {/* Content */}

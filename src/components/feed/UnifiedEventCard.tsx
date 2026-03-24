@@ -252,14 +252,9 @@ export const UnifiedEventCard = ({
               }}
             />
             {entryBadgeLabel && (
-              <Badge className={cn(
-                "text-white text-[9px] lg:text-[10px] px-1 lg:px-1.5 py-0 h-4 lg:h-5 border-0",
-                isBoosted 
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500" 
-                  : "bg-gradient-to-r from-accent to-seafoam"
-              )}>
+              <span className="text-white text-[9px] lg:text-[10px] font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {entryBadgeLabel}
-              </Badge>
+              </span>
             )}
           </div>
         </div>
@@ -348,14 +343,9 @@ export const UnifiedEventCard = ({
               }}
             />
             {entryBadgeLabel && (
-              <Badge className={cn(
-                "text-white text-[10px] px-1.5 py-0 h-5 border-0",
-                isBoosted 
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500" 
-                  : "bg-gradient-to-r from-accent to-seafoam"
-              )}>
+              <span className="text-white text-[10px] font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {entryBadgeLabel}
-              </Badge>
+              </span>
             )}
           </div>
         </Link>

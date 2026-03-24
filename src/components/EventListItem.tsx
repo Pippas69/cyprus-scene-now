@@ -114,9 +114,9 @@ const EventListItem = ({
               <Badge variant="secondary" className="text-xs py-0 h-5">
                 {getCategoryLabel(event.category[0], language)}
               </Badge>
-              <Badge variant="outline" className="text-xs py-0 h-5">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {event.price_tier === 'free' ? t.free : event.price_tier}
-              </Badge>
+              </span>
             </div>
           </div>
         </div>
