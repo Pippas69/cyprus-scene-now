@@ -6,8 +6,16 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[ACTIVATE-PENDING-BOOST] ${step}${detailsStr}`);
+};
+
+const toErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message?: unknown }).message ?? "Unknown error");
+  }
+  return String(error);
 };
 
 async function deductPartialBudget(
@@ -68,7 +76,7 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw userError;
+    if (userError) throw new Error(userError.message);
     const user = userData.user;
     if (!user?.id) throw new Error("User not authenticated");
 
@@ -89,7 +97,7 @@ Deno.serve(async (req) => {
     let activated = false;
 
     // Check for pending event boosts
-    const { data: pendingEventBoost } = await supabaseClient
+    const { data: pendingEventBoost, error: pendingEventError } = await supabaseClient
       .from("event_boosts")
       .select("id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
@@ -98,6 +106,10 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    if (pendingEventError) {
+      throw new Error(`Failed to fetch pending event boost: ${pendingEventError.message}`);
+    }
 
     if (pendingEventBoost) {
       const startDate = new Date(pendingEventBoost.start_date);
@@ -115,8 +127,9 @@ Deno.serve(async (req) => {
           const { error: updateError } = await supabaseClient
             .from("event_boosts")
             .update({ status: newStatus })
-            .eq("id", pendingEventBoost.id);
-          if (updateError) throw updateError;
+            .eq("id", pendingEventBoost.id)
+            .eq("status", "pending");
+          if (updateError) throw new Error(updateError.message);
           activated = true;
           logStep("Event boost activated", { boostId: pendingEventBoost.id, status: newStatus, budgetDeducted: partialBudget });
         }
@@ -124,17 +137,18 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabaseClient
           .from("event_boosts")
           .update({ status: newStatus })
-          .eq("id", pendingEventBoost.id);
-        if (updateError) throw updateError;
+          .eq("id", pendingEventBoost.id)
+          .eq("status", "pending");
+        if (updateError) throw new Error(updateError.message);
         activated = true;
         logStep("Event boost activated (no budget deduction needed)", { boostId: pendingEventBoost.id, status: newStatus });
       }
     }
 
     // Check for pending offer boosts
-    const { data: pendingOfferBoost } = await supabaseClient
+    const { data: pendingOfferBoost, error: pendingOfferError } = await supabaseClient
       .from("offer_boosts")
-      .select("id, start_date, end_date, partial_budget_cents")
+      .select("id, discount_id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
       .eq("status", "pending")
       .eq("source", "purchase")
@@ -142,9 +156,26 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    if (pendingOfferError) {
+      throw new Error(`Failed to fetch pending offer boost: ${pendingOfferError.message}`);
+    }
+
     if (pendingOfferBoost) {
       const startDate = new Date(pendingOfferBoost.start_date);
       const newStatus = startDate <= now ? "active" : "scheduled";
+
+      // Cleanup bad historical state: completed/deactivated rows that still have active=true
+      const { error: cleanupStaleActiveError } = await supabaseClient
+        .from("offer_boosts")
+        .update({ active: false, updated_at: now.toISOString() })
+        .eq("discount_id", pendingOfferBoost.discount_id)
+        .neq("id", pendingOfferBoost.id)
+        .eq("active", true)
+        .neq("status", "active");
+
+      if (cleanupStaleActiveError) {
+        throw new Error(`Failed stale-active cleanup: ${cleanupStaleActiveError.message}`);
+      }
 
       const partialBudget = pendingOfferBoost.partial_budget_cents || 0;
 
@@ -155,25 +186,39 @@ Deno.serve(async (req) => {
         } else {
           const { error: updateError } = await supabaseClient
             .from("offer_boosts")
-            .update({ status: newStatus, active: newStatus === "active" })
-            .eq("id", pendingOfferBoost.id);
-          if (updateError) throw updateError;
+            .update({ status: newStatus, active: newStatus === "active", updated_at: now.toISOString() })
+            .eq("id", pendingOfferBoost.id)
+            .eq("status", "pending");
+          if (updateError) throw new Error(updateError.message);
           activated = true;
           logStep("Offer boost activated", { boostId: pendingOfferBoost.id, status: newStatus, budgetDeducted: partialBudget });
         }
       } else {
         const { error: updateError } = await supabaseClient
           .from("offer_boosts")
-          .update({ status: newStatus, active: newStatus === "active" })
-          .eq("id", pendingOfferBoost.id);
-        if (updateError) throw updateError;
+          .update({ status: newStatus, active: newStatus === "active", updated_at: now.toISOString() })
+          .eq("id", pendingOfferBoost.id)
+          .eq("status", "pending");
+        if (updateError) throw new Error(updateError.message);
         activated = true;
         logStep("Offer boost activated (no budget deduction needed)", { boostId: pendingOfferBoost.id, status: newStatus });
+      }
+
+      // Clean up older duplicate pending attempts for this same offer
+      const { error: cleanupPendingError } = await supabaseClient
+        .from("offer_boosts")
+        .update({ status: "deactivated", active: false, updated_at: now.toISOString() })
+        .eq("discount_id", pendingOfferBoost.discount_id)
+        .eq("status", "pending")
+        .neq("id", pendingOfferBoost.id);
+
+      if (cleanupPendingError) {
+        logStep("WARNING: Failed to cleanup older pending offer boosts", { boostId: pendingOfferBoost.id, error: cleanupPendingError.message });
       }
     }
 
     // Check for pending profile boosts
-    const { data: pendingProfileBoost } = await supabaseClient
+    const { data: pendingProfileBoost, error: pendingProfileError } = await supabaseClient
       .from("profile_boosts")
       .select("id, start_date, end_date, partial_budget_cents")
       .eq("business_id", businessId)
@@ -182,6 +227,10 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    if (pendingProfileError) {
+      throw new Error(`Failed to fetch pending profile boost: ${pendingProfileError.message}`);
+    }
 
     if (pendingProfileBoost) {
       const startDate = new Date(pendingProfileBoost.start_date);
@@ -197,8 +246,9 @@ Deno.serve(async (req) => {
           const { error: updateError } = await supabaseClient
             .from("profile_boosts")
             .update({ status: newStatus })
-            .eq("id", pendingProfileBoost.id);
-          if (updateError) throw updateError;
+            .eq("id", pendingProfileBoost.id)
+            .eq("status", "pending");
+          if (updateError) throw new Error(updateError.message);
           activated = true;
           logStep("Profile boost activated", { boostId: pendingProfileBoost.id, status: newStatus, budgetDeducted: partialBudget });
         }
@@ -206,8 +256,9 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabaseClient
           .from("profile_boosts")
           .update({ status: newStatus })
-          .eq("id", pendingProfileBoost.id);
-        if (updateError) throw updateError;
+          .eq("id", pendingProfileBoost.id)
+          .eq("status", "pending");
+        if (updateError) throw new Error(updateError.message);
         activated = true;
         logStep("Profile boost activated (no budget deduction needed)", { boostId: pendingProfileBoost.id, status: newStatus });
       }
@@ -222,7 +273,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = toErrorMessage(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
