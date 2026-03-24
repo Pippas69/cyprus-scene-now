@@ -225,21 +225,24 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           )}
           
-          {/* Bottom overlay: Discount badge + Redeem (same line, premium size) */}
+          {/* Bottom overlay: Redeem (left) + Discount badge (right) - text only, no bg */}
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1.5" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+            <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
+              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
+            </span>
+            <div className="flex items-center gap-1.5">
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
-                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
+                <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
                   -{offerData.percent_off}%
-                </Badge>
+                </span>
               )}
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" className="inline-flex">
-                      <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
+                      <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold cursor-pointer">
                         Offer
-                      </Badge>
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto max-w-[200px] p-2 px-3 rounded-lg" side="top" align="start">
@@ -248,25 +251,12 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </Popover>
               )}
               {isCredit && (
-                <Badge className="text-[11px] px-2.5 py-0.5 h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
-                  <Wallet className="h-3 w-3 mr-1" />
+                <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold flex items-center gap-1">
+                  <Wallet className="h-3 w-3" />
                   {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
-                </Badge>
+                </span>
               )}
             </div>
-            <Button 
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
-                setIsPurchaseOpen(true);
-              }} 
-              size="sm" 
-              variant="default"
-              className="text-[11px] px-2.5 py-0.5 h-6 font-bold shadow-md"
-            >
-              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-            </Button>
           </div>
           
           {/* Bundle badge */}
