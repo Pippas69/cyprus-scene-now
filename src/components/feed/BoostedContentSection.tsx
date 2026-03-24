@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Share2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
-import { Badge } from "@/components/ui/badge";
+
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
