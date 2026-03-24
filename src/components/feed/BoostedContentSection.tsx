@@ -273,11 +273,8 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
 
           {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
-          {/* Bottom overlay: Redeem (left) + Discount badge (right) - text only */}
-          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
-            <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
-              {t.redeem}
-            </span>
+          {/* Bottom overlay: Discount badge (right) - text only */}
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-end z-10">
             <div className="flex items-center gap-1">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
                 <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
