@@ -1,9 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Share2 } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PremiumBadge } from "@/components/ui/premium-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UnifiedEventCard } from "@/components/feed/UnifiedEventCard";
 import { differenceInDays } from "date-fns";
@@ -252,8 +252,9 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
         {/* TOP - Image section - responsive height, larger on mobile */}
         <div className="relative h-28 sm:h-36 lg:h-40 overflow-visible">
           {/* Image container - clipped, clickable to business profile */}
-          <Link
-            to={`/business/${offer.business_id}`}
+          <button
+            type="button"
+            onClick={handleRedeemClick}
             className="absolute inset-0 overflow-hidden rounded-t-xl"
           >
             {coverImage ? (
@@ -268,25 +269,28 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             )}
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </Link>
+          </button>
 
           {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
-          {/* Bottom overlay: Discount badge + Redeem (premium size) */}
+          {/* Bottom overlay: Redeem (left) + Discount badge (right) - text only */}
           <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
+            <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
+              {t.redeem}
+            </span>
             <div className="flex items-center gap-1">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
-                <Badge className="text-[9px] lg:text-[11px] px-1.5 lg:px-2.5 py-0.5 h-5 lg:h-6 font-bold border-0 bg-primary text-primary-foreground shadow-md">
+                <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
                   -{offer.percent_off}%
-                </Badge>
+                </span>
               )}
               {offer.discount_type === "special_deal" && offer.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
-                      <Badge className="text-[9px] lg:text-[11px] px-1.5 lg:px-2.5 py-0.5 h-5 lg:h-6 font-bold border-0 bg-primary text-primary-foreground cursor-pointer shadow-md">
+                    <button type="button" className="inline-flex" onClick={(e) => e.stopPropagation()}>
+                      <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold cursor-pointer">
                         Offer
-                      </Badge>
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto max-w-[200px] p-2 px-3 rounded-lg" side="top" align="start">
@@ -295,14 +299,6 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                 </Popover>
               )}
             </div>
-            <Button 
-              onClick={handleRedeemClick}
-              size="sm" 
-              variant="default"
-              className="text-[9px] lg:text-[11px] px-1.5 lg:px-2.5 py-0.5 h-5 lg:h-6 font-bold shadow-md"
-            >
-              {t.redeem}
-            </Button>
           </div>
         </div>
 
