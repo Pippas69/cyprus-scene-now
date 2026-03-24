@@ -1,8 +1,8 @@
 import { MapPin, Percent, Calendar, ShoppingBag, Package, Wallet, CalendarCheck, Sparkles, Share2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trackDiscountView, trackOfferRedeemClick, useViewTracking } from "@/lib/analyticsTracking";
 import { useCallback, useRef, useState } from "react";
