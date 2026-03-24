@@ -273,8 +273,8 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
 
           {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
-          {/* Bottom overlay: Discount badge (right) - text only */}
-          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-end z-10">
+          {/* Bottom overlay: Discount badge (left) + Share icon (right) */}
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-1">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
                 <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
@@ -296,6 +296,13 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                 </Popover>
               )}
             </div>
+            <button
+              onClick={handleShareClick}
+              className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:text-white/80 transition-colors shrink-0"
+              title={language === "el" ? "Κοινοποίηση" : "Share"}
+            >
+              <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
+            </button>
           </div>
         </div>
 
@@ -312,7 +319,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             <span className="text-[10px] lg:text-xs truncate">{getExpiryLabel()}</span>
           </div>
 
-          {/* LINE 3: Location + Business + Share */}
+          {/* LINE 3: Location + Business */}
           <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground">
             <button 
               onClick={handleMapClick}
@@ -323,13 +330,6 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               <span className="text-[10px] lg:text-xs truncate">
                 {translateCity(offer.businesses?.city, language)} · {offer.businesses?.name}
               </span>
-            </button>
-            <button
-              onClick={handleShareClick}
-              className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-              title={language === "el" ? "Κοινοποίηση" : "Share"}
-            >
-              <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
             </button>
           </div>
         </div>
