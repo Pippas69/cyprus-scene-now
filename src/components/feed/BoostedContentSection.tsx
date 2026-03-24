@@ -319,7 +319,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             <span className="text-[10px] lg:text-xs truncate">{getExpiryLabel()}</span>
           </div>
 
-          {/* LINE 3: Location + Business + Share */}
+          {/* LINE 3: Location + Business */}
           <div className="flex items-center gap-1 lg:gap-1.5 text-muted-foreground">
             <button 
               onClick={handleMapClick}
@@ -330,13 +330,6 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
               <span className="text-[10px] lg:text-xs truncate">
                 {translateCity(offer.businesses?.city, language)} · {offer.businesses?.name}
               </span>
-            </button>
-            <button
-              onClick={handleShareClick}
-              className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-              title={language === "el" ? "Κοινοποίηση" : "Share"}
-            >
-              <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
             </button>
           </div>
         </div>
