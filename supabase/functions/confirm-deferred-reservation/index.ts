@@ -50,7 +50,7 @@ serve(async (req) => {
       .single();
 
     if (resError || !reservation) throw new Error("Reservation not found");
-    if (reservation.deferred_status !== "awaiting_confirmation") {
+    if (reservation.deferred_status !== "awaiting_confirmation" && reservation.deferred_status !== "payment_failed") {
       throw new Error("Reservation is not awaiting confirmation");
     }
 
