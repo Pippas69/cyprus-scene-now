@@ -343,7 +343,7 @@ export const UnifiedEventCard = ({
               }}
             />
             {entryBadgeLabel && (
-              <span className="text-white text-[10px] font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
                 {entryBadgeLabel}
               </span>
             )}
