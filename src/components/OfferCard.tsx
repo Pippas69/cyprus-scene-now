@@ -230,10 +230,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           )}
           
           {/* Bottom overlay: Redeem (left) + Discount badge (right) - text only, no bg */}
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
-            <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
-              {language === "el" ? "Εξαργύρωσε" : "Redeem"}
-            </span>
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-end z-10">
             <div className="flex items-center gap-1.5">
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
                 <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
