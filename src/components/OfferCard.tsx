@@ -197,10 +197,14 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
     >
       <CardContent className="p-0">
         {/* Image section - consistent height across all devices to match mobile design */}
-        <Link
-          to={`/business/${offerData.business_id}`}
-          className="block relative h-[45vw] md:aspect-auto md:h-44 overflow-hidden rounded-t-xl"
-          aria-label={offerData.businesses.name}
+        <button
+          type="button"
+          onClick={() => {
+            trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
+            setIsPurchaseOpen(true);
+          }}
+          className="block relative h-[45vw] md:aspect-auto md:h-44 overflow-hidden rounded-t-xl w-full"
+          aria-label={offerData.title}
         >
           {imageUrl ? (
             <img
