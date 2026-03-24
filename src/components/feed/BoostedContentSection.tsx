@@ -252,8 +252,9 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
         {/* TOP - Image section - responsive height, larger on mobile */}
         <div className="relative h-28 sm:h-36 lg:h-40 overflow-visible">
           {/* Image container - clipped, clickable to business profile */}
-          <Link
-            to={`/business/${offer.business_id}`}
+          <button
+            type="button"
+            onClick={handleRedeemClick}
             className="absolute inset-0 overflow-hidden rounded-t-xl"
           >
             {coverImage ? (
@@ -268,7 +269,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             )}
             {/* Gradient overlay for text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </Link>
+          </button>
 
           {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
