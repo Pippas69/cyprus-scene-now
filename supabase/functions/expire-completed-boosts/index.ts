@@ -151,6 +151,7 @@ serve(async (req) => {
           .from("offer_boosts")
           .update({
             status: "completed",
+            active: false,
             updated_at: now.toISOString(),
           })
           .eq("id", boost.id);

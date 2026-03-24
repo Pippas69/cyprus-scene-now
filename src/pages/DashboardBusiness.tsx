@@ -104,33 +104,61 @@ const DashboardBusiness = () => {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
-    // Handle subscription and boost success/cancel URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const subscriptionStatus = urlParams.get('subscription');
-    const boostStatus = urlParams.get('boost');
-    
-    if (subscriptionStatus === 'success') {
-      toast.success(language === 'el' ? 'Η συνδρομή ολοκληρώθηκε επιτυχώς!' : 'Subscription successful!');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (subscriptionStatus === 'canceled') {
-      toast.info(language === 'el' ? 'Η συνδρομή ακυρώθηκε' : 'Subscription canceled');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-    
-    if (boostStatus === 'success') {
-      // Activate any pending boosts (fallback for webhook delays)
-      supabase.functions.invoke("activate-pending-boost").then(() => {
-        toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
-      }).catch(() => {
-        toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
-      });
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (boostStatus === 'canceled') {
-      // Clean up pending (unpaid) boost records
-      supabase.functions.invoke("cancel-pending-boost").catch(() => {});
-      toast.info(language === 'el' ? 'Η πληρωμή boost ακυρώθηκε' : 'Boost payment canceled');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
+    const handlePaymentParams = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const subscriptionStatus = urlParams.get('subscription');
+      const boostStatus = urlParams.get('boost');
+
+      if (subscriptionStatus === 'success') {
+        toast.success(language === 'el' ? 'Η συνδρομή ολοκληρώθηκε επιτυχώς!' : 'Subscription successful!');
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (subscriptionStatus === 'canceled') {
+        toast.info(language === 'el' ? 'Η συνδρομή ακυρώθηκε' : 'Subscription canceled');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
+      if (boostStatus === 'success') {
+        let activated = false;
+        let lastError: any = null;
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            lastError = new Error('No active session yet');
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            continue;
+          }
+
+          const { error } = await supabase.functions.invoke("activate-pending-boost");
+          if (!error) {
+            activated = true;
+            break;
+          }
+
+          lastError = error;
+          await new Promise((resolve) => setTimeout(resolve, 700));
+        }
+
+        if (activated) {
+          toast.success(language === 'el' ? 'Το boost ενεργοποιήθηκε επιτυχώς!' : 'Boost activated successfully!');
+        } else {
+          console.error('Boost activation failed after payment:', lastError);
+          toast.error(
+            language === 'el'
+              ? 'Η πληρωμή ολοκληρώθηκε, αλλά η ενεργοποίηση του boost απέτυχε. Προσπαθήστε ξανά.'
+              : 'Payment completed, but boost activation failed. Please try again.'
+          );
+        }
+
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (boostStatus === 'canceled') {
+        supabase.functions.invoke("cancel-pending-boost").catch(() => {});
+        toast.info(language === 'el' ? 'Η πληρωμή boost ακυρώθηκε' : 'Boost payment canceled');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    };
+
+    void handlePaymentParams();
   }, [language]);
   
   // Enable real-time notifications
