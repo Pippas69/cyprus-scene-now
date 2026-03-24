@@ -47,6 +47,8 @@ interface UnifiedEventCardProps {
   disableViewTracking?: boolean;
   /** Optional query string appended to navigation links (e.g. "?src=dashboard_user"). */
   linkSearch?: string;
+  /** When true, hides PremiumBadge and entry badge (used in Feed). */
+  hideBadges?: boolean;
 }
 
 const translations = {
@@ -89,7 +91,8 @@ export const UnifiedEventCard = ({
   size = "default",
   className,
   disableViewTracking = false,
-  linkSearch
+  linkSearch,
+  hideBadges = false
 }: UnifiedEventCardProps) => {
   const t = translations[language];
   const eventDate = new Date(event.start_at);
@@ -224,7 +227,7 @@ export const UnifiedEventCard = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
 
-          {isBoosted && (
+          {isBoosted && !hideBadges && (
             <div className="absolute -top-1.5 -right-1.5 lg:-top-2 lg:-right-2 z-10">
               <PremiumBadge type="event" />
             </div>
@@ -251,7 +254,7 @@ export const UnifiedEventCard = ({
                 } : undefined,
               }}
             />
-            {entryBadgeLabel && (
+            {entryBadgeLabel && !hideBadges && (
               <span className="text-white text-[9px] lg:text-[10px] font-semibold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {entryBadgeLabel}
               </span>
@@ -315,7 +318,7 @@ export const UnifiedEventCard = ({
           </div>
 
           {/* Boosted badge - protrudes outside card like feed */}
-          {isBoosted && (
+          {isBoosted && !hideBadges && (
             <div className="absolute -top-2 -right-2 z-20">
               <PremiumBadge type="event" />
             </div>
@@ -342,7 +345,7 @@ export const UnifiedEventCard = ({
                 } : undefined,
               }}
             />
-            {entryBadgeLabel && (
+            {entryBadgeLabel && !hideBadges && (
               <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
                 {entryBadgeLabel}
               </span>

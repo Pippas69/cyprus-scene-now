@@ -166,6 +166,7 @@ export const BoostedContentSection = memo(({
                   language={language}
                   isBoosted={true}
                   size="boosted"
+                  hideBadges
                 />
               ) : (
                 <OfferCard 
@@ -269,10 +270,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </Link>
 
-          {/* BADGE - Top Right - Premium only for boosted */}
-          <div className="absolute -top-1.5 -right-1.5 lg:-top-2 lg:-right-2 z-10">
-            <PremiumBadge type="offer" />
-          </div>
+          {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
           {/* Bottom overlay: Discount badge + Redeem (premium size) */}
           <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
