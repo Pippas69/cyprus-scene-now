@@ -694,6 +694,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     if (reservation.deferred_status === 'awaiting_confirmation') {
       return <Badge className="bg-amber-500 text-white text-xs h-7 px-3">{language === 'el' ? 'Αναμονή Επιβεβ.' : 'Awaiting Confirm'}</Badge>;
     }
+    if (reservation.deferred_status === 'payment_failed') {
+      return <Badge variant="destructive" className="text-xs h-7 px-3">{language === 'el' ? 'Αποτυχία Πληρωμής' : 'Payment Failed'}</Badge>;
+    }
     if (reservation.deferred_status === 'auto_charged') {
       return <Badge variant="destructive" className="text-xs h-7 px-3">{language === 'el' ? 'Χρεώθηκε Ακύρωση' : 'Fee Charged'}</Badge>;
     }
@@ -789,6 +792,27 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 {confirmingDeferredId === reservation.id
                   ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
                   : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
+                }
+              </Button>
+            </div>
+          )}
+
+          {/* Deferred Payment: Payment Failed - Retry */}
+          {!isPast && reservation.deferred_status === 'payment_failed' && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-2.5 space-y-2 mt-1">
+              <span className="text-xs font-medium text-destructive">
+                {language === 'el' ? '❌ Η κάρτα σας απορρίφθηκε. Δοκιμάστε ξανά.' : '❌ Your card was declined. Please retry.'}
+              </span>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="w-full h-8 text-xs"
+                disabled={confirmingDeferredId === reservation.id}
+                onClick={() => handleConfirmDeferred(reservation.id)}
+              >
+                {confirmingDeferredId === reservation.id
+                  ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                  : (language === 'el' ? '🔄 Δοκιμάστε Ξανά' : '🔄 Retry Payment')
                 }
               </Button>
             </div>
