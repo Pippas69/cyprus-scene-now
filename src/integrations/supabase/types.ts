@@ -4185,6 +4185,7 @@ export type Database = {
           created_at: string
           deferred_confirmation_deadline: string | null
           deferred_payment_mode: string | null
+          deferred_retry_count: number | null
           deferred_status: string | null
           event_id: string | null
           id: string
@@ -4217,6 +4218,7 @@ export type Database = {
           created_at?: string
           deferred_confirmation_deadline?: string | null
           deferred_payment_mode?: string | null
+          deferred_retry_count?: number | null
           deferred_status?: string | null
           event_id?: string | null
           id?: string
@@ -4249,6 +4251,7 @@ export type Database = {
           created_at?: string
           deferred_confirmation_deadline?: string | null
           deferred_payment_mode?: string | null
+          deferred_retry_count?: number | null
           deferred_status?: string | null
           event_id?: string | null
           id?: string

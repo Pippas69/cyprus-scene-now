@@ -50,7 +50,7 @@ serve(async (req) => {
       .single();
 
     if (resError || !reservation) throw new Error("Reservation not found");
-    if (reservation.deferred_status !== "awaiting_confirmation") {
+    if (reservation.deferred_status !== "awaiting_confirmation" && reservation.deferred_status !== "payment_failed") {
       throw new Error("Reservation is not awaiting confirmation");
     }
 
@@ -67,8 +67,24 @@ serve(async (req) => {
         throw new Error("No payment intent found for auth hold reservation");
       }
 
-      await stripe.paymentIntents.capture(reservation.stripe_payment_intent_id);
-      console.log("[CONFIRM-DEFERRED] Captured auth hold:", reservation.stripe_payment_intent_id);
+      try {
+        await stripe.paymentIntents.capture(reservation.stripe_payment_intent_id);
+        console.log("[CONFIRM-DEFERRED] Captured auth hold:", reservation.stripe_payment_intent_id);
+      } catch (captureErr: any) {
+        console.error("[CONFIRM-DEFERRED] Auth hold capture failed:", captureErr.message);
+        await supabaseClient.from("reservations").update({
+          deferred_status: "payment_failed",
+          deferred_retry_count: (reservation.deferred_retry_count || 0) + 1,
+        }).eq("id", reservation.id);
+        
+        return new Response(JSON.stringify({ 
+          error: "card_declined", 
+          message: captureErr.message || "Payment capture failed. Please try again."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402,
+        });
+      }
 
     } else if (reservation.deferred_payment_mode === "setup_intent") {
       // Charge the saved card
@@ -122,8 +138,26 @@ serve(async (req) => {
         piParams.transfer_data = { destination: business.stripe_account_id };
       }
 
-      const paymentIntent = await stripe.paymentIntents.create(piParams);
-      console.log("[CONFIRM-DEFERRED] Created and confirmed PI:", paymentIntent.id);
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.create(piParams);
+        console.log("[CONFIRM-DEFERRED] Created and confirmed PI:", paymentIntent.id);
+      } catch (chargeErr: any) {
+        console.error("[CONFIRM-DEFERRED] Card declined:", chargeErr.message);
+        // Mark as payment_failed so user can retry
+        await supabaseClient.from("reservations").update({
+          deferred_status: "payment_failed",
+          deferred_retry_count: (reservation.deferred_retry_count || 0) + 1,
+        }).eq("id", reservation.id);
+        
+        return new Response(JSON.stringify({ 
+          error: "card_declined", 
+          message: chargeErr.message || "Your card was declined. Please try again or use a different card."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402,
+        });
+      }
 
       // Store the new payment intent ID
       await supabaseClient.from("reservations").update({
