@@ -229,8 +229,8 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             </div>
           )}
           
-          {/* Bottom overlay: Redeem (left) + Discount badge (right) - text only, no bg */}
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-end z-10">
+          {/* Bottom overlay: Discount badge (left) + Share icon (right) */}
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-1.5">
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
                 <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
@@ -240,7 +240,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               {offerData.discount_type === "special_deal" && offerData.special_deal_text && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex">
+                    <button type="button" className="inline-flex" onClick={(e) => e.stopPropagation()}>
                       <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold cursor-pointer">
                         Offer
                       </span>
@@ -258,6 +258,16 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </span>
               )}
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsShareOpen(true);
+              }}
+              className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:text-white/80 transition-colors shrink-0"
+              title={language === "el" ? "Κοινοποίηση" : "Share"}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </button>
           </div>
           
           {/* Bundle badge */}
@@ -284,7 +294,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             <span className="text-xs truncate">{formatExpiryChip(offerData.end_at)}</span>
           </div>
 
-          {/* Location + Share on same line */}
+          {/* Location */}
           <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
             <button 
               onClick={handleMapClick}
@@ -295,17 +305,6 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
               <span className="text-xs truncate">
                 {translateCity(offerData.businesses.city, language)} · {offerData.businesses.name}
               </span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsShareOpen(true);
-              }}
-              className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-              title={language === "el" ? "Κοινοποίηση" : "Share"}
-            >
-              <Share2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
