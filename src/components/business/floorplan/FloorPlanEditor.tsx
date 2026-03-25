@@ -311,8 +311,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setLoading(false);
   };
 
-  const loadTableAssignments = async (tableIds: string[]) => {
-    if (!selectedEventId) { setTableAssignments([]); return; }
+  const loadTableAssignments = async (tableIds: string[], eventId?: string) => {
+    const effectiveEventId = eventId || selectedEventId;
+    if (!effectiveEventId) { setTableAssignments([]); return; }
     
     const { data } = await supabase
       .from('reservation_table_assignments')
