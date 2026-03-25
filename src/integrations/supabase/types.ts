@@ -7184,16 +7184,27 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
-      sync_crm_guest_from_ticket_data: {
-        Args: {
-          p_business_id: string
-          p_guest_name: string
-          p_order_id: string
-          p_ticket_status: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
+      sync_crm_guest_from_ticket_data:
+        | {
+            Args: {
+              p_business_id: string
+              p_guest_name: string
+              p_order_id: string
+              p_ticket_status?: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_business_id: string
+              p_guest_name: string
+              p_order_id: string
+              p_ticket_status: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       unlockrows: { Args: { "": string }; Returns: number }
       update_boost_status: { Args: never; Returns: undefined }
       update_business_with_geo: {
