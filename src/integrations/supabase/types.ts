@@ -1336,6 +1336,7 @@ export type Database = {
         Row: {
           anniversary: string | null
           birthday: string | null
+          brought_by_user_id: string | null
           business_id: string
           company: string | null
           created_at: string
@@ -1359,6 +1360,7 @@ export type Database = {
         Insert: {
           anniversary?: string | null
           birthday?: string | null
+          brought_by_user_id?: string | null
           business_id: string
           company?: string | null
           created_at?: string
@@ -1382,6 +1384,7 @@ export type Database = {
         Update: {
           anniversary?: string | null
           birthday?: string | null
+          brought_by_user_id?: string | null
           business_id?: string
           company?: string | null
           created_at?: string
@@ -1403,6 +1406,20 @@ export type Database = {
           vip_level_override?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "crm_guests_brought_by_user_id_fkey"
+            columns: ["brought_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guests_brought_by_user_id_fkey"
+            columns: ["brought_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "crm_guests_business_id_fkey"
             columns: ["business_id"]
@@ -6497,6 +6514,14 @@ export type Database = {
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
+      merge_ghost_to_account: {
+        Args: {
+          p_account_id: string
+          p_business_id: string
+          p_ghost_id: string
+        }
+        Returns: undefined
+      }
       normalize_guest_identity: { Args: { p_value: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }

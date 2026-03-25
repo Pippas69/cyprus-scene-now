@@ -55,6 +55,7 @@ const translations = {
     music: "Μουσική",
     instagram: "Instagram",
     relationNotes: "Σχέσεις",
+    broughtBy: "Προέλευση",
   },
   en: {
     timeline: "Timeline",
@@ -84,6 +85,7 @@ const translations = {
     music: "Music",
     instagram: "Instagram",
     relationNotes: "Relations",
+    broughtBy: "Brought by",
   },
 };
 
@@ -312,6 +314,15 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
             <div className="space-y-2.5">
+              {guest.profile_type === "ghost" && guest.brought_by_name && (
+                <div className="flex items-start gap-2.5 py-1.5 px-2 rounded-lg bg-muted/50 border border-border">
+                  <Ghost className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
+                    <p className="text-xs font-medium text-foreground">{guest.brought_by_name}</p>
+                  </div>
+                </div>
+              )}
               {guest.phone && guest.profile_type !== "ghost" && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
               {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
               {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}

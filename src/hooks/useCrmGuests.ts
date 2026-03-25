@@ -22,6 +22,7 @@ export interface CrmGuest {
   custom_fields: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  brought_by_user_id: string | null;
   // Computed stats
   total_visits: number;
   total_spend_cents: number;
@@ -35,6 +36,7 @@ export interface CrmGuest {
   // Joined data
   tags: CrmGuestTag[];
   notes_count: number;
+  brought_by_name: string | null;
 }
 
 export interface CrmGuestTag {
@@ -83,16 +85,35 @@ export function useCrmGuests(businessId: string | null) {
 
       // Now fetch tag assignments for these guests
       const guestIds = guests.map((g) => g.id);
-      const { data: tagAssignments } = await supabase
-        .from("crm_guest_tag_assignments")
-        .select("guest_id, crm_guest_tags(id, name, color, emoji, is_system)")
-        .in("guest_id", guestIds);
+      // Fetch brought_by profile names for ghosts
+      const broughtByIds = [...new Set(
+        guests.filter((g: any) => g.brought_by_user_id).map((g: any) => g.brought_by_user_id as string)
+      )];
 
-      // Fetch notes count per guest
-      const { data: notesData } = await supabase
-        .from("crm_guest_notes")
-        .select("guest_id")
-        .eq("business_id", businessId);
+      const [tagAssignmentsRes, notesDataRes, broughtByRes] = await Promise.all([
+        supabase
+          .from("crm_guest_tag_assignments")
+          .select("guest_id, crm_guest_tags(id, name, color, emoji, is_system)")
+          .in("guest_id", guestIds),
+        supabase
+          .from("crm_guest_notes")
+          .select("guest_id")
+          .eq("business_id", businessId),
+        broughtByIds.length > 0
+          ? supabase.from("profiles").select("id, first_name, last_name").in("id", broughtByIds)
+          : Promise.resolve({ data: [] as { id: string; first_name: string | null; last_name: string | null }[] }),
+      ]);
+
+      const tagAssignments = tagAssignmentsRes.data;
+      const notesData = notesDataRes.data;
+
+      const broughtByNameMap = new Map<string, string>();
+      if (broughtByRes.data) {
+        for (const p of broughtByRes.data) {
+          const name = [p.first_name, p.last_name].filter(Boolean).join(" ");
+          broughtByNameMap.set(p.id, name || "Unknown");
+        }
+      }
 
       const statsMap = new Map<string, Record<string, unknown>>();
       if (statsRes.data) {
@@ -121,9 +142,11 @@ export function useCrmGuests(businessId: string | null) {
 
       return guests.map((g): CrmGuest => {
         const stats = statsMap.get(g.id) || {};
+        const broughtById = (g as any).brought_by_user_id as string | null;
         return {
           ...g,
           custom_fields: (g.custom_fields as Record<string, unknown>) || {},
+          brought_by_user_id: broughtById || null,
           total_visits: Number(stats.total_visits || 0),
           total_spend_cents: Number(stats.total_spend_cents || 0),
           total_no_shows: Number(stats.total_no_shows || 0),
@@ -135,6 +158,7 @@ export function useCrmGuests(businessId: string | null) {
           total_reservations: Number(stats.total_reservations || 0),
           tags: tagMap.get(g.id) || [],
           notes_count: notesCountMap.get(g.id) || 0,
+          brought_by_name: broughtById ? (broughtByNameMap.get(broughtById) || null) : null,
         };
       });
     },
