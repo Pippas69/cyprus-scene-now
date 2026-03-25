@@ -612,7 +612,7 @@ export default function EventDetail() {
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-lg sm:text-xl font-bold leading-tight line-clamp-2 flex-1">{event.title}</h1>
                 {eventHasTickets && startingPriceCents !== null &&
-                <span className="shrink-0 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-sm font-bold">
+                <span className="shrink-0 text-white text-sm font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {formatPrice(startingPriceCents)}
                   </span>
                 }
@@ -631,7 +631,7 @@ export default function EventDetail() {
               <CardContent className="py-4 px-4 space-y-3">
                 {showInstances.length > 1 ?
                 <div className="flex items-start gap-3">
-                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <Calendar className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
                       {showInstances.map((si: any) =>
                     <p key={si.id} className="text-sm text-foreground font-medium">
@@ -641,7 +641,7 @@ export default function EventDetail() {
                     </div>
                   </div> :
                 <div className="flex items-start gap-3">
-                    <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                    <Calendar className="h-4 w-4 text-foreground shrink-0 mt-1" />
                     <div>
                       <p className="text-sm font-semibold text-foreground">
                         {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
@@ -661,8 +661,8 @@ export default function EventDetail() {
                     window.open(mapsUrl, '_blank');
                   }}
                   className="flex items-center gap-3 w-full text-left group">
-                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
-                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</span>
+                  <MapPin className="h-4 w-4 text-foreground shrink-0 group-hover:text-foreground/80 transition-colors" />
+                  <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">{event.location}</span>
                 </button>
               </CardContent>
             </Card>
@@ -827,14 +827,12 @@ export default function EventDetail() {
               </Link>
 
               {/* Share Button */}
-              <RippleButton
-                variant="outline"
-                className="w-full gap-2 h-8 text-sm"
-                onClick={handleShare}>
-                
-                <Share2 className="h-3.5 w-3.5" />
-                {text.share}
-              </RippleButton>
+              <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={handleShare}>
+                <CardContent className="py-3 px-4 flex items-center gap-3">
+                  <Share2 className="h-4 w-4 text-foreground shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{text.share}</span>
+                </CardContent>
+              </Card>
               
               {/* Terms & Conditions */}
               {event.terms_and_conditions &&
@@ -879,7 +877,7 @@ export default function EventDetail() {
             <Card variant="glass" className="backdrop-blur-md border-border/50">
               <CardContent className="py-4 px-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-4 w-4 text-primary shrink-0 mt-1" />
+                  <Calendar className="h-4 w-4 text-foreground shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">
                       {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
@@ -898,8 +896,8 @@ export default function EventDetail() {
                     window.open(mapsUrl, '_blank');
                   }}
                   className="flex items-center gap-3 w-full text-left group">
-                  <MapPin className="h-4 w-4 text-primary shrink-0 group-hover:text-primary/80 transition-colors" />
-                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{event.location}</p>
+                  <MapPin className="h-4 w-4 text-foreground shrink-0 group-hover:text-foreground/80 transition-colors" />
+                  <p className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">{event.location}</p>
                 </button>
               </CardContent>
             </Card>
@@ -1031,14 +1029,12 @@ export default function EventDetail() {
             }
 
             {/* Share Button */}
-            <RippleButton
-              variant="outline"
-              className="w-full gap-2"
-              onClick={handleShare}>
-              
-              <Share2 className="h-4 w-4" />
-              {text.share}
-            </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={handleShare}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <Share2 className="h-4 w-4 text-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground">{text.share}</span>
+              </CardContent>
+            </Card>
             
             {/* Terms & Conditions (desktop) */}
             {event.terms_and_conditions &&
