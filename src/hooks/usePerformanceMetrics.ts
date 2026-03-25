@@ -213,28 +213,49 @@ export const usePerformanceMetrics = (
       }
 
       // Event visits = (1) ticket check-ins + (2) verified reservation check-ins for event-linked reservations
+      // DEDUP: same user + same event = 1 visit (ticket+reservation counted once)
       let eventVisitsCount = 0;
       if (eventIds.length > 0) {
-        const { count: ticketCheckins } = await supabase
+        // Fetch ticket check-ins with user_id and event_id for dedup
+        const { data: ticketCheckinData } = await supabase
           .from("tickets")
-          .select("id", { count: "exact", head: true })
+          .select("id, user_id, event_id")
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        eventVisitsCount = ticketCheckins || 0;
+        const ticketCheckins = (ticketCheckinData || []) as { id: string; user_id: string | null; event_id: string }[];
+        eventVisitsCount = ticketCheckins.length;
 
-        const { count: eventReservationCheckins } = await supabase
+        // Build set of (user_id, event_id) pairs from ticket check-ins
+        const ticketCheckinPairs = new Set<string>();
+        ticketCheckins.forEach((t) => {
+          if (t.user_id && t.event_id) {
+            ticketCheckinPairs.add(`${t.user_id}:${t.event_id}`);
+          }
+        });
+
+        // Fetch event reservation check-ins
+        const { data: eventResCheckinData } = await supabase
           .from("reservations")
-          .select("id", { count: "exact", head: true })
+          .select("id, user_id, event_id")
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
           .neq("auto_created_from_tickets", true)
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        eventVisitsCount += eventReservationCheckins || 0;
+        // Only count event reservations where user doesn't already have a checked-in ticket
+        const eventResCheckins = (eventResCheckinData || []) as { id: string; user_id: string | null; event_id: string | null }[];
+        const dedupedEventResVisits = eventResCheckins.filter((r) => {
+          if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
+            return false; // Already counted via ticket
+          }
+          return true;
+        });
+
+        eventVisitsCount += dedupedEventResVisits.length;
       }
 
       return {
