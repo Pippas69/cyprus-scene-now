@@ -303,8 +303,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  // Unified loading state - show nothing until all main feed data is ready
-  const isFeedLoading = loadingActiveBoosts || loadingOfferBoosts || loadingBoostedEvents || loadingBoostedOffers || loadingProfiles;
+  // No unified loading gate — each section renders independently with fade-in
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isHorizontalSwipeRef.current = false;
@@ -408,47 +407,35 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
 
         {/* PRIORITY 1: Paid content at the very top */}
-        {isFeedLoading ? (
-          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 space-y-3">
-            <div className="flex gap-3 overflow-hidden">
-              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
-              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
-            </div>
-            <div className="flex gap-2 overflow-hidden">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="min-w-[100px] h-[130px] rounded-xl" />
-              ))}
-            </div>
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
+          <BoostedContentSection 
+            events={boostedEvents || []} 
+            offers={boostedOffers || []} 
+            language={language}
+            userCity={selectedCity || personalizedData?.profile?.city}
+          />
+        </div>
+
+        {/* Smart Search Bar */}
+        {showNavbar && (
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
+            <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
-        ) : (
-          <>
-            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
-              <BoostedContentSection 
-                events={boostedEvents || []} 
-                offers={boostedOffers || []} 
-                language={language}
-                userCity={selectedCity || personalizedData?.profile?.city}
-              />
-            </div>
+        )}
 
-            {/* Smart Search Bar */}
-            {showNavbar && (
-              <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
-                <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
-              </div>
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
+          <div className="space-y-3 sm:space-y-4">
+            {/* POSITION #2: Featured Businesses */}
+            {profileBoosts && profileBoosts.length > 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                <BoostedProfilesScroller
+                  profiles={profileBoosts}
+                  language={language}
+                  eventBoostBusinessIds={eventBoostBusinessIds}
+                  offerBoostBusinessIds={offerBoostBusinessIds}
+                />
+              </motion.div>
             )}
-
-            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
-              <div className="space-y-3 sm:space-y-4">
-                {/* POSITION #2: Featured Businesses */}
-                {profileBoosts && profileBoosts.length > 0 && (
-                  <BoostedProfilesScroller
-                    profiles={profileBoosts}
-                    language={language}
-                    eventBoostBusinessIds={eventBoostBusinessIds}
-                    offerBoostBusinessIds={offerBoostBusinessIds}
-                  />
-                )}
 
             {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
@@ -478,7 +465,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </div>
             </div>
 
-            {/* Student Discount results (only when filter is active) - uses same square card design */}
+            {/* Student Discount results */}
             {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
               <motion.div 
                 className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3"
@@ -496,7 +483,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                       to={`/business/${business.id}`}
                       className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
                     >
-                      {/* Full cover background image */}
                       <div 
                         className="absolute inset-0 bg-cover bg-center"
                         style={{ 
@@ -506,17 +492,11 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                           backgroundColor: !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
                         }}
                       />
-                      
-                      {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                      
-                      {/* Student discount badge - top right */}
                       <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 sm:px-2 sm:py-1 flex items-center gap-0.5 sm:gap-1">
                         <GraduationCap className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         <span className="text-[9px] sm:text-xs font-semibold">{business.student_discount_percent}%</span>
                       </div>
-                      
-                      {/* Content at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
                         <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
                           {business.name}
@@ -531,7 +511,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               </motion.div>
             )}
 
-            {/* All businesses from FOMO - filtered by selected categories (hidden when student discount filter is active) */}
+            {/* All businesses from FOMO */}
             {!showStudentDiscounts && (
               <BusinessDirectorySection 
                 language={language} 
@@ -541,10 +521,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+        </div>
 
         {showScrollTop && (
           <FloatingActionButton
