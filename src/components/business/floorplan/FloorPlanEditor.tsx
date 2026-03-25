@@ -316,39 +316,17 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     
     const { data } = await supabase
       .from('reservation_table_assignments')
-      .select('table_id, reservation_id, event_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo, user_id)')
+      .select('table_id, reservation_id, event_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
       .in('table_id', tableIds)
       .eq('event_id', selectedEventId);
 
     if (data) {
-      // Resolve CRM names for registered users
-      const userIds = Array.from(new Set(
-        data.map((a: any) => a.reservations?.user_id).filter(Boolean)
-      )) as string[];
-
-      const crmNameByUserId = new Map<string, string>();
-      if (userIds.length > 0) {
-        const { data: crmGuests } = await supabase
-          .from('crm_guests')
-          .select('user_id, guest_name')
-          .eq('business_id', businessId)
-          .eq('profile_type', 'registered')
-          .in('user_id', userIds);
-        (crmGuests || []).forEach((g: any) => {
-          if (g.user_id && g.guest_name) crmNameByUserId.set(g.user_id, g.guest_name);
-        });
-      }
-
-      setTableAssignments(data.map((a: any) => {
-        const userId = a.reservations?.user_id;
-        const resolvedName = userId ? (crmNameByUserId.get(userId) || a.reservations?.reservation_name || '') : (a.reservations?.reservation_name || '');
-        return {
-          table_id: a.table_id,
-          reservation_id: a.reservation_id,
-          reservation_name: resolvedName,
-          party_size: a.reservations?.party_size || 0,
-        };
-      }));
+      setTableAssignments(data.map((a: any) => ({
+        table_id: a.table_id,
+        reservation_id: a.reservation_id,
+        reservation_name: a.reservations?.reservation_name || '',
+        party_size: a.reservations?.party_size || 0,
+      })));
     }
   };
 
@@ -375,23 +353,12 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const loadReservationDetail = async (reservationId: string, tableLabel: string, tableId: string) => {
     const { data } = await supabase
       .from('reservations')
-      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo, user_id')
+      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo')
       .eq('id', reservationId)
       .single();
 
     if (data) {
-      let resolvedName = data.reservation_name;
-      if (data.user_id) {
-        const { data: crmGuest } = await supabase
-          .from('crm_guests')
-          .select('guest_name')
-          .eq('business_id', businessId)
-          .eq('profile_type', 'registered')
-          .eq('user_id', data.user_id)
-          .maybeSingle();
-        if (crmGuest?.guest_name) resolvedName = crmGuest.guest_name;
-      }
-      setDetailReservation({ ...data, reservation_name: resolvedName });
+      setDetailReservation(data);
       setDetailTableLabel(tableLabel);
       setDetailTableId(tableId);
       setDetailDialogOpen(true);
