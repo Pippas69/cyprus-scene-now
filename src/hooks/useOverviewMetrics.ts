@@ -302,36 +302,16 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         });
       });
 
-      // D) Tickets: CRM-compatible identity (registered only when guest_name matches profile)
+      // D) Tickets: each ticket = 1 unique QR code = 1 unique customer
+      // Use ticket.id as the identity key to prevent name/phone collisions across orders
       ticketsData.forEach((ticket) => {
-        const orderInfo = ticketOrderById.get(ticket.order_id);
-        const effectiveGuestName = ticket.guest_name || orderInfo?.customer_name || null;
-        const guestNameKey = normalizeName(effectiveGuestName);
-
-        let effectiveUserId: string | null = null;
         if (ticket.user_id) {
-          const profileIdentity = profileIdentityByUserId.get(ticket.user_id);
-          if (
-            profileIdentity &&
-            (!guestNameKey ||
-              guestNameKey === profileIdentity.nameKey ||
-              guestNameKey === profileIdentity.fullNameKey)
-          ) {
-            effectiveUserId = ticket.user_id;
-          }
-        }
-
-        if (effectiveUserId) {
-          customerKeys.add(buildUserCustomerKey(effectiveUserId));
-          countRegisteredAction(effectiveUserId, `ticket_order:${ticket.order_id}`);
+          // Registered user: use user_id directly (no profile lookup required)
+          customerKeys.add(buildUserCustomerKey(ticket.user_id));
+          countRegisteredAction(ticket.user_id, `ticket_order:${ticket.order_id}`);
         } else {
-          customerKeys.add(
-            buildGhostCustomerKey({
-              guestName: effectiveGuestName,
-              phone: orderInfo?.customer_phone,
-              fallback: `ticket:${ticket.id}`,
-            })
-          );
+          // Ghost: use unique ticket ID to avoid collisions
+          customerKeys.add(`ticket:${ticket.id}`);
         }
       });
 
@@ -351,7 +331,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           return;
         }
 
-        const isRegistered = !!reservation.user_id && profileIdentityByUserId.has(reservation.user_id);
+        const isRegistered = !!reservation.user_id;
         if (isRegistered && reservation.user_id) {
           customerKeys.add(buildUserCustomerKey(reservation.user_id));
           countRegisteredAction(reservation.user_id, `reservation:${reservation.id}`);
@@ -382,7 +362,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           return;
         }
 
-        const isRegistered = !!purchase.user_id && profileIdentityByUserId.has(purchase.user_id);
+        const isRegistered = !!purchase.user_id;
         if (isRegistered && purchase.user_id) {
           customerKeys.add(buildUserCustomerKey(purchase.user_id));
           countRegisteredAction(purchase.user_id, `offer_purchase:${purchase.id}`);
@@ -398,7 +378,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // G) Student discount redemptions
       studentRedemptions.forEach((redemption) => {
         const studentUserId = studentUserByVerification.get(redemption.student_verification_id) || null;
-        const isRegistered = !!studentUserId && profileIdentityByUserId.has(studentUserId);
+        const isRegistered = !!studentUserId;
 
         if (isRegistered && studentUserId) {
           customerKeys.add(buildUserCustomerKey(studentUserId));
