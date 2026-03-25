@@ -541,8 +541,10 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {showScrollTop && (
           <FloatingActionButton
