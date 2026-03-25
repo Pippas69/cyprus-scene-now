@@ -380,7 +380,7 @@ export const UnifiedEventCard = ({
               }}
             />
             {entryBadgeLabel && !hideBadges && (
-              <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
+              <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-full border border-white/20 shadow-lg">
                 {entryBadgeLabel}
               </span>
             )}
