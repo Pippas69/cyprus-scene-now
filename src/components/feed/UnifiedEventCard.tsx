@@ -98,6 +98,7 @@ export const UnifiedEventCard = ({
   const t = translations[language];
   const eventDate = new Date(event.start_at);
   const now = new Date();
+  const [showFeedShareDialog, setShowFeedShareDialog] = useState(false);
 
   // View tracking - trackEventView now handles source validation internally
   const cardRef = useRef<HTMLDivElement | null>(null);
