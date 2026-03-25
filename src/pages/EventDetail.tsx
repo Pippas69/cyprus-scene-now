@@ -619,12 +619,32 @@ export default function EventDetail() {
               </div>
             </motion.div>
 
-            {/* Description (if any) */}
-            {event.description &&
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
-                {event.description}
-              </p>
-            }
+            {/* RSVP buttons + Description */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Description (if any) */}
+              {event.description &&
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 flex-1 min-w-0">
+                  {event.description}
+                </p>
+              }
+              {/* RSVP actions */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => handleRSVP('interested')}
+                  disabled={rsvpLoading}
+                  className="flex items-center gap-1.5 group transition-colors">
+                  <Heart className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-colors", isInterested ? "fill-primary text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                  <span className="text-xs sm:text-sm font-semibold text-muted-foreground">{interestedCount}</span>
+                </button>
+                <button
+                  onClick={() => handleRSVP('going')}
+                  disabled={rsvpLoading}
+                  className="flex items-center gap-1.5 group transition-colors">
+                  <Users className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-colors", isGoing ? "fill-primary text-primary" : "text-muted-foreground group-hover:text-primary")} />
+                  <span className="text-xs sm:text-sm font-semibold text-muted-foreground">{goingCount}</span>
+                </button>
+              </div>
+            </div>
 
             {/* Date / Time / Location — premium info card (mobile/tablet only, desktop has sidebar) */}
             <Card variant="glass" className="backdrop-blur-md border-border/50 lg:hidden">
