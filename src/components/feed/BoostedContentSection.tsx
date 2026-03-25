@@ -153,12 +153,12 @@ export const BoostedContentSection = memo(({
 
   return (
     <div className="w-full">
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-3 pt-2 pr-2 pb-1">
+      <div className="w-full overflow-x-auto overflow-y-hidden scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex gap-3 pt-2 pr-2 pb-1 snap-x snap-mandatory">
           {allContent.map((item) => (
             <div
               key={`${item.type}-${item.data.id}`}
-              className="flex-shrink-0"
+              className="flex-shrink-0 snap-start"
             >
               {item.type === 'event' ? (
                 <UnifiedEventCard
@@ -178,8 +178,7 @@ export const BoostedContentSection = memo(({
             </div>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
     </div>
   );
 });
