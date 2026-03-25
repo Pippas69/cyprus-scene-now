@@ -567,7 +567,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
-        updateData.ticket_credit_cents = cents;
+        // Business can set real spend manually; CRM splits this per person.
+        updateData.actual_spend_cents = cents;
       } else if (field === 'preferred_time') {
         // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
         if (!editValue) return;
