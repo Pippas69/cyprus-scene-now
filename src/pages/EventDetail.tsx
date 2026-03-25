@@ -610,43 +610,41 @@ export default function EventDetail() {
                 <ArrowLeft className="h-4 w-4 text-white" />
               </button>
 
-              {/* Title + Price badge at bottom of image */}
+              {/* RSVP — top right on image */}
+              <div className="absolute top-3 right-3 sm:right-4 flex items-center gap-3 z-10">
+                <button
+                  onClick={() => handleRSVP('interested')}
+                  disabled={rsvpLoading}
+                  className="flex items-center gap-1 group transition-colors">
+                  <Heart className={cn("h-4 w-4 sm:h-5 sm:w-5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] transition-colors", isInterested ? "fill-white text-white" : "text-white/80 group-hover:text-white")} />
+                  <span className="text-white text-xs sm:text-sm font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{interestedCount}</span>
+                </button>
+                <button
+                  onClick={() => handleRSVP('going')}
+                  disabled={rsvpLoading}
+                  className="flex items-center gap-1 group transition-colors">
+                  <Users className={cn("h-4 w-4 sm:h-5 sm:w-5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] transition-colors", isGoing ? "fill-white text-white" : "text-white/80 group-hover:text-white")} />
+                  <span className="text-white text-xs sm:text-sm font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{goingCount}</span>
+                </button>
+              </div>
+
+              {/* Title + Price at bottom of image */}
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
-                <h1 className="text-white text-lg sm:text-xl font-bold leading-tight line-clamp-2 flex-1">{event.title}</h1>
+                <h1 className="text-white text-sm sm:text-lg lg:text-xl font-bold leading-tight line-clamp-2 flex-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{event.title}</h1>
                 {eventHasTickets && startingPriceCents !== null &&
-                <span className="shrink-0 text-white text-sm font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {formatPrice(startingPriceCents)}
                   </span>
                 }
               </div>
             </motion.div>
 
-            {/* RSVP buttons + Description */}
-            <div className="flex items-center justify-between gap-3">
-              {/* Description (if any) */}
-              {event.description &&
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 flex-1 min-w-0">
-                  {event.description}
-                </p>
-              }
-              {/* RSVP actions */}
-              <div className="flex items-center gap-3 shrink-0">
-                <button
-                  onClick={() => handleRSVP('interested')}
-                  disabled={rsvpLoading}
-                  className="flex items-center gap-1.5 group transition-colors">
-                  <Heart className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-colors", isInterested ? "fill-primary text-primary" : "text-muted-foreground group-hover:text-primary")} />
-                  <span className="text-xs sm:text-sm font-semibold text-muted-foreground">{interestedCount}</span>
-                </button>
-                <button
-                  onClick={() => handleRSVP('going')}
-                  disabled={rsvpLoading}
-                  className="flex items-center gap-1.5 group transition-colors">
-                  <Users className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-colors", isGoing ? "fill-primary text-primary" : "text-muted-foreground group-hover:text-primary")} />
-                  <span className="text-xs sm:text-sm font-semibold text-muted-foreground">{goingCount}</span>
-                </button>
-              </div>
-            </div>
+            {/* Description (if any) */}
+            {event.description &&
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
+                {event.description}
+              </p>
+            }
 
             {/* Date / Time / Location — premium info card (mobile/tablet only, desktop has sidebar) */}
             <Card variant="glass" className="backdrop-blur-md border-border/50 lg:hidden">
