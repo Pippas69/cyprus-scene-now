@@ -200,6 +200,7 @@ export const UnifiedEventCard = ({
     };
 
     return (
+      <>
       <Link
         ref={cardRef as any}
         to={`/event/${event.id}${linkSearch || ""}`}
