@@ -200,14 +200,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
-  // Reload assignments when event changes
+  // Reload assignments when event or items change
   useEffect(() => {
     if (items.length > 0 && selectedEventId) {
-      loadTableAssignments(items.map(i => i.id));
-    } else if (!selectedEventId) {
+      loadTableAssignments(items.map(i => i.id), selectedEventId);
+    } else {
       setTableAssignments([]);
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, items.length]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -311,14 +311,15 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setLoading(false);
   };
 
-  const loadTableAssignments = async (tableIds: string[]) => {
-    if (!selectedEventId) { setTableAssignments([]); return; }
+  const loadTableAssignments = async (tableIds: string[], eventId?: string) => {
+    const effectiveEventId = eventId || selectedEventId;
+    if (!effectiveEventId) { setTableAssignments([]); return; }
     
     const { data } = await supabase
       .from('reservation_table_assignments')
       .select('table_id, reservation_id, event_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
       .in('table_id', tableIds)
-      .eq('event_id', selectedEventId);
+      .eq('event_id', effectiveEventId);
 
     if (data) {
       setTableAssignments(data.map((a: any) => ({
