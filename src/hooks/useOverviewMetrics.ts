@@ -190,10 +190,12 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       ]);
 
       const ticketsData = (ticketsRes.data || []) as TicketCustomerRow[];
-      const reservations = [
-        ...((directReservationsRes.data || []) as ReservationCustomerRow[]),
-        ...((eventReservationsRes.data || []) as ReservationCustomerRow[]),
-      ];
+      // For customer counting: only use direct (profile) reservations.
+      // Event reservations are NOT counted as separate customers because
+      // all event types (hybrid, ticket-only, reservation-only) track
+      // individual guests via the tickets table. Counting event reservations
+      // would double-count people already tracked via tickets.
+      const reservations = (directReservationsRes.data || []) as ReservationCustomerRow[];
       const offerPurchases = (offerPurchasesRes.data || []) as OfferPurchaseCustomerRow[];
       const standaloneOfferPurchases = offerPurchases.filter(
         (purchase) => !purchase.reservation_id || purchase.claim_type === "walk_in"
