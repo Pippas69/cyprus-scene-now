@@ -277,7 +277,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
           <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-1">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
-                <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold">
+                <span className="bg-black/40 backdrop-blur-md text-white text-[10px] lg:text-[11px] font-bold px-2 lg:px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
                   {offer.percent_off}%
                 </span>
               )}
@@ -285,7 +285,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" className="inline-flex" onClick={(e) => e.stopPropagation()}>
-                      <span className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-xs font-bold cursor-pointer">
+                      <span className="bg-black/40 backdrop-blur-md text-white text-[10px] lg:text-[11px] font-bold px-2 lg:px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg cursor-pointer">
                         Offer
                       </span>
                     </button>
@@ -298,7 +298,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
             </div>
             <button
               onClick={handleShareClick}
-              className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:text-white/80 transition-colors shrink-0"
+              className="bg-black/40 backdrop-blur-md text-white p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition-all shrink-0"
               title={language === "el" ? "Κοινοποίηση" : "Share"}
             >
               <Share2 className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
