@@ -576,11 +576,11 @@ export const useBoostValueMetrics = (
 
           // Event reservation check-ins (only count reservations that were actually checked in)
           // DEDUP: skip if same user already has a checked-in ticket for the same event
-          const eventReservationCheckins = await fetchAll<{ event_id: string | null; created_at: string; checked_in_at: string | null; user_id: string | null }>(
+          const eventReservationCheckins = await fetchAll<{ id: string; event_id: string | null; created_at: string; checked_in_at: string | null; user_id: string | null }>(
             async (from, to) => {
               const { data } = await supabase
                 .from("reservations")
-                .select("event_id, created_at, checked_in_at, user_id")
+                .select("id, event_id, created_at, checked_in_at, user_id")
                 .in("event_id", paidEventIds)
                 .not("checked_in_at", "is", null)
                 .neq("auto_created_from_tickets", true)
@@ -591,7 +591,25 @@ export const useBoostValueMetrics = (
             }
           );
 
+          // Exclude reservations linked via ticket_orders (hybrid events)
+          const eventResIds = (eventReservationCheckins || []).map((r) => r.id);
+          let linkedResIds = new Set<string>();
+          if (eventResIds.length > 0) {
+            const { data: linkedRows } = await supabase
+              .from("ticket_orders")
+              .select("linked_reservation_id")
+              .in("linked_reservation_id", eventResIds)
+              .not("linked_reservation_id", "is", null);
+            linkedResIds = new Set(
+              (linkedRows || [])
+                .map((row) => (row as { linked_reservation_id: string | null }).linked_reservation_id)
+                .filter(Boolean) as string[]
+            );
+          }
+
           (eventReservationCheckins || []).forEach((r) => {
+            // Skip linked reservations (already counted via ticket)
+            if (linkedResIds.has(r.id)) return;
             // DEDUP: skip if user already has a checked-in ticket for same event
             if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
               return;

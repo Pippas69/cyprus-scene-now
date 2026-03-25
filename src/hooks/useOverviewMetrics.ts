@@ -346,8 +346,23 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
 
+        // Exclude reservations linked via ticket_orders (hybrid events)
+        const eventResIds = (eventResCheckins || []).map((r) => r.id);
+        let linkedResIds = new Set<string>();
+        if (eventResIds.length > 0) {
+          const { data: linkedRows } = await supabase
+            .from("ticket_orders")
+            .select("linked_reservation_id")
+            .in("linked_reservation_id", eventResIds)
+            .not("linked_reservation_id", "is", null);
+          linkedResIds = new Set(
+            (linkedRows || [])
+              .map((row) => (row as { linked_reservation_id: string | null }).linked_reservation_id)
+              .filter(Boolean) as string[]
+          );
+        }
+
         // Build a set of (user_id, event_id) pairs that already have a checked-in ticket
-        // to avoid double-counting when the same person has both a ticket and a reservation
         const ticketCheckinPairs = new Set<string>();
         if ((eventResCheckins || []).length > 0) {
           const { data: checkedInTickets } = await supabase
@@ -363,6 +378,8 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         }
 
         eventReservationVisits = (eventResCheckins || []).filter((r) => {
+          // Skip linked reservations
+          if (linkedResIds.has(r.id)) return false;
           // Exclude if this user already has a checked-in ticket for the same event
           if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
             return false;
