@@ -233,7 +233,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
             <div className="flex items-center gap-1.5">
               {offerData.percent_off && offerData.percent_off > 0 && offerData.discount_type !== "special_deal" && (
-                <span className="bg-black/40 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
+                <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
                   {offerData.percent_off}%
                 </span>
               )}
@@ -241,7 +241,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" className="inline-flex" onClick={(e) => e.stopPropagation()}>
-                      <span className="bg-black/40 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg cursor-pointer">
+                      <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg cursor-pointer">
                         Offer
                       </span>
                     </button>
@@ -252,7 +252,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 </Popover>
               )}
               {isCredit && (
-                <span className="bg-black/40 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg flex items-center gap-1">
+                <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg flex items-center gap-1">
                   <Wallet className="h-3 w-3" />
                   {bonusPercent > 0 ? `+${bonusPercent}%` : ""}
                 </span>
@@ -263,7 +263,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
                 e.stopPropagation();
                 setIsShareOpen(true);
               }}
-              className="bg-black/40 backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-black/60 transition-all shrink-0"
+              className="bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all shrink-0"
               title={language === "el" ? "Κοινοποίηση" : "Share"}
             >
               <Share2 className="h-3.5 w-3.5" />
