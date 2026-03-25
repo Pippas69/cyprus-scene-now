@@ -75,68 +75,15 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const totalViews = (profileViews || 0) + offerViews + eventViews;
 
       // =====================================================
-      // 2. CUSTOMERS + RETURNING (Unified CRM definition)
-      // Customer = unique person with a QR from any source:
-      // - Event tickets
-      // - Reservations (profile / offer / event)
-      // - Offer claims (walk-in or standalone)
-      // - Student discount redemptions
-      // Returning = registered users with 2+ actions (not limited to check-ins)
+      // 2. CUSTOMERS (covers) + RETURNING
+      // Customer = every person who came to the venue via FOMO
+      // (total covers, not unique bookers)
+      // Returning = registered users (with account) who visited 2+ times
       // =====================================================
 
-      const customerKeys = new Set<string>();
+      // Track registered user actions for "returning" calculation
       const registeredActionCounts: Record<string, number> = {};
       const seenRegisteredActions = new Set<string>();
-
-      type TicketCustomerRow = {
-        id: string;
-        user_id: string | null;
-        guest_name: string | null;
-        order_id: string;
-      };
-
-      type ReservationCustomerRow = {
-        id: string;
-        user_id: string | null;
-        reservation_name: string | null;
-        phone_number: string | null;
-      };
-
-      type OfferPurchaseCustomerRow = {
-        id: string;
-        user_id: string | null;
-        reservation_id: string | null;
-        claim_type: string | null;
-      };
-
-      const normalizeName = (value: string | null | undefined) => {
-        if (!value) return null;
-        const normalized = value.trim().toLowerCase().replace(/\s+/g, " ");
-        return normalized.length > 0 ? normalized : null;
-      };
-
-      const normalizePhone = (value: string | null | undefined) => {
-        if (!value) return null;
-        const normalized = value.replace(/\s+/g, "").replace(/[()-]/g, "");
-        return normalized.length > 0 ? normalized : null;
-      };
-
-      const buildGhostCustomerKey = ({
-        guestName,
-        phone,
-        fallback,
-      }: {
-        guestName?: string | null;
-        phone?: string | null;
-        fallback: string;
-      }) => {
-        const nameKey = normalizeName(guestName);
-        const phoneKey = normalizePhone(phone) || "";
-        if (!nameKey && !phoneKey) return fallback;
-        return `ghost:${nameKey || "unknown"}:${phoneKey}`;
-      };
-
-      const buildUserCustomerKey = (userId: string) => `user:${userId}`;
 
       const countRegisteredAction = (userId: string | null | undefined, actionKey: string) => {
         if (!userId) return;
@@ -146,19 +93,19 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         registeredActionCounts[userId] = (registeredActionCounts[userId] || 0) + 1;
       };
 
-      // A) Load all customer-producing sources first
+      // A) Load all sources
       const [ticketsRes, directReservationsRes, eventReservationsRes, offerPurchasesRes, studentRedemptionsRes] = await Promise.all([
         eventIds.length > 0
           ? supabase
               .from("tickets")
-              .select("id, user_id, guest_name, order_id")
+              .select("id, user_id, order_id")
               .in("event_id", eventIds)
               .gte("created_at", startDate.toISOString())
               .lte("created_at", endDate.toISOString())
           : Promise.resolve({ data: [], error: null }),
         supabase
           .from("reservations")
-          .select("id, user_id, reservation_name, phone_number")
+          .select("id, user_id, party_size")
           .eq("business_id", businessId)
           .is("event_id", null)
           .eq("status", "accepted")
@@ -167,7 +114,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         eventIds.length > 0
           ? supabase
               .from("reservations")
-              .select("id, user_id, reservation_name, phone_number")
+              .select("id, user_id, party_size")
               .in("event_id", eventIds)
               .eq("status", "accepted")
               .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
@@ -176,7 +123,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           : Promise.resolve({ data: [], error: null }),
         supabase
           .from("offer_purchases")
-          .select("id, user_id, reservation_id, claim_type")
+          .select("id, user_id, reservation_id, claim_type, party_size")
           .eq("business_id", businessId)
           .in("status", ["paid", "redeemed"])
           .gte("created_at", startDate.toISOString())
@@ -189,232 +136,69 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .lte("created_at", endDate.toISOString()),
       ]);
 
-      const ticketsData = (ticketsRes.data || []) as TicketCustomerRow[];
-      // For customer counting: only use direct (profile) reservations.
-      // Event reservations are NOT counted as separate customers because
-      // all event types (hybrid, ticket-only, reservation-only) track
-      // individual guests via the tickets table. Counting event reservations
-      // would double-count people already tracked via tickets.
-      const reservations = (directReservationsRes.data || []) as ReservationCustomerRow[];
-      const offerPurchases = (offerPurchasesRes.data || []) as OfferPurchaseCustomerRow[];
+      const ticketsData = (ticketsRes.data || []) as { id: string; user_id: string | null; order_id: string }[];
+      const directReservations = (directReservationsRes.data || []) as { id: string; user_id: string | null; party_size: number }[];
+      const eventReservations = (eventReservationsRes.data || []) as { id: string; user_id: string | null; party_size: number }[];
+      const offerPurchases = (offerPurchasesRes.data || []) as { id: string; user_id: string | null; reservation_id: string | null; claim_type: string | null; party_size: number | null }[];
       const standaloneOfferPurchases = offerPurchases.filter(
         (purchase) => !purchase.reservation_id || purchase.claim_type === "walk_in"
       );
-      const studentRedemptions = (studentRedemptionsRes.data || []) as {
-        id: string;
-        student_verification_id: string;
-      }[];
+      const studentRedemptions = (studentRedemptionsRes.data || []) as { id: string; student_verification_id: string }[];
 
       // B) Resolve student verification -> user
       const studentVerificationIds = Array.from(
-        new Set(
-          studentRedemptions
-            .map((redemption) => redemption.student_verification_id)
-            .filter(Boolean)
-        )
+        new Set(studentRedemptions.map((r) => r.student_verification_id).filter(Boolean))
       );
-
       const studentUserByVerification = new Map<string, string>();
       if (studentVerificationIds.length > 0) {
         const { data: studentVerifications } = await supabase
           .from("student_verifications")
           .select("id, user_id")
           .in("id", studentVerificationIds);
-
-        (studentVerifications || []).forEach((verification) => {
-          if (verification.id && verification.user_id) {
-            studentUserByVerification.set(verification.id, verification.user_id);
-          }
+        (studentVerifications || []).forEach((v) => {
+          if (v.id && v.user_id) studentUserByVerification.set(v.id, v.user_id);
         });
       }
 
-      // C) Load related entities for identity resolution
-      const reservationIds = reservations.map((r) => r.id);
-      const offerPurchaseIds = standaloneOfferPurchases.map((purchase) => purchase.id);
-      const ticketOrderIds = Array.from(new Set(ticketsData.map((ticket) => ticket.order_id)));
+      // C) Count covers (total people) from each source
+      let totalCovers = 0;
 
-      const involvedUserIds = Array.from(
-        new Set(
-          [
-            ...ticketsData.map((ticket) => ticket.user_id),
-            ...reservations.map((reservation) => reservation.user_id),
-            ...standaloneOfferPurchases.map((purchase) => purchase.user_id),
-            ...Array.from(studentUserByVerification.values()),
-          ].filter(Boolean)
-        )
-      ) as string[];
+      // Tickets: each ticket = 1 person (1 QR code)
+      totalCovers += ticketsData.length;
 
-      const [reservationGuestsRes, offerGuestsRes, ticketOrdersRes, profilesRes] = await Promise.all([
-        reservationIds.length > 0
-          ? supabase
-              .from("reservation_guests")
-              .select("id, reservation_id, guest_name")
-              .in("reservation_id", reservationIds)
-          : Promise.resolve({ data: [], error: null }),
-        offerPurchaseIds.length > 0
-          ? supabase
-              .from("offer_purchase_guests")
-              .select("id, purchase_id, guest_name")
-              .in("purchase_id", offerPurchaseIds)
-          : Promise.resolve({ data: [], error: null }),
-        ticketOrderIds.length > 0
-          ? supabase
-              .from("ticket_orders")
-              .select("id, customer_name, customer_phone")
-              .in("id", ticketOrderIds)
-          : Promise.resolve({ data: [], error: null }),
-        involvedUserIds.length > 0
-          ? supabase
-              .from("profiles")
-              .select("id, name, first_name, last_name")
-              .in("id", involvedUserIds)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-
-      const reservationGuestsByReservation = new Map<string, { id: string; guest_name: string | null }[]>();
-      (reservationGuestsRes.data || []).forEach((guest) => {
-        const existing = reservationGuestsByReservation.get(guest.reservation_id) || [];
-        existing.push({ id: guest.id, guest_name: guest.guest_name });
-        reservationGuestsByReservation.set(guest.reservation_id, existing);
+      // Direct reservations: party_size = number of people
+      // (these are profile-level reservations, not event-linked)
+      directReservations.forEach((r) => {
+        totalCovers += r.party_size || 1;
+        if (r.user_id) countRegisteredAction(r.user_id, `reservation:${r.id}`);
       });
 
-      const offerGuestsByPurchase = new Map<string, { id: string; guest_name: string | null }[]>();
-      (offerGuestsRes.data || []).forEach((guest) => {
-        const existing = offerGuestsByPurchase.get(guest.purchase_id) || [];
-        existing.push({ id: guest.id, guest_name: guest.guest_name });
-        offerGuestsByPurchase.set(guest.purchase_id, existing);
+      // Event reservations: skip for cover counting because
+      // those people are already counted via tickets.
+      // But still track registered actions for "returning".
+      eventReservations.forEach((r) => {
+        if (r.user_id) countRegisteredAction(r.user_id, `event_reservation:${r.id}`);
       });
 
-      const ticketOrderById = new Map<string, { customer_name: string | null; customer_phone: string | null }>();
-      (ticketOrdersRes.data || []).forEach((order) => {
-        ticketOrderById.set(order.id, {
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone,
-        });
+      // Ticket registered actions
+      ticketsData.forEach((t) => {
+        if (t.user_id) countRegisteredAction(t.user_id, `ticket_order:${t.order_id}`);
       });
 
-      const profileIdentityByUserId = new Map<string, { nameKey: string | null; fullNameKey: string | null }>();
-      (profilesRes.data || []).forEach((profile) => {
-        const first = profile.first_name?.trim() || "";
-        const last = profile.last_name?.trim() || "";
-        const fullName = `${first} ${last}`.trim();
-        profileIdentityByUserId.set(profile.id, {
-          nameKey: normalizeName(profile.name),
-          fullNameKey: normalizeName(fullName),
-        });
+      // Standalone offer purchases: party_size or 1
+      standaloneOfferPurchases.forEach((p) => {
+        totalCovers += p.party_size || 1;
+        if (p.user_id) countRegisteredAction(p.user_id, `offer_purchase:${p.id}`);
       });
 
-      // D) Tickets: each ticket = 1 unique QR code = 1 unique customer
-      // The buyer (user_id) may purchase tickets for other people (different guest_name).
-      // Only match ticket to buyer if guest_name matches profile name.
-      // Otherwise treat as a separate ghost customer using ticket.id (unique, no collisions).
-      ticketsData.forEach((ticket) => {
-        const effectiveGuestName = ticket.guest_name || ticketOrderById.get(ticket.order_id)?.customer_name || null;
-        const guestNameKey = normalizeName(effectiveGuestName);
-
-        let matchesBuyer = false;
-        if (ticket.user_id) {
-          const profileIdentity = profileIdentityByUserId.get(ticket.user_id);
-          if (profileIdentity) {
-            // Match if guest_name matches profile name or first_name
-            matchesBuyer = !guestNameKey ||
-              guestNameKey === profileIdentity.nameKey ||
-              guestNameKey === profileIdentity.fullNameKey ||
-              (profileIdentity.nameKey && guestNameKey === profileIdentity.nameKey.split(' ')[0]) ||
-              (profileIdentity.fullNameKey && guestNameKey === profileIdentity.fullNameKey.split(' ')[0]);
-          } else {
-            // No profile found but user_id exists - treat as registered
-            matchesBuyer = !guestNameKey;
-          }
-        }
-
-        if (matchesBuyer && ticket.user_id) {
-          customerKeys.add(buildUserCustomerKey(ticket.user_id));
-          countRegisteredAction(ticket.user_id, `ticket_order:${ticket.order_id}`);
-        } else {
-          // Different person (guest) - use unique ticket ID to prevent collisions
-          customerKeys.add(`ticket:${ticket.id}`);
-        }
+      // Student discount redemptions: 1 each
+      studentRedemptions.forEach((r) => {
+        totalCovers += 1;
+        const studentUserId = studentUserByVerification.get(r.student_verification_id) || null;
+        if (studentUserId) countRegisteredAction(studentUserId, `student_redemption:${r.id}`);
       });
 
-      // E) Reservations: registered by user_id, ghost by reservation_name + phone
-      reservations.forEach((reservation) => {
-        const guests = reservationGuestsByReservation.get(reservation.id) || [];
-
-        if (guests.length > 0) {
-          guests.forEach((guest) => {
-            customerKeys.add(
-              buildGhostCustomerKey({
-                guestName: guest.guest_name,
-                fallback: `reservation_guest:${guest.id}`,
-              })
-            );
-          });
-          return;
-        }
-
-        const isRegistered = !!reservation.user_id;
-        if (isRegistered && reservation.user_id) {
-          customerKeys.add(buildUserCustomerKey(reservation.user_id));
-          countRegisteredAction(reservation.user_id, `reservation:${reservation.id}`);
-        } else {
-          customerKeys.add(
-            buildGhostCustomerKey({
-              guestName: reservation.reservation_name,
-              phone: reservation.phone_number,
-              fallback: `reservation:${reservation.id}`,
-            })
-          );
-        }
-      });
-
-      // F) Offer claims (standalone / walk-in), avoid double-counting offer-linked reservations
-      standaloneOfferPurchases.forEach((purchase) => {
-        const guests = offerGuestsByPurchase.get(purchase.id) || [];
-
-        if (guests.length > 0) {
-          guests.forEach((guest) => {
-            customerKeys.add(
-              buildGhostCustomerKey({
-                guestName: guest.guest_name,
-                fallback: `offer_guest:${guest.id}`,
-              })
-            );
-          });
-          return;
-        }
-
-        const isRegistered = !!purchase.user_id;
-        if (isRegistered && purchase.user_id) {
-          customerKeys.add(buildUserCustomerKey(purchase.user_id));
-          countRegisteredAction(purchase.user_id, `offer_purchase:${purchase.id}`);
-        } else {
-          customerKeys.add(
-            buildGhostCustomerKey({
-              fallback: `offer_purchase:${purchase.id}`,
-            })
-          );
-        }
-      });
-
-      // G) Student discount redemptions
-      studentRedemptions.forEach((redemption) => {
-        const studentUserId = studentUserByVerification.get(redemption.student_verification_id) || null;
-        const isRegistered = !!studentUserId;
-
-        if (isRegistered && studentUserId) {
-          customerKeys.add(buildUserCustomerKey(studentUserId));
-          countRegisteredAction(studentUserId, `student_redemption:${redemption.id}`);
-        } else {
-          customerKeys.add(
-            buildGhostCustomerKey({
-              fallback: `student_redemption:${redemption.id}`,
-            })
-          );
-        }
-      });
-
-      const customersThruFomo = customerKeys.size;
+      const customersThruFomo = totalCovers;
       const repeatCustomers = Object.values(registeredActionCounts).filter((count) => count >= 2).length;
 
       // =====================================================
