@@ -303,14 +303,34 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       });
 
       // D) Tickets: each ticket = 1 unique QR code = 1 unique customer
-      // Use ticket.id as the identity key to prevent name/phone collisions across orders
+      // The buyer (user_id) may purchase tickets for other people (different guest_name).
+      // Only match ticket to buyer if guest_name matches profile name.
+      // Otherwise treat as a separate ghost customer using ticket.id (unique, no collisions).
       ticketsData.forEach((ticket) => {
+        const effectiveGuestName = ticket.guest_name || ticketOrderById.get(ticket.order_id)?.customer_name || null;
+        const guestNameKey = normalizeName(effectiveGuestName);
+
+        let matchesBuyer = false;
         if (ticket.user_id) {
-          // Registered user: use user_id directly (no profile lookup required)
+          const profileIdentity = profileIdentityByUserId.get(ticket.user_id);
+          if (profileIdentity) {
+            // Match if guest_name matches profile name or first_name
+            matchesBuyer = !guestNameKey ||
+              guestNameKey === profileIdentity.nameKey ||
+              guestNameKey === profileIdentity.fullNameKey ||
+              (profileIdentity.nameKey && guestNameKey === profileIdentity.nameKey.split(' ')[0]) ||
+              (profileIdentity.fullNameKey && guestNameKey === profileIdentity.fullNameKey.split(' ')[0]);
+          } else {
+            // No profile found but user_id exists - treat as registered
+            matchesBuyer = !guestNameKey;
+          }
+        }
+
+        if (matchesBuyer && ticket.user_id) {
           customerKeys.add(buildUserCustomerKey(ticket.user_id));
           countRegisteredAction(ticket.user_id, `ticket_order:${ticket.order_id}`);
         } else {
-          // Ghost: use unique ticket ID to avoid collisions
+          // Different person (guest) - use unique ticket ID to prevent collisions
           customerKeys.add(`ticket:${ticket.id}`);
         }
       });
