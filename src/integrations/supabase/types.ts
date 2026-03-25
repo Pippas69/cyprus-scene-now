@@ -7228,10 +7228,10 @@ export type Database = {
         Args: {
           p_business_id: string
           p_email?: string
-          p_guest_name: string
+          p_guest_name?: string
           p_phone?: string
           p_profile_type?: string
-          p_user_id: string
+          p_user_id?: string
         }
         Returns: string
       }
