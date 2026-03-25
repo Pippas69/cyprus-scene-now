@@ -1011,7 +1011,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
-      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
+      <div className="relative overflow-hidden border border-white/[0.06] shadow-[0_8px_40px_rgba(0,0,0,0.4)] rounded-xl w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
           ref={canvasRef}
           className={`absolute inset-0 select-none touch-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -1039,9 +1039,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           onMouseUp={isDesignMode ? handleMouseUp : undefined}
         >
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
+            background: 'radial-gradient(ellipse at 25% 15%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 55%, hsl(220 35% 4%) 100%)',
           }} />
-          <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.2)' }} />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
             <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-fill pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
