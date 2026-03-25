@@ -102,7 +102,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Fetch active event boosts (with hourly window support)
-  const { data: activeBoosts } = useQuery({
+  const { data: activeBoosts, isLoading: loadingActiveBoosts } = useQuery({
     queryKey: ["active-boosts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -127,7 +127,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const eventBoostBusinessIds = useMemo(() => new Set(activeBoosts?.map((b) => b.business_id) || []), [activeBoosts]);
 
   // Boosted events ONLY (paid priority) - sorted chronologically by start_at
-  const { data: boostedEvents } = useQuery({
+  const { data: boostedEvents, isLoading: loadingBoostedEvents } = useQuery({
     queryKey: ["boosted-events", selectedCity, activeBoosts?.map((b) => b.event_id).join(",")],
     queryFn: async () => {
       if (!activeBoosts || activeBoosts.length === 0) return [];
@@ -205,7 +205,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Boosted offers (paid priority) - check status AND window (supports hourly)
-  const { data: offerBoosts } = useQuery({
+  const { data: offerBoosts, isLoading: loadingOfferBoosts } = useQuery({
     queryKey: ["active-offer-boosts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -230,7 +230,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const offerBoostBusinessIds = useMemo(() => new Set(offerBoosts?.map((b: any) => b.business_id) || []), [offerBoosts]);
 
   // Boosted offers (paid priority) - sorted chronologically by end_at (soonest expiry first)
-  const { data: boostedOffers } = useQuery({
+  const { data: boostedOffers, isLoading: loadingBoostedOffers } = useQuery({
     queryKey: ["boosted-offers", selectedCity, offerBoosts?.map((b: any) => b.discount_id).join(",")],
     queryFn: async () => {
       if (!offerBoosts || offerBoosts.length === 0) return [];
