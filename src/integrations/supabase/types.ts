@@ -3047,6 +3047,7 @@ export type Database = {
           discount_percent: number
           expires_at: string
           final_price_cents: number
+          guest_name: string | null
           id: string
           original_price_cents: number
           party_size: number | null
@@ -3075,6 +3076,7 @@ export type Database = {
           discount_percent?: number
           expires_at: string
           final_price_cents?: number
+          guest_name?: string | null
           id?: string
           original_price_cents?: number
           party_size?: number | null
@@ -3103,6 +3105,7 @@ export type Database = {
           discount_percent?: number
           expires_at?: string
           final_price_cents?: number
+          guest_name?: string | null
           id?: string
           original_price_cents?: number
           party_size?: number | null
