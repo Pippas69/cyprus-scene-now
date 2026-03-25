@@ -605,9 +605,9 @@ export default function EventDetail() {
               {/* Back arrow — overlaid on image (mobile/tablet only) */}
               <button
                 onClick={() => navigate(-1)}
-                className="lg:hidden absolute top-3 left-3 sm:left-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors">
+                className="lg:hidden absolute top-3 left-3 sm:left-4 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors">
                 
-                <ArrowLeft className="h-4 w-4 text-white" />
+                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
               </button>
 
               {/* RSVP — top right on image */}
@@ -629,7 +629,7 @@ export default function EventDetail() {
               </div>
 
               {/* Title + Price at bottom of image */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 flex items-end justify-between gap-3">
+              <div className="absolute bottom-0 left-0 right-0 p-4 pb-5 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-sm sm:text-lg lg:text-xl font-bold leading-tight line-clamp-2 flex-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{event.title}</h1>
                 {eventHasTickets && startingPriceCents !== null &&
                 <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
