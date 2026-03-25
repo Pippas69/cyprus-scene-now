@@ -30,6 +30,8 @@ interface CardActionBarProps {
   pillShareStyle?: boolean;
   /** When true, uses smaller icons for compact mobile cards */
   compactIcons?: boolean;
+  /** When true, hides the share button (rendered externally) */
+  hideShare?: boolean;
 }
 
 export const CardActionBar = ({
