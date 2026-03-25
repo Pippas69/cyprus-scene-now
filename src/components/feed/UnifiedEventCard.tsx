@@ -10,6 +10,7 @@ import { CardActionBar } from "./CardActionBar";
 import { useCallback, useRef, useState } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
+import { ShareDialog } from "@/components/sharing/ShareDialog";
 
 interface UnifiedEventCardProps {
   event: {
