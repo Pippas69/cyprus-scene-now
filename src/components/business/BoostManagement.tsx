@@ -235,7 +235,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           gte("viewed_at", overallStart).lte("viewed_at", overallEnd),
           supabase.from("rsvps").select("created_at").eq("event_id", eventId).
           gte("created_at", overallStart).lte("created_at", overallEnd),
-          supabase.from("tickets").select("id, created_at, checked_in_at, status").eq("event_id", eventId).
+          supabase.from("tickets").select("id, user_id, created_at, checked_in_at, status").eq("event_id", eventId).
           gte("created_at", overallStart).lte("created_at", overallEnd),
           supabase.from("ticket_orders").select("created_at, subtotal_cents, status").eq("event_id", eventId).
           eq("status", "completed").gte("created_at", overallStart).lte("created_at", overallEnd),
@@ -253,6 +253,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           );
           const ticketsSold = boostedTickets.length;
           const ticketCheckIns = boostedTickets.filter((t) => t.checked_in_at).length;
+          const checkedInTicketPairs = new Set<string>();
+          boostedTickets.forEach((t) => {
+            if (t.checked_in_at && t.user_id) {
+              checkedInTicketPairs.add(`${t.user_id}:${eventId}`);
+            }
+          });
 
           const boostedOrders = (ordersRes.data || []).filter((o) => isInAnyWindow(o.created_at, windows));
           const ticketRevenue = boostedOrders.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0);
@@ -273,7 +279,12 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
             );
           }
 
-          const boostedReservations = boostedReservationsRaw.filter((r) => !r.auto_created_from_tickets && !linkedResIds.has(r.id));
+          const boostedReservations = boostedReservationsRaw.filter((r) => {
+            if (r.auto_created_from_tickets) return false;
+            if (linkedResIds.has(r.id)) return false;
+            if (r.user_id && checkedInTicketPairs.has(`${r.user_id}:${eventId}`)) return false;
+            return true;
+          });
           const reservationsCount = boostedReservations.length;
           const reservationGuests = boostedReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
           const reservationRevenue = boostedReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
