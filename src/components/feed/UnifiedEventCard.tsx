@@ -270,9 +270,9 @@ export const UnifiedEventCard = ({
           {hideBadges && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowFeedShareDialog(true); }}
-              className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+              className="absolute bottom-1 right-1 md:bottom-1 md:right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-[3px] md:p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
             >
-              <Share2 className="h-3 w-3" />
+              <Share2 className="h-2 w-2 md:h-2.5 md:w-2.5 lg:h-3 lg:w-3" />
             </button>
           )}
         </div>
