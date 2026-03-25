@@ -452,25 +452,27 @@ export function VenueSVGCanvas({
         const self = isSelf(item);
 
         const customColor = item.color || null;
-        let fill = customColor ? `${customColor}0A` : THEME.tableFill;
+        let fill = customColor ? `${customColor}08` : THEME.tableFill;
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = 0.35;
+        let strokeWidth = 0.25;
+        let filterAttr: string | undefined = 'url(#fp-table-shadow)';
 
         if (hasTableAssignment) {
-          fill = 'hsl(142 60% 50% / 0.15)';
-          stroke = 'hsl(142 60% 45%)';
-          strokeWidth = 0.5;
+          fill = 'hsl(168 45% 48% / 0.12)';
+          stroke = 'hsl(168 50% 50%)';
+          strokeWidth = 0.4;
+          filterAttr = 'url(#fp-glow-assigned)';
         } else if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
-          strokeWidth = 0.45;
+          strokeWidth = 0.35;
         } else if (self) {
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
         } else if (selected) {
           fill = THEME.tableSelectedFill;
           stroke = THEME.tableSelectedStroke;
-          strokeWidth = 0.45;
+          strokeWidth = 0.4;
         }
 
         const handlers = makeInteractionHandlers(item.id);
@@ -495,13 +497,13 @@ export function VenueSVGCanvas({
         );
 
         return (
-          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter={filterAttr}>
             {g.shape === 'round' ? (
               <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
             ) : (
               <rect
                 x={g.x} y={g.y} width={g.w} height={g.h}
-                rx={g.shape === 'rectangle' ? 0.25 : 0.5}
+                rx={g.shape === 'rectangle' ? 0.3 : 0.6}
                 fill={fill} stroke={stroke} strokeWidth={strokeWidth}
               />
             )}
