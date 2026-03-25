@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, Clock } from "lucide-react";
+import { MapPin, Calendar, Clock, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS, el } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
+import { ShareDialog } from "@/components/sharing/ShareDialog";
 
 interface UnifiedEventCardProps {
   event: {
@@ -97,6 +98,7 @@ export const UnifiedEventCard = ({
   const t = translations[language];
   const eventDate = new Date(event.start_at);
   const now = new Date();
+  const [showFeedShareDialog, setShowFeedShareDialog] = useState(false);
 
   // View tracking - trackEventView now handles source validation internally
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -198,6 +200,7 @@ export const UnifiedEventCard = ({
     };
 
     return (
+      <>
       <Link
         ref={cardRef as any}
         to={`/event/${event.id}${linkSearch || ""}`}
@@ -243,9 +246,9 @@ export const UnifiedEventCard = ({
               language={language}
               className="drop-shadow-md"
               onImage
-              pillShareStyle={hideBadges}
               compactIcons={hideBadges}
-              shareData={{
+              hideShare={hideBadges}
+              shareData={hideBadges ? undefined : {
                 title: event.title,
                 location: event.location,
                 start_at: event.start_at,
@@ -262,6 +265,16 @@ export const UnifiedEventCard = ({
               </span>
             )}
           </div>
+
+          {/* Bottom-right: Share icon pill (feed only) */}
+          {hideBadges && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowFeedShareDialog(true); }}
+              className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+            >
+              <Share2 className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         {/* Content section */}
@@ -282,6 +295,25 @@ export const UnifiedEventCard = ({
           </button>
         </div>
       </Link>
+      {hideBadges && (
+        <ShareDialog
+          open={showFeedShareDialog}
+          onOpenChange={setShowFeedShareDialog}
+          event={{
+            id: event.id,
+            title: event.title,
+            location: event.location,
+            start_at: event.start_at,
+            cover_image_url: event.cover_image_url || undefined,
+            businesses: event.businesses ? {
+              id: event.business_id || event.businesses.id || event.businesses.name,
+              name: event.businesses.name,
+            } : undefined,
+          }}
+          language={language}
+        />
+      )}
+    </>
     );
   }
 

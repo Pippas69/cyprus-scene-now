@@ -30,6 +30,8 @@ interface CardActionBarProps {
   pillShareStyle?: boolean;
   /** When true, uses smaller icons for compact mobile cards */
   compactIcons?: boolean;
+  /** When true, hides the share button (rendered externally) */
+  hideShare?: boolean;
 }
 
 export const CardActionBar = ({
@@ -43,6 +45,7 @@ export const CardActionBar = ({
   onImage = false,
   pillShareStyle = false,
   compactIcons = false,
+  hideShare = false,
 }: CardActionBarProps) => {
   const { toast } = useToast();
   const [isInterested, setIsInterested] = useState(false);
@@ -249,7 +252,7 @@ export const CardActionBar = ({
         </button>
 
         {/* Share Button */}
-        {pillShareStyle ? (
+        {!hideShare && (pillShareStyle ? (
           <button
             onClick={handleShare}
             className="bg-[hsl(var(--card))] backdrop-blur-md text-white p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
@@ -268,7 +271,7 @@ export const CardActionBar = ({
           >
             <Share2 className={cn(compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5")} strokeWidth={2.5} />
           </button>
-        )}
+        ))}
       </div>
 
       {/* Share Dialog */}

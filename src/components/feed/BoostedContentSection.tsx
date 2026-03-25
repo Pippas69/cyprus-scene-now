@@ -273,9 +273,8 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
 
           {/* BADGE removed in feed - no PremiumBadge for boosted offers */}
 
-          {/* Bottom overlay: Discount badge (left) + Share icon (right) */}
-          <div className="absolute bottom-1.5 left-1.5 right-1.5 lg:bottom-2 lg:left-2 lg:right-2 flex items-center justify-between z-10">
-            <div className="flex items-center gap-1">
+          {/* Bottom-left overlay: Discount badge */}
+          <div className="absolute bottom-1.5 left-1.5 lg:bottom-2 lg:left-2 flex items-center gap-1 z-10">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
                 <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[9px] lg:text-[11px] font-bold px-1.5 lg:px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
                   {offer.percent_off}%
@@ -295,15 +294,16 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                   </PopoverContent>
                 </Popover>
               )}
-            </div>
-            <button
-              onClick={handleShareClick}
-              className="bg-[hsl(var(--card))] backdrop-blur-md text-white p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all shrink-0"
-              title={language === "el" ? "Κοινοποίηση" : "Share"}
-            >
-              <Share2 className="h-2.5 w-2.5 lg:h-3.5 lg:w-3.5" />
-            </button>
           </div>
+
+          {/* Bottom-right: Share icon pill */}
+          <button
+            onClick={handleShareClick}
+            className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+            title={language === "el" ? "Κοινοποίηση" : "Share"}
+          >
+            <Share2 className="h-3 w-3" />
+          </button>
         </div>
 
         {/* BOTTOM HALF - Offer Details - responsive */}
