@@ -294,6 +294,25 @@ export const UnifiedEventCard = ({
           </button>
         </div>
       </Link>
+      {hideBadges && (
+        <ShareDialog
+          open={showFeedShareDialog}
+          onOpenChange={setShowFeedShareDialog}
+          event={{
+            id: event.id,
+            title: event.title,
+            location: event.location,
+            start_at: event.start_at,
+            cover_image_url: event.cover_image_url || undefined,
+            businesses: event.businesses ? {
+              id: event.business_id || event.businesses.id || event.businesses.name,
+              name: event.businesses.name,
+            } : undefined,
+          }}
+          language={language}
+        />
+      )}
+    </>
     );
   }
 
