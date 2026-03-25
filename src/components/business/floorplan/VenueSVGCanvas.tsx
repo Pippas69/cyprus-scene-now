@@ -83,27 +83,30 @@ type Geometry = {
   rotation: number;
 };
 
-/* ═══ Canva/Figma-inspired theme ═══ */
+/* ═══ Premium SevenRooms-inspired theme ═══ */
 const THEME = {
-  grid: 'rgba(255,255,255,0.06)',
-  fixtureFill: 'rgba(255,255,255,0.04)',
-  fixtureStroke: 'rgba(255,255,255,0.35)',
-  fixtureText: 'rgba(255,255,255,0.5)',
-  tableStroke: 'rgba(255,255,255,0.4)',
-  tableFill: 'rgba(255,255,255,0.05)',
+  grid: 'rgba(255,255,255,0.04)',
+  fixtureFill: 'rgba(255,255,255,0.03)',
+  fixtureStroke: 'rgba(255,255,255,0.25)',
+  fixtureText: 'rgba(255,255,255,0.45)',
+  tableStroke: 'rgba(255,255,255,0.30)',
+  tableFill: 'rgba(255,255,255,0.04)',
   tableSelectedStroke: 'hsl(var(--primary))',
-  tableSelectedFill: 'hsl(var(--primary) / 0.12)',
-  tableText: 'rgba(255,255,255,0.6)',
+  tableSelectedFill: 'hsl(var(--primary) / 0.10)',
+  tableText: 'rgba(255,255,255,0.75)',
   occupiedStroke: 'hsl(0 72% 55%)',
-  occupiedFill: 'hsl(0 72% 55% / 0.12)',
+  occupiedFill: 'hsl(0 72% 55% / 0.10)',
   selfStroke: 'hsl(var(--floorplan-accent))',
-  selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
+  selfFill: 'hsl(var(--floorplan-accent) / 0.10)',
   selectionStroke: 'hsl(var(--primary))',
   handleFill: 'hsl(var(--primary))',
   handleBorder: '#fff',
   alignGuide: 'hsl(var(--primary) / 0.7)',
-  lineStroke: 'rgba(255,255,255,0.6)',
-  textColor: 'rgba(255,255,255,0.8)',
+  lineStroke: 'rgba(255,255,255,0.45)',
+  textColor: 'rgba(255,255,255,0.85)',
+  // Premium glow/shadow tokens
+  tableGlow: 'rgba(255,255,255,0.06)',
+  assignedGlow: 'rgba(62,195,183,0.15)',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
