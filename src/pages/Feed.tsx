@@ -283,7 +283,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Student discount (always below the 4 category sections)
-  const { data: studentDiscountBusinesses } = useQuery({
+  const { data: studentDiscountBusinesses, isLoading: loadingStudentDiscounts } = useQuery({
     queryKey: ["student-discount-businesses", selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -301,6 +301,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     },
     staleTime: 60000,
   });
+
+  // Unified loading state - show nothing until all main feed data is ready
+  const isFeedLoading = loadingActiveBoosts || loadingOfferBoosts || loadingBoostedEvents || loadingBoostedOffers || loadingProfiles;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isHorizontalSwipeRef.current = false;
