@@ -16,13 +16,13 @@ export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) =
     return (
       <div 
         className={`
-          inline-flex items-center justify-center 
+          flex items-center justify-center 
           w-6 h-6 rounded-full 
           bg-gradient-ocean
           ${className}
         `}
       >
-        <Crown className="h-3 w-3 text-white drop-shadow-sm" />
+        <Crown className="h-3 w-3 text-white drop-shadow-sm shrink-0" />
       </div>
     );
   }
