@@ -451,6 +451,8 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 offerBoostBusinessIds={offerBoostBusinessIds}
               />
             )}
+          </>
+        )}
 
             {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
