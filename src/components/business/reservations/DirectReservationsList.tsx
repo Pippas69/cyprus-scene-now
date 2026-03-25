@@ -243,7 +243,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
-          auto_created_from_tickets, ticket_credit_cents, seating_type_id,
+          auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id,
           profiles(name, email)
         `);
@@ -567,7 +567,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
-        updateData.ticket_credit_cents = cents;
+        // Business can set real spend manually; CRM splits this per person.
+        updateData.actual_spend_cents = cents;
       } else if (field === 'preferred_time') {
         // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
         if (!editValue) return;
@@ -954,6 +955,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 const minAge = getMinAge(reservation.id);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
+                const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const minChargeDisplay = minChargeCents > 0 ?
                 (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
@@ -961,6 +963,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
                 `€${(minChargeCents / 100).toFixed(2)}`) :
                 '-';
+                const actualSpendDisplay = actualSpendCents > 0
+                  ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
+                  : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
 
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
@@ -994,12 +999,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col items-start">
+                        <div className="flex flex-col items-start gap-1">
+                          <span>{minChargeDisplay}</span>
                           <EditableCell
                           reservationId={reservation.id}
                           field="ticket_credit_cents"
-                          displayValue={minChargeDisplay}
-                          rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'} />
+                          displayValue={actualSpendDisplay}
+                          rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
                         
                           {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
                         <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
