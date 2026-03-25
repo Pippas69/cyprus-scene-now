@@ -410,12 +410,10 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         {/* PRIORITY 1: Paid content at the very top */}
         {isFeedLoading ? (
           <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 space-y-3">
-            {/* Boosted content skeleton */}
             <div className="flex gap-3 overflow-hidden">
               <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
               <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
             </div>
-            {/* Profile scroller skeleton */}
             <div className="flex gap-2 overflow-hidden">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="min-w-[100px] h-[130px] rounded-xl" />
@@ -433,26 +431,24 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             </div>
 
-        {/* Smart Search Bar */}
-        {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
-            <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
-          </div>
-        )}
-
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
-          <div className="space-y-3 sm:space-y-4">
-            {/* POSITION #2: Featured Businesses */}
-            {profileBoosts && profileBoosts.length > 0 && (
-              <BoostedProfilesScroller
-                profiles={profileBoosts}
-                language={language}
-                eventBoostBusinessIds={eventBoostBusinessIds}
-                offerBoostBusinessIds={offerBoostBusinessIds}
-              />
+            {/* Smart Search Bar */}
+            {showNavbar && (
+              <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
+                <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
+              </div>
             )}
-          </>
-        )}
+
+            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
+              <div className="space-y-3 sm:space-y-4">
+                {/* POSITION #2: Featured Businesses */}
+                {profileBoosts && profileBoosts.length > 0 && (
+                  <BoostedProfilesScroller
+                    profiles={profileBoosts}
+                    language={language}
+                    eventBoostBusinessIds={eventBoostBusinessIds}
+                    offerBoostBusinessIds={offerBoostBusinessIds}
+                  />
+                )}
 
             {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
