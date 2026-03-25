@@ -408,14 +408,30 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
 
         {/* PRIORITY 1: Paid content at the very top */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
-          <BoostedContentSection 
-            events={boostedEvents || []} 
-            offers={boostedOffers || []} 
-            language={language}
-            userCity={selectedCity || personalizedData?.profile?.city}
-          />
-        </div>
+        {isFeedLoading ? (
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 space-y-3">
+            {/* Boosted content skeleton */}
+            <div className="flex gap-3 overflow-hidden">
+              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
+              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
+            </div>
+            {/* Profile scroller skeleton */}
+            <div className="flex gap-2 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="min-w-[100px] h-[130px] rounded-xl" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
+              <BoostedContentSection 
+                events={boostedEvents || []} 
+                offers={boostedOffers || []} 
+                language={language}
+                userCity={selectedCity || personalizedData?.profile?.city}
+              />
+            </div>
 
         {/* Smart Search Bar */}
         {showNavbar && (
