@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUp, Filter, GraduationCap } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 
@@ -102,7 +103,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Fetch active event boosts (with hourly window support)
-  const { data: activeBoosts } = useQuery({
+  const { data: activeBoosts, isLoading: loadingActiveBoosts } = useQuery({
     queryKey: ["active-boosts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -127,7 +128,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const eventBoostBusinessIds = useMemo(() => new Set(activeBoosts?.map((b) => b.business_id) || []), [activeBoosts]);
 
   // Boosted events ONLY (paid priority) - sorted chronologically by start_at
-  const { data: boostedEvents } = useQuery({
+  const { data: boostedEvents, isLoading: loadingBoostedEvents } = useQuery({
     queryKey: ["boosted-events", selectedCity, activeBoosts?.map((b) => b.event_id).join(",")],
     queryFn: async () => {
       if (!activeBoosts || activeBoosts.length === 0) return [];
@@ -205,7 +206,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Boosted offers (paid priority) - check status AND window (supports hourly)
-  const { data: offerBoosts } = useQuery({
+  const { data: offerBoosts, isLoading: loadingOfferBoosts } = useQuery({
     queryKey: ["active-offer-boosts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -230,7 +231,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   const offerBoostBusinessIds = useMemo(() => new Set(offerBoosts?.map((b: any) => b.business_id) || []), [offerBoosts]);
 
   // Boosted offers (paid priority) - sorted chronologically by end_at (soonest expiry first)
-  const { data: boostedOffers } = useQuery({
+  const { data: boostedOffers, isLoading: loadingBoostedOffers } = useQuery({
     queryKey: ["boosted-offers", selectedCity, offerBoosts?.map((b: any) => b.discount_id).join(",")],
     queryFn: async () => {
       if (!offerBoosts || offerBoosts.length === 0) return [];
@@ -276,14 +277,14 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Featured businesses (plan-weighted)
-  const { data: profileBoosts } = useActiveProfileBoosts({
+  const { data: profileBoosts, isLoading: loadingProfiles } = useActiveProfileBoosts({
     selectedCity,
     userProfile: personalizedData?.profile || null,
     userId: user?.id || null,
   });
 
   // Student discount (always below the 4 category sections)
-  const { data: studentDiscountBusinesses } = useQuery({
+  const { data: studentDiscountBusinesses, isLoading: loadingStudentDiscounts } = useQuery({
     queryKey: ["student-discount-businesses", selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -301,6 +302,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     },
     staleTime: 60000,
   });
+
+  // Unified loading state - show nothing until all main feed data is ready
+  const isFeedLoading = loadingActiveBoosts || loadingOfferBoosts || loadingBoostedEvents || loadingBoostedOffers || loadingProfiles;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isHorizontalSwipeRef.current = false;
@@ -404,33 +408,47 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         </div>
 
         {/* PRIORITY 1: Paid content at the very top */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
-          <BoostedContentSection 
-            events={boostedEvents || []} 
-            offers={boostedOffers || []} 
-            language={language}
-            userCity={selectedCity || personalizedData?.profile?.city}
-          />
-        </div>
-
-        {/* Smart Search Bar */}
-        {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
-            <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
+        {isFeedLoading ? (
+          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 space-y-3">
+            <div className="flex gap-3 overflow-hidden">
+              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
+              <Skeleton className="min-w-[280px] sm:min-w-[320px] h-[200px] sm:h-[240px] rounded-xl" />
+            </div>
+            <div className="flex gap-2 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="min-w-[100px] h-[130px] rounded-xl" />
+              ))}
+            </div>
           </div>
-        )}
-
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
-          <div className="space-y-3 sm:space-y-4">
-            {/* POSITION #2: Featured Businesses */}
-            {profileBoosts && profileBoosts.length > 0 && (
-              <BoostedProfilesScroller
-                profiles={profileBoosts}
+        ) : (
+          <>
+            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
+              <BoostedContentSection 
+                events={boostedEvents || []} 
+                offers={boostedOffers || []} 
                 language={language}
-                eventBoostBusinessIds={eventBoostBusinessIds}
-                offerBoostBusinessIds={offerBoostBusinessIds}
+                userCity={selectedCity || personalizedData?.profile?.city}
               />
+            </div>
+
+            {/* Smart Search Bar */}
+            {showNavbar && (
+              <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
+                <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
+              </div>
             )}
+
+            <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
+              <div className="space-y-3 sm:space-y-4">
+                {/* POSITION #2: Featured Businesses */}
+                {profileBoosts && profileBoosts.length > 0 && (
+                  <BoostedProfilesScroller
+                    profiles={profileBoosts}
+                    language={language}
+                    eventBoostBusinessIds={eventBoostBusinessIds}
+                    offerBoostBusinessIds={offerBoostBusinessIds}
+                  />
+                )}
 
             {/* Filters (categories + student discount) - more compact on mobile */}
             <div data-filters className="w-full">
@@ -523,8 +541,10 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
               />
             )}
 
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {showScrollTop && (
           <FloatingActionButton
