@@ -75,25 +75,22 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const totalViews = (profileViews || 0) + offerViews + eventViews;
 
       // =====================================================
-      // 2. CUSTOMERS (covers) + RETURNING
-      // Customer = every person who came to the venue via FOMO
-      // (total covers, not unique bookers)
-      // Returning = registered users (with account) who visited 2+ times
+      // 2. CUSTOMERS (unique people) + RETURNING
+      // Customer = unique person in CRM (matches CRM tab exactly)
+      // Returning = registered users with 2+ distinct interactions
       // =====================================================
 
-      // Track registered user actions for "returning" calculation
-      const registeredActionCounts: Record<string, number> = {};
-      const seenRegisteredActions = new Set<string>();
+      // A) Count unique customers from CRM guests (source of truth)
+      const { count: crmGuestCount } = await supabase
+        .from("crm_guests")
+        .select("*", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
 
-      const countRegisteredAction = (userId: string | null | undefined, actionKey: string) => {
-        if (!userId) return;
-        const dedupeKey = `${userId}:${actionKey}`;
-        if (seenRegisteredActions.has(dedupeKey)) return;
-        seenRegisteredActions.add(dedupeKey);
-        registeredActionCounts[userId] = (registeredActionCounts[userId] || 0) + 1;
-      };
+      const customersThruFomo = crmGuestCount || 0;
 
-      // A) Load all sources
+      // B) Load sources for "returning" calculation and other metrics
       const [ticketsRes, directReservationsRes, eventReservationsRes, offerPurchasesRes, studentRedemptionsRes] = await Promise.all([
         eventIds.length > 0
           ? supabase
@@ -145,7 +142,7 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       );
       const studentRedemptions = (studentRedemptionsRes.data || []) as { id: string; student_verification_id: string }[];
 
-      // B) Resolve student verification -> user
+      // C) Resolve student verification -> user
       const studentVerificationIds = Array.from(
         new Set(studentRedemptions.map((r) => r.student_verification_id).filter(Boolean))
       );
@@ -160,45 +157,43 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
         });
       }
 
-      // C) Count covers (total people) from each source
-      let totalCovers = 0;
+      // D) Track registered user actions for "returning" calculation
+      const registeredActionCounts: Record<string, number> = {};
+      const seenRegisteredActions = new Set<string>();
 
-      // Tickets: each ticket = 1 person (1 QR code)
-      totalCovers += ticketsData.length;
+      const countRegisteredAction = (userId: string | null | undefined, actionKey: string) => {
+        if (!userId) return;
+        const dedupeKey = `${userId}:${actionKey}`;
+        if (seenRegisteredActions.has(dedupeKey)) return;
+        seenRegisteredActions.add(dedupeKey);
+        registeredActionCounts[userId] = (registeredActionCounts[userId] || 0) + 1;
+      };
 
-      // Direct reservations: party_size = number of people
-      // (these are profile-level reservations, not event-linked)
-      directReservations.forEach((r) => {
-        totalCovers += r.party_size || 1;
-        if (r.user_id) countRegisteredAction(r.user_id, `reservation:${r.id}`);
-      });
-
-      // Event reservations: skip for cover counting because
-      // those people are already counted via tickets.
-      // But still track registered actions for "returning".
-      eventReservations.forEach((r) => {
-        if (r.user_id) countRegisteredAction(r.user_id, `event_reservation:${r.id}`);
-      });
-
-      // Ticket registered actions
+      // Ticket registered actions (deduplicate by order)
       ticketsData.forEach((t) => {
         if (t.user_id) countRegisteredAction(t.user_id, `ticket_order:${t.order_id}`);
       });
 
-      // Standalone offer purchases: party_size or 1
+      // Direct reservation actions
+      directReservations.forEach((r) => {
+        if (r.user_id) countRegisteredAction(r.user_id, `reservation:${r.id}`);
+      });
+
+      // Event reservation actions
+      eventReservations.forEach((r) => {
+        if (r.user_id) countRegisteredAction(r.user_id, `event_reservation:${r.id}`);
+      });
+
+      // Standalone offer purchase actions
       standaloneOfferPurchases.forEach((p) => {
-        totalCovers += p.party_size || 1;
         if (p.user_id) countRegisteredAction(p.user_id, `offer_purchase:${p.id}`);
       });
 
-      // Student discount redemptions: 1 each
+      // Student discount actions
       studentRedemptions.forEach((r) => {
-        totalCovers += 1;
         const studentUserId = studentUserByVerification.get(r.student_verification_id) || null;
         if (studentUserId) countRegisteredAction(studentUserId, `student_redemption:${r.id}`);
       });
-
-      const customersThruFomo = totalCovers;
       const repeatCustomers = Object.values(registeredActionCounts).filter((count) => count >= 2).length;
 
       // =====================================================
