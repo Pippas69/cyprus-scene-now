@@ -935,13 +935,12 @@ export default function EventDetail() {
 
             {/* Tickets/Reservations */}
             {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
-            <RippleButton
-              className="w-full gap-2"
-              onClick={() => setShowTicketFlow(true)}>
-              
-                <Ticket className="h-4 w-4" />
-                {text.buyTickets}
-              </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={() => setShowTicketFlow(true)}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <Ticket className="h-4 w-4 text-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground">{text.buyTickets}</span>
+              </CardContent>
+            </Card>
             }
 
             {/* Kaliva flow */}
@@ -973,13 +972,12 @@ export default function EventDetail() {
                   </> :
 
               <>
-                    <RippleButton
-                  className="w-full gap-2"
-                  onClick={() => setShowKalivaFlow(true)}>
-                  
-                      <Ticket className="h-4 w-4" />
-                      {language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}
-                    </RippleButton>
+                    <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={() => setShowKalivaFlow(true)}>
+                      <CardContent className="py-3 px-4 flex items-center gap-3">
+                        <Ticket className="h-4 w-4 text-foreground shrink-0" />
+                        <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                      </CardContent>
+                    </Card>
                     {!allTicketsSoldOut &&
                 <button
                   type="button"
@@ -995,33 +993,30 @@ export default function EventDetail() {
             }
 
             {eventHasReservation && event.event_type === 'reservation' && user &&
-            <RippleButton
-              className="w-full gap-2"
-              onClick={() => setShowReservationCheckout(true)}>
-              
-                <Calendar className="h-4 w-4" />
-                {text.makeReservation}
-              </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={() => setShowReservationCheckout(true)}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
+              </CardContent>
+            </Card>
             }
 
             {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
-            <RippleButton
-              className="w-full gap-2"
-              onClick={() => setShowReservationCheckout(true)}>
-              
-                <Calendar className="h-4 w-4" />
-                {text.makeReservation}
-              </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={() => setShowReservationCheckout(true)}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
+              </CardContent>
+            </Card>
             }
 
             {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
-            <RippleButton
-              className="w-full gap-2"
-              onClick={() => setShowReservationDialog(true)}>
-              
-                <Calendar className="h-4 w-4" />
-                {text.makeReservation}
-              </RippleButton>
+            <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={() => setShowReservationDialog(true)}>
+              <CardContent className="py-3 px-4 flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-foreground shrink-0" />
+                <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
+              </CardContent>
+            </Card>
             }
 
             {/* Share Button */}
