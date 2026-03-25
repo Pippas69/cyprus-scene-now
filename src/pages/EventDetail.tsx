@@ -800,9 +800,9 @@ export default function EventDetail() {
                     source: 'event_host_link'
                   });
                 }}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md hover:bg-accent/30 transition-all duration-200 group">
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md transition-all duration-200 group">
                 
-                <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20 transition-all">
                   <AvatarImage src={event.businesses.logo_url || ''} />
                   <AvatarFallback className="bg-muted">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -811,10 +811,7 @@ export default function EventDetail() {
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
-                    {event.businesses.verified &&
-                    <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                    }
+                    <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {translateCity(event.businesses.city, language)}
@@ -823,8 +820,8 @@ export default function EventDetail() {
               </Link>
 
               {/* Share Button */}
-              <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer hover:bg-accent/10 transition-all" onClick={handleShare}>
-                <CardContent className="py-3 px-4 flex items-center gap-3">
+              <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={handleShare}>
+                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
                   <Share2 className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.share}</span>
                 </CardContent>
@@ -911,9 +908,9 @@ export default function EventDetail() {
                   source: 'event_host_link'
                 });
               }}
-              className="flex items-center gap-3.5 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md hover:bg-accent/30 transition-all duration-200 group">
+              className="flex items-center gap-3.5 p-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md transition-all duration-200 group">
               
-              <Avatar className="h-11 w-11 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+              <Avatar className="h-11 w-11 ring-2 ring-primary/20 transition-all">
                 <AvatarImage src={event.businesses.logo_url || ''} />
                 <AvatarFallback className="bg-muted">
                   <Building2 className="h-5 w-5 text-muted-foreground" />
@@ -922,10 +919,7 @@ export default function EventDetail() {
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-wider text-muted-foreground/60 font-medium">{text.hostedBy}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{event.businesses.name}</p>
-                  {event.businesses.verified &&
-                  <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  }
+                  <p className="font-semibold text-sm truncate">{event.businesses.name}</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground truncate">
                   {translateCity(event.businesses.city, language)}
