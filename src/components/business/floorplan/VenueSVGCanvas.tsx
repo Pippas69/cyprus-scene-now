@@ -83,27 +83,30 @@ type Geometry = {
   rotation: number;
 };
 
-/* ═══ Canva/Figma-inspired theme ═══ */
+/* ═══ Premium SevenRooms-inspired theme ═══ */
 const THEME = {
-  grid: 'rgba(255,255,255,0.06)',
-  fixtureFill: 'rgba(255,255,255,0.04)',
-  fixtureStroke: 'rgba(255,255,255,0.35)',
-  fixtureText: 'rgba(255,255,255,0.5)',
-  tableStroke: 'rgba(255,255,255,0.4)',
-  tableFill: 'rgba(255,255,255,0.05)',
+  grid: 'rgba(255,255,255,0.04)',
+  fixtureFill: 'rgba(255,255,255,0.03)',
+  fixtureStroke: 'rgba(255,255,255,0.25)',
+  fixtureText: 'rgba(255,255,255,0.45)',
+  tableStroke: 'rgba(255,255,255,0.30)',
+  tableFill: 'rgba(255,255,255,0.04)',
   tableSelectedStroke: 'hsl(var(--primary))',
-  tableSelectedFill: 'hsl(var(--primary) / 0.12)',
-  tableText: 'rgba(255,255,255,0.6)',
+  tableSelectedFill: 'hsl(var(--primary) / 0.10)',
+  tableText: 'rgba(255,255,255,0.75)',
   occupiedStroke: 'hsl(0 72% 55%)',
-  occupiedFill: 'hsl(0 72% 55% / 0.12)',
+  occupiedFill: 'hsl(0 72% 55% / 0.10)',
   selfStroke: 'hsl(var(--floorplan-accent))',
-  selfFill: 'hsl(var(--floorplan-accent) / 0.12)',
+  selfFill: 'hsl(var(--floorplan-accent) / 0.10)',
   selectionStroke: 'hsl(var(--primary))',
   handleFill: 'hsl(var(--primary))',
   handleBorder: '#fff',
   alignGuide: 'hsl(var(--primary) / 0.7)',
-  lineStroke: 'rgba(255,255,255,0.6)',
-  textColor: 'rgba(255,255,255,0.8)',
+  lineStroke: 'rgba(255,255,255,0.45)',
+  textColor: 'rgba(255,255,255,0.85)',
+  // Premium glow/shadow tokens
+  tableGlow: 'rgba(255,255,255,0.06)',
+  assignedGlow: 'rgba(62,195,183,0.15)',
 };
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -329,6 +332,26 @@ export function VenueSVGCanvas({
 
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
+      <defs>
+        {/* Premium subtle glow for assigned tables */}
+        <filter id="fp-glow-assigned" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" result="blur" />
+          <feFlood floodColor="hsl(168 50% 55%)" floodOpacity="0.25" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {/* Subtle inner shadow for tables */}
+        <filter id="fp-table-shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="0.15" stdDeviation="0.3" floodColor="rgba(0,0,0,0.35)" />
+        </filter>
+        {/* Fixture shadow */}
+        <filter id="fp-fixture-shadow" x="-5%" y="-5%" width="110%" height="110%">
+          <feDropShadow dx="0" dy="0.1" stdDeviation="0.2" floodColor="rgba(0,0,0,0.25)" />
+        </filter>
+      </defs>
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
 
@@ -367,28 +390,34 @@ export function VenueSVGCanvas({
         const handlers = makeInteractionHandlers(item.id);
 
         return (
-          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter="url(#fp-fixture-shadow)">
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
-              rx={isDj ? 0.6 : 0.35}
-              fill={item.color ? `${item.color}08` : THEME.fixtureFill}
+              rx={isDj ? 0.8 : 0.4}
+              fill={item.color ? `${item.color}06` : THEME.fixtureFill}
               stroke={selected ? THEME.selectionStroke : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.5 : 0.35}
+              strokeWidth={selected ? 0.5 : 0.25}
             />
             {isBar && (
               <rect
-                x={g.x + g.w * 0.07} y={g.y + g.h * 0.05}
-                width={g.w * 0.86} height={g.h * 0.9}
-                rx={0.28} fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.12} opacity={0.4}
+                x={g.x + g.w * 0.06} y={g.y + g.h * 0.06}
+                width={g.w * 0.88} height={g.h * 0.88}
+                rx={0.3} fill="none" stroke={THEME.fixtureStroke}
+                strokeWidth={0.08} opacity={0.3}
               />
             )}
             {isDj && (
-              <circle
-                cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.18}
-                fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.15} opacity={0.6}
-              />
+              <>
+                <circle
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.22}
+                  fill="none" stroke={THEME.fixtureStroke}
+                  strokeWidth={0.1} opacity={0.4}
+                />
+                <circle
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.08}
+                  fill={THEME.fixtureStroke} opacity={0.25}
+                />
+              </>
             )}
             {showLabels && (
               <text
@@ -396,9 +425,9 @@ export function VenueSVGCanvas({
                 textAnchor="middle" dominantBaseline="central"
                 transform={g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={item.color || THEME.fixtureText}
-                fontSize={Math.min(g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28, g.h > g.w * 1.3 ? g.w * 0.7 : g.h * 0.7, 6)}
+                fontSize={Math.min(g.h > g.w * 1.3 ? g.h * 0.26 : g.w * 0.26, g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.65, 5.5)}
                 fontWeight={700}
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.08em' }}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase' }}
                 className="pointer-events-none"
               >
                 {item.label.toUpperCase()}
@@ -423,25 +452,27 @@ export function VenueSVGCanvas({
         const self = isSelf(item);
 
         const customColor = item.color || null;
-        let fill = customColor ? `${customColor}0A` : THEME.tableFill;
+        let fill = customColor ? `${customColor}08` : THEME.tableFill;
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = 0.35;
+        let strokeWidth = 0.25;
+        let filterAttr: string | undefined = 'url(#fp-table-shadow)';
 
         if (hasTableAssignment) {
-          fill = 'hsl(142 60% 50% / 0.15)';
-          stroke = 'hsl(142 60% 45%)';
-          strokeWidth = 0.5;
+          fill = 'hsl(168 45% 48% / 0.12)';
+          stroke = 'hsl(168 50% 50%)';
+          strokeWidth = 0.4;
+          filterAttr = 'url(#fp-glow-assigned)';
         } else if (occupied) {
           fill = THEME.occupiedFill;
           stroke = THEME.occupiedStroke;
-          strokeWidth = 0.45;
+          strokeWidth = 0.35;
         } else if (self) {
           fill = THEME.selfFill;
           stroke = THEME.selfStroke;
         } else if (selected) {
           fill = THEME.tableSelectedFill;
           stroke = THEME.tableSelectedStroke;
-          strokeWidth = 0.45;
+          strokeWidth = 0.4;
         }
 
         const handlers = makeInteractionHandlers(item.id);
@@ -466,13 +497,13 @@ export function VenueSVGCanvas({
         );
 
         return (
-          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers}>
+          <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter={filterAttr}>
             {g.shape === 'round' ? (
               <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
             ) : (
               <rect
                 x={g.x} y={g.y} width={g.w} height={g.h}
-                rx={g.shape === 'rectangle' ? 0.25 : 0.5}
+                rx={g.shape === 'rectangle' ? 0.3 : 0.6}
                 fill={fill} stroke={stroke} strokeWidth={strokeWidth}
               />
             )}
@@ -484,11 +515,11 @@ export function VenueSVGCanvas({
                 <text
                   x={cx} y={cy - availH * (displayName.isMultiLine ? 0.28 : 0.22)}
                   textAnchor="middle" dominantBaseline="central"
-                  fill="hsl(142 60% 45% / 0.7)"
-                  fontSize={labelFontSize * 0.65}
-                  fontWeight={600}
+                  fill="hsl(168 50% 55% / 0.6)"
+                  fontSize={labelFontSize * 0.6}
+                  fontWeight={500}
                   className="pointer-events-none"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                  style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
                 >
                   {item.label}
                 </text>
@@ -498,22 +529,22 @@ export function VenueSVGCanvas({
                     <text
                       x={cx} y={cy - nameFontSize * 0.15}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(142 60% 55%)"
+                      fill="hsl(168 50% 60%)"
                       fontSize={nameFontSize}
-                      fontWeight={700}
+                      fontWeight={600}
                       className="pointer-events-none"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                     >
                       {displayName.lines[0]}
                     </text>
                     <text
                       x={cx} y={cy + nameFontSize * 1.15}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(142 60% 55%)"
+                      fill="hsl(168 50% 60%)"
                       fontSize={nameFontSize}
-                      fontWeight={700}
+                      fontWeight={600}
                       className="pointer-events-none"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                     >
                       {displayName.lines[1]}
                     </text>
@@ -522,11 +553,11 @@ export function VenueSVGCanvas({
                   <text
                     x={cx} y={cy + nameFontSize * 0.4}
                     textAnchor="middle" dominantBaseline="central"
-                    fill="hsl(142 60% 55%)"
+                    fill="hsl(168 50% 60%)"
                     fontSize={nameFontSize}
-                    fontWeight={700}
+                    fontWeight={600}
                     className="pointer-events-none"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                    style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                   >
                     {displayName.lines[0]}
                   </text>
@@ -539,13 +570,13 @@ export function VenueSVGCanvas({
                 transform={g.shape !== 'round' && g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                 fontSize={Math.min(
-                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.h * 0.3 : g.w * 0.3),
-                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.w * 0.7 : g.h * 0.65),
-                  5
+                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28),
+                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.6),
+                  4.5
                 )}
-                fontWeight={700}
+                fontWeight={600}
                 className="pointer-events-none"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.04em' }}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
               >
                 {item.label}
               </text>
@@ -584,7 +615,7 @@ export function VenueSVGCanvas({
               fill={item.color || THEME.textColor}
               fontSize={Math.min(g.h * 0.65, g.w * 0.35, 6)}
               fontWeight={600}
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+              style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.04em' }}
               className="pointer-events-none"
             >
               {item.label}

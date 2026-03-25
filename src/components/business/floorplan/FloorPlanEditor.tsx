@@ -1011,7 +1011,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       )}
 
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
-      <div className="relative overflow-hidden border border-border/20 shadow-2xl rounded-lg w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
+      <div className="relative overflow-hidden border border-white/[0.06] shadow-[0_8px_40px_rgba(0,0,0,0.4)] rounded-xl w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
           ref={canvasRef}
           className={`absolute inset-0 select-none touch-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -1039,9 +1039,9 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
           onMouseUp={isDesignMode ? handleMouseUp : undefined}
         >
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 30% 20%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 60%, hsl(220 32% 5%) 100%)',
+            background: 'radial-gradient(ellipse at 25% 15%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 55%, hsl(220 35% 4%) 100%)',
           }} />
-          <div className="absolute inset-0 border border-white/[0.03] pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.2)' }} />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
             <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-fill pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
@@ -1115,13 +1115,13 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       ) : (
         <div className="flex items-center justify-end gap-2 mt-3">
-          <div className="flex items-center gap-3 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-border/30 shadow-lg">
+          <div className="flex items-center gap-4 bg-card/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/20 shadow-lg">
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ border: '1px solid hsl(142 60% 45%)', background: 'hsl(142 60% 50% / 0.15)' }} />
+              <div className="w-2.5 h-2.5 rounded-full" style={{ border: '1.5px solid hsl(168 50% 50%)', background: 'hsl(168 45% 48% / 0.12)', boxShadow: '0 0 4px hsl(168 50% 55% / 0.3)' }} />
               {language === 'el' ? 'Τοποθετημένη' : 'Assigned'}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <div className="w-2.5 h-2.5 rounded-sm border border-white/40 bg-white/5" />
+              <div className="w-2.5 h-2.5 rounded-full border border-white/25 bg-white/4" />
               {language === 'el' ? 'Διαθέσιμη' : 'Available'}
             </div>
           </div>
