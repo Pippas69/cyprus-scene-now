@@ -92,25 +92,42 @@ export function FloorPlanTableAssignmentDialog({
 
     const { data, error } = await supabase
       .from('reservations')
-      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at, user_id, profiles:user_id(first_name, last_name)')
+      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at, user_id')
       .eq('business_id', businessId)
       .eq('event_id', eventId)
       .in('status', ['pending', 'accepted', 'confirmed'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      // Use profile name when user_id exists, otherwise use reservation_name
-      const mapped = data.map((r: any) => {
-        const profileName = r.profiles?.first_name
-          ? `${r.profiles.first_name} ${r.profiles.last_name || ''}`.trim()
-          : null;
-        return {
-          ...r,
-          reservation_name: profileName || r.reservation_name,
-        } as Reservation;
-      });
-      setReservations(mapped);
+      const userIds = Array.from(
+        new Set(data.map((r: any) => r.user_id).filter(Boolean))
+      ) as string[];
+
+      const crmNameByUserId = new Map<string, string>();
+
+      if (userIds.length > 0) {
+        const { data: crmGuests } = await supabase
+          .from('crm_guests')
+          .select('user_id, guest_name')
+          .eq('business_id', businessId)
+          .eq('profile_type', 'registered')
+          .in('user_id', userIds);
+
+        (crmGuests || []).forEach((guest: any) => {
+          if (guest.user_id && guest.guest_name && !crmNameByUserId.has(guest.user_id)) {
+            crmNameByUserId.set(guest.user_id, guest.guest_name);
+          }
+        });
+      }
+
+      const mapped = data.map((r: any) => ({
+        ...r,
+        reservation_name: r.user_id ? (crmNameByUserId.get(r.user_id) || r.reservation_name) : r.reservation_name,
+      }));
+
+      setReservations(mapped as Reservation[]);
     }
+
     setLoading(false);
   };
 
