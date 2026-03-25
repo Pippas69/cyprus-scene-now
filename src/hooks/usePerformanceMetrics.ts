@@ -246,9 +246,30 @@ export const usePerformanceMetrics = (
           .gte("checked_in_at", startDate)
           .lte("checked_in_at", endDate);
 
-        // Only count event reservations where user doesn't already have a checked-in ticket
         const eventResCheckins = (eventResCheckinData || []) as { id: string; user_id: string | null; event_id: string | null }[];
+
+        // Exclude linked reservations created from ticket flows (already represented by ticket check-ins)
+        let linkedReservationIds = new Set<string>();
+        const eventResIds = eventResCheckins.map((r) => r.id);
+        if (eventResIds.length > 0) {
+          const { data: linkedRows } = await supabase
+            .from("ticket_orders")
+            .select("linked_reservation_id")
+            .in("linked_reservation_id", eventResIds)
+            .not("linked_reservation_id", "is", null);
+
+          linkedReservationIds = new Set(
+            (linkedRows || [])
+              .map((row) => (row as { linked_reservation_id: string | null }).linked_reservation_id)
+              .filter(Boolean) as string[]
+          );
+        }
+
+        // Only count event reservations where user doesn't already have a checked-in ticket
         const dedupedEventResVisits = eventResCheckins.filter((r) => {
+          if (linkedReservationIds.has(r.id)) {
+            return false;
+          }
           if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
             return false; // Already counted via ticket
           }
