@@ -276,7 +276,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
   });
 
   // Featured businesses (plan-weighted)
-  const { data: profileBoosts } = useActiveProfileBoosts({
+  const { data: profileBoosts, isLoading: loadingProfiles } = useActiveProfileBoosts({
     selectedCity,
     userProfile: personalizedData?.profile || null,
     userId: user?.id || null,
