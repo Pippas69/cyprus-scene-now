@@ -26,6 +26,10 @@ interface CardActionBarProps {
   className?: string;
   /** When true, uses white/light colors for overlay on images */
   onImage?: boolean;
+  /** When true, renders share icon as a frosted pill badge (used in feed) */
+  pillShareStyle?: boolean;
+  /** When true, uses smaller icons for compact mobile cards */
+  compactIcons?: boolean;
 }
 
 export const CardActionBar = ({
@@ -37,6 +41,8 @@ export const CardActionBar = ({
   shareData,
   className,
   onImage = false,
+  pillShareStyle = false,
+  compactIcons = false,
 }: CardActionBarProps) => {
   const { toast } = useToast();
   const [isInterested, setIsInterested] = useState(false);
@@ -211,7 +217,7 @@ export const CardActionBar = ({
           >
             <Heart
               className={cn(
-                "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
+                compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isInterested && "fill-red-500 text-red-500"
               )}
               strokeWidth={2.5}
@@ -234,7 +240,7 @@ export const CardActionBar = ({
           >
             <Users
               className={cn(
-                "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
+                compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isGoing && "text-sky-400"
               )}
               strokeWidth={2.5}
@@ -243,17 +249,26 @@ export const CardActionBar = ({
         </button>
 
         {/* Share Button */}
-        <button
-          onClick={handleShare}
-          className={cn(
-            "flex items-center transition-colors",
-            onImage
-              ? "text-white hover:text-white/70"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Share2 className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
-        </button>
+        {pillShareStyle ? (
+          <button
+            onClick={handleShare}
+            className="bg-[hsl(var(--card))] backdrop-blur-md text-white p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+          >
+            <Share2 className={cn(compactIcons ? "h-2.5 w-2.5 lg:h-3 lg:w-3" : "h-3 w-3 lg:h-3.5 lg:w-3.5")} strokeWidth={2.5} />
+          </button>
+        ) : (
+          <button
+            onClick={handleShare}
+            className={cn(
+              "flex items-center transition-colors",
+              onImage
+                ? "text-white hover:text-white/70"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Share2 className={cn(compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5")} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
 
       {/* Share Dialog */}
