@@ -47,9 +47,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       },
       en: {
         reservations: 'Reservations',
-        staffControl: 'Staff Control',
+        staffControl: 'Control',
         settings: 'Settings',
-        list: 'Reservation List',
+        list: 'Management',
         selectEvent: 'Select event',
         directReservations: 'Reservations',
         events: 'Events',
