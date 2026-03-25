@@ -358,8 +358,27 @@ export const UnifiedEventCard = ({
             </div>
           )}
 
-          {/* Bottom overlay: Entry badge (right) */}
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-end z-10">
+          {/* Bottom overlay: Action bar (left) + Entry badge (right) */}
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-10">
+            <CardActionBar
+              entityId={event.id}
+              entityType="event"
+              interestedCount={interestedCount}
+              goingCount={goingCount}
+              language={language}
+              className="drop-shadow-md"
+              onImage
+              shareData={{
+                title: event.title,
+                location: event.location,
+                start_at: event.start_at,
+                cover_image_url: event.cover_image_url || undefined,
+                businesses: event.businesses ? {
+                  id: event.business_id || event.businesses.id || event.businesses.name,
+                  name: event.businesses.name,
+                } : undefined,
+              }}
+            />
             {entryBadgeLabel && !hideBadges && (
               <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-full border border-white/20 shadow-lg">
                 {entryBadgeLabel}
@@ -392,26 +411,6 @@ export const UnifiedEventCard = ({
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="text-xs truncate">{locationLine || event.location}</span>
           </button>
-
-          {/* Action bar below location */}
-          <CardActionBar
-            entityId={event.id}
-            entityType="event"
-            interestedCount={interestedCount}
-            goingCount={goingCount}
-            language={language}
-            className="mt-1"
-            shareData={{
-              title: event.title,
-              location: event.location,
-              start_at: event.start_at,
-              cover_image_url: event.cover_image_url || undefined,
-              businesses: event.businesses ? {
-                id: event.business_id || event.businesses.id || event.businesses.name,
-                name: event.businesses.name,
-              } : undefined,
-            }}
-          />
         </div>
       </CardContent>
     </Card>
