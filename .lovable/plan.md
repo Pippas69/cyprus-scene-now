@@ -1,72 +1,80 @@
 
 
-# "Hold Now, Charge Later" — Μόνο για Asmationexperience
+# Διόρθωση: Μέτρηση Πελατών στα Analytics & Ταυτοποίηση στο CRM
 
-## Σύνοψη
-Το feature θα είναι διαθέσιμο **μόνο** για το business **Asmationexperience** (`bca2cb97-1723-4358-87b1-130d279e60a6`). Αντί να χτίσουμε ένα γενικό toggle στη φόρμα δημιουργίας event, θα χρησιμοποιήσουμε ένα **business-level flag** στη βάση δεδομένων. Μόνο αυτό το business θα βλέπει τις σχετικές επιλογές στο UI.
+## Περίληψη Προβλήματος
 
----
+Το Blue Martini έχει 1 event (Summer Event) με:
+- 3 κρατήσεις (3 + 4 + 4 = 11 άτομα)
+- 2 walk-in εισιτήρια
+- **Σύνολο: 13 μοναδικά QR codes = 13 πελάτες**
 
-## Τι αλλάζει από το αρχικό σχέδιο
+Στα Analytics εμφανίζονται **12 πελάτες** αντί για 13, και **0% επιστρέφοντες**. Στο CRM, χρήστες που είναι εγγεγραμμένοι (π.χ. Γιώργος, Μαρίνος, Μάριος) εμφανίζονται ως "ghost" αντί ως κανονικοί χρήστες.
 
-| Αρχικό σχέδιο | Τώρα |
+## Αιτίες
+
+**1. Λάθος μέτρηση πελατών (12 αντί 13)**
+Στο `useOverviewMetrics.ts`, η ταυτοποίηση γίνεται με βάση `όνομα + τηλέφωνο`. Αν δύο διαφορετικά άτομα από διαφορετικές παραγγελίες έχουν το ίδιο όνομα (π.χ. "Μάριος") και το ίδιο τηλέφωνο (από τον αγοραστή της παραγγελίας), τότε μετριούνται ως 1 αντί για 2. Αυτό δημιουργεί "σύγκρουση" ταυτοτήτων.
+
+**2. Επιστρέφοντες = 0%**
+Ο κώδικας μετράει "επιστρέφοντες" μόνο για εγγεγραμμένους χρήστες. Αλλά το σύστημα ψάχνει στον πίνακα `profiles` για να επιβεβαιώσει ότι κάποιος είναι εγγεγραμμένος. Αν το profile δεν βρεθεί, όλοι πέφτουν στην κατηγορία "ghost" και κανείς δεν μετριέται ως εγγεγραμμένος → 0% επιστρέφοντες.
+
+**3. Εγγεγραμμένοι χρήστες φαίνονται ως "ghost" στο CRM**
+Η συνάρτηση `upsert_crm_guest_identity` στη βάση ελέγχει αν υπάρχει εγγραφή στον πίνακα `profiles`. Αν δεν βρεθεί (π.χ. λόγω καθυστέρησης δημιουργίας profil), ο χρήστης δημιουργείται ως ghost παρόλο που έχει `user_id`.
+
+## Σχέδιο Υλοποίησης
+
+### Βήμα 1: Διόρθωση ταυτοποίησης πελατών στα Analytics
+
+**Αρχείο:** `src/hooks/useOverviewMetrics.ts`
+
+Αλλαγή του κλειδιού ταυτοποίησης για εισιτήρια. Αντί να χρησιμοποιεί `όνομα + τηλέφωνο` (που δημιουργεί συγκρούσεις μεταξύ παραγγελιών), θα χρησιμοποιεί το μοναδικό ID του εισιτηρίου.
+
+```text
+Πριν:   ghost:marios:96765822        → σύγκρουση μεταξύ παραγγελιών
+Μετά:   ticket:abc123-unique-id      → μοναδικό ανά εισιτήριο
+```
+
+Κάθε QR code = 1 εισιτήριο = 1 μοναδικός πελάτης. Πάντα.
+
+### Βήμα 2: Διόρθωση αναγνώρισης εγγεγραμμένων χρηστών
+
+**Αρχείο:** `src/hooks/useOverviewMetrics.ts`
+
+Τώρα ο κώδικας απαιτεί να υπάρχει εγγραφή στον πίνακα `profiles` για να θεωρήσει κάποιον εγγεγραμμένο. Αυτό είναι λάθος. Αν ένα εισιτήριο ή μια κράτηση έχει `user_id`, ο χρήστης **είναι** εγγεγραμμένος, ανεξάρτητα από το αν βρέθηκε το profile του.
+
+```text
+Πριν:   Αν user_id υπάρχει ΚΑΙ profile υπάρχει → εγγεγραμμένος
+Μετά:   Αν user_id υπάρχει → εγγεγραμμένος (τέλος)
+```
+
+### Βήμα 3: Διόρθωση CRM ταυτοποίησης στη βάση δεδομένων
+
+**Νέο migration (SQL)**
+
+Η συνάρτηση `upsert_crm_guest_identity` θα αλλάξει ώστε: αν δοθεί `user_id`, να ψάχνει/δημιουργεί τον πελάτη ως **εγγεγραμμένο** χωρίς να ελέγχει αν υπάρχει profile. Το profile μπορεί να δημιουργηθεί αργότερα.
+
+```text
+Πριν:   user_id + profile υπάρχει    → εγγεγραμμένος
+         user_id + profile ΔΕΝ υπάρχει → ghost (ΛΑΘΟΣ!)
+Μετά:   user_id υπάρχει              → εγγεγραμμένος (ΣΩΣΤΟ)
+```
+
+### Βήμα 4: Επαναϋπολογισμός υπαρχόντων δεδομένων
+
+Μετά τη διόρθωση, θα τρέξει η συνάρτηση `backfill_crm_guests` για τα businesses που επηρεάζονται, ώστε να διορθωθούν τα ιστορικά δεδομένα (ghost → εγγεγραμμένος όπου πρέπει).
+
+## Αρχεία που θα τροποποιηθούν
+
+| Αρχείο | Τι αλλάζει |
 |---|---|
-| Toggle διαθέσιμο σε όλα τα businesses | Μόνο για Asmationexperience |
-| Γενικό feature flag στο events table | Feature flag στο events table + business-level check στο UI |
+| `src/hooks/useOverviewMetrics.ts` | Κλειδί ταυτοποίησης + αναγνώριση εγγεγραμμένων |
+| Νέο SQL migration | Διόρθωση `upsert_crm_guest_identity` + backfill |
 
-Πρακτικά: οι στήλες στη βάση παραμένουν γενικές (ώστε να μπορεί να ενεργοποιηθεί και σε άλλους αργότερα), αλλά το UI εμφανίζει τις ρυθμίσεις **μόνο** αν ο χρήστης ανήκει στο Asmationexperience.
+## Τι θα διορθωθεί
 
----
-
-## Τεχνικό Σχέδιο
-
-### 1. Database Migration
-- Νέες στήλες στο `events`: `deferred_payment_enabled`, `deferred_confirmation_hours`, `deferred_cancellation_fee_percent`
-- Νέες στήλες στο `reservations`: `deferred_payment_mode`, `deferred_confirmation_deadline`, `deferred_status`, `stripe_setup_intent_id`, `stripe_payment_method_id`
-
-### 2. UI — Event Creation/Edit Forms
-- Ελέγχουμε αν το `businessId` === `bca2cb97-...` (Asmationexperience)
-- Μόνο τότε εμφανίζεται η ενότητα "Deferred Payment" με:
-  - Toggle on/off
-  - Ώρες πριν το event για deadline (αριθμός)
-  - Ποσοστό χρέωσης ακύρωσης (αριθμός %)
-
-### 3. Edge Function: `create-deferred-checkout`
-- Αν event έχει `deferred_payment_enabled = true`:
-  - Event εντός 7 ημερών → PaymentIntent με `capture_method: "manual"` (auth hold)
-  - Event πάνω από 7 ημέρες → SetupIntent (αποθήκευση κάρτας)
-- Αποθηκεύει mode + deadline στο reservation
-- Reservation status = `awaiting_confirmation`
-
-### 4. Edge Function: `confirm-deferred-reservation`
-- Ο πελάτης πατάει "Confirm Attendance"
-- Auth hold → capture full amount
-- SetupIntent → charge saved card
-
-### 5. Edge Function: `process-deferred-deadlines` (Cron)
-- Κάθε 15 λεπτά ελέγχει reservations με περασμένο deadline
-- Χρεώνει cancellation fee %
-- Στέλνει push notification στον πελάτη
-
-### 6. Customer UI
-- Στις "Οι Κρατήσεις Μου": reservations με `deferred_status = awaiting_confirmation` δείχνουν countdown + κουμπί "Επιβεβαίωση Παρουσίας"
-- Checkout page: σαφές μήνυμα ότι η κάρτα δεν χρεώνεται τώρα
-
-### 7. Reminder Notifications
-- Push notifications 2 ώρες και 30 λεπτά πριν το deadline
-
----
-
-## Αρχεία που θα δημιουργηθούν/τροποποιηθούν
-
-| Αρχείο | Ενέργεια |
-|---|---|
-| Migration SQL | Νέο — στήλες σε `events` + `reservations` |
-| `EventCreationForm.tsx` | Τροποποίηση — deferred section (μόνο για Asmatio) |
-| `EventEditForm.tsx` | Τροποποίηση — deferred section (μόνο για Asmatio) |
-| `ReservationEventCheckout.tsx` | Τροποποίηση — deferred flow + messaging |
-| `create-deferred-checkout/index.ts` | Νέο edge function |
-| `confirm-deferred-reservation/index.ts` | Νέο edge function |
-| `process-deferred-deadlines/index.ts` | Νέο edge function (cron) |
-| User reservations page | Τροποποίηση — confirm button + countdown |
+- 13 πελάτες αντί για 12 (σωστή μέτρηση)
+- Σωστό ποσοστό επιστρεφόντων (αν κάποιος εγγεγραμμένος έχει 2+ αλληλεπιδράσεις)
+- Εγγεγραμμένοι χρήστες (Γιώργος, Μαρίνος, Μάριος) εμφανίζονται σωστά στο CRM, όχι ως ghost
+- Ισχύει για **όλα** τα business accounts, όχι μόνο το Blue Martini
 
