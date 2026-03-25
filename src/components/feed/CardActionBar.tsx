@@ -26,6 +26,10 @@ interface CardActionBarProps {
   className?: string;
   /** When true, uses white/light colors for overlay on images */
   onImage?: boolean;
+  /** When true, renders share icon as a frosted pill badge (used in feed) */
+  pillShareStyle?: boolean;
+  /** When true, uses smaller icons for compact mobile cards */
+  compactIcons?: boolean;
 }
 
 export const CardActionBar = ({
@@ -37,6 +41,8 @@ export const CardActionBar = ({
   shareData,
   className,
   onImage = false,
+  pillShareStyle = false,
+  compactIcons = false,
 }: CardActionBarProps) => {
   const { toast } = useToast();
   const [isInterested, setIsInterested] = useState(false);
