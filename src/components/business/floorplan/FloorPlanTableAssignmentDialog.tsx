@@ -92,14 +92,24 @@ export function FloorPlanTableAssignmentDialog({
 
     const { data, error } = await supabase
       .from('reservations')
-      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at')
+      .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at, user_id, profiles:user_id(first_name, last_name)')
       .eq('business_id', businessId)
       .eq('event_id', eventId)
       .in('status', ['pending', 'accepted', 'confirmed'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setReservations(data as Reservation[]);
+      // Use profile name when user_id exists, otherwise use reservation_name
+      const mapped = data.map((r: any) => {
+        const profileName = r.profiles?.first_name
+          ? `${r.profiles.first_name} ${r.profiles.last_name || ''}`.trim()
+          : null;
+        return {
+          ...r,
+          reservation_name: profileName || r.reservation_name,
+        } as Reservation;
+      });
+      setReservations(mapped);
     }
     setLoading(false);
   };
