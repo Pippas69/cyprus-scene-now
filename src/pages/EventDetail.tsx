@@ -650,7 +650,7 @@ export default function EventDetail() {
             <Card variant="glass" className="backdrop-blur-md border-border/50 lg:hidden">
               <CardContent className="py-4 px-4 space-y-3">
                 {showInstances.length > 1 ?
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 font-thin text-sm">
                     <Calendar className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
                       {showInstances.map((si: any) =>
@@ -660,7 +660,7 @@ export default function EventDetail() {
                     )}
                     </div>
                   </div> :
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 font-thin text-sm">
                     <Calendar className="h-4 w-4 text-foreground shrink-0 mt-1" />
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -889,7 +889,7 @@ export default function EventDetail() {
             {/* Event Details Card - Date & Location (FIRST in sidebar) */}
             <Card variant="glass" className="backdrop-blur-md border-border/50">
               <CardContent className="py-4 px-4 space-y-3">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 font-thin text-sm">
                   <Calendar className="h-4 w-4 text-foreground shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">
