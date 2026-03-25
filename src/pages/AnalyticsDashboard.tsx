@@ -21,13 +21,13 @@ import { shouldHideOffers } from '@/lib/shouldHideOffers';
 
 const translations = {
   el: {
-    title: 'Insights & CRM',
-    overview: 'Επισκόπηση',
+    title: 'Analytics & CRM',
+    overview: 'Analytics',
     crm: 'CRM'
   },
   en: {
-    title: 'Insights & CRM',
-    overview: 'Overview',
+    title: 'Analytics & CRM',
+    overview: 'Analytics',
     crm: 'CRM'
   }
 };
