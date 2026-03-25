@@ -303,8 +303,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     staleTime: 60000,
   });
 
-  // Unified loading state - show nothing until all main feed data is ready
-  const isFeedLoading = loadingActiveBoosts || loadingOfferBoosts || loadingBoostedEvents || loadingBoostedOffers || loadingProfiles;
+  // No unified loading gate — each section renders independently with fade-in
 
   const handleTouchStart = (e: React.TouchEvent) => {
     isHorizontalSwipeRef.current = false;
