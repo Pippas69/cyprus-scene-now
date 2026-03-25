@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, Clock } from "lucide-react";
+import { MapPin, Calendar, Clock, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PremiumBadge } from "@/components/ui/premium-badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInMinutes } from "date-fns";
 import { enUS, el } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
 
