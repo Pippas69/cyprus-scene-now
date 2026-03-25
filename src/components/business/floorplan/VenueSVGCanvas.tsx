@@ -515,11 +515,11 @@ export function VenueSVGCanvas({
                 <text
                   x={cx} y={cy - availH * (displayName.isMultiLine ? 0.28 : 0.22)}
                   textAnchor="middle" dominantBaseline="central"
-                  fill="hsl(142 60% 45% / 0.7)"
-                  fontSize={labelFontSize * 0.65}
-                  fontWeight={600}
+                  fill="hsl(168 50% 55% / 0.6)"
+                  fontSize={labelFontSize * 0.6}
+                  fontWeight={500}
                   className="pointer-events-none"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                  style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
                 >
                   {item.label}
                 </text>
@@ -529,22 +529,22 @@ export function VenueSVGCanvas({
                     <text
                       x={cx} y={cy - nameFontSize * 0.15}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(142 60% 55%)"
+                      fill="hsl(168 50% 60%)"
                       fontSize={nameFontSize}
-                      fontWeight={700}
+                      fontWeight={600}
                       className="pointer-events-none"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                     >
                       {displayName.lines[0]}
                     </text>
                     <text
                       x={cx} y={cy + nameFontSize * 1.15}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(142 60% 55%)"
+                      fill="hsl(168 50% 60%)"
                       fontSize={nameFontSize}
-                      fontWeight={700}
+                      fontWeight={600}
                       className="pointer-events-none"
-                      style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                     >
                       {displayName.lines[1]}
                     </text>
@@ -553,11 +553,11 @@ export function VenueSVGCanvas({
                   <text
                     x={cx} y={cy + nameFontSize * 0.4}
                     textAnchor="middle" dominantBaseline="central"
-                    fill="hsl(142 60% 55%)"
+                    fill="hsl(168 50% 60%)"
                     fontSize={nameFontSize}
-                    fontWeight={700}
+                    fontWeight={600}
                     className="pointer-events-none"
-                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+                    style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
                   >
                     {displayName.lines[0]}
                   </text>
@@ -570,13 +570,13 @@ export function VenueSVGCanvas({
                 transform={g.shape !== 'round' && g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                 fontSize={Math.min(
-                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.h * 0.3 : g.w * 0.3),
-                  g.shape === 'round' ? g.w * 0.35 : (g.h > g.w * 1.3 ? g.w * 0.7 : g.h * 0.65),
-                  5
+                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28),
+                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.6),
+                  4.5
                 )}
-                fontWeight={700}
+                fontWeight={600}
                 className="pointer-events-none"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.04em' }}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
               >
                 {item.label}
               </text>
