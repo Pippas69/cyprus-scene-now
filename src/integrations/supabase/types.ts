@@ -6576,6 +6576,10 @@ export type Database = {
         Args: { p_quantity: number; p_tier_id: string }
         Returns: Json
       }
+      resolve_crm_guest_for_ticket: {
+        Args: { p_business_id: string; p_guest_name: string; p_user_id: string }
+        Returns: string
+      }
       search_content:
         | {
             Args: { search_query: string }
@@ -7236,6 +7240,16 @@ export type Database = {
             }
             Returns: undefined
           }
+      sync_crm_guest_from_ticket_data_core: {
+        Args: {
+          p_business_id: string
+          p_guest_name: string
+          p_order_id: string
+          p_ticket_status?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       update_boost_status: { Args: never; Returns: undefined }
       update_business_with_geo: {
