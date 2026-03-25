@@ -45,6 +45,7 @@ export const CardActionBar = ({
   onImage = false,
   pillShareStyle = false,
   compactIcons = false,
+  hideShare = false,
 }: CardActionBarProps) => {
   const { toast } = useToast();
   const [isInterested, setIsInterested] = useState(false);
