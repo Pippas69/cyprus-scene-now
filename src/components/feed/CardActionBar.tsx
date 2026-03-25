@@ -204,13 +204,14 @@ export const CardActionBar = ({
 
   return (
     <>
-      <div className={cn("flex items-center gap-2.5 sm:gap-4", className)}>
+      <div className={cn("flex items-center", compactIcons ? "gap-1.5 md:gap-2 lg:gap-4" : "gap-2.5 sm:gap-4", className)}>
         {/* Interested Button */}
         <button
           onClick={(e) => handleAction(e, "interested")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
+              "flex items-center gap-0.5 sm:gap-1 font-extrabold transition-colors",
+              compactIcons ? "text-[8px] md:text-[9px] lg:text-[11px]" : "text-[10px] sm:text-[11px]",
               isInterested
                 ? "text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.9)]"
                 : onImage
@@ -220,7 +221,7 @@ export const CardActionBar = ({
           >
             <Heart
               className={cn(
-                compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
+                compactIcons ? "h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isInterested && "fill-red-500 text-red-500"
               )}
               strokeWidth={2.5}
@@ -233,7 +234,8 @@ export const CardActionBar = ({
           onClick={(e) => handleAction(e, "going")}
           disabled={loading}
             className={cn(
-              "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-extrabold transition-colors",
+              "flex items-center gap-0.5 sm:gap-1 font-extrabold transition-colors",
+              compactIcons ? "text-[8px] md:text-[9px] lg:text-[11px]" : "text-[10px] sm:text-[11px]",
               isGoing
                 ? "text-sky-400 drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]"
                 : onImage
@@ -243,7 +245,7 @@ export const CardActionBar = ({
           >
             <Users
               className={cn(
-                compactIcons ? "h-3 w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
+                compactIcons ? "h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" : "h-3.5 w-3.5 sm:h-3.5 sm:w-3.5",
                 isGoing && "text-sky-400"
               )}
               strokeWidth={2.5}

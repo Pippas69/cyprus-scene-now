@@ -276,7 +276,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
           {/* Bottom-left overlay: Discount badge */}
           <div className="absolute bottom-1.5 left-1.5 lg:bottom-2 lg:left-2 flex items-center gap-1 z-10">
               {offer.percent_off && offer.percent_off > 0 && offer.discount_type !== "special_deal" && (
-                <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[9px] lg:text-[11px] font-bold px-1.5 lg:px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
+                <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[8px] md:text-[9px] lg:text-[11px] font-bold px-1.5 md:px-2 lg:px-2.5 py-[1px] md:py-0.5 rounded-full border border-white/20 shadow-lg">
                   {offer.percent_off}%
                 </span>
               )}
@@ -284,7 +284,7 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button type="button" className="inline-flex" onClick={(e) => e.stopPropagation()}>
-                      <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[9px] lg:text-[11px] font-bold px-1.5 lg:px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg cursor-pointer">
+                      <span className="bg-[hsl(var(--card))] backdrop-blur-md text-white text-[8px] md:text-[9px] lg:text-[11px] font-bold px-1.5 md:px-2 lg:px-2.5 py-[1px] md:py-0.5 rounded-full border border-white/20 shadow-lg cursor-pointer">
                         Offer
                       </span>
                     </button>
@@ -299,10 +299,10 @@ const OfferCard = memo(({ offer, t, language }: OfferCardProps) => {
           {/* Bottom-right: Share icon pill */}
           <button
             onClick={handleShareClick}
-            className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+            className="absolute bottom-1 right-1 md:bottom-1 md:right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-[3px] md:p-1 lg:p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
             title={language === "el" ? "Κοινοποίηση" : "Share"}
           >
-            <Share2 className="h-3 w-3" />
+            <Share2 className="h-2 w-2 md:h-2.5 md:w-2.5 lg:h-3 lg:w-3" />
           </button>
         </div>
 
