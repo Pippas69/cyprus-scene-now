@@ -200,14 +200,14 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     }
   };
 
-  // Reload assignments when event changes
+  // Reload assignments when event or items change
   useEffect(() => {
     if (items.length > 0 && selectedEventId) {
-      loadTableAssignments(items.map(i => i.id));
-    } else if (!selectedEventId) {
+      loadTableAssignments(items.map(i => i.id), selectedEventId);
+    } else {
       setTableAssignments([]);
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, items.length]);
 
   // Keyboard shortcuts
   useEffect(() => {
