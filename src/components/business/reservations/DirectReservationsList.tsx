@@ -955,6 +955,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 const minAge = getMinAge(reservation.id);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
+                const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const minChargeDisplay = minChargeCents > 0 ?
                 (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
@@ -962,6 +963,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
                 `€${(minChargeCents / 100).toFixed(2)}`) :
                 '-';
+                const actualSpendDisplay = actualSpendCents > 0
+                  ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
+                  : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
 
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
@@ -995,12 +999,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col items-start">
+                        <div className="flex flex-col items-start gap-1">
+                          <span>{minChargeDisplay}</span>
                           <EditableCell
                           reservationId={reservation.id}
                           field="ticket_credit_cents"
-                          displayValue={minChargeDisplay}
-                          rawValue={ticketPaidCents > 0 ? (ticketPaidCents / 100).toFixed(2) : '0'} />
+                          displayValue={actualSpendDisplay}
+                          rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
                         
                           {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
                         <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">

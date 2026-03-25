@@ -239,7 +239,7 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           gte("created_at", overallStart).lte("created_at", overallEnd),
           supabase.from("ticket_orders").select("created_at, subtotal_cents, status").eq("event_id", eventId).
           eq("status", "completed").gte("created_at", overallStart).lte("created_at", overallEnd),
-          supabase.from("reservations").select("created_at, checked_in_at, status, party_size, prepaid_min_charge_cents").
+          supabase.from("reservations").select("id, user_id, created_at, checked_in_at, status, party_size, prepaid_min_charge_cents, auto_created_from_tickets").
           eq("event_id", eventId).eq("status", "accepted").
           gte("created_at", overallStart).lte("created_at", overallEnd)]
           );
@@ -257,7 +257,23 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           const boostedOrders = (ordersRes.data || []).filter((o) => isInAnyWindow(o.created_at, windows));
           const ticketRevenue = boostedOrders.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0);
 
-          const boostedReservations = (reservationsRes.data || []).filter((r) => isInAnyWindow(r.created_at, windows));
+          const boostedReservationsRaw = (reservationsRes.data || []).filter((r) => isInAnyWindow(r.created_at, windows));
+          const boostedReservationIds = boostedReservationsRaw.map((r) => r.id);
+          let linkedResIds = new Set<string>();
+          if (boostedReservationIds.length > 0) {
+            const { data: linkedRows } = await supabase
+              .from("ticket_orders")
+              .select("linked_reservation_id")
+              .in("linked_reservation_id", boostedReservationIds)
+              .not("linked_reservation_id", "is", null);
+            linkedResIds = new Set(
+              (linkedRows || [])
+                .map((row) => row.linked_reservation_id)
+                .filter(Boolean) as string[]
+            );
+          }
+
+          const boostedReservations = boostedReservationsRaw.filter((r) => !r.auto_created_from_tickets && !linkedResIds.has(r.id));
           const reservationsCount = boostedReservations.length;
           const reservationGuests = boostedReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
           const reservationRevenue = boostedReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
