@@ -243,6 +243,8 @@ export const UnifiedEventCard = ({
               language={language}
               className="drop-shadow-md"
               onImage
+              pillShareStyle={hideBadges}
+              compactIcons={hideBadges}
               shareData={{
                 title: event.title,
                 location: event.location,
