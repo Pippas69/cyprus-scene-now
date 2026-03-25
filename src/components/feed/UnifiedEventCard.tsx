@@ -245,9 +245,9 @@ export const UnifiedEventCard = ({
               language={language}
               className="drop-shadow-md"
               onImage
-              pillShareStyle={hideBadges}
               compactIcons={hideBadges}
-              shareData={{
+              hideShare={hideBadges}
+              shareData={hideBadges ? undefined : {
                 title: event.title,
                 location: event.location,
                 start_at: event.start_at,
@@ -264,6 +264,16 @@ export const UnifiedEventCard = ({
               </span>
             )}
           </div>
+
+          {/* Bottom-right: Share icon pill (feed only) */}
+          {hideBadges && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowFeedShareDialog(true); }}
+              className="absolute bottom-1 right-1 lg:bottom-1.5 lg:right-1.5 z-10 bg-[hsl(var(--card))] backdrop-blur-md text-white p-1.5 rounded-full border border-white/20 shadow-lg hover:bg-[hsl(var(--card))]/90 transition-all"
+            >
+              <Share2 className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         {/* Content section */}
