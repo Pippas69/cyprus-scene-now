@@ -319,7 +319,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       .from('reservation_table_assignments')
       .select('table_id, reservation_id, event_id, reservations(reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, staff_memo)')
       .in('table_id', tableIds)
-      .eq('event_id', selectedEventId);
+      .eq('event_id', effectiveEventId);
 
     if (data) {
       setTableAssignments(data.map((a: any) => ({
