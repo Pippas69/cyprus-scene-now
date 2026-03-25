@@ -398,7 +398,7 @@ export const UnifiedEventCard = ({
 
           {/* Date/Time with clock icon */}
           <div className="flex items-center gap-1.5 text-muted-foreground min-w-0">
-            <Clock className="h-3 w-3 shrink-0 text-primary" />
+            <Clock className="h-3 w-3 shrink-0" />
             <span className="text-xs truncate">{dateLabel}</span>
           </div>
 
