@@ -25,8 +25,10 @@ import {
   ArrowLeft,
   CheckCircle,
   Ticket,
-  PartyPopper } from
+  PartyPopper,
+  Heart } from
 'lucide-react';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { EventAttendees } from '@/components/EventAttendees';
