@@ -6514,6 +6514,14 @@ export type Database = {
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
+      merge_ghost_to_account: {
+        Args: {
+          p_account_id: string
+          p_business_id: string
+          p_ghost_id: string
+        }
+        Returns: undefined
+      }
       normalize_guest_identity: { Args: { p_value: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
