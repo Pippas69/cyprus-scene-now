@@ -543,11 +543,11 @@ export const useBoostValueMetrics = (
 
         if (paidEventIds.length > 0) {
           // Ticket check-ins (only count tickets that were actually checked in)
-          const ticketCheckins = await fetchAll<{ event_id: string; created_at: string; checked_in_at: string | null }>(
+          const ticketCheckins = await fetchAll<{ event_id: string; created_at: string; checked_in_at: string | null; user_id: string | null }>(
             async (from, to) => {
               const { data } = await supabase
                 .from("tickets")
-                .select("event_id, created_at, checked_in_at")
+                .select("event_id, created_at, checked_in_at, user_id")
                 .in("event_id", paidEventIds)
                 .not("checked_in_at", "is", null)
                 .gte("checked_in_at", startDate)
@@ -556,6 +556,14 @@ export const useBoostValueMetrics = (
               return (data || []) as any;
             }
           );
+
+          // Build set of (user_id, event_id) pairs from ticket check-ins for dedup
+          const ticketCheckinPairs = new Set<string>();
+          (ticketCheckins || []).forEach((t) => {
+            if (t.user_id && t.event_id) {
+              ticketCheckinPairs.add(`${t.user_id}:${t.event_id}`);
+            }
+          });
 
           (ticketCheckins || []).forEach((ticket) => {
             // Attribution based on PURCHASE time (created_at), but only if checked in
@@ -567,11 +575,12 @@ export const useBoostValueMetrics = (
           });
 
           // Event reservation check-ins (only count reservations that were actually checked in)
-          const eventReservationCheckins = await fetchAll<{ event_id: string | null; created_at: string; checked_in_at: string | null }>(
+          // DEDUP: skip if same user already has a checked-in ticket for the same event
+          const eventReservationCheckins = await fetchAll<{ event_id: string | null; created_at: string; checked_in_at: string | null; user_id: string | null }>(
             async (from, to) => {
               const { data } = await supabase
                 .from("reservations")
-                .select("event_id, created_at, checked_in_at")
+                .select("event_id, created_at, checked_in_at, user_id")
                 .in("event_id", paidEventIds)
                 .not("checked_in_at", "is", null)
                 .neq("auto_created_from_tickets", true)
@@ -583,6 +592,10 @@ export const useBoostValueMetrics = (
           );
 
           (eventReservationCheckins || []).forEach((r) => {
+            // DEDUP: skip if user already has a checked-in ticket for same event
+            if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
+              return;
+            }
             // Attribution based on RESERVATION time (created_at), but only if checked in
             if (r.event_id && r.created_at && isWithinBoostPeriod(r.created_at, r.event_id, eventBoostPeriods)) {
               boostedEventVisits++;
