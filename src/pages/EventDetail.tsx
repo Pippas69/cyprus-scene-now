@@ -629,7 +629,7 @@ export default function EventDetail() {
               </div>
 
               {/* Title + Price at bottom of image */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 pb-5 sm:p-5 flex items-end justify-between gap-3">
+              <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 sm:pb-5 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-sm sm:text-lg lg:text-xl font-bold leading-tight line-clamp-2 flex-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{event.title}</h1>
                 {eventHasTickets && startingPriceCents !== null &&
                 <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
