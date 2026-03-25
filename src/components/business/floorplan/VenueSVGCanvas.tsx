@@ -615,7 +615,7 @@ export function VenueSVGCanvas({
               fill={item.color || THEME.textColor}
               fontSize={Math.min(g.h * 0.65, g.w * 0.35, 6)}
               fontWeight={600}
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}
+              style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.04em' }}
               className="pointer-events-none"
             >
               {item.label}
