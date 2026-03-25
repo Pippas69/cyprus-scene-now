@@ -332,6 +332,26 @@ export function VenueSVGCanvas({
 
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
+      <defs>
+        {/* Premium subtle glow for assigned tables */}
+        <filter id="fp-glow-assigned" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" result="blur" />
+          <feFlood floodColor="hsl(168 50% 55%)" floodOpacity="0.25" result="color" />
+          <feComposite in="color" in2="blur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        {/* Subtle inner shadow for tables */}
+        <filter id="fp-table-shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="0.15" stdDeviation="0.3" floodColor="rgba(0,0,0,0.35)" />
+        </filter>
+        {/* Fixture shadow */}
+        <filter id="fp-fixture-shadow" x="-5%" y="-5%" width="110%" height="110%">
+          <feDropShadow dx="0" dy="0.1" stdDeviation="0.2" floodColor="rgba(0,0,0,0.25)" />
+        </filter>
+      </defs>
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
 
