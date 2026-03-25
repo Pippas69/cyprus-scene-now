@@ -336,15 +336,39 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
 
       let eventReservationVisits = 0;
       if (eventIds.length > 0) {
-        const { count } = await supabase
+        // Fetch event reservations with check-ins
+        const { data: eventResCheckins } = await supabase
           .from("reservations")
-          .select("id", { count: "exact", head: true })
+          .select("id, user_id, event_id")
           .in("event_id", eventIds)
           .not("checked_in_at", "is", null)
-          .neq("auto_created_from_tickets", true)
+          .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
           .gte("checked_in_at", startDate.toISOString())
           .lte("checked_in_at", endDate.toISOString());
-        eventReservationVisits = count || 0;
+
+        // Build a set of (user_id, event_id) pairs that already have a checked-in ticket
+        // to avoid double-counting when the same person has both a ticket and a reservation
+        const ticketCheckinPairs = new Set<string>();
+        if ((eventResCheckins || []).length > 0) {
+          const { data: checkedInTickets } = await supabase
+            .from("tickets")
+            .select("user_id, event_id")
+            .in("event_id", eventIds)
+            .not("checked_in_at", "is", null);
+          (checkedInTickets || []).forEach((t) => {
+            if (t.user_id && t.event_id) {
+              ticketCheckinPairs.add(`${t.user_id}:${t.event_id}`);
+            }
+          });
+        }
+
+        eventReservationVisits = (eventResCheckins || []).filter((r) => {
+          // Exclude if this user already has a checked-in ticket for the same event
+          if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
+            return false;
+          }
+          return true;
+        }).length;
       }
 
       // D. Student discount visits (student discount redemptions at this business)
