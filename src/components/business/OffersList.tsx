@@ -51,7 +51,7 @@ const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: str
   return (
     <Badge 
       variant="default" 
-      className="absolute -top-2.5 right-0 bg-gradient-to-r from-[#3ec3b7] to-[#2a9d8f] text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2"
+      className="absolute -top-2.5 right-0 bg-gradient-ocean text-white flex items-center gap-0.5 shadow-md cursor-default text-[9px] md:text-[10px] lg:text-xs h-5 md:h-6 px-1.5 md:px-2"
     >
       <Sparkles className="h-2.5 w-2.5 md:h-3 md:w-3" />
       {label}

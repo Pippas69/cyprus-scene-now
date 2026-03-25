@@ -18,7 +18,7 @@ export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) =
         className={`
           inline-flex items-center justify-center 
           w-6 h-6 rounded-full 
-          bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600
+          bg-gradient-ocean
           ${className}
         `}
       >
@@ -33,7 +33,7 @@ export const PremiumBadge = memo(({ type, className = "" }: PremiumBadgeProps) =
         className={`
           inline-flex items-center justify-center 
           w-6 h-6 rounded-full 
-          bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600
+          bg-gradient-ocean
           ${className}
       `}
     >
