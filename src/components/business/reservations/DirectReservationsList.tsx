@@ -1019,21 +1019,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell>
                         <div className="flex items-center gap-1.5">
                           {getStatusBadge(reservation)}
-                          {hasFloorPlan && reservation.status === 'accepted' && !reservation.checked_in_at && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs text-primary hover:text-primary"
-                              onClick={() => setFloorPlanAssignment({
-                                reservationId: reservation.id,
-                                reservationName: reservation.reservation_name,
-                                partySize: reservation.party_size,
-                                eventId: reservation.event_id,
-                              })}
-                            >
-                              <MapPin className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1161,21 +1146,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableCell className="align-top">
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
-                      {hasFloorPlan && reservation.status === 'accepted' && !reservation.checked_in_at && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-primary hover:text-primary"
-                          onClick={() => setFloorPlanAssignment({
-                            reservationId: reservation.id,
-                            reservationName: reservation.reservation_name,
-                            partySize: reservation.party_size,
-                            eventId: reservation.event_id,
-                          })}
-                        >
-                          <MapPin className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
