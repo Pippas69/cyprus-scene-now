@@ -17,6 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toastTranslations, formatToastMessage } from '@/translations/toastTranslations';
 import { validationTranslations } from '@/translations/validationTranslations';
 import { reservationSchema } from '@/lib/reservationValidation';
+import { useProfileName } from '@/hooks/useProfileName';
 
 interface ReservationDialogProps {
   open: boolean;

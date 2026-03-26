@@ -20,6 +20,7 @@ import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDi
 import { useClosedSlots } from '@/hooks/useClosedSlots';
 import { useClosedDates } from '@/hooks/useClosedDates';
 import { useSlotAvailability } from '@/hooks/useSlotAvailability';
+import { useProfileName } from '@/hooks/useProfileName';
 
 interface DirectReservationDialogProps {
   open: boolean;

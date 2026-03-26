@@ -17,6 +17,7 @@ import {
   ArrowRight, ArrowLeft, ExternalLink, Users, Calendar, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProfileName } from '@/hooks/useProfileName';
 import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
