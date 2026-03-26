@@ -482,8 +482,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8 flex-shrink-0">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="mx-4 mt-2 mb-0 grid grid-cols-3 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -499,18 +499,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          {/* Notes list (scrolls) */}
-          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
+        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
+          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 pb-2">
                 {notes.map((note) => (
                   <div
                     key={note.id}
                     className={
-                      "rounded-xl border p-3 text-xs bg-card/60 backdrop-blur-sm " +
+                       "rounded-lg border p-3 text-xs " +
                       (note.is_alert
                         ? "border-destructive/30"
                         : note.is_pinned
@@ -540,8 +539,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             )}
           </div>
 
-          {/* Add note (exactly bottom like before) */}
-          <div className="mt-2 pt-2 border-t border-border space-y-2 flex-shrink-0">
+          {/* Add note — fixed at bottom */}
+          <div className="px-4 pt-2 pb-3 border-t border-border space-y-2 flex-shrink-0">
             <div className="flex gap-2">
               <Textarea
                 placeholder={t.addNote}
@@ -602,12 +601,12 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
+        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
+          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-4">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
-              <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-3">
+              <div className="space-y-0">
                 {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
                 {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
                 {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
@@ -622,18 +621,14 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
                 {hasRelation && <DetailRow icon={Heart} label={t.relationNotes} value={guest.relationship_notes!} />}
 
-                {hasOrigin && (
-                  <>
-                    {guest.brought_by_user_id && (
-                      <DetailRow icon={Ghost} label={t.broughtBy} value={guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")} />
-                    )}
-                    {(originContext?.date || guest.created_at) && (
-                      <DetailRow icon={Calendar} label={t.date} value={format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })} />
-                    )}
-                    {originContext?.eventTitle && (
-                      <DetailRow icon={Ticket} label={t.event} value={originContext.eventTitle} />
-                    )}
-                  </>
+                {guest.brought_by_user_id && (
+                  <DetailRow icon={Ghost} label={t.broughtBy} value={guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")} />
+                )}
+                {(hasOrigin && (originContext?.date || guest.created_at)) && (
+                  <DetailRow icon={Calendar} label={t.date} value={format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })} />
+                )}
+                {(hasOrigin && originContext?.eventTitle) && (
+                  <DetailRow icon={Ticket} label={t.event} value={originContext.eventTitle} />
                 )}
               </div>
             )}
@@ -641,13 +636,13 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
+        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
+          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-4">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2.5 w-full p-3 rounded-xl border border-border bg-card/60 backdrop-blur-sm"
+                  className="flex items-center gap-2.5 w-full p-2.5 rounded-lg border border-border"
                 >
                   <span className="text-xs font-medium text-foreground flex-1">
                     {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
@@ -671,7 +666,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
               {/* Create new tag */}
               {showNewTag ? (
-                <div className="p-3 rounded-xl border border-border bg-card/60 backdrop-blur-sm space-y-2.5">
+                <div className="p-3 rounded-lg border border-border space-y-2.5">
                   <Input
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
@@ -757,11 +752,11 @@ function QuickStat({ label, value, warning }: { label: string; value: string; wa
 
 function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-2.5 py-2 border-b border-border/40 last:border-b-0">
-      <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-      <div>
-        <p className="text-[10px] text-muted-foreground">{label}</p>
-        <p className="text-xs text-foreground">{value}</p>
+    <div className="flex items-start gap-3 py-2.5 border-b border-border/30 last:border-b-0">
+      <Icon className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+      <div className="min-w-0">
+        <p className="text-[10px] text-muted-foreground leading-tight">{label}</p>
+        <p className="text-sm text-foreground mt-0.5">{value}</p>
       </div>
     </div>
   );
