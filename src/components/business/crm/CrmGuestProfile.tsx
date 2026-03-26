@@ -343,13 +343,37 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
             <div className="space-y-2.5">
-              {guest.profile_type === "ghost" && guest.brought_by_user_id && (
-                <div className="flex items-start gap-2.5 py-1.5 px-2 rounded-lg bg-muted/50 border border-border">
-                  <Ghost className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
-                    <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
-                  </div>
+              {isGhost && (guest.brought_by_user_id || originContext) && (
+                <div className="rounded-lg bg-muted/50 border border-border p-2.5 space-y-1.5">
+                  {guest.brought_by_user_id && (
+                    <div className="flex items-center gap-2">
+                      <Ghost className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
+                        <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
+                      </div>
+                    </div>
+                  )}
+                  {(originContext?.date || guest.created_at) && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.date}</p>
+                        <p className="text-xs text-foreground">
+                          {format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {originContext?.eventTitle && (
+                    <div className="flex items-center gap-2">
+                      <Ticket className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.event}</p>
+                        <p className="text-xs text-foreground">{originContext.eventTitle}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {guest.phone && guest.profile_type !== "ghost" && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
