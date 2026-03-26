@@ -44,6 +44,13 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
+  // Keep the open profile in sync after edits/refetches
+  useEffect(() => {
+    if (!selectedGuest) return;
+    const updated = guests.find((g) => g.id === selectedGuest.id);
+    if (updated && updated !== selectedGuest) setSelectedGuest(updated);
+  }, [guests, selectedGuest]);
+
   // Filter by segment
   const segmentedGuests = useMemo(() => {
     const now = Date.now();

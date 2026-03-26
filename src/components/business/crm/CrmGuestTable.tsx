@@ -157,10 +157,10 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                           {t.ghost}
                         </span>
                       )}
-                      {!isGhost && guest.phone && (
+                      {guest.phone && (
                         <span className="text-[10px] text-muted-foreground truncate">{guest.phone}</span>
                       )}
-                      {!isGhost && guest.email && !guest.phone && (
+                      {guest.email && !guest.phone && (
                         <span className="text-[10px] text-muted-foreground truncate">{guest.email}</span>
                       )}
                     </div>
@@ -225,7 +225,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
               </TableCell>
 
               <TableCell className="py-2.5">
-                {!isGhost && guest.email ? (
+                {guest.email ? (
                   <span className="text-xs text-muted-foreground block max-w-[180px]">{guest.email}</span>
                 ) : (
                   <span className="text-xs text-muted-foreground/40">—</span>
