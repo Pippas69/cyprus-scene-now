@@ -80,6 +80,8 @@ export function useCrmGuests(businessId: string | null) {
       ]);
 
       if (guestsRes.error) throw guestsRes.error;
+      if (statsRes.error) throw statsRes.error;
+
       const guests = guestsRes.data || [];
       if (guests.length === 0) return [];
 

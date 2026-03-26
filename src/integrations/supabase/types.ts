@@ -4340,6 +4340,13 @@ export type Database = {
             referencedRelation: "reservation_seating_types"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reservations_seating_type_id_fkey"
+            columns: ["seating_type_id"]
+            isOneToOne: false
+            referencedRelation: "seating_types"
+            referencedColumns: ["id"]
+          },
         ]
       }
       rsvps: {
@@ -4425,6 +4432,13 @@ export type Database = {
             columns: ["seating_type_id"]
             isOneToOne: false
             referencedRelation: "reservation_seating_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seating_type_tiers_seating_type_id_fkey"
+            columns: ["seating_type_id"]
+            isOneToOne: false
+            referencedRelation: "seating_types"
             referencedColumns: ["id"]
           },
         ]
@@ -5896,6 +5910,21 @@ export type Database = {
           name?: string | null
           town?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      seating_types: {
+        Row: {
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
         }
         Relationships: []
       }
