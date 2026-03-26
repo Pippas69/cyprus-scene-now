@@ -409,9 +409,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </div>
         )}
 
-        {/* Alert & Pinned notes indicators */}
+        {/* Pinned & Alert notes indicators — between tags and email */}
         {alertNotes.length > 0 && (
-          <div className="mt-2.5 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
+          <div className="mt-2 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
             {alertNotes.map((n) => (
               <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
                 <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0 mt-0.5" />
@@ -428,6 +428,14 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <span className="text-foreground">{n.content}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Email */}
+        {guest.email && (
+          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            <span>{guest.email}</span>
           </div>
         )}
       </div>
@@ -470,11 +478,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                     <div className="flex items-center gap-1.5 mb-1">
                       {note.is_alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
                       {note.is_pinned && !note.is_alert && <Pin className="h-3 w-3 text-primary" />}
-                      {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
                       <Badge variant="outline" className="text-[8px] h-3.5 px-1">{note.category}</Badge>
                       <span className="text-[9px] text-muted-foreground ml-auto">
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
                       </span>
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                        title={t.deleteNote}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
                     </div>
                     <p className="text-foreground whitespace-pre-wrap">{note.content}</p>
                   </div>
@@ -526,15 +540,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 />
                 <AlertTriangle className="h-2.5 w-2.5" />
                 {t.alert}
-              </label>
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
-                <Checkbox
-                  checked={noteIsPrivate}
-                  onCheckedChange={(v) => setNoteIsPrivate(!!v)}
-                  className="h-3.5 w-3.5"
-                />
-                <Lock className="h-2.5 w-2.5" />
-                {t.privateLbl}
               </label>
             </div>
           </div>
