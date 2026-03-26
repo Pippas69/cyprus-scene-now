@@ -195,10 +195,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [guestNames, setGuestNames] = useState<string[]>([]);
   const [guestAges, setGuestAges] = useState<string[]>([]);
-   const [customerEmail, setCustomerEmail] = useState('');
-   const [customerPhone, setCustomerPhone] = useState('');
-   const [specialRequests, setSpecialRequests] = useState('');
-  const profileName = useProfileName(undefined); // Will be set after auth check in handleCheckout
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [specialRequests, setSpecialRequests] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const profileName = useProfileName(userId);
+
+  // Fetch userId on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   // Auto-fill first guest name with profile name
   useEffect(() => {
@@ -535,14 +541,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                   <Input
                     placeholder={`${t.guestN} ${idx + 1}`}
                     value={name}
+                    readOnly={idx === 0 && !!profileName}
                     onChange={(e) => {
+                      if (idx === 0 && profileName) return;
                       setGuestNames(prev => {
                         const updated = [...prev];
                         updated[idx] = e.target.value;
                         return updated;
                       });
                     }}
-                    className="h-9 text-sm flex-1"
+                    className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
                   />
                   <Input
                     placeholder={t.age}

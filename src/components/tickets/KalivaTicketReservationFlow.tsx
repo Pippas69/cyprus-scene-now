@@ -209,6 +209,25 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+
+  // Auto-fill booker name (slot 0)
+  const [userId, setUserId] = useState<string | null>(null);
+  const profileName = useProfileName(userId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  useEffect(() => {
+    if (profileName) {
+      setGuests(prev => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        updated[0] = { ...updated[0], name: profileName };
+        return updated;
+      });
+    }
+  }, [profileName]);
   const [reservationHoursFrom, setReservationHoursFrom] = useState<string | null>(null);
   const [reservationHoursTo, setReservationHoursTo] = useState<string | null>(null);
 
@@ -581,8 +600,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
               <Input
                 placeholder={t.name}
                 value={guest.name}
-                onChange={(e) => updateGuest(idx, 'name', e.target.value)}
-                className="h-9 text-sm flex-1"
+                readOnly={idx === 0 && !!profileName}
+                onChange={(e) => {
+                  if (idx === 0 && profileName) return;
+                  updateGuest(idx, 'name', e.target.value);
+                }}
+                className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
               />
               <Input
                 placeholder={t.age}

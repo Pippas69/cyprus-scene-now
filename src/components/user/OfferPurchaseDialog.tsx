@@ -23,6 +23,8 @@ import { useClosedSlots } from "@/hooks/useClosedSlots";
 import { useClosedDates } from "@/hooks/useClosedDates";
 import { useSlotAvailability } from "@/hooks/useSlotAvailability";
 import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
+import { useProfileName } from "@/hooks/useProfileName";
+import { cn } from "@/lib/utils";
 
 interface TimeSlot {
   id?: string;
@@ -102,6 +104,24 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [guestNames, setGuestNames] = useState<string[]>(['']);
   const [claimSuccess, setClaimSuccess] = useState<ClaimSuccessData | null>(null);
   const [currentGuestIndex, setCurrentGuestIndex] = useState(0);
+
+  // Auto-fill booker name (slot 0)
+  const [userId, setUserId] = useState<string | null>(null);
+  const profileName = useProfileName(userId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  useEffect(() => {
+    if (profileName && guestNames[0] !== profileName) {
+      setGuestNames(prev => {
+        const updated = [...prev];
+        updated[0] = profileName;
+        return updated;
+      });
+    }
+  }, [profileName]);
 
   // Fresh offer data
   const [freshOffer, setFreshOffer] = useState<Offer | null>(null);
@@ -769,13 +789,15 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </Label>
           <Input
           value={guestNames[0] || ''}
+          readOnly={!!profileName}
           onChange={(e) => {
+            if (profileName) return;
             const newNames = [...guestNames];
             newNames[0] = e.target.value;
             setGuestNames(newNames);
           }}
           placeholder={language === "el" ? "Το όνομά σας" : "Your name"}
-          className="h-9 sm:h-10 text-xs sm:text-sm" />
+          className={cn("h-9 sm:h-10 text-xs sm:text-sm", profileName && "bg-muted cursor-not-allowed")} />
         </div>
         <div className="w-[130px] space-y-1.5">
           <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
