@@ -222,27 +222,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
     setTagsLoaded(true);
   };
 
-  const isTagAssigned = (tagId: string) => guest.tags.some((t) => t.id === tagId);
-
-  const toggleTag = async (tagId: string) => {
-    try {
-      if (isTagAssigned(tagId)) {
-        await supabase
-          .from("crm_guest_tag_assignments")
-          .delete()
-          .eq("guest_id", guest.id)
-          .eq("tag_id", tagId);
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        await supabase
-          .from("crm_guest_tag_assignments")
-          .insert({ guest_id: guest.id, tag_id: tagId, assigned_by: user?.id || null });
-      }
-      onUpdate();
-    } catch {
-      toast.error(language === "el" ? "Σφάλμα" : "Error");
-    }
-  };
 
   const deleteNote = async (noteId: string) => {
     try {
