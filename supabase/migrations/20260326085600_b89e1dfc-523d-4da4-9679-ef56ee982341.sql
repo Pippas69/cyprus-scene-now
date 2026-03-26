@@ -1,0 +1,1 @@
+CREATE OR REPLACE VIEW public.seating_types WITH (security_invoker=on) AS SELECT id, seating_type AS name FROM public.reservation_seating_types;
