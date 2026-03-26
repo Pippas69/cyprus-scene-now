@@ -190,6 +190,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {isGhost && allGuests.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowMergeDialog(true)}
+                title={t.mergeProfiles}
+              >
+                <Merge className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {guest.user_id && (
               <Button
                 variant="ghost"
