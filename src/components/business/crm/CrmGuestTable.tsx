@@ -194,7 +194,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
 
               {floorPlanEnabled && (
                 <TableCell className="py-2.5">
-                  {guest.favorite_table ? (
+                  {guest.total_visits > 0 && guest.favorite_table ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted text-foreground font-medium">
                       {guest.favorite_table}
                     </span>
