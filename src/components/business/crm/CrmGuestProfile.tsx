@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useGhostOriginContext } from "@/hooks/useGhostOriginContext";
@@ -153,6 +154,7 @@ const TAG_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b8
 
 export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
@@ -247,8 +249,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const deleteNote = async (noteId: string) => {
     try {
       await supabase.from("crm_guest_notes").delete().eq("id", noteId);
+      queryClient.invalidateQueries({ queryKey: ["crm-guest-notes", guest.id] });
       onUpdate();
-      // Refetch notes
       toast.success(language === "el" ? "Σημείωση διαγράφηκε" : "Note deleted");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
