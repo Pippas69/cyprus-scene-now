@@ -205,6 +205,25 @@ export function useCrmGuests(businessId: string | null) {
           dbUpdates[key] = updates[key];
         }
       }
+
+      // If guest_name changed, propagate to reservation_guests for stats consistency
+      if (dbUpdates.guest_name && businessId) {
+        // Get the current name before updating
+        const { data: currentGuest } = await supabase
+          .from("crm_guests")
+          .select("guest_name, business_id")
+          .eq("id", id)
+          .single();
+
+        if (currentGuest && currentGuest.guest_name !== dbUpdates.guest_name) {
+          await supabase.rpc("propagate_crm_guest_rename", {
+            p_business_id: currentGuest.business_id,
+            p_old_name: currentGuest.guest_name,
+            p_new_name: dbUpdates.guest_name as string,
+          });
+        }
+      }
+
       const { data, error } = await supabase
         .from("crm_guests")
         .update(dbUpdates)
