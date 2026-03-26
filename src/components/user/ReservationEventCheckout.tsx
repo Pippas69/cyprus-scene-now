@@ -241,6 +241,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const profileName = useProfileName(userId);
+
+  // Auto-fill reservation name and first guest with profile name
+  useEffect(() => {
+    if (profileName) {
+      setReservationName(profileName);
+      setGuests(prev => {
+        const updated = [...prev];
+        if (updated.length > 0) updated[0] = { ...updated[0], name: profileName };
+        return updated;
+      });
+    }
+  }, [profileName]);
 
   // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
@@ -533,7 +546,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
-                className="h-9 text-sm"
+                className={`h-9 text-sm ${profileName ? 'bg-muted cursor-not-allowed' : ''}`}
+                readOnly={!!profileName}
               />
             </div>
 
@@ -614,8 +628,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                     <Input
                       placeholder={t.guestName}
                       value={guest.name}
-                      onChange={(e) => updateGuest(idx, 'name', e.target.value)}
-                      className="h-9 text-sm flex-1"
+                      onChange={(e) => {
+                        if (idx === 0 && profileName) return;
+                        updateGuest(idx, 'name', e.target.value);
+                      }}
+                      className={`h-9 text-sm flex-1 ${idx === 0 && profileName ? 'bg-muted cursor-not-allowed' : ''}`}
+                      readOnly={idx === 0 && !!profileName}
                     />
                     <Input
                       placeholder={t.guestAge}

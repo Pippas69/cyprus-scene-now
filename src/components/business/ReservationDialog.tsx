@@ -54,6 +54,14 @@ export const ReservationDialog = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [capacityLoading, setCapacityLoading] = useState(false);
+  const profileName = useProfileName(userId);
+
+  // Auto-fill reservation name with profile name
+  useEffect(() => {
+    if (profileName) {
+      setFormData(prev => ({ ...prev, reservation_name: profileName }));
+    }
+  }, [profileName]);
 
   const isMobile = useIsMobile();
 
@@ -240,6 +248,8 @@ export const ReservationDialog = ({
           onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
           placeholder={t.namePlaceholder}
           required
+          readOnly={!!profileName}
+          className={profileName ? 'bg-muted cursor-not-allowed' : ''}
         />
       </div>
 
