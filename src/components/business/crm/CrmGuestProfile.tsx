@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -60,7 +60,7 @@ const translations = {
     email: "Email",
     birthday: "Γενέθλια",
     allergies: "Αλλεργίες",
-    dietary: "Διατροφικές",
+    dietary: "Διατροφικές προτιμήσεις",
     seating: "Προτίμηση θέσης",
     drinks: "Ποτά",
     food: "Φαγητά",
@@ -107,7 +107,7 @@ const translations = {
     email: "Email",
     birthday: "Birthday",
     allergies: "Allergies",
-    dietary: "Dietary",
+    dietary: "Dietary preferences",
     seating: "Seating",
     drinks: "Drinks",
     food: "Food",
@@ -166,11 +166,16 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [showMergeDialog, setShowMergeDialog] = useState(false);
 
   // Tags state
+  const [guestTags, setGuestTags] = useState<CrmGuestTag[]>(guest.tags || []);
   const [allTags, setAllTags] = useState<CrmGuestTag[]>([]);
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [savingTag, setSavingTag] = useState(false);
+
+  useEffect(() => {
+    setGuestTags(guest.tags || []);
+  }, [guest.id, guest.tags]);
 
   const isGhost = guest.profile_type === "ghost";
   const { data: originContext } = useGhostOriginContext(
@@ -235,15 +240,23 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   };
 
   const deleteTag = async (tagId: string) => {
+    // Optimistic UI (instant removal)
+    const prevAllTags = allTags;
+    const prevGuestTags = guestTags;
+    setAllTags((prev) => prev.filter((t) => t.id !== tagId));
+    setGuestTags((prev) => prev.filter((t) => t.id !== tagId));
+
     try {
       // Delete all assignments first, then the tag itself
       await supabase.from("crm_guest_tag_assignments").delete().eq("tag_id", tagId);
       await supabase.from("crm_guest_tags").delete().eq("id", tagId);
-      setTagsLoaded(false);
-      loadAllTags();
+      queryClient.invalidateQueries({ queryKey: ["crm-guests", businessId] });
       onUpdate();
       toast.success(language === "el" ? "Tag διαγράφηκε" : "Tag deleted");
     } catch {
+      // rollback
+      setAllTags(prevAllTags);
+      setGuestTags(prevGuestTags);
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
   };
@@ -251,10 +264,29 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const createTag = async () => {
     if (!newTagName.trim()) return;
     setSavingTag(true);
+
+    // Optimistic UI: show immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimisticTag: CrmGuestTag = {
+      id: tempId,
+      name: newTagName.trim(),
+      color: "hsl(var(--primary))",
+      emoji: null,
+      is_system: false,
+    };
+    const prevAllTags = allTags;
+    const prevGuestTags = guestTags;
+    setAllTags((prev) => {
+      const next = [...prev, optimisticTag];
+      next.sort((a, b) => a.name.localeCompare(b.name));
+      return next;
+    });
+    setGuestTags((prev) => [...prev, optimisticTag]);
+
     try {
       const { data, error } = await supabase
         .from("crm_guest_tags")
-        .insert({ business_id: businessId, name: newTagName.trim(), color: "hsl(var(--muted-foreground))" })
+        .insert({ business_id: businessId, name: newTagName.trim(), color: "hsl(var(--primary))" })
         .select()
         .single();
       if (error) throw error;
@@ -263,13 +295,25 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       await supabase
         .from("crm_guest_tag_assignments")
         .insert({ guest_id: guest.id, tag_id: data.id, assigned_by: user?.id || null });
+
+      const createdTag = data as unknown as CrmGuestTag;
+      setAllTags((prev) => {
+        const next = prev.map((t) => (t.id === tempId ? createdTag : t));
+        next.sort((a, b) => a.name.localeCompare(b.name));
+        return next;
+      });
+      setGuestTags((prev) => prev.map((t) => (t.id === tempId ? createdTag : t)));
+      setTagsLoaded(true);
+
       setNewTagName("");
       setShowNewTag(false);
-      setTagsLoaded(false);
-      await loadAllTags();
+      queryClient.invalidateQueries({ queryKey: ["crm-guests", businessId] });
       onUpdate();
       toast.success(language === "el" ? "Tag δημιουργήθηκε" : "Tag created");
     } catch {
+      // rollback optimistic UI
+      setAllTags(prevAllTags);
+      setGuestTags(prevGuestTags);
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
     setSavingTag(false);
@@ -373,13 +417,13 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </div>
 
         {/* Tags */}
-        {guest.tags.length > 0 && (
+        {guestTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2.5">
-            {guest.tags.map((tag) => (
+            {guestTags.map((tag) => (
               <Badge
                 key={tag.id}
-                variant="secondary"
-                className="text-[9px] px-1.5 py-0 h-4"
+                variant="outline"
+                className="text-[9px] px-1.5 py-0 h-4 bg-background border-border text-foreground"
               >
                 {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
                 {tag.name}
@@ -523,59 +567,28 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="flex-1">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
-              <div className="space-y-4">
-                {/* Contact */}
-                {hasContact && (
-                  <DetailSection title={t.sectionContact}>
-                    {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
-                    {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
-                    {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
-                  </DetailSection>
-                )}
+              <div className="rounded-lg border border-border bg-card p-3 space-y-1">
+                {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
+                {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
+                {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
 
-                {/* Allergies & Diet */}
-                {hasAllergy && (
-                  <DetailSection title={t.sectionAllergyDiet}>
-                    {g.allergies?.length > 0 && (
-                      <div className="flex items-start gap-2.5 py-1.5">
-                        <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-[10px] text-destructive font-medium">{t.allergies}</p>
-                          <p className="text-xs text-foreground">{g.allergies.join(", ")}</p>
-                        </div>
-                      </div>
-                    )}
-                    {guest.dietary_preferences?.length ? (
-                      <DetailRow icon={UtensilsCrossed} label={t.dietary} value={guest.dietary_preferences.join(", ")} />
-                    ) : null}
-                  </DetailSection>
-                )}
+                {g.allergies?.length > 0 && <DetailRow icon={AlertTriangle} label={t.allergies} value={g.allergies.join(", ")} />}
+                {guest.dietary_preferences?.length ? <DetailRow icon={UtensilsCrossed} label={t.dietary} value={guest.dietary_preferences.join(", ")} /> : null}
 
-                {/* Preferences */}
-                {hasPrefs && (
-                  <DetailSection title={t.sectionPrefs}>
-                    {g.seating_preferences && <DetailRow icon={Armchair} label={t.seating} value={g.seating_preferences} />}
-                    {guest.drink_preferences && <DetailRow icon={Wine} label={t.drinks} value={guest.drink_preferences} />}
-                    {g.food_preferences && <DetailRow icon={UtensilsCrossed} label={t.food} value={g.food_preferences} />}
-                    {guest.music_preferences && <DetailRow icon={Music} label={t.music} value={guest.music_preferences} />}
-                  </DetailSection>
-                )}
+                {g.seating_preferences && <DetailRow icon={Armchair} label={t.seating} value={g.seating_preferences} />}
+                {guest.drink_preferences && <DetailRow icon={Wine} label={t.drinks} value={guest.drink_preferences} />}
+                {g.food_preferences && <DetailRow icon={UtensilsCrossed} label={t.food} value={g.food_preferences} />}
+                {guest.music_preferences && <DetailRow icon={Music} label={t.music} value={guest.music_preferences} />}
 
-                {/* Relationship */}
-                {hasRelation && (
-                  <DetailSection title={t.sectionRelation}>
-                    <DetailRow icon={Heart} label={t.relationNotes} value={guest.relationship_notes!} />
-                  </DetailSection>
-                )}
+                {hasRelation && <DetailRow icon={Heart} label={t.relationNotes} value={guest.relationship_notes!} />}
 
-                {/* Origin (ghosts) */}
                 {hasOrigin && (
-                  <DetailSection title={t.sectionOrigin}>
+                  <>
                     {guest.brought_by_user_id && (
                       <DetailRow icon={Ghost} label={t.broughtBy} value={guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")} />
                     )}
@@ -585,7 +598,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                     {originContext?.eventTitle && (
                       <DetailRow icon={Ticket} label={t.event} value={originContext.eventTitle} />
                     )}
-                  </DetailSection>
+                  </>
                 )}
               </div>
             )}
@@ -593,13 +606,13 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 min-h-0 mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="flex-1">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-card"
+                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-background"
                 >
                   <span className="text-xs font-medium text-foreground flex-1">
                     {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
