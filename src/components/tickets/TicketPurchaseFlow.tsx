@@ -198,7 +198,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
    const [customerEmail, setCustomerEmail] = useState('');
    const [customerPhone, setCustomerPhone] = useState('');
    const [specialRequests, setSpecialRequests] = useState('');
-  const profileName = useProfileName(user?.id);
+  const profileName = useProfileName(undefined); // Will be set after auth check in handleCheckout
 
   // Auto-fill first guest name with profile name
   useEffect(() => {
