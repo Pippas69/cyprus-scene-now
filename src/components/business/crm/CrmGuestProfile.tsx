@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useGhostOriginContext } from "@/hooks/useGhostOriginContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +12,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   X, Star, MapPin, Phone, Mail, Cake, Instagram, Building2,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
+  Merge, Calendar, Ticket,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
 import { CrmSendMessageDialog } from "./CrmSendMessageDialog";
+import { CrmGhostMergeDialog } from "./CrmGhostMergeDialog";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
