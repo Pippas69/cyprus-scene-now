@@ -662,7 +662,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                   )}
                 </div>
               ))}
-              ))}
 
               {allTags.length === 0 && !showNewTag && (
                 <p className="text-xs text-muted-foreground text-center py-4">{t.noTags}</p>
