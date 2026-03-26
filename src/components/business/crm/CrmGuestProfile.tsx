@@ -16,7 +16,7 @@ import {
   X, Star, Phone, Mail, Cake,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
   Merge, Calendar, Ticket, UtensilsCrossed, Armchair, Wine, Music, Heart,
-  Plus, Lock,
+  Plus, Trash2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
@@ -54,7 +54,8 @@ const translations = {
     noNotes: "Δεν υπάρχουν σημειώσεις",
     alert: "Ειδοποίηση",
     pinned: "Καρφιτσωμένο",
-    privateLbl: "Ιδιωτική",
+    deleteNote: "Διαγραφή σημείωσης",
+    deleteTag: "Διαγραφή tag",
     phone: "Τηλέφωνο",
     email: "Email",
     birthday: "Γενέθλια",
@@ -100,7 +101,8 @@ const translations = {
     noNotes: "No notes yet",
     alert: "Alert",
     pinned: "Pinned",
-    privateLbl: "Private",
+    deleteNote: "Delete note",
+    deleteTag: "Delete tag",
     phone: "Phone",
     email: "Email",
     birthday: "Birthday",
@@ -157,7 +159,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [newNote, setNewNote] = useState("");
   const [noteIsPinned, setNoteIsPinned] = useState(false);
   const [noteIsAlert, setNoteIsAlert] = useState(false);
-  const [noteIsPrivate, setNoteIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
@@ -202,7 +203,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       setNewNote("");
       setNoteIsPinned(false);
       setNoteIsAlert(false);
-      setNoteIsPrivate(false);
       toast.success(language === "el" ? "Σημείωση αποθηκεύτηκε" : "Note saved");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
@@ -239,6 +239,31 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           .insert({ guest_id: guest.id, tag_id: tagId, assigned_by: user?.id || null });
       }
       onUpdate();
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+  };
+
+  const deleteNote = async (noteId: string) => {
+    try {
+      await supabase.from("crm_guest_notes").delete().eq("id", noteId);
+      onUpdate();
+      // Refetch notes
+      toast.success(language === "el" ? "Σημείωση διαγράφηκε" : "Note deleted");
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+  };
+
+  const deleteTag = async (tagId: string) => {
+    try {
+      // Delete all assignments first, then the tag itself
+      await supabase.from("crm_guest_tag_assignments").delete().eq("tag_id", tagId);
+      await supabase.from("crm_guest_tags").delete().eq("id", tagId);
+      setTagsLoaded(false);
+      loadAllTags();
+      onUpdate();
+      toast.success(language === "el" ? "Tag διαγράφηκε" : "Tag deleted");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
