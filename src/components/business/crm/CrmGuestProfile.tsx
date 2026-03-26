@@ -27,6 +27,7 @@ interface CrmGuestProfileProps {
   onClose: () => void;
   onUpdate: () => void;
   onUpdateGuest?: (data: { id: string } & Record<string, unknown>) => Promise<unknown>;
+  allGuests?: CrmGuest[];
 }
 
 const translations = {
@@ -59,6 +60,9 @@ const translations = {
     instagram: "Instagram",
     relationNotes: "Σχέσεις",
     broughtBy: "Προέλευση",
+    date: "Ημερομηνία",
+    event: "Εκδήλωση",
+    mergeProfiles: "Συγχώνευση",
   },
   en: {
     timeline: "Timeline",
@@ -89,6 +93,9 @@ const translations = {
     instagram: "Instagram",
     relationNotes: "Relations",
     broughtBy: "Brought by",
+    date: "Date",
+    event: "Event",
+    mergeProfiles: "Merge",
   },
 };
 
