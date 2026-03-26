@@ -170,7 +170,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setIsLoading(false);
       setAcceptedTerms(false);
       setPartySize(1);
-      setGuestNames(['']);
+      setGuestNames([profileName || '']);
       setClaimSuccess(null);
       setCurrentGuestIndex(0);
       setWantsReservation(false);
