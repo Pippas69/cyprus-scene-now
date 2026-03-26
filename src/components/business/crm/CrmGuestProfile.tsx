@@ -464,8 +464,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8 flex-shrink-0">
+      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0 overflow-hidden pt-1">
+        <TabsList className="mx-4 grid grid-cols-3 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -481,8 +481,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="flex-1 mt-2">
+        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-2 overflow-hidden">
+          <ScrollArea className="flex-1 pt-2">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
@@ -521,7 +521,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </ScrollArea>
 
           {/* Add note input */}
-          <div className="mt-2 pt-2 border-t border-border space-y-2">
+          <div className="mt-auto pt-2 border-t border-border space-y-2 flex-shrink-0">
             <div className="flex gap-2">
               <Textarea
                 placeholder={t.addNote}
@@ -567,8 +567,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="flex-1">
+        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="flex-1 pt-2">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -606,8 +606,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="flex-1">
+        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="flex-1 pt-2">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
