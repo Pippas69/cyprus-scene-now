@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useGhostOriginContext } from "@/hooks/useGhostOriginContext";
@@ -16,7 +17,7 @@ import {
   X, Star, Phone, Mail, Cake,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
   Merge, Calendar, Ticket, UtensilsCrossed, Armchair, Wine, Music, Heart,
-  Plus, Lock,
+  Plus, Trash2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
@@ -54,7 +55,8 @@ const translations = {
     noNotes: "Δεν υπάρχουν σημειώσεις",
     alert: "Ειδοποίηση",
     pinned: "Καρφιτσωμένο",
-    privateLbl: "Ιδιωτική",
+    deleteNote: "Διαγραφή σημείωσης",
+    deleteTag: "Διαγραφή tag",
     phone: "Τηλέφωνο",
     email: "Email",
     birthday: "Γενέθλια",
@@ -100,7 +102,8 @@ const translations = {
     noNotes: "No notes yet",
     alert: "Alert",
     pinned: "Pinned",
-    privateLbl: "Private",
+    deleteNote: "Delete note",
+    deleteTag: "Delete tag",
     phone: "Phone",
     email: "Email",
     birthday: "Birthday",
@@ -151,13 +154,13 @@ const TAG_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b8
 
 export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
   const [newNote, setNewNote] = useState("");
   const [noteIsPinned, setNoteIsPinned] = useState(false);
   const [noteIsAlert, setNoteIsAlert] = useState(false);
-  const [noteIsPrivate, setNoteIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
@@ -202,7 +205,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       setNewNote("");
       setNoteIsPinned(false);
       setNoteIsAlert(false);
-      setNoteIsPrivate(false);
       toast.success(language === "el" ? "Σημείωση αποθηκεύτηκε" : "Note saved");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
@@ -239,6 +241,31 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           .insert({ guest_id: guest.id, tag_id: tagId, assigned_by: user?.id || null });
       }
       onUpdate();
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+  };
+
+  const deleteNote = async (noteId: string) => {
+    try {
+      await supabase.from("crm_guest_notes").delete().eq("id", noteId);
+      queryClient.invalidateQueries({ queryKey: ["crm-guest-notes", guest.id] });
+      onUpdate();
+      toast.success(language === "el" ? "Σημείωση διαγράφηκε" : "Note deleted");
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+  };
+
+  const deleteTag = async (tagId: string) => {
+    try {
+      // Delete all assignments first, then the tag itself
+      await supabase.from("crm_guest_tag_assignments").delete().eq("tag_id", tagId);
+      await supabase.from("crm_guest_tags").delete().eq("id", tagId);
+      setTagsLoaded(false);
+      loadAllTags();
+      onUpdate();
+      toast.success(language === "el" ? "Tag διαγράφηκε" : "Tag deleted");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
@@ -384,9 +411,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </div>
         )}
 
-        {/* Alert & Pinned notes indicators */}
+        {/* Pinned & Alert notes indicators — between tags and email */}
         {alertNotes.length > 0 && (
-          <div className="mt-2.5 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
+          <div className="mt-2 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
             {alertNotes.map((n) => (
               <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
                 <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0 mt-0.5" />
@@ -403,6 +430,14 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <span className="text-foreground">{n.content}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Email */}
+        {guest.email && (
+          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            <span>{guest.email}</span>
           </div>
         )}
       </div>
@@ -445,11 +480,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                     <div className="flex items-center gap-1.5 mb-1">
                       {note.is_alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
                       {note.is_pinned && !note.is_alert && <Pin className="h-3 w-3 text-primary" />}
-                      {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
                       <Badge variant="outline" className="text-[8px] h-3.5 px-1">{note.category}</Badge>
                       <span className="text-[9px] text-muted-foreground ml-auto">
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
                       </span>
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                        title={t.deleteNote}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
                     </div>
                     <p className="text-foreground whitespace-pre-wrap">{note.content}</p>
                   </div>
@@ -501,15 +542,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 />
                 <AlertTriangle className="h-2.5 w-2.5" />
                 {t.alert}
-              </label>
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
-                <Checkbox
-                  checked={noteIsPrivate}
-                  onCheckedChange={(v) => setNoteIsPrivate(!!v)}
-                  className="h-3.5 w-3.5"
-                />
-                <Lock className="h-2.5 w-2.5" />
-                {t.privateLbl}
               </label>
             </div>
           </div>
@@ -594,30 +626,43 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               )}
 
               {allTags.map((tag) => (
-                <button
+                <div
                   key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
                   className={`flex items-center gap-2.5 w-full p-2.5 rounded-lg border text-left transition-colors ${
                     isTagAssigned(tag.id)
                       ? "border-primary/40 bg-primary/5"
                       : "border-border bg-card hover:bg-muted/50"
                   }`}
                 >
-                  <div
-                    className="h-3.5 w-3.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="text-xs font-medium text-foreground flex-1">
-                    {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
-                    {tag.name}
-                  </span>
-                  {isTagAssigned(tag.id) && (
-                    <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
+                  <button
+                    onClick={() => toggleTag(tag.id)}
+                    className="flex items-center gap-2.5 flex-1 min-w-0"
+                  >
+                    <div
+                      className="h-3.5 w-3.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-xs font-medium text-foreground flex-1 text-left">
+                      {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
+                      {tag.name}
+                    </span>
+                    {isTagAssigned(tag.id) && (
+                      <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
+                    )}
+                    {tag.is_system && (
+                      <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
+                    )}
+                  </button>
+                  {!tag.is_system && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteTag(tag.id); }}
+                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                      title={t.deleteTag}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   )}
-                  {tag.is_system && (
-                    <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
-                  )}
-                </button>
+                </div>
               ))}
 
               {allTags.length === 0 && !showNewTag && (
