@@ -101,9 +101,10 @@ export function useCrmGuests(businessId: string | null) {
           .from("crm_guest_notes")
           .select("guest_id")
           .eq("business_id", businessId),
+        // Resolve booker names from crm_guests (same business) instead of profiles to avoid RLS issues
         broughtByIds.length > 0
-          ? supabase.from("profiles").select("id, first_name, last_name").in("id", broughtByIds)
-          : Promise.resolve({ data: [] as { id: string; first_name: string | null; last_name: string | null }[] }),
+          ? supabase.from("crm_guests").select("user_id, guest_name").eq("business_id", businessId).in("user_id", broughtByIds).eq("profile_type", "registered")
+          : Promise.resolve({ data: [] as { user_id: string | null; guest_name: string }[] }),
       ]);
 
       const tagAssignments = tagAssignmentsRes.data;
@@ -112,8 +113,9 @@ export function useCrmGuests(businessId: string | null) {
       const broughtByNameMap = new Map<string, string>();
       if (broughtByRes.data) {
         for (const p of broughtByRes.data) {
-          const name = [p.first_name, p.last_name].filter(Boolean).join(" ");
-          broughtByNameMap.set(p.id, name || "Unknown");
+          if (p.user_id) {
+            broughtByNameMap.set(p.user_id, p.guest_name || "Unknown");
+          }
         }
       }
 
