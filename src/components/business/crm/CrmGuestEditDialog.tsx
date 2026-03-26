@@ -76,19 +76,30 @@ const translations = {
   },
 };
 
-const getInitialForm = (guest: CrmGuest) => ({
-  guest_name: guest.guest_name,
-  phone: guest.phone || "",
-  email: guest.email || "",
-  birthday: guest.birthday || "",
-  allergies: (guest as any).allergies?.join(", ") || "",
-  dietary_preferences: guest.dietary_preferences?.join(", ") || "",
-  seating_preferences: (guest as any).seating_preferences || "",
-  drink_preferences: guest.drink_preferences || "",
-  food_preferences: (guest as any).food_preferences || "",
-  music_preferences: guest.music_preferences || "",
-  relationship_notes: guest.relationship_notes || "",
-});
+const parseBirthday = (bday: string | null) => {
+  if (!bday) return { day: "", month: "", year: "" };
+  const parts = bday.split("-");
+  return { year: parts[0] || "", month: parts[1] || "", day: parts[2] || "" };
+};
+
+const getInitialForm = (guest: CrmGuest) => {
+  const bd = parseBirthday(guest.birthday || null);
+  return {
+    guest_name: guest.guest_name,
+    phone: guest.phone || "",
+    email: guest.email || "",
+    birthday_day: bd.day,
+    birthday_month: bd.month,
+    birthday_year: bd.year,
+    allergies: (guest as any).allergies?.join(", ") || "",
+    dietary_preferences: guest.dietary_preferences?.join(", ") || "",
+    seating_preferences: (guest as any).seating_preferences || "",
+    drink_preferences: guest.drink_preferences || "",
+    food_preferences: (guest as any).food_preferences || "",
+    music_preferences: guest.music_preferences || "",
+    relationship_notes: guest.relationship_notes || "",
+  };
+};
 
 export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSuccess }: CrmGuestEditDialogProps) {
   const { language } = useLanguage();
@@ -105,6 +116,15 @@ export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSucc
 
   const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
 
+  const buildBirthday = () => {
+    const { birthday_year, birthday_month, birthday_day } = form;
+    if (!birthday_day && !birthday_month && !birthday_year) return null;
+    const y = birthday_year.padStart(4, "0");
+    const m = birthday_month.padStart(2, "0");
+    const d = birthday_day.padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -113,7 +133,7 @@ export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSucc
         guest_name: form.guest_name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
-        birthday: form.birthday || null,
+        birthday: buildBirthday(),
         allergies: form.allergies.trim()
           ? form.allergies.split(",").map((s) => s.trim()).filter(Boolean)
           : null,
@@ -143,59 +163,76 @@ export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSucc
           <DialogDescription className="sr-only">
             {language === "el" ? "Φόρμα επεξεργασίας στοιχείων πελάτη" : "Guest profile editing form"}
           </DialogDescription>
-          {guest.profile_type === "ghost" && (
-            <p className="text-xs text-muted-foreground mt-1">{t.enrichHint}</p>
-          )}
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           {/* SECTION 1: Basic Info */}
-          <Section title={t.sectionBasic}>
-            <Field label={`${t.name} *`} value={form.guest_name} onChange={(v) => set("guest_name", v)} />
+          <div className="space-y-3">
+            <Field label={t.name} value={form.guest_name} onChange={(v) => set("guest_name", v)} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t.phone} value={form.phone} onChange={(v) => set("phone", v)} placeholder="+357..." />
               <Field label={t.email} value={form.email} onChange={(v) => set("email", v)} placeholder="email@example.com" type="email" />
             </div>
-            <Field label={t.birthday} value={form.birthday} onChange={(v) => set("birthday", v)} type="date" />
-          </Section>
+            <div>
+              <Label className="text-xs text-muted-foreground">{t.birthday}</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <Input
+                  value={form.birthday_day}
+                  onChange={(e) => set("birthday_day", e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  placeholder={t.birthdayDay}
+                  className="h-9 text-sm"
+                  inputMode="numeric"
+                />
+                <Input
+                  value={form.birthday_month}
+                  onChange={(e) => set("birthday_month", e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  placeholder={t.birthdayMonth}
+                  className="h-9 text-sm"
+                  inputMode="numeric"
+                />
+                <Input
+                  value={form.birthday_year}
+                  onChange={(e) => set("birthday_year", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder={t.birthdayYear}
+                  className="h-9 text-sm"
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-border" />
 
           {/* SECTION 2: Allergies & Diet */}
-          <Section title={t.sectionAllergy}>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <AlertTriangle className="h-3 w-3 text-destructive" />
-                <Label className="text-xs text-destructive font-medium">{t.allergies}</Label>
-              </div>
-              <Input
-                value={form.allergies}
-                onChange={(e) => set("allergies", e.target.value)}
-                placeholder="Nuts, Shellfish, Gluten..."
-                className="h-9 text-sm border-destructive/30 focus-visible:ring-destructive/30"
-              />
-              <p className="text-[10px] text-destructive/70 mt-0.5">{t.allergiesHint}</p>
-            </div>
-            <Field label={t.dietary} value={form.dietary_preferences} onChange={(v) => set("dietary_preferences", v)} placeholder="Vegan, Pescatarian..." />
-          </Section>
+          <div className="space-y-3">
+            <Field label={t.allergies} value={form.allergies} onChange={(v) => set("allergies", v)} />
+            <Field label={t.dietary} value={form.dietary_preferences} onChange={(v) => set("dietary_preferences", v)} />
+          </div>
+
+          <hr className="border-border" />
 
           {/* SECTION 3: Preferences */}
-          <Section title={t.sectionPrefs}>
-            <Field label={t.seating} value={form.seating_preferences} onChange={(v) => set("seating_preferences", v)} placeholder="Window, Booth, Bar, Outdoor..." />
+          <div className="space-y-3">
+            <Field label={t.seating} value={form.seating_preferences} onChange={(v) => set("seating_preferences", v)} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t.drinks} value={form.drink_preferences} onChange={(v) => set("drink_preferences", v)} />
               <Field label={t.food} value={form.food_preferences} onChange={(v) => set("food_preferences", v)} />
             </div>
             <Field label={t.music} value={form.music_preferences} onChange={(v) => set("music_preferences", v)} />
-          </Section>
+          </div>
+
+          <hr className="border-border" />
 
           {/* SECTION 4: Relationship Info */}
-          <Section title={t.sectionRelation}>
+          <div className="space-y-3">
+            <Label className="text-xs text-muted-foreground">{t.relationNotes}</Label>
             <Textarea
               value={form.relationship_notes}
               onChange={(e) => set("relationship_notes", e.target.value)}
               className="text-sm min-h-[70px] resize-none"
               placeholder={t.relationPlaceholder}
             />
-          </Section>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -208,15 +245,6 @@ export function CrmGuestEditDialog({ open, onOpenChange, guest, onUpdate, onSucc
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3">
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
-      {children}
-    </div>
   );
 }
 
