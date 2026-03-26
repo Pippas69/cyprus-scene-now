@@ -6593,6 +6593,10 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       process_no_show_reservations: { Args: never; Returns: number }
+      propagate_crm_guest_rename: {
+        Args: { p_business_id: string; p_new_name: string; p_old_name: string }
+        Returns: undefined
+      }
       release_offer_spots: {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: undefined
