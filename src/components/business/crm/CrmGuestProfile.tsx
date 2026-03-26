@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   X, Star, Phone, Mail, Cake,
@@ -524,21 +523,19 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
             {/* Note options */}
             <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
-                <Checkbox
-                  checked={noteIsPinned}
-                  onCheckedChange={(v) => setNoteIsPinned(!!v)}
-                  className="h-3.5 w-3.5"
-                />
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsPinned(!noteIsPinned)}>
+                <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${noteIsPinned ? 'bg-primary border-primary' : 'border-muted-foreground/40'}`}>
+                  {noteIsPinned && <span className="text-[8px] text-primary-foreground">✓</span>}
+                </div>
                 <Pin className="h-2.5 w-2.5" />
                 {t.pinned}
               </label>
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
-                <Checkbox
-                  checked={noteIsAlert}
-                  onCheckedChange={(v) => setNoteIsAlert(!!v)}
-                  className="h-3.5 w-3.5"
-                />
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsAlert(!noteIsAlert)}>
+                <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${noteIsAlert ? 'bg-primary border-primary' : 'border-muted-foreground/40'}`}>
+                  {noteIsAlert && <span className="text-[8px] text-primary-foreground">✓</span>}
+                </div>
                 <AlertTriangle className="h-2.5 w-2.5" />
                 {t.alert}
               </label>
