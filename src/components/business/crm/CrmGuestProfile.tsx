@@ -206,7 +206,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           {guest.avg_party_size > 0 && (
             <span>👥 {t.avgParty}: {guest.avg_party_size}</span>
           )}
-          {guest.favorite_table && (
+          {guest.total_visits > 0 && guest.favorite_table && (
             <span>🪑 {t.favTable}: {guest.favorite_table}</span>
           )}
           {guest.first_visit && (
