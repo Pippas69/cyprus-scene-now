@@ -624,30 +624,44 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               )}
 
               {allTags.map((tag) => (
-                <button
+                <div
                   key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
                   className={`flex items-center gap-2.5 w-full p-2.5 rounded-lg border text-left transition-colors ${
                     isTagAssigned(tag.id)
                       ? "border-primary/40 bg-primary/5"
                       : "border-border bg-card hover:bg-muted/50"
                   }`}
                 >
-                  <div
-                    className="h-3.5 w-3.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="text-xs font-medium text-foreground flex-1">
-                    {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
-                    {tag.name}
-                  </span>
-                  {isTagAssigned(tag.id) && (
-                    <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
+                  <button
+                    onClick={() => toggleTag(tag.id)}
+                    className="flex items-center gap-2.5 flex-1 min-w-0"
+                  >
+                    <div
+                      className="h-3.5 w-3.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-xs font-medium text-foreground flex-1 text-left">
+                      {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
+                      {tag.name}
+                    </span>
+                    {isTagAssigned(tag.id) && (
+                      <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
+                    )}
+                    {tag.is_system && (
+                      <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
+                    )}
+                  </button>
+                  {!tag.is_system && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteTag(tag.id); }}
+                      className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                      title={t.deleteTag}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   )}
-                  {tag.is_system && (
-                    <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
-                  )}
-                </button>
+                </div>
+              ))}
               ))}
 
               {allTags.length === 0 && !showNewTag && (
