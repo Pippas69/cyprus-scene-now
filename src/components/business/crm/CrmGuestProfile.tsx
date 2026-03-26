@@ -150,7 +150,7 @@ function getLoyaltyBadge(visits: number, _spendCents: number, override?: string 
   return info ? { level, ...info } : null;
 }
 
-const TAG_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+
 
 export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
@@ -171,7 +171,6 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [tagsLoaded, setTagsLoaded] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
-  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
   const [savingTag, setSavingTag] = useState(false);
 
   const isGhost = guest.profile_type === "ghost";
@@ -277,7 +276,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
     try {
       const { data, error } = await supabase
         .from("crm_guest_tags")
-        .insert({ business_id: businessId, name: newTagName.trim(), color: newTagColor })
+        .insert({ business_id: businessId, name: newTagName.trim(), color: "hsl(var(--muted-foreground))" })
         .select()
         .single();
       if (error) throw error;
@@ -289,6 +288,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       setNewTagName("");
       setShowNewTag(false);
       setTagsLoaded(false);
+      await loadAllTags();
       onUpdate();
       toast.success(language === "el" ? "Tag δημιουργήθηκε" : "Tag created");
     } catch {
@@ -400,9 +400,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             {guest.tags.map((tag) => (
               <Badge
                 key={tag.id}
-                variant="outline"
+                variant="secondary"
                 className="text-[9px] px-1.5 py-0 h-4"
-                style={{ backgroundColor: tag.color + "20", color: tag.color, borderColor: tag.color + "40" }}
               >
                 {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
                 {tag.name}
@@ -443,8 +442,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8">
+      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -460,7 +459,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4">
+        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 mt-0 px-4 pb-4 overflow-hidden">
           <ScrollArea className="flex-1 mt-2">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
@@ -548,8 +547,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
-          <ScrollArea className="h-full mt-2">
+        <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="h-full">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -618,44 +617,21 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 min-h-0 mt-0 px-4 pb-4">
-          <ScrollArea className="h-full mt-2">
-            <div className="space-y-3">
-              {allTags.length > 0 && (
-                <p className="text-[10px] text-muted-foreground">{t.assignTags}</p>
-              )}
-
+        <TabsContent value="tags" className="flex-1 min-h-0 mt-0 px-4 pb-4 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className={`flex items-center gap-2.5 w-full p-2.5 rounded-lg border text-left transition-colors ${
-                    isTagAssigned(tag.id)
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border bg-card hover:bg-muted/50"
-                  }`}
+                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-card"
                 >
-                  <button
-                    onClick={() => toggleTag(tag.id)}
-                    className="flex items-center gap-2.5 flex-1 min-w-0"
-                  >
-                    <div
-                      className="h-3.5 w-3.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="text-xs font-medium text-foreground flex-1 text-left">
-                      {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
-                      {tag.name}
-                    </span>
-                    {isTagAssigned(tag.id) && (
-                      <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
-                    )}
-                    {tag.is_system && (
-                      <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
-                    )}
-                  </button>
+                  <span className="text-xs font-medium text-foreground flex-1">
+                    {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
+                    {tag.name}
+                  </span>
                   {!tag.is_system && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteTag(tag.id); }}
+                      onClick={() => deleteTag(tag.id)}
                       className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
                       title={t.deleteTag}
                     >
@@ -678,25 +654,19 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                     placeholder={t.tagName}
                     className="h-8 text-xs"
                     autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        createTag();
+                      }
+                    }}
                   />
-                  <div className="flex gap-1.5">
-                    {TAG_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setNewTagColor(c)}
-                        className={`h-5 w-5 rounded-full border-2 transition-transform ${
-                          newTagColor === c ? "border-foreground scale-110" : "border-transparent"
-                        }`}
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
                   <div className="flex gap-2">
                     <Button size="sm" className="h-7 text-xs flex-1" onClick={createTag} disabled={!newTagName.trim() || savingTag}>
                       {t.create}
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowNewTag(false)}>
-                      {t.details === "Λεπτομέρειες" ? "Ακύρωση" : "Cancel"}
+                      {language === "el" ? "Ακύρωση" : "Cancel"}
                     </Button>
                   </div>
                 </div>
