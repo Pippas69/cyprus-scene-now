@@ -151,7 +151,17 @@ export function CrmGhostMergeDialog({
         })
         .eq("id", primaryId);
 
-      // 4. Delete merged ghost profiles
+      // 4. Propagate merged guest names → primary name in reservation_guests
+      const mergedGuests = allGuests.filter((g) => mergeIds.includes(g.id));
+      for (const mg of mergedGuests) {
+        await supabase.rpc("propagate_crm_guest_rename", {
+          p_business_id: primaryGuest.business_id,
+          p_old_name: mg.guest_name,
+          p_new_name: primaryGuest.guest_name,
+        });
+      }
+
+      // 5. Delete merged ghost profiles
       await supabase.from("crm_guests").delete().in("id", mergeIds);
 
       toast.success(t.success);
