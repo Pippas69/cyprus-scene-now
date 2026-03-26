@@ -264,10 +264,29 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const createTag = async () => {
     if (!newTagName.trim()) return;
     setSavingTag(true);
+
+    // Optimistic UI: show immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimisticTag: CrmGuestTag = {
+      id: tempId,
+      name: newTagName.trim(),
+      color: "hsl(var(--primary))",
+      emoji: null,
+      is_system: false,
+    };
+    const prevAllTags = allTags;
+    const prevGuestTags = guestTags;
+    setAllTags((prev) => {
+      const next = [...prev, optimisticTag];
+      next.sort((a, b) => a.name.localeCompare(b.name));
+      return next;
+    });
+    setGuestTags((prev) => [...prev, optimisticTag]);
+
     try {
       const { data, error } = await supabase
         .from("crm_guest_tags")
-        .insert({ business_id: businessId, name: newTagName.trim(), color: "hsl(var(--muted-foreground))" })
+        .insert({ business_id: businessId, name: newTagName.trim(), color: "hsl(var(--primary))" })
         .select()
         .single();
       if (error) throw error;
@@ -279,11 +298,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
       const createdTag = data as unknown as CrmGuestTag;
       setAllTags((prev) => {
-        const next = [...prev.filter((t) => t.id !== createdTag.id), createdTag];
+        const next = prev.map((t) => (t.id === tempId ? createdTag : t));
         next.sort((a, b) => a.name.localeCompare(b.name));
         return next;
       });
-      setGuestTags((prev) => [...prev.filter((t) => t.id !== createdTag.id), createdTag]);
+      setGuestTags((prev) => prev.map((t) => (t.id === tempId ? createdTag : t)));
       setTagsLoaded(true);
 
       setNewTagName("");
@@ -292,6 +311,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       onUpdate();
       toast.success(language === "el" ? "Tag δημιουργήθηκε" : "Tag created");
     } catch {
+      // rollback optimistic UI
+      setAllTags(prevAllTags);
+      setGuestTags(prevGuestTags);
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
     setSavingTag(false);
@@ -401,7 +423,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               <Badge
                 key={tag.id}
                 variant="outline"
-                className="text-[9px] px-1.5 py-0 h-4 bg-card border-border text-foreground"
+                className="text-[9px] px-1.5 py-0 h-4 bg-background border-border text-foreground"
               >
                 {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
                 {tag.name}
@@ -590,7 +612,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               {allTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-card"
+                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-background"
                 >
                   <span className="text-xs font-medium text-foreground flex-1">
                     {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
