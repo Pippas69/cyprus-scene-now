@@ -17,6 +17,7 @@ import {
   ArrowRight, ArrowLeft, ExternalLink, Users, Calendar, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProfileName } from '@/hooks/useProfileName';
 import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
@@ -197,6 +198,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
    const [customerEmail, setCustomerEmail] = useState('');
    const [customerPhone, setCustomerPhone] = useState('');
    const [specialRequests, setSpecialRequests] = useState('');
+  const profileName = useProfileName(undefined); // Will be set after auth check in handleCheckout
+
+  // Auto-fill first guest name with profile name
+  useEffect(() => {
+    if (profileName) {
+      setGuestNames(prev => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        updated[0] = profileName;
+        return updated;
+      });
+    }
+  }, [profileName]);
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);

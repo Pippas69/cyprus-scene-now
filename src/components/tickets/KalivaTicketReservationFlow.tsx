@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useProfileName } from '@/hooks/useProfileName';
 
 interface SeatingTypeOption {
   id: string;
