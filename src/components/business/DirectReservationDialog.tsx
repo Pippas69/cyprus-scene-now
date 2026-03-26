@@ -93,6 +93,18 @@ export const DirectReservationDialog = ({
   }>({ open: false, reservation: null });
 
   const isMobile = useIsMobile();
+  const profileName = useProfileName(userId);
+
+  // Auto-fill reservation name and first guest slot with profile name
+  useEffect(() => {
+    if (profileName) {
+      setFormData(prev => ({
+        ...prev,
+        reservation_name: profileName,
+        guest_names: [profileName, ...prev.guest_names.slice(1)],
+      }));
+    }
+  }, [profileName]);
 
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
@@ -582,7 +594,8 @@ export const DirectReservationDialog = ({
             onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
             placeholder={t.namePlaceholder}
             required
-            className="text-xs sm:text-sm h-9 sm:h-10" />
+            readOnly={!!profileName}
+            className={`text-xs sm:text-sm h-9 sm:h-10 ${profileName ? 'bg-muted cursor-not-allowed' : ''}`} />
           
             </div>
             <div className="space-y-1.5">
@@ -623,13 +636,15 @@ export const DirectReservationDialog = ({
             key={index}
             value={name}
             onChange={(e) => {
+              if (index === 0 && profileName) return; // Slot 0 is read-only (booker)
               const newNames = [...formData.guest_names];
               newNames[index] = e.target.value;
               setFormData({ ...formData, guest_names: newNames });
             }}
-            placeholder={`${language === 'el' ? 'Άτομο' : 'Guest'} ${index + 1}`}
+            placeholder={index === 0 && profileName ? profileName : `${language === 'el' ? 'Άτομο' : 'Guest'} ${index + 1}`}
             required
-            className="text-xs sm:text-sm h-9 sm:h-10" />
+            readOnly={index === 0 && !!profileName}
+            className={`text-xs sm:text-sm h-9 sm:h-10 ${index === 0 && profileName ? 'bg-muted cursor-not-allowed' : ''}`} />
 
           )}
             </div>
