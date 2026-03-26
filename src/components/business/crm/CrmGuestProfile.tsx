@@ -314,12 +314,12 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
             <div className="space-y-2.5">
-              {guest.profile_type === "ghost" && guest.brought_by_name && (
+              {guest.profile_type === "ghost" && guest.brought_by_user_id && (
                 <div className="flex items-start gap-2.5 py-1.5 px-2 rounded-lg bg-muted/50 border border-border">
                   <Ghost className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
-                    <p className="text-xs font-medium text-foreground">{guest.brought_by_name}</p>
+                    <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
                   </div>
                 </div>
               )}
