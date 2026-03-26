@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 
 import {
@@ -157,6 +156,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
+
+  const [tab, setTab] = useState<"notes" | "details" | "tags">("notes");
+  const notesScrollRef = useRef<HTMLDivElement | null>(null);
+  const detailsScrollRef = useRef<HTMLDivElement | null>(null);
+  const tagsScrollRef = useRef<HTMLDivElement | null>(null);
   const [newNote, setNewNote] = useState("");
   const [noteIsPinned, setNoteIsPinned] = useState(false);
   const [noteIsAlert, setNoteIsAlert] = useState(false);
@@ -176,6 +180,20 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   useEffect(() => {
     setGuestTags(guest.tags || []);
   }, [guest.id, guest.tags]);
+
+  // Ensure each tab starts from the top (no weird preserved scroll offset)
+  useEffect(() => {
+    const el = tab === "notes" ? notesScrollRef.current : tab === "details" ? detailsScrollRef.current : tagsScrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [tab]);
+
+  // Load tags when the Tags tab is opened
+  useEffect(() => {
+    if (tab === "tags") {
+      void loadAllTags();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   const isGhost = guest.profile_type === "ghost";
   const { data: originContext } = useGhostOriginContext(
@@ -464,8 +482,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0 overflow-hidden pt-1">
-        <TabsList className="mx-4 grid grid-cols-3 h-8 flex-shrink-0">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -474,15 +492,16 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             <Edit3 className="h-3 w-3" />
             {t.details}
           </TabsTrigger>
-          <TabsTrigger value="tags" className="text-xs gap-1" onClick={loadAllTags}>
+          <TabsTrigger value="tags" className="text-xs gap-1">
             <Tag className="h-3 w-3" />
             {t.tags}
           </TabsTrigger>
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-2 overflow-hidden">
-          <ScrollArea className="flex-1 pt-2">
+        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
+          {/* Notes list (scrolls) */}
+          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
@@ -490,38 +509,39 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`p-2.5 rounded-lg border text-xs ${
-                      note.is_alert
-                        ? "border-destructive/30 bg-destructive/5"
+                    className={
+                      "rounded-xl border p-3 text-xs bg-card/60 backdrop-blur-sm " +
+                      (note.is_alert
+                        ? "border-destructive/30"
                         : note.is_pinned
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-card"
-                    }`}
+                        ? "border-primary/25"
+                        : "border-border")
+                    }
                   >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      {note.is_alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
-                      {note.is_pinned && !note.is_alert && <Pin className="h-3 w-3 text-primary" />}
-                      <Badge variant="outline" className="text-[8px] h-3.5 px-1">{note.category}</Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                      {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
+                      <Badge variant="outline" className="text-[8px] h-4 px-1.5">{note.category}</Badge>
                       <span className="text-[9px] text-muted-foreground ml-auto">
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
                       </span>
                       <button
                         onClick={() => deleteNote(note.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                        className="text-muted-foreground hover:text-destructive transition-colors"
                         title={t.deleteNote}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <p className="text-foreground whitespace-pre-wrap">{note.content}</p>
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
                   </div>
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
 
-          {/* Add note input */}
-          <div className="mt-auto pt-2 border-t border-border space-y-2 flex-shrink-0">
+          {/* Add note (exactly bottom like before) */}
+          <div className="mt-2 pt-2 border-t border-border space-y-2 flex-shrink-0">
             <div className="flex gap-2">
               <Textarea
                 placeholder={t.addNote}
@@ -544,19 +564,34 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <Send className="h-3.5 w-3.5" />
               </Button>
             </div>
-            {/* Note options */}
+
             <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
-                onClick={() => setNoteIsPinned(!noteIsPinned)}>
-                <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${noteIsPinned ? 'bg-primary border-primary' : 'border-muted-foreground/40'}`}>
+              <label
+                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsPinned(!noteIsPinned)}
+              >
+                <div
+                  className={
+                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                    (noteIsPinned ? "bg-primary border-primary" : "border-muted-foreground/40")
+                  }
+                >
                   {noteIsPinned && <span className="text-[8px] text-primary-foreground">✓</span>}
                 </div>
                 <Pin className="h-2.5 w-2.5" />
                 {t.pinned}
               </label>
-              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
-                onClick={() => setNoteIsAlert(!noteIsAlert)}>
-                <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center ${noteIsAlert ? 'bg-primary border-primary' : 'border-muted-foreground/40'}`}>
+
+              <label
+                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsAlert(!noteIsAlert)}
+              >
+                <div
+                  className={
+                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                    (noteIsAlert ? "bg-primary border-primary" : "border-muted-foreground/40")
+                  }
+                >
                   {noteIsAlert && <span className="text-[8px] text-primary-foreground">✓</span>}
                 </div>
                 <AlertTriangle className="h-2.5 w-2.5" />
@@ -568,11 +603,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
         {/* Details tab */}
         <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="flex-1 pt-2">
+          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
-              <div className="rounded-lg border border-border bg-card p-3 space-y-1">
+              <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-3">
                 {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
                 {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
                 {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
@@ -602,17 +637,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 )}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </TabsContent>
 
         {/* Tags tab */}
         <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <ScrollArea className="flex-1 pt-2">
+          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2.5 w-full p-2 rounded-lg border border-border bg-background"
+                  className="flex items-center gap-2.5 w-full p-3 rounded-xl border border-border bg-card/60 backdrop-blur-sm"
                 >
                   <span className="text-xs font-medium text-foreground flex-1">
                     {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
@@ -636,7 +671,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
               {/* Create new tag */}
               {showNewTag ? (
-                <div className="p-3 rounded-lg border border-border bg-card space-y-2.5">
+                <div className="p-3 rounded-xl border border-border bg-card/60 backdrop-blur-sm space-y-2.5">
                   <Input
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
@@ -663,7 +698,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full h-8 text-xs gap-1.5"
+                  className="w-full h-9 text-xs gap-1.5"
                   onClick={() => setShowNewTag(true)}
                 >
                   <Plus className="h-3 w-3" />
@@ -671,7 +706,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 </Button>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -720,20 +755,9 @@ function QuickStat({ label, value, warning }: { label: string; value: string; wa
   );
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{title}</h4>
-      <div className="rounded-lg border border-border bg-card p-2.5 space-y-0.5">
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
+    <div className="flex items-start gap-2.5 py-2 border-b border-border/40 last:border-b-0">
       <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
       <div>
         <p className="text-[10px] text-muted-foreground">{label}</p>
