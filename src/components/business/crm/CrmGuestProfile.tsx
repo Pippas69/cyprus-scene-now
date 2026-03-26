@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -156,6 +156,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
+
+  const [tab, setTab] = useState<"notes" | "details" | "tags">("notes");
+  const notesScrollRef = useRef<HTMLDivElement | null>(null);
+  const detailsScrollRef = useRef<HTMLDivElement | null>(null);
+  const tagsScrollRef = useRef<HTMLDivElement | null>(null);
   const [newNote, setNewNote] = useState("");
   const [noteIsPinned, setNoteIsPinned] = useState(false);
   const [noteIsAlert, setNoteIsAlert] = useState(false);
@@ -175,6 +180,20 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   useEffect(() => {
     setGuestTags(guest.tags || []);
   }, [guest.id, guest.tags]);
+
+  // Ensure each tab starts from the top (no weird preserved scroll offset)
+  useEffect(() => {
+    const el = tab === "notes" ? notesScrollRef.current : tab === "details" ? detailsScrollRef.current : tagsScrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [tab]);
+
+  // Load tags when the Tags tab is opened
+  useEffect(() => {
+    if (tab === "tags") {
+      void loadAllTags();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   const isGhost = guest.profile_type === "ghost";
   const { data: originContext } = useGhostOriginContext(
@@ -463,8 +482,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="notes" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="mx-4 mt-1 grid grid-cols-3 h-8 flex-shrink-0">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <TabsList className="mx-4 mt-2 grid grid-cols-3 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -473,16 +492,16 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             <Edit3 className="h-3 w-3" />
             {t.details}
           </TabsTrigger>
-          <TabsTrigger value="tags" className="text-xs gap-1" onClick={loadAllTags}>
+          <TabsTrigger value="tags" className="text-xs gap-1">
             <Tag className="h-3 w-3" />
             {t.tags}
           </TabsTrigger>
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-3 overflow-hidden">
+        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
           {/* Notes list (scrolls) */}
-          <div className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
+          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
@@ -521,74 +540,70 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             )}
           </div>
 
-          {/* Add note (fixed at bottom, like before) */}
-          <div className="pt-3 mt-2 border-t border-border flex-shrink-0">
-            <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-3">
-              <div className="flex items-end gap-2">
-                <Textarea
-                  placeholder={t.addNote}
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  className="text-xs min-h-[72px] resize-none bg-background/40"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddNote();
-                    }
-                  }}
-                />
-                <Button
-                  size="icon"
-                  className="h-10 w-10 flex-shrink-0"
-                  disabled={!newNote.trim() || submitting}
-                  onClick={handleAddNote}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+          {/* Add note (exactly bottom like before) */}
+          <div className="mt-2 pt-2 border-t border-border space-y-2 flex-shrink-0">
+            <div className="flex gap-2">
+              <Textarea
+                placeholder={t.addNote}
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                className="text-xs min-h-[60px] resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNote();
+                  }
+                }}
+              />
+              <Button
+                size="icon"
+                className="h-8 w-8 flex-shrink-0 self-end"
+                disabled={!newNote.trim() || submitting}
+                onClick={handleAddNote}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
 
-              <div className="flex flex-wrap gap-4 mt-3">
-                <button
-                  type="button"
-                  onClick={() => setNoteIsPinned(!noteIsPinned)}
-                  className="flex items-center gap-2 text-[10px] text-muted-foreground"
+            <div className="flex flex-wrap gap-3">
+              <label
+                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsPinned(!noteIsPinned)}
+              >
+                <div
+                  className={
+                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                    (noteIsPinned ? "bg-primary border-primary" : "border-muted-foreground/40")
+                  }
                 >
-                  <span
-                    className={
-                      "h-4 w-4 rounded border flex items-center justify-center " +
-                      (noteIsPinned ? "bg-primary border-primary" : "border-border")
-                    }
-                  >
-                    {noteIsPinned && <span className="text-[9px] text-primary-foreground">✓</span>}
-                  </span>
-                  <Pin className="h-3 w-3" />
-                  {t.pinned}
-                </button>
+                  {noteIsPinned && <span className="text-[8px] text-primary-foreground">✓</span>}
+                </div>
+                <Pin className="h-2.5 w-2.5" />
+                {t.pinned}
+              </label>
 
-                <button
-                  type="button"
-                  onClick={() => setNoteIsAlert(!noteIsAlert)}
-                  className="flex items-center gap-2 text-[10px] text-muted-foreground"
+              <label
+                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setNoteIsAlert(!noteIsAlert)}
+              >
+                <div
+                  className={
+                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                    (noteIsAlert ? "bg-primary border-primary" : "border-muted-foreground/40")
+                  }
                 >
-                  <span
-                    className={
-                      "h-4 w-4 rounded border flex items-center justify-center " +
-                      (noteIsAlert ? "bg-primary border-primary" : "border-border")
-                    }
-                  >
-                    {noteIsAlert && <span className="text-[9px] text-primary-foreground">✓</span>}
-                  </span>
-                  <AlertTriangle className="h-3 w-3" />
-                  {t.alert}
-                </button>
-              </div>
+                  {noteIsAlert && <span className="text-[8px] text-primary-foreground">✓</span>}
+                </div>
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {t.alert}
+              </label>
             </div>
           </div>
         </TabsContent>
 
         {/* Details tab */}
         <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
+          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -627,7 +642,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
         {/* Tags tab */}
         <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 px-4 pb-4 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto pt-2 pr-1">
+          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto pt-1 pr-1">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
