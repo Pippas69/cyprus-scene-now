@@ -443,6 +443,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           businessId={businessId}
         />
       )}
+
+      {/* Merge Dialog */}
+      {isGhost && (
+        <CrmGhostMergeDialog
+          open={showMergeDialog}
+          onOpenChange={setShowMergeDialog}
+          primaryGuest={guest}
+          allGuests={allGuests}
+          onSuccess={onUpdate}
+        />
+      )}
     </div>
   );
 }
