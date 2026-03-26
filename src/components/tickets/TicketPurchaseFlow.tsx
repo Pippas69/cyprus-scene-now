@@ -198,6 +198,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
    const [customerEmail, setCustomerEmail] = useState('');
    const [customerPhone, setCustomerPhone] = useState('');
    const [specialRequests, setSpecialRequests] = useState('');
+  const profileName = useProfileName(user?.id);
+
+  // Auto-fill first guest name with profile name
+  useEffect(() => {
+    if (profileName) {
+      setGuestNames(prev => {
+        if (prev.length === 0) return prev;
+        const updated = [...prev];
+        updated[0] = profileName;
+        return updated;
+      });
+    }
+  }, [profileName]);
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
