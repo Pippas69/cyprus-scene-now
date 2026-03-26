@@ -117,7 +117,7 @@ function getLoyaltyBadge(visits: number, _spendCents: number, override?: string 
   return info ? { level, ...info } : null;
 }
 
-export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest }: CrmGuestProfileProps) {
+export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
@@ -126,6 +126,14 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+
+  const isGhost = guest.profile_type === "ghost";
+  const { data: originContext } = useGhostOriginContext(
+    isGhost ? guest.guest_name : null,
+    businessId,
+    isGhost
+  );
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
