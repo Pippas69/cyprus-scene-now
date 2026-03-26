@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCrmGuests, type CrmGuest } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { CrmGuestTable } from "./CrmGuestTable";
@@ -43,6 +43,13 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
   const [segment, setSegment] = useState<Segment>("all");
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+
+  // Keep the open profile in sync after edits/refetches
+  useEffect(() => {
+    if (!selectedGuest) return;
+    const updated = guests.find((g) => g.id === selectedGuest.id);
+    if (updated && updated !== selectedGuest) setSelectedGuest(updated);
+  }, [guests, selectedGuest]);
 
   // Filter by segment
   const segmentedGuests = useMemo(() => {

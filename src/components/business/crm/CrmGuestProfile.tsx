@@ -376,7 +376,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                   )}
                 </div>
               )}
-              {guest.phone && guest.profile_type !== "ghost" && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
+              {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
               {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
               {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
               {guest.company && <DetailRow icon={Building2} label={t.company} value={guest.company} />}
