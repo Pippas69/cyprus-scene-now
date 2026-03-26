@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCrmGuests, type CrmGuest } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { CrmGuestTable } from "./CrmGuestTable";
