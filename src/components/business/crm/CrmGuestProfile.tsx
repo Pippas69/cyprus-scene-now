@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useGhostOriginContext } from "@/hooks/useGhostOriginContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +12,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   X, Star, MapPin, Phone, Mail, Cake, Instagram, Building2,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
+  Merge, Calendar, Ticket,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
 import { CrmSendMessageDialog } from "./CrmSendMessageDialog";
+import { CrmGhostMergeDialog } from "./CrmGhostMergeDialog";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
@@ -24,6 +27,7 @@ interface CrmGuestProfileProps {
   onClose: () => void;
   onUpdate: () => void;
   onUpdateGuest?: (data: { id: string } & Record<string, unknown>) => Promise<unknown>;
+  allGuests?: CrmGuest[];
 }
 
 const translations = {
@@ -56,6 +60,9 @@ const translations = {
     instagram: "Instagram",
     relationNotes: "Σχέσεις",
     broughtBy: "Προέλευση",
+    date: "Ημερομηνία",
+    event: "Εκδήλωση",
+    mergeProfiles: "Συγχώνευση",
   },
   en: {
     timeline: "Timeline",
@@ -86,6 +93,9 @@ const translations = {
     instagram: "Instagram",
     relationNotes: "Relations",
     broughtBy: "Brought by",
+    date: "Date",
+    event: "Event",
+    mergeProfiles: "Merge",
   },
 };
 
@@ -107,7 +117,7 @@ function getLoyaltyBadge(visits: number, _spendCents: number, override?: string 
   return info ? { level, ...info } : null;
 }
 
-export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest }: CrmGuestProfileProps) {
+export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
@@ -116,6 +126,14 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+
+  const isGhost = guest.profile_type === "ghost";
+  const { data: originContext } = useGhostOriginContext(
+    isGhost ? guest.guest_name : null,
+    businessId,
+    isGhost
+  );
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
@@ -172,6 +190,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {isGhost && allGuests.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowMergeDialog(true)}
+                title={t.mergeProfiles}
+              >
+                <Merge className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {guest.user_id && (
               <Button
                 variant="ghost"
@@ -314,13 +343,37 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
             <div className="space-y-2.5">
-              {guest.profile_type === "ghost" && guest.brought_by_user_id && (
-                <div className="flex items-start gap-2.5 py-1.5 px-2 rounded-lg bg-muted/50 border border-border">
-                  <Ghost className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
-                    <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
-                  </div>
+              {isGhost && (guest.brought_by_user_id || originContext) && (
+                <div className="rounded-lg bg-muted/50 border border-border p-2.5 space-y-1.5">
+                  {guest.brought_by_user_id && (
+                    <div className="flex items-center gap-2">
+                      <Ghost className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
+                        <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
+                      </div>
+                    </div>
+                  )}
+                  {(originContext?.date || guest.created_at) && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.date}</p>
+                        <p className="text-xs text-foreground">
+                          {format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {originContext?.eventTitle && (
+                    <div className="flex items-center gap-2">
+                      <Ticket className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">{t.event}</p>
+                        <p className="text-xs text-foreground">{originContext.eventTitle}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {guest.phone && guest.profile_type !== "ghost" && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
@@ -388,6 +441,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           guestName={guest.guest_name}
           guestId={guest.id}
           businessId={businessId}
+        />
+      )}
+
+      {/* Merge Dialog */}
+      {isGhost && (
+        <CrmGhostMergeDialog
+          open={showMergeDialog}
+          onOpenChange={setShowMergeDialog}
+          primaryGuest={guest}
+          allGuests={allGuests}
+          onSuccess={onUpdate}
         />
       )}
     </div>

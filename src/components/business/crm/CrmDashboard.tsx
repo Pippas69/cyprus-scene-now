@@ -167,6 +167,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
               onClose={() => setSelectedGuest(null)}
               onUpdate={() => refetch()}
               onUpdateGuest={updateGuest}
+              allGuests={guests}
             />
           )}
         </SheetContent>
