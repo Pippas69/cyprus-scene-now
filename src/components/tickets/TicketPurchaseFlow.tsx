@@ -299,12 +299,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
-  // Sync guest name fields
+  // Sync guest name fields — preserve slot 0 if profileName is set
   useEffect(() => {
     setGuestNames(prev => {
       if (prev.length === totalTickets) return prev;
       if (prev.length < totalTickets) {
-        return [...prev, ...Array(totalTickets - prev.length).fill('')];
+        const extended = [...prev, ...Array(totalTickets - prev.length).fill('')];
+        if (profileName && extended.length > 0) extended[0] = profileName;
+        return extended;
       }
       return prev.slice(0, totalTickets);
     });
@@ -315,7 +317,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
-  }, [totalTickets]);
+  }, [totalTickets, profileName]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = ticketTiers.find(t => t.id === tierId);
