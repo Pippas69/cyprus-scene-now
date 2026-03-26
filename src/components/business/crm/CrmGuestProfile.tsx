@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type CrmGuest, useCrmGuestNotes } from "@/hooks/useCrmGuests";
+import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useGhostOriginContext } from "@/hooks/useGhostOriginContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,10 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  X, Star, MapPin, Phone, Mail, Cake, Instagram, Building2,
+  X, Star, Phone, Mail, Cake,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
-  Merge, Calendar, Ticket,
+  Merge, Calendar, Ticket, UtensilsCrossed, Armchair, Wine, Music, Heart,
+  Plus, Lock,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
@@ -50,19 +54,32 @@ const translations = {
     noNotes: "Δεν υπάρχουν σημειώσεις",
     alert: "Ειδοποίηση",
     pinned: "Καρφιτσωμένο",
+    privateLbl: "Ιδιωτική",
     phone: "Τηλέφωνο",
     email: "Email",
     birthday: "Γενέθλια",
-    company: "Εταιρεία",
+    allergies: "Αλλεργίες",
     dietary: "Διατροφικές",
+    seating: "Προτίμηση θέσης",
     drinks: "Ποτά",
+    food: "Φαγητά",
     music: "Μουσική",
-    instagram: "Instagram",
-    relationNotes: "Σχέσεις",
+    relationNotes: "Πληροφορίες σχέσης",
     broughtBy: "Προέλευση",
     date: "Ημερομηνία",
     event: "Εκδήλωση",
     mergeProfiles: "Συγχώνευση",
+    sectionContact: "Επικοινωνία",
+    sectionAllergyDiet: "Αλλεργίες & Διατροφή",
+    sectionPrefs: "Προτιμήσεις",
+    sectionRelation: "Πληροφορίες σχέσης",
+    sectionOrigin: "Προέλευση",
+    noDetails: "Δεν υπάρχουν λεπτομέρειες — επεξεργαστείτε το προφίλ",
+    noTags: "Δεν υπάρχουν tags",
+    addTag: "Νέο tag",
+    tagName: "Όνομα tag",
+    create: "Δημιουργία",
+    assignTags: "Επιλέξτε tags για αυτόν τον πελάτη",
   },
   en: {
     timeline: "Timeline",
@@ -83,19 +100,32 @@ const translations = {
     noNotes: "No notes yet",
     alert: "Alert",
     pinned: "Pinned",
+    privateLbl: "Private",
     phone: "Phone",
     email: "Email",
     birthday: "Birthday",
-    company: "Company",
+    allergies: "Allergies",
     dietary: "Dietary",
+    seating: "Seating",
     drinks: "Drinks",
+    food: "Food",
     music: "Music",
-    instagram: "Instagram",
-    relationNotes: "Relations",
+    relationNotes: "Relationship info",
     broughtBy: "Brought by",
     date: "Date",
     event: "Event",
     mergeProfiles: "Merge",
+    sectionContact: "Contact",
+    sectionAllergyDiet: "Allergies & Diet",
+    sectionPrefs: "Preferences",
+    sectionRelation: "Relationship info",
+    sectionOrigin: "Origin",
+    noDetails: "No details — edit the profile to add",
+    noTags: "No tags",
+    addTag: "New tag",
+    tagName: "Tag name",
+    create: "Create",
+    assignTags: "Select tags for this guest",
   },
 };
 
@@ -117,16 +147,29 @@ function getLoyaltyBadge(visits: number, _spendCents: number, override?: string 
   return info ? { level, ...info } : null;
 }
 
+const TAG_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
+
 export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdateGuest, allGuests = [] }: CrmGuestProfileProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
   const [newNote, setNewNote] = useState("");
+  const [noteIsPinned, setNoteIsPinned] = useState(false);
+  const [noteIsAlert, setNoteIsAlert] = useState(false);
+  const [noteIsPrivate, setNoteIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
+
+  // Tags state
+  const [allTags, setAllTags] = useState<CrmGuestTag[]>([]);
+  const [tagsLoaded, setTagsLoaded] = useState(false);
+  const [showNewTag, setShowNewTag] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState(TAG_COLORS[0]);
+  const [savingTag, setSavingTag] = useState(false);
 
   const isGhost = guest.profile_type === "ghost";
   const { data: originContext } = useGhostOriginContext(
@@ -137,6 +180,10 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
   const initials = guest.guest_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
   const loyalty = getLoyaltyBadge(guest.total_visits, guest.total_spend_cents, guest.vip_level_override);
+
+  // Find pinned and alert notes for the quick stats zone
+  const pinnedNotes = notes.filter((n) => n.is_pinned);
+  const alertNotes = notes.filter((n) => n.is_alert);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -149,14 +196,88 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         business_id: businessId,
         author_id: user.id,
         content: newNote.trim(),
+        is_pinned: noteIsPinned,
+        is_alert: noteIsAlert,
       });
       setNewNote("");
+      setNoteIsPinned(false);
+      setNoteIsAlert(false);
+      setNoteIsPrivate(false);
       toast.success(language === "el" ? "Σημείωση αποθηκεύτηκε" : "Note saved");
     } catch {
       toast.error(language === "el" ? "Σφάλμα" : "Error");
     }
     setSubmitting(false);
   };
+
+  // Load all business tags for the tags tab
+  const loadAllTags = async () => {
+    if (tagsLoaded) return;
+    const { data } = await supabase
+      .from("crm_guest_tags")
+      .select("id, name, color, emoji, is_system")
+      .eq("business_id", businessId)
+      .order("name");
+    setAllTags((data || []) as CrmGuestTag[]);
+    setTagsLoaded(true);
+  };
+
+  const isTagAssigned = (tagId: string) => guest.tags.some((t) => t.id === tagId);
+
+  const toggleTag = async (tagId: string) => {
+    try {
+      if (isTagAssigned(tagId)) {
+        await supabase
+          .from("crm_guest_tag_assignments")
+          .delete()
+          .eq("guest_id", guest.id)
+          .eq("tag_id", tagId);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase
+          .from("crm_guest_tag_assignments")
+          .insert({ guest_id: guest.id, tag_id: tagId, assigned_by: user?.id || null });
+      }
+      onUpdate();
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+  };
+
+  const createTag = async () => {
+    if (!newTagName.trim()) return;
+    setSavingTag(true);
+    try {
+      const { data, error } = await supabase
+        .from("crm_guest_tags")
+        .insert({ business_id: businessId, name: newTagName.trim(), color: newTagColor })
+        .select()
+        .single();
+      if (error) throw error;
+      // Auto-assign to current guest
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase
+        .from("crm_guest_tag_assignments")
+        .insert({ guest_id: guest.id, tag_id: data.id, assigned_by: user?.id || null });
+      setNewTagName("");
+      setShowNewTag(false);
+      setTagsLoaded(false);
+      onUpdate();
+      toast.success(language === "el" ? "Tag δημιουργήθηκε" : "Tag created");
+    } catch {
+      toast.error(language === "el" ? "Σφάλμα" : "Error");
+    }
+    setSavingTag(false);
+  };
+
+  // Build details data
+  const g = guest as any;
+  const hasContact = guest.phone || guest.email || guest.birthday;
+  const hasAllergy = g.allergies?.length > 0 || guest.dietary_preferences?.length > 0;
+  const hasPrefs = g.seating_preferences || guest.drink_preferences || g.food_preferences || guest.music_preferences;
+  const hasRelation = guest.relationship_notes;
+  const hasOrigin = isGhost && (guest.brought_by_user_id || originContext);
+  const hasAnyDetails = hasContact || hasAllergy || hasPrefs || hasRelation || hasOrigin;
 
   return (
     <div className="flex flex-col h-full">
@@ -262,6 +383,28 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             ))}
           </div>
         )}
+
+        {/* Alert & Pinned notes indicators */}
+        {alertNotes.length > 0 && (
+          <div className="mt-2.5 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
+            {alertNotes.map((n) => (
+              <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
+                <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0 mt-0.5" />
+                <span className="text-destructive font-medium">{n.content}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {pinnedNotes.filter((n) => !n.is_alert).length > 0 && (
+          <div className="mt-1.5 p-2 rounded-lg border border-primary/20 bg-primary/5">
+            {pinnedNotes.filter((n) => !n.is_alert).map((n) => (
+              <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
+                <Pin className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-foreground">{n.content}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -275,7 +418,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             <Edit3 className="h-3 w-3" />
             {t.details}
           </TabsTrigger>
-          <TabsTrigger value="tags" className="text-xs gap-1">
+          <TabsTrigger value="tags" className="text-xs gap-1" onClick={loadAllTags}>
             <Tag className="h-3 w-3" />
             {t.tags}
           </TabsTrigger>
@@ -301,7 +444,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       {note.is_alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
-                      {note.is_pinned && <Pin className="h-3 w-3 text-primary" />}
+                      {note.is_pinned && !note.is_alert && <Pin className="h-3 w-3 text-primary" />}
+                      {note.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
                       <Badge variant="outline" className="text-[8px] h-3.5 px-1">{note.category}</Badge>
                       <span className="text-[9px] text-muted-foreground ml-auto">
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
@@ -315,107 +459,212 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </ScrollArea>
 
           {/* Add note input */}
-          <div className="flex gap-2 mt-2 pt-2 border-t border-border">
-            <Textarea
-              placeholder={t.addNote}
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              className="text-xs min-h-[60px] resize-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddNote();
-                }
-              }}
-            />
-            <Button
-              size="icon"
-              className="h-8 w-8 flex-shrink-0 self-end"
-              disabled={!newNote.trim() || submitting}
-              onClick={handleAddNote}
-            >
-              <Send className="h-3.5 w-3.5" />
-            </Button>
+          <div className="mt-2 pt-2 border-t border-border space-y-2">
+            <div className="flex gap-2">
+              <Textarea
+                placeholder={t.addNote}
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                className="text-xs min-h-[60px] resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNote();
+                  }
+                }}
+              />
+              <Button
+                size="icon"
+                className="h-8 w-8 flex-shrink-0 self-end"
+                disabled={!newNote.trim() || submitting}
+                onClick={handleAddNote}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {/* Note options */}
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={noteIsPinned}
+                  onCheckedChange={(v) => setNoteIsPinned(!!v)}
+                  className="h-3.5 w-3.5"
+                />
+                <Pin className="h-2.5 w-2.5" />
+                {t.pinned}
+              </label>
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={noteIsAlert}
+                  onCheckedChange={(v) => setNoteIsAlert(!!v)}
+                  className="h-3.5 w-3.5"
+                />
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {t.alert}
+              </label>
+              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                <Checkbox
+                  checked={noteIsPrivate}
+                  onCheckedChange={(v) => setNoteIsPrivate(!!v)}
+                  className="h-3.5 w-3.5"
+                />
+                <Lock className="h-2.5 w-2.5" />
+                {t.privateLbl}
+              </label>
+            </div>
           </div>
         </TabsContent>
 
         {/* Details tab */}
         <TabsContent value="details" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
-            <div className="space-y-2.5">
-              {isGhost && (guest.brought_by_user_id || originContext) && (
-                <div className="rounded-lg bg-muted/50 border border-border p-2.5 space-y-1.5">
-                  {guest.brought_by_user_id && (
-                    <div className="flex items-center gap-2">
-                      <Ghost className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">{t.broughtBy}</p>
-                        <p className="text-xs font-medium text-foreground">{guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")}</p>
+            {!hasAnyDetails ? (
+              <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
+            ) : (
+              <div className="space-y-4">
+                {/* Contact */}
+                {hasContact && (
+                  <DetailSection title={t.sectionContact}>
+                    {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
+                    {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
+                    {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
+                  </DetailSection>
+                )}
+
+                {/* Allergies & Diet */}
+                {hasAllergy && (
+                  <DetailSection title={t.sectionAllergyDiet}>
+                    {g.allergies?.length > 0 && (
+                      <div className="flex items-start gap-2.5 py-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-destructive font-medium">{t.allergies}</p>
+                          <p className="text-xs text-foreground">{g.allergies.join(", ")}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {(originContext?.date || guest.created_at) && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">{t.date}</p>
-                        <p className="text-xs text-foreground">
-                          {format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {originContext?.eventTitle && (
-                    <div className="flex items-center gap-2">
-                      <Ticket className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">{t.event}</p>
-                        <p className="text-xs text-foreground">{originContext.eventTitle}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {guest.phone && <DetailRow icon={Phone} label={t.phone} value={guest.phone} />}
-              {guest.email && <DetailRow icon={Mail} label={t.email} value={guest.email} />}
-              {guest.birthday && <DetailRow icon={Cake} label={t.birthday} value={format(new Date(guest.birthday), "dd MMMM", { locale })} />}
-              {guest.company && <DetailRow icon={Building2} label={t.company} value={guest.company} />}
-              {guest.instagram_handle && <DetailRow icon={Instagram} label={t.instagram} value={`@${guest.instagram_handle}`} />}
-              {guest.dietary_preferences?.length ? <DetailRow icon={Tag} label={t.dietary} value={guest.dietary_preferences.join(", ")} /> : null}
-              {guest.drink_preferences && <DetailRow icon={Tag} label={t.drinks} value={guest.drink_preferences} />}
-              {guest.music_preferences && <DetailRow icon={Tag} label={t.music} value={guest.music_preferences} />}
-              {guest.relationship_notes && <DetailRow icon={Tag} label={t.relationNotes} value={guest.relationship_notes} />}
-            </div>
+                    )}
+                    {guest.dietary_preferences?.length ? (
+                      <DetailRow icon={UtensilsCrossed} label={t.dietary} value={guest.dietary_preferences.join(", ")} />
+                    ) : null}
+                  </DetailSection>
+                )}
+
+                {/* Preferences */}
+                {hasPrefs && (
+                  <DetailSection title={t.sectionPrefs}>
+                    {g.seating_preferences && <DetailRow icon={Armchair} label={t.seating} value={g.seating_preferences} />}
+                    {guest.drink_preferences && <DetailRow icon={Wine} label={t.drinks} value={guest.drink_preferences} />}
+                    {g.food_preferences && <DetailRow icon={UtensilsCrossed} label={t.food} value={g.food_preferences} />}
+                    {guest.music_preferences && <DetailRow icon={Music} label={t.music} value={guest.music_preferences} />}
+                  </DetailSection>
+                )}
+
+                {/* Relationship */}
+                {hasRelation && (
+                  <DetailSection title={t.sectionRelation}>
+                    <DetailRow icon={Heart} label={t.relationNotes} value={guest.relationship_notes!} />
+                  </DetailSection>
+                )}
+
+                {/* Origin (ghosts) */}
+                {hasOrigin && (
+                  <DetailSection title={t.sectionOrigin}>
+                    {guest.brought_by_user_id && (
+                      <DetailRow icon={Ghost} label={t.broughtBy} value={guest.brought_by_name || (language === "el" ? "Άγνωστος" : "Unknown")} />
+                    )}
+                    {(originContext?.date || guest.created_at) && (
+                      <DetailRow icon={Calendar} label={t.date} value={format(new Date(originContext?.date || guest.created_at), "dd MMMM yyyy", { locale })} />
+                    )}
+                    {originContext?.eventTitle && (
+                      <DetailRow icon={Ticket} label={t.event} value={originContext.eventTitle} />
+                    )}
+                  </DetailSection>
+                )}
+              </div>
+            )}
           </ScrollArea>
         </TabsContent>
 
         {/* Tags tab */}
         <TabsContent value="tags" className="flex-1 min-h-0 mt-0 px-4 pb-4">
           <ScrollArea className="h-full mt-2">
-            <div className="space-y-2">
-              {guest.tags.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-6">
-                  {language === "el" ? "Δεν υπάρχουν tags" : "No tags"}
-                </p>
-              ) : (
-                guest.tags.map((tag) => (
+            <div className="space-y-3">
+              {allTags.length > 0 && (
+                <p className="text-[10px] text-muted-foreground">{t.assignTags}</p>
+              )}
+
+              {allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => toggleTag(tag.id)}
+                  className={`flex items-center gap-2.5 w-full p-2.5 rounded-lg border text-left transition-colors ${
+                    isTagAssigned(tag.id)
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-card hover:bg-muted/50"
+                  }`}
+                >
                   <div
-                    key={tag.id}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-border"
-                  >
-                    <div
-                      className="h-3 w-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="text-xs font-medium text-foreground">
-                      {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
-                      {tag.name}
-                    </span>
-                    <Badge variant="outline" className="text-[8px] h-3.5 px-1 ml-auto">
-                      {tag.is_system ? "Auto" : "Custom"}
-                    </Badge>
+                    className="h-3.5 w-3.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: tag.color }}
+                  />
+                  <span className="text-xs font-medium text-foreground flex-1">
+                    {tag.emoji && <span className="mr-1">{tag.emoji}</span>}
+                    {tag.name}
+                  </span>
+                  {isTagAssigned(tag.id) && (
+                    <Badge className="text-[8px] h-3.5 px-1 bg-primary text-primary-foreground">✓</Badge>
+                  )}
+                  {tag.is_system && (
+                    <Badge variant="outline" className="text-[8px] h-3.5 px-1">Auto</Badge>
+                  )}
+                </button>
+              ))}
+
+              {allTags.length === 0 && !showNewTag && (
+                <p className="text-xs text-muted-foreground text-center py-4">{t.noTags}</p>
+              )}
+
+              {/* Create new tag */}
+              {showNewTag ? (
+                <div className="p-3 rounded-lg border border-border bg-card space-y-2.5">
+                  <Input
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    placeholder={t.tagName}
+                    className="h-8 text-xs"
+                    autoFocus
+                  />
+                  <div className="flex gap-1.5">
+                    {TAG_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setNewTagColor(c)}
+                        className={`h-5 w-5 rounded-full border-2 transition-transform ${
+                          newTagColor === c ? "border-foreground scale-110" : "border-transparent"
+                        }`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
                   </div>
-                ))
+                  <div className="flex gap-2">
+                    <Button size="sm" className="h-7 text-xs flex-1" onClick={createTag} disabled={!newTagName.trim() || savingTag}>
+                      {t.create}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowNewTag(false)}>
+                      {t.details === "Λεπτομέρειες" ? "Ακύρωση" : "Cancel"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs gap-1.5"
+                  onClick={() => setShowNewTag(true)}
+                >
+                  <Plus className="h-3 w-3" />
+                  {t.addTag}
+                </Button>
               )}
             </div>
           </ScrollArea>
@@ -463,6 +712,17 @@ function QuickStat({ label, value, warning }: { label: string; value: string; wa
     <div className="rounded-lg border border-border p-2 text-center">
       <p className={`text-base font-bold ${warning ? "text-destructive" : "text-foreground"}`}>{value}</p>
       <p className="text-[9px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{title}</h4>
+      <div className="rounded-lg border border-border bg-card p-2.5 space-y-0.5">
+        {children}
+      </div>
     </div>
   );
 }

@@ -1334,6 +1334,7 @@ export type Database = {
       }
       crm_guests: {
         Row: {
+          allergies: string[] | null
           anniversary: string | null
           birthday: string | null
           brought_by_user_id: string | null
@@ -1344,6 +1345,7 @@ export type Database = {
           dietary_preferences: string[] | null
           drink_preferences: string | null
           email: string | null
+          food_preferences: string | null
           guest_name: string
           id: string
           instagram_handle: string | null
@@ -1353,11 +1355,13 @@ export type Database = {
           phone: string | null
           profile_type: string
           relationship_notes: string | null
+          seating_preferences: string | null
           updated_at: string
           user_id: string | null
           vip_level_override: string | null
         }
         Insert: {
+          allergies?: string[] | null
           anniversary?: string | null
           birthday?: string | null
           brought_by_user_id?: string | null
@@ -1368,6 +1372,7 @@ export type Database = {
           dietary_preferences?: string[] | null
           drink_preferences?: string | null
           email?: string | null
+          food_preferences?: string | null
           guest_name: string
           id?: string
           instagram_handle?: string | null
@@ -1377,11 +1382,13 @@ export type Database = {
           phone?: string | null
           profile_type?: string
           relationship_notes?: string | null
+          seating_preferences?: string | null
           updated_at?: string
           user_id?: string | null
           vip_level_override?: string | null
         }
         Update: {
+          allergies?: string[] | null
           anniversary?: string | null
           birthday?: string | null
           brought_by_user_id?: string | null
@@ -1392,6 +1399,7 @@ export type Database = {
           dietary_preferences?: string[] | null
           drink_preferences?: string | null
           email?: string | null
+          food_preferences?: string | null
           guest_name?: string
           id?: string
           instagram_handle?: string | null
@@ -1401,6 +1409,7 @@ export type Database = {
           phone?: string | null
           profile_type?: string
           relationship_notes?: string | null
+          seating_preferences?: string | null
           updated_at?: string
           user_id?: string | null
           vip_level_override?: string | null
