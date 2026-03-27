@@ -837,3 +837,44 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
     </div>
   );
 }
+
+function EditableInlineField({ prefix, label, value, placeholder, editable, onSave }: {
+  prefix: string; label: string; value: string; placeholder?: string; editable?: boolean; onSave?: (val: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editVal, setEditVal] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setEditVal(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  const handleSave = () => {
+    setEditing(false);
+    if (editVal !== value && onSave) onSave(editVal);
+  };
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        {prefix} {label}:
+        <input
+          ref={inputRef}
+          className="w-12 text-[10px] bg-transparent border-b border-primary outline-none text-foreground"
+          value={editVal}
+          onChange={(e) => setEditVal(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") { setEditVal(value); setEditing(false); } }}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={editable ? "cursor-pointer hover:text-foreground transition-colors" : ""}
+      onClick={() => { if (editable) setEditing(true); }}
+    >
+      {prefix} {label}: {value || placeholder}
+    </span>
+  );
+}
