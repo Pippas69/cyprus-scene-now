@@ -441,43 +441,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           )}
         </div>
 
-        {/* Tags */}
-        {guestTags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2.5">
-            {guestTags.map((tag) => (
-              <Badge
-                key={tag.id}
-                variant="outline"
-                className="text-[9px] px-1.5 py-0 h-4 bg-background border-border text-foreground"
-              >
-                {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
 
-        {/* Pinned & Alert notes indicators — between tags and email */}
-        {alertNotes.length > 0 && (
-          <div className="mt-2 p-2 rounded-lg border border-destructive/30 bg-destructive/5">
-            {alertNotes.map((n) => (
-              <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
-                <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0 mt-0.5" />
-                <span className="text-destructive font-medium">{n.content}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {pinnedNotes.filter((n) => !n.is_alert).length > 0 && (
-          <div className="mt-1.5 p-2 rounded-lg border border-primary/20 bg-primary/5">
-            {pinnedNotes.filter((n) => !n.is_alert).map((n) => (
-              <div key={n.id} className="flex items-start gap-1.5 text-[10px]">
-                <Pin className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-foreground">{n.content}</span>
-              </div>
-            ))}
-          </div>
-        )}
+
 
         {/* Email */}
         {guest.email && (

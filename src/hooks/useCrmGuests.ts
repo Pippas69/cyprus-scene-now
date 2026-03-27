@@ -36,6 +36,7 @@ export interface CrmGuest {
   // Joined data
   tags: CrmGuestTag[];
   notes_count: number;
+  pinned_notes: { id: string; content: string; is_pinned: boolean; is_alert: boolean }[];
   brought_by_name: string | null;
 }
 
@@ -92,7 +93,7 @@ export function useCrmGuests(businessId: string | null) {
         guests.filter((g: any) => g.brought_by_user_id).map((g: any) => g.brought_by_user_id as string)
       )];
 
-      const [tagAssignmentsRes, notesDataRes, broughtByRes] = await Promise.all([
+      const [tagAssignmentsRes, notesDataRes, pinnedNotesRes, broughtByRes] = await Promise.all([
         supabase
           .from("crm_guest_tag_assignments")
           .select("guest_id, crm_guest_tags(id, name, color, emoji, is_system)")
@@ -101,6 +102,11 @@ export function useCrmGuests(businessId: string | null) {
           .from("crm_guest_notes")
           .select("guest_id")
           .eq("business_id", businessId),
+        supabase
+          .from("crm_guest_notes")
+          .select("id, guest_id, content, is_pinned, is_alert")
+          .eq("business_id", businessId)
+          .or("is_pinned.eq.true,is_alert.eq.true"),
         // Resolve booker names from crm_guests (same business) instead of profiles to avoid RLS issues
         broughtByIds.length > 0
           ? supabase.from("crm_guests").select("user_id, guest_name").eq("business_id", businessId).in("user_id", broughtByIds).eq("profile_type", "registered")
@@ -144,6 +150,15 @@ export function useCrmGuests(businessId: string | null) {
         }
       }
 
+      const pinnedNotesMap = new Map<string, { id: string; content: string; is_pinned: boolean; is_alert: boolean }[]>();
+      if (pinnedNotesRes.data) {
+        for (const n of pinnedNotesRes.data) {
+          const existing = pinnedNotesMap.get(n.guest_id) || [];
+          existing.push({ id: n.id, content: n.content, is_pinned: n.is_pinned, is_alert: n.is_alert });
+          pinnedNotesMap.set(n.guest_id, existing);
+        }
+      }
+
       return guests.map((g): CrmGuest => {
         const stats = statsMap.get(g.id) || {};
         const broughtById = (g as any).brought_by_user_id as string | null;
@@ -162,6 +177,7 @@ export function useCrmGuests(businessId: string | null) {
           total_reservations: Number(stats.total_reservations || 0),
           tags: tagMap.get(g.id) || [],
           notes_count: notesCountMap.get(g.id) || 0,
+          pinned_notes: pinnedNotesMap.get(g.id) || [],
           brought_by_name: broughtById ? (broughtByNameMap.get(broughtById) || null) : null,
         };
       });
