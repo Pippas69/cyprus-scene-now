@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Ghost } from "lucide-react";
+import { MessageSquare, Ghost, AlertTriangle, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
@@ -29,6 +29,7 @@ const translations = {
     tags: "Tags",
     email: "Email",
     table: "Τραπέζι",
+    notes: "Σημειώσεις",
     never: "Ποτέ",
     ghost: "Ghost",
   },
@@ -41,6 +42,7 @@ const translations = {
     tags: "Tags",
     email: "Email",
     table: "Table",
+    notes: "Notes",
     never: "Never",
     ghost: "Ghost",
   },
