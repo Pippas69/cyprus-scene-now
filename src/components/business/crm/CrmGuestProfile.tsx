@@ -487,11 +487,10 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                     const firstGeneralIdx = sorted.findIndex(n => !n.is_pinned && !n.is_alert);
                     const hasGeneral = firstGeneralIdx !== -1;
 
-                    return sorted.map((note, idx) => (
+                    return sorted.map((note, idx) => {
+                      const isGeneral = !note.is_pinned && !note.is_alert;
+                      return (
                       <React.Fragment key={note.id}>
-                        {hasGeneral && idx === firstGeneralIdx && (
-                          <p className="text-[10px] text-muted-foreground/50 pt-2 pb-0.5 px-1">{language === 'el' ? 'Γενικά' : 'General'}</p>
-                        )}
                         <div
                           className={
                             "rounded-lg border p-3 text-xs " +
@@ -505,6 +504,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                           <div className="flex items-center gap-2 mb-2">
                             {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
                             {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
+                            {isGeneral && (
+                              <span className="text-[10px] text-muted-foreground/50">{language === 'el' ? 'Γενικά' : 'General'}</span>
+                            )}
                             
                             <span className="text-[9px] text-muted-foreground ml-auto">
                               {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
@@ -520,7 +522,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                           <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
                         </div>
                       </React.Fragment>
-                    ));
+                      );
+                    });
+
                   })()}
                 </div>
               )}
