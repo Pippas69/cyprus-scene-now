@@ -679,7 +679,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               ))}
 
               {allTags.length === 0 && !showNewTag && (
-                <p className="text-xs text-muted-foreground text-center pt-2 pb-4">{t.noTags}</p>
+                <p className="text-xs text-muted-foreground text-center mt-[2cm] pb-4">{t.noTags}</p>
               )}
 
               {/* Create new tag */}
