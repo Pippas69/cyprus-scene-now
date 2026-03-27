@@ -188,6 +188,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
           onExportSelected={handleExportSelected}
           onAddTag={() => setBulkTagMode("add")}
           onRemoveTag={() => setBulkTagMode("remove")}
+          onSendMessage={() => setShowBulkMessage(true)}
         />
       ) : (
         <div className="px-3 sm:px-4 pt-3 pb-2 space-y-2">
