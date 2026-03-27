@@ -302,6 +302,14 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
           clearSelection();
         }}
       />
+
+      {/* Bulk Send Message Dialog */}
+      <CrmBulkSendMessageDialog
+        open={showBulkMessage}
+        onOpenChange={setShowBulkMessage}
+        guests={sortedGuests.filter((g) => selectedIds.has(g.id))}
+        businessId={businessId}
+      />
     </div>
   );
 }
