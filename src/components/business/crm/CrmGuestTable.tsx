@@ -84,7 +84,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
           <TableHead className="text-right w-24">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.spend}</span>
           </TableHead>
-          <TableHead className="text-center w-20">
+          <TableHead className="text-center w-20 whitespace-nowrap">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.noShows}</span>
           </TableHead>
           {floorPlanEnabled && (
