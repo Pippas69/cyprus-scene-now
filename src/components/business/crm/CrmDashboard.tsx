@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useCrmGuests, type CrmGuest } from "@/hooks/useCrmGuests";
 import { useRealtimeCrm } from "@/hooks/useRealtimeCrm";
 import { useLanguage } from "@/hooks/useLanguage";
-import { CrmGuestTable } from "./CrmGuestTable";
+import { CrmGuestTable, type SortColumn, type SortConfig } from "./CrmGuestTable";
 import { CrmGuestProfile } from "./CrmGuestProfile";
-import { CrmSegmentDropdown } from "./CrmSegmentDropdown";
+import { CrmSegmentDropdown, type Segment, type DataFilter } from "./CrmSegmentDropdown";
 import { CrmAddGuestDialog } from "./CrmAddGuestDialog";
 import { CrmBulkActionBar } from "./CrmBulkActionBar";
 import { CrmBulkSendMessageDialog } from "./CrmBulkSendMessageDialog";
@@ -21,8 +21,6 @@ interface CrmDashboardProps {
   businessId: string;
   floorPlanEnabled?: boolean;
 }
-
-type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
 
 const translations = {
   el: {
@@ -52,7 +50,6 @@ function downloadXlsx(guests: CrmGuest[], filename: string) {
     "Email": g.email || "",
   }));
   const ws = XLSX.utils.json_to_sheet(data);
-  // Set column widths
   ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 35 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Πελάτες");
@@ -67,6 +64,8 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
 
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
+  const [activeFilters, setActiveFilters] = useState<Set<DataFilter>>(new Set());
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "visits", direction: "desc" });
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -83,67 +82,108 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
     if (updated && updated !== selectedGuest) setSelectedGuest(updated);
   }, [guests, selectedGuest]);
 
+  const handleSort = useCallback((column: SortColumn) => {
+    setSortConfig((prev) => ({
+      column,
+      direction: prev.column === column && prev.direction === "desc" ? "asc" : "desc",
+    }));
+  }, []);
+
+  const handleToggleFilter = useCallback((filter: DataFilter) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(filter)) next.delete(filter);
+      else next.add(filter);
+      return next;
+    });
+  }, []);
+
   // Filter by segment
   const segmentedGuests = useMemo(() => {
     const now = Date.now();
     return guests.filter((g) => {
       switch (segment) {
-        case "vip":
-          return g.total_visits >= 5 && g.total_spend_cents >= 30000;
         case "regulars":
           return g.total_visits >= 3;
         case "new":
           return g.total_visits <= 1;
         case "at_risk": {
-          if (!g.last_visit) return false;
-          const days = (now - new Date(g.last_visit).getTime()) / (1000 * 60 * 60 * 24);
-          return days >= 30 && days < 90;
-        }
-        case "churned": {
           if (!g.last_visit) return g.total_visits > 0;
           const days = (now - new Date(g.last_visit).getTime()) / (1000 * 60 * 60 * 24);
-          return days >= 90;
+          return days >= 30;
         }
         case "no_show_risk":
           return g.total_no_shows >= 2;
         case "high_spenders":
           return g.total_spend_cents >= 10000;
-        case "birthday_week": {
-          if (!g.birthday) return false;
-          const bday = new Date(g.birthday);
-          const today = new Date();
-          const thisYear = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
-          const diff = (thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
-          return diff >= -1 && diff <= 7;
-        }
         default:
           return true;
       }
     });
   }, [guests, segment]);
 
+  // Apply data filters
+  const dataFilteredGuests = useMemo(() => {
+    if (activeFilters.size === 0) return segmentedGuests;
+    return segmentedGuests.filter((g) => {
+      for (const f of activeFilters) {
+        switch (f) {
+          case "has_table":
+            if (!g.favorite_table) return false;
+            break;
+          case "has_notes":
+            if (g.notes_count <= 0) return false;
+            break;
+          case "has_tags":
+            if (g.tags.length === 0) return false;
+            break;
+          case "has_email":
+            if (!g.email) return false;
+            break;
+          case "has_phone":
+            if (!g.phone) return false;
+            break;
+        }
+      }
+      return true;
+    });
+  }, [segmentedGuests, activeFilters]);
+
   // Search filter
   const filteredGuests = useMemo(() => {
-    if (!search.trim()) return segmentedGuests;
+    if (!search.trim()) return dataFilteredGuests;
     const q = search.toLowerCase();
-    return segmentedGuests.filter(
+    return dataFilteredGuests.filter(
       (g) =>
         g.guest_name.toLowerCase().includes(q) ||
         g.email?.toLowerCase().includes(q) ||
         g.phone?.includes(q)
     );
-  }, [segmentedGuests, search]);
+  }, [dataFilteredGuests, search]);
 
-  // Fixed multi-criteria sort
+  // Dynamic sort
   const sortedGuests = useMemo(() => {
     return [...filteredGuests].sort((a, b) => {
-      if (b.total_visits !== a.total_visits) return b.total_visits - a.total_visits;
-      if (b.total_spend_cents !== a.total_spend_cents) return b.total_spend_cents - a.total_spend_cents;
-      const aTime = a.last_visit ? new Date(a.last_visit).getTime() : 0;
-      const bTime = b.last_visit ? new Date(b.last_visit).getTime() : 0;
-      return bTime - aTime;
+      const dir = sortConfig.direction === "desc" ? -1 : 1;
+      switch (sortConfig.column) {
+        case "name":
+          return dir * a.guest_name.localeCompare(b.guest_name);
+        case "visits":
+          return dir * (a.total_visits - b.total_visits);
+        case "last_visit": {
+          const aTime = a.last_visit ? new Date(a.last_visit).getTime() : 0;
+          const bTime = b.last_visit ? new Date(b.last_visit).getTime() : 0;
+          return dir * (aTime - bTime);
+        }
+        case "spend":
+          return dir * (a.total_spend_cents - b.total_spend_cents);
+        case "no_shows":
+          return dir * (a.total_no_shows - b.total_no_shows);
+        default:
+          return 0;
+      }
     });
-  }, [filteredGuests]);
+  }, [filteredGuests, sortConfig]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -195,7 +235,12 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
       ) : (
         <div className="px-3 sm:px-4 pt-3 pb-2 space-y-2">
           <div className="flex items-center gap-2">
-            <CrmSegmentDropdown segment={segment} onSegmentChange={setSegment} />
+            <CrmSegmentDropdown
+              segment={segment}
+              onSegmentChange={setSegment}
+              activeFilters={activeFilters}
+              onToggleFilter={handleToggleFilter}
+            />
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
@@ -259,6 +304,8 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onToggleSelectAll={toggleSelectAll}
+            sortConfig={sortConfig}
+            onSort={handleSort}
           />
         )}
       </div>

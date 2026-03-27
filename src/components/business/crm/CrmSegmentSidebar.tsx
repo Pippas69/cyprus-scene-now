@@ -1,8 +1,7 @@
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
-import { Users, Star, RefreshCw, UserPlus, AlertTriangle, Skull, XCircle, DollarSign, Cake } from "lucide-react";
-
-type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
+import { Users, RefreshCw, UserPlus, AlertTriangle, XCircle, DollarSign } from "lucide-react";
+import type { Segment } from "./CrmSegmentDropdown";
 
 interface CrmSegmentSidebarProps {
   segment: Segment;
@@ -14,39 +13,30 @@ const translations = {
   el: {
     segments: "Segments",
     all: "Όλοι",
-    vip: "VIP",
     regulars: "Τακτικοί",
     new: "Νέοι",
     at_risk: "Σε κίνδυνο",
-    churned: "Ανενεργοί",
     no_show_risk: "No-show risk",
     high_spenders: "Υψηλή δαπάνη",
-    birthday_week: "Γενέθλια",
   },
   en: {
     segments: "Segments",
     all: "All guests",
-    vip: "VIP",
     regulars: "Regulars",
     new: "New",
     at_risk: "At risk",
-    churned: "Churned",
     no_show_risk: "No-show risk",
     high_spenders: "High spenders",
-    birthday_week: "Birthday",
   },
 };
 
 const segmentConfig: { key: Segment; icon: React.ElementType }[] = [
   { key: "all", icon: Users },
-  { key: "vip", icon: Star },
   { key: "regulars", icon: RefreshCw },
   { key: "new", icon: UserPlus },
   { key: "at_risk", icon: AlertTriangle },
-  { key: "churned", icon: Skull },
   { key: "no_show_risk", icon: XCircle },
   { key: "high_spenders", icon: DollarSign },
-  { key: "birthday_week", icon: Cake },
 ];
 
 export function CrmSegmentSidebar({ segment, onSegmentChange, guestCount }: CrmSegmentSidebarProps) {
