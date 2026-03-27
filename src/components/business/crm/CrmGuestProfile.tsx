@@ -506,9 +506,12 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 min-h-0 !mt-0 overflow-hidden">
-          <div className="flex h-full min-h-0 flex-col">
-            <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-3">
+        <TabsContent value="notes" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
+          <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+            <div
+              ref={notesScrollRef}
+              className="min-h-0 overflow-y-auto px-4 pt-2 pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
               {notes.length === 0 && !notesLoading ? (
                 <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
               ) : (
@@ -548,7 +551,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             </div>
 
             {/* Add note — fixed at bottom */}
-            <div className="px-4 pt-2 pb-3 border-t border-border space-y-2 bg-background flex-shrink-0 mt-auto">
+            <div className="px-4 pt-2 pb-3 border-t border-border space-y-2 bg-background flex-shrink-0">
               <div className="flex gap-2">
                 <Textarea
                   placeholder={t.addNote}
@@ -610,8 +613,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0">
-          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 pt-0 pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <TabsContent value="details" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
+          <div
+            ref={detailsScrollRef}
+            className="h-full min-h-0 overflow-y-auto px-4 pt-0 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -645,8 +651,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0">
-          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 pt-2 pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <TabsContent value="tags" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
+          <div
+            ref={tagsScrollRef}
+            className="h-full min-h-0 overflow-y-auto px-4 pt-0 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
