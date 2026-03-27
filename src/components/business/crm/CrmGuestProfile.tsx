@@ -506,103 +506,105 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="relative flex-1 min-h-0 !mt-0 overflow-hidden">
-          <div ref={notesScrollRef} className="h-full min-h-0 overflow-y-auto px-4 pt-2 pb-28">
-            {notes.length === 0 && !notesLoading ? (
-              <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
-            ) : (
-              <div className="space-y-2 pb-2">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={
-                       "rounded-lg border p-3 text-xs " +
-                      (note.is_alert
-                        ? "border-destructive/30"
-                        : note.is_pinned
-                        ? "border-primary/25"
-                        : "border-border")
-                    }
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
-                      {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
-                      <Badge variant="outline" className="text-[8px] h-4 px-1.5">{note.category}</Badge>
-                      <span className="text-[9px] text-muted-foreground ml-auto">
-                        {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
-                      </span>
-                      <button
-                        onClick={() => deleteNote(note.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                        title={t.deleteNote}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+        <TabsContent value="notes" className="flex-1 min-h-0 !mt-0 overflow-hidden">
+          <div className="flex h-full min-h-0 flex-col">
+            <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-3">
+              {notes.length === 0 && !notesLoading ? (
+                <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
+              ) : (
+                <div className="space-y-2 pb-2">
+                  {notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className={
+                         "rounded-lg border p-3 text-xs " +
+                        (note.is_alert
+                          ? "border-destructive/30"
+                          : note.is_pinned
+                          ? "border-primary/25"
+                          : "border-border")
+                      }
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                        {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
+                        <Badge variant="outline" className="text-[8px] h-4 px-1.5">{note.category}</Badge>
+                        <span className="text-[9px] text-muted-foreground ml-auto">
+                          {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
+                        </span>
+                        <button
+                          onClick={() => deleteNote(note.id)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          title={t.deleteNote}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
                     </div>
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add note — fixed at bottom */}
-          <div className="absolute inset-x-0 bottom-0 px-4 pt-2 pb-3 border-t border-border space-y-2 bg-background">
-            <div className="flex gap-2">
-              <Textarea
-                placeholder={t.addNote}
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                className="text-xs min-h-[60px] resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddNote();
-                  }
-                }}
-              />
-              <Button
-                size="icon"
-                className="h-8 w-8 flex-shrink-0 self-end"
-                disabled={!newNote.trim() || submitting}
-                onClick={handleAddNote}
-              >
-                <Send className="h-3.5 w-3.5" />
-              </Button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <label
-                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
-                onClick={() => setNoteIsPinned(!noteIsPinned)}
-              >
-                <div
-                  className={
-                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
-                    (noteIsPinned ? "bg-primary border-primary" : "border-muted-foreground/40")
-                  }
+            {/* Add note — fixed at bottom */}
+            <div className="px-4 pt-2 pb-3 border-t border-border space-y-2 bg-background flex-shrink-0 mt-auto">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder={t.addNote}
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="text-xs min-h-[60px] resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddNote();
+                    }
+                  }}
+                />
+                <Button
+                  size="icon"
+                  className="h-8 w-8 flex-shrink-0 self-end"
+                  disabled={!newNote.trim() || submitting}
+                  onClick={handleAddNote}
                 >
-                  {noteIsPinned && <span className="text-[8px] text-primary-foreground">✓</span>}
-                </div>
-                <Pin className="h-2.5 w-2.5" />
-                {t.pinned}
-              </label>
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
 
-              <label
-                className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
-                onClick={() => setNoteIsAlert(!noteIsAlert)}
-              >
-                <div
-                  className={
-                    `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
-                    (noteIsAlert ? "bg-primary border-primary" : "border-muted-foreground/40")
-                  }
+              <div className="flex flex-wrap gap-3">
+                <label
+                  className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                  onClick={() => setNoteIsPinned(!noteIsPinned)}
                 >
-                  {noteIsAlert && <span className="text-[8px] text-primary-foreground">✓</span>}
-                </div>
-                <AlertTriangle className="h-2.5 w-2.5" />
-                {t.alert}
-              </label>
+                  <div
+                    className={
+                      `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                      (noteIsPinned ? "bg-primary border-primary" : "border-muted-foreground/40")
+                    }
+                  >
+                    {noteIsPinned && <span className="text-[8px] text-primary-foreground">✓</span>}
+                  </div>
+                  <Pin className="h-2.5 w-2.5" />
+                  {t.pinned}
+                </label>
+
+                <label
+                  className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer"
+                  onClick={() => setNoteIsAlert(!noteIsAlert)}
+                >
+                  <div
+                    className={
+                      `h-3.5 w-3.5 rounded border flex items-center justify-center ` +
+                      (noteIsAlert ? "bg-primary border-primary" : "border-muted-foreground/40")
+                    }
+                  >
+                    {noteIsAlert && <span className="text-[8px] text-primary-foreground">✓</span>}
+                  </div>
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  {t.alert}
+                </label>
+              </div>
             </div>
           </div>
         </TabsContent>
