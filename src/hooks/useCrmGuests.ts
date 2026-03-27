@@ -93,7 +93,7 @@ export function useCrmGuests(businessId: string | null) {
         guests.filter((g: any) => g.brought_by_user_id).map((g: any) => g.brought_by_user_id as string)
       )];
 
-      const [tagAssignmentsRes, notesDataRes, broughtByRes] = await Promise.all([
+      const [tagAssignmentsRes, notesDataRes, pinnedNotesRes, broughtByRes] = await Promise.all([
         supabase
           .from("crm_guest_tag_assignments")
           .select("guest_id, crm_guest_tags(id, name, color, emoji, is_system)")
