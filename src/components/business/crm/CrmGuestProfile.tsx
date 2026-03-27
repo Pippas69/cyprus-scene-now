@@ -506,8 +506,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsList>
 
         {/* Notes tab */}
-        <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-24">
+        <TabsContent value="notes" className="relative flex-1 min-h-0 !mt-0 overflow-hidden">
+          <div ref={notesScrollRef} className="h-full min-h-0 overflow-y-auto px-4 pt-2 pb-28">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
@@ -547,7 +547,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </div>
 
           {/* Add note — fixed at bottom */}
-          <div className="sticky bottom-0 px-4 pt-2 pb-3 border-t border-border space-y-2 flex-shrink-0 bg-background">
+          <div className="absolute inset-x-0 bottom-0 px-4 pt-2 pb-3 border-t border-border space-y-2 bg-background">
             <div className="flex gap-2">
               <Textarea
                 placeholder={t.addNote}
