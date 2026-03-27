@@ -182,10 +182,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   }, [guest.id, guest.tags]);
 
   // Ensure each tab starts from the top (no weird preserved scroll offset)
+  // - when switching tabs
+  // - when switching guests while staying on the same tab
   useEffect(() => {
-    const el = tab === "notes" ? notesScrollRef.current : tab === "details" ? detailsScrollRef.current : tagsScrollRef.current;
+    const el =
+      tab === "notes"
+        ? notesScrollRef.current
+        : tab === "details"
+          ? detailsScrollRef.current
+          : tagsScrollRef.current;
     if (el) el.scrollTop = 0;
-  }, [tab]);
+  }, [tab, guest.id]);
 
   // Load tags when the Tags tab is opened
   useEffect(() => {
@@ -500,7 +507,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
         {/* Notes tab */}
         <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2">
+          <div ref={notesScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-24">
             {notes.length === 0 && !notesLoading ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
             ) : (
@@ -540,7 +547,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           </div>
 
           {/* Add note — fixed at bottom */}
-          <div className="px-4 pt-2 pb-3 border-t border-border space-y-2 flex-shrink-0">
+          <div className="sticky bottom-0 px-4 pt-2 pb-3 border-t border-border space-y-2 flex-shrink-0 bg-background">
             <div className="flex gap-2">
               <Textarea
                 placeholder={t.addNote}
@@ -602,7 +609,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
         {/* Details tab */}
         <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-4">
+          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-0 pb-4">
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -637,7 +644,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
         {/* Tags tab */}
         <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-4">
+          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-0 pb-4">
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
