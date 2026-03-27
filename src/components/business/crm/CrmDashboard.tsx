@@ -233,50 +233,50 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
           onSendMessage={() => setShowBulkMessage(true)}
         />
       ) : (
-        <div className="px-3 sm:px-4 pt-3 pb-2 space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="px-2 sm:px-4 pt-3 pb-2 space-y-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <CrmSegmentDropdown
               segment={segment}
               onSegmentChange={setSegment}
               activeFilters={activeFilters}
               onToggleFilter={handleToggleFilter}
             />
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
               <Input
                 placeholder={t.search}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 text-xs"
+                className="pl-7 sm:pl-8 h-7 sm:h-8 text-[11px] sm:text-xs"
               />
             </div>
             <Button
               variant={selectionMode ? "secondary" : "outline"}
               size="sm"
-              className="gap-1 h-8 text-xs flex-shrink-0"
+              className="gap-0.5 sm:gap-1 h-7 sm:h-8 text-[11px] sm:text-xs flex-shrink-0 px-2 sm:px-3"
               onClick={() => {
                 setSelectionMode(!selectionMode);
                 if (selectionMode) setSelectedIds(new Set());
               }}
             >
-              <CheckSquare className="h-3.5 w-3.5" />
+              <CheckSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">{t.selectMode}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1 h-8 text-xs flex-shrink-0"
+              className="gap-0.5 sm:gap-1 h-7 sm:h-8 text-[11px] sm:text-xs flex-shrink-0 px-2 sm:px-3"
               onClick={handleExportXlsx}
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">{t.exportXlsx}</span>
             </Button>
             <Button
               onClick={() => setShowAddDialog(true)}
               size="sm"
-              className="gap-1.5 h-8 text-xs flex-shrink-0"
+              className="gap-0.5 sm:gap-1.5 h-7 sm:h-8 text-[11px] sm:text-xs flex-shrink-0 px-2 sm:px-3"
             >
-              <UserPlus className="h-3.5 w-3.5" />
+              <UserPlus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">{t.addGuest}</span>
             </Button>
           </div>
