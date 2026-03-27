@@ -58,14 +58,6 @@ export function CrmBulkActionBar({
           <Download className="h-3 w-3" />
           {t.exportXlsx}
         </Button>
-        <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={onAddTag}>
-          <Tag className="h-3 w-3" />
-          {t.addTag}
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={onRemoveTag}>
-          <TagIcon className="h-3 w-3" />
-          {t.removeTag}
-        </Button>
       </div>
     </div>
   );
