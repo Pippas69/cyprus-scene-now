@@ -36,6 +36,7 @@ export interface CrmGuest {
   // Joined data
   tags: CrmGuestTag[];
   notes_count: number;
+  pinned_notes: { id: string; content: string; is_pinned: boolean; is_alert: boolean }[];
   brought_by_name: string | null;
 }
 
@@ -101,6 +102,11 @@ export function useCrmGuests(businessId: string | null) {
           .from("crm_guest_notes")
           .select("guest_id")
           .eq("business_id", businessId),
+        supabase
+          .from("crm_guest_notes")
+          .select("id, guest_id, content, is_pinned, is_alert")
+          .eq("business_id", businessId)
+          .or("is_pinned.eq.true,is_alert.eq.true"),
         // Resolve booker names from crm_guests (same business) instead of profiles to avoid RLS issues
         broughtByIds.length > 0
           ? supabase.from("crm_guests").select("user_id, guest_name").eq("business_id", businessId).in("user_id", broughtByIds).eq("profile_type", "registered")
