@@ -420,7 +420,19 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-2">
           <QuickStat label={t.visits} value={String(guest.total_visits)} />
-          <QuickStat label={t.spend} value={`€${(guest.total_spend_cents / 100).toFixed(0)}`} />
+          <QuickStat
+            label={t.spend}
+            value={`€${(guest.total_spend_cents / 100).toFixed(0)}`}
+            editable={!!onUpdateGuest}
+            onSave={async (val) => {
+              const numericVal = parseFloat(val.replace(/[€,]/g, ""));
+              if (isNaN(numericVal) || numericVal < 0) return;
+              const cents = Math.round(numericVal * 100);
+              await supabase.from("crm_guests").update({ spend_override_cents: cents }).eq("id", guest.id);
+              onUpdate();
+              toast.success(language === "el" ? "Έξοδα ενημερώθηκαν" : "Spend updated");
+            }}
+          />
           <QuickStat label={t.noShows} value={String(guest.total_no_shows)} warning={guest.total_no_shows >= 2} />
         </div>
 
@@ -430,7 +442,32 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             <span>👥 {t.avgParty}: {guest.avg_party_size}</span>
           )}
           {guest.total_visits > 0 && guest.favorite_table && (
-            <span>🪑 {t.favTable}: {guest.favorite_table}</span>
+            <EditableInlineField
+              prefix="🪑"
+              label={t.favTable}
+              value={guest.favorite_table}
+              editable={!!onUpdateGuest}
+              onSave={async (val) => {
+                await supabase.from("crm_guests").update({ favorite_table_override: val || null }).eq("id", guest.id);
+                onUpdate();
+                toast.success(language === "el" ? "Αγαπημένο τραπέζι ενημερώθηκε" : "Favorite table updated");
+              }}
+            />
+          )}
+          {!guest.favorite_table && guest.total_visits > 0 && onUpdateGuest && (
+            <EditableInlineField
+              prefix="🪑"
+              label={t.favTable}
+              value=""
+              placeholder="-"
+              editable
+              onSave={async (val) => {
+                if (!val.trim()) return;
+                await supabase.from("crm_guests").update({ favorite_table_override: val }).eq("id", guest.id);
+                onUpdate();
+                toast.success(language === "el" ? "Αγαπημένο τραπέζι ενημερώθηκε" : "Favorite table updated");
+              }}
+            />
           )}
           {guest.first_visit && (
             <span>📅 {t.firstVisit}: {format(new Date(guest.first_visit), "dd/MM/yy")}</span>
@@ -754,10 +791,36 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   );
 }
 
-function QuickStat({ label, value, warning }: { label: string; value: string; warning?: boolean }) {
+function QuickStat({ label, value, warning, editable, onSave }: { label: string; value: string; warning?: boolean; editable?: boolean; onSave?: (val: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [editVal, setEditVal] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setEditVal(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  const handleSave = () => {
+    setEditing(false);
+    if (editVal !== value && onSave) onSave(editVal);
+  };
+
   return (
-    <div className="rounded-lg border border-border p-2 text-center">
-      <p className={`text-base font-bold ${warning ? "text-destructive" : "text-foreground"}`}>{value}</p>
+    <div
+      className={`rounded-lg border border-border p-2 text-center ${editable ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}`}
+      onClick={() => { if (editable && !editing) setEditing(true); }}
+    >
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="w-full text-center text-base font-bold bg-transparent border-b border-primary outline-none text-foreground"
+          value={editVal}
+          onChange={(e) => setEditVal(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") { setEditVal(value); setEditing(false); } }}
+        />
+      ) : (
+        <p className={`text-base font-bold ${warning ? "text-destructive" : "text-foreground"}`}>{value}</p>
+      )}
       <p className="text-[9px] text-muted-foreground">{label}</p>
     </div>
   );
@@ -772,5 +835,46 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
         <p className="text-sm text-foreground mt-0.5">{value}</p>
       </div>
     </div>
+  );
+}
+
+function EditableInlineField({ prefix, label, value, placeholder, editable, onSave }: {
+  prefix: string; label: string; value: string; placeholder?: string; editable?: boolean; onSave?: (val: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editVal, setEditVal] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setEditVal(value); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+  const handleSave = () => {
+    setEditing(false);
+    if (editVal !== value && onSave) onSave(editVal);
+  };
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        {prefix} {label}:
+        <input
+          ref={inputRef}
+          className="w-12 text-[10px] bg-transparent border-b border-primary outline-none text-foreground"
+          value={editVal}
+          onChange={(e) => setEditVal(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") { setEditVal(value); setEditing(false); } }}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={editable ? "cursor-pointer hover:text-foreground transition-colors" : ""}
+      onClick={() => { if (editable) setEditing(true); }}
+    >
+      {prefix} {label}: {value || placeholder}
+    </span>
   );
 }

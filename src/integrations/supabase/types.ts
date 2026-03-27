@@ -1406,6 +1406,7 @@ export type Database = {
           dietary_preferences: string[] | null
           drink_preferences: string | null
           email: string | null
+          favorite_table_override: string | null
           food_preferences: string | null
           guest_name: string
           id: string
@@ -1417,6 +1418,7 @@ export type Database = {
           profile_type: string
           relationship_notes: string | null
           seating_preferences: string | null
+          spend_override_cents: number | null
           updated_at: string
           user_id: string | null
           vip_level_override: string | null
@@ -1433,6 +1435,7 @@ export type Database = {
           dietary_preferences?: string[] | null
           drink_preferences?: string | null
           email?: string | null
+          favorite_table_override?: string | null
           food_preferences?: string | null
           guest_name: string
           id?: string
@@ -1444,6 +1447,7 @@ export type Database = {
           profile_type?: string
           relationship_notes?: string | null
           seating_preferences?: string | null
+          spend_override_cents?: number | null
           updated_at?: string
           user_id?: string | null
           vip_level_override?: string | null
@@ -1460,6 +1464,7 @@ export type Database = {
           dietary_preferences?: string[] | null
           drink_preferences?: string | null
           email?: string | null
+          favorite_table_override?: string | null
           food_preferences?: string | null
           guest_name?: string
           id?: string
@@ -1471,6 +1476,7 @@ export type Database = {
           profile_type?: string
           relationship_notes?: string | null
           seating_preferences?: string | null
+          spend_override_cents?: number | null
           updated_at?: string
           user_id?: string | null
           vip_level_override?: string | null
