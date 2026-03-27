@@ -10,9 +10,16 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Ghost, AlertTriangle, Pin } from "lucide-react";
+import { MessageSquare, Ghost, AlertTriangle, Pin, ChevronUp, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+
+export type SortColumn = "name" | "visits" | "last_visit" | "spend" | "no_shows";
+export type SortDirection = "asc" | "desc";
+export interface SortConfig {
+  column: SortColumn;
+  direction: SortDirection;
+}
 
 interface CrmGuestTableProps {
   guests: CrmGuest[];
@@ -22,6 +29,8 @@ interface CrmGuestTableProps {
   onToggleSelect?: (id: string) => void;
   onToggleSelectAll?: () => void;
   selectionMode?: boolean;
+  sortConfig?: SortConfig;
+  onSort?: (column: SortColumn) => void;
 }
 
 const translations = {
@@ -68,7 +77,50 @@ const loyaltyStyles = {
   bronze: "bg-orange-500/15 text-orange-400 border-orange-500/30",
 };
 
-export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selectedIds, onToggleSelect, onToggleSelectAll, selectionMode }: CrmGuestTableProps) {
+function SortableHeader({
+  label,
+  column,
+  sortConfig,
+  onSort,
+}: {
+  label: string;
+  column: SortColumn;
+  sortConfig?: SortConfig;
+  onSort?: (column: SortColumn) => void;
+}) {
+  const isActive = sortConfig?.column === column;
+  const direction = isActive ? sortConfig.direction : null;
+
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-0.5 group cursor-pointer select-none"
+      onClick={() => onSort?.(column)}
+    >
+      <span className="text-[11px] tracking-wide font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className="flex flex-col -space-y-1">
+        <ChevronUp
+          className={`h-2.5 w-2.5 transition-colors ${
+            isActive && direction === "asc"
+              ? "text-primary"
+              : "text-muted-foreground/30 group-hover:text-muted-foreground/60"
+          }`}
+        />
+        <ChevronDown
+          className={`h-2.5 w-2.5 transition-colors ${
+            isActive && direction === "desc"
+              ? "text-primary"
+              : "text-muted-foreground/30 group-hover:text-muted-foreground/60"
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
+export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selectedIds, onToggleSelect, onToggleSelectAll, selectionMode, sortConfig, onSort }: CrmGuestTableProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
@@ -88,19 +140,19 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
             </TableHead>
           )}
           <TableHead className="min-w-[220px]">
-            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.guest}</span>
+            <SortableHeader label={t.guest} column="name" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
           <TableHead className="text-center w-20">
-            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.visits}</span>
+            <SortableHeader label={t.visits} column="visits" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
           <TableHead className="min-w-[100px]">
-            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.lastVisit}</span>
+            <SortableHeader label={t.lastVisit} column="last_visit" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
           <TableHead className="text-right w-24">
-            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.spend}</span>
+            <SortableHeader label={t.spend} column="spend" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
           <TableHead className="text-center w-20 whitespace-nowrap">
-            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.noShows}</span>
+            <SortableHeader label={t.noShows} column="no_shows" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
           {floorPlanEnabled && (
             <TableHead className="min-w-[80px]">
