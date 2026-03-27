@@ -11,7 +11,7 @@ interface CrmSegmentSidebarProps {
 
 const translations = {
   el: {
-    segments: "Segments",
+    segments: "Κατηγορίες",
     all: "Όλοι",
     regulars: "Τακτικοί",
     new: "Νέοι",
@@ -20,7 +20,7 @@ const translations = {
     high_spenders: "Υψηλή δαπάνη",
   },
   en: {
-    segments: "Segments",
+    segments: "Categories",
     all: "All guests",
     regulars: "Regulars",
     new: "New",
@@ -45,7 +45,7 @@ export function CrmSegmentSidebar({ segment, onSegmentChange, guestCount }: CrmS
 
   return (
     <div className="p-2 space-y-0.5">
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 py-1.5">
+      <p className="text-[10px] font-medium text-muted-foreground tracking-wider px-2 py-1.5">
         {t.segments}
       </p>
       {segmentConfig.map(({ key, icon: Icon }) => (
