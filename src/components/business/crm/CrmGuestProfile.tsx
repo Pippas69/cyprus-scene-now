@@ -522,7 +522,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                           <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
                         </div>
                       </React.Fragment>
-                    ));
+                      );
+                    });
+
                   })()}
                 </div>
               )}
