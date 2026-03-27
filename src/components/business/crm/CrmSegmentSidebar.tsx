@@ -11,7 +11,7 @@ interface CrmSegmentSidebarProps {
 
 const translations = {
   el: {
-    segments: "Segments",
+    segments: "Κατηγορίες",
     all: "Όλοι",
     regulars: "Τακτικοί",
     new: "Νέοι",
@@ -20,7 +20,7 @@ const translations = {
     high_spenders: "Υψηλή δαπάνη",
   },
   en: {
-    segments: "Segments",
+    segments: "Categories",
     all: "All guests",
     regulars: "Regulars",
     new: "New",
