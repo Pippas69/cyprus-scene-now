@@ -711,8 +711,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="comms" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
           <div className="min-h-0 overflow-y-auto px-4 pt-2 pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <CrmCommunicationHistory
-              guestEmail={guest.email}
-              guestUserId={guest.user_id}
+              guestId={guest.id}
               businessId={businessId}
             />
           </div>
