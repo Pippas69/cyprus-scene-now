@@ -93,6 +93,9 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
             </TableHead>
           )}
           <TableHead className="min-w-[120px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.notes}</span>
+          </TableHead>
+          <TableHead className="min-w-[120px]">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.tags}</span>
           </TableHead>
           <TableHead className="min-w-[140px]">
