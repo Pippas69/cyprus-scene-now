@@ -63,6 +63,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
   const { language } = useLanguage();
   const t = translations[language];
   const { guests, isLoading, addGuest, updateGuest, refetch } = useCrmGuests(businessId);
+  useRealtimeCrm(businessId);
 
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
