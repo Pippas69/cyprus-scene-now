@@ -210,6 +210,30 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
               )}
 
               <TableCell className="py-2.5">
+                {guest.pinned_notes.length > 0 ? (
+                  <div className="space-y-1 max-w-[160px]">
+                    {guest.pinned_notes.slice(0, 2).map((n) => (
+                      <div key={n.id} className="flex items-start gap-1 text-[9px]">
+                        {n.is_alert ? (
+                          <AlertTriangle className="h-2.5 w-2.5 text-destructive flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Pin className="h-2.5 w-2.5 text-primary flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={`truncate ${n.is_alert ? "text-destructive font-medium" : "text-foreground"}`}>
+                          {n.content}
+                        </span>
+                      </div>
+                    ))}
+                    {guest.pinned_notes.length > 2 && (
+                      <span className="text-[8px] text-muted-foreground">+{guest.pinned_notes.length - 2}</span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
+                )}
+              </TableCell>
+
+              <TableCell className="py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {guest.tags.slice(0, 3).map((tag) => (
                     <span
