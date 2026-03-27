@@ -610,8 +610,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Details tab */}
-        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-0 pb-4">
+        <TabsContent value="details" className="flex-1 flex flex-col min-h-0 !mt-0">
+          <div ref={detailsScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 pt-0 pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {!hasAnyDetails ? (
               <p className="text-xs text-muted-foreground text-center py-6">{t.noDetails}</p>
             ) : (
@@ -645,8 +645,8 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         </TabsContent>
 
         {/* Tags tab */}
-        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0 overflow-hidden">
-          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-0 pb-4">
+        <TabsContent value="tags" className="flex-1 flex flex-col min-h-0 !mt-0">
+          <div ref={tagsScrollRef} className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 pt-2 pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <div className="space-y-2">
               {allTags.map((tag) => (
                 <div
@@ -670,7 +670,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               ))}
 
               {allTags.length === 0 && !showNewTag && (
-                <p className="text-xs text-muted-foreground text-center py-4">{t.noTags}</p>
+                <p className="text-xs text-muted-foreground text-center pt-2 pb-4">{t.noTags}</p>
               )}
 
               {/* Create new tag */}
