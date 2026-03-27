@@ -163,17 +163,17 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
     setSelectionMode(false);
   }, []);
 
-  const handleExportCsv = useCallback(() => {
+  const handleExportXlsx = useCallback(() => {
     const toExport = selectedIds.size > 0
       ? sortedGuests.filter((g) => selectedIds.has(g.id))
       : sortedGuests;
-    downloadCsv(toExport, `guests-${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadXlsx(toExport, `guests-${new Date().toISOString().slice(0, 10)}.xlsx`);
     toast.success(t.exported);
   }, [sortedGuests, selectedIds, t.exported]);
 
   const handleExportSelected = useCallback(() => {
     const toExport = sortedGuests.filter((g) => selectedIds.has(g.id));
-    downloadCsv(toExport, `guests-selected-${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadXlsx(toExport, `guests-selected-${new Date().toISOString().slice(0, 10)}.xlsx`);
     toast.success(t.exported);
   }, [sortedGuests, selectedIds, t.exported]);
 
@@ -217,10 +217,10 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
               variant="outline"
               size="sm"
               className="gap-1 h-8 text-xs flex-shrink-0"
-              onClick={handleExportCsv}
+              onClick={handleExportXlsx}
             >
               <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t.exportCsv}</span>
+              <span className="hidden sm:inline">{t.exportXlsx}</span>
             </Button>
             <Button
               onClick={() => setShowAddDialog(true)}
