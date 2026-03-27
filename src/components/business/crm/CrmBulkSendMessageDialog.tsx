@@ -52,6 +52,8 @@ const translations = {
     withPhone: "με τηλέφωνο",
     withEmail: "με email",
     withApp: "εγγεγραμμένοι",
+    smsOpened: "Η εφαρμογή SMS άνοιξε",
+    emailOpened: "Η εφαρμογή email άνοιξε",
   },
   en: {
     title: "Bulk send message",
@@ -80,8 +82,33 @@ const translations = {
     withPhone: "with phone",
     withEmail: "with email",
     withApp: "registered",
+    smsOpened: "SMS app opened",
+    emailOpened: "Email app opened",
   },
 };
+
+async function logCommunication(
+  businessId: string,
+  senderId: string,
+  guests: { id: string; contact?: string }[],
+  channel: "in_app" | "sms" | "email",
+  subject: string,
+  message: string,
+  status: string = "sent"
+) {
+  const rows = guests.map((g) => ({
+    business_id: businessId,
+    guest_id: g.id,
+    sender_id: senderId,
+    channel,
+    subject,
+    message,
+    recipient_contact: g.contact || null,
+    status,
+  }));
+
+  await supabase.from("crm_communication_log" as any).insert(rows);
+}
 
 export function CrmBulkSendMessageDialog({
   open,
@@ -115,41 +142,67 @@ export function CrmBulkSendMessageDialog({
       return;
     }
 
-    // SMS: open native SMS with all phone numbers
-    if (channelSms) {
-      if (guestsWithPhone.length === 0) {
-        toast.error(t.noPhones);
-      } else {
-        const phones = guestsWithPhone.map((g) => g.phone).join(",");
-        const smsBody = encodeURIComponent(`${trimmedSubject}\n\n${trimmedMessage}`);
-        window.open(`sms:${phones}?body=${smsBody}`, "_blank");
+    setSending(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const senderId = sessionData.session?.user?.id;
+      if (!senderId) throw new Error("Missing auth session");
+      const accessToken = sessionData.session?.access_token;
+
+      // SMS: open native SMS with all phone numbers
+      if (channelSms) {
+        if (guestsWithPhone.length === 0) {
+          toast.error(t.noPhones);
+        } else {
+          const phones = guestsWithPhone.map((g) => g.phone).join(",");
+          const smsBody = encodeURIComponent(`${trimmedSubject}\n\n${trimmedMessage}`);
+          window.open(`sms:${phones}?body=${smsBody}`, "_blank");
+          toast.success(t.smsOpened);
+
+          // Log SMS sends
+          await logCommunication(
+            businessId,
+            senderId,
+            guestsWithPhone.map((g) => ({ id: g.id, contact: g.phone || undefined })),
+            "sms",
+            trimmedSubject,
+            trimmedMessage
+          );
+        }
       }
-    }
 
-    // Email: open mailto with all emails
-    if (channelEmail) {
-      if (guestsWithEmail.length === 0) {
-        toast.error(t.noEmails);
-      } else {
-        const emails = guestsWithEmail.map((g) => g.email).join(",");
-        const mailSubject = encodeURIComponent(trimmedSubject);
-        const mailBody = encodeURIComponent(trimmedMessage);
-        window.open(`mailto:${emails}?subject=${mailSubject}&body=${mailBody}`, "_blank");
+      // Email: open mailto with all emails
+      if (channelEmail) {
+        if (guestsWithEmail.length === 0) {
+          toast.error(t.noEmails);
+        } else {
+          const emails = guestsWithEmail.map((g) => g.email).join(",");
+          const mailSubject = encodeURIComponent(trimmedSubject);
+          const mailBody = encodeURIComponent(trimmedMessage);
+          window.open(`mailto:${emails}?subject=${mailSubject}&body=${mailBody}`, "_blank");
+          toast.success(t.emailOpened);
+
+          // Log email sends
+          await logCommunication(
+            businessId,
+            senderId,
+            guestsWithEmail.map((g) => ({ id: g.id, contact: g.email || undefined })),
+            "email",
+            trimmedSubject,
+            trimmedMessage
+          );
+        }
       }
-    }
 
-    // In-app: send via edge function to each registered user
-    if (channelInApp) {
-      if (guestsWithApp.length === 0) {
-        toast.error(t.noAppUsers);
-      } else {
-        setSending(true);
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const accessToken = sessionData.session?.access_token;
-          if (!accessToken) throw new Error("Missing auth session");
-
+      // In-app: send via edge function to each registered user
+      if (channelInApp) {
+        if (guestsWithApp.length === 0) {
+          toast.error(t.noAppUsers);
+        } else {
           let successCount = 0;
+          const successGuests: { id: string; contact?: string }[] = [];
+
           for (const guest of guestsWithApp) {
             try {
               const { data, error } = await supabase.functions.invoke(
@@ -164,29 +217,38 @@ export function CrmBulkSendMessageDialog({
                   headers: { Authorization: `Bearer ${accessToken}` },
                 }
               );
-              if (!error && data?.success) successCount++;
+              if (!error && data?.success) {
+                successCount++;
+                successGuests.push({ id: guest.id, contact: guest.user_id || undefined });
+              }
             } catch {
               // continue with others
             }
           }
+
+          // Log in-app sends
+          if (successGuests.length > 0) {
+            await logCommunication(
+              businessId,
+              senderId,
+              successGuests,
+              "in_app",
+              trimmedSubject,
+              trimmedMessage
+            );
+          }
+
           toast.success(`${successCount} ${t.successInApp}`);
-        } catch {
-          toast.error(t.errorInApp);
         }
-        setSending(false);
       }
+    } catch {
+      toast.error(t.errorInApp);
     }
 
-    if (!channelInApp || guestsWithApp.length === 0) {
-      // If only SMS/Email channels, close immediately
-      setSubject("");
-      setMessage("");
-      onOpenChange(false);
-    } else {
-      setSubject("");
-      setMessage("");
-      onOpenChange(false);
-    }
+    setSending(false);
+    setSubject("");
+    setMessage("");
+    onOpenChange(false);
   };
 
   return (

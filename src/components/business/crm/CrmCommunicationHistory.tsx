@@ -6,17 +6,18 @@ import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 
 interface CrmCommunicationHistoryProps {
-  guestEmail: string | null;
-  guestUserId: string | null;
+  guestId: string;
   businessId: string;
 }
 
 interface CommEntry {
   id: string;
-  type: "email" | "in_app" | "sms";
-  content: string;
-  date: string;
-  status?: string;
+  channel: "in_app" | "sms" | "email";
+  subject: string | null;
+  message: string;
+  recipient_contact: string | null;
+  status: string;
+  created_at: string;
 }
 
 const translations = {
@@ -24,100 +25,36 @@ const translations = {
     noHistory: "Δεν υπάρχει ιστορικό επικοινωνίας",
     noHistoryDesc: "Τα μηνύματα και τα emails θα εμφανίζονται εδώ.",
     email: "Email",
-    inApp: "Μήνυμα",
+    inApp: "Μήνυμα εντός εφαρμογής",
     sms: "SMS",
   },
   en: {
     noHistory: "No communication history",
     noHistoryDesc: "Messages and emails will appear here.",
     email: "Email",
-    inApp: "Message",
+    inApp: "In-app message",
     sms: "SMS",
   },
 };
 
-export function CrmCommunicationHistory({ guestEmail, guestUserId, businessId }: CrmCommunicationHistoryProps) {
+export function CrmCommunicationHistory({ guestId, businessId }: CrmCommunicationHistoryProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ["crm-comm-history", guestEmail, guestUserId, businessId],
+    queryKey: ["crm-comm-history", guestId, businessId],
     queryFn: async () => {
-      const results: CommEntry[] = [];
+      const { data, error } = await supabase
+        .from("crm_communication_log" as any)
+        .select("id, channel, subject, message, recipient_contact, status, created_at")
+        .eq("guest_id", guestId)
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(100);
 
-      // Fetch emails from email_send_log if guest has email
-      if (guestEmail) {
-        const { data: emails } = await supabase
-          .from("email_send_log" as any)
-          .select("id, template_name, recipient_email, status, created_at, metadata")
-          .eq("recipient_email", guestEmail)
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-        if (emails) {
-          // Deduplicate by message_id — take latest status per message
-          const seen = new Set<string>();
-          for (const e of emails as any[]) {
-            const key = e.message_id || e.id;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            results.push({
-              id: e.id,
-              type: "email",
-              content: e.template_name || "Email",
-              date: e.created_at,
-              status: e.status,
-            });
-          }
-        }
-      }
-
-      // Fetch in-app messages if guest is a registered user
-      if (guestUserId) {
-        // Find conversations where this user is a participant
-        const { data: participations } = await supabase
-          .from("conversation_participants")
-          .select("conversation_id")
-          .eq("user_id", guestUserId);
-
-        if (participations && participations.length > 0) {
-          const convIds = participations.map((p) => p.conversation_id);
-          
-          // Get the business owner's user_id
-          const { data: biz } = await supabase
-            .from("businesses")
-            .select("user_id")
-            .eq("id", businessId)
-            .single();
-
-          if (biz) {
-            // Fetch messages sent BY the business owner TO this guest
-            const { data: messages } = await supabase
-              .from("direct_messages")
-              .select("id, body, created_at, sender_id, conversation_id")
-              .in("conversation_id", convIds)
-              .eq("sender_id", biz.user_id)
-              .order("created_at", { ascending: false })
-              .limit(50);
-
-            if (messages) {
-              for (const m of messages) {
-                results.push({
-                  id: m.id,
-                  type: "in_app",
-                  content: m.body,
-                  date: m.created_at,
-                });
-              }
-            }
-          }
-        }
-      }
-
-      // Sort all entries by date descending
-      results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      return results;
+      if (error) throw error;
+      return (data || []) as unknown as CommEntry[];
     },
   });
 
@@ -155,7 +92,6 @@ export function CrmCommunicationHistory({ guestEmail, guestUserId, businessId }:
     sent: "text-green-500",
     pending: "text-yellow-500",
     failed: "text-destructive",
-    dlq: "text-destructive",
   };
 
   return (
@@ -163,17 +99,23 @@ export function CrmCommunicationHistory({ guestEmail, guestUserId, businessId }:
       {entries.map((entry) => (
         <div key={entry.id} className="rounded-lg border border-border/50 p-3 text-xs">
           <div className="flex items-center gap-2 mb-1">
-            {iconMap[entry.type]}
-            <span className="font-medium text-foreground">{labelMap[entry.type]}</span>
-            {entry.status && (
-              <span className={`text-[9px] ml-auto ${statusColors[entry.status] || "text-muted-foreground"}`}>
-                {entry.status}
+            {iconMap[entry.channel]}
+            <span className="font-medium text-foreground">{labelMap[entry.channel]}</span>
+            {entry.recipient_contact && (
+              <span className="text-[9px] text-muted-foreground/70 truncate max-w-[120px]">
+                → {entry.recipient_contact}
               </span>
             )}
+            <span className={`text-[9px] ml-auto ${statusColors[entry.status] || "text-muted-foreground"}`}>
+              {entry.status}
+            </span>
           </div>
-          <p className="text-muted-foreground line-clamp-2 ml-5.5">{entry.content}</p>
+          {entry.subject && (
+            <p className="text-foreground/80 font-medium ml-5.5 mb-0.5">{entry.subject}</p>
+          )}
+          <p className="text-muted-foreground line-clamp-2 ml-5.5">{entry.message}</p>
           <p className="text-[9px] text-muted-foreground/60 mt-1 ml-5.5">
-            {format(new Date(entry.date), "dd MMM yyyy, HH:mm", { locale })}
+            {format(new Date(entry.created_at), "dd MMM yyyy, HH:mm", { locale })}
           </p>
         </div>
       ))}
