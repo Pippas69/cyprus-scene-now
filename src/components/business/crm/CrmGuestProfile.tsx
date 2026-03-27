@@ -654,7 +654,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
         <TabsContent value="tags" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
           <div
             ref={tagsScrollRef}
-            className="h-full min-h-0 overflow-y-auto px-4 pt-0 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="h-full min-h-0 overflow-y-auto px-4 pt-4 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <div className="space-y-2">
               {allTags.map((tag) => (
