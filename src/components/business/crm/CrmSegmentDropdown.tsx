@@ -91,7 +91,7 @@ export function CrmSegmentDropdown({ segment, onSegmentChange, activeFilters, on
       <PopoverContent className="w-52 p-0" align="start">
         {/* Segments section */}
         <div className="p-2">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 py-1">
+          <p className="text-[10px] font-medium text-muted-foreground tracking-wider px-2 py-1">
             {t.segments}
           </p>
           <div className="space-y-0.5">
@@ -116,7 +116,7 @@ export function CrmSegmentDropdown({ segment, onSegmentChange, activeFilters, on
 
         {/* Data filters section */}
         <div className="p-2">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2 py-1 flex items-center gap-1">
+          <p className="text-[10px] font-medium text-muted-foreground tracking-wider px-2 py-1 flex items-center gap-1">
             <Filter className="h-3 w-3" />
             {t.filters}
           </p>
