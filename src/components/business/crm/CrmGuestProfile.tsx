@@ -481,7 +481,10 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
               ) : (
                 <div className="space-y-2 pb-2">
-                  {notes.map((note) => (
+                  {[...notes].sort((a, b) => {
+                    const priority = (n: typeof a) => n.is_pinned ? 0 : n.is_alert ? 1 : 2;
+                    return priority(a) - priority(b);
+                  }).map((note) => (
                     <div
                       key={note.id}
                       className={
@@ -496,7 +499,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                       <div className="flex items-center gap-2 mb-2">
                         {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
                         {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
-                        <Badge variant="outline" className="text-[8px] h-4 px-1.5">{note.category}</Badge>
+                        
                         <span className="text-[9px] text-muted-foreground ml-auto">
                           {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
                         </span>
