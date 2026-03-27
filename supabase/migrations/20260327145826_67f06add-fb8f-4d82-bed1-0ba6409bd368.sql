@@ -1,0 +1,1 @@
+UPDATE public.crm_guests SET spend_override_cents = NULL WHERE id = '029bb95b-ae9c-4448-b6ea-669be202dcfd' AND spend_override_cents = 1000;
