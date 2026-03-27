@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Send, Mail, MessageSquare, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { type CrmGuest } from "@/hooks/useCrmGuests";
@@ -28,10 +29,11 @@ const translations = {
   el: {
     title: "Μαζική αποστολή μηνύματος",
     description: "Στείλε το ίδιο μήνυμα σε πολλούς πελάτες.",
-    channels: "Κανάλια αποστολής",
+    channelExtra: "Επιπλέον κανάλι",
     inApp: "Μήνυμα εντός εφαρμογής",
-    sms: "SMS (ανοίγει στο κινητό)",
+    sms: "SMS",
     email: "Email",
+    none: "Κανένα",
     subject: "Θέμα",
     subjectPlaceholder: "π.χ. Ειδική πρόσκληση",
     message: "Μήνυμα",
@@ -44,24 +46,27 @@ const translations = {
     sending: "Αποστολή σε εξέλιξη...",
     successInApp: "μηνύματα εντός εφαρμογής στάλθηκαν",
     errorInApp: "Σφάλμα αποστολής μηνυμάτων",
-    smsNote: "Θα ανοίξει η εφαρμογή SMS με τα τηλέφωνα",
-    emailNote: "Θα ανοίξει η εφαρμογή email με τα emails",
+    smsNote: "Θα ανοίξει η εφαρμογή SMS για κάθε παραλήπτη ξεχωριστά",
+    emailNote: "Θα ανοίξει η εφαρμογή email για κάθε παραλήπτη ξεχωριστά",
     noPhones: "Κανένας επιλεγμένος πελάτης δεν έχει τηλέφωνο",
     noEmails: "Κανένας επιλεγμένος πελάτης δεν έχει email",
     noAppUsers: "Κανένας επιλεγμένος πελάτης δεν είναι εγγεγραμμένος χρήστης",
     withPhone: "με τηλέφωνο",
     withEmail: "με email",
     withApp: "εγγεγραμμένοι",
-    smsOpened: "Η εφαρμογή SMS άνοιξε",
-    emailOpened: "Η εφαρμογή email άνοιξε",
+    smsOpenedFor: "SMS άνοιξε για",
+    emailOpenedFor: "Email άνοιξε για",
+    processingRecipient: "Επεξεργασία παραλήπτη",
+    of: "από",
   },
   en: {
     title: "Bulk send message",
     description: "Send the same message to multiple customers.",
-    channels: "Send channels",
+    channelExtra: "Additional channel",
     inApp: "In-app message",
-    sms: "SMS (opens on phone)",
+    sms: "SMS",
     email: "Email",
+    none: "None",
     subject: "Subject",
     subjectPlaceholder: "e.g. Special invitation",
     message: "Message",
@@ -74,16 +79,18 @@ const translations = {
     sending: "Sending...",
     successInApp: "in-app messages sent",
     errorInApp: "Failed to send messages",
-    smsNote: "Will open SMS app with phone numbers",
-    emailNote: "Will open email app with addresses",
+    smsNote: "Will open SMS app for each recipient individually",
+    emailNote: "Will open email app for each recipient individually",
     noPhones: "No selected guest has a phone number",
     noEmails: "No selected guest has an email",
     noAppUsers: "No selected guest is a registered user",
     withPhone: "with phone",
     withEmail: "with email",
     withApp: "registered",
-    smsOpened: "SMS app opened",
-    emailOpened: "Email app opened",
+    smsOpenedFor: "SMS opened for",
+    emailOpenedFor: "Email opened for",
+    processingRecipient: "Processing recipient",
+    of: "of",
   },
 };
 
@@ -123,15 +130,15 @@ export function CrmBulkSendMessageDialog({
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [channelInApp, setChannelInApp] = useState(true);
-  const [channelSms, setChannelSms] = useState(false);
-  const [channelEmail, setChannelEmail] = useState(false);
+  // "none" | "sms" | "email" — mutually exclusive
+  const [extraChannel, setExtraChannel] = useState<"none" | "sms" | "email">("none");
 
   const guestsWithPhone = guests.filter((g) => g.phone);
   const guestsWithEmail = guests.filter((g) => g.email);
   const guestsWithApp = guests.filter((g) => g.user_id);
 
   const handleSend = async () => {
-    if (!channelInApp && !channelSms && !channelEmail) {
+    if (!channelInApp && extraChannel === "none") {
       toast.error(t.noChannel);
       return;
     }
@@ -150,17 +157,22 @@ export function CrmBulkSendMessageDialog({
       if (!senderId) throw new Error("Missing auth session");
       const accessToken = sessionData.session?.access_token;
 
-      // SMS: open native SMS with all phone numbers
-      if (channelSms) {
+      // SMS: open native SMS for each recipient individually
+      if (extraChannel === "sms") {
         if (guestsWithPhone.length === 0) {
           toast.error(t.noPhones);
         } else {
-          const phones = guestsWithPhone.map((g) => g.phone).join(",");
           const smsBody = encodeURIComponent(`${trimmedSubject}\n\n${trimmedMessage}`);
-          window.open(`sms:${phones}?body=${smsBody}`, "_blank");
-          toast.success(t.smsOpened);
+          for (let i = 0; i < guestsWithPhone.length; i++) {
+            const guest = guestsWithPhone[i];
+            window.open(`sms:${guest.phone}?body=${smsBody}`, "_blank");
+            toast.info(`${t.smsOpenedFor} ${guest.guest_name} (${i + 1}/${guestsWithPhone.length})`);
+            // Small delay so browser doesn't block multiple opens
+            if (i < guestsWithPhone.length - 1) {
+              await new Promise((r) => setTimeout(r, 800));
+            }
+          }
 
-          // Log SMS sends
           await logCommunication(
             businessId,
             senderId,
@@ -172,18 +184,22 @@ export function CrmBulkSendMessageDialog({
         }
       }
 
-      // Email: open mailto with all emails
-      if (channelEmail) {
+      // Email: open native email for each recipient individually
+      if (extraChannel === "email") {
         if (guestsWithEmail.length === 0) {
           toast.error(t.noEmails);
         } else {
-          const emails = guestsWithEmail.map((g) => g.email).join(",");
           const mailSubject = encodeURIComponent(trimmedSubject);
           const mailBody = encodeURIComponent(trimmedMessage);
-          window.open(`mailto:${emails}?subject=${mailSubject}&body=${mailBody}`, "_blank");
-          toast.success(t.emailOpened);
+          for (let i = 0; i < guestsWithEmail.length; i++) {
+            const guest = guestsWithEmail[i];
+            window.open(`mailto:${guest.email}?subject=${mailSubject}&body=${mailBody}`, "_blank");
+            toast.info(`${t.emailOpenedFor} ${guest.guest_name} (${i + 1}/${guestsWithEmail.length})`);
+            if (i < guestsWithEmail.length - 1) {
+              await new Promise((r) => setTimeout(r, 800));
+            }
+          }
 
-          // Log email sends
           await logCommunication(
             businessId,
             senderId,
@@ -226,7 +242,6 @@ export function CrmBulkSendMessageDialog({
             }
           }
 
-          // Log in-app sends
           if (successGuests.length > 0) {
             await logCommunication(
               businessId,
@@ -248,6 +263,8 @@ export function CrmBulkSendMessageDialog({
     setSending(false);
     setSubject("");
     setMessage("");
+    setExtraChannel("none");
+    setChannelInApp(true);
     onOpenChange(false);
   };
 
@@ -265,20 +282,32 @@ export function CrmBulkSendMessageDialog({
         </DialogHeader>
 
         <div className="space-y-3 py-2">
-          {/* Channel selection */}
+          {/* In-app checkbox */}
           <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">{t.channels}</Label>
-            <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox checked={channelInApp} onCheckedChange={(v) => setChannelInApp(!!v)} />
+              <MessageSquare className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs">{t.inApp}</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">
+                {guestsWithApp.length} {t.withApp}
+              </span>
+            </label>
+          </div>
+
+          {/* Extra channel: SMS or Email (mutually exclusive) */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-2 block">{t.channelExtra}</Label>
+            <RadioGroup
+              value={extraChannel}
+              onValueChange={(v) => setExtraChannel(v as "none" | "sms" | "email")}
+              className="space-y-2"
+            >
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={channelInApp} onCheckedChange={(v) => setChannelInApp(!!v)} />
-                <MessageSquare className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs">{t.inApp}</span>
-                <span className="text-[10px] text-muted-foreground ml-auto">
-                  {guestsWithApp.length} {t.withApp}
-                </span>
+                <RadioGroupItem value="none" id="ch-none" />
+                <span className="text-xs text-muted-foreground">{t.none}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={channelSms} onCheckedChange={(v) => setChannelSms(!!v)} />
+                <RadioGroupItem value="sms" id="ch-sms" />
                 <Phone className="h-3.5 w-3.5 text-green-500" />
                 <span className="text-xs">{t.sms}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">
@@ -286,14 +315,21 @@ export function CrmBulkSendMessageDialog({
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={channelEmail} onCheckedChange={(v) => setChannelEmail(!!v)} />
+                <RadioGroupItem value="email" id="ch-email" />
                 <Mail className="h-3.5 w-3.5 text-blue-500" />
                 <span className="text-xs">{t.email}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">
                   {guestsWithEmail.length} {t.withEmail}
                 </span>
               </label>
-            </div>
+            </RadioGroup>
+
+            {extraChannel === "sms" && (
+              <p className="text-[10px] text-muted-foreground mt-1.5 ml-6">{t.smsNote}</p>
+            )}
+            {extraChannel === "email" && (
+              <p className="text-[10px] text-muted-foreground mt-1.5 ml-6">{t.emailNote}</p>
+            )}
           </div>
 
           <div>
