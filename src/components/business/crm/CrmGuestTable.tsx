@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare, Ghost, AlertTriangle, Pin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -17,6 +18,10 @@ interface CrmGuestTableProps {
   guests: CrmGuest[];
   onSelectGuest: (guest: CrmGuest) => void;
   floorPlanEnabled?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
+  selectionMode?: boolean;
 }
 
 const translations = {
@@ -63,15 +68,25 @@ const loyaltyStyles = {
   bronze: "bg-orange-500/15 text-orange-400 border-orange-500/30",
 };
 
-export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGuestTableProps) {
+export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selectedIds, onToggleSelect, onToggleSelectAll, selectionMode }: CrmGuestTableProps) {
   const { language } = useLanguage();
   const t = translations[language];
   const locale = language === "el" ? el : enUS;
+
+  const allSelected = selectionMode && guests.length > 0 && selectedIds?.size === guests.length;
 
   return (
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent border-border/40">
+          {selectionMode && (
+            <TableHead className="w-10">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={() => onToggleSelectAll?.()}
+              />
+            </TableHead>
+          )}
           <TableHead className="min-w-[220px]">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.guest}</span>
           </TableHead>
@@ -127,13 +142,28 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
             .toUpperCase();
 
           const isGhost = guest.profile_type === "ghost";
+          const isSelected = selectedIds?.has(guest.id) ?? false;
 
           return (
             <TableRow
               key={guest.id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors border-border/30"
-              onClick={() => onSelectGuest(guest)}
+              className={`cursor-pointer hover:bg-accent/50 transition-colors border-border/30 ${isSelected ? "bg-primary/5" : ""}`}
+              onClick={() => {
+                if (selectionMode && onToggleSelect) {
+                  onToggleSelect(guest.id);
+                } else {
+                  onSelectGuest(guest);
+                }
+              }}
             >
+              {selectionMode && (
+                <TableCell className="py-2.5" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => onToggleSelect?.(guest.id)}
+                  />
+                </TableCell>
+              )}
               <TableCell className="py-2.5">
                 <div className="flex items-center gap-2.5">
                   <Avatar className={`h-8 w-8 flex-shrink-0 ring-1 ${isGhost ? "ring-muted-foreground/30" : "ring-primary/30"}`}>
@@ -163,10 +193,22 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                         </span>
                       )}
                       {guest.phone && (
-                        <span className="text-[10px] text-muted-foreground truncate">{guest.phone}</span>
+                        <a
+                          href={`tel:${guest.phone}`}
+                          className="text-[10px] text-muted-foreground hover:text-primary hover:underline truncate"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {guest.phone}
+                        </a>
                       )}
                       {guest.email && !guest.phone && (
-                        <span className="text-[10px] text-muted-foreground truncate">{guest.email}</span>
+                        <a
+                          href={`mailto:${guest.email}`}
+                          className="text-[10px] text-muted-foreground hover:text-primary hover:underline truncate"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {guest.email}
+                        </a>
                       )}
                     </div>
                   </div>
@@ -254,7 +296,13 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
 
               <TableCell className="py-2.5">
                 {guest.email ? (
-                  <span className="text-xs text-muted-foreground block max-w-[180px]">{guest.email}</span>
+                  <a
+                    href={`mailto:${guest.email}`}
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline block max-w-[180px] truncate"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {guest.email}
+                  </a>
                 ) : (
                   <span className="text-xs text-muted-foreground/40">—</span>
                 )}

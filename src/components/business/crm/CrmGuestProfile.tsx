@@ -15,7 +15,7 @@ import {
   X, Star, Phone, Mail, Cake,
   Clock, MessageSquare, Tag, Edit3, Pin, AlertTriangle, Send, Ghost, Pencil,
   Merge, Calendar, Ticket, UtensilsCrossed, Armchair, Wine, Music, Heart,
-  Plus, Trash2,
+  Plus, Trash2, History,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { CrmGuestEditDialog } from "./CrmGuestEditDialog";
 import { CrmSendMessageDialog } from "./CrmSendMessageDialog";
 import { CrmGhostMergeDialog } from "./CrmGhostMergeDialog";
+import { CrmCommunicationHistory } from "./CrmCommunicationHistory";
 
 interface CrmGuestProfileProps {
   guest: CrmGuest;
@@ -157,7 +158,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
 
-  const [tab, setTab] = useState<"notes" | "details" | "tags">("notes");
+  const [tab, setTab] = useState<"notes" | "details" | "tags" | "comms">("notes");
   const notesScrollRef = useRef<HTMLDivElement | null>(null);
   const detailsScrollRef = useRef<HTMLDivElement | null>(null);
   const tagsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -453,7 +454,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 mt-2 mb-0 grid grid-cols-3 h-8 flex-shrink-0">
+        <TabsList className="mx-4 mt-2 mb-0 grid grid-cols-4 h-8 flex-shrink-0">
           <TabsTrigger value="notes" className="text-xs gap-1">
             <MessageSquare className="h-3 w-3" />
             {t.notes}
@@ -465,6 +466,10 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           <TabsTrigger value="tags" className="text-xs gap-1">
             <Tag className="h-3 w-3" />
             {t.tags}
+          </TabsTrigger>
+          <TabsTrigger value="comms" className="text-xs gap-1">
+            <History className="h-3 w-3" />
+            {language === "el" ? "Επικοινωνία" : "Comms"}
           </TabsTrigger>
         </TabsList>
 
@@ -699,6 +704,17 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 </Button>
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        {/* Communication History tab */}
+        <TabsContent value="comms" className="!mt-0 h-full min-h-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=inactive]:hidden flex-col">
+          <div className="min-h-0 overflow-y-auto px-4 pt-2 pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <CrmCommunicationHistory
+              guestEmail={guest.email}
+              guestUserId={guest.user_id}
+              businessId={businessId}
+            />
           </div>
         </TabsContent>
       </Tabs>

@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useCrmGuests, type CrmGuest } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { CrmGuestTable } from "./CrmGuestTable";
 import { CrmGuestProfile } from "./CrmGuestProfile";
 import { CrmSegmentDropdown } from "./CrmSegmentDropdown";
 import { CrmAddGuestDialog } from "./CrmAddGuestDialog";
+import { CrmBulkActionBar } from "./CrmBulkActionBar";
+import { CrmBulkTagDialog } from "./CrmBulkTagDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, Users } from "lucide-react";
+import { Search, UserPlus, Users, Download, CheckSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { toast } from "sonner";
 
 interface CrmDashboardProps {
   businessId: string;
   floorPlanEnabled?: boolean;
 }
-
 
 type Segment = "all" | "vip" | "regulars" | "new" | "at_risk" | "churned" | "no_show_risk" | "high_spenders" | "birthday_week";
 
@@ -25,14 +27,38 @@ const translations = {
     addGuest: "Νέος πελάτης",
     noGuests: "Δεν υπάρχουν πελάτες ακόμα",
     noGuestsDesc: "Οι πελάτες θα εμφανιστούν αυτόματα από κρατήσεις και εισιτήρια, ή προσθέστε χειροκίνητα.",
+    exportCsv: "Export CSV",
+    exported: "Το αρχείο CSV εξήχθη",
+    selectMode: "Επιλογή",
   },
   en: {
     search: "Search guest...",
     addGuest: "New guest",
     noGuests: "No guests yet",
     noGuestsDesc: "Guests will appear automatically from reservations and tickets, or add manually.",
+    exportCsv: "Export CSV",
+    exported: "CSV file exported",
+    selectMode: "Select",
   },
 };
+
+function downloadCsv(guests: CrmGuest[], filename: string) {
+  const header = "Όνομα,Τηλέφωνο,Email";
+  const rows = guests.map((g) => {
+    const name = g.guest_name.replace(/,/g, " ");
+    const phone = g.phone || "";
+    const email = g.email || "";
+    return `${name},${phone},${email}`;
+  });
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps) {
   const { language } = useLanguage();
@@ -43,6 +69,11 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
   const [segment, setSegment] = useState<Segment>("all");
   const [selectedGuest, setSelectedGuest] = useState<CrmGuest | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+
+  // Bulk selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTagMode, setBulkTagMode] = useState<"add" | "remove" | null>(null);
 
   // Keep the open profile in sync after edits/refetches
   useEffect(() => {
@@ -102,7 +133,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
     );
   }, [segmentedGuests, search]);
 
-  // Fixed multi-criteria sort: visits desc → spend desc → last visit desc
+  // Fixed multi-criteria sort
   const sortedGuests = useMemo(() => {
     return [...filteredGuests].sort((a, b) => {
       if (b.total_visits !== a.total_visits) return b.total_visits - a.total_visits;
@@ -113,31 +144,97 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
     });
   }, [filteredGuests]);
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === sortedGuests.length) return new Set();
+      return new Set(sortedGuests.map((g) => g.id));
+    });
+  }, [sortedGuests]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  }, []);
+
+  const handleExportCsv = useCallback(() => {
+    const toExport = selectedIds.size > 0
+      ? sortedGuests.filter((g) => selectedIds.has(g.id))
+      : sortedGuests;
+    downloadCsv(toExport, `guests-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success(t.exported);
+  }, [sortedGuests, selectedIds, t.exported]);
+
+  const handleExportSelected = useCallback(() => {
+    const toExport = sortedGuests.filter((g) => selectedIds.has(g.id));
+    downloadCsv(toExport, `guests-selected-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success(t.exported);
+  }, [sortedGuests, selectedIds, t.exported]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Toolbar: segment dropdown, search, add button */}
-      <div className="px-3 sm:px-4 pt-3 pb-2 space-y-2">
-        <div className="flex items-center gap-2">
-          <CrmSegmentDropdown segment={segment} onSegmentChange={setSegment} />
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder={t.search}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs"
-            />
+      {/* Toolbar or Bulk Action Bar */}
+      {selectionMode && selectedIds.size > 0 ? (
+        <CrmBulkActionBar
+          selectedCount={selectedIds.size}
+          onClearSelection={clearSelection}
+          onExportSelected={handleExportSelected}
+          onAddTag={() => setBulkTagMode("add")}
+          onRemoveTag={() => setBulkTagMode("remove")}
+        />
+      ) : (
+        <div className="px-3 sm:px-4 pt-3 pb-2 space-y-2">
+          <div className="flex items-center gap-2">
+            <CrmSegmentDropdown segment={segment} onSegmentChange={setSegment} />
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder={t.search}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <Button
+              variant={selectionMode ? "secondary" : "outline"}
+              size="sm"
+              className="gap-1 h-8 text-xs flex-shrink-0"
+              onClick={() => {
+                setSelectionMode(!selectionMode);
+                if (selectionMode) setSelectedIds(new Set());
+              }}
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t.selectMode}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 h-8 text-xs flex-shrink-0"
+              onClick={handleExportCsv}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t.exportCsv}</span>
+            </Button>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              size="sm"
+              className="gap-1.5 h-8 text-xs flex-shrink-0"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t.addGuest}</span>
+            </Button>
           </div>
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            size="sm"
-            className="gap-1.5 h-8 text-xs flex-shrink-0"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t.addGuest}</span>
-          </Button>
         </div>
-      </div>
+      )}
 
       {/* Table */}
       <div className="flex-1 min-h-0 overflow-auto">
@@ -156,6 +253,10 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
             guests={sortedGuests}
             onSelectGuest={setSelectedGuest}
             floorPlanEnabled={floorPlanEnabled}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
           />
         )}
       </div>
@@ -187,6 +288,19 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
         businessId={businessId}
         onAdd={addGuest}
         onSuccess={() => refetch()}
+      />
+
+      {/* Bulk Tag Dialog */}
+      <CrmBulkTagDialog
+        open={bulkTagMode !== null}
+        onOpenChange={(open) => !open && setBulkTagMode(null)}
+        mode={bulkTagMode || "add"}
+        selectedGuestIds={Array.from(selectedIds)}
+        businessId={businessId}
+        onComplete={() => {
+          refetch();
+          clearSelection();
+        }}
       />
     </div>
   );
