@@ -157,7 +157,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const locale = language === "el" ? el : enUS;
   const { notes, isLoading: notesLoading, addNote } = useCrmGuestNotes(guest.id, businessId);
 
-  const [tab, setTab] = useState<"notes" | "details" | "tags">("notes");
+  const [tab, setTab] = useState<"notes" | "details" | "tags" | "comms">("notes");
   const notesScrollRef = useRef<HTMLDivElement | null>(null);
   const detailsScrollRef = useRef<HTMLDivElement | null>(null);
   const tagsScrollRef = useRef<HTMLDivElement | null>(null);
