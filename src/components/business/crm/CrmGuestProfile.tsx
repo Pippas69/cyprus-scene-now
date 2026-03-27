@@ -194,11 +194,9 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
     if (el) el.scrollTop = 0;
   }, [tab, guest.id]);
 
-  // Load tags when the Tags tab is opened
+  // Preload all business tags on mount
   useEffect(() => {
-    if (tab === "tags") {
-      void loadAllTags();
-    }
+    void loadAllTags();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
