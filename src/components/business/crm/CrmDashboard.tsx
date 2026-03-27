@@ -6,6 +6,7 @@ import { CrmGuestProfile } from "./CrmGuestProfile";
 import { CrmSegmentDropdown } from "./CrmSegmentDropdown";
 import { CrmAddGuestDialog } from "./CrmAddGuestDialog";
 import { CrmBulkActionBar } from "./CrmBulkActionBar";
+import { CrmBulkSendMessageDialog } from "./CrmBulkSendMessageDialog";
 import { CrmBulkTagDialog } from "./CrmBulkTagDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,8 @@ const translations = {
     addGuest: "Νέος πελάτης",
     noGuests: "Δεν υπάρχουν πελάτες ακόμα",
     noGuestsDesc: "Οι πελάτες θα εμφανιστούν αυτόματα από κρατήσεις και εισιτήρια, ή προσθέστε χειροκίνητα.",
-    exportCsv: "Export CSV",
-    exported: "Το αρχείο CSV εξήχθη",
+    exportXlsx: "Export Excel",
+    exported: "Το αρχείο Excel εξήχθη",
     selectMode: "Επιλογή",
   },
   en: {
@@ -37,28 +38,24 @@ const translations = {
     addGuest: "New guest",
     noGuests: "No guests yet",
     noGuestsDesc: "Guests will appear automatically from reservations and tickets, or add manually.",
-    exportCsv: "Export CSV",
-    exported: "CSV file exported",
+    exportXlsx: "Export Excel",
+    exported: "Excel file exported",
     selectMode: "Select",
   },
 };
 
-function downloadCsv(guests: CrmGuest[], filename: string) {
-  const header = "Όνομα,Τηλέφωνο,Email";
-  const rows = guests.map((g) => {
-    const name = g.guest_name.replace(/,/g, " ");
-    const phone = g.phone || "";
-    const email = g.email || "";
-    return `${name},${phone},${email}`;
-  });
-  const csv = [header, ...rows].join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function downloadXlsx(guests: CrmGuest[], filename: string) {
+  const data = guests.map((g) => ({
+    "Όνομα": g.guest_name,
+    "Τηλέφωνο": g.phone || "",
+    "Email": g.email || "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  // Set column widths
+  ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 35 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Πελάτες");
+  XLSX.writeFile(wb, filename);
 }
 
 export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps) {
