@@ -150,6 +150,15 @@ export function useCrmGuests(businessId: string | null) {
         }
       }
 
+      const pinnedNotesMap = new Map<string, { id: string; content: string; is_pinned: boolean; is_alert: boolean }[]>();
+      if (pinnedNotesRes.data) {
+        for (const n of pinnedNotesRes.data) {
+          const existing = pinnedNotesMap.get(n.guest_id) || [];
+          existing.push({ id: n.id, content: n.content, is_pinned: n.is_pinned, is_alert: n.is_alert });
+          pinnedNotesMap.set(n.guest_id, existing);
+        }
+      }
+
       return guests.map((g): CrmGuest => {
         const stats = statsMap.get(g.id) || {};
         const broughtById = (g as any).brought_by_user_id as string | null;
@@ -168,6 +177,7 @@ export function useCrmGuests(businessId: string | null) {
           total_reservations: Number(stats.total_reservations || 0),
           tags: tagMap.get(g.id) || [],
           notes_count: notesCountMap.get(g.id) || 0,
+          pinned_notes: pinnedNotesMap.get(g.id) || [],
           brought_by_name: broughtById ? (broughtByNameMap.get(broughtById) || null) : null,
         };
       });
