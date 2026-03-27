@@ -100,6 +100,7 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
             queryClient.invalidateQueries({ queryKey: ['business-stats', businessId] });
             queryClient.invalidateQueries({ queryKey: ['business-events', businessId] });
             queryClient.invalidateQueries({ queryKey: ['business-reservations', businessId] });
+            queryClient.invalidateQueries({ queryKey: ['crm-guests', businessId] });
           }
         }
       )
