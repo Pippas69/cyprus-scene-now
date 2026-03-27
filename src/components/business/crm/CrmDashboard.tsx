@@ -72,6 +72,7 @@ export function CrmDashboard({ businessId, floorPlanEnabled }: CrmDashboardProps
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkTagMode, setBulkTagMode] = useState<"add" | "remove" | null>(null);
+  const [showBulkMessage, setShowBulkMessage] = useState(false);
 
   // Keep the open profile in sync after edits/refetches
   useEffect(() => {
