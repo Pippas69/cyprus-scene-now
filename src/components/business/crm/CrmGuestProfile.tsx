@@ -481,39 +481,49 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
                 <p className="text-xs text-muted-foreground text-center py-6">{t.noNotes}</p>
               ) : (
                 <div className="space-y-2 pb-2">
-                  {[...notes].sort((a, b) => {
-                    const priority = (n: typeof a) => n.is_pinned ? 0 : n.is_alert ? 1 : 2;
-                    return priority(a) - priority(b);
-                  }).map((note) => (
-                    <div
-                      key={note.id}
-                      className={
-                         "rounded-lg border p-3 text-xs " +
-                        (note.is_alert
-                          ? "border-destructive/30"
-                          : note.is_pinned
-                          ? "border-primary/25"
-                          : "border-border")
-                      }
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
-                        {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
-                        
-                        <span className="text-[9px] text-muted-foreground ml-auto">
-                          {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
-                        </span>
-                        <button
-                          onClick={() => deleteNote(note.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                          title={t.deleteNote}
+                  {(() => {
+                    const sorted = [...notes].sort((a, b) => {
+                      const priority = (n: typeof a) => n.is_pinned ? 0 : n.is_alert ? 1 : 2;
+                      return priority(a) - priority(b);
+                    });
+                    const firstGeneralIdx = sorted.findIndex(n => !n.is_pinned && !n.is_alert);
+                    const hasGeneral = firstGeneralIdx !== -1;
+
+                    return sorted.map((note, idx) => (
+                      <React.Fragment key={note.id}>
+                        {hasGeneral && idx === firstGeneralIdx && (
+                          <p className="text-[10px] text-muted-foreground/50 pt-2 pb-0.5 px-1">{language === 'el' ? 'Γενικά' : 'General'}</p>
+                        )}
+                        <div
+                          className={
+                            "rounded-lg border p-3 text-xs " +
+                            (note.is_alert
+                              ? "border-destructive/30"
+                              : note.is_pinned
+                              ? "border-primary/25"
+                              : "border-border")
+                          }
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                    </div>
-                  ))}
+                          <div className="flex items-center gap-2 mb-2">
+                            {note.is_alert && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                            {note.is_pinned && !note.is_alert && <Pin className="h-3.5 w-3.5 text-primary" />}
+                            
+                            <span className="text-[9px] text-muted-foreground ml-auto">
+                              {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale })}
+                            </span>
+                            <button
+                              onClick={() => deleteNote(note.id)}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              title={t.deleteNote}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                        </div>
+                      </React.Fragment>
+                    ));
+                  })()}
                 </div>
               )}
             </div>
