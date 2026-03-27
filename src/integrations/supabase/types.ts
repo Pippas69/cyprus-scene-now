@@ -1153,6 +1153,67 @@ export type Database = {
           },
         ]
       }
+      crm_communication_log: {
+        Row: {
+          business_id: string
+          channel: string
+          created_at: string
+          guest_id: string
+          id: string
+          message: string
+          recipient_contact: string | null
+          sender_id: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          business_id: string
+          channel: string
+          created_at?: string
+          guest_id: string
+          id?: string
+          message: string
+          recipient_contact?: string | null
+          sender_id?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          created_at?: string
+          guest_id?: string
+          id?: string
+          message?: string
+          recipient_contact?: string | null
+          sender_id?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_communication_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_communication_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_communication_log_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "crm_guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_guest_notes: {
         Row: {
           author_id: string
