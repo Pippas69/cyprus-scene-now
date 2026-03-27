@@ -84,7 +84,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
           <TableHead className="text-right w-24">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.spend}</span>
           </TableHead>
-          <TableHead className="text-center w-20">
+          <TableHead className="text-center w-20 whitespace-nowrap">
             <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.noShows}</span>
           </TableHead>
           {floorPlanEnabled && (
@@ -219,7 +219,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                         ) : (
                           <Pin className="h-2.5 w-2.5 text-primary flex-shrink-0 mt-0.5" />
                         )}
-                        <span className={`truncate ${n.is_alert ? "text-destructive font-medium" : "text-foreground"}`}>
+                        <span className="truncate text-foreground font-medium">
                           {n.content}
                         </span>
                       </div>
@@ -238,8 +238,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled }: CrmGu
                   {guest.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag.id}
-                      className="inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-medium border"
-                      style={{ backgroundColor: tag.color + "15", color: tag.color, borderColor: tag.color + "30" }}
+                      className="inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full font-bold border border-foreground/30 text-foreground"
                     >
                       {tag.emoji && <span className="mr-0.5">{tag.emoji}</span>}
                       {tag.name}
