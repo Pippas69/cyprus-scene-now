@@ -13,6 +13,7 @@ import { Search, UserPlus, Users, Download, CheckSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface CrmDashboardProps {
   businessId: string;
