@@ -1,6 +1,6 @@
 import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
-import { Download, Tag, TagIcon, X } from "lucide-react";
+import { Download, Tag, TagIcon, Send, X } from "lucide-react";
 
 interface CrmBulkActionBarProps {
   selectedCount: number;
@@ -8,20 +8,23 @@ interface CrmBulkActionBarProps {
   onExportSelected: () => void;
   onAddTag: () => void;
   onRemoveTag: () => void;
+  onSendMessage: () => void;
 }
 
 const translations = {
   el: {
     selected: "επιλεγμένοι",
-    exportCsv: "Export CSV",
+    exportXlsx: "Export Excel",
     addTag: "Προσθήκη Tag",
     removeTag: "Αφαίρεση Tag",
+    sendMessage: "Αποστολή",
   },
   en: {
     selected: "selected",
-    exportCsv: "Export CSV",
+    exportXlsx: "Export Excel",
     addTag: "Add Tag",
     removeTag: "Remove Tag",
+    sendMessage: "Send",
   },
 };
 
@@ -31,6 +34,7 @@ export function CrmBulkActionBar({
   onExportSelected,
   onAddTag,
   onRemoveTag,
+  onSendMessage,
 }: CrmBulkActionBarProps) {
   const { language } = useLanguage();
   const t = translations[language];
@@ -46,9 +50,13 @@ export function CrmBulkActionBar({
         </Button>
       </div>
       <div className="flex items-center gap-1.5 ml-auto">
+        <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={onSendMessage}>
+          <Send className="h-3 w-3" />
+          {t.sendMessage}
+        </Button>
         <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={onExportSelected}>
           <Download className="h-3 w-3" />
-          {t.exportCsv}
+          {t.exportXlsx}
         </Button>
         <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={onAddTag}>
           <Tag className="h-3 w-3" />
