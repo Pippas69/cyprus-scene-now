@@ -96,7 +96,7 @@ const translations = {
 
 async function logCommunication(
   businessId: string,
-  senderId: string,
+  senderId: string | null,
   guests: { id: string; contact?: string }[],
   channel: "in_app" | "sms" | "email",
   subject: string,
@@ -115,6 +115,16 @@ async function logCommunication(
   }));
 
   await supabase.from("crm_communication_log" as any).insert(rows);
+}
+
+function openNativeComposer(url: string) {
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.rel = "noopener noreferrer";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }
 
 export function CrmBulkSendMessageDialog({
@@ -152,10 +162,17 @@ export function CrmBulkSendMessageDialog({
     setSending(true);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const senderId = sessionData.session?.user?.id;
-      if (!senderId) throw new Error("Missing auth session");
-      const accessToken = sessionData.session?.access_token;
+      let senderId: string | null = null;
+      let accessToken: string | undefined;
+      let sessionResolved = false;
+
+      const resolveSession = async () => {
+        if (sessionResolved) return;
+        sessionResolved = true;
+        const { data: sessionData } = await supabase.auth.getSession();
+        senderId = sessionData.session?.user?.id ?? null;
+        accessToken = sessionData.session?.access_token;
+      };
 
       // SMS: open native SMS for each recipient individually
       if (extraChannel === "sms") {
@@ -165,22 +182,23 @@ export function CrmBulkSendMessageDialog({
           const smsBody = encodeURIComponent(`${trimmedSubject}\n\n${trimmedMessage}`);
           for (let i = 0; i < guestsWithPhone.length; i++) {
             const guest = guestsWithPhone[i];
-            window.open(`sms:${guest.phone}?body=${smsBody}`, "_blank");
+            openNativeComposer(`sms:${guest.phone}?body=${smsBody}`);
             toast.info(`${t.smsOpenedFor} ${guest.guest_name} (${i + 1}/${guestsWithPhone.length})`);
-            // Small delay so browser doesn't block multiple opens
-            if (i < guestsWithPhone.length - 1) {
-              await new Promise((r) => setTimeout(r, 800));
-            }
           }
 
-          await logCommunication(
-            businessId,
-            senderId,
-            guestsWithPhone.map((g) => ({ id: g.id, contact: g.phone || undefined })),
-            "sms",
-            trimmedSubject,
-            trimmedMessage
-          );
+          try {
+            await resolveSession();
+            await logCommunication(
+              businessId,
+              senderId,
+              guestsWithPhone.map((g) => ({ id: g.id, contact: g.phone || undefined })),
+              "sms",
+              trimmedSubject,
+              trimmedMessage
+            );
+          } catch {
+            // do not block native composer flow on logging failure
+          }
         }
       }
 
@@ -193,21 +211,23 @@ export function CrmBulkSendMessageDialog({
           const mailBody = encodeURIComponent(trimmedMessage);
           for (let i = 0; i < guestsWithEmail.length; i++) {
             const guest = guestsWithEmail[i];
-            window.open(`mailto:${guest.email}?subject=${mailSubject}&body=${mailBody}`, "_blank");
+            openNativeComposer(`mailto:${guest.email}?subject=${mailSubject}&body=${mailBody}`);
             toast.info(`${t.emailOpenedFor} ${guest.guest_name} (${i + 1}/${guestsWithEmail.length})`);
-            if (i < guestsWithEmail.length - 1) {
-              await new Promise((r) => setTimeout(r, 800));
-            }
           }
 
-          await logCommunication(
-            businessId,
-            senderId,
-            guestsWithEmail.map((g) => ({ id: g.id, contact: g.email || undefined })),
-            "email",
-            trimmedSubject,
-            trimmedMessage
-          );
+          try {
+            await resolveSession();
+            await logCommunication(
+              businessId,
+              senderId,
+              guestsWithEmail.map((g) => ({ id: g.id, contact: g.email || undefined })),
+              "email",
+              trimmedSubject,
+              trimmedMessage
+            );
+          } catch {
+            // do not block native composer flow on logging failure
+          }
         }
       }
 
@@ -216,6 +236,9 @@ export function CrmBulkSendMessageDialog({
         if (guestsWithApp.length === 0) {
           toast.error(t.noAppUsers);
         } else {
+          await resolveSession();
+          if (!senderId || !accessToken) throw new Error("Missing auth session");
+
           let successCount = 0;
           const successGuests: { id: string; contact?: string }[] = [];
 
