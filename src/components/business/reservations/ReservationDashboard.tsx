@@ -350,6 +350,48 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const selectedEvent = events.find(e => e.id === selectedEventId);
   const diningSelectedEvent = diningEvents.find(e => e.id === diningSelectedEventId);
 
+  // Group events by type for ticket-linked businesses
+  const { ticketEvents, reservationEvents, hybridEvents, availableTabs } = useMemo(() => {
+    const ticket = events.filter(e => e.event_type === 'ticket');
+    const reservation = events.filter(e => e.event_type === 'reservation' || e.event_type === null);
+    const hybrid = events.filter(e => e.event_type === 'ticket_reservation');
+    
+    const tabs: EventTypeTab[] = [];
+    if (ticket.length > 0) tabs.push('ticket');
+    if (reservation.length > 0) tabs.push('reservation');
+    if (hybrid.length > 0) tabs.push('ticket_reservation');
+    
+    return { ticketEvents: ticket, reservationEvents: reservation, hybridEvents: hybrid, availableTabs: tabs };
+  }, [events]);
+
+  // Auto-set activeTypeTab when tabs change
+  useEffect(() => {
+    if (!isTicketLinked || availableTabs.length === 0) return;
+    
+    setActiveTypeTab(prev => {
+      if (prev && availableTabs.includes(prev)) return prev;
+      return availableTabs[0];
+    });
+  }, [isTicketLinked, availableTabs]);
+
+  // Get events for the active type tab
+  const activeTabEvents = useMemo(() => {
+    if (activeTypeTab === 'ticket') return ticketEvents;
+    if (activeTypeTab === 'reservation') return reservationEvents;
+    if (activeTypeTab === 'ticket_reservation') return hybridEvents;
+    return [];
+  }, [activeTypeTab, ticketEvents, reservationEvents, hybridEvents]);
+
+  // Auto-select event when type tab changes
+  useEffect(() => {
+    if (!isTicketLinked || activeTabEvents.length === 0) return;
+    
+    const currentStillValid = selectedEventId && activeTabEvents.some(e => e.id === selectedEventId);
+    if (!currentStillValid) {
+      setSelectedEventId(activeTabEvents[0].id);
+    }
+  }, [isTicketLinked, activeTypeTab, activeTabEvents]);
+
   // Is a dining/bar business currently viewing an event?
   const isDiningEventMode = isDiningBar && !isTicketLinked && diningSelectedEventId !== null;
 
