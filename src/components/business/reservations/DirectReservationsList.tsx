@@ -1034,7 +1034,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               })}
               </TableBody>
             </Table>
-          </Card>
+          </div>
         }
 
         {/* Floor Plan Assignment Dialog - Kaliva mode */}
