@@ -417,7 +417,7 @@ const Signup = () => {
               }) => <FormItem>
                       <FormLabel>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl h-9 sm:h-10" />
+                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -427,7 +427,7 @@ const Signup = () => {
               }) => <FormItem>
                       <FormLabel>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl h-9 sm:h-10" />
+                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -438,7 +438,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="25" {...field} className="rounded-xl h-9 sm:h-10" />
+                      <Input type="number" placeholder="25" {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -448,7 +448,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-9 sm:h-10" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -458,7 +458,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-9 sm:h-10" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -475,7 +475,7 @@ const Signup = () => {
                       value={field.value || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-xl h-9 sm:h-10">
+                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-sm">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
                         </SelectTrigger>
                       </FormControl>
@@ -497,7 +497,7 @@ const Signup = () => {
                       value={field.value || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-xl h-9 sm:h-10">
+                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-sm">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />
                         </SelectTrigger>
                       </FormControl>
