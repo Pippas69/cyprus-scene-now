@@ -399,7 +399,7 @@ const SignupBusiness = () => {
             {/* Business Name */}
             <div>
               <Label htmlFor="businessName">{language === 'el' ? 'Όνομα Επιχείρησης *' : 'Business Name *'}</Label>
-              <Input id="businessName" {...register("businessName")} className="mt-1" placeholder={language === 'el' ? 'π.χ. Καφέ Παραλία' : 'e.g. Beach Cafe'} />
+              <Input id="businessName" {...register("businessName")} className="mt-1 h-8 sm:h-10 text-sm" placeholder={language === 'el' ? 'π.χ. Καφέ Παραλία' : 'e.g. Beach Cafe'} />
               {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
             </div>
 
@@ -427,7 +427,7 @@ const SignupBusiness = () => {
             {/* Address */}
             <div>
               <Label htmlFor="address">{language === 'el' ? 'Διεύθυνση *' : 'Address *'}</Label>
-              <Input id="address" {...register("address")} className="mt-1" placeholder={language === 'el' ? 'π.χ. Λεωφόρος Μακαρίου 25' : 'e.g. 25 Makarios Avenue'} />
+              <Input id="address" {...register("address")} className="mt-1 h-8 sm:h-10 text-sm" placeholder={language === 'el' ? 'π.χ. Λεωφόρος Μακαρίου 25' : 'e.g. 25 Makarios Avenue'} />
               {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
             </div>
 
@@ -435,12 +435,12 @@ const SignupBusiness = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">{language === 'el' ? 'Email Επιχείρησης *' : 'Business Email *'}</Label>
-                <Input id="email" type="email" {...register("email")} className="mt-1" placeholder="info@business.com" />
+                <Input id="email" type="email" {...register("email")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="info@business.com" />
                 {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
               </div>
               <div>
                 <Label htmlFor="phone">{language === 'el' ? 'Τηλέφωνο *' : 'Phone *'}</Label>
-                <Input id="phone" {...register("phone")} className="mt-1" placeholder="99123456" />
+                <Input id="phone" {...register("phone")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="99123456" />
                 {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
               </div>
             </div>
@@ -448,19 +448,19 @@ const SignupBusiness = () => {
             {/* Website */}
             <div>
               <Label htmlFor="website">{language === 'el' ? 'Ιστοσελίδα' : 'Website'}</Label>
-              <Input id="website" {...register("website")} className="mt-1" placeholder="https://www.business.com" />
+              <Input id="website" {...register("website")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="https://www.business.com" />
             </div>
 
             {/* Password */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="password">{language === 'el' ? 'Κωδικός Πρόσβασης *' : 'Password *'}</Label>
-                <PasswordInput id="password" {...register("password")} className="mt-1" />
+                <PasswordInput id="password" {...register("password")} className="mt-1 h-8 sm:h-10 text-sm" />
                 {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
               </div>
               <div>
                 <Label htmlFor="confirmPassword">{language === 'el' ? 'Επιβεβαίωση Κωδικού *' : 'Confirm Password *'}</Label>
-                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1" />
+                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1 h-8 sm:h-10 text-sm" />
                 {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
               </div>
             </div>
@@ -468,7 +468,7 @@ const SignupBusiness = () => {
             {/* Description */}
             <div>
               <Label htmlFor="description">{language === 'el' ? 'Περιγραφή (μέχρι 300 χαρακτήρες)' : 'Description (up to 300 characters)'}</Label>
-              <Textarea id="description" {...register("description")} className="mt-1" rows={4} placeholder={language === 'el' ? 'Μια σύντομη περιγραφή της επιχείρησής σας...' : 'A brief description of your business...'} />
+              <Textarea id="description" {...register("description")} className="mt-1 h-8 sm:h-10 text-sm" rows={4} placeholder={language === 'el' ? 'Μια σύντομη περιγραφή της επιχείρησής σας...' : 'A brief description of your business...'} />
               {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
             </div>
 
