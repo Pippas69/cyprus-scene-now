@@ -75,6 +75,7 @@ interface TicketOnlyOrder {
   created_at: string;
   tier_name: string;
   ticket_code: string | null;
+  staff_memo: string | null;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
@@ -95,6 +96,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [editValue, setEditValue] = useState<string>('');
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
+  // Ticket memo editing (for ticket-only mode)
+  const [editingTicketMemo, setEditingTicketMemo] = useState<string | null>(null);
+  const [ticketMemoValue, setTicketMemoValue] = useState('');
+  // Ticket name editing (for ticket-only mode)
+  const [editingTicketName, setEditingTicketName] = useState<string | null>(null);
+  const [ticketNameValue, setTicketNameValue] = useState('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
   // Floor plan assignment dialog
@@ -136,7 +143,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       minCharge: 'Min. Charge',
       saved: 'Αποθηκεύτηκε!',
       errorSaving: 'Σφάλμα αποθήκευσης',
-      staffMemo: 'Staff memo',
+      staffMemo: 'Σημειώσεις',
       staffMemoPlaceholder: 'Σημείωση για το team...',
       customerNote: 'Σχόλιο πελάτη',
     },
@@ -170,7 +177,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       minCharge: 'Min. Charge',
       saved: 'Saved!',
       errorSaving: 'Error saving',
-      staffMemo: 'Staff memo',
+      staffMemo: 'Notes',
       staffMemoPlaceholder: 'Note for the team...',
       customerNote: 'Customer note',
     }
@@ -460,7 +467,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at')
+        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
@@ -524,6 +531,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at: t.created_at,
           tier_name: tierNames[t.tier_id] || '',
           ticket_code: t.ticket_code || null,
+          staff_memo: (t as any).staff_memo || null,
         };
       });
 
@@ -776,6 +784,90 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
+  // Save ticket memo
+  const handleSaveTicketMemo = async (ticketId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ staff_memo: ticketMemoValue || null } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketMemo(null);
+      setTicketMemoValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: ticketMemoValue || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket memo:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
+  // Save ticket guest name
+  const handleSaveTicketName = async (ticketId: string) => {
+    try {
+      const trimmed = ticketNameValue.trim();
+      if (!trimmed) return;
+      const { error } = await supabase
+        .from('tickets')
+        .update({ guest_name: trimmed } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketName(null);
+      setTicketNameValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_name: trimmed } : t));
+    } catch (error) {
+      console.error('Error saving ticket name:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
+  // Render ticket memo cell
+  const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
+    if (editingTicketMemo === ticket.ticket_id) {
+      return (
+        <div className="flex items-center gap-1 min-w-[140px]">
+          <Input
+            value={ticketMemoValue}
+            onChange={(e) => setTicketMemoValue(e.target.value)}
+            placeholder={t.staffMemoPlaceholder}
+            className="h-7 text-xs"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveTicketMemo(ticket.ticket_id);
+              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); }
+            }}
+          />
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
+            <Save className="h-3 w-3 text-primary" />
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); }}>
+            <X className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <button
+        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        onClick={() => {
+          setEditingTicketMemo(ticket.ticket_id);
+          setTicketMemoValue(ticket.staff_memo || '');
+        }}
+      >
+        {ticket.staff_memo ? (
+          <span className="text-xs text-foreground max-w-[120px] truncate">{ticket.staff_memo}</span>
+        ) : (
+          <>
+            <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
+            <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
+          </>
+        )}
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+      </button>
+    );
+  };
+
   // Helper to render Staff Memo cell
   const renderStaffMemoCell = (reservation: DirectReservation) => {
     if (editingMemo === reservation.id) {
@@ -871,13 +963,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return (
         <div className="space-y-4 w-full max-w-full">
           <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[600px] table-fixed">
+            <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-1/4">{t.name}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.details}</TableHead>
-                  <TableHead className="text-xs w-1/4">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -885,7 +978,34 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
-                        <span>{ticket.guest_name}</span>
+                        {editingTicketName === ticket.ticket_id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={ticketNameValue}
+                              onChange={(e) => setTicketNameValue(e.target.value)}
+                              className="h-7 text-sm w-28"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTicketName(ticket.ticket_id);
+                                if (e.key === 'Escape') { setEditingTicketName(null); setTicketNameValue(''); }
+                              }}
+                            />
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketName(ticket.ticket_id)}>
+                              <Check className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketName(null); setTicketNameValue(''); }}>
+                              <X className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span
+                            className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-1 group/edit"
+                            onClick={() => { setEditingTicketName(ticket.ticket_id); setTicketNameValue(ticket.guest_name); }}
+                          >
+                            {ticket.guest_name}
+                            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+                          </span>
+                        )}
                         {ticket.buyer_phone && (
                           <span className="text-sm text-muted-foreground">{ticket.buyer_phone}</span>
                         )}
@@ -893,11 +1013,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-sm whitespace-nowrap">
-                          1 {language === 'el' ? 'εισιτήριο' : 'ticket'}
-                        </span>
-                        {ticket.guest_age && (
-                          <span className="text-sm font-thin text-muted-foreground">{ticket.guest_age}+</span>
+                        {ticket.guest_age ? (
+                          <span className="text-sm text-muted-foreground">{ticket.guest_age}+</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
@@ -919,6 +1038,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       ) : (
                         <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {renderTicketMemoCell(ticket)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1100,13 +1222,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
 
       <div className="rounded-md border w-full overflow-x-auto">
-          <Table className="w-full min-w-[600px] table-fixed text-sm">
+          <Table className="w-full min-w-[700px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/4">{t.name}</TableHead>
-                <TableHead className="w-1/4">{t.dateTime}</TableHead>
-                <TableHead className="w-1/4">{t.details}</TableHead>
-                <TableHead className="w-1/4">{t.status}</TableHead>
+                <TableHead className="w-[20%]">{t.name}</TableHead>
+                <TableHead className="w-[20%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[20%]">{t.details}</TableHead>
+                <TableHead className="w-[18%]">{t.status}</TableHead>
+                <TableHead className="w-[22%]">{t.staffMemo}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1168,6 +1291,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    {renderStaffMemoCell(reservation)}
                   </TableCell>
                 </TableRow>
                 );

@@ -57,7 +57,7 @@ const translations = {
     time: 'Time',
     seating: 'Seating',
     requests: 'Customer notes',
-    staffMemo: 'Staff memo',
+    staffMemo: 'Notes',
     remove: 'Remove',
     reassign: 'Reassign',
     status: {
