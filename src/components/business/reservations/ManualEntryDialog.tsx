@@ -16,6 +16,17 @@ interface SeatingTypeOption {
   seating_type: string;
 }
 
+interface TicketTierOption {
+  id: string;
+  name: string;
+  price_cents: number;
+}
+
+interface TableOption {
+  id: string;
+  label: string;
+}
+
 interface ManualEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,22 +51,30 @@ export const ManualEntryDialog = ({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [partySize, setPartySize] = useState('1');
-  const [preferredTime, setPreferredTime] = useState('');
+  const [dateTime, setDateTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
   const [notes, setNotes] = useState('');
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
+  const [ticketPrice, setTicketPrice] = useState('');
   const [seatingTypeId, setSeatingTypeId] = useState('');
+  const [ticketTierId, setTicketTierId] = useState('');
+  const [tableId, setTableId] = useState('');
   const [saving, setSaving] = useState(false);
   const [eventSeatingTypes, setEventSeatingTypes] = useState<SeatingTypeOption[]>([]);
+  const [ticketTiers, setTicketTiers] = useState<TicketTierOption[]>([]);
+  const [tables, setTables] = useState<TableOption[]>([]);
 
   const t = {
     el: {
-      title: 'Προσθήκη',
+      titleDirect: 'Προσθήκη κράτησης',
+      titleTicket: 'Προσθήκη εισιτηρίου',
+      titleReservation: 'Προσθήκη κράτησης',
+      titleHybrid: 'Προσθήκη',
       name: 'Όνομα',
       phone: 'Τηλέφωνο',
       partySize: 'Αριθμός ατόμων',
-      time: 'Ώρα',
+      dateTime: 'Ημερομηνία & ώρα',
       seating: 'Θέση',
       notes: 'Σημειώσεις',
       save: 'Αποθήκευση',
@@ -68,13 +87,20 @@ export const ManualEntryDialog = ({
       minAge: 'Ελάχιστη ηλικία',
       minCharge: 'Ελάχιστη χρέωση (€)',
       seatingType: 'Τύπος θέσης',
+      ticketPrice: 'Τιμή εισιτηρίου (€)',
+      ticketType: 'Τύπος εισιτηρίου',
+      table: 'Τραπέζι',
+      selectOption: 'Επιλέξτε...',
     },
     en: {
-      title: 'Add',
+      titleDirect: 'Add reservation',
+      titleTicket: 'Add ticket',
+      titleReservation: 'Add reservation',
+      titleHybrid: 'Add entry',
       name: 'Name',
       phone: 'Phone',
       partySize: 'Party size',
-      time: 'Time',
+      dateTime: 'Date & time',
       seating: 'Seating',
       notes: 'Notes',
       save: 'Save',
@@ -87,18 +113,25 @@ export const ManualEntryDialog = ({
       minAge: 'Minimum age',
       minCharge: 'Minimum charge (€)',
       seatingType: 'Seating type',
+      ticketPrice: 'Ticket price (€)',
+      ticketType: 'Ticket type',
+      table: 'Table',
+      selectOption: 'Select...',
     },
   };
 
   const txt = t[language];
-  const showPartySize = entryType !== 'ticket';
-  const showTime = entryType === 'direct';
-  const showSeating = entryType === 'direct' || entryType === 'reservation' || entryType === 'hybrid';
-  const showSeatingType = (entryType === 'reservation' || entryType === 'hybrid') && eventSeatingTypes.length > 0;
-  const showMinAge = entryType !== 'direct';
-  const showMinCharge = entryType !== 'ticket';
 
-  // Fetch seating types for the event
+  const getTitle = () => {
+    switch (entryType) {
+      case 'direct': return txt.titleDirect;
+      case 'ticket': return txt.titleTicket;
+      case 'reservation': return txt.titleReservation;
+      case 'hybrid': return txt.titleHybrid;
+    }
+  };
+
+  // Fetch seating types for event
   useEffect(() => {
     if (!eventId || entryType === 'direct' || entryType === 'ticket') {
       setEventSeatingTypes([]);
@@ -108,21 +141,51 @@ export const ManualEntryDialog = ({
       .from('reservation_seating_types')
       .select('id, seating_type')
       .eq('event_id', eventId)
-      .then(({ data }) => {
-        setEventSeatingTypes(data || []);
-      });
+      .then(({ data }) => setEventSeatingTypes(data || []));
   }, [eventId, entryType]);
+
+  // Fetch ticket tiers for ticket events
+  useEffect(() => {
+    if (!eventId || (entryType !== 'ticket' && entryType !== 'hybrid')) {
+      setTicketTiers([]);
+      return;
+    }
+    supabase
+      .from('ticket_tiers')
+      .select('id, name, price_cents')
+      .eq('event_id', eventId)
+      .eq('active', true)
+      .order('sort_order')
+      .then(({ data }) => setTicketTiers(data || []));
+  }, [eventId, entryType]);
+
+  // Fetch floor plan tables for business
+  useEffect(() => {
+    if (entryType === 'ticket' || entryType === 'direct') {
+      setTables([]);
+      return;
+    }
+    supabase
+      .from('floor_plan_tables')
+      .select('id, label')
+      .eq('business_id', businessId)
+      .order('sort_order')
+      .then(({ data }) => setTables((data || []).filter(t => t.label)));
+  }, [businessId, entryType]);
 
   const resetForm = () => {
     setName('');
     setPhone('');
     setPartySize('1');
-    setPreferredTime('');
+    setDateTime('');
     setSeatingPreference('');
     setNotes('');
     setMinAge('');
     setMinCharge('');
+    setTicketPrice('');
     setSeatingTypeId('');
+    setTicketTierId('');
+    setTableId('');
   };
 
   const handleSave = async () => {
@@ -138,7 +201,6 @@ export const ManualEntryDialog = ({
       if (!user) throw new Error('Not authenticated');
 
       if (entryType === 'ticket' && eventId) {
-        // For ticket-only events, insert into tickets table
         const { error } = await supabase.from('tickets').insert({
           event_id: eventId,
           guest_name: trimmedName,
@@ -147,12 +209,10 @@ export const ManualEntryDialog = ({
           is_manual_entry: true,
           manual_status: null,
           order_id: crypto.randomUUID(),
-          tier_id: '',
+          tier_id: ticketTierId || '',
         } as any);
         if (error) throw error;
       } else {
-        // Insert into reservations table
-        // DO NOT set user_id for manual entries — it would link to business owner's profile in CRM
         const insertData: Record<string, any> = {
           user_id: user.id,
           reservation_name: trimmedName,
@@ -164,36 +224,36 @@ export const ManualEntryDialog = ({
           special_requests: notes.trim() || null,
         };
 
-        // Min age
-        if (minAge) {
-          insertData.min_age = parseInt(minAge);
-        }
-
-        // Min charge in cents
-        if (minCharge) {
-          insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
-        }
-
-        // Seating type
-        if (seatingTypeId) {
-          insertData.seating_type_id = seatingTypeId;
-        }
+        if (minAge) insertData.min_age = parseInt(minAge);
+        if (minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        if (seatingTypeId) insertData.seating_type_id = seatingTypeId;
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
-          if (preferredTime) {
-            insertData.preferred_time = new Date(preferredTime).toISOString();
+          if (dateTime) {
+            insertData.preferred_time = new Date(dateTime).toISOString();
           }
           if (seatingPreference) {
             insertData.seating_preference = seatingPreference;
           }
         } else {
-          // Event-based reservation
           insertData.event_id = eventId;
         }
 
-        const { error } = await supabase.from('reservations').insert(insertData as any);
+        const { data: reservationData, error } = await supabase
+          .from('reservations')
+          .insert(insertData as any)
+          .select('id')
+          .single();
         if (error) throw error;
+
+        // Assign table if selected
+        if (tableId && reservationData?.id) {
+          await supabase.from('reservation_table_assignments').insert({
+            reservation_id: reservationData.id,
+            table_id: tableId,
+          } as any);
+        }
       }
 
       toast.success(txt.saved);
@@ -217,55 +277,75 @@ export const ManualEntryDialog = ({
     return seatingTypeTranslations[language]?.[type.toLowerCase()] || type;
   };
 
+  const fieldClass = "space-y-1";
+  const labelClass = "text-[11px] sm:text-xs text-muted-foreground";
+  const inputClass = "h-8 sm:h-9 text-xs sm:text-sm";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{txt.title}</DialogTitle>
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-4 sm:p-6">
+        <DialogHeader className="pb-1">
+          <DialogTitle className="text-sm sm:text-base">{getTitle()}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <div className="flex-1 overflow-y-auto space-y-3 pr-1 -mr-1">
           {/* Name */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">{txt.name} *</Label>
+          <div className={fieldClass}>
+            <Label className={labelClass}>{txt.name} *</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={txt.name}
               autoFocus
+              className={inputClass}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
             />
           </div>
 
           {/* Phone */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">{txt.phone}</Label>
+          <div className={fieldClass}>
+            <Label className={labelClass}>{txt.phone}</Label>
             <Input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={txt.phone}
               type="tel"
+              className={inputClass}
             />
           </div>
 
-          {/* Party size */}
-          {showPartySize && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.partySize} *</Label>
+          {/* === DIRECT: Date & Time === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.dateTime}</Label>
+              <Input
+                value={dateTime}
+                onChange={(e) => setDateTime(e.target.value)}
+                type="datetime-local"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* === Party size: direct, reservation, hybrid === */}
+          {entryType !== 'ticket' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.partySize}</Label>
               <Input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
                 type="number"
                 min="1"
                 max="50"
+                className={inputClass}
               />
             </div>
           )}
 
-          {/* Min age */}
-          {showMinAge && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.minAge}</Label>
+          {/* === TICKET: Min age === */}
+          {(entryType === 'ticket' || entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.minAge}</Label>
               <Input
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}
@@ -273,14 +353,50 @@ export const ManualEntryDialog = ({
                 min="0"
                 max="99"
                 placeholder="18"
+                className={inputClass}
               />
             </div>
           )}
 
-          {/* Min charge */}
-          {showMinCharge && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.minCharge}</Label>
+          {/* === TICKET: Ticket price === */}
+          {entryType === 'ticket' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.ticketPrice}</Label>
+              <Input
+                value={ticketPrice}
+                onChange={(e) => setTicketPrice(e.target.value)}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* === TICKET: Ticket type (tier) === */}
+          {entryType === 'ticket' && ticketTiers.length > 0 && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.ticketType}</Label>
+              <Select value={ticketTierId} onValueChange={setTicketTierId}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={txt.selectOption} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ticketTiers.map((tier) => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      {tier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* === RESERVATION/HYBRID: Min charge === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.minCharge}</Label>
               <Input
                 value={minCharge}
                 onChange={(e) => setMinCharge(e.target.value)}
@@ -288,17 +404,18 @@ export const ManualEntryDialog = ({
                 min="0"
                 step="0.01"
                 placeholder="0.00"
+                className={inputClass}
               />
             </div>
           )}
 
-          {/* Seating type (event-based) */}
-          {showSeatingType && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.seatingType}</Label>
+          {/* === RESERVATION/HYBRID: Seating type === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && eventSeatingTypes.length > 0 && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.seatingType}</Label>
               <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={txt.seatingType} />
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={txt.selectOption} />
                 </SelectTrigger>
                 <SelectContent>
                   {eventSeatingTypes.map((st) => (
@@ -311,79 +428,85 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* Preferred time - direct only */}
-          {showTime && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.time}</Label>
-              <Input
-                value={preferredTime}
-                onChange={(e) => setPreferredTime(e.target.value)}
-                type="datetime-local"
-              />
+          {/* === DIRECT: Seating preference === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.seating}</Label>
+              {seatingOptions && seatingOptions.length > 0 ? (
+                <Select value={seatingPreference} onValueChange={setSeatingPreference}>
+                  <SelectTrigger className={inputClass}>
+                    <SelectValue placeholder={txt.selectOption} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seatingOptions.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Select value={seatingPreference} onValueChange={setSeatingPreference}>
+                  <SelectTrigger className={inputClass}>
+                    <SelectValue placeholder={txt.selectOption} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indoor">{txt.indoor}</SelectItem>
+                    <SelectItem value="outdoor">{txt.outdoor}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           )}
 
-          {/* Seating - direct/reservation/hybrid */}
-          {showSeating && !showSeatingType && (seatingOptions && seatingOptions.length > 0 ? (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.seating}</Label>
-              <Select value={seatingPreference} onValueChange={setSeatingPreference}>
-                <SelectTrigger>
-                  <SelectValue placeholder={txt.seating} />
+          {/* === RESERVATION/HYBRID: Table === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && tables.length > 0 && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.table}</Label>
+              <Select value={tableId} onValueChange={setTableId}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={txt.selectOption} />
                 </SelectTrigger>
                 <SelectContent>
-                  {seatingOptions.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  {tables.map((tbl) => (
+                    <SelectItem key={tbl.id} value={tbl.id}>
+                      {tbl.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          ) : entryType === 'direct' ? (
-            <div className="space-y-1.5">
-              <Label className="text-sm">{txt.seating}</Label>
-              <Select value={seatingPreference} onValueChange={setSeatingPreference}>
-                <SelectTrigger>
-                  <SelectValue placeholder={txt.seating} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="indoor">{txt.indoor}</SelectItem>
-                  <SelectItem value="outdoor">{txt.outdoor}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null)}
+          )}
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">{txt.notes}</Label>
+          {/* Notes - all types */}
+          <div className={fieldClass}>
+            <Label className={labelClass}>{txt.notes}</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={txt.notes}
               rows={2}
-              className="resize-none"
+              className="resize-none text-xs sm:text-sm"
             />
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => { resetForm(); onOpenChange(false); }}
-              disabled={saving}
-            >
-              {txt.cancel}
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {txt.save}
-            </Button>
-          </div>
+        {/* Actions - sticky bottom */}
+        <div className="flex gap-2 pt-3 border-t border-border mt-2">
+          <Button
+            variant="outline"
+            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+            onClick={() => { resetForm(); onOpenChange(false); }}
+            disabled={saving}
+          >
+            {txt.cancel}
+          </Button>
+          <Button
+            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            {txt.save}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
