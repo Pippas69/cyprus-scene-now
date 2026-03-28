@@ -43,7 +43,7 @@ const translations = {
 export function UserSidebar() {
   const { language } = useLanguage();
   const t = translations[language];
-  const { open } = useSidebar();
+  const { open, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -106,12 +106,18 @@ export function UserSidebar() {
   };
 
   const handleNavClick = useCallback((url: string) => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
     navigate(url);
-  }, [navigate]);
+  }, [isMobile, navigate, setOpenMobile]);
 
   const handleTabClick = useCallback((tab: string) => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
     navigate(`/dashboard-user?tab=${tab}`, { replace: true });
-  }, [navigate]);
+  }, [isMobile, navigate, setOpenMobile]);
 
   return (
     <Sidebar collapsible="icon">
