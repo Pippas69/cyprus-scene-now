@@ -468,7 +468,7 @@ const SignupBusiness = () => {
             {/* Description */}
             <div>
               <Label htmlFor="description">{language === 'el' ? 'Περιγραφή (μέχρι 300 χαρακτήρες)' : 'Description (up to 300 characters)'}</Label>
-              <Textarea id="description" {...register("description")} className="mt-1 h-8 sm:h-10 text-sm" rows={4} placeholder={language === 'el' ? 'Μια σύντομη περιγραφή της επιχείρησής σας...' : 'A brief description of your business...'} />
+              <Textarea id="description" {...register("description")} className="mt-1 text-sm" rows={3} placeholder={language === 'el' ? 'Μια σύντομη περιγραφή της επιχείρησής σας...' : 'A brief description of your business...'} />
               {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
             </div>
 
