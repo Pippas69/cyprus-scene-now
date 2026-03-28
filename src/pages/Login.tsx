@@ -159,7 +159,7 @@ const Login = () => {
                 <FormItem>
                     <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm sm:text-sm text-base" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,7 +173,7 @@ const Login = () => {
                 <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm sm:text-sm text-base" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
