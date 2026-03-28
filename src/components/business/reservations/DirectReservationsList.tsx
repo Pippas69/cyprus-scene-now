@@ -96,6 +96,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [editValue, setEditValue] = useState<string>('');
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
+  // Ticket memo editing (for ticket-only mode)
+  const [editingTicketMemo, setEditingTicketMemo] = useState<string | null>(null);
+  const [ticketMemoValue, setTicketMemoValue] = useState('');
+  // Ticket name editing (for ticket-only mode)
+  const [editingTicketName, setEditingTicketName] = useState<string | null>(null);
+  const [ticketNameValue, setTicketNameValue] = useState('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
   // Floor plan assignment dialog
