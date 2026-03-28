@@ -297,22 +297,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (linked) {
         setReservations(enrichedData);
 
-        // For ticket-only events, fetch ticket orders instead
-        if (selectedEventType === 'ticket' && selectedEventId) {
-          fetchTicketOnlyOrders(selectedEventId);
+        const isTicketOnlyMode = selectedEventType === 'ticket' && !!selectedEventId;
+
+        // For ticket-only events, fetch ticket orders and wait before removing loader
+        if (isTicketOnlyMode && selectedEventId) {
+          setTicketOnlyOrders([]);
+          await fetchTicketOnlyOrders(selectedEventId, requestId);
         } else {
           setTicketOnlyOrders([]);
         }
 
-        // Fetch ages for Kaliva
-        fetchAgesForReservations(reservationIds);
-        // Fetch check-in counts (used tickets per reservation)
-        fetchCheckInCounts(reservationIds);
-        // Fetch seating tiers
-        const seatingTypeIds = [...new Set(enrichedData.map((r) => r.seating_type_id).filter(Boolean))] as string[];
-        if (seatingTypeIds.length > 0) {
-          fetchSeatingTiers(seatingTypeIds);
-          fetchSeatingTypeNames(seatingTypeIds);
+        // Fetch enrichment data only for reservation/hybrid flows
+        if (!isTicketOnlyMode) {
+          fetchAgesForReservations(reservationIds);
+          fetchCheckInCounts(reservationIds);
+          const seatingTypeIds = [...new Set(enrichedData.map((r) => r.seating_type_id).filter(Boolean))] as string[];
+          if (seatingTypeIds.length > 0) {
+            fetchSeatingTiers(seatingTypeIds);
+            fetchSeatingTypeNames(seatingTypeIds);
+          }
         }
       } else {
         const isCompleted = (r: DirectReservation) => {
@@ -450,7 +453,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setCheckInCounts(countsMap);
   };
 
-  const fetchTicketOnlyOrders = async (eventId: string) => {
+  const fetchTicketOnlyOrders = async (eventId: string, requestId?: number) => {
+    const isStaleRequest = () => requestId !== undefined && requestId !== fetchReservationsRequestRef.current;
+
     try {
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
@@ -458,6 +463,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
+
+      if (isStaleRequest()) return;
 
       if (!tickets || tickets.length === 0) {
         setTicketOnlyOrders([]);
@@ -471,6 +478,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         .select('id, customer_phone, subtotal_cents, status')
         .in('id', orderIds)
         .eq('status', 'completed');
+
+      if (isStaleRequest()) return;
 
       const completedOrderIds = new Set((orders || []).map(o => o.id));
       const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number }> = {};
@@ -492,6 +501,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           .from('ticket_tiers')
           .select('id, name')
           .in('id', tierIds);
+
+        if (isStaleRequest()) return;
+
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
@@ -515,10 +527,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         };
       });
 
+      if (isStaleRequest()) return;
       setTicketOnlyOrders(enrichedOrders);
     } catch (error) {
       console.error('Error fetching ticket-only orders:', error);
-      setTicketOnlyOrders([]);
+      if (!isStaleRequest()) {
+        setTicketOnlyOrders([]);
+      }
     }
   };
 
@@ -617,10 +632,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   // Report count to parent for Kaliva header
   useEffect(() => {
-    if (onReservationCountChange) {
+    if (onReservationCountChange && !loading) {
       onReservationCountChange(stats.total);
     }
-  }, [stats.total, onReservationCountChange]);
+  }, [stats.total, onReservationCountChange, loading]);
 
   const getStatusBadge = (reservation: DirectReservation) => {
     if (reservation.checked_in_at) {

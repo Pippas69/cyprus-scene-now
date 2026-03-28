@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback, useRef, startTransition } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
@@ -29,8 +29,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [isDiningBar, setIsDiningBar] = useState(false);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [eventsHydrated, setEventsHydrated] = useState(false);
   // For dining/bar: null means "direct reservations", a string means event-specific
   const [diningSelectedEventId, setDiningSelectedEventId] = useState<string | null>(null);
+  const [diningEventsHydrated, setDiningEventsHydrated] = useState(false);
   const selectedEventIdRef = useRef<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
 
@@ -109,8 +111,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       if (requestId !== fetchEventsRequestRef.current) return;
 
       if (!eventsData || eventsData.length === 0) {
-        setEvents([]);
+        setEvents((prev) => (prev.length ? [] : prev));
         setSelectedEventId(null);
+        setEventsHydrated(true);
         return;
       }
 
@@ -159,21 +162,36 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         reservationCount: counts[e.id] || 0,
       }));
 
-      // Only update state if data actually changed to prevent flicker
+      const nextSelectedEventId =
+        selectedEventIdRef.current && options.some((e) => e.id === selectedEventIdRef.current)
+          ? selectedEventIdRef.current
+          : (options[0]?.id || null);
+
+      // Only update state if data actually changed to prevent visual refresh/flicker
       setEvents((prev) => {
-        if (prev.length === options.length && prev.every((p, i) => 
-          p.id === options[i].id && p.reservationCount === options[i].reservationCount
-        )) {
-          return prev; // No change, skip re-render
+        if (
+          prev.length === options.length &&
+          prev.every((p, i) =>
+            p.id === options[i].id &&
+            p.title === options[i].title &&
+            p.start_at === options[i].start_at &&
+            p.event_type === options[i].event_type &&
+            p.reservationCount === options[i].reservationCount
+          )
+        ) {
+          return prev;
         }
         return options;
       });
 
-      if (!selectedEventIdRef.current || !options.find((e) => e.id === selectedEventIdRef.current)) {
-        startTransition(() => setSelectedEventId(options[0]?.id || null));
+      if (nextSelectedEventId !== selectedEventIdRef.current) {
+        setSelectedEventId(nextSelectedEventId);
       }
+
+      setEventsHydrated(true);
     } catch (error) {
       console.error('Error fetching reservation dashboard events:', error);
+      setEventsHydrated(true);
     }
   }, [isTicketLinked, businessId]);
 
@@ -199,7 +217,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       if (requestId !== diningFetchRef.current) return;
 
       if (!eventsData || eventsData.length === 0) {
-        setDiningEvents([]);
+        setDiningEvents((prev) => (prev.length ? [] : prev));
+        setDiningEventsHydrated(true);
         return;
       }
 
@@ -245,17 +264,26 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         reservationCount: counts[e.id] || 0,
       }));
 
-      // Only update state if data actually changed to prevent flicker
       setDiningEvents((prev) => {
-        if (prev.length === options.length && prev.every((p, i) => 
-          p.id === options[i].id && p.reservationCount === options[i].reservationCount
-        )) {
+        if (
+          prev.length === options.length &&
+          prev.every((p, i) =>
+            p.id === options[i].id &&
+            p.title === options[i].title &&
+            p.start_at === options[i].start_at &&
+            p.event_type === options[i].event_type &&
+            p.reservationCount === options[i].reservationCount
+          )
+        ) {
           return prev;
         }
         return options;
       });
+
+      setDiningEventsHydrated(true);
     } catch (error) {
       console.error('Error fetching dining events:', error);
+      setDiningEventsHydrated(true);
     }
   }, [isDiningBar, isTicketLinked, businessId]);
 
@@ -314,7 +342,14 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   // Is a dining/bar business currently viewing an event?
   const isDiningEventMode = isDiningBar && !isTicketLinked && diningSelectedEventId !== null;
 
-  if (isTicketLinked === null) {
+  const isHydratingHeader =
+    isTicketLinked
+      ? !eventsHydrated || (events.length > 0 && !selectedEventId)
+      : isDiningBar
+        ? !diningEventsHydrated
+        : false;
+
+  if (isTicketLinked === null || isHydratingHeader) {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
