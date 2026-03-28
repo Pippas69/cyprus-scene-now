@@ -514,7 +514,7 @@ const SignupBusiness = () => {
               type="submit" 
               variant="gradient" 
               size="lg" 
-              className="w-full" 
+              className="w-full h-10 sm:h-12 text-sm sm:text-base" 
               disabled={isSubmitting || (isBetaMode && inviteCodeStatus !== 'valid')}
             >
               {isSubmitting 
