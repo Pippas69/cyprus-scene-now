@@ -113,17 +113,14 @@ function AppContent() {
           <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
           <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
           <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
-          <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
-          <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
-          <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
-          <Route path="/offers" element={<PageTransition><UserLayout><Offers /></UserLayout></PageTransition>} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-student" element={<VerifyStudent />} />
-          <Route path="/signup-business" element={<SignupBusiness />} />
-          <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
+          {/* User Layout routes - nested so UserLayout stays mounted */}
+          <Route element={<UserLayout />}>
+            <Route path="/feed" element={<Feed showNavbar={false} />} />
+            <Route path="/ekdiloseis" element={<Ekdiloseis />} />
+            <Route path="/xartis" element={<Xartis />} />
+            <Route path="/offers" element={<Offers />} />
+            <Route path="/dashboard-user/*" element={<DashboardUser />} />
+          </Route>
           <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
