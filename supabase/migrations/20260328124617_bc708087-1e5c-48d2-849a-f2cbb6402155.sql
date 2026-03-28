@@ -1,0 +1,1 @@
+UPDATE app_settings SET value = '{"enabled": false, "message_el": "Σύντομα κοντά σας!", "message_en": "Coming Soon!"}'::jsonb, updated_at = now() WHERE key = 'beta_mode';
