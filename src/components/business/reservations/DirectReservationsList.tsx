@@ -140,7 +140,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       today: 'Σήμερα',
       checkedInCount: 'Check-ins',
       ages: 'Ηλικίες',
-      minCharge: 'Min. Charge',
+      minCharge: 'Ελάχιστη Χρέωση',
       saved: 'Αποθηκεύτηκε!',
       errorSaving: 'Σφάλμα αποθήκευσης',
       staffMemo: 'Σημειώσεις',
@@ -956,7 +956,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const isReservationOnly = selectedEventType === 'reservation';
     const priceColumnLabel = isTicketOnly
       ? (language === 'el' ? 'Τιμή' : 'Price')
-      : 'Minimum Charge';
+      : (language === 'el' ? 'Ελάχιστη Χρέωση' : 'Minimum Charge');
 
     // TICKET-ONLY: show ticket orders with same layout as hybrid
     if (isTicketOnly && ticketOnlyOrders.length > 0) {

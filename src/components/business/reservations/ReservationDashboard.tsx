@@ -437,8 +437,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   onClick={() => setActiveTypeTab(type)}
                   className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
                     activeTypeTab === type
-                      ? 'bg-gradient-ocean text-white shadow-sm'
-                      : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                      ? 'bg-card text-foreground shadow-sm border border-border/50'
+                      : 'text-foreground/50 hover:text-foreground/70'
                   }`}
                 >
                   {getTypeTabLabel(type)}
@@ -452,7 +452,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 value={selectedEventId || ''}
                 onValueChange={(val) => setSelectedEventId(val)}
               >
-                <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all bg-primary text-primary-foreground shadow-sm border-primary">
+                <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-full gap-2 px-4 transition-all bg-card text-foreground shadow-sm border border-border/50">
                   <SelectValue placeholder={t.selectEvent} />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
@@ -484,10 +484,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             {isDiningBar && (
               <button
                 onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-                className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
                   diningSelectedEventId === null
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                    ? 'bg-card text-foreground shadow-sm border border-border/50'
+                    : 'text-foreground/50 hover:text-foreground/70'
                 }`}
               >
                 {t.directReservations}
@@ -502,10 +502,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   setActiveTab('list');
                 }}
               >
-                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all ${
+                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-full gap-2 px-4 transition-all ${
                   diningSelectedEventId !== null
-                    ? 'bg-primary text-primary-foreground shadow-sm border-primary'
-                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                    ? 'bg-card text-foreground shadow-sm border border-border/50'
+                    : 'text-foreground/50 border-0 hover:text-foreground/70'
                 }`}>
                   <SelectValue placeholder={t.events} />
                 </SelectTrigger>
