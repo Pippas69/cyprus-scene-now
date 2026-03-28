@@ -244,6 +244,11 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
                           {t.ghost}
                         </span>
                       )}
+                      {isGhost && guest.avg_party_size > 1 && (
+                        <span className="text-[9px] text-muted-foreground/60">
+                          · {language === "el" ? `${guest.avg_party_size} άτομα` : `${guest.avg_party_size} ppl`}
+                        </span>
+                      )}
                       {guest.phone && (
                         <a
                           href={`tel:${guest.phone}`}
