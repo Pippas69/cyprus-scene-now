@@ -118,7 +118,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     eventId?: string | null;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
-  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
+  const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
+  const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
