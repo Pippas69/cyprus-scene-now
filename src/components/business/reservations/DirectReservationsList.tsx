@@ -970,6 +970,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       </div>);
   }
 
+  // Determine entry type for manual add dialog
+  const getEntryType = (): 'direct' | 'ticket' | 'reservation' | 'hybrid' => {
+    if (!isTicketLinked) return 'direct';
+    if (selectedEventType === 'ticket') return 'ticket';
+    if (selectedEventType === 'reservation') return 'reservation';
+    return 'hybrid';
+  };
+
+  const addButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="rounded-full h-8 w-8 p-0 border-border/50"
+      onClick={() => setManualEntryOpen(true)}
+      title={language === 'el' ? 'Προσθήκη' : 'Add'}
+    >
+      <Plus className="h-4 w-4" />
+    </Button>
+  );
+
   // ===================== KALIVA MODE =====================
   if (isTicketLinked) {
     const isTicketOnly = selectedEventType === 'ticket';
@@ -982,6 +1002,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
+          <div className="flex justify-end">{addButton}</div>
           <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
