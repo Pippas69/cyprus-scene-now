@@ -433,7 +433,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="25" {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
+                      <Input type="number" placeholder={language === "el" ? "π.χ. 18" : "e.g. 18"} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
