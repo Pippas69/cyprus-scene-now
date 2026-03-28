@@ -78,7 +78,7 @@ const SignupBusiness = () => {
 
   // Validate invite code when it changes
   useEffect(() => {
-    if (!isBetaMode || !inviteCode || inviteCode.length < 5) {
+    if (!inviteCode || inviteCode.length < 5) {
       setInviteCodeStatus('idle');
       setInviteCodeError('');
       return;
@@ -150,26 +150,24 @@ const SignupBusiness = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    // Validate invite code if beta mode is enabled
-    if (isBetaMode) {
-      if (!data.inviteCode) {
-        toast({
-          title: language === 'el' ? "Σφάλμα" : "Error",
-          description: language === 'el' ? "Απαιτείται κωδικός πρόσκλησης" : "Invite code is required",
-          variant: "destructive"
-        });
-        return;
-      }
+    // Validate invite code
+    if (!data.inviteCode) {
+      toast({
+        title: language === 'el' ? "Σφάλμα" : "Error",
+        description: language === 'el' ? "Απαιτείται κωδικός πρόσκλησης" : "Invite code is required",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      const codeValidation = await validateInviteCode(data.inviteCode);
-      if (!codeValidation.valid) {
-        toast({
-          title: language === 'el' ? "Σφάλμα" : "Error",
-          description: inviteCodeError || (language === 'el' ? "Μη έγκυρος κωδικός" : "Invalid invite code"),
-          variant: "destructive"
-        });
-        return;
-      }
+    const codeValidation = await validateInviteCode(data.inviteCode);
+    if (!codeValidation.valid) {
+      toast({
+        title: language === 'el' ? "Σφάλμα" : "Error",
+        description: inviteCodeError || (language === 'el' ? "Μη έγκυρος κωδικός" : "Invalid invite code"),
+        variant: "destructive"
+      });
+      return;
     }
 
     setIsSubmitting(true);
@@ -251,7 +249,7 @@ const SignupBusiness = () => {
       }
 
       // Update invite code if used and create beta subscription
-      if (isBetaMode && data.inviteCode && businessId) {
+      if (data.inviteCode && businessId) {
         const normalizedCode = data.inviteCode.toUpperCase().trim();
         
         // First get current uses
