@@ -256,7 +256,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
-          prepaid_min_charge_cents, event_id,
+          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status,
           profiles(name, email)
         `);
 
@@ -651,6 +651,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   }, [stats.total, onReservationCountChange, loading]);
 
   const getStatusBadge = (reservation: DirectReservation) => {
+    // Manual entries use the ManualStatusToggle
+    if (reservation.is_manual_entry) {
+      return (
+        <ManualStatusToggle
+          id={reservation.id}
+          currentStatus={reservation.manual_status ?? null}
+          table="reservations"
+          language={language}
+          onStatusChange={(newStatus) => {
+            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus } : r));
+          }}
+        />
+      );
+    }
+
     if (reservation.checked_in_at) {
       // For clubs/events with ticket-linked flow, show check-in count
       if (isTicketLinked) {
