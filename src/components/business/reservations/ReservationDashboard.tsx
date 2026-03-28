@@ -454,6 +454,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                       {getTypeTabCount(type)}
                     </span>
                   )}
+                </button>
               ))}
               <Button
                 variant="outline"
