@@ -434,7 +434,6 @@ export const DirectReservationDialog = ({
       // and maxPartySize is enforced.
       const { data: booking, error } = await supabase.rpc('book_slot_atomically', {
         p_business_id: businessId,
-        p_user_id: userId,
         p_date: format(formData.preferred_date, 'yyyy-MM-dd'),
         p_slot_time: formData.preferred_time,
         p_party_size: formData.party_size,
