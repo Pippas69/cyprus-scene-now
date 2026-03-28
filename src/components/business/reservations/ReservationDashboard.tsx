@@ -342,7 +342,14 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   // Is a dining/bar business currently viewing an event?
   const isDiningEventMode = isDiningBar && !isTicketLinked && diningSelectedEventId !== null;
 
-  if (isTicketLinked === null) {
+  const isHydratingHeader =
+    isTicketLinked
+      ? !eventsHydrated || (events.length > 0 && !selectedEventId)
+      : isDiningBar
+        ? !diningEventsHydrated
+        : false;
+
+  if (isTicketLinked === null || isHydratingHeader) {
     return (
       <div className="flex items-center justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
