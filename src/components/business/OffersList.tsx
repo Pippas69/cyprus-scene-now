@@ -19,35 +19,8 @@ import {
 
 // Helper component to show active boost badge for offers - positioned half in/half out above icons
 const ActiveOfferBoostBadge = ({ offerId, label }: { offerId: string; label: string }) => {
-  const { data: activeBoost } = useQuery({
-    queryKey: ["offer-active-boost", offerId],
-    queryFn: async () => {
-      // Fetch all active boosts for this offer
-      const { data } = await supabase
-        .from("offer_boosts")
-        .select("id, start_date, end_date, created_at, duration_mode, duration_hours")
-        .eq("discount_id", offerId)
-        .eq("status", "active");
-      
-      // Check each boost to see if current timestamp is within window
-      const now = new Date().toISOString();
-      const activeBoostRecord = (data || []).find((boost) => {
-        const window = computeBoostWindow({
-          start_date: boost.start_date,
-          end_date: boost.end_date,
-          created_at: boost.created_at,
-          duration_mode: boost.duration_mode,
-          duration_hours: boost.duration_hours,
-        });
-        if (!window) return false;
-        return isTimestampWithinWindow(now, window);
-      });
-
-      return activeBoostRecord || null;
-    },
-  });
-  
-  if (!activeBoost) return null;
+  // Badge hidden by design — boost functionality still active
+  return null;
   return (
     <Badge 
       variant="default" 
