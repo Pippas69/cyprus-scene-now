@@ -996,7 +996,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
-          <div className="flex justify-end">{addButton}</div>
           <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
@@ -1099,7 +1098,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length === 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
-          <div className="flex justify-end">{addButton}</div>
           <Card>
             <CardContent className="py-10 text-center">
               <Ticket className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
@@ -1122,7 +1120,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // RESERVATION-ONLY or TICKET_AND_RESERVATION (hybrid) — existing flow
     return (
       <div className="space-y-4 w-full max-w-full">
-        <div className="flex justify-end">{addButton}</div>
         {filteredReservations.length === 0 ?
         <Card>
             <CardContent className="py-10 text-center">
@@ -1275,7 +1272,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ))}
       </div>
 
-      <div className="flex justify-end">{addButton}</div>
+      
 
       {filteredReservations.length === 0 ?
       <Card>
