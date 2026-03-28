@@ -1140,7 +1140,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 {filteredReservations.map((reservation) => {
                 const minAge = getMinAge(reservation);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
-                const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
+                const minChargeCents = reservation.is_manual_entry && reservation.prepaid_min_charge_cents != null
+                  ? reservation.prepaid_min_charge_cents
+                  : (tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0);
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const minChargeDisplay = minChargeCents > 0 ?
