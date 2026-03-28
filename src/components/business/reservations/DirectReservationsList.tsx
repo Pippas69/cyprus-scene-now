@@ -855,7 +855,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
-          <Card>
+          <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[600px] table-fixed">
               <TableHeader>
                 <TableRow>
@@ -909,7 +909,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 ))}
               </TableBody>
             </Table>
-          </Card>
+          </div>
         </div>
       );
     }
@@ -939,7 +939,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </CardContent>
           </Card> :
 
-        <Card>
+        <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[750px] table-fixed">
               <TableHeader>
                 <TableRow>
@@ -1034,7 +1034,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               })}
               </TableBody>
             </Table>
-          </Card>
+          </div>
         }
 
         {/* Floor Plan Assignment Dialog - Kaliva mode */}
