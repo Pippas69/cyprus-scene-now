@@ -31,15 +31,15 @@ const PLAN_NAMES: Record<string, string> = {
 
 // Monthly price IDs for each paid plan (used for subscription schedule)
 const MONTHLY_PRICE_IDS: Record<string, string> = {
-  basic: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',
-  pro: 'price_1SyYDEHwXCvHV7ZwBy72motr',
-  elite: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',
+  basic: 'price_1SpwozHTQ1AOHDjnVuRc9Qna',
+  pro: 'price_1Spwp2HTQ1AOHDjnrxToaDoC',
+  elite: 'price_1Spwp5HTQ1AOHDjn8NpaDDj6',
 };
 
 const ANNUAL_PRICE_IDS: Record<string, string> = {
-  basic: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',
-  pro: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',
-  elite: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',
+  basic: 'price_1Spwp1HTQ1AOHDjnQx155dfC',
+  pro: 'price_1Spwp3HTQ1AOHDjnq9F1BnZh',
+  elite: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
 };
 
 Deno.serve(async (req) => {
