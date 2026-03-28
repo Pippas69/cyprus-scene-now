@@ -24,7 +24,7 @@ const SignupBusiness = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
-  const { isBetaMode, isLoading: betaLoading } = useBetaMode();
+  const { theme, setTheme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [coordinates, setCoordinates] = useState<{ lng: number; lat: number } | null>(null);
