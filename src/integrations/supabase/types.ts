@@ -5309,6 +5309,7 @@ export type Database = {
           seat_number: number | null
           seat_row: string | null
           seat_zone: string | null
+          staff_memo: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           ticket_code: string | null
           tier_id: string
@@ -5328,6 +5329,7 @@ export type Database = {
           seat_number?: number | null
           seat_row?: string | null
           seat_zone?: string | null
+          staff_memo?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
           tier_id: string
@@ -5347,6 +5349,7 @@ export type Database = {
           seat_number?: number | null
           seat_row?: string | null
           seat_zone?: string | null
+          staff_memo?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
           tier_id?: string
