@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -46,6 +46,7 @@ export function UserSidebar() {
   const t = translations[language];
   const { open } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -56,7 +57,6 @@ export function UserSidebar() {
       setUser(user);
       
       if (user) {
-        // Get profile data
         const { data: profile } = await supabase
           .from('profiles')
           .select('name, avatar_url')
@@ -94,18 +94,19 @@ export function UserSidebar() {
   ];
 
   const personalItems = [
-    { title: t.myTickets, url: '/dashboard-user?tab=events', icon: Ticket, tab: 'events' },
-    { title: t.reservations, url: '/dashboard-user?tab=reservations', icon: CalendarCheck, tab: 'reservations' },
-    { title: t.myOffers, url: '/dashboard-user?tab=offers', icon: Percent, tab: 'offers' },
-    { title: t.settings, url: '/dashboard-user?tab=settings', icon: Settings, tab: 'settings' },
+    { title: t.myTickets, tab: 'events', icon: Ticket },
+    { title: t.reservations, tab: 'reservations', icon: CalendarCheck },
+    { title: t.myOffers, tab: 'offers', icon: Percent },
+    { title: t.settings, tab: 'settings', icon: Settings },
   ];
 
-  const isItemActive = (url: string, tab?: string) => {
-    if (tab) {
-      return currentPath === '/dashboard-user' && currentTab === tab;
-    }
-    return currentPath === url;
+  const isTabActive = (tab: string) => {
+    return currentPath === '/dashboard-user' && currentTab === tab;
   };
+
+  const handleTabClick = useCallback((tab: string) => {
+    navigate(`/dashboard-user?tab=${tab}`, { replace: true });
+  }, [navigate]);
 
   return (
     <Sidebar collapsible="icon">
@@ -133,7 +134,7 @@ export function UserSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isItemActive(item.url)}>
+                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
                     <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -149,12 +150,14 @@ export function UserSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {personalItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
+                <SidebarMenuItem key={item.tab}>
+                  <SidebarMenuButton
+                    isActive={isTabActive(item.tab)}
+                    onClick={() => handleTabClick(item.tab)}
+                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
