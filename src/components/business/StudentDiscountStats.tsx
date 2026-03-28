@@ -69,10 +69,10 @@ export function StudentDiscountStats({ businessId, language }: StudentDiscountSt
   }
   
   return (
-    <div className="flex items-start md:items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg border bg-gradient-to-r from-primary/5 to-transparent">
+    <div className="flex items-start md:items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg border bg-card/50">
       {/* Smaller icon on tablet & mobile */}
-      <div className="flex items-center justify-center h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 rounded-full bg-primary/10 flex-shrink-0 mt-0.5 md:mt-0">
-        <GraduationCap className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-primary" />
+      <div className="flex items-center justify-center h-5 w-5 md:h-6 md:w-6 lg:h-8 lg:w-8 rounded-full bg-foreground/10 flex-shrink-0 mt-0.5 md:mt-0">
+        <GraduationCap className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-foreground" />
       </div>
 
       {/* Mobile: 2 lines (label+percent) then (redemptions+mode). Tablet+: single line */}
@@ -80,7 +80,7 @@ export function StudentDiscountStats({ businessId, language }: StudentDiscountSt
         <div className="flex items-center gap-1.5 md:gap-3 flex-wrap md:flex-nowrap">
           <div className="flex items-center gap-1 md:gap-1.5 flex-shrink-0">
             <span className="text-[10px] md:text-xs lg:text-sm font-medium text-muted-foreground whitespace-nowrap">{t.studentDiscount}:</span>
-            <Badge variant="default" className="text-xs md:text-sm lg:text-base font-bold px-1.5 md:px-2">
+            <Badge variant="outline" className="text-xs md:text-sm lg:text-base font-bold px-1.5 md:px-2 bg-card text-foreground border-border/50">
               {business.student_discount_percent}%
             </Badge>
           </div>

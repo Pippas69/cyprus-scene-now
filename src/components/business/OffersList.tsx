@@ -313,7 +313,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                       <Calendar className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                       <span className="whitespace-nowrap">{formatOfferDates(offer.start_at, offer.end_at)}</span>
                     </div>
-                    <div className="flex items-center gap-0.5 text-primary font-medium whitespace-nowrap">
+                    <div className="flex items-center gap-0.5 text-foreground font-medium whitespace-nowrap">
                       <Hash className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" />
                       <span className="text-[9px] md:text-[10px] lg:text-xs">{getClaimCount(offer.id)} {language === "el" ? "Διεκδικήσεις" : "Claims"}</span>
                     </div>
@@ -363,7 +363,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                     return (
                       <Badge
                         variant={offer.active ? "default" : "secondary"}
-                        className={`h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm ${offer.active ? "bg-primary text-primary-foreground" : ""}`}
+                        className={`h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm ${offer.active ? "bg-card text-foreground border border-border/50" : ""}`}
                       >
                         {offer.active ? t.active : t.inactive}
                       </Badge>
@@ -373,7 +373,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   {offer.percent_off && (
                     <Badge
                       variant="outline"
-                      className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm text-primary border-primary/30 bg-primary/5 font-semibold"
+                      className="h-5 md:h-6 lg:h-7 px-2 md:px-2.5 lg:px-3 text-[10px] md:text-xs lg:text-sm text-foreground border-border/50 font-semibold"
                     >
                       {offer.percent_off}% OFF
                     </Badge>
