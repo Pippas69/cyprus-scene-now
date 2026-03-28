@@ -403,11 +403,6 @@ const Signup = () => {
         </div>
 
         <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
-          <div className="text-center mb-5 sm:mb-8">
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-seafoam mb-1">
-              {t.signup}
-            </h1>
-          </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
