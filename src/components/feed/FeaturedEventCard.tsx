@@ -8,6 +8,7 @@ import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 import { useCallback, useRef } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
+import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
 interface FeaturedEventCardProps {
   event: any;
@@ -65,7 +66,7 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
         <div className="absolute inset-0">
           {event.cover_image_url ? (
             <img
-              src={event.cover_image_url}
+              src={getOptimizedImageUrl(event.cover_image_url, 800)}
               alt={event.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               loading="eager"
