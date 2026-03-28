@@ -365,7 +365,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           <h1 className="text-2xl md:text-3xl font-bold shrink-0">
             {isPerformance
               ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
-              : selectedEventType === 'ticket'
+              : selectedEvent?.event_type === 'ticket'
                 ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
                 : t.reservations}
           </h1>
