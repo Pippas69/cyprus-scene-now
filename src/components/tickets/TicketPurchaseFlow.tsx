@@ -535,16 +535,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                   <Input
                     placeholder={`${t.guestN} ${idx + 1}`}
                     value={name}
-                    readOnly={idx === 0 && !!profileName}
                     onChange={(e) => {
-                      if (idx === 0 && profileName) return;
                       setGuestNames(prev => {
                         const updated = [...prev];
                         updated[idx] = e.target.value;
                         return updated;
                       });
                     }}
-                    className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
+                    className="h-9 text-sm flex-1"
                   />
                   <Input
                     placeholder={t.age}
