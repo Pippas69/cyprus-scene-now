@@ -5860,7 +5860,6 @@ export type Database = {
           id: string | null
           logo_url: string | null
           name: string | null
-          phone: string | null
           verified: boolean | null
           website: string | null
         }
@@ -5875,7 +5874,6 @@ export type Database = {
           id?: string | null
           logo_url?: string | null
           name?: string | null
-          phone?: string | null
           verified?: boolean | null
           website?: string | null
         }
@@ -5890,7 +5888,6 @@ export type Database = {
           id?: string | null
           logo_url?: string | null
           name?: string | null
-          phone?: string | null
           verified?: boolean | null
           website?: string | null
         }
