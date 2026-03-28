@@ -363,7 +363,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       <div className="min-w-0">
         <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-2xl md:text-3xl font-bold shrink-0">
-            {isPerformance ? (language === 'el' ? 'Εισιτήρια' : 'Tickets') : t.reservations}
+            {isPerformance
+              ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
+              : selectedEventType === 'ticket'
+                ? (language === 'el' ? 'Εισιτήρια' : 'Tickets')
+                : t.reservations}
           </h1>
 
           {/* Event selector for ticket-linked businesses (clubs/events/performances) */}
