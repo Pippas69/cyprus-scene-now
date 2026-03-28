@@ -249,8 +249,52 @@ export default function SubscriptionPlans({
     reset: resetConfetti
   } = useConfetti();
   const t = translations[language];
+
+  // FAST: Read directly from DB for instant display (no edge function call)
+  const { data: fastDbData } = useQuery({
+    queryKey: ['subscription-plans-db-fast'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+      if (!business) return null;
+      const { data: sub } = await supabase
+        .from('business_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('business_id', business.id)
+        .eq('status', 'active')
+        .single();
+      if (!sub || !sub.subscription_plans) return { subscribed: false };
+      const plan = sub.subscription_plans as any;
+      const budgetRemaining = Math.min(
+        sub.monthly_budget_remaining_cents ?? plan.event_boost_budget_cents,
+        plan.event_boost_budget_cents
+      );
+      return {
+        subscribed: true,
+        plan_slug: plan.slug,
+        plan_name: plan.name,
+        billing_cycle: sub.billing_cycle || 'monthly',
+        status: 'active',
+        subscription_end: sub.current_period_end,
+        monthly_budget_remaining_cents: budgetRemaining,
+        event_boost_budget_cents: plan.event_boost_budget_cents,
+        downgrade_pending: !!sub.downgraded_to_free_at,
+        downgrade_effective_date: sub.downgraded_to_free_at ? sub.current_period_end : null,
+        downgrade_target_plan: sub.downgrade_target_plan || 'free',
+      };
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // BACKGROUND: Stripe sync (slower but accurate)
   const {
-    data: currentSubscription,
+    data: stripeSubscription,
     refetch: refetchSubscription
   } = useQuery({
     queryKey: ['current-subscription'],
@@ -274,6 +318,9 @@ export default function SubscriptionPlans({
     },
     refetchInterval: 60000
   });
+
+  // Use Stripe data when available, otherwise fast DB data
+  const currentSubscription = stripeSubscription || fastDbData;
 
   // Handle success/canceled URL parameters
   useEffect(() => {
