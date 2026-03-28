@@ -250,8 +250,10 @@ Deno.serve(async (req) => {
     // Add destination charge with application fee (split payment)
     // Platform keeps the commission, business gets the rest automatically
     // If commission-free, application_fee_amount is 0
+    // Stripe processing fees: 2.9% + €0.25 — charged to connected account via application_fee
+    const stripeFeesCents = Math.ceil(finalPriceCents * 0.029 + 25);
     checkoutConfig.payment_intent_data = {
-      application_fee_amount: commissionAmountCents, // Platform commission (0 if commission-free)
+      application_fee_amount: commissionAmountCents + stripeFeesCents, // Commission + Stripe fees
       transfer_data: {
         destination: discount.businesses.stripe_account_id, // Business receives the rest
       },

@@ -134,7 +134,9 @@ serve(async (req) => {
       };
 
       if (hasConnectSetup) {
-        piParams.application_fee_amount = platformFeeCents;
+        // Stripe processing fees: 2.9% + €0.25 — charged to connected account
+        const stripeFeesCents = Math.ceil(reservation.prepaid_min_charge_cents * 0.029 + 25);
+        piParams.application_fee_amount = platformFeeCents + stripeFeesCents;
         piParams.transfer_data = { destination: business.stripe_account_id };
       }
 

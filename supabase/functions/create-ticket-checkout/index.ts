@@ -536,8 +536,10 @@ Deno.serve(async (req) => {
         applicationFee: commissionCents 
       });
       
+      // Stripe processing fees: 2.9% + €0.25 — charged to connected account via application_fee
+      const stripeFeesCents = Math.ceil(totalCents * 0.029 + 25);
       sessionConfig.payment_intent_data = {
-        application_fee_amount: commissionCents, // Platform takes commission
+        application_fee_amount: commissionCents + stripeFeesCents, // Commission + Stripe fees
         transfer_data: {
           destination: business.stripe_account_id!, // Business receives the rest
         },
