@@ -68,6 +68,11 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
               src={event.cover_image_url}
               alt={event.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              width={800}
+              height={500}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20" />
@@ -119,6 +124,7 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
                 window.open(mapsUrl, '_blank');
               }}
               className="flex items-center gap-1.5 hover:text-white transition-colors"
+              aria-label={`${language === 'el' ? 'Άνοιγμα τοποθεσίας' : 'Open location'}: ${event.location}`}
             >
               <MapPin size={16} />
               <span>{event.location}</span>

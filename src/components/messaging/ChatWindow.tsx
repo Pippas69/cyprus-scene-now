@@ -88,7 +88,7 @@ export function ChatWindow({
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b bg-background">
         {showBackButton && onBack && (
-          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
+          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0" aria-label="Go back">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         )}
