@@ -46,6 +46,7 @@ interface DirectReservation {
   event_id?: string | null;
   is_manual_entry?: boolean;
   manual_status?: string | null;
+  min_age?: number | null;
 }
 
 interface DirectReservationsListProps {
