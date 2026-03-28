@@ -416,11 +416,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     return t.reservation;
   };
 
-  // For dining/bar: determine if viewing direct reservations or an event
-  const isDirectMode = !isTicketLinked && (!isDiningBar || diningSelectedEventId === null);
-  // For ticket-linked: always show events dropdown
-  const showEventsDropdown = isTicketLinked ? events.length > 0 : (isDiningBar && diningEvents.length > 0);
-
   const getTypeTabLabel = (type: EventTypeTab) => {
     if (type === 'ticket') return t.ticket;
     if (type === 'reservation') return t.reservation;
