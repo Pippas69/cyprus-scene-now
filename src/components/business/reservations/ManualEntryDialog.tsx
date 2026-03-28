@@ -203,6 +203,21 @@ export const ManualEntryDialog = ({
       if (!user) throw new Error('Not authenticated');
 
       if (entryType === 'ticket' && eventId) {
+        // Create a ticket_order first (FK constraint)
+        const orderId = crypto.randomUUID();
+        const priceCents = ticketPrice ? Math.round(parseFloat(ticketPrice) * 100) : 0;
+        const { error: orderError } = await supabase.from('ticket_orders').insert({
+          id: orderId,
+          event_id: eventId,
+          user_id: user.id,
+          quantity: 1,
+          total_cents: priceCents,
+          status: 'completed',
+          phone: phone.trim() || null,
+          is_manual_entry: true,
+        } as any);
+        if (orderError) throw orderError;
+
         const { error } = await supabase.from('tickets').insert({
           event_id: eventId,
           user_id: user.id,
@@ -211,8 +226,9 @@ export const ManualEntryDialog = ({
           status: 'valid',
           is_manual_entry: true,
           manual_status: null,
-          order_id: crypto.randomUUID(),
+          order_id: orderId,
           tier_id: ticketTierId || '',
+          staff_memo: notes.trim() || null,
         } as any);
         if (error) throw error;
       } else {
