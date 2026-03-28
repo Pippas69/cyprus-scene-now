@@ -592,9 +592,7 @@ export default function SubscriptionPlans({
     text: string;
     note?: string;
   }, gradient: string, index: number) => <li key={index} className="flex items-start gap-2.5">
-      <div className={`p-0.5 rounded-full bg-gradient-to-br ${gradient} mt-0.5 shrink-0`}>
-        <Check className="w-3 h-3 text-white" />
-      </div>
+      <span className="text-sm text-foreground/80 mt-0.5">•</span>
       <div className="flex flex-col">
         <span className="text-sm text-foreground/90">{feature.text}</span>
         {feature.note && <span className="text-xs text-muted-foreground">{feature.note}</span>}
@@ -657,17 +655,16 @@ export default function SubscriptionPlans({
       {/* Unified Status Bar: FREE + downgrade on left, current plan + boost credits on right */}
       <div className={`${embedded ? 'px-1 pt-2' : 'max-w-7xl mx-auto px-4'} pb-3`}>
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-lg border border-white/10 bg-white/5">
             {/* Left: FREE + downgrade badge */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Building2 className="w-4 h-4 text-muted-foreground" />
-              <span className="font-semibold text-sm">{t.freeTitle}</span>
+              <span className="font-semibold text-sm text-white">{t.freeTitle}</span>
 
               {/* Downgrade to Free button */}
               {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (!currentSubscription?.downgrade_pending || (currentSubscription?.downgrade_target_plan && currentSubscription.downgrade_target_plan !== 'free')) && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
+                    <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 hover:bg-white/15 text-white/70 border border-white/10 transition-colors cursor-pointer">
                       <ArrowDown className="w-2.5 h-2.5" />
                       {t.downgradeToFree}
                     </button>
@@ -690,33 +687,23 @@ export default function SubscriptionPlans({
 
               {/* Pending downgrade to FREE indicator */}
               {currentSubscription?.plan_slug !== 'free' && currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
-                  <span className="py-0.5 text-center leading-[1.3]">
-                    {t.downgradeWillSwitch} Free
-                    <br />
-                    {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
-                  </span>
-                </Badge>
+                <span className="text-[10px] text-white/50 max-w-[200px]">
+                  {t.downgradeWillSwitch} Free {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
+                </span>
               )}
             </div>
 
             {/* Right: Current plan name + Boost Credits (only for paid plans) */}
             {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (
               <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-sm font-bold text-white">{currentSubscription.plan_name}</span>
+                <div className="h-4 w-px bg-white/20" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-foreground">{currentSubscription.plan_name}</span>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">
-                    {language === 'el' ? 'Ενεργή' : 'Active'}
-                  </Badge>
-                </div>
-                <div className="h-4 w-px bg-border" />
-                <div className="flex items-center gap-1.5">
-                  <Rocket className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span className="text-xs text-muted-foreground">Boost Credits:</span>
-                  <span className="text-xs font-bold text-primary">
+                  <span className="text-xs text-white/60">Boost Credits:</span>
+                  <span className="text-xs font-bold text-white">
                     {formatCurrency(currentSubscription.monthly_budget_remaining_cents)}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-white/40">
                     / {formatCurrency(currentSubscription.event_boost_budget_cents)}
                   </span>
                 </div>
@@ -728,20 +715,20 @@ export default function SubscriptionPlans({
 
       {/* Title & Billing Toggle */}
       <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-4`}>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="flex flex-col items-center gap-4 mb-6 lg:flex-row lg:justify-between">
-          <h2 className="text-xl font-semibold text-foreground">{t.selectPlan}</h2>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="flex flex-col items-center gap-3 mb-5 sm:flex-row sm:justify-between">
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">{t.selectPlan}</h2>
           
-          {/* Billing Toggle — FOMO styled */}
-          <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
-            <button onClick={() => setBillingCycle('monthly')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingCycle === 'monthly' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+          {/* Billing Toggle — compact FOMO styled */}
+          <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-full">
+            <button onClick={() => setBillingCycle('monthly')} className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${billingCycle === 'monthly' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
               {t.monthly}
             </button>
-            <button onClick={() => setBillingCycle('annual')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${billingCycle === 'annual' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+            <button onClick={() => setBillingCycle('annual')} className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${billingCycle === 'annual' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
               {t.annual}
-              <Badge className="bg-primary-foreground text-primary border-0 text-xs">
-                <Sparkles className="w-3 h-3 mr-1" />
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary-foreground text-primary text-[10px] sm:text-xs font-medium whitespace-nowrap">
+                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 {t.saveMonths}
-              </Badge>
+              </span>
             </button>
           </div>
         </motion.div>
@@ -767,17 +754,9 @@ export default function SubscriptionPlans({
             duration: 0.5,
             delay: index * 0.1
           }}>
-                <Card className={`relative h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isCurrent ? 'ring-2 ring-primary' : ''} ${isMostPopular ? 'shadow-lg border-primary/30' : ''}`}>
-                  {/* Gradient Top Border & Most Popular Badge for Pro */}
-                  {isMostPopular && <>
-                      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
-                      <div className="absolute -top-3 left-4">
-                        <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 shadow-md px-3 py-1`}>
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {t.mostPopular}
-                        </Badge>
-                      </div>
-                    </>}
+                <Card className={`relative h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isCurrent ? 'ring-2 ring-primary' : ''}`}>
+                  {/* Gradient Top Border */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
 
                   {/* Current Plan Badge */}
                   {isCurrent && <div className="absolute top-3.5 right-4">
@@ -787,15 +766,9 @@ export default function SubscriptionPlans({
                       </Badge>
                     </div>}
 
-                  
                   <CardHeader className="pb-3">
-                    {/* Plan Icon & Name */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} text-white`}>
-                        <PlanIconComponent className="w-5 h-5" />
-                      </div>
-                      <h3 className="text-xl font-bold uppercase">{planSlug}</h3>
-                    </div>
+                    {/* Plan Name — no icon */}
+                    <h3 className="text-xl font-bold uppercase mb-3">{planSlug}</h3>
 
                     {/* Pending downgrade badge - shown on the TARGET plan card */}
                     {currentSubscription?.downgrade_pending && currentSubscription.downgrade_target_plan === planSlug && (
