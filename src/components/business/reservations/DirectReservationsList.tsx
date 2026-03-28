@@ -680,7 +680,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
       // If no check-ins yet but has ticket counts, show confirmed
       if (counts && counts.total > 0) {
-        return <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>;
+        return <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>;
       }
     }
     if (reservation.status === 'cancelled') {
@@ -694,7 +694,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
     }
     if (reservation.status === 'accepted') {
-      return <Badge variant="default">{t.confirmed}</Badge>;
+      return <span className="text-sm text-foreground whitespace-nowrap">{t.confirmed}</span>;
     }
     return <Badge variant="outline">{reservation.status}</Badge>;
   };
@@ -1036,7 +1036,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       {ticket.checked_in ? (
                         <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
                       ) : (
-                        <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
+                        <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>
                       )}
                     </TableCell>
                     <TableCell>

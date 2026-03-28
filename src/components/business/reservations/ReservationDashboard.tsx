@@ -435,9 +435,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 <button
                   key={type}
                   onClick={() => setActiveTypeTab(type)}
-                  className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                  className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
                     activeTypeTab === type
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-gradient-ocean text-white shadow-sm'
                       : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
                   }`}
                 >
