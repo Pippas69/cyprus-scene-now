@@ -566,11 +566,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return fallbackTier?.prepaid_min_charge_cents ?? null;
   };
 
-  const getMinAge = (reservationId: string): string => {
-    const ages = agesByReservation[reservationId];
-    if (!ages || ages.length === 0) return '-';
-    const min = Math.min(...ages);
-    return `${min}+`;
+  const getMinAge = (reservation: DirectReservation): string => {
+    const ages = agesByReservation[reservation.id];
+    if (ages && ages.length > 0) {
+      const min = Math.min(...ages);
+      return `${min}+`;
+    }
+    if (typeof reservation.min_age === 'number' && reservation.min_age > 0) {
+      return String(reservation.min_age);
+    }
+    return '-';
   };
 
   // Inline editing handlers
@@ -1142,7 +1147,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
-                const minAge = getMinAge(reservation.id);
+                const minAge = getMinAge(reservation);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0;
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
