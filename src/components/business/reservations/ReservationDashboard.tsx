@@ -6,8 +6,9 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
+import { Button } from '@/components/ui/button';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -26,6 +27,7 @@ type EventTypeTab = 'ticket' | 'reservation' | 'ticket_reservation';
 
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
   const [isPerformance, setIsPerformance] = useState(false);
   const [isDiningBar, setIsDiningBar] = useState(false);
@@ -429,13 +431,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
         {isTicketLinked && availableTabs.length > 0 && (
           <div className="space-y-3">
-            {/* Type tabs */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Type tabs + add button */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {availableTabs.map((type) => (
                 <button
                   key={type}
                   onClick={() => setActiveTypeTab(type)}
-                  className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
+                  className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
                     activeTypeTab === type
                       ? 'bg-card text-foreground shadow-sm border border-border/50'
                       : 'text-foreground/50 hover:text-foreground/70'
@@ -444,6 +446,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   {getTypeTabLabel(type)}
                 </button>
               ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0"
+                onClick={() => setManualEntryOpen(true)}
+                title={language === 'el' ? 'Προσθήκη' : 'Add'}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
 
             {/* Per-tab event dropdown (only if 2+ events in active tab) */}
@@ -478,13 +489,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </div>
         )}
 
-        {/* Dining/bar businesses: badges layout (unchanged) */}
+        {/* Dining/bar businesses: badges layout */}
         {!isTicketLinked && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isDiningBar && (
               <button
                 onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-                className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
+                className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
                   diningSelectedEventId === null
                     ? 'bg-card text-foreground shadow-sm border border-border/50'
                     : 'text-foreground/50 hover:text-foreground/70'
@@ -502,7 +513,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   setActiveTab('list');
                 }}
               >
-                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-full gap-2 px-4 transition-all ${
+                <SelectTrigger className={`h-8 sm:h-9 text-xs sm:text-sm w-auto min-w-[140px] sm:min-w-[180px] max-w-xs rounded-full gap-2 px-3 sm:px-4 transition-all ${
                   diningSelectedEventId !== null
                     ? 'bg-card text-foreground shadow-sm border border-border/50'
                     : 'text-foreground/50 border-0 hover:text-foreground/70'
@@ -531,6 +542,16 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 </SelectContent>
               </Select>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0"
+              onClick={() => setManualEntryOpen(true)}
+              title={language === 'el' ? 'Προσθήκη' : 'Add'}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
@@ -553,7 +574,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
         <TabsContent value="list" className="mt-4">
           {isDiningEventMode ? (
-            // Dining/bar viewing an event → show event-specific reservations (full event mode)
             <DirectReservationsList
               businessId={businessId}
               language={language}
@@ -561,6 +581,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
               forceEventMode
+              manualEntryOpen={manualEntryOpen}
+              onManualEntryOpenChange={setManualEntryOpen}
             />
           ) : (
             <DirectReservationsList
@@ -569,6 +591,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={isTicketLinked ? handleReservationCountChange : undefined}
               selectedEventId={isTicketLinked ? selectedEventId : undefined}
               selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
+              manualEntryOpen={manualEntryOpen}
+              onManualEntryOpenChange={setManualEntryOpen}
             />
           )}
         </TabsContent>

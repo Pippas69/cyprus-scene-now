@@ -56,6 +56,8 @@ interface DirectReservationsListProps {
   selectedEventId?: string | null;
   selectedEventType?: string | null;
   forceEventMode?: boolean;
+  manualEntryOpen?: boolean;
+  onManualEntryOpenChange?: (open: boolean) => void;
 }
 
 // Cache for seating tiers
@@ -81,7 +83,7 @@ interface TicketOnlyOrder {
   ticket_code: string | null;
   staff_memo: string | null;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     eventId?: string | null;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
-  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
+  const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
+  const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
@@ -978,17 +982,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return 'hybrid';
   };
 
-  const addButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      className="rounded-full h-8 w-8 p-0 border-border/50"
-      onClick={() => setManualEntryOpen(true)}
-      title={language === 'el' ? 'Προσθήκη' : 'Add'}
-    >
-      <Plus className="h-4 w-4" />
-    </Button>
-  );
+
 
   // ===================== KALIVA MODE =====================
   if (isTicketLinked) {
@@ -1002,7 +996,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
-          <div className="flex justify-end">{addButton}</div>
           <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
@@ -1105,7 +1098,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length === 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
-          <div className="flex justify-end">{addButton}</div>
           <Card>
             <CardContent className="py-10 text-center">
               <Ticket className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
@@ -1128,7 +1120,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // RESERVATION-ONLY or TICKET_AND_RESERVATION (hybrid) — existing flow
     return (
       <div className="space-y-4 w-full max-w-full">
-        <div className="flex justify-end">{addButton}</div>
         {filteredReservations.length === 0 ?
         <Card>
             <CardContent className="py-10 text-center">
@@ -1281,7 +1272,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ))}
       </div>
 
-      <div className="flex justify-end">{addButton}</div>
+      
 
       {filteredReservations.length === 0 ?
       <Card>
