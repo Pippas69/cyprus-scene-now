@@ -462,7 +462,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       <div className="flex items-center pt-1 md:pt-1.5">
                       {eventType === 'ticket' &&
                       <Badge
-                        className="bg-gradient-ocean hover:opacity-90 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 border-0"
+                        className="bg-card text-foreground border border-border/50 cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
                         onClick={() => setTicketSalesEvent({ id: event.id, title: event.title })}>
                         
                             <Ticket className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
@@ -471,7 +471,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       }
                         {eventType === 'reservation' &&
                       <Badge
-                        className="bg-gradient-ocean hover:opacity-90 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 border-0"
+                        className="bg-card text-foreground border border-border/50 cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
                         onClick={() => setReservationEvent({ id: event.id, title: event.title })}>
                         
                             <Grid3X3 className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
@@ -480,7 +480,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                       }
                         {eventType === 'ticket_and_reservation' &&
                       <Badge
-                        className="bg-gradient-ocean hover:opacity-90 text-white cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 border-0"
+                        className="bg-card text-foreground border border-border/50 cursor-pointer flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2"
                         onClick={() => setCombinedEvent({ id: event.id, title: event.title })}>
                         
                             
@@ -489,7 +489,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                           </Badge>
                       }
                         {eventType === 'free_entry' &&
-                      <Badge className="bg-gradient-ocean hover:opacity-90 text-white border-0 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
+                      <Badge className="bg-card text-foreground border border-border/50 flex items-center gap-0.5 text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2">
                             <Gift className="h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
                             {t.badgeFreeEntry}
                           </Badge>
@@ -552,7 +552,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
                              className={`cursor-pointer text-[10px] md:text-xs lg:text-sm h-5 md:h-6 lg:h-7 px-1.5 md:px-2 flex items-center gap-0.5 ${
                             isPaused ?
                             "bg-muted text-muted-foreground hover:bg-muted/80" :
-                            "bg-gradient-ocean text-white hover:opacity-90 border-0"}`
+                            "bg-card text-foreground border border-border/50 hover:bg-card/80"}`
                             }
                             onClick={() => handleTogglePause(event.id, !!isPaused)}>
                             
