@@ -364,6 +364,7 @@ export const ManualEntryDialog = ({
               <Input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
                 type="number"
                 min="1"
                 max="50"
@@ -379,6 +380,7 @@ export const ManualEntryDialog = ({
               <Input
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
                 type="number"
                 min="0"
                 max="99"
@@ -395,6 +397,7 @@ export const ManualEntryDialog = ({
               <Input
                 value={ticketPrice}
                 onChange={(e) => setTicketPrice(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
                 type="number"
                 min="0"
                 step="0.01"
@@ -403,26 +406,7 @@ export const ManualEntryDialog = ({
               />
             </div>
           )}
-
-          {/* === TICKET: Ticket type (tier) === */}
-          {entryType === 'ticket' && ticketTiers.length > 0 && (
-            <div className={fieldClass}>
-              <Label className={labelClass}>{txt.ticketType}</Label>
-              <Select value={ticketTierId} onValueChange={setTicketTierId}>
-                <SelectTrigger className={inputClass}>
-                  <SelectValue placeholder={txt.selectOption} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ticketTiers.map((tier) => (
-                    <SelectItem key={tier.id} value={tier.id}>
-                      {tier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
+...
           {/* === RESERVATION/HYBRID: Min charge === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
@@ -430,6 +414,7 @@ export const ManualEntryDialog = ({
               <Input
                 value={minCharge}
                 onChange={(e) => setMinCharge(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
                 type="number"
                 min="0"
                 step="0.01"
