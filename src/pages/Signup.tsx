@@ -404,7 +404,7 @@ const Signup = () => {
 
         <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
           <div className="text-center mb-5 sm:mb-8">
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-seafoam to-primary bg-clip-text text-transparent mb-1">
+            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-seafoam mb-1">
               {t.signup}
             </h1>
           </div>
@@ -526,15 +526,17 @@ const Signup = () => {
                   {language === "el" ? "Επιλέξτε όσα θέλετε για καλύτερες προτάσεις" : "Select as many as you like for better recommendations"}
                 </p>
 
-                <InterestSelectorList
-                  categories={getCategoriesForUser(language)}
-                  selectedIds={selectedPreferences}
-                  onToggle={togglePreference}
-                />
+                <div className="[&>div]:space-y-1.5 sm:[&>div]:space-y-2">
+                  <InterestSelectorList
+                    categories={getCategoriesForUser(language)}
+                    selectedIds={selectedPreferences}
+                    onToggle={togglePreference}
+                  />
+                </div>
               </div>
 
               {/* Student Verification Section */}
-              <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border border-border rounded-xl bg-muted/30">
+              <div className="space-y-2 sm:space-y-4 p-2.5 sm:p-4 border border-border rounded-xl bg-muted/30">
                 <div className="flex items-center space-x-3">
                   <Checkbox 
                     id="isStudent" 
@@ -608,7 +610,7 @@ const Signup = () => {
                 )}
               </div>
 
-              <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={isLoading}>
+              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading}>
                 {isLoading ? t.signingUp : t.signupButton}
               </Button>
 
@@ -620,7 +622,7 @@ const Signup = () => {
                 )}
               </p>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-xs sm:text-sm text-muted-foreground">
                 {t.alreadyHaveAccount}{" "}
                 <Link to="/login" className="text-primary hover:underline font-semibold">
                   {t.loginLink}
@@ -629,9 +631,9 @@ const Signup = () => {
             </form>
           </Form>
 
-          <div className="mt-8 text-right">
-            <Link to="/signup-business" className="inline-flex items-center gap-2 text-sm text-white hover:text-white/80 transition-colors font-medium">
-              <Store className="h-4 w-4" />
+          <div className="mt-4 sm:mt-8 text-right">
+            <Link to="/signup-business" className="inline-flex items-center gap-2 text-xs sm:text-sm text-white hover:text-white/80 transition-colors font-medium">
+              <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t.businessSignupLink}
             </Link>
           </div>

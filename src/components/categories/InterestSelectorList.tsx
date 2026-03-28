@@ -46,10 +46,10 @@ export function InterestSelectorList({
         const isActive = (!hasSubOptions && selectedIds.includes(category.id)) || selectedSubCount > 0;
 
         return (
-          <div key={category.id} className="border border-border rounded-2xl overflow-hidden">
+          <div key={category.id} className="border border-border rounded-xl sm:rounded-2xl overflow-hidden">
             <div
               className={cn(
-                "flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5",
+                "flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3.5",
                 "bg-background",
                 isActive && "bg-muted/40"
               )}
