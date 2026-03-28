@@ -46,6 +46,7 @@ interface DirectReservation {
   event_id?: string | null;
   is_manual_entry?: boolean;
   manual_status?: string | null;
+  min_age?: number | null;
 }
 
 interface DirectReservationsListProps {
@@ -260,7 +261,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
-          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status,
+          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age,
           profiles(name, email)
         `);
 
@@ -664,7 +665,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           table="reservations"
           language={language}
           onStatusChange={(newStatus) => {
-            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus } : r));
+            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus, checked_in_at: newStatus === 'arrived' ? new Date().toISOString() : null, status: newStatus === 'no_show' ? 'no_show' : 'accepted' } : r));
           }}
         />
       );

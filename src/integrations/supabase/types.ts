@@ -4288,6 +4288,7 @@ export type Database = {
           id: string
           is_manual_entry: boolean
           manual_status: string | null
+          min_age: number | null
           party_size: number
           phone_number: string | null
           preferred_time: string | null
@@ -4324,6 +4325,7 @@ export type Database = {
           id?: string
           is_manual_entry?: boolean
           manual_status?: string | null
+          min_age?: number | null
           party_size: number
           phone_number?: string | null
           preferred_time?: string | null
@@ -4360,6 +4362,7 @@ export type Database = {
           id?: string
           is_manual_entry?: boolean
           manual_status?: string | null
+          min_age?: number | null
           party_size?: number
           phone_number?: string | null
           preferred_time?: string | null
