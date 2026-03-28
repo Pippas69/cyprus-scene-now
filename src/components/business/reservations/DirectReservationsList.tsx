@@ -963,13 +963,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return (
         <div className="space-y-4 w-full max-w-full">
           <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[600px] table-fixed">
+            <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-1/4">{t.name}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.details}</TableHead>
-                  <TableHead className="text-xs w-1/4">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-1/4">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -977,7 +978,34 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
-                        <span>{ticket.guest_name}</span>
+                        {editingTicketName === ticket.ticket_id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={ticketNameValue}
+                              onChange={(e) => setTicketNameValue(e.target.value)}
+                              className="h-7 text-sm w-28"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTicketName(ticket.ticket_id);
+                                if (e.key === 'Escape') { setEditingTicketName(null); setTicketNameValue(''); }
+                              }}
+                            />
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketName(ticket.ticket_id)}>
+                              <Check className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketName(null); setTicketNameValue(''); }}>
+                              <X className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span
+                            className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-1 group/edit"
+                            onClick={() => { setEditingTicketName(ticket.ticket_id); setTicketNameValue(ticket.guest_name); }}
+                          >
+                            {ticket.guest_name}
+                            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+                          </span>
+                        )}
                         {ticket.buyer_phone && (
                           <span className="text-sm text-muted-foreground">{ticket.buyer_phone}</span>
                         )}
@@ -985,11 +1013,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-sm whitespace-nowrap">
-                          1 {language === 'el' ? 'εισιτήριο' : 'ticket'}
-                        </span>
-                        {ticket.guest_age && (
-                          <span className="text-sm font-thin text-muted-foreground">{ticket.guest_age}+</span>
+                        {ticket.guest_age ? (
+                          <span className="text-sm text-muted-foreground">{ticket.guest_age}+</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
@@ -1011,6 +1038,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       ) : (
                         <Badge variant="default">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {renderTicketMemoCell(ticket)}
                     </TableCell>
                   </TableRow>
                 ))}
