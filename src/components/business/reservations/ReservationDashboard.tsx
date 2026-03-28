@@ -22,6 +22,8 @@ interface EventOption {
   reservationCount: number;
 }
 
+type EventTypeTab = 'ticket' | 'reservation' | 'ticket_reservation';
+
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
@@ -30,6 +32,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventsHydrated, setEventsHydrated] = useState(false);
+  const [activeTypeTab, setActiveTypeTab] = useState<EventTypeTab | null>(null);
   // For dining/bar: null means "direct reservations", a string means event-specific
   const [diningSelectedEventId, setDiningSelectedEventId] = useState<string | null>(null);
   const [diningEventsHydrated, setDiningEventsHydrated] = useState(false);
@@ -347,6 +350,48 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const selectedEvent = events.find(e => e.id === selectedEventId);
   const diningSelectedEvent = diningEvents.find(e => e.id === diningSelectedEventId);
 
+  // Group events by type for ticket-linked businesses
+  const { ticketEvents, reservationEvents, hybridEvents, availableTabs } = useMemo(() => {
+    const ticket = events.filter(e => e.event_type === 'ticket');
+    const reservation = events.filter(e => e.event_type === 'reservation' || e.event_type === null);
+    const hybrid = events.filter(e => e.event_type === 'ticket_reservation');
+    
+    const tabs: EventTypeTab[] = [];
+    if (ticket.length > 0) tabs.push('ticket');
+    if (reservation.length > 0) tabs.push('reservation');
+    if (hybrid.length > 0) tabs.push('ticket_reservation');
+    
+    return { ticketEvents: ticket, reservationEvents: reservation, hybridEvents: hybrid, availableTabs: tabs };
+  }, [events]);
+
+  // Auto-set activeTypeTab when tabs change
+  useEffect(() => {
+    if (!isTicketLinked || availableTabs.length === 0) return;
+    
+    setActiveTypeTab(prev => {
+      if (prev && availableTabs.includes(prev)) return prev;
+      return availableTabs[0];
+    });
+  }, [isTicketLinked, availableTabs]);
+
+  // Get events for the active type tab
+  const activeTabEvents = useMemo(() => {
+    if (activeTypeTab === 'ticket') return ticketEvents;
+    if (activeTypeTab === 'reservation') return reservationEvents;
+    if (activeTypeTab === 'ticket_reservation') return hybridEvents;
+    return [];
+  }, [activeTypeTab, ticketEvents, reservationEvents, hybridEvents]);
+
+  // Auto-select event when type tab changes
+  useEffect(() => {
+    if (!isTicketLinked || activeTabEvents.length === 0) return;
+    
+    const currentStillValid = selectedEventId && activeTabEvents.some(e => e.id === selectedEventId);
+    if (!currentStillValid) {
+      setSelectedEventId(activeTabEvents[0].id);
+    }
+  }, [isTicketLinked, activeTypeTab, activeTabEvents]);
+
   // Is a dining/bar business currently viewing an event?
   const isDiningEventMode = isDiningBar && !isTicketLinked && diningSelectedEventId !== null;
 
@@ -371,75 +416,123 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     return t.reservation;
   };
 
-  // For dining/bar: determine if viewing direct reservations or an event
-  const isDirectMode = !isTicketLinked && (!isDiningBar || diningSelectedEventId === null);
-  // For ticket-linked: always show events dropdown
-  const showEventsDropdown = isTicketLinked ? events.length > 0 : (isDiningBar && diningEvents.length > 0);
+  const getTypeTabLabel = (type: EventTypeTab) => {
+    if (type === 'ticket') return t.ticket;
+    if (type === 'reservation') return t.reservation;
+    return t.ticketReservation;
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="min-w-0">
-        
-        
-        <div className="flex items-center gap-2">
-          {/* Badge: Κρατήσεις (direct reservations - no dropdown) */}
-          {!isTicketLinked && isDiningBar && (
-            <button
-              onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-              className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
-                diningSelectedEventId === null
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
-              }`}
-            >
-              {t.directReservations}
-            </button>
-          )}
+      <div className="min-w-0 space-y-3">
+        {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
+        {isTicketLinked && availableTabs.length > 0 && (
+          <div className="space-y-3">
+            {/* Type tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {availableTabs.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveTypeTab(type)}
+                  className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                    activeTypeTab === type
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                  }`}
+                >
+                  {getTypeTabLabel(type)}
+                </button>
+              ))}
+            </div>
 
-          {/* Badge: Εκδηλώσεις (with dropdown) */}
-          {showEventsDropdown && (
-            <Select 
-              value={isTicketLinked ? (selectedEventId || '') : (diningSelectedEventId || '')} 
-              onValueChange={(val) => {
-                if (isTicketLinked) {
-                  setSelectedEventId(val);
-                } else {
+            {/* Per-tab event dropdown (only if 2+ events in active tab) */}
+            {activeTabEvents.length > 1 && (
+              <Select
+                value={selectedEventId || ''}
+                onValueChange={(val) => setSelectedEventId(val)}
+              >
+                <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all bg-primary text-primary-foreground shadow-sm border-primary">
+                  <SelectValue placeholder={t.selectEvent} />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  {activeTabEvents.map((event) => {
+                    const dateStr = new Date(event.start_at).toLocaleDateString(
+                      language === 'el' ? 'el-GR' : 'en-US',
+                      { day: 'numeric', month: 'long' }
+                    );
+                    return (
+                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{dateStr}</span>
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                            {event.reservationCount}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
+
+        {/* Dining/bar businesses: badges layout (unchanged) */}
+        {!isTicketLinked && (
+          <div className="flex items-center gap-2">
+            {isDiningBar && (
+              <button
+                onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
+                className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                  diningSelectedEventId === null
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                }`}
+              >
+                {t.directReservations}
+              </button>
+            )}
+
+            {isDiningBar && diningEvents.length > 0 && (
+              <Select
+                value={diningSelectedEventId || ''}
+                onValueChange={(val) => {
                   setDiningSelectedEventId(val);
                   setActiveTab('list');
-                }
-              }}
-            >
-              <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all ${
-                isTicketLinked || diningSelectedEventId !== null
-                  ? 'bg-primary text-primary-foreground shadow-sm border-primary'
-                  : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
-              }`}>
-                <SelectValue placeholder={t.events} />
-              </SelectTrigger>
-              <SelectContent className="rounded-lg">
-                {(isTicketLinked ? events : diningEvents).map((event) => {
-                  const dateStr = new Date(event.start_at).toLocaleDateString(
-                    language === 'el' ? 'el-GR' : 'en-US',
-                    { day: 'numeric', month: 'long' }
-                  );
-                  const typeLabel = getEventTypeLabel(event.event_type);
-                  return (
-                    <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
-                      <span className="flex items-center gap-2">
-                        <span className="text-sm">{dateStr}</span>
-                        <span className="text-xs text-muted-foreground">({typeLabel})</span>
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
-                          {event.reservationCount}
+                }}
+              >
+                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all ${
+                  diningSelectedEventId !== null
+                    ? 'bg-primary text-primary-foreground shadow-sm border-primary'
+                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                }`}>
+                  <SelectValue placeholder={t.events} />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  {diningEvents.map((event) => {
+                    const dateStr = new Date(event.start_at).toLocaleDateString(
+                      language === 'el' ? 'el-GR' : 'en-US',
+                      { day: 'numeric', month: 'long' }
+                    );
+                    const typeLabel = getEventTypeLabel(event.event_type);
+                    return (
+                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{dateStr}</span>
+                          <span className="text-xs text-muted-foreground">({typeLabel})</span>
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                            {event.reservationCount}
+                          </span>
                         </span>
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
