@@ -8,6 +8,7 @@ import { format, differenceInMinutes } from "date-fns";
 import { enUS, el } from "date-fns/locale";
 import { CardActionBar } from "./CardActionBar";
 import { useCallback, useRef, useState } from "react";
+import { getOptimizedImageUrl } from "@/lib/imageLoader";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
 import { ShareDialog } from "@/components/sharing/ShareDialog";
@@ -218,7 +219,7 @@ export const UnifiedEventCard = ({
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
-                src={event.cover_image_url}
+                src={getOptimizedImageUrl(event.cover_image_url, 400)}
                 alt={event.title}
                 className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
               />
@@ -334,7 +335,7 @@ export const UnifiedEventCard = ({
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
-                src={event.cover_image_url}
+                src={getOptimizedImageUrl(event.cover_image_url, 400)}
                 alt={event.title}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"

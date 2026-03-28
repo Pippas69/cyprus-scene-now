@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
 
 const PARTNER_SEARCH = [
@@ -84,7 +85,7 @@ const PartnerLogoMarquee = () => {
                   className="flex flex-col items-center gap-2 flex-shrink-0 group"
                 >
                   <Avatar className="w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20">
-                    <AvatarImage src={partner.logo_url || undefined} alt={partner.name} />
+                    <AvatarImage src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 112) : undefined} alt={partner.name} />
                     <AvatarFallback className={`bg-gradient-to-br ${partner.gradient} text-white font-semibold text-xs sm:text-sm tracking-wide`}>
                       {partner.initials}
                     </AvatarFallback>
