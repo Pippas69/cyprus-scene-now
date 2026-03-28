@@ -91,9 +91,14 @@ function AppContent() {
                         adminRoutes.some(route => location.pathname.startsWith(route)) ||
                         businessRoutes.some(route => location.pathname.startsWith(route));
 
+  // Stabilize route key so layout wrappers don't remount on internal navigation
+  const userLayoutPaths = ['/feed', '/ekdiloseis', '/xartis', '/offers', '/dashboard-user'];
+  const isUserLayout = userLayoutPaths.some(p => location.pathname.startsWith(p));
   const routesKey = location.pathname.startsWith('/dashboard-business')
     ? '/dashboard-business'
-    : location.pathname;
+    : isUserLayout
+      ? '/user-layout'
+      : location.pathname;
 
   return (
     <>
