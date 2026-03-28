@@ -421,70 +421,123 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   // For ticket-linked: always show events dropdown
   const showEventsDropdown = isTicketLinked ? events.length > 0 : (isDiningBar && diningEvents.length > 0);
 
+  const getTypeTabLabel = (type: EventTypeTab) => {
+    if (type === 'ticket') return t.ticket;
+    if (type === 'reservation') return t.reservation;
+    return t.ticketReservation;
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="min-w-0">
-        
-        
-        <div className="flex items-center gap-2">
-          {/* Badge: Κρατήσεις (direct reservations - no dropdown) */}
-          {!isTicketLinked && isDiningBar && (
-            <button
-              onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-              className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
-                diningSelectedEventId === null
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
-              }`}
-            >
-              {t.directReservations}
-            </button>
-          )}
+      <div className="min-w-0 space-y-3">
+        {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
+        {isTicketLinked && availableTabs.length > 0 && (
+          <div className="space-y-3">
+            {/* Type tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {availableTabs.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveTypeTab(type)}
+                  className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                    activeTypeTab === type
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                  }`}
+                >
+                  {getTypeTabLabel(type)}
+                </button>
+              ))}
+            </div>
 
-          {/* Badge: Εκδηλώσεις (with dropdown) */}
-          {showEventsDropdown && (
-            <Select 
-              value={isTicketLinked ? (selectedEventId || '') : (diningSelectedEventId || '')} 
-              onValueChange={(val) => {
-                if (isTicketLinked) {
-                  setSelectedEventId(val);
-                } else {
+            {/* Per-tab event dropdown (only if 2+ events in active tab) */}
+            {activeTabEvents.length > 1 && (
+              <Select
+                value={selectedEventId || ''}
+                onValueChange={(val) => setSelectedEventId(val)}
+              >
+                <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all bg-primary text-primary-foreground shadow-sm border-primary">
+                  <SelectValue placeholder={t.selectEvent} />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  {activeTabEvents.map((event) => {
+                    const dateStr = new Date(event.start_at).toLocaleDateString(
+                      language === 'el' ? 'el-GR' : 'en-US',
+                      { day: 'numeric', month: 'long' }
+                    );
+                    return (
+                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{dateStr}</span>
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                            {event.reservationCount}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
+
+        {/* Dining/bar businesses: badges layout (unchanged) */}
+        {!isTicketLinked && (
+          <div className="flex items-center gap-2">
+            {isDiningBar && (
+              <button
+                onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
+                className={`h-9 px-4 text-sm font-medium rounded-lg transition-all ${
+                  diningSelectedEventId === null
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                }`}
+              >
+                {t.directReservations}
+              </button>
+            )}
+
+            {isDiningBar && diningEvents.length > 0 && (
+              <Select
+                value={diningSelectedEventId || ''}
+                onValueChange={(val) => {
                   setDiningSelectedEventId(val);
                   setActiveTab('list');
-                }
-              }}
-            >
-              <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all ${
-                isTicketLinked || diningSelectedEventId !== null
-                  ? 'bg-primary text-primary-foreground shadow-sm border-primary'
-                  : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
-              }`}>
-                <SelectValue placeholder={t.events} />
-              </SelectTrigger>
-              <SelectContent className="rounded-lg">
-                {(isTicketLinked ? events : diningEvents).map((event) => {
-                  const dateStr = new Date(event.start_at).toLocaleDateString(
-                    language === 'el' ? 'el-GR' : 'en-US',
-                    { day: 'numeric', month: 'long' }
-                  );
-                  const typeLabel = getEventTypeLabel(event.event_type);
-                  return (
-                    <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
-                      <span className="flex items-center gap-2">
-                        <span className="text-sm">{dateStr}</span>
-                        <span className="text-xs text-muted-foreground">({typeLabel})</span>
-                        <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
-                          {event.reservationCount}
+                }}
+              >
+                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-lg gap-2 px-4 transition-all ${
+                  diningSelectedEventId !== null
+                    ? 'bg-primary text-primary-foreground shadow-sm border-primary'
+                    : 'bg-card/50 text-foreground/70 border border-border/30 hover:bg-card/80'
+                }`}>
+                  <SelectValue placeholder={t.events} />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  {diningEvents.map((event) => {
+                    const dateStr = new Date(event.start_at).toLocaleDateString(
+                      language === 'el' ? 'el-GR' : 'en-US',
+                      { day: 'numeric', month: 'long' }
+                    );
+                    const typeLabel = getEventTypeLabel(event.event_type);
+                    return (
+                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{dateStr}</span>
+                          <span className="text-xs text-muted-foreground">({typeLabel})</span>
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                            {event.reservationCount}
+                          </span>
                         </span>
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
