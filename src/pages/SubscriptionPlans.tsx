@@ -205,23 +205,24 @@ const translations = {
   }
 };
 
-// Plan configuration
+// Plan configuration — unified FOMO ocean gradient for all tiers
+const FOMO_GRADIENT = 'from-[hsl(174,62%,45%)] to-[hsl(174,50%,35%)]';
 const PLAN_CONFIG = {
   basic: {
     icon: Zap,
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 5999,
     annualMonthlyPrice: 4999
   },
   pro: {
     icon: Star,
-    gradient: 'from-primary to-sunset-coral',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 11999,
     annualMonthlyPrice: 9999
   },
   elite: {
     icon: Crown,
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 23999,
     annualMonthlyPrice: 19999
   }
@@ -248,8 +249,52 @@ export default function SubscriptionPlans({
     reset: resetConfetti
   } = useConfetti();
   const t = translations[language];
+
+  // FAST: Read directly from DB for instant display (no edge function call)
+  const { data: fastDbData } = useQuery({
+    queryKey: ['subscription-plans-db-fast'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+      if (!business) return null;
+      const { data: sub } = await supabase
+        .from('business_subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('business_id', business.id)
+        .eq('status', 'active')
+        .single();
+      if (!sub || !sub.subscription_plans) return { subscribed: false };
+      const plan = sub.subscription_plans as any;
+      const budgetRemaining = Math.min(
+        sub.monthly_budget_remaining_cents ?? plan.event_boost_budget_cents,
+        plan.event_boost_budget_cents
+      );
+      return {
+        subscribed: true,
+        plan_slug: plan.slug,
+        plan_name: plan.name,
+        billing_cycle: sub.billing_cycle || 'monthly',
+        status: 'active',
+        subscription_end: sub.current_period_end,
+        monthly_budget_remaining_cents: budgetRemaining,
+        event_boost_budget_cents: plan.event_boost_budget_cents,
+        downgrade_pending: !!sub.downgraded_to_free_at,
+        downgrade_effective_date: sub.downgraded_to_free_at ? sub.current_period_end : null,
+        downgrade_target_plan: sub.downgrade_target_plan || 'free',
+      };
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // BACKGROUND: Stripe sync (slower but accurate)
   const {
-    data: currentSubscription,
+    data: stripeSubscription,
     refetch: refetchSubscription
   } = useQuery({
     queryKey: ['current-subscription'],
@@ -273,6 +318,9 @@ export default function SubscriptionPlans({
     },
     refetchInterval: 60000
   });
+
+  // Use Stripe data when available, otherwise fast DB data
+  const currentSubscription = stripeSubscription || fastDbData;
 
   // Handle success/canceled URL parameters
   useEffect(() => {
@@ -538,9 +586,6 @@ export default function SubscriptionPlans({
 
   // Calculate subscription usage percentages
   const budgetUsedPercent = currentSubscription?.event_boost_budget_cents > 0 ? (currentSubscription.event_boost_budget_cents - currentSubscription.monthly_budget_remaining_cents) / currentSubscription.event_boost_budget_cents * 100 : 0;
-  const currentPlanConfig = currentSubscription?.plan_slug ? PLAN_CONFIG[currentSubscription.plan_slug as keyof typeof PLAN_CONFIG] : null;
-  const PlanIcon = currentPlanConfig?.icon || Zap;
-  const currentPlanGradient = currentPlanConfig?.gradient || 'from-blue-500 to-cyan-500';
   const plans = ['basic', 'pro', 'elite'] as const;
   const renderFeatureItem = (feature: {
     icon: any;
@@ -609,169 +654,91 @@ export default function SubscriptionPlans({
           </motion.div>}
       </AnimatePresence>
 
-      {/* Compact Current Plan Banner - Only visible for paid plans (Basic, Pro, Elite) */}
-      {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && <div className={`${embedded ? 'px-1 pt-2' : 'max-w-7xl mx-auto px-4'} ${embedded ? 'pb-3' : 'pt-4 pb-3'}`}>
-          <motion.div initial={{
-        opacity: 0,
-        y: -10
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.3
-      }}>
-            <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-2.5 sm:p-3 rounded-lg border bg-muted/30 border-border/50`}>
-              {/* Plan Info */}
-              <div className="flex items-center gap-2">
-                <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-br ${currentPlanGradient} text-white`}>
-                  <PlanIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-semibold">{currentSubscription.plan_name}</span>
-                  <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+      {/* Unified Status Bar: FREE + downgrade on left, current plan + boost credits on right */}
+      <div className={`${embedded ? 'px-1 pt-2' : 'max-w-7xl mx-auto px-4'} pb-3`}>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+            {/* Left: FREE + downgrade badge */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Building2 className="w-4 h-4 text-muted-foreground" />
+              <span className="font-semibold text-sm">{t.freeTitle}</span>
+
+              {/* Downgrade to Free button */}
+              {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (!currentSubscription?.downgrade_pending || (currentSubscription?.downgrade_target_plan && currentSubscription.downgrade_target_plan !== 'free')) && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
+                      <ArrowDown className="w-2.5 h-2.5" />
+                      {t.downgradeToFree}
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
+                      <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDowngrade('free')} disabled={loadingDowngrade}>
+                        {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {t.downgradeConfirm}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {/* Pending downgrade to FREE indicator */}
+              {currentSubscription?.plan_slug !== 'free' && currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
+                  <span className="py-0.5 text-center leading-[1.3]">
+                    {t.downgradeWillSwitch} Free
+                    <br />
+                    {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
+                  </span>
+                </Badge>
+              )}
+            </div>
+
+            {/* Right: Current plan name + Boost Credits (only for paid plans) */}
+            {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-foreground">{currentSubscription.plan_name}</span>
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">
                     {language === 'el' ? 'Ενεργή' : 'Active'}
                   </Badge>
                 </div>
-              </div>
-
-              {/* Boost Credits (paid plans only) */}
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
-                  <Rocket className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" />
-                  <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Boost Credits:</span>
-                  <span className="text-[10px] sm:text-xs font-semibold">
+                <div className="h-4 w-px bg-border" />
+                <div className="flex items-center gap-1.5">
+                  <Rocket className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-xs text-muted-foreground">Boost Credits:</span>
+                  <span className="text-xs font-bold text-primary">
                     {formatCurrency(currentSubscription.monthly_budget_remaining_cents)}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground">
                     / {formatCurrency(currentSubscription.event_boost_budget_cents)}
                   </span>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </div>}
-
-      {/* Header Section with Free Plan */}
-      <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-4`}>
-        {/* Free Plan - Compact Horizontal Section */}
-        <motion.div initial={{
-        opacity: 0,
-        y: 10
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.4
-      }} className="mb-4">
-          <div className="px-4 py-3 rounded-lg bg-muted/20 border border-border/30">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              {/* Free Plan Title */}
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium text-sm text-foreground">{t.freeTitle}</span>
-                
-                {/* Downgrade to Free badge - only visible when on paid plan */}
-                {currentSubscription?.subscribed && currentSubscription?.plan_slug !== 'free' && (!currentSubscription?.downgrade_pending || (currentSubscription?.downgrade_target_plan && currentSubscription.downgrade_target_plan !== 'free')) && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <button className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted hover:bg-muted/80 text-muted-foreground border border-border/50 transition-colors cursor-pointer">
-                        <ArrowDown className="w-2.5 h-2.5" />
-                        {t.downgradeToFree}
-                      </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t.downgradeConfirmTitle}</AlertDialogTitle>
-                        <AlertDialogDescription>{t.downgradeConfirmDesc}</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t.downgradeCancel}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDowngrade('free')} disabled={loadingDowngrade}>
-                          {loadingDowngrade ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                          {t.downgradeConfirm}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-
-                {/* Pending downgrade to FREE indicator - only show here when target is free (and current plan is not already free) */}
-                {currentSubscription?.plan_slug !== 'free' && currentSubscription?.downgrade_pending && (currentSubscription.downgrade_target_plan === 'free' || !currentSubscription.downgrade_target_plan) && (
-                  <Badge variant="outline" className="ml-1 text-[9px] px-1.5 py-0 h-auto leading-tight bg-amber-500/10 text-amber-600 border-amber-500/20 max-w-[200px]">
-                    <span className="py-0.5 text-center leading-[1.3]">
-                      {t.downgradeWillSwitch} Free
-                      <br />
-                      {t.downgradeOnDate} {formatDate(currentSubscription.downgrade_effective_date)}
-                    </span>
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Separator */}
-              <div className="hidden sm:block h-4 w-px bg-border" />
-              
-              {/* Features - All inline with consistent styling */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeBusinessProfile}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeEventCreation}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeOfferCreation}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeMarketplace}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeMapPresence}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Check className="w-3 h-3" />
-                  {t.freeAnalytics}
-                </span>
-                {/* Stats - inline on tablet (md) */}
-                <span className="hidden md:flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">Commission: {t.freeCommission}</span>
-              </div>
-              
-              {/* Separator */}
-              <div className="hidden lg:block h-4 w-px bg-border" />
-              
-              {/* Stats - compact pills (shown on mobile/desktop) */}
-              <div className="flex md:hidden lg:flex items-center gap-2 text-xs">
-                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">Commission: {t.freeCommission}</span>
-              </div>
-            </div>
+            )}
           </div>
         </motion.div>
+      </div>
 
-        {/* Title & Billing Toggle - Stacked on mobile/tablet, row on desktop */}
-        <motion.div initial={{
-        opacity: 0,
-        y: 10
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.4,
-        delay: 0.1
-      }} className="flex flex-col items-center gap-4 mb-6 lg:flex-row lg:justify-between">
+      {/* Title & Billing Toggle */}
+      <div className={`${embedded ? 'px-1' : 'max-w-7xl mx-auto px-4'} pb-4`}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="flex flex-col items-center gap-4 mb-6 lg:flex-row lg:justify-between">
           <h2 className="text-xl font-semibold text-foreground">{t.selectPlan}</h2>
           
-          {/* Billing Toggle */}
+          {/* Billing Toggle — FOMO styled */}
           <div className="inline-flex items-center gap-2 p-1.5 bg-muted rounded-full">
-            <button onClick={() => setBillingCycle('monthly')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingCycle === 'monthly' ? 'bg-background text-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+            <button onClick={() => setBillingCycle('monthly')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingCycle === 'monthly' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
               {t.monthly}
             </button>
-            <button onClick={() => setBillingCycle('annual')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${billingCycle === 'annual' ? 'bg-background text-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
+            <button onClick={() => setBillingCycle('annual')} className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${billingCycle === 'annual' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
               {t.annual}
-              <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-xs">
+              <Badge className="bg-primary-foreground text-primary border-0 text-xs">
                 <Sparkles className="w-3 h-3 mr-1" />
                 {t.saveMonths}
               </Badge>
@@ -881,7 +848,7 @@ export default function SubscriptionPlans({
                         </AlertDialogContent>
                       </AlertDialog>
                     ) : (
-                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
+                      <Button className={`w-full ${isMostPopular ? 'bg-primary hover:bg-primary/90' : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
                         {loadingPlan === planSlug ? <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             {t.loading}
@@ -910,7 +877,7 @@ export default function SubscriptionPlans({
           <div className="p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
             <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                <div className="p-3 rounded-xl bg-primary text-primary-foreground">
                   <Building2 className="w-6 h-6" />
                 </div>
                 <div>
