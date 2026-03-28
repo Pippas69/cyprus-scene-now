@@ -739,7 +739,7 @@ export default function EventDetail() {
                       <Ticket className="h-3.5 w-3.5" />
                       <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                     </div> :
-                !user ? null : reservationsSoldOut ?
+                reservationsSoldOut ?
                 <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
@@ -965,7 +965,7 @@ export default function EventDetail() {
                     <Ticket className="h-4 w-4" />
                     <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                   </div> :
-              !user ? null : reservationsSoldOut ?
+              reservationsSoldOut ?
               <>
                     <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
@@ -1111,7 +1111,7 @@ export default function EventDetail() {
       }
 
       {/* Ticket Purchase Flow */}
-      {user && hasNativeTickets &&
+      {hasNativeTickets &&
       <TicketPurchaseFlow
         open={showTicketFlow}
         onOpenChange={setShowTicketFlow}
