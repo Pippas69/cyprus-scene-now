@@ -106,7 +106,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen gradient-hero flex items-start sm:items-center justify-center pt-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
           <div className="w-full h-full rounded-full bg-gradient-glow" />
