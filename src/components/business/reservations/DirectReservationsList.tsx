@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -195,6 +195,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const t = text[language];
 
+  const nameCollator = useMemo(
+    () => new Intl.Collator(language === 'el' ? 'el' : 'en', { sensitivity: 'base', numeric: true }),
+    [language]
+  );
+
+  const sortReservationsByName = useCallback(
+    (items: DirectReservation[]) =>
+      [...items].sort((a, b) => nameCollator.compare(a.reservation_name || '', b.reservation_name || '')),
+    [nameCollator]
+  );
+
+  const sortTicketOrdersByName = useCallback(
+    (items: TicketOnlyOrder[]) =>
+      [...items].sort((a, b) => nameCollator.compare(a.guest_name || '', b.guest_name || '')),
+    [nameCollator]
+  );
+
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
     // Check if business has floor plan enabled AND has zones
@@ -276,11 +293,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         query = query.eq('business_id', businessId).is('event_id', null);
       }
 
-      if (linked) {
-        query = query.order('reservation_name', { ascending: true });
-      } else {
-        query = query.order('preferred_time', { ascending: false });
-      }
+      query = query.order('reservation_name', { ascending: true });
 
       const { data, error } = await query;
       if (error) throw error;
@@ -308,11 +321,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ...r,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
+      const sortedByName = sortReservationsByName(enrichedData);
 
       if (requestId !== fetchReservationsRequestRef.current) return;
 
       if (linked) {
-        setReservations(enrichedData);
+        setReservations(sortedByName);
 
         const isTicketOnlyMode = selectedEventType === 'ticket' && !!selectedEventId;
 
@@ -328,37 +342,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!isTicketOnlyMode) {
           fetchAgesForReservations(reservationIds);
           fetchCheckInCounts(reservationIds);
-          const seatingTypeIds = [...new Set(enrichedData.map((r) => r.seating_type_id).filter(Boolean))] as string[];
+          const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
             fetchSeatingTypeNames(seatingTypeIds);
           }
         }
       } else {
-        const isCompleted = (r: DirectReservation) => {
-          if (r.checked_in_at) return true;
-          if (r.status === 'cancelled') return true;
-          if (r.status === 'accepted' && r.preferred_time) {
-            const slotTime = new Date(r.preferred_time);
-            const graceEnd = addMinutes(slotTime, 15);
-            if (isAfter(new Date(), graceEnd)) return true;
-          }
-          return false;
-        };
-
-        const pendingReservations = enrichedData.filter((r) => !isCompleted(r));
-        const completedReservations = enrichedData.filter((r) => isCompleted(r));
-
-        const sortByTime = (a: DirectReservation, b: DirectReservation) => {
-          const timeA = a.preferred_time ? new Date(a.preferred_time).getTime() : 0;
-          const timeB = b.preferred_time ? new Date(b.preferred_time).getTime() : 0;
-          return timeB - timeA;
-        };
-
-        pendingReservations.sort(sortByTime);
-        completedReservations.sort(sortByTime);
-
-        setReservations([...pendingReservations, ...completedReservations]);
+        setReservations(sortedByName);
       }
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -479,7 +470,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         .from('tickets')
         .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
         .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+        .order('guest_name', { ascending: true });
 
       if (isStaleRequest()) return;
 
@@ -546,7 +537,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       });
 
       if (isStaleRequest()) return;
-      setTicketOnlyOrders(enrichedOrders);
+      setTicketOnlyOrders(sortTicketOrdersByName(enrichedOrders));
     } catch (error) {
       console.error('Error fetching ticket-only orders:', error);
       if (!isStaleRequest()) {
@@ -621,7 +612,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (error) throw error;
 
       // Update local state
-      setReservations((prev) => prev.map((r) => r.id === id ? { ...r, ...updateData } : r));
+      setReservations((prev) => sortReservationsByName(prev.map((r) => r.id === id ? { ...r, ...updateData } : r)));
       toast.success(t.saved);
     } catch (err) {
       console.error('Error saving:', err);
@@ -845,7 +836,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       toast.success(t.saved);
       setEditingTicketName(null);
       setTicketNameValue('');
-      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_name: trimmed } : t));
+      setTicketOnlyOrders(prev => sortTicketOrdersByName(prev.map(t => t.ticket_id === ticketId ? { ...t, guest_name: trimmed } : t)));
     } catch (error) {
       console.error('Error saving ticket name:', error);
       toast.error(t.errorSaving);
