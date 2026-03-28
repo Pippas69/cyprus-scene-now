@@ -4286,6 +4286,8 @@ export type Database = {
           deferred_status: string | null
           event_id: string | null
           id: string
+          is_manual_entry: boolean
+          manual_status: string | null
           party_size: number
           phone_number: string | null
           preferred_time: string | null
@@ -4320,6 +4322,8 @@ export type Database = {
           deferred_status?: string | null
           event_id?: string | null
           id?: string
+          is_manual_entry?: boolean
+          manual_status?: string | null
           party_size: number
           phone_number?: string | null
           preferred_time?: string | null
@@ -4354,6 +4358,8 @@ export type Database = {
           deferred_status?: string | null
           event_id?: string | null
           id?: string
+          is_manual_entry?: boolean
+          manual_status?: string | null
           party_size?: number
           phone_number?: string | null
           preferred_time?: string | null
@@ -5304,6 +5310,8 @@ export type Database = {
           guest_age: number | null
           guest_name: string | null
           id: string
+          is_manual_entry: boolean
+          manual_status: string | null
           order_id: string
           qr_code_token: string
           seat_number: number | null
@@ -5324,6 +5332,8 @@ export type Database = {
           guest_age?: number | null
           guest_name?: string | null
           id?: string
+          is_manual_entry?: boolean
+          manual_status?: string | null
           order_id: string
           qr_code_token?: string
           seat_number?: number | null
@@ -5344,6 +5354,8 @@ export type Database = {
           guest_age?: number | null
           guest_name?: string | null
           id?: string
+          is_manual_entry?: boolean
+          manual_status?: string | null
           order_id?: string
           qr_code_token?: string
           seat_number?: number | null
