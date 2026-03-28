@@ -784,6 +784,90 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
+  // Save ticket memo
+  const handleSaveTicketMemo = async (ticketId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ staff_memo: ticketMemoValue || null } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketMemo(null);
+      setTicketMemoValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: ticketMemoValue || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket memo:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
+  // Save ticket guest name
+  const handleSaveTicketName = async (ticketId: string) => {
+    try {
+      const trimmed = ticketNameValue.trim();
+      if (!trimmed) return;
+      const { error } = await supabase
+        .from('tickets')
+        .update({ guest_name: trimmed } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketName(null);
+      setTicketNameValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_name: trimmed } : t));
+    } catch (error) {
+      console.error('Error saving ticket name:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
+  // Render ticket memo cell
+  const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
+    if (editingTicketMemo === ticket.ticket_id) {
+      return (
+        <div className="flex items-center gap-1 min-w-[140px]">
+          <Input
+            value={ticketMemoValue}
+            onChange={(e) => setTicketMemoValue(e.target.value)}
+            placeholder={t.staffMemoPlaceholder}
+            className="h-7 text-xs"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveTicketMemo(ticket.ticket_id);
+              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); }
+            }}
+          />
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
+            <Save className="h-3 w-3 text-primary" />
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); }}>
+            <X className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <button
+        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        onClick={() => {
+          setEditingTicketMemo(ticket.ticket_id);
+          setTicketMemoValue(ticket.staff_memo || '');
+        }}
+      >
+        {ticket.staff_memo ? (
+          <span className="text-xs text-foreground max-w-[120px] truncate">{ticket.staff_memo}</span>
+        ) : (
+          <>
+            <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
+            <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
+          </>
+        )}
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+      </button>
+    );
+  };
+
   // Helper to render Staff Memo cell
   const renderStaffMemoCell = (reservation: DirectReservation) => {
     if (editingMemo === reservation.id) {
