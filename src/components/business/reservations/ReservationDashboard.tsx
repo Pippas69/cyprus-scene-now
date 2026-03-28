@@ -27,6 +27,7 @@ type EventTypeTab = 'ticket' | 'reservation' | 'ticket_reservation';
 
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
   const [isPerformance, setIsPerformance] = useState(false);
   const [isDiningBar, setIsDiningBar] = useState(false);
