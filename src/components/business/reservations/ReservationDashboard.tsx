@@ -22,6 +22,8 @@ interface EventOption {
   reservationCount: number;
 }
 
+type EventTypeTab = 'ticket' | 'reservation' | 'ticket_reservation';
+
 export const ReservationDashboard = ({ businessId, language }: ReservationDashboardProps) => {
   const [activeTab, setActiveTab] = useState('list');
   const [isTicketLinked, setIsTicketLinked] = useState<boolean | null>(null);
@@ -30,6 +32,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [events, setEvents] = useState<EventOption[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventsHydrated, setEventsHydrated] = useState(false);
+  const [activeTypeTab, setActiveTypeTab] = useState<EventTypeTab | null>(null);
   // For dining/bar: null means "direct reservations", a string means event-specific
   const [diningSelectedEventId, setDiningSelectedEventId] = useState<string | null>(null);
   const [diningEventsHydrated, setDiningEventsHydrated] = useState(false);
