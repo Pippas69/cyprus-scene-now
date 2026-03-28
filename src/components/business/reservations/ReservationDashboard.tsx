@@ -465,7 +465,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                       <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
                         <span className="flex items-center gap-2">
                           <span className="text-sm">{dateStr}</span>
-                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                          <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
                             {event.reservationCount}
                           </span>
                         </span>
@@ -520,8 +520,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                       <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
                         <span className="flex items-center gap-2">
                           <span className="text-sm">{dateStr}</span>
-                          <span className="text-xs text-muted-foreground">({typeLabel})</span>
-                          <span className="inline-flex items-center justify-center rounded-full bg-primary/20 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                          <span className="text-xs text-foreground">({typeLabel})</span>
+                          <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
                             {event.reservationCount}
                           </span>
                         </span>
