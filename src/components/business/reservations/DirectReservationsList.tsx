@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save } from
+  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save, Plus } from
 'lucide-react';
+import { ManualEntryDialog } from './ManualEntryDialog';
+import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -42,6 +44,8 @@ interface DirectReservation {
   seating_type_id?: string | null;
   prepaid_min_charge_cents?: number | null;
   event_id?: string | null;
+  is_manual_entry?: boolean;
+  manual_status?: string | null;
 }
 
 interface DirectReservationsListProps {
@@ -112,6 +116,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     eventId?: string | null;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
@@ -251,7 +256,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
-          prepaid_min_charge_cents, event_id,
+          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status,
           profiles(name, email)
         `);
 
@@ -646,6 +651,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   }, [stats.total, onReservationCountChange, loading]);
 
   const getStatusBadge = (reservation: DirectReservation) => {
+    // Manual entries use the ManualStatusToggle
+    if (reservation.is_manual_entry) {
+      return (
+        <ManualStatusToggle
+          id={reservation.id}
+          currentStatus={reservation.manual_status ?? null}
+          table="reservations"
+          language={language}
+          onStatusChange={(newStatus) => {
+            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus } : r));
+          }}
+        />
+      );
+    }
+
     if (reservation.checked_in_at) {
       // For clubs/events with ticket-linked flow, show check-in count
       if (isTicketLinked) {
@@ -950,6 +970,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       </div>);
   }
 
+  // Determine entry type for manual add dialog
+  const getEntryType = (): 'direct' | 'ticket' | 'reservation' | 'hybrid' => {
+    if (!isTicketLinked) return 'direct';
+    if (selectedEventType === 'ticket') return 'ticket';
+    if (selectedEventType === 'reservation') return 'reservation';
+    return 'hybrid';
+  };
+
+  const addButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="rounded-full h-8 w-8 p-0 border-border/50"
+      onClick={() => setManualEntryOpen(true)}
+      title={language === 'el' ? 'Προσθήκη' : 'Add'}
+    >
+      <Plus className="h-4 w-4" />
+    </Button>
+  );
+
   // ===================== KALIVA MODE =====================
   if (isTicketLinked) {
     const isTicketOnly = selectedEventType === 'ticket';
@@ -962,6 +1002,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
+          <div className="flex justify-end">{addButton}</div>
           <div className="rounded-md border w-full overflow-x-auto">
             <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
@@ -1047,6 +1088,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableBody>
             </Table>
           </div>
+          <ManualEntryDialog
+            open={manualEntryOpen}
+            onOpenChange={setManualEntryOpen}
+            businessId={businessId}
+            language={language}
+            entryType={getEntryType()}
+            eventId={selectedEventId}
+            onSuccess={() => fetchReservations(true)}
+          />
         </div>
       );
     }
@@ -1055,12 +1105,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length === 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
+          <div className="flex justify-end">{addButton}</div>
           <Card>
             <CardContent className="py-10 text-center">
               <Ticket className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">{language === 'el' ? 'Δεν υπάρχουν αγορές εισιτηρίων ακόμα' : 'No ticket purchases yet'}</p>
             </CardContent>
           </Card>
+          <ManualEntryDialog
+            open={manualEntryOpen}
+            onOpenChange={setManualEntryOpen}
+            businessId={businessId}
+            language={language}
+            entryType={getEntryType()}
+            eventId={selectedEventId}
+            onSuccess={() => fetchReservations(true)}
+          />
         </div>
       );
     }
@@ -1068,6 +1128,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // RESERVATION-ONLY or TICKET_AND_RESERVATION (hybrid) — existing flow
     return (
       <div className="space-y-4 w-full max-w-full">
+        <div className="flex justify-end">{addButton}</div>
         {filteredReservations.length === 0 ?
         <Card>
             <CardContent className="py-10 text-center">
@@ -1190,6 +1251,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             }}
           />
         )}
+        <ManualEntryDialog
+          open={manualEntryOpen}
+          onOpenChange={setManualEntryOpen}
+          businessId={businessId}
+          language={language}
+          entryType={getEntryType()}
+          eventId={selectedEventId}
+          onSuccess={() => fetchReservations(true)}
+        />
       </div>);
 
   }
@@ -1211,7 +1281,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ))}
       </div>
 
-      <div className="min-w-0"></div>
+      <div className="flex justify-end">{addButton}</div>
 
       {filteredReservations.length === 0 ?
       <Card>
@@ -1320,5 +1390,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           }}
         />
       )}
+      <ManualEntryDialog
+        open={manualEntryOpen}
+        onOpenChange={setManualEntryOpen}
+        businessId={businessId}
+        language={language}
+        entryType={getEntryType()}
+        eventId={selectedEventId}
+        onSuccess={() => fetchReservations(true)}
+      />
     </div>);
 };
