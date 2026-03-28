@@ -144,8 +144,9 @@ const Login = () => {
 
         <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
           <div className="text-center mb-8">
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 normal-case">
-              {t.login}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
+              <span className="font-inter">Login to</span>{' '}
+              <span className="font-cinzel">ΦΟΜΟ</span>
             </h1>
             
 
