@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,11 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 type EntryType = 'direct' | 'ticket' | 'reservation' | 'hybrid';
+
+interface SeatingTypeOption {
+  id: string;
+  seating_type: string;
+}
 
 interface ManualEntryDialogProps {
   open: boolean;
@@ -38,7 +43,11 @@ export const ManualEntryDialog = ({
   const [preferredTime, setPreferredTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
   const [notes, setNotes] = useState('');
+  const [minAge, setMinAge] = useState('');
+  const [minCharge, setMinCharge] = useState('');
+  const [seatingTypeId, setSeatingTypeId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [eventSeatingTypes, setEventSeatingTypes] = useState<SeatingTypeOption[]>([]);
 
   const t = {
     el: {
@@ -56,6 +65,9 @@ export const ManualEntryDialog = ({
       error: 'Σφάλμα κατά την αποθήκευση',
       indoor: 'Εσωτερικά',
       outdoor: 'Εξωτερικά',
+      minAge: 'Ελάχιστη ηλικία',
+      minCharge: 'Ελάχιστη χρέωση (€)',
+      seatingType: 'Τύπος θέσης',
     },
     en: {
       title: 'Add',
@@ -72,6 +84,9 @@ export const ManualEntryDialog = ({
       error: 'Error saving',
       indoor: 'Indoor',
       outdoor: 'Outdoor',
+      minAge: 'Minimum age',
+      minCharge: 'Minimum charge (€)',
+      seatingType: 'Seating type',
     },
   };
 
@@ -79,6 +94,24 @@ export const ManualEntryDialog = ({
   const showPartySize = entryType !== 'ticket';
   const showTime = entryType === 'direct';
   const showSeating = entryType === 'direct' || entryType === 'reservation' || entryType === 'hybrid';
+  const showSeatingType = (entryType === 'reservation' || entryType === 'hybrid') && eventSeatingTypes.length > 0;
+  const showMinAge = entryType !== 'direct';
+  const showMinCharge = entryType !== 'ticket';
+
+  // Fetch seating types for the event
+  useEffect(() => {
+    if (!eventId || entryType === 'direct' || entryType === 'ticket') {
+      setEventSeatingTypes([]);
+      return;
+    }
+    supabase
+      .from('reservation_seating_types')
+      .select('id, seating_type')
+      .eq('event_id', eventId)
+      .then(({ data }) => {
+        setEventSeatingTypes(data || []);
+      });
+  }, [eventId, entryType]);
 
   const resetForm = () => {
     setName('');
@@ -87,6 +120,9 @@ export const ManualEntryDialog = ({
     setPreferredTime('');
     setSeatingPreference('');
     setNotes('');
+    setMinAge('');
+    setMinCharge('');
+    setSeatingTypeId('');
   };
 
   const handleSave = async () => {
@@ -106,15 +142,17 @@ export const ManualEntryDialog = ({
         const { error } = await supabase.from('tickets').insert({
           event_id: eventId,
           guest_name: trimmedName,
+          guest_age: minAge ? parseInt(minAge) : null,
           status: 'valid',
           is_manual_entry: true,
           manual_status: null,
-          order_id: crypto.randomUUID(), // placeholder - manual entries need an order_id
-          tier_id: '', // no tier for manual
+          order_id: crypto.randomUUID(),
+          tier_id: '',
         } as any);
         if (error) throw error;
       } else {
         // Insert into reservations table
+        // DO NOT set user_id for manual entries — it would link to business owner's profile in CRM
         const insertData: Record<string, any> = {
           user_id: user.id,
           reservation_name: trimmedName,
@@ -125,6 +163,21 @@ export const ManualEntryDialog = ({
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
         };
+
+        // Min age
+        if (minAge) {
+          insertData.min_age = parseInt(minAge);
+        }
+
+        // Min charge in cents
+        if (minCharge) {
+          insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        }
+
+        // Seating type
+        if (seatingTypeId) {
+          insertData.seating_type_id = seatingTypeId;
+        }
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
@@ -155,6 +208,15 @@ export const ManualEntryDialog = ({
     }
   };
 
+  const seatingTypeTranslations: Record<string, Record<string, string>> = {
+    el: { table: 'Τραπέζι', sofa: 'Καναπές', vip: 'VIP', bar: 'Bar' },
+    en: { table: 'Table', sofa: 'Sofa', vip: 'VIP', bar: 'Bar' },
+  };
+
+  const translateSeatingType = (type: string) => {
+    return seatingTypeTranslations[language]?.[type.toLowerCase()] || type;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -163,7 +225,7 @@ export const ManualEntryDialog = ({
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          {/* Name - always shown */}
+          {/* Name */}
           <div className="space-y-1.5">
             <Label className="text-sm">{txt.name} *</Label>
             <Input
@@ -175,7 +237,7 @@ export const ManualEntryDialog = ({
             />
           </div>
 
-          {/* Phone - always shown */}
+          {/* Phone */}
           <div className="space-y-1.5">
             <Label className="text-sm">{txt.phone}</Label>
             <Input
@@ -186,7 +248,7 @@ export const ManualEntryDialog = ({
             />
           </div>
 
-          {/* Party size - not for ticket-only */}
+          {/* Party size */}
           {showPartySize && (
             <div className="space-y-1.5">
               <Label className="text-sm">{txt.partySize} *</Label>
@@ -197,6 +259,55 @@ export const ManualEntryDialog = ({
                 min="1"
                 max="50"
               />
+            </div>
+          )}
+
+          {/* Min age */}
+          {showMinAge && (
+            <div className="space-y-1.5">
+              <Label className="text-sm">{txt.minAge}</Label>
+              <Input
+                value={minAge}
+                onChange={(e) => setMinAge(e.target.value)}
+                type="number"
+                min="0"
+                max="99"
+                placeholder="18"
+              />
+            </div>
+          )}
+
+          {/* Min charge */}
+          {showMinCharge && (
+            <div className="space-y-1.5">
+              <Label className="text-sm">{txt.minCharge}</Label>
+              <Input
+                value={minCharge}
+                onChange={(e) => setMinCharge(e.target.value)}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+          )}
+
+          {/* Seating type (event-based) */}
+          {showSeatingType && (
+            <div className="space-y-1.5">
+              <Label className="text-sm">{txt.seatingType}</Label>
+              <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={txt.seatingType} />
+                </SelectTrigger>
+                <SelectContent>
+                  {eventSeatingTypes.map((st) => (
+                    <SelectItem key={st.id} value={st.id}>
+                      {translateSeatingType(st.seating_type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -213,7 +324,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* Seating - direct/reservation/hybrid */}
-          {showSeating && (seatingOptions && seatingOptions.length > 0 ? (
+          {showSeating && !showSeatingType && (seatingOptions && seatingOptions.length > 0 ? (
             <div className="space-y-1.5">
               <Label className="text-sm">{txt.seating}</Label>
               <Select value={seatingPreference} onValueChange={setSeatingPreference}>
@@ -242,7 +353,7 @@ export const ManualEntryDialog = ({
             </div>
           ) : null)}
 
-          {/* Notes - always shown */}
+          {/* Notes */}
           <div className="space-y-1.5">
             <Label className="text-sm">{txt.notes}</Label>
             <Textarea

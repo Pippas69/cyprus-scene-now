@@ -37,11 +37,52 @@ export const ManualStatusToggle = ({
   const handleSelect = async (value: string | null) => {
     setOpen(false);
     try {
-      const { error } = await supabase
-        .from(table)
-        .update({ manual_status: value } as any)
-        .eq('id', id);
-      if (error) throw error;
+      if (table === 'reservations') {
+        // Update manual_status and also update checked_in_at / status for analytics
+        const updateData: Record<string, any> = { manual_status: value };
+        
+        if (value === 'arrived') {
+          updateData.checked_in_at = new Date().toISOString();
+          updateData.status = 'accepted';
+        } else if (value === 'no_show') {
+          updateData.checked_in_at = null;
+          updateData.status = 'no_show';
+        } else {
+          // Reset to unknown
+          updateData.checked_in_at = null;
+          updateData.status = 'accepted';
+        }
+
+        const { error } = await supabase
+          .from(table)
+          .update(updateData as any)
+          .eq('id', id);
+        if (error) throw error;
+      } else {
+        // Tickets table
+        const updateData: Record<string, any> = { manual_status: value };
+        
+        if (value === 'arrived') {
+          updateData.checked_in = true;
+          updateData.checked_in_at = new Date().toISOString();
+          updateData.status = 'used';
+        } else if (value === 'no_show') {
+          updateData.checked_in = false;
+          updateData.checked_in_at = null;
+          updateData.status = 'valid';
+        } else {
+          updateData.checked_in = false;
+          updateData.checked_in_at = null;
+          updateData.status = 'valid';
+        }
+
+        const { error } = await supabase
+          .from(table)
+          .update(updateData as any)
+          .eq('id', id);
+        if (error) throw error;
+      }
+      
       onStatusChange(value);
     } catch (err) {
       console.error('Error updating manual status:', err);
