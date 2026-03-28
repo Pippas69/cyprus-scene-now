@@ -34,9 +34,7 @@ const SignupBusiness = () => {
   const [inviteCodeError, setInviteCodeError] = useState<string>('');
 
   const formSchema = z.object({
-    inviteCode: isBetaMode 
-      ? z.string().min(1, language === 'el' ? "Απαιτείται κωδικός πρόσκλησης" : "Invite code is required")
-      : z.string().optional(),
+    inviteCode: z.string().min(1, language === 'el' ? "Απαιτείται κωδικός πρόσκλησης" : "Invite code is required"),
     businessName: z.string().min(2, "Το όνομα πρέπει να έχει τουλάχιστον 2 χαρακτήρες"),
     category: z.array(z.string()).min(1, "Επιλέξτε τουλάχιστον μία κατηγορία"),
     city: z.string().min(1, "Επιλέξτε πόλη"),
@@ -369,48 +367,46 @@ const SignupBusiness = () => {
         <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
             {/* Invite Code - Only shown in beta mode */}
-            {isBetaMode && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl mb-6">
-                <Label htmlFor="inviteCode" className="flex items-center gap-2 text-primary font-semibold">
-                  <Key className="h-4 w-4" />
-                  {language === 'el' ? 'Κωδικός Πρόσκλησης *' : 'Invite Code *'}
-                </Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {language === 'el'
-                    ? 'Εισάγετε τον κωδικό πρόσκλησης που λάβατε για να εγγραφείτε στο beta.'
-                    : 'Enter the invite code you received to register for the beta.'
-                  }
-                </p>
-                <div className="relative">
-                  <Input 
-                    id="inviteCode" 
-                    {...register("inviteCode")} 
-                    className="mt-1 uppercase font-mono tracking-wider pr-10" 
-                    placeholder="ΦΟΜΟ-XXXX-XXXX"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {inviteCodeStatus === 'checking' && (
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    )}
-                    {inviteCodeStatus === 'valid' && (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    )}
-                    {inviteCodeStatus === 'invalid' && (
-                      <XCircle className="h-5 w-5 text-destructive" />
-                    )}
-                  </div>
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl mb-6">
+              <Label htmlFor="inviteCode" className="flex items-center gap-2 text-primary font-semibold">
+                <Key className="h-4 w-4" />
+                {language === 'el' ? 'Κωδικός Πρόσκλησης *' : 'Invite Code *'}
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                {language === 'el'
+                  ? 'Εισάγετε τον κωδικό πρόσκλησης που λάβατε για να εγγραφείτε.'
+                  : 'Enter the invite code you received to register.'
+                }
+              </p>
+              <div className="relative">
+                <Input 
+                  id="inviteCode" 
+                  {...register("inviteCode")} 
+                  className="mt-1 uppercase font-mono tracking-wider pr-10 h-8 sm:h-10 text-sm" 
+                  placeholder="ΦΟΜΟ-XXXX-XXXX"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {inviteCodeStatus === 'checking' && (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {inviteCodeStatus === 'valid' && (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  )}
+                  {inviteCodeStatus === 'invalid' && (
+                    <XCircle className="h-5 w-5 text-destructive" />
+                  )}
                 </div>
-                {errors.inviteCode && <p className="text-sm text-destructive mt-1">{errors.inviteCode.message}</p>}
-                {inviteCodeStatus === 'invalid' && inviteCodeError && (
-                  <p className="text-sm text-destructive mt-1">{inviteCodeError}</p>
-                )}
-                {inviteCodeStatus === 'valid' && (
-                  <p className="text-sm text-green-600 mt-1">
-                    {language === 'el' ? 'Έγκυρος κωδικός!' : 'Valid code!'}
-                  </p>
-                )}
               </div>
-            )}
+              {errors.inviteCode && <p className="text-sm text-destructive mt-1">{errors.inviteCode.message}</p>}
+              {inviteCodeStatus === 'invalid' && inviteCodeError && (
+                <p className="text-sm text-destructive mt-1">{inviteCodeError}</p>
+              )}
+              {inviteCodeStatus === 'valid' && (
+                <p className="text-sm text-green-600 mt-1">
+                  {language === 'el' ? 'Έγκυρος κωδικός!' : 'Valid code!'}
+                </p>
+              )}
+            </div>
 
             {/* Business Name */}
             <div>
