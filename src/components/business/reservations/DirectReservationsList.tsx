@@ -664,7 +664,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           table="reservations"
           language={language}
           onStatusChange={(newStatus) => {
-            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus } : r));
+            setReservations((prev) => prev.map((r) => r.id === reservation.id ? { ...r, manual_status: newStatus, checked_in_at: newStatus === 'arrived' ? new Date().toISOString() : null, status: newStatus === 'no_show' ? 'no_show' : 'accepted' } : r));
           }}
         />
       );
