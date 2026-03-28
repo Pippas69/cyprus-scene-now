@@ -99,6 +99,7 @@ function AppContent() {
     <>
       <ScrollToTop />
       <div className={`min-h-screen ${hideBottomNav ? '' : 'pb-16'} md:pb-0`}>
+        <Suspense fallback={null}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={routesKey}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
@@ -156,6 +157,7 @@ function AppContent() {
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
         </AnimatePresence>
+        </Suspense>
       </div>
       {!hideBottomNav && <BottomNav />}
     </>
