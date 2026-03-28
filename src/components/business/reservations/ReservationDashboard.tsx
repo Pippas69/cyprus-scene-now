@@ -424,6 +424,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     return t.ticketReservation;
   };
 
+  const getTypeTabCount = (type: EventTypeTab) => {
+    const evts = type === 'ticket' ? ticketEvents : type === 'reservation' ? reservationEvents : hybridEvents;
+    return evts.reduce((sum, e) => sum + (e.reservationCount || 0), 0);
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
