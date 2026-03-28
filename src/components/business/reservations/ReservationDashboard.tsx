@@ -574,7 +574,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
         <TabsContent value="list" className="mt-4">
           {isDiningEventMode ? (
-            // Dining/bar viewing an event → show event-specific reservations (full event mode)
             <DirectReservationsList
               businessId={businessId}
               language={language}
@@ -582,6 +581,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
               forceEventMode
+              manualEntryOpen={manualEntryOpen}
+              onManualEntryOpenChange={setManualEntryOpen}
             />
           ) : (
             <DirectReservationsList
@@ -590,6 +591,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={isTicketLinked ? handleReservationCountChange : undefined}
               selectedEventId={isTicketLinked ? selectedEventId : undefined}
               selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
+              manualEntryOpen={manualEntryOpen}
+              onManualEntryOpenChange={setManualEntryOpen}
             />
           )}
         </TabsContent>
