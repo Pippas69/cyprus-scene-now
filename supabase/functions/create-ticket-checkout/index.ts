@@ -105,29 +105,9 @@ Deno.serve(async (req) => {
       logStep("Seat details loaded", { count: seatDetailsMap.size });
     }
 
-    // Get business subscription to determine commission rate
-    const { data: subscription } = await supabaseClient
-      .from("business_subscriptions")
-      .select("*, subscription_plans(*)")
-      .eq("business_id", event.business_id)
-      .eq("status", "active")
-      .maybeSingle();
-
-    let planSlug = "free";
-    if (subscription?.subscription_plans?.slug) {
-      planSlug = subscription.subscription_plans.slug;
-    }
-    logStep("Subscription plan", { planSlug });
-
-    // Get commission rate for this plan
-    const { data: commissionRate } = await supabaseClient
-      .from("ticket_commission_rates")
-      .select("commission_percent")
-      .eq("plan_slug", planSlug)
-      .single();
-
-    const commissionPercent = commissionRate?.commission_percent ?? 12;
-    logStep("Commission rate", { commissionPercent });
+    // COMMISSION DISABLED: Platform is in early stage, no commission charged
+    const commissionPercent = 0;
+    logStep("Commission rate", { commissionPercent, note: "Commission disabled - early stage" });
 
     // Fetch ticket tiers and validate availability
     const tierIds = items.map(item => item.tierId);

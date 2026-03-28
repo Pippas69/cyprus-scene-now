@@ -738,11 +738,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const renderAuthStep = () => (
+    <InlineAuthGate onAuthSuccess={() => {
+      // Auth succeeded, steps will recalculate (auth step removed), auto-advance
+      setCurrentStepIdx(prev => prev); // force re-render
+    }} />
+  );
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 'showSelect': return renderShowSelectStep();
       case 'seats': return renderSeatStep();
       case 'tickets': return renderTicketsStep();
+      case 'auth': return renderAuthStep();
       case 'guests': return renderGuestsStep();
       case 'checkout': return renderCheckoutStep();
       default: return null;
@@ -754,6 +762,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'showSelect': return !!selectedShowId;
       case 'seats': return selectedSeats.length > 0;
       case 'tickets': return tierTotalTickets > 0;
+      case 'auth': return isAuthenticated;
       case 'guests': return allGuestDetailsFilled && totalTickets > 0;
       case 'checkout': return true;
       default: return true;
