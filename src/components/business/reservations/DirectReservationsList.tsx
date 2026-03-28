@@ -1128,6 +1128,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // RESERVATION-ONLY or TICKET_AND_RESERVATION (hybrid) — existing flow
     return (
       <div className="space-y-4 w-full max-w-full">
+        <div className="flex justify-end">{addButton}</div>
         {filteredReservations.length === 0 ?
         <Card>
             <CardContent className="py-10 text-center">
