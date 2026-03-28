@@ -17,13 +17,14 @@ import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
 
-// Critical pages loaded eagerly (landing + main feed)
+// Core user navigation pages loaded eagerly to avoid sidebar/layout remount flicker
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
+import Ekdiloseis from "./pages/Ekdiloseis";
+import Xartis from "./pages/Xartis";
+import Offers from "./pages/Offers";
 
-// All other pages lazy-loaded for reduced initial bundle
-const Ekdiloseis = lazy(() => import("./pages/Ekdiloseis"));
-const Xartis = lazy(() => import("./pages/Xartis"));
+// Secondary pages lazy-loaded for reduced initial bundle
 const Signup = lazy(() => import("./pages/Signup"));
 const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -61,7 +62,6 @@ const ReservationView = lazy(() => import("./pages/ReservationView"));
 const OfferView = lazy(() => import("./pages/OfferView"));
 const ReservationSuccess = lazy(() => import("./pages/ReservationSuccess"));
 const OfferPurchaseSuccess = lazy(() => import("./pages/OfferPurchaseSuccess"));
-const Offers = lazy(() => import("./pages/Offers"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
