@@ -106,7 +106,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center py-6 sm:py-12 px-3 sm:px-6 lg:px-8">
+    <div className="min-h-screen gradient-hero flex items-center justify-center py-4 sm:py-12 px-3 sm:px-6 lg:px-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
           <div className="w-full h-full rounded-full bg-gradient-glow" />
@@ -114,7 +114,7 @@ const Login = () => {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <div className="max-w-md w-full space-y-4 sm:space-y-8 relative z-10">
+      <div className="max-w-md w-full space-y-2 sm:space-y-8 relative z-10">
         <div className="flex items-center justify-between mb-2 sm:mb-4">
           <Button
             variant="ghost"
