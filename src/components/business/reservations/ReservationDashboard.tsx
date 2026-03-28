@@ -380,7 +380,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="min-w-0">
-        <h1 className="text-2xl md:text-3xl font-bold mb-3">{t.pageTitle}</h1>
+        
         
         <div className="flex items-center gap-2">
           {/* Badge: Κρατήσεις (direct reservations - no dropdown) */}
