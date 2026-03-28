@@ -461,7 +461,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at')
+        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
@@ -525,6 +525,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at: t.created_at,
           tier_name: tierNames[t.tier_id] || '',
           ticket_code: t.ticket_code || null,
+          staff_memo: (t as any).staff_memo || null,
         };
       });
 
