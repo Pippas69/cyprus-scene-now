@@ -44,18 +44,11 @@ const translations = {
 export function UserSidebar() {
   const { language } = useLanguage();
   const t = translations[language];
-  const { open, setOpenMobile, isMobile } = useSidebar();
+  const { open } = useSidebar();
   const location = useLocation();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
-
-  // Close mobile sidebar when navigating
-  const handleMobileNav = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -141,7 +134,7 @@ export function UserSidebar() {
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url)}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
+                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
@@ -158,7 +151,7 @@ export function UserSidebar() {
               {personalItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isItemActive(item.url, item.tab)}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground" onClick={handleMobileNav}>
+                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
