@@ -586,9 +586,6 @@ export default function SubscriptionPlans({
 
   // Calculate subscription usage percentages
   const budgetUsedPercent = currentSubscription?.event_boost_budget_cents > 0 ? (currentSubscription.event_boost_budget_cents - currentSubscription.monthly_budget_remaining_cents) / currentSubscription.event_boost_budget_cents * 100 : 0;
-  const currentPlanConfig = currentSubscription?.plan_slug ? PLAN_CONFIG[currentSubscription.plan_slug as keyof typeof PLAN_CONFIG] : null;
-  const PlanIcon = currentPlanConfig?.icon || Zap;
-  const currentPlanGradient = currentPlanConfig?.gradient || 'from-blue-500 to-cyan-500';
   const plans = ['basic', 'pro', 'elite'] as const;
   const renderFeatureItem = (feature: {
     icon: any;
@@ -851,7 +848,7 @@ export default function SubscriptionPlans({
                         </AlertDialogContent>
                       </AlertDialog>
                     ) : (
-                      <Button className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
+                      <Button className={`w-full ${isMostPopular ? 'bg-primary hover:bg-primary/90' : ''}`} variant={isCurrent ? "secondary" : isMostPopular ? "default" : "outline"} size="lg" onClick={() => handleChoosePlan(planSlug)} disabled={loadingPlan !== null || isCurrent}>
                         {loadingPlan === planSlug ? <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             {t.loading}
@@ -880,7 +877,7 @@ export default function SubscriptionPlans({
           <div className="p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
             <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                <div className="p-3 rounded-xl bg-primary text-primary-foreground">
                   <Building2 className="w-6 h-6" />
                 </div>
                 <div>
