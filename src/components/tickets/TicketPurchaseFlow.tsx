@@ -210,7 +210,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     });
     return () => subscription.unsubscribe();
   }, []);
-  }, [profileName]);
+  
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -293,14 +293,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
-  // Sync guest name fields — preserve slot 0 if profileName is set
+  // Sync guest name fields
   useEffect(() => {
     setGuestNames(prev => {
       if (prev.length === totalTickets) return prev;
       if (prev.length < totalTickets) {
-        const extended = [...prev, ...Array(totalTickets - prev.length).fill('')];
-        if (profileName && extended.length > 0) extended[0] = profileName;
-        return extended;
+        return [...prev, ...Array(totalTickets - prev.length).fill('')];
       }
       return prev.slice(0, totalTickets);
     });
@@ -311,7 +309,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
-  }, [totalTickets, profileName]);
+  }, [totalTickets]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = ticketTiers.find(t => t.id === tierId);
