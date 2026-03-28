@@ -230,8 +230,11 @@ export const ManualEntryDialog = ({
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
-          if (dateTime) {
-            insertData.preferred_time = new Date(dateTime).toISOString();
+          if (dateTime && dateTime.trim()) {
+            const parsed = new Date(dateTime);
+            if (!isNaN(parsed.getTime())) {
+              insertData.preferred_time = parsed.toISOString();
+            }
           }
           if (seatingPreference) {
             insertData.seating_preference = seatingPreference;
