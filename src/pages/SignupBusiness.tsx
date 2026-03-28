@@ -343,10 +343,23 @@ const SignupBusiness = () => {
       </div>
 
       <div className="max-w-4xl mx-auto relative z-10">
-        <Button variant="ghost" onClick={() => navigate("/signup")} className="text-white hover:text-seafoam mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {language === 'el' ? 'Πίσω στην Εγγραφή Χρήστη' : 'Back to User Signup'}
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => navigate("/signup")} className="text-white hover:text-seafoam">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {language === 'el' ? 'Πίσω στην Εγγραφή Χρήστη' : 'Back to User Signup'}
+          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="text-white hover:text-seafoam"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
 
 
         {/* Main Form */}
@@ -410,6 +423,7 @@ const SignupBusiness = () => {
                 selectedCategories={selectedCategories}
                 onCategoryChange={handleCategoryChange}
                 language={language}
+                compact
               />
               {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
             </div>
