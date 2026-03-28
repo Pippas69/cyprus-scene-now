@@ -101,7 +101,8 @@ export const BusinessCategorySelector = ({
               {/* Main Category Row */}
               <div
                 className={cn(
-                  "flex items-center justify-between p-3 transition-colors",
+                  "flex items-center justify-between transition-colors",
+                  compact ? "p-2 sm:p-3" : "p-3",
                   (isSelected || hasSubSelected) ? "bg-primary/10" : "bg-background hover:bg-muted/50"
                 )}
               >
