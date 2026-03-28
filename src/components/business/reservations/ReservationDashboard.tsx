@@ -354,7 +354,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const { ticketEvents, reservationEvents, hybridEvents, availableTabs } = useMemo(() => {
     const ticket = events.filter(e => e.event_type === 'ticket');
     const reservation = events.filter(e => e.event_type === 'reservation' || e.event_type === null);
-    const hybrid = events.filter(e => e.event_type === 'ticket_reservation');
+    const hybrid = events.filter(e => e.event_type === 'ticket_reservation' || e.event_type === 'ticket_and_reservation');
     
     const tabs: EventTypeTab[] = [];
     if (ticket.length > 0) tabs.push('ticket');
