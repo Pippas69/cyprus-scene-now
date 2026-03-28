@@ -115,7 +115,7 @@ const Login = () => {
       </div>
 
       <div className="max-w-md w-full space-y-2 sm:space-y-8 relative z-10">
-        <div className="flex items-center justify-between mb-2 sm:mb-4 -mt-2 sm:mt-0">
+        <div className="flex items-center justify-between mb-2 sm:mb-4 -mt-4 sm:mt-0">
           <Button
             variant="ghost"
             onClick={() => navigate("/")}
