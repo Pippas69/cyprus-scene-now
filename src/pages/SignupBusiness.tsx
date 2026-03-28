@@ -350,20 +350,8 @@ const SignupBusiness = () => {
 
 
         {/* Main Form */}
-        <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
-          <div className="text-center mb-8">
-            <h1 className="font-cinzel text-xl sm:text-2xl md:text-4xl font-bold text-white mb-2">
-              {language === 'el' ? 'Εγγραφή Επιχείρησης στο ΦΟΜΟ' : 'Business Registration to ΦΟΜΟ'}
-            </h1>
-            <p className="font-inter text-sm sm:text-base md:text-lg text-muted-foreground">
-              {language === 'el'
-                ? 'Καταχώρησε την επιχείρησή σου και έλα σε επαφή με νέο κοινό στην Κύπρο.'
-                : 'Register your business and connect with new audiences in Cyprus.'
-              }
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
             {/* Invite Code - Only shown in beta mode */}
             {isBetaMode && (
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl mb-6">
