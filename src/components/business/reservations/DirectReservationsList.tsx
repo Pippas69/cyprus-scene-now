@@ -1088,6 +1088,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableBody>
             </Table>
           </div>
+          <ManualEntryDialog
+            open={manualEntryOpen}
+            onOpenChange={setManualEntryOpen}
+            businessId={businessId}
+            language={language}
+            entryType={getEntryType()}
+            eventId={selectedEventId}
+            onSuccess={() => fetchReservations(true)}
+          />
         </div>
       );
     }
@@ -1096,12 +1105,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (isTicketOnly && ticketOnlyOrders.length === 0) {
       return (
         <div className="space-y-4 w-full max-w-full">
+          <div className="flex justify-end">{addButton}</div>
           <Card>
             <CardContent className="py-10 text-center">
               <Ticket className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">{language === 'el' ? 'Δεν υπάρχουν αγορές εισιτηρίων ακόμα' : 'No ticket purchases yet'}</p>
             </CardContent>
           </Card>
+          <ManualEntryDialog
+            open={manualEntryOpen}
+            onOpenChange={setManualEntryOpen}
+            businessId={businessId}
+            language={language}
+            entryType={getEntryType()}
+            eventId={selectedEventId}
+            onSuccess={() => fetchReservations(true)}
+          />
         </div>
       );
     }
