@@ -11,6 +11,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import LanguageToggle from '@/components/LanguageToggle';
 import Logo from '@/components/Logo';
 import { UserAccountDropdown } from '@/components/UserAccountDropdown';
+import { SidebarMobileClose } from '@/components/SidebarMobileClose';
 import type { User } from '@supabase/supabase-js';
 
 interface UserLayoutProps {
@@ -91,6 +92,7 @@ export function UserLayout({ children }: UserLayoutProps) {
 
   return (
     <SidebarProvider>
+      <SidebarMobileClose />
       <div className="min-h-screen flex flex-col w-full bg-background">
         {/* Fixed Header spanning full width - Mobile optimized */}
         <header className="h-12 sm:h-14 border-b flex items-center px-2 sm:px-4 bg-background sticky top-0 z-50 overflow-visible">

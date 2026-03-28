@@ -380,7 +380,7 @@ const SignupBusiness = () => {
                 <Input 
                   id="inviteCode" 
                   {...register("inviteCode")} 
-                  className="mt-1 uppercase font-mono tracking-wider pr-10 h-8 sm:h-10 text-sm" 
+                  className="mt-1 uppercase font-mono tracking-wider pr-10 h-8 sm:h-10 text-base sm:text-sm" 
                   placeholder="ΦΟΜΟ-XXXX-XXXX"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -409,7 +409,7 @@ const SignupBusiness = () => {
             {/* Business Name */}
             <div>
               <Label htmlFor="businessName">{language === 'el' ? 'Όνομα Επιχείρησης *' : 'Business Name *'}</Label>
-              <Input id="businessName" {...register("businessName")} className="mt-1 h-8 sm:h-10 text-sm" placeholder={language === 'el' ? 'π.χ. Καφέ Παραλία' : 'e.g. Beach Cafe'} />
+              <Input id="businessName" {...register("businessName")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder={language === 'el' ? 'π.χ. Καφέ Παραλία' : 'e.g. Beach Cafe'} />
               {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
             </div>
 
@@ -428,7 +428,7 @@ const SignupBusiness = () => {
             {/* City */}
             <div>
               <Label htmlFor="city">{language === 'el' ? 'Τοποθεσία / Πόλη *' : 'Location / City *'}</Label>
-              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 h-8 sm:h-10 text-sm">
+              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 h-8 sm:h-10 text-base sm:text-sm">
                 <option value="">{language === 'el' ? 'Επιλέξτε πόλη' : 'Select city'}</option>
                 {getCityOptions(language).map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
@@ -438,7 +438,7 @@ const SignupBusiness = () => {
             {/* Address */}
             <div>
               <Label htmlFor="address">{language === 'el' ? 'Διεύθυνση *' : 'Address *'}</Label>
-              <Input id="address" {...register("address")} className="mt-1 h-8 sm:h-10 text-sm" placeholder={language === 'el' ? 'π.χ. Λεωφόρος Μακαρίου 25' : 'e.g. 25 Makarios Avenue'} />
+              <Input id="address" {...register("address")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder={language === 'el' ? 'π.χ. Λεωφόρος Μακαρίου 25' : 'e.g. 25 Makarios Avenue'} />
               {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
             </div>
 
@@ -446,12 +446,12 @@ const SignupBusiness = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">{language === 'el' ? 'Email Επιχείρησης *' : 'Business Email *'}</Label>
-                <Input id="email" type="email" {...register("email")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="info@business.com" />
+                <Input id="email" type="email" {...register("email")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="info@business.com" />
                 {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
               </div>
               <div>
                 <Label htmlFor="phone">{language === 'el' ? 'Τηλέφωνο *' : 'Phone *'}</Label>
-                <Input id="phone" {...register("phone")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="99123456" />
+                <Input id="phone" {...register("phone")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="99123456" />
                 {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
               </div>
             </div>
@@ -459,19 +459,19 @@ const SignupBusiness = () => {
             {/* Website */}
             <div>
               <Label htmlFor="website">{language === 'el' ? 'Ιστοσελίδα' : 'Website'}</Label>
-              <Input id="website" {...register("website")} className="mt-1 h-8 sm:h-10 text-sm" placeholder="https://www.business.com" />
+              <Input id="website" {...register("website")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="https://www.business.com" />
             </div>
 
             {/* Password */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="password">{language === 'el' ? 'Κωδικός Πρόσβασης *' : 'Password *'}</Label>
-                <PasswordInput id="password" {...register("password")} className="mt-1 h-8 sm:h-10 text-sm" />
+                <PasswordInput id="password" {...register("password")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" />
                 {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
               </div>
               <div>
                 <Label htmlFor="confirmPassword">{language === 'el' ? 'Επιβεβαίωση Κωδικού *' : 'Confirm Password *'}</Label>
-                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1 h-8 sm:h-10 text-sm" />
+                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" />
                 {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
               </div>
             </div>

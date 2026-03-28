@@ -142,8 +142,8 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
-          <div className="text-center mb-6 sm:mb-8">
+        <div className="bg-card rounded-3xl shadow-elegant p-4 sm:p-8 md:p-12">
+          <div className="text-center mb-4 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 whitespace-nowrap">
               <span className="font-inter">{language === 'el' ? 'Σύνδεση στο' : 'Login to'}</span>{' '}
               <span className="font-cinzel">ΦΟΜΟ</span>
@@ -151,7 +151,7 @@ const Login = () => {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5 sm:space-y-6">
               <FormField
                 control={form.control}
                 name="email"
@@ -159,7 +159,7 @@ const Login = () => {
                 <FormItem>
                     <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,7 +173,7 @@ const Login = () => {
                 <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-sm" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

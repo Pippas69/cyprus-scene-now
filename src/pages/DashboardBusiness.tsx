@@ -28,6 +28,7 @@ import BudgetTracker from "@/components/business/BudgetTracker";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BusinessSidebar } from "@/components/business/BusinessSidebar";
 import { BusinessFAB } from "@/components/business/BusinessFAB";
+import { SidebarMobileClose } from "@/components/SidebarMobileClose";
 import { BusinessPostsList } from "@/components/business/posting/BusinessPostsList";
 import { BusinessPostForm } from "@/components/business/posting/BusinessPostForm";
 import { Button } from "@/components/ui/button";
@@ -295,6 +296,7 @@ const DashboardBusiness = () => {
         language={language}
       />
       <SidebarProvider>
+      <SidebarMobileClose />
       <div className="h-screen w-full flex overflow-hidden">
         <BusinessSidebar businessCategories={businessCategories} floorPlanEnabled={floorPlanEnabled} planSlug={subscriptionData?.plan} />
         
