@@ -6160,7 +6160,6 @@ export type Database = {
           p_seating_preference?: string
           p_slot_time: string
           p_special_requests?: string
-          p_user_id: string
         }
         Returns: Json
       }
