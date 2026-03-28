@@ -203,18 +203,26 @@ export const ManualEntryDialog = ({
       if (!user) throw new Error('Not authenticated');
 
       if (entryType === 'ticket' && eventId) {
-        // Create a ticket_order first (FK constraint)
+        // Create ticket_order first (tickets.order_id FK)
         const orderId = crypto.randomUUID();
-        const priceCents = ticketPrice ? Math.round(parseFloat(ticketPrice) * 100) : 0;
+        const resolvedTierId = ticketTierId || ticketTiers[0]?.id;
+        if (!resolvedTierId) throw new Error('No ticket tier selected');
+
+        const parsedPrice = ticketPrice.trim() ? Number(ticketPrice) : 0;
+        const priceCents = Number.isFinite(parsedPrice) ? Math.max(0, Math.round(parsedPrice * 100)) : 0;
+        const customerEmail = user.email || `manual+${orderId}@noemail.local`;
+
         const { error: orderError } = await supabase.from('ticket_orders').insert({
           id: orderId,
+          business_id: businessId,
           event_id: eventId,
           user_id: user.id,
-          quantity: 1,
-          total_cents: priceCents,
+          customer_name: trimmedName,
+          customer_email: customerEmail,
+          customer_phone: phone.trim() || null,
           status: 'completed',
-          phone: phone.trim() || null,
-          is_manual_entry: true,
+          subtotal_cents: priceCents,
+          total_cents: priceCents,
         } as any);
         if (orderError) throw orderError;
 
@@ -227,7 +235,7 @@ export const ManualEntryDialog = ({
           is_manual_entry: true,
           manual_status: null,
           order_id: orderId,
-          tier_id: ticketTierId || '',
+          tier_id: resolvedTierId,
           staff_memo: notes.trim() || null,
         } as any);
         if (error) throw error;
