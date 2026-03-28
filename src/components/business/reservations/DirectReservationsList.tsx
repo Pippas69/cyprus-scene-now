@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save } from
+  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save, Plus } from
 'lucide-react';
+import { ManualEntryDialog } from './ManualEntryDialog';
+import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
