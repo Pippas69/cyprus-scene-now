@@ -85,6 +85,7 @@ export const ManualEntryDialog = ({
       indoor: 'Εσωτερικά',
       outdoor: 'Εξωτερικά',
       minAge: 'Ελάχιστη ηλικία',
+      age: 'Ηλικία',
       minCharge: 'Ελάχιστη χρέωση (€)',
       seatingType: 'Τύπος θέσης',
       ticketPrice: 'Τιμή εισιτηρίου (€)',
@@ -111,6 +112,7 @@ export const ManualEntryDialog = ({
       indoor: 'Indoor',
       outdoor: 'Outdoor',
       minAge: 'Minimum age',
+      age: 'Age',
       minCharge: 'Minimum charge (€)',
       seatingType: 'Seating type',
       ticketPrice: 'Ticket price (€)',
@@ -348,7 +350,7 @@ export const ManualEntryDialog = ({
           {/* === TICKET: Min age === */}
           {(entryType === 'ticket' || entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.minAge}</Label>
+              <Label className={labelClass}>{entryType === 'ticket' ? txt.age : txt.minAge}</Label>
               <Input
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}

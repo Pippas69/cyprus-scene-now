@@ -1049,7 +1049,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         {ticket.guest_age ? (
-                          <span className="text-sm text-muted-foreground">{ticket.guest_age}+</span>
+                          <span className="text-sm text-muted-foreground">{ticket.guest_age}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
