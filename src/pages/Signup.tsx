@@ -73,7 +73,7 @@ const Signup = () => {
     defaultValues: {
       firstName: "",
       lastName: "",
-      age: 18,
+      age: undefined,
       email: "",
       password: "",
       town: "",
