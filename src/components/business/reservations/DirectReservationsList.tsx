@@ -44,6 +44,8 @@ interface DirectReservation {
   seating_type_id?: string | null;
   prepaid_min_charge_cents?: number | null;
   event_id?: string | null;
+  is_manual_entry?: boolean;
+  manual_status?: string | null;
 }
 
 interface DirectReservationsListProps {
