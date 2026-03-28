@@ -1222,13 +1222,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
 
       <div className="rounded-md border w-full overflow-x-auto">
-          <Table className="w-full min-w-[600px] table-fixed text-sm">
+          <Table className="w-full min-w-[700px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/4">{t.name}</TableHead>
-                <TableHead className="w-1/4">{t.dateTime}</TableHead>
-                <TableHead className="w-1/4">{t.details}</TableHead>
-                <TableHead className="w-1/4">{t.status}</TableHead>
+                <TableHead className="w-[20%]">{t.name}</TableHead>
+                <TableHead className="w-[20%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[20%]">{t.details}</TableHead>
+                <TableHead className="w-[18%]">{t.status}</TableHead>
+                <TableHead className="w-[22%]">{t.staffMemo}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1290,6 +1291,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    {renderStaffMemoCell(reservation)}
                   </TableCell>
                 </TableRow>
                 );
