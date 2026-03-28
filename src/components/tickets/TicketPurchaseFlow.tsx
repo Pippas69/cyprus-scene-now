@@ -205,24 +205,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
-  const profileName = useProfileName(userId);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Fetch userId on mount
+  // Check auth on mount and listen for changes
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => setIsAuthenticated(!!data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
   }, []);
-
-  // Auto-fill first guest name with profile name
-  useEffect(() => {
-    if (profileName) {
-      setGuestNames(prev => {
-        if (prev.length === 0) return prev;
-        const updated = [...prev];
-        updated[0] = profileName;
-        return updated;
-      });
-    }
   }, [profileName]);
 
   // Checkout state
