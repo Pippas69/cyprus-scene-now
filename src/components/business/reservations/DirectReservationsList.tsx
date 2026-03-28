@@ -56,6 +56,8 @@ interface DirectReservationsListProps {
   selectedEventId?: string | null;
   selectedEventType?: string | null;
   forceEventMode?: boolean;
+  manualEntryOpen?: boolean;
+  onManualEntryOpenChange?: (open: boolean) => void;
 }
 
 // Cache for seating tiers
