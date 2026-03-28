@@ -339,8 +339,7 @@ const Navbar = () => {
                         {t.forBusinesses}
                       </Button>
                       <Button 
-                        variant="outline" 
-                        className="w-full text-sm border-background text-white hover:bg-background hover:text-white" 
+                        className="w-full text-sm bg-[#4ECDC4] text-white hover:bg-[#3dbdb5] border-0" 
                         size="default" 
                         onClick={() => {
                           navigate("/login");
