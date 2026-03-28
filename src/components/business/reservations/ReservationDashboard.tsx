@@ -489,13 +489,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </div>
         )}
 
-        {/* Dining/bar businesses: badges layout (unchanged) */}
+        {/* Dining/bar businesses: badges layout */}
         {!isTicketLinked && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isDiningBar && (
               <button
                 onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-                className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
+                className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
                   diningSelectedEventId === null
                     ? 'bg-card text-foreground shadow-sm border border-border/50'
                     : 'text-foreground/50 hover:text-foreground/70'
@@ -513,7 +513,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   setActiveTab('list');
                 }}
               >
-                <SelectTrigger className={`h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-full gap-2 px-4 transition-all ${
+                <SelectTrigger className={`h-8 sm:h-9 text-xs sm:text-sm w-auto min-w-[140px] sm:min-w-[180px] max-w-xs rounded-full gap-2 px-3 sm:px-4 transition-all ${
                   diningSelectedEventId !== null
                     ? 'bg-card text-foreground shadow-sm border border-border/50'
                     : 'text-foreground/50 border-0 hover:text-foreground/70'
@@ -542,6 +542,16 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 </SelectContent>
               </Select>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0"
+              onClick={() => setManualEntryOpen(true)}
+              title={language === 'el' ? 'Προσθήκη' : 'Add'}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
