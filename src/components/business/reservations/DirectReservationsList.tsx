@@ -982,17 +982,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return 'hybrid';
   };
 
-  const addButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      className="rounded-full h-8 w-8 p-0 border-border/50"
-      onClick={() => setManualEntryOpen(true)}
-      title={language === 'el' ? 'Προσθήκη' : 'Add'}
-    >
-      <Plus className="h-4 w-4" />
-    </Button>
-  );
+
 
   // ===================== KALIVA MODE =====================
   if (isTicketLinked) {
