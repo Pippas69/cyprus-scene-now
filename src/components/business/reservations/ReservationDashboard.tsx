@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, startTransition } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReservationSlotManager } from './ReservationSlotManager';
 import { ReservationStaffControls } from './ReservationStaffControls';
@@ -159,10 +159,18 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         reservationCount: counts[e.id] || 0,
       }));
 
-      setEvents(options);
+      // Only update state if data actually changed to prevent flicker
+      setEvents((prev) => {
+        if (prev.length === options.length && prev.every((p, i) => 
+          p.id === options[i].id && p.reservationCount === options[i].reservationCount
+        )) {
+          return prev; // No change, skip re-render
+        }
+        return options;
+      });
 
       if (!selectedEventIdRef.current || !options.find((e) => e.id === selectedEventIdRef.current)) {
-        setSelectedEventId(options[0]?.id || null);
+        startTransition(() => setSelectedEventId(options[0]?.id || null));
       }
     } catch (error) {
       console.error('Error fetching reservation dashboard events:', error);
@@ -237,7 +245,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         reservationCount: counts[e.id] || 0,
       }));
 
-      setDiningEvents(options);
+      // Only update state if data actually changed to prevent flicker
+      setDiningEvents((prev) => {
+        if (prev.length === options.length && prev.every((p, i) => 
+          p.id === options[i].id && p.reservationCount === options[i].reservationCount
+        )) {
+          return prev;
+        }
+        return options;
+      });
     } catch (error) {
       console.error('Error fetching dining events:', error);
     }
