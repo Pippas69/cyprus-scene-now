@@ -10,43 +10,8 @@ export const useCommissionRate = (businessId: string | null) => {
   return useQuery<CommissionData>({
     queryKey: ["commission-rate", businessId],
     queryFn: async () => {
-      if (!businessId) {
-        return { commissionPercent: 12, planSlug: null };
-      }
-
-      // Prefer backend truth (supports manual overrides / fallback logic)
-      try {
-        const { data, error } = await supabase.functions.invoke("check-subscription");
-        if (!error && data) {
-          return {
-            commissionPercent: (data as any).commission_percent ?? 12,
-            planSlug: (data as any).plan_slug ?? null,
-          };
-        }
-      } catch {
-        // fall through
-      }
-
-      // Fallback: DB subscription -> commission table
-      const { data: subscription } = await supabase
-        .from("business_subscriptions")
-        .select("plan_id, subscription_plans(slug)")
-        .eq("business_id", businessId)
-        .eq("status", "active")
-        .maybeSingle();
-
-      const planSlug = (subscription?.subscription_plans as any)?.slug || "free";
-
-      const { data: commissionRate } = await supabase
-        .from("ticket_commission_rates")
-        .select("commission_percent")
-        .eq("plan_slug", planSlug)
-        .maybeSingle();
-
-      return {
-        commissionPercent: commissionRate?.commission_percent ?? 12,
-        planSlug,
-      };
+      // COMMISSION DISABLED: Platform is in early stage, no commission charged
+      return { commissionPercent: 0, planSlug: null };
     },
     enabled: !!businessId,
     staleTime: 5 * 60 * 1000, // 5 minutes

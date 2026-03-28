@@ -112,15 +112,9 @@ serve(async (req) => {
     }
     console.log("[CHECKOUT] Subscription plan:", { planSlug });
 
-    // Get commission rate for this plan
-    const { data: commissionRate } = await supabaseClient
-      .from("ticket_commission_rates")
-      .select("commission_percent")
-      .eq("plan_slug", planSlug)
-      .single();
-
-    const commissionPercent = commissionRate?.commission_percent ?? 12;
-    console.log("[CHECKOUT] Commission rate:", { commissionPercent });
+    // COMMISSION DISABLED: Platform is in early stage, no commission charged
+    const commissionPercent = 0;
+    console.log("[CHECKOUT] Commission rate:", { commissionPercent, note: "Commission disabled - early stage" });
 
     // Allow destination charges if business has completed Stripe Connect onboarding.
     // In preview/dev environments, allow platform checkout for testing.

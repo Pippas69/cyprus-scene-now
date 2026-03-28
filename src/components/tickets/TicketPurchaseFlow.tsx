@@ -17,10 +17,10 @@ import {
   ArrowRight, ArrowLeft, ExternalLink, Users, Calendar, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useProfileName } from '@/hooks/useProfileName';
 import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
+import { InlineAuthGate } from "./InlineAuthGate";
 
 interface TicketTier {
   id: string;
@@ -70,6 +70,7 @@ const translations = {
       showSelect: "Επιλογή Παράστασης",
       seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
+      auth: "Σύνδεση",
       guests: "Στοιχεία Καλεσμένων",
       checkout: "Ολοκλήρωση",
     },
@@ -114,6 +115,7 @@ const translations = {
       showSelect: "Select Show",
       seats: "Select Seats",
       tickets: "Select Tickets",
+      auth: "Sign In",
       guests: "Guest Details",
       checkout: "Checkout",
     },
@@ -198,25 +200,17 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
-  const profileName = useProfileName(userId);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Fetch userId on mount
+  // Check auth on mount and listen for changes
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => setIsAuthenticated(!!data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
   }, []);
-
-  // Auto-fill first guest name with profile name
-  useEffect(() => {
-    if (profileName) {
-      setGuestNames(prev => {
-        if (prev.length === 0) return prev;
-        const updated = [...prev];
-        updated[0] = profileName;
-        return updated;
-      });
-    }
-  }, [profileName]);
+  
 
   // Checkout state
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -271,10 +265,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     if (hasMultipleShows) steps.push('showSelect');
     if (hasSeating) steps.push('seats');
     if (!isSeatedWithPricing) steps.push('tickets');
+    if (!isAuthenticated) steps.push('auth');
     steps.push('guests');
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
@@ -299,14 +294,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
-  // Sync guest name fields — preserve slot 0 if profileName is set
+  // Sync guest name fields
   useEffect(() => {
     setGuestNames(prev => {
       if (prev.length === totalTickets) return prev;
       if (prev.length < totalTickets) {
-        const extended = [...prev, ...Array(totalTickets - prev.length).fill('')];
-        if (profileName && extended.length > 0) extended[0] = profileName;
-        return extended;
+        return [...prev, ...Array(totalTickets - prev.length).fill('')];
       }
       return prev.slice(0, totalTickets);
     });
@@ -317,7 +310,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
-  }, [totalTickets, profileName]);
+  }, [totalTickets]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = ticketTiers.find(t => t.id === tierId);
@@ -543,16 +536,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                   <Input
                     placeholder={`${t.guestN} ${idx + 1}`}
                     value={name}
-                    readOnly={idx === 0 && !!profileName}
                     onChange={(e) => {
-                      if (idx === 0 && profileName) return;
                       setGuestNames(prev => {
                         const updated = [...prev];
                         updated[idx] = e.target.value;
                         return updated;
                       });
                     }}
-                    className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
+                    className="h-9 text-sm flex-1"
                   />
                   <Input
                     placeholder={t.age}
@@ -747,11 +738,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
+  const renderAuthStep = () => (
+    <InlineAuthGate onAuthSuccess={() => {
+      // Auth succeeded, steps will recalculate (auth step removed), auto-advance
+      setCurrentStepIdx(prev => prev); // force re-render
+    }} />
+  );
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 'showSelect': return renderShowSelectStep();
       case 'seats': return renderSeatStep();
       case 'tickets': return renderTicketsStep();
+      case 'auth': return renderAuthStep();
       case 'guests': return renderGuestsStep();
       case 'checkout': return renderCheckoutStep();
       default: return null;
@@ -763,6 +762,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'showSelect': return !!selectedShowId;
       case 'seats': return selectedSeats.length > 0;
       case 'tickets': return tierTotalTickets > 0;
+      case 'auth': return isAuthenticated;
       case 'guests': return allGuestDetailsFilled && totalTickets > 0;
       case 'checkout': return true;
       default: return true;
