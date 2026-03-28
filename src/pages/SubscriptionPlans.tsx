@@ -205,23 +205,24 @@ const translations = {
   }
 };
 
-// Plan configuration
+// Plan configuration — unified FOMO ocean gradient for all tiers
+const FOMO_GRADIENT = 'from-[hsl(174,62%,45%)] to-[hsl(174,50%,35%)]';
 const PLAN_CONFIG = {
   basic: {
     icon: Zap,
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 5999,
     annualMonthlyPrice: 4999
   },
   pro: {
     icon: Star,
-    gradient: 'from-primary to-sunset-coral',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 11999,
     annualMonthlyPrice: 9999
   },
   elite: {
     icon: Crown,
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 23999,
     annualMonthlyPrice: 19999
   }
