@@ -222,7 +222,8 @@ serve(async (req) => {
             ...guestsMeta,
           },
           ...(hasConnectSetup ? {
-            application_fee_amount: platformFeeCents,
+            // Stripe processing fees: 2.9% + €0.25 — charged to connected account
+            application_fee_amount: platformFeeCents + Math.ceil(prepaidAmountCents * 0.029 + 25),
             transfer_data: { destination: business.stripe_account_id },
           } : {}),
         },

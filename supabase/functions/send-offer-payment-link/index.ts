@@ -127,8 +127,11 @@ Deno.serve(async (req) => {
     };
 
     // Add payment intent data for Connect
+    // Stripe processing fees: 2.9% + €0.25 — charged to connected account via application_fee
+    const totalForFees = purchase.final_price_cents || purchase.original_price_cents || 0;
+    const stripeFeesCents = Math.ceil(totalForFees * 0.029 + 25);
     checkoutConfig.payment_intent_data = {
-      application_fee_amount: purchase.commission_amount_cents || 0,
+      application_fee_amount: (purchase.commission_amount_cents || 0) + stripeFeesCents,
       transfer_data: {
         destination: stripeAccountId,
       },
