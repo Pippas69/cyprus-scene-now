@@ -431,13 +431,13 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
         {isTicketLinked && availableTabs.length > 0 && (
           <div className="space-y-3">
-            {/* Type tabs */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Type tabs + add button */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {availableTabs.map((type) => (
                 <button
                   key={type}
                   onClick={() => setActiveTypeTab(type)}
-                  className={`h-9 px-4 text-sm font-medium rounded-full transition-all ${
+                  className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
                     activeTypeTab === type
                       ? 'bg-card text-foreground shadow-sm border border-border/50'
                       : 'text-foreground/50 hover:text-foreground/70'
@@ -446,6 +446,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   {getTypeTabLabel(type)}
                 </button>
               ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0"
+                onClick={() => setManualEntryOpen(true)}
+                title={language === 'el' ? 'Προσθήκη' : 'Add'}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
 
             {/* Per-tab event dropdown (only if 2+ events in active tab) */}
