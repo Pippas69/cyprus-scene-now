@@ -76,12 +76,19 @@ export const checkWebPSupport = (): Promise<boolean> => {
   });
 };
 
-// Get optimized image URL (if using CDN with format support)
+// Get optimized image URL using Supabase image transforms
 export const getOptimizedImageUrl = (url: string, width?: number): string => {
   if (!url) return '';
   
-  // If it's a Supabase URL, we could add transform parameters
-  // For now, just return the original URL
-  // In production, you might add: ?width=800&format=webp
+  // Apply Supabase Storage image transforms for storage URLs
+  if (url.includes('supabase.co/storage/v1/object/public/') && width) {
+    // Convert public URL to render/image transform URL
+    const transformUrl = url.replace(
+      '/storage/v1/object/public/',
+      '/storage/v1/render/image/public/'
+    );
+    return `${transformUrl}?width=${width}&resize=contain`;
+  }
+  
   return url;
 };
