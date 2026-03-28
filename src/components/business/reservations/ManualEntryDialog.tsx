@@ -205,6 +205,7 @@ export const ManualEntryDialog = ({
       if (entryType === 'ticket' && eventId) {
         const { error } = await supabase.from('tickets').insert({
           event_id: eventId,
+          user_id: user.id,
           guest_name: trimmedName,
           guest_age: minAge ? parseInt(minAge) : null,
           status: 'valid',
