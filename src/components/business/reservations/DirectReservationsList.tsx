@@ -75,6 +75,7 @@ interface TicketOnlyOrder {
   created_at: string;
   tier_name: string;
   ticket_code: string | null;
+  staff_memo: string | null;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
@@ -136,7 +137,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       minCharge: 'Min. Charge',
       saved: 'Αποθηκεύτηκε!',
       errorSaving: 'Σφάλμα αποθήκευσης',
-      staffMemo: 'Staff memo',
+      staffMemo: 'Σημειώσεις',
       staffMemoPlaceholder: 'Σημείωση για το team...',
       customerNote: 'Σχόλιο πελάτη',
     },
@@ -170,7 +171,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       minCharge: 'Min. Charge',
       saved: 'Saved!',
       errorSaving: 'Error saving',
-      staffMemo: 'Staff memo',
+      staffMemo: 'Notes',
       staffMemoPlaceholder: 'Note for the team...',
       customerNote: 'Customer note',
     }
