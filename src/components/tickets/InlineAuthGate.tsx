@@ -9,7 +9,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, Chrome } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
-import { FaApple } from "react-icons/fa";
+
 
 const translations = {
   el: {
