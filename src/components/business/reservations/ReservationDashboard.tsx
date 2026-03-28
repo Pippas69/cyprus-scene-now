@@ -6,7 +6,7 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, CalendarDays } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
 
 interface ReservationDashboardProps {
