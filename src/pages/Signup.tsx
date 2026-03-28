@@ -402,25 +402,22 @@ const Signup = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12">
-          <div className="text-center mb-8">
-            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-seafoam to-aegean bg-clip-text text-transparent mb-2">
+        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
+          <div className="text-center mb-5 sm:mb-8">
+            <h1 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1">
               {t.signup}
             </h1>
-            <p className="font-inter text-muted-foreground">
-              {t.joinUs}
-            </p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                 <FormField control={form.control} name="firstName" render={({
                 field
               }) => <FormItem>
                       <FormLabel>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl" />
+                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl h-9 sm:h-10" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -430,7 +427,7 @@ const Signup = () => {
               }) => <FormItem>
                       <FormLabel>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl" />
+                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl h-9 sm:h-10" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>} />
@@ -441,7 +438,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="25" {...field} className="rounded-xl" />
+                      <Input type="number" placeholder="25" {...field} className="rounded-xl h-9 sm:h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -451,7 +448,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{t.email}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl" />
+                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-9 sm:h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -461,7 +458,7 @@ const Signup = () => {
             }) => <FormItem>
                     <FormLabel>{t.password}</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl" />
+                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-9 sm:h-10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
@@ -478,7 +475,7 @@ const Signup = () => {
                       value={field.value || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger className="rounded-xl h-9 sm:h-10">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
                         </SelectTrigger>
                       </FormControl>
@@ -500,7 +497,7 @@ const Signup = () => {
                       value={field.value || ""}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger className="rounded-xl h-9 sm:h-10">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />
                         </SelectTrigger>
                       </FormControl>
@@ -520,7 +517,7 @@ const Signup = () => {
                   </FormItem>} />
 
               {/* Category Preferences - list rows (as per mock) */}
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <FormLabel className="flex items-center gap-2">
                   <Heart className="h-4 w-4 text-primary" />
                   {language === "el" ? "Τι σας αρέσει;" : "What do you like?"}
@@ -537,7 +534,7 @@ const Signup = () => {
               </div>
 
               {/* Student Verification Section */}
-              <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/30">
+              <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border border-border rounded-xl bg-muted/30">
                 <div className="flex items-center space-x-3">
                   <Checkbox 
                     id="isStudent" 
