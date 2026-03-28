@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
-import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,9 +99,15 @@ export function UserSidebar() {
     { title: t.settings, tab: 'settings', icon: Settings },
   ];
 
+  const isMainActive = (url: string) => currentPath === url;
+
   const isTabActive = (tab: string) => {
     return currentPath === '/dashboard-user' && currentTab === tab;
   };
+
+  const handleNavClick = useCallback((url: string) => {
+    navigate(url);
+  }, [navigate]);
 
   const handleTabClick = useCallback((tab: string) => {
     navigate(`/dashboard-user?tab=${tab}`, { replace: true });
@@ -134,11 +139,13 @@ export function UserSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
-                    <NavLink to={item.url} className="flex items-center gap-2 text-sidebar-foreground">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
+                  <SidebarMenuButton
+                    isActive={isMainActive(item.url)}
+                    onClick={() => handleNavClick(item.url)}
+                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
