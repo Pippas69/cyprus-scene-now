@@ -26,29 +26,29 @@ const safeTimestampToISO = (timestamp: number | null | undefined): string => {
 // Price mapping for subscription plans (Basic/Pro/Elite)
 const PRICE_MAPPING: Record<string, Record<string, string>> = {
   basic: {
-    monthly: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',
-    annual: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',
+    monthly: 'price_1SpwozHTQ1AOHDjnVuRc9Qna',
+    annual: 'price_1Spwp1HTQ1AOHDjnQx155dfC',
   },
   pro: {
-    monthly: 'price_1SyYDEHwXCvHV7ZwBy72motr',
-    annual: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',
+    monthly: 'price_1Spwp2HTQ1AOHDjnrxToaDoC',
+    annual: 'price_1Spwp3HTQ1AOHDjnq9F1BnZh',
   },
   elite: {
-    monthly: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',
-    annual: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',
+    monthly: 'price_1Spwp5HTQ1AOHDjn8NpaDDj6',
+    annual: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
   },
-  // Legacy mappings
+  // Legacy mappings -> mapped to current live prices
   starter: {
-    monthly: 'price_1SyYDBHwXCvHV7ZwWIPuJHzf',
-    annual: 'price_1SyYDCHwXCvHV7ZwAw3fngIN',
+    monthly: 'price_1SpwozHTQ1AOHDjnVuRc9Qna',
+    annual: 'price_1Spwp1HTQ1AOHDjnQx155dfC',
   },
   growth: {
-    monthly: 'price_1SyYDEHwXCvHV7ZwBy72motr',
-    annual: 'price_1SyYDFHwXCvHV7ZwE1uQ0H1c',
+    monthly: 'price_1Spwp2HTQ1AOHDjnrxToaDoC',
+    annual: 'price_1Spwp3HTQ1AOHDjnq9F1BnZh',
   },
   professional: {
-    monthly: 'price_1SyYDGHwXCvHV7Zwg9IDT9jt',
-    annual: 'price_1SyYDHHwXCvHV7ZwDVK9HHIU',
+    monthly: 'price_1Spwp5HTQ1AOHDjn8NpaDDj6',
+    annual: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
   },
 };
 
