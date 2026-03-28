@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { UserSidebar } from '@/components/user/UserSidebar';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { UserAccountDropdown } from '@/components/UserAccountDropdown';
 import type { User } from '@supabase/supabase-js';
 
 interface UserLayoutProps {
-  children?: ReactNode;
+  children: ReactNode;
 }
 
 export function UserLayout({ children }: UserLayoutProps) {
@@ -151,7 +151,7 @@ export function UserLayout({ children }: UserLayoutProps) {
             }}
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-background relative z-10 max-w-full [-webkit-overflow-scrolling:touch]"
           >
-            {children || <Outlet />}
+            {children}
           </main>
         </div>
       </div>
