@@ -39,6 +39,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const text = useMemo(
     () => ({
       el: {
+        pageTitle: 'Διαχείριση',
         reservations: 'Κρατήσεις',
         staffControl: 'Έλεγχος',
         settings: 'Ρυθμίσεις',
@@ -46,8 +47,12 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         selectEvent: 'Επιλέξτε εκδήλωση',
         directReservations: 'Κρατήσεις',
         events: 'Εκδηλώσεις',
+        ticket: 'Εισιτήριο',
+        reservation: 'Κράτηση',
+        ticketReservation: 'Εισιτήριο & Κράτηση',
       },
       en: {
+        pageTitle: 'Management',
         reservations: 'Reservations',
         staffControl: 'Control',
         settings: 'Settings',
@@ -55,6 +60,9 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         selectEvent: 'Select event',
         directReservations: 'Reservations',
         events: 'Events',
+        ticket: 'Ticket',
+        reservation: 'Reservation',
+        ticketReservation: 'Ticket & Reservation',
       }
     }),
     []
