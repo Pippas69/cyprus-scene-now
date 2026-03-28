@@ -537,35 +537,35 @@ const Signup = () => {
 
               {/* Student Verification Section */}
               <div className="space-y-2 sm:space-y-4 p-2.5 sm:p-4 border border-border rounded-xl bg-muted/30">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   <Checkbox 
                     id="isStudent" 
                     checked={isStudent} 
                     onCheckedChange={(checked) => setIsStudent(checked === true)}
-                    className="rounded" 
+                    className="rounded h-4 w-4" 
                   />
-                  <label htmlFor="isStudent" className="flex items-center gap-2 text-sm font-medium leading-none cursor-pointer">
-                    <GraduationCap className="h-4 w-4 text-primary" />
+                  <label htmlFor="isStudent" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium leading-none cursor-pointer">
+                    <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                     {language === "el" ? "Είμαι φοιτητής/τρια" : "I am a student"}
                   </label>
                 </div>
                 
                 {isStudent && (
-                  <div className="space-y-4 pt-2 animate-in slide-in-from-top-2">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="space-y-2.5 sm:space-y-4 pt-1.5 sm:pt-2 animate-in slide-in-from-top-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {language === "el" 
                         ? "Επαληθεύστε τη φοιτητική σας ιδιότητα για να λαμβάνετε εκπτώσεις σε επιχειρήσεις."
                         : "Verify your student status to receive discounts at businesses."
                       }
                     </p>
                     
-                    <div className="space-y-2">
-                      <FormLabel>{language === "el" ? "Πανεπιστήμιο" : "University"}</FormLabel>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <FormLabel className="text-xs sm:text-sm">{language === "el" ? "Πανεπιστήμιο" : "University"}</FormLabel>
                       <Select 
                         value={selectedUniversity} 
                         onValueChange={setSelectedUniversity}
                       >
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-sm">
                           <SelectValue placeholder={language === "el" ? "Επιλέξτε πανεπιστήμιο" : "Select university"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -579,9 +579,9 @@ const Signup = () => {
                     </div>
                     
                     {selectedUniversity && (
-                      <div className="space-y-2 animate-in slide-in-from-top-2">
-                        <FormLabel className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
+                      <div className="space-y-1.5 sm:space-y-2 animate-in slide-in-from-top-2">
+                        <FormLabel className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           {language === "el" ? "Ακαδημαϊκό Email" : "University Email"}
                         </FormLabel>
                         <Input
@@ -589,7 +589,7 @@ const Signup = () => {
                           value={universityEmail}
                           onChange={(e) => setUniversityEmail(e.target.value)}
                           placeholder={`example@${selectedUniversity}`}
-                          className="rounded-xl text-[13px] sm:text-sm"
+                          className="rounded-xl h-8 sm:h-10 text-xs sm:text-sm"
                         />
                         {studentEmailError && (
                           <p className="text-[10px] sm:text-sm text-destructive">{studentEmailError}</p>
