@@ -1281,7 +1281,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ))}
       </div>
 
-      <div className="min-w-0"></div>
+      <div className="flex justify-end">{addButton}</div>
 
       {filteredReservations.length === 0 ?
       <Card>
@@ -1390,5 +1390,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           }}
         />
       )}
+      <ManualEntryDialog
+        open={manualEntryOpen}
+        onOpenChange={setManualEntryOpen}
+        businessId={businessId}
+        language={language}
+        entryType={getEntryType()}
+        eventId={selectedEventId}
+        onSuccess={() => fetchReservations(true)}
+      />
     </div>);
 };
