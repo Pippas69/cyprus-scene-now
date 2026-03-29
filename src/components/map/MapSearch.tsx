@@ -107,7 +107,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 text-white h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
+        <Search className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 text-white h-3 w-3 md:h-3.5 md:w-3.5" />
         <Input
           type="text"
           placeholder={text[language].placeholder}
@@ -116,10 +116,10 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           onFocus={() => results.length > 0 && setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           className={cn(
-            "pl-5 md:pl-6 lg:pl-8 shadow-lg border-0 rounded-lg",
-            "h-[24px] md:h-[26px] lg:h-8",
+            "pl-6 md:pl-8 shadow-lg border-0",
+            "h-7 md:h-8",
             "text-[8px] md:text-[9px] lg:text-xs text-white placeholder:text-white/70",
-            "w-[90px] md:w-[120px] lg:w-[180px]"
+            "w-[110px] md:w-[150px] lg:w-[180px]"
           )}
           style={{ backgroundColor: '#0D3B66' }}
         />
