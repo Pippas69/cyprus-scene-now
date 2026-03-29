@@ -329,29 +329,36 @@ serve(async (req) => {
       },
     };
 
-    const session = await stripe.checkout.sessions.create(
-      hasConnectSetup
-        ? {
-            ...baseSessionParams,
-            payment_intent_data: {
-              // application_fee = commission + processing fees → business receives full prepaid amount
-              application_fee_amount: platformFeeCents + stripeFeesCents,
-              transfer_data: {
-                destination: business.stripe_account_id,
-              },
-              metadata: {
-                type: "reservation_event",
-                event_id,
-                reservation_id: reservation.id,
-                seating_type_id,
-                party_size: party_size.toString(),
-                prepaid_amount_cents: prepaidAmountCents.toString(),
-                business_id: business.id,
-              },
+    let session;
+    if (hasConnectSetup) {
+      try {
+        // Verify the connected account exists before attempting destination charge
+        await stripe.accounts.retrieve(business.stripe_account_id);
+        session = await stripe.checkout.sessions.create({
+          ...baseSessionParams,
+          payment_intent_data: {
+            application_fee_amount: platformFeeCents + stripeFeesCents,
+            transfer_data: {
+              destination: business.stripe_account_id,
             },
-          }
-        : baseSessionParams
-    );
+            metadata: {
+              type: "reservation_event",
+              event_id,
+              reservation_id: reservation.id,
+              seating_type_id,
+              party_size: party_size.toString(),
+              prepaid_amount_cents: prepaidAmountCents.toString(),
+              business_id: business.id,
+            },
+          },
+        });
+      } catch (connectError) {
+        console.warn("[CHECKOUT] Connect account invalid, falling back to platform checkout:", connectError);
+        session = await stripe.checkout.sessions.create(baseSessionParams);
+      }
+    } else {
+      session = await stripe.checkout.sessions.create(baseSessionParams);
+    }
 
     // Update reservation with payment intent ID
     if (session.payment_intent) {
