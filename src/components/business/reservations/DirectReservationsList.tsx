@@ -874,7 +874,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  // Render ticket memo cell
+  // Save ticket guest city (for ghost guests)
+  const handleSaveTicketCity = async (ticketId: string) => {
+    try {
+      const trimmed = ticketCityValue.trim();
+      const { error } = await supabase
+        .from('tickets')
+        .update({ guest_city: trimmed || null } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketCity(null);
+      setTicketCityValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_city: trimmed || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket city:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
