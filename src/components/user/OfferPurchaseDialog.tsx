@@ -565,8 +565,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const ReservationSection = () => {
     if (!showReservationOption) return null;
 
-    const canProceedWithReservation = wantsReservation && reservationDate && reservationTime &&
-    availableCapacity !== null && availableCapacity >= partySize && !capacityError;
+    const seatingOptions = offer.businesses?.reservation_seating_options || [];
 
     return (
       <div className="space-y-3 sm:space-y-4">
@@ -581,6 +580,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               if (!checked) {
                 setReservationDate(undefined);
                 setReservationTime("");
+                setReservationName('');
+                setReservationPhone('');
+                setReservationSeating('none');
                 setAvailableCapacity(null);
                 setCapacityError(null);
               }
@@ -596,9 +598,35 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             `Book a table during the discount hours (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). `}
             </p>
 
+            {/* Reservation Name */}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <User className="h-3 w-3" />
+                {t("reservationName")}
+              </Label>
+              <Input
+                value={reservationName}
+                onChange={(e) => setReservationName(e.target.value)}
+                placeholder={language === "el" ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Doe"}
+                className="h-9 sm:h-10 text-xs sm:text-sm" />
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                {t("phone")}
+              </Label>
+              <Input
+                value={reservationPhone}
+                onChange={(e) => setReservationPhone(e.target.value)}
+                placeholder={language === "el" ? "π.χ. 99123456" : "e.g. 99123456"}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+                type="tel" />
+            </div>
+
             {/* Date Selection */}
             <div className="space-y-1.5">
-              
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9">
@@ -624,7 +652,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   modifiers={closedDatesModifiers}
                   modifiersStyles={closedDatesModifiersStyles}
                   initialFocus />
-                
                 </PopoverContent>
               </Popover>
             </div>
@@ -640,7 +667,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   </div> :
             timeSlots.length === 0 ?
             <p className="text-xs text-muted-foreground">{t("noSlotsForDay")}</p> :
-
             <div className="flex flex-wrap gap-1.5">
                     {timeSlots.map((slot) => {
                 const isPassed = isSlotPassed(slot);
@@ -652,15 +678,36 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                     className="text-xs h-7 px-2.5"
                     disabled={isPassed}
                     onClick={() => setReservationTime(slot)}>
-                    
                           {slot}
                         </Button>);
-
               })}
                   </div>
             }
               </div>
           }
+
+            {/* Seating Preference (Optional) - below date/time */}
+            {seatingOptions.length > 0 &&
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                {t("seatingPreference")}
+              </Label>
+              <Select value={reservationSeating} onValueChange={setReservationSeating}>
+                <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("noPreference")}</SelectItem>
+                  {seatingOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option === 'indoor' ? t("indoor") : option === 'outdoor' ? t("outdoor") : option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            }
 
             {/* Capacity Check */}
             {checkingCapacity &&
@@ -682,7 +729,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </div>
         }
       </div>);
-
   };
 
   // === SUCCESS VIEW ===
