@@ -116,6 +116,7 @@ const translations = {
     continuePayment: "Συνέχεια στην Πληρωμή",
     cancel: "Ακύρωση",
     specialRequests: "Ειδικά αιτήματα",
+    reservationName: "Όνομα Κράτησης",
   },
   en: {
     title: "Ticket & Reservation",
@@ -168,6 +169,7 @@ const translations = {
     continuePayment: "Continue to Payment",
     cancel: "Cancel",
     specialRequests: "Special requests",
+    reservationName: "Reservation Name",
   },
 };
 
@@ -211,6 +213,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [reservationName, setReservationName] = useState('');
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
@@ -470,6 +473,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         customerPhone: phoneNumber.trim() || null,
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,
+        reservationName: reservationName.trim() || guests[0].name.trim(),
         guests: guests.map(g => ({
           name: g.name.trim(),
           age: parseInt(g.age) || 0,
@@ -560,6 +564,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const renderStep2 = () => (
     <div className="space-y-4">
+      {/* Reservation Name */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-2 text-sm">
+          <User className="h-3.5 w-3.5" />
+          {t.reservationName}
+        </Label>
+        <Input
+          value={reservationName}
+          onChange={(e) => setReservationName(e.target.value)}
+          placeholder={language === 'el' ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Doe"}
+          className="h-9 text-sm"
+        />
+      </div>
+
       {/* Party Size + Ticket Price - Same Row */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -808,15 +826,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       return (
         <ProfileCompletionGate onComplete={(profile) => {
           setProfileComplete(true);
+          // Only auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          setPhoneNumber(profile.phone);
-          supabase.auth.getUser().then(({ data }) => {
-            if (data.user?.email) setCustomerEmail(data.user.email);
-          });
+          // Phone and email are left empty for the user to fill
         }} />
       );
     }

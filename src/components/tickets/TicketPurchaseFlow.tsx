@@ -384,16 +384,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    supabase.auth.getUser().then(({ data }) => {
-      const authEmail = data.user?.email || '';
-      if (authEmail) {
-        setCustomerEmail(prev => prev.trim() ? prev : authEmail);
-      }
-    });
-  }, [isAuthenticated]);
+  // Phone and email are left empty for the user to fill freely
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
@@ -827,17 +818,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <ProfileCompletionGate onComplete={(profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Auto-fill buyer as first guest and contact info
+      // Only auto-fill buyer as first guest name
       setGuestNames(prev => {
         const updated = [...prev];
         if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
         return updated;
       });
-      setCustomerPhone(profile.phone);
-      // Auto-fill email from auth
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user?.email) setCustomerEmail(data.user.email);
-      });
+      // Phone and email are left empty for the user to fill
     }} />
   );
 
