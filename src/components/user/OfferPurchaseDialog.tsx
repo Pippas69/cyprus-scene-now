@@ -846,6 +846,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
+      {/* Auth Gate for unauthenticated users */}
+      {!isAuthenticated && (
+        <div className="my-2">
+          <InlineAuthGate onAuthSuccess={() => {}} />
+        </div>
+      )}
+
       <div className="h-1.5" />
 
       {/* RESERVATION SECTION */}

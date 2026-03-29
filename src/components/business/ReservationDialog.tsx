@@ -27,7 +27,7 @@ interface ReservationDialogProps {
   eventStartAt: string;
   seatingOptions: string[];
   language: 'el' | 'en';
-  userId: string;
+  userId?: string;
   onSuccess: () => void;
 }
 

@@ -28,7 +28,7 @@ interface DirectReservationDialogProps {
   businessId: string;
   businessName: string;
   language: 'el' | 'en';
-  userId: string;
+  userId?: string;
   onSuccess: () => void;
 }
 
