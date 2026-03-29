@@ -782,10 +782,11 @@ export const DirectReservationDialog = ({
           id="phone_number"
           type="tel"
           value={formData.phone_number}
-          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+          onChange={(e) => { if (!profilePhone) setFormData({ ...formData, phone_number: e.target.value }); }}
           placeholder={t.phonePlaceholder}
           required
-          className="text-xs sm:text-sm h-9 sm:h-10" />
+          readOnly={!!profilePhone}
+          className={`text-xs sm:text-sm h-9 sm:h-10 ${profilePhone ? 'bg-muted cursor-not-allowed' : ''}`} />
         
           </div>
 
