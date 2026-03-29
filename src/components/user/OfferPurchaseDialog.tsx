@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { InlineAuthGate } from "@/components/tickets/InlineAuthGate";
+import { ProfileCompletionGate } from "@/components/tickets/ProfileCompletionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -109,17 +110,25 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthGate, setShowAuthGate] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
+    const checkProfile = async (uid: string) => {
+      const { data } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', uid).single();
+      if (data) setProfileComplete(!!(data.first_name && data.last_name && data.phone));
+    };
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setIsAuthenticated(!!data.user);
+      if (data.user) checkProfile(data.user.id);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
-      if (session?.user) setUserId(session.user.id);
+      if (session?.user) {
+        setUserId(session.user.id);
+        checkProfile(session.user.id);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -190,7 +199,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
-      setShowAuthGate(false);
+      // showAuthGate removed — auth is shown upfront
     }
   }, [isOpen]);
 
@@ -451,11 +460,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleClaim = async () => {
-    // If not authenticated, show auth gate
-    if (!isAuthenticated) {
-      setShowAuthGate(true);
-      return;
-    }
 
     setIsLoading(true);
     try {
@@ -746,7 +750,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const reservationValid = !wantsReservation || reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError;
   const claimEnabled = canClaim && reservationValid;
 
-  const formContent =
+  const formContent = !isAuthenticated ? (
+    <div className="space-y-4 py-4">
+      <InlineAuthGate onAuthSuccess={() => {}} />
+    </div>
+  ) : !profileComplete ? (
+    <div className="space-y-4 py-4">
+      <ProfileCompletionGate onComplete={(profile) => {
+        setProfileComplete(true);
+        const fullName = `${profile.firstName} ${profile.lastName}`;
+        setGuestNames(prev => {
+          const updated = [...prev];
+          updated[0] = fullName;
+          return updated;
+        });
+      }} />
+    </div>
+  ) :
   <div className="space-y-1.5">
       {/* Description */}
       {offer.description && (
@@ -854,17 +874,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
-      {/* Auth Gate - shown when user tries to claim without auth */}
-      {showAuthGate && !isAuthenticated && (
-        <div className="my-2 space-y-2">
-          <InlineAuthGate onAuthSuccess={() => {
-            setShowAuthGate(false);
-          }} />
-          <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
-            {language === 'el' ? '← Πίσω' : '← Back'}
-          </Button>
-        </div>
-      )}
+      {/* Auth gate removed — auth is shown upfront before the form */}
 
       <div className="h-1.5" />
 

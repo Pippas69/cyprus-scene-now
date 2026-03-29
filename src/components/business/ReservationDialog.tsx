@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
+import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -57,17 +58,21 @@ export const ReservationDialog = ({
   const [capacityLoading, setCapacityLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
-  const [showAuthGate, setShowAuthGate] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
   const profileName = useProfileName(currentUserId);
 
   useEffect(() => {
+    const checkProfile = async (uid: string) => {
+      const { data } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', uid).single();
+      if (data) setProfileComplete(!!(data.first_name && data.last_name && data.phone));
+    };
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
-      if (data.user) setCurrentUserId(data.user.id);
+      if (data.user) { setCurrentUserId(data.user.id); checkProfile(data.user.id); }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
-      if (session?.user) setCurrentUserId(session.user.id);
+      if (session?.user) { setCurrentUserId(session.user.id); checkProfile(session.user.id); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -150,11 +155,7 @@ export const ReservationDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If not authenticated, show auth gate instead of submitting
-    if (!isAuthenticated) {
-      setShowAuthGate(true);
-      return;
-    }
+    // Auth is now handled upfront, no need to check here
     
     // Validate with Zod schema
     try {
@@ -231,14 +232,20 @@ export const ReservationDialog = ({
     }
   };
 
-  const formContent = showAuthGate && !isAuthenticated ? (
-    <div className="space-y-4">
-      <InlineAuthGate onAuthSuccess={() => {
-        setShowAuthGate(false);
+  const formContent = !isAuthenticated ? (
+    <div className="space-y-4 py-4">
+      <InlineAuthGate onAuthSuccess={() => {}} />
+    </div>
+  ) : !profileComplete ? (
+    <div className="space-y-4 py-4">
+      <ProfileCompletionGate onComplete={(profile) => {
+        setProfileComplete(true);
+        setFormData(prev => ({
+          ...prev,
+          reservation_name: `${profile.firstName} ${profile.lastName}`,
+          phone_number: profile.phone,
+        }));
       }} />
-      <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
-        {language === 'el' ? '← Πίσω στη φόρμα' : '← Back to form'}
-      </Button>
     </div>
   ) : (
     <form onSubmit={handleSubmit} className="space-y-4">

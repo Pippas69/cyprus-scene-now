@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
+import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,7 +22,7 @@ import { ReservationSuccessDialog } from '@/components/user/ReservationSuccessDi
 import { useClosedSlots } from '@/hooks/useClosedSlots';
 import { useClosedDates } from '@/hooks/useClosedDates';
 import { useSlotAvailability } from '@/hooks/useSlotAvailability';
-import { useProfileName } from '@/hooks/useProfileName';
+import { useProfileData } from '@/hooks/useProfileData';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -96,7 +97,6 @@ export const DirectReservationDialog = ({
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
-  const [showAuthGate, setShowAuthGate] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -111,9 +111,9 @@ export const DirectReservationDialog = ({
   }, []);
 
   const isMobile = useIsMobile();
-  const profileName = useProfileName(currentUserId);
+  const { profileName, profilePhone, profileComplete } = useProfileData(currentUserId);
 
-  // Auto-fill reservation name and first guest slot with profile name
+  // Auto-fill reservation name, first guest slot, and phone with profile data
   useEffect(() => {
     if (profileName) {
       setFormData(prev => ({
@@ -123,6 +123,12 @@ export const DirectReservationDialog = ({
       }));
     }
   }, [profileName]);
+
+  useEffect(() => {
+    if (profilePhone) {
+      setFormData(prev => ({ ...prev, phone_number: profilePhone }));
+    }
+  }, [profilePhone]);
 
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
@@ -418,12 +424,6 @@ export const DirectReservationDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If not authenticated, show auth gate instead of submitting
-    if (!isAuthenticated) {
-      setShowAuthGate(true);
-      return;
-    }
-
     if (!formData.reservation_name.trim()) {
       toast.error(language === 'el' ? 'Παρακαλώ εισάγετε όνομα' : 'Please enter a name');
       return;
@@ -574,14 +574,22 @@ export const DirectReservationDialog = ({
     }
   }, [formData.preferred_date, timeSlots.length, fullyBookedSlots, closedSlots]);
 
-  const formContent = showAuthGate && !isAuthenticated ? (
-    <div className="space-y-4">
+  const formContent = !isAuthenticated ? (
+    <div className="space-y-4 py-4">
       <InlineAuthGate onAuthSuccess={() => {
-        setShowAuthGate(false);
+        // Auth state listener will update isAuthenticated
       }} />
-      <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
-        {language === 'el' ? '← Πίσω στη φόρμα' : '← Back to form'}
-      </Button>
+    </div>
+  ) : !profileComplete ? (
+    <div className="space-y-4 py-4">
+      <ProfileCompletionGate onComplete={(profile) => {
+        setFormData(prev => ({
+          ...prev,
+          reservation_name: `${profile.firstName} ${profile.lastName}`,
+          guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
+          phone_number: profile.phone,
+        }));
+      }} />
     </div>
   ) : (
   <form onSubmit={handleSubmit} className="space-y-4">
@@ -774,10 +782,11 @@ export const DirectReservationDialog = ({
           id="phone_number"
           type="tel"
           value={formData.phone_number}
-          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+          onChange={(e) => { if (!profilePhone) setFormData({ ...formData, phone_number: e.target.value }); }}
           placeholder={t.phonePlaceholder}
           required
-          className="text-xs sm:text-sm h-9 sm:h-10" />
+          readOnly={!!profilePhone}
+          className={`text-xs sm:text-sm h-9 sm:h-10 ${profilePhone ? 'bg-muted cursor-not-allowed' : ''}`} />
         
           </div>
 
