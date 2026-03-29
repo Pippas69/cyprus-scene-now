@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle } from "lucide-react";
+import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -38,6 +38,10 @@ const createSignupSchema = (language: "el" | "en") => {
     email: z.string().trim().email(vt.invalidEmail),
     password: z.string().min(8, vt.passwordTooShort),
     town: z.string().min(1, vt.selectOption),
+    phone: z.string().min(1, language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required')
+      .refine((val) => val.replace(/\D/g, '').length >= 8, {
+        message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number'
+      }),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
   });
@@ -52,6 +56,8 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     password: "",
     town: "",
     gender: "",
+    phone: "",
+    phoneCountry: "CY" as "CY" | "GR",
   });
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [isStudent, setIsStudent] = useState(false);
@@ -70,6 +76,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Κωδικός",
       town: "Πόλη",
+      phone: "Τηλέφωνο",
       townPlaceholder: "Επιλέξτε πόλη",
       gender: "Φύλο",
       genderPlaceholder: "Επιλέξτε φύλο (προαιρετικό)",
@@ -99,6 +106,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
       email: "Email",
       password: "Password",
       town: "Town",
+      phone: "Phone",
       townPlaceholder: "Select town",
       gender: "Gender",
       genderPlaceholder: "Select gender (optional)",
@@ -197,6 +205,10 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     try {
       const redirectUrl = `${window.location.origin}/ekdiloseis`;
       
+      // Format full phone number
+      const phonePrefix = formData.phoneCountry === 'CY' ? '+357' : '+30';
+      const fullPhone = phonePrefix + formData.phone.replace(/\D/g, '');
+
       // Sign up with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -208,6 +220,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
             last_name: formData.lastName,
             age: formData.age,
             town: formData.town,
+            phone: fullPhone,
             gender: formData.gender || null,
             preferences: selectedPreferences,
             is_student: isStudent,
@@ -226,6 +239,9 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
           .upsert(
             {
               id: authData.user.id,
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              phone: fullPhone,
               gender: formData.gender || null,
               age: typeof formData.age === "number" ? formData.age : null,
               town: formData.town,
@@ -416,6 +432,39 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <Label className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary" />
+                {t.phone}
+              </Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.phoneCountry}
+                  onValueChange={(value) => setFormData({ ...formData, phoneCountry: value as "CY" | "GR" })}
+                  disabled={loading}
+                >
+                  <SelectTrigger className="rounded-xl w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CY">🇨🇾 +357</SelectItem>
+                    <SelectItem value="GR">🇬🇷 +30</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder={formData.phoneCountry === 'CY' ? '99123456' : '6912345678'}
+                  disabled={loading}
+                  className="rounded-xl flex-1"
+                  required
+                />
+              </div>
             </div>
 
             {/* Gender */}

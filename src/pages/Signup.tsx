@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeSelectChange } from "@/lib/formSafeUpdate";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2 } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2, Phone } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -20,6 +20,7 @@ import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
+import { SuccessCheckmark } from "@/components/ui/success-animation";
 import { useBetaMode } from "@/hooks/useBetaMode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { getCategoriesForUser } from "@/lib/unifiedCategories";
@@ -62,6 +63,13 @@ const Signup = () => {
     town: z.string().min(1, {
       message: vt.selectOption
     }),
+    phone: z.string().min(1, {
+      message: language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'
+    }).refine((val) => {
+      const digits = val.replace(/\D/g, '').length;
+      return digits >= 8;
+    }, { message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number' }),
+    phoneCountry: z.enum(['CY', 'GR']).default('CY'),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
     isStudent: z.boolean().optional(),
@@ -79,6 +87,8 @@ const Signup = () => {
       email: "",
       password: "",
       town: "",
+      phone: "",
+      phoneCountry: "CY" as const,
       gender: undefined,
       preferences: [],
       isStudent: false,
@@ -95,6 +105,7 @@ const Signup = () => {
   const [studentVerificationSent, setStudentVerificationSent] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
@@ -153,6 +164,10 @@ const Signup = () => {
         }
       }
 
+      // Format full phone number
+      const phonePrefix = values.phoneCountry === 'CY' ? '+357' : '+30';
+      const fullPhone = phonePrefix + values.phone.replace(/\D/g, '');
+
       const {
         data,
         error
@@ -166,6 +181,7 @@ const Signup = () => {
             last_name: values.lastName,
             age: values.age,
             town: values.town,
+            phone: fullPhone,
             gender: values.gender,
             preferences: selectedPreferences,
             is_student: isStudent,
@@ -204,9 +220,11 @@ const Signup = () => {
           .upsert(
             {
               id: data.user.id,
+              first_name: values.firstName,
+              last_name: values.lastName,
+              phone: fullPhone,
               gender: values.gender ?? null,
               age: typeof values.age === "number" ? values.age : null,
-              // We treat “Περιοχή” as city/town for analytics
               town: values.town,
               city: values.town,
             } as any,
@@ -319,8 +337,8 @@ const Signup = () => {
         setOtpCode('');
       } else {
         confetti.trigger();
-        toast.success(language === 'el' ? 'Ο λογαριασμός σου επαληθεύτηκε!' : 'Your account has been verified!');
-        setTimeout(() => navigate(redirectAfterVerify), 1500);
+        setShowSuccessScreen(true);
+        setTimeout(() => navigate(redirectAfterVerify), 3500);
       }
     } catch (e) {
       toast.error(language === 'el' ? 'Κάτι πήγε στραβά' : 'Something went wrong');
@@ -437,6 +455,38 @@ const Signup = () => {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Success Screen after OTP verification
+  if (showSuccessScreen) {
+    return (
+      <>
+        <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={100} />
+        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
+              <div className="w-full h-full rounded-full bg-gradient-glow" />
+            </div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
+          </div>
+          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl text-center">
+            <SuccessCheckmark isVisible={true} size="lg" className="mx-auto" />
+            <h2 className="text-2xl font-bold text-foreground font-cinzel">
+              {language === 'el' ? 'Καλωσόρισες στο ΦΟΜΟ!' : 'Welcome to FOMO!'}
+            </h2>
+            <p className="text-muted-foreground">
+              {language === 'el'
+                ? 'Η εγγραφή σου ολοκληρώθηκε επιτυχώς!'
+                : 'Your registration was completed successfully!'}
+            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {language === 'el' ? 'Ανακατεύθυνση...' : 'Redirecting...'}
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -624,6 +674,43 @@ const Signup = () => {
                     </Select>
                     <FormMessage />
                   </FormItem>} />
+
+              {/* Phone field with country selector */}
+              <div className="space-y-1.5">
+                <FormLabel className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" />
+                  {language === "el" ? "Τηλέφωνο" : "Phone"}
+                </FormLabel>
+                <div className="flex gap-2">
+                  <FormField control={form.control} name="phoneCountry" render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value || "CY"}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm w-[100px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="CY">🇨🇾 +357</SelectItem>
+                        <SelectItem value="GR">🇬🇷 +30</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder={form.watch('phoneCountry') === 'CY' ? '99123456' : '6912345678'}
+                          {...field}
+                          className="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              </div>
 
               <FormField control={form.control} name="gender" render={({
               field
