@@ -190,6 +190,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
+      setShowAuthGate(false);
     }
   }, [isOpen]);
 
