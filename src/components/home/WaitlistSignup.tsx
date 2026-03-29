@@ -32,7 +32,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "Επιτυχής εγγραφή! Θα σε ειδοποιήσουμε σύντομα.",
       errorExists: "Αυτό το email χρησιμοποιείται ήδη",
       errorGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      passwordHint: "Τουλάχιστον 6 χαρακτήρες"
+      passwordHint: "Τουλάχιστον 8 χαρακτήρες"
     },
     en: {
       badge: "Early Access",
@@ -46,7 +46,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "You're on the list! We'll notify you soon.",
       errorExists: "This email is already registered",
       errorGeneric: "Something went wrong. Please try again.",
-      passwordHint: "At least 6 characters"
+      passwordHint: "At least 8 characters"
     }
   };
 
@@ -58,7 +58,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       toast.error(language === "el" ? "Συμπλήρωσε όλα τα πεδία" : "Please fill all fields");
       return;
     }
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast.error(t.passwordHint);
       return;
     }

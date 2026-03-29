@@ -54,7 +54,7 @@ const Signup = () => {
     email: z.string().trim().email({
       message: vt.invalidEmail
     }),
-    password: z.string().min(6, {
+    password: z.string().min(8, {
       message: vt.passwordTooShort
     }),
     town: z.string().min(1, {

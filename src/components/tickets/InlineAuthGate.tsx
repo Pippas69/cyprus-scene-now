@@ -27,7 +27,7 @@ const translations = {
     verify: "Επαλήθευση",
     resend: "Αποστολή ξανά",
     processing: "Επεξεργασία...",
-    passwordMin: "Τουλάχιστον 6 χαρακτήρες",
+    passwordMin: "Τουλάχιστον 8 χαρακτήρες",
     google: "Google",
     apple: "Apple",
   },
@@ -46,7 +46,7 @@ const translations = {
     verify: "Verify",
     resend: "Resend",
     processing: "Processing...",
-    passwordMin: "At least 6 characters",
+    passwordMin: "At least 8 characters",
     google: "Google",
     apple: "Apple",
   },
@@ -68,7 +68,7 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
 
   const handleEmailSignup = async () => {
     if (!email || !password) return;
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast.error(t.passwordMin);
       return;
     }

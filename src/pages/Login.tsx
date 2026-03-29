@@ -28,7 +28,7 @@ const Login = () => {
 
   const loginSchema = z.object({
     email: z.string().trim().email({ message: t.invalidEmail }),
-    password: z.string().min(6, { message: t.passwordTooShort })
+    password: z.string().min(8, { message: t.passwordTooShort })
   });
 
   type LoginFormValues = z.infer<typeof loginSchema>;

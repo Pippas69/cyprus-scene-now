@@ -45,7 +45,7 @@ const SignupBusiness = () => {
       .refine((val) => val.replace(/\D/g, '').length >= 8, { message: language === 'el' ? 'Το τηλέφωνο πρέπει να έχει τουλάχιστον 8 ψηφία' : 'Phone must be at least 8 digits' })
       .refine((val) => val.replace(/\D/g, '').length <= 15, { message: language === 'el' ? 'Το τηλέφωνο δεν μπορεί να υπερβαίνει τα 15 ψηφία' : 'Phone cannot exceed 15 digits' }),
     website: z.string().optional(),
-    password: z.string().min(6, "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες"),
+    password: z.string().min(8, "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες"),
     confirmPassword: z.string(),
     description: z.string().max(300, "Η περιγραφή δεν μπορεί να υπερβαίνει τους 300 χαρακτήρες").optional(),
     termsAccepted: z.boolean().refine(val => val === true, "Πρέπει να αποδεχτείτε τους όρους")
