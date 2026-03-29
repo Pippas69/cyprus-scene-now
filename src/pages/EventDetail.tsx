@@ -538,8 +538,8 @@ export default function EventDetail() {
   if (error || !event) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="hidden lg:block"><Navbar /></div>
+        <div className="container mx-auto px-4 py-8 pt-4 lg:pt-24">
           <RippleButton
             variant="ghost"
             onClick={() => navigate(-1)}
