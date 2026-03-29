@@ -24,8 +24,8 @@ const translations = {
     save: "Συνέχεια",
     processing: "Αποθήκευση...",
     invalidPhone: "Μη έγκυρος αριθμός τηλεφώνου",
-    cyprusPhoneHint: "8 ψηφία (π.χ. 99123456)",
-    greecePhoneHint: "10 ψηφία (π.χ. 6912345678)",
+    cyprusPhoneHint: "8 ψηφία",
+    greecePhoneHint: "10 ψηφία",
     fillAll: "Συμπληρώστε όλα τα πεδία",
   },
   en: {
@@ -42,8 +42,8 @@ const translations = {
     save: "Continue",
     processing: "Saving...",
     invalidPhone: "Invalid phone number",
-    cyprusPhoneHint: "8 digits (e.g. 99123456)",
-    greecePhoneHint: "10 digits (e.g. 6912345678)",
+    cyprusPhoneHint: "8 digits",
+    greecePhoneHint: "10 digits",
     fillAll: "Please fill in all fields",
   },
 };
@@ -67,6 +67,29 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
   const cityOptions = getCityOptions(language);
 
+  const parseStoredPhone = (rawPhone: string): { country: 'CY' | 'GR'; local: string } | null => {
+    const digits = rawPhone.replace(/\D/g, '');
+    if (!digits) return null;
+
+    if (digits.startsWith('357') && digits.length === 11) {
+      return { country: 'CY', local: digits.slice(3) };
+    }
+
+    if (digits.startsWith('30') && digits.length === 12) {
+      return { country: 'GR', local: digits.slice(2) };
+    }
+
+    if (digits.length === 8) {
+      return { country: 'CY', local: digits };
+    }
+
+    if (digits.length === 10) {
+      return { country: 'GR', local: digits };
+    }
+
+    return null;
+  };
+
   // Check if profile is already complete
   useEffect(() => {
     const checkProfile = async () => {
@@ -82,18 +105,36 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       if (profile) {
         const p = profile as any;
         const profileCity = p.city || p.town || '';
-        if (p.first_name && p.last_name && p.phone && profileCity) {
+        const parsedPhone = parseStoredPhone(p.phone || '');
+        const hasValidPhone = !!parsedPhone && (parsedPhone.country === 'CY' ? parsedPhone.local.length === 8 : parsedPhone.local.length === 10);
+
+        if (p.first_name && p.last_name && hasValidPhone && profileCity) {
+          const normalizedPhone = parsedPhone.country === 'CY'
+            ? `+357${parsedPhone.local}`
+            : `+30${parsedPhone.local}`;
+
           onComplete({
             firstName: p.first_name,
             lastName: p.last_name,
-            phone: p.phone,
+            phone: normalizedPhone,
             city: profileCity,
           });
         } else {
           if (p.first_name) setFirstName(p.first_name);
           if (p.last_name) setLastName(p.last_name);
-          if (p.phone) setPhone(p.phone);
-          if (profileCity) setCity(profileCity);
+
+          if (parsedPhone) {
+            setCountry(parsedPhone.country);
+            setPhone(parsedPhone.local);
+          }
+
+          if (profileCity) {
+            if ((parsedPhone?.country ?? 'CY') === 'CY') {
+              setCity(profileCity);
+            } else {
+              setGreekCity(profileCity);
+            }
+          }
         }
       }
       setChecking(false);
