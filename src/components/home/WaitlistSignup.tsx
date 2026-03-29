@@ -32,7 +32,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
       success: "Επιτυχής εγγραφή! Θα σε ειδοποιήσουμε σύντομα.",
       errorExists: "Αυτό το email χρησιμοποιείται ήδη",
       errorGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      passwordHint: "Τουλάχιστον 6 χαρακτήρες"
+      passwordHint: "Τουλάχιστον 8 χαρακτήρες"
     },
     en: {
       badge: "Early Access",
