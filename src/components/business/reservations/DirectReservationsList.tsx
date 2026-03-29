@@ -77,6 +77,8 @@ interface TicketOnlyOrder {
   guest_age: number | null;
   buyer_phone: string | null;
   buyer_city: string | null;
+  guest_city: string | null;
+  is_buyer: boolean;
   subtotal_cents: number;
   status: string;
   checked_in: boolean;
