@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle } from "lucide-react";
+import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
@@ -38,6 +38,7 @@ const createSignupSchema = (language: "el" | "en") => {
     email: z.string().trim().email(vt.invalidEmail),
     password: z.string().min(8, vt.passwordTooShort),
     town: z.string().min(1, vt.selectOption),
+    phone: z.string().min(1, language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
   });
