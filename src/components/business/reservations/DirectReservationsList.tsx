@@ -1068,8 +1068,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
+                        {ticket.buyer_city && (
+                          <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            {ticket.buyer_city}
+                          </span>
+                        )}
                         {ticket.guest_age ? (
-                          <span className="text-sm text-muted-foreground">{ticket.guest_age}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
+                          </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">—</span>
                         )}
