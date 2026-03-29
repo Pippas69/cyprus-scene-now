@@ -552,15 +552,15 @@ Deno.serve(async (req) => {
     if (hasStripeConnect) {
       logStep("Using Stripe Connect payment splitting", { 
         connectedAccountId: business.stripe_account_id,
-        applicationFee: commissionCents 
+        applicationFee: commissionCents + stripeFeesCents
       });
       
-      // Stripe processing fees: 2.9% + €0.25 — charged to connected account via application_fee
-      const stripeFeesCents = Math.ceil(totalCents * 0.029 + 25);
+      // application_fee_amount = commission + Stripe fees + processing fees
+      // This ensures the business receives the full subtotal (ticket price) as net payout
       sessionConfig.payment_intent_data = {
-        application_fee_amount: commissionCents + stripeFeesCents, // Commission + Stripe fees
+        application_fee_amount: commissionCents + stripeFeesCents, // Platform keeps commission + fees
         transfer_data: {
-          destination: business.stripe_account_id!, // Business receives the rest
+          destination: business.stripe_account_id!, // Business receives subtotal (full ticket price)
         },
       };
     } else {
