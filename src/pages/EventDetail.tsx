@@ -562,9 +562,12 @@ export default function EventDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {/* Navbar hidden on mobile for immersive event view, shown on desktop */}
+      <div className="hidden lg:block">
+        <Navbar />
+      </div>
       
-      <div className="container mx-auto px-4 py-8 pt-20 lg:pt-24">
+      <div className="container mx-auto px-4 py-4 lg:py-8 pt-2 lg:pt-24">
         {/* Desktop-only back button */}
         <RippleButton
           variant="ghost"
@@ -580,12 +583,12 @@ export default function EventDetail() {
           <div className="lg:col-span-2 space-y-4">
             {/* Hero Image — premium style with title + price overlaid */}
             <motion.div
-              className="relative rounded-xl shadow-lg overflow-hidden -mx-4 sm:mx-0"
+              className="relative rounded-2xl shadow-lg overflow-hidden -mx-4 sm:mx-0 lg:rounded-xl"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}>
               
-              <div className="aspect-video">
+              <div className="aspect-[3/4] sm:aspect-video">
                 {event.cover_image_url ?
                 <img
                   src={event.cover_image_url}
