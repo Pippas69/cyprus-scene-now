@@ -227,6 +227,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [buyerFullName, setBuyerFullName] = useState('');
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [isFreshSignup, setIsFreshSignup] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
@@ -236,6 +238,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
       setAuthUserId(data.user?.id ?? null);
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
