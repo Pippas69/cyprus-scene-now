@@ -430,8 +430,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+  const hasReservationName = reservationName.trim().length >= 2;
+  const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber) && isEmailValid;
+  const canProceedToStep3 = hasReservationName && allGuestsFilled && partySize > 0 && isPhoneValid && isEmailValid;
 
   // Dynamic step: auth/profile gate between step 1 and step 2
   const getEffectiveStep = (): number | 'auth' | 'profile' => {
@@ -442,8 +444,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const effectiveStep = getEffectiveStep();
 
   const handleCheckout = async () => {
+    if (!hasReservationName) {
+      toast.error(language === 'el' ? 'Συμπληρώστε όνομα κράτησης' : 'Please enter reservation name');
+      return;
+    }
     if (!allGuestsFilled) {
       toast.error(t.fillAllGuests);
+      return;
+    }
+    if (!isPhoneValid) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό τηλέφωνο' : 'Please enter a valid phone number');
+      return;
+    }
+    if (!isEmailValid) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό email' : 'Please enter a valid email');
       return;
     }
 
@@ -469,11 +483,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         eventId,
         items: [{ tierId: ticketTier.id, quantity: partySize }],
         customerName: guests[0].name.trim(),
-        customerEmail: customerEmail.trim() || user.email,
-        customerPhone: phoneNumber.trim() || null,
+        customerEmail: customerEmail.trim(),
+        customerPhone: phoneNumber.trim(),
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,
-        reservationName: reservationName.trim() || guests[0].name.trim(),
+        reservationName: reservationName.trim(),
         guests: guests.map(g => ({
           name: g.name.trim(),
           age: parseInt(g.age) || 0,
@@ -586,7 +600,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             {t.partySize}
           </Label>
           {ticketTier && ticketPricePerPerson > 0 && (
-            <Label className="text-sm text-primary font-medium">
+            <Label className="text-sm text-foreground font-medium">
               {language === 'el' ? 'Τιμή εισιτηρίων' : 'Ticket price'}
             </Label>
           )}
@@ -605,10 +619,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
           {ticketTier && ticketPricePerPerson > 0 && (
-            <span className="text-lg font-bold text-primary">{formatPrice(ticketTotal)}</span>
+            <span className="text-lg font-bold text-foreground">{formatPrice(ticketTotal)}</span>
           )}
           {ticketTier && ticketPricePerPerson === 0 && (
-            <span className="text-sm font-medium text-primary">{t.free}</span>
+            <span className="text-sm font-medium text-foreground">{t.free}</span>
           )}
         </div>
       </div>

@@ -382,7 +382,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
-  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
+  const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
+  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
 
   // Phone and email are left empty for the user to fill freely
 
@@ -400,8 +401,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       toast.error(t.noTicketsSelected);
       return;
     }
-    if (!allGuestDetailsFilled) {
+    if (!allNamesFilled || !allAgesFilled) {
       toast.error(t.fillAllNames);
+      return;
+    }
+    if (!isValidCheckoutPhone(customerPhone)) {
+      toast.error(t.fillPhone);
+      return;
+    }
+    if (!isValidCheckoutEmail(customerEmail)) {
+      toast.error(t.fillEmail);
       return;
     }
     if (!termsAccepted) {
@@ -452,8 +461,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         eventId,
         items,
         customerName: guestNames[0].trim(),
-        customerEmail: customerEmail.trim() || user.email,
-        customerPhone: customerPhone.trim() || null,
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
         specialRequests: specialRequests.trim() || null,
         guests: guestNames.map((name, idx) => ({
           name: name.trim(),
@@ -625,7 +634,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 <p className="text-xs text-muted-foreground">{t.email}</p>
                 <p className="text-sm font-medium break-all">{customerEmail || '-'}</p>
               </div>
-              <p className="text-[11px] text-muted-foreground">{t.autoFromAccount}</p>
+              <p className="text-[11px] text-muted-foreground">{language === 'el' ? 'Συμπληρώστε το τηλέφωνο και το email που θέλετε για τη συγκεκριμένη αγορά.' : 'Enter the phone and email you want for this specific purchase.'}</p>
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -715,7 +724,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {/* Total */}
       <div className="flex justify-between font-bold text-lg">
         <span>{t.total}</span>
-        <span className="text-primary">{isFreeOrder ? t.free : formatPrice(total)}</span>
+        <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
       </div>
 
       {/* Terms checkbox */}

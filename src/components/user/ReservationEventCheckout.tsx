@@ -401,8 +401,25 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Handle checkout
   const handleCheckout = async () => {
     if (!selectedSeating || !price) return;
+
+    const hasReservationName = reservationName.trim().length >= 2;
+    const isPhoneValidNow = isValidPhone(phoneNumber.trim());
+    const isEmailValidNow = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+
+    if (!hasReservationName) {
+      toast.error(language === 'el' ? 'Συμπληρώστε όνομα κράτησης' : 'Please enter reservation name');
+      return;
+    }
     if (!allGuestsFilled) {
       toast.error(t.fillAllGuests);
+      return;
+    }
+    if (!isPhoneValidNow) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό τηλέφωνο' : 'Please enter a valid phone number');
+      return;
+    }
+    if (!isEmailValidNow) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό email' : 'Please enter a valid email');
       return;
     }
 
@@ -415,9 +432,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           event_id: eventId,
           seating_type_id: selectedSeating.id,
           party_size: partySize,
-          reservation_name: reservationName,
-          phone_number: phoneNumber,
-          customer_email: customerEmail.trim() || null,
+          reservation_name: reservationName.trim(),
+          phone_number: phoneNumber.trim(),
+          customer_email: customerEmail.trim(),
           special_requests: specialRequests || null,
           guests: guests.map(g => ({
             name: g.name.trim(),
@@ -456,9 +473,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const isPhoneValid = phoneNumber.trim() === '' || isValidPhone(phoneNumber);
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && price !== null && isPhoneValid && isEmailValid;
+  const isPhoneValid = isValidPhone(phoneNumber.trim());
+  const isEmailValid = customerEmail.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
+  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && partySize > 0 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
