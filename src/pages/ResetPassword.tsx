@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -53,6 +53,10 @@ const ResetPassword = () => {
       confirmPassword: "",
     },
   });
+
+  const [pwLen, setPwLen] = useState(0);
+  const [cpwLen, setCpwLen] = useState(0);
+  const [pwMatch, setPwMatch] = useState(true);
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
     setLoading(true);
@@ -118,6 +122,7 @@ const ResetPassword = () => {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        onChange={(e) => { field.onChange(e); setPwLen(e.target.value.length); setPwMatch(e.target.value === form.getValues("confirmPassword")); }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -135,6 +140,7 @@ const ResetPassword = () => {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        onChange={(e) => { field.onChange(e); setCpwLen(e.target.value.length); setPwMatch(e.target.value === form.getValues("password")); }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -142,7 +148,7 @@ const ResetPassword = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={loading || (form.getValues("password") || "").length < 8 || (form.getValues("confirmPassword") || "").length < 8 || form.getValues("password") !== form.getValues("confirmPassword")}>
+              <Button type="submit" className="w-full" disabled={loading || pwLen < 8 || cpwLen < 8 || !pwMatch}>
                 {loading 
                   ? (language === 'el' ? "Αποθήκευση..." : "Saving...") 
                   : (language === 'el' ? "Αλλαγή Κωδικού" : "Change Password")}

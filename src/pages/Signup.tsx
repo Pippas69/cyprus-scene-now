@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,7 @@ const Signup = () => {
       selectedUniversity: ""
     }
   });
+  const [passwordLength, setPasswordLength] = useState(0);
   
   const [isStudent, setIsStudent] = useState(false);
   const [universityEmail, setUniversityEmail] = useState("");
@@ -448,15 +449,15 @@ const Signup = () => {
                     <FormMessage />
                   </FormItem>} />
 
-              <FormField control={form.control} name="password" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{t.password}</FormLabel>
-                    <FormControl>
-                      <PasswordInput placeholder={t.passwordPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
+               <FormField control={form.control} name="password" render={({
+               field
+             }) => <FormItem>
+                     <FormLabel>{t.password}</FormLabel>
+                     <FormControl>
+                       <PasswordInput placeholder={t.passwordPlaceholder} {...field} onChange={(e) => { field.onChange(e); setPasswordLength(e.target.value.trim().length); }} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>} />
 
               <FormField control={form.control} name="town" render={({
               field
@@ -605,7 +606,7 @@ const Signup = () => {
                 )}
               </div>
 
-              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || (form.getValues("password") || "").trim().length < 8}>
+              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || passwordLength < 8}>
                 {isLoading ? t.signingUp : t.signupButton}
               </Button>
 
