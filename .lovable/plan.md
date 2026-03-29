@@ -1,22 +1,37 @@
 
 
-## Πλάνο: Μικρότερα γράμματα στα input fields του DirectReservationDialog (mobile)
+## Πλάνο: Ομοιόμορφα μεγέθη γραμμάτων & premium mobile UI σε όλα τα dialogs
 
 ### Πρόβλημα
-Τα input fields (Όνομα Κράτησης, Αριθμός Ατόμων, Ονόματα Ατόμων, Τηλέφωνο, Ειδικές Απαιτήσεις) εμφανίζουν μεγαλύτερο κείμενο από το Select "Ώρα Άφιξης". Αυτό συμβαίνει γιατί το base `Input` component έχει `text-base` (16px) στις default classes, και παρόλο που περνάμε `text-xs`, ενδέχεται η σειρά εφαρμογής να μην λειτουργεί σωστά σε όλα τα στοιχεία.
+Τα input fields σε mobile στα dialogs προσφορών (OfferPurchaseDialog) και εκδηλώσεων (TicketPurchaseFlow, ReservationEventCheckout, KalivaTicketReservationFlow) έχουν ανομοιόμορφα μεγέθη κειμένου. Επίσης, το τηλέφωνο στις προσφορές γεμίζει αυτόματα από το προφίλ ενώ πρέπει να είναι κενό.
 
-### Λύση
-Αλλαγή **μόνο** στο `src/components/business/DirectReservationDialog.tsx` — εφαρμογή μικρότερου ύψους και font size στα mobile inputs:
+### Αλλαγές
 
-1. **Reservation Name Input** (γραμμή ~634): Προσθήκη `[&]:text-xs` για αναγκαστική εφαρμογή σε mobile
-2. **NumberInput (Party Size)** (γραμμή ~658): Ήδη μικρό, θα επιβεβαιωθεί
-3. **Guest Name Inputs** (γραμμή ~683): Ίδια αλλαγή `[&]:text-xs`
-4. **Phone Input** (γραμμή ~785): Ίδια αλλαγή
-5. **Special Requests Textarea** (γραμμή ~826): Ίδια αλλαγή
+**1. Ομοιόμορφα μεγέθη γραμμάτων σε mobile (4 αρχεία)**
 
-### Τεχνική Προσέγγιση
-Αντί `text-xs sm:text-sm`, θα χρησιμοποιηθεί `text-[12px] sm:text-sm` ή εναλλακτικά wrapper με `[&_input]:text-xs [&_textarea]:text-xs` στο mobile form container, ώστε να εφαρμόζεται καθολικά σε όλα τα πεδία χωρίς conflict με το base `text-base` του Input component.
+Προσθήκη `[&_input]:!text-xs [&_textarea]:!text-xs [&_select]:!text-xs` στο mobile scroll container κάθε dialog — ακριβώς όπως έγινε στο DirectReservationDialog:
 
-### Αρχείο
-- `src/components/business/DirectReservationDialog.tsx` — μόνο mobile styling, χωρίς αλλαγή λογικής
+- `src/components/user/OfferPurchaseDialog.tsx` — γραμμή 1035
+- `src/components/tickets/TicketPurchaseFlow.tsx` — γραμμή 1017
+- `src/components/user/ReservationEventCheckout.tsx` — γραμμή 1029
+- `src/components/tickets/KalivaTicketReservationFlow.tsx` — γραμμή 1021
+
+Κάθε mobile scroll div αλλάζει από:
+```
+className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide"
+```
+σε:
+```
+className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-xs [&_textarea]:!text-xs"
+```
+
+**2. Τηλέφωνο κενό στις προσφορές (1 αρχείο)**
+
+`src/components/user/OfferPurchaseDialog.tsx` — γραμμή 847: Αφαίρεση του auto-fill `if (profile.phone) setReservationPhone(profile.phone);` ώστε το πεδίο τηλεφώνου να παραμένει κενό και να το συμπληρώνει ο χρήστης.
+
+### Αρχεία
+- `src/components/user/OfferPurchaseDialog.tsx`
+- `src/components/tickets/TicketPurchaseFlow.tsx`
+- `src/components/user/ReservationEventCheckout.tsx`
+- `src/components/tickets/KalivaTicketReservationFlow.tsx`
 
