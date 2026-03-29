@@ -288,9 +288,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     const steps: string[] = [];
     if (hasMultipleShows) steps.push('showSelect');
     if (hasSeating) steps.push('seats');
+    // Auth-first for ticket-only (non-seated) events
+    if (!hasSeating && !isAuthenticated) steps.push('auth');
+    if (!hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
     if (!isSeatedWithPricing) steps.push('tickets');
-    if (!isAuthenticated) steps.push('auth');
-    if (isAuthenticated && !profileComplete) steps.push('profile');
+    // Auth after seat selection for seated events
+    if (hasSeating && !isAuthenticated) steps.push('auth');
+    if (hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
     steps.push('guests');
     steps.push('checkout');
     return steps;
@@ -835,16 +839,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   );
 
   const renderProfileStep = () => (
-    <ProfileCompletionGate onComplete={(profile) => {
+    <ProfileCompletionGate onComplete={async (profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Only auto-fill buyer as first guest name
+      // Auto-fill buyer as first guest name
       setGuestNames(prev => {
         const updated = [...prev];
         if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
         return updated;
       });
-      // Phone and email are left empty for the user to fill
+      // Auto-fill phone from profile
+      if (profile.phone) setCustomerPhone(profile.phone);
+      // Auto-fill email from auth user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) setCustomerEmail(user.email);
     }} />
   );
 
