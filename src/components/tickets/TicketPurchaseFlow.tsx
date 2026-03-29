@@ -24,6 +24,7 @@ import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { InlineAuthGate } from "./InlineAuthGate";
 import { ProfileCompletionGate } from "./ProfileCompletionGate";
 import { isValidPhone } from "@/lib/phoneValidation";
+import { useProfileName } from "@/hooks/useProfileName";
 
 interface TicketTier {
   id: string;
@@ -225,15 +226,31 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [profileComplete, setProfileComplete] = useState(false);
   const [buyerProfile, setBuyerProfile] = useState<{ firstName: string; lastName: string; phone: string; city: string } | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [buyerFullName, setBuyerFullName] = useState('');
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+
+  // Fallback: for returning users who skip profile step
+  const profileName = useProfileName(authUserId);
 
   // Check auth on mount and listen for changes
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setIsAuthenticated(!!data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      setAuthUserId(data.user?.id ?? null);
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
+      setAuthUserId(session?.user?.id ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Apply profileName as fallback for returning users
+  useEffect(() => {
+    if (profileName && !buyerFullName) {
+      setBuyerFullName(profileName);
+    }
+  }, [profileName, buyerFullName]);
   
 
   // Checkout state
@@ -327,14 +344,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const isValidCheckoutEmail = (raw: string) => /\S+@\S+\.\S+/.test(raw.trim());
 
-  // Sync guest name fields
+  // Sync guest name fields & apply buyer name to slot 0
   useEffect(() => {
     setGuestNames(prev => {
-      if (prev.length === totalTickets) return prev;
-      if (prev.length < totalTickets) {
-        return [...prev, ...Array(totalTickets - prev.length).fill('')];
+      let updated = [...prev];
+      if (updated.length < totalTickets) {
+        updated = [...updated, ...Array(totalTickets - updated.length).fill('')];
+      } else if (updated.length > totalTickets) {
+        updated = updated.slice(0, totalTickets);
       }
-      return prev.slice(0, totalTickets);
+      // Apply buyer name to slot 0 if available and empty
+      if (updated.length > 0 && !updated[0] && buyerFullName) {
+        updated[0] = buyerFullName;
+      }
+      return updated;
     });
     setGuestAges(prev => {
       if (prev.length === totalTickets) return prev;
@@ -343,7 +366,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
       return prev.slice(0, totalTickets);
     });
-  }, [totalTickets]);
+  }, [totalTickets, buyerFullName]);
 
   const updateQuantity = (tierId: string, delta: number) => {
     const tier = ticketTiers.find(t => t.id === tierId);
@@ -855,12 +878,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <ProfileCompletionGate onComplete={async (profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Auto-fill buyer as first guest name
-      setGuestNames(prev => {
-        const updated = [...prev];
-        if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
-        return updated;
-      });
+      // Buffer buyer name — will be applied to guestNames[0] via useEffect
+      const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+      setBuyerFullName(fullName);
       // Auto-fill phone from profile
       if (profile.phone) setCustomerPhone(profile.phone);
       // Auto-fill email from auth user
