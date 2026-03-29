@@ -9,6 +9,7 @@ import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRe
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { InlineAuthGate } from "./InlineAuthGate";
+import { ProfileCompletionGate } from "./ProfileCompletionGate";
 
 interface TicketTier {
   id: string;
