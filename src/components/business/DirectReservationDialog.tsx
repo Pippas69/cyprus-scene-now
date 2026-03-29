@@ -574,14 +574,22 @@ export const DirectReservationDialog = ({
     }
   }, [formData.preferred_date, timeSlots.length, fullyBookedSlots, closedSlots]);
 
-  const formContent = showAuthGate && !isAuthenticated ? (
-    <div className="space-y-4">
+  const formContent = !isAuthenticated ? (
+    <div className="space-y-4 py-4">
       <InlineAuthGate onAuthSuccess={() => {
-        setShowAuthGate(false);
+        // Auth state listener will update isAuthenticated
       }} />
-      <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
-        {language === 'el' ? '← Πίσω στη φόρμα' : '← Back to form'}
-      </Button>
+    </div>
+  ) : !profileComplete ? (
+    <div className="space-y-4 py-4">
+      <ProfileCompletionGate onComplete={(profile) => {
+        setFormData(prev => ({
+          ...prev,
+          reservation_name: `${profile.firstName} ${profile.lastName}`,
+          guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
+          phone_number: profile.phone,
+        }));
+      }} />
     </div>
   ) : (
   <form onSubmit={handleSubmit} className="space-y-4">
