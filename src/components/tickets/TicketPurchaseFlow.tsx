@@ -106,6 +106,8 @@ const translations = {
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
     processingFee: "Έξοδα επεξεργασίας",
+    accountContact: "Στοιχεία λογαριασμού",
+    autoFromAccount: "Αυτόματα από τον λογαριασμό σας",
     selectedSeats: "Επιλεγμένες θέσεις",
     row: "Σειρά",
     seat: "Θέση",
@@ -158,6 +160,8 @@ const translations = {
     summary: "Summary",
     ticketCost: "Ticket cost",
     processingFee: "Processing fee",
+    accountContact: "Account details",
+    autoFromAccount: "Auto-filled from your account",
     selectedSeats: "Selected seats",
     row: "Row",
     seat: "Seat",
@@ -314,6 +318,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
+  const isValidCheckoutPhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return false;
+    if (digits.startsWith('357')) return digits.length === 11;
+    if (digits.startsWith('30')) return digits.length === 12;
+    return digits.length === 8 || digits.length === 10;
+  };
+
+  const isValidCheckoutEmail = (raw: string) => /\S+@\S+\.\S+/.test(raw.trim());
+
   // Sync guest name fields
   useEffect(() => {
     setGuestNames(prev => {
@@ -368,7 +382,18 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
-  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && customerPhone.trim().length >= 8 && customerEmail.trim().length > 0;
+  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    supabase.auth.getUser().then(({ data }) => {
+      const authEmail = data.user?.email || '';
+      if (authEmail) {
+        setCustomerEmail(prev => prev.trim() ? prev : authEmail);
+      }
+    });
+  }, [isAuthenticated]);
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
@@ -596,30 +621,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         )}
 
-        {/* Phone & Email */}
+        {/* Account contact (already captured during auth/profile) */}
         {totalTickets > 0 && (
           <div className="space-y-2">
-            <div className="space-y-1">
-              <Label htmlFor="ticket-phone" className="text-sm">{t.phone}</Label>
-              <Input
-                id="ticket-phone"
-                type="tel"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="+357..."
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="ticket-email-guest" className="text-sm">{t.email}</Label>
-              <Input
-                id="ticket-email-guest"
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder="email@example.com"
-                className="h-9 text-sm"
-              />
+            <Label className="text-sm font-medium">{t.accountContact}</Label>
+            <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-2">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">{t.phone}</p>
+                <p className="text-sm font-medium break-all">{customerPhone || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">{t.email}</p>
+                <p className="text-sm font-medium break-all">{customerEmail || '-'}</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">{t.autoFromAccount}</p>
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -713,18 +728,23 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       </div>
 
       {/* Terms checkbox */}
-      <div className="flex items-start gap-2 p-3 rounded-lg border bg-muted/20">
+      <div className={cn(
+        "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
+        termsAccepted
+          ? "border-primary/40 bg-primary/5"
+          : "border-border/70 bg-card/60"
+      )}>
         <Checkbox
           id="terms-accept"
           checked={termsAccepted}
           onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-          className="mt-0.5"
+          className="mt-0.5 rounded-[6px]"
         />
-        <label htmlFor="terms-accept" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+        <label htmlFor="terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
           {t.termsLabel}{' '}
-          <a href="/terms" target="_blank" className="text-primary underline">{t.termsLink}</a>
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
           {' '}{t.andThe}{' '}
-          <a href="/privacy" target="_blank" className="text-primary underline">{t.privacyLink}</a>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
         </label>
       </div>
 
