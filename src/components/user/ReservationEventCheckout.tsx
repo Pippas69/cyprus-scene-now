@@ -539,15 +539,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     if (effectiveStep === 'profile') {
       return (
-        <ProfileCompletionGate onComplete={(profile) => {
+        <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
-          // Only auto-fill first guest name from profile
+          // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          // Phone and email are left empty for the user to fill
+          // Auto-fill phone and email from profile/auth
+          if (profile.phone) setPhoneNumber(profile.phone);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.email) setCustomerEmail(user.email);
         }} />
       );
     }

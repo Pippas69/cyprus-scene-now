@@ -585,6 +585,7 @@ export const DirectReservationDialog = ({
         setFormData(prev => ({
           ...prev,
           guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
+          phone_number: profile.phone || prev.phone_number,
         }));
       }} />
     </div>
