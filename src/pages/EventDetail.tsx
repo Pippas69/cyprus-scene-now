@@ -667,7 +667,7 @@ export default function EventDetail() {
                         {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                      {format(new Date(event.start_at), 'HH:mm')}
                       </p>
                     </div>
                   </div>
@@ -896,7 +896,7 @@ export default function EventDetail() {
                       {format(new Date(event.start_at), 'EEEE, d MMMM yyyy', { locale: language === 'el' ? el : enUS })}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(event.start_at), 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}
+                      {format(new Date(event.start_at), 'HH:mm')}
                     </p>
                   </div>
                 </div>
