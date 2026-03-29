@@ -624,32 +624,36 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         )}
 
         {/* Account contact */}
-        {totalTickets > 0 && (
+        {totalTickets > 0 && (!buyerProfile?.phone || !customerEmail) && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">{t.accountContact}</Label>
             <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
-                <Input
-                  id="ticket-checkout-phone"
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+357 99 123456"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
-                <Input
-                  id="ticket-checkout-email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="example@email.com"
-                  className="h-9 text-sm"
-                />
-              </div>
+              {!buyerProfile?.phone && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
+                  <Input
+                    id="ticket-checkout-phone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="+357 99 123456"
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
+              {!customerEmail && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
+                  <Input
+                    id="ticket-checkout-email"
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="example@email.com"
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -659,6 +663,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               optionalLabel={t.optional}
             />
           </div>
+        )}
+        {/* Special Requests when account details are auto-filled */}
+        {totalTickets > 0 && buyerProfile?.phone && customerEmail && (
+          <CollapsibleSpecialRequests
+            value={specialRequests}
+            onChange={setSpecialRequests}
+            label={t.specialRequests}
+            optionalLabel={t.optional}
+          />
         )}
       </div>
     );
