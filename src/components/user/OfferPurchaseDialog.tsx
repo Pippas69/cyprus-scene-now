@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { InlineAuthGate } from "@/components/tickets/InlineAuthGate";
+import { ProfileCompletionGate } from "@/components/tickets/ProfileCompletionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthGate, setShowAuthGate] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
