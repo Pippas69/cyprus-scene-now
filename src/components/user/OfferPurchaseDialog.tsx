@@ -843,8 +843,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           updated[0] = fullName;
           return updated;
         });
-        // Auto-fill phone from profile
-        if (profile.phone) setReservationPhone(profile.phone);
+        // Phone field left empty for user to fill manually
       }} />
     </div>
   ) :
@@ -1032,7 +1031,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             </div>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-xs [&_textarea]:!text-xs">
             {formContent}
           </div>
         </DialogContent>

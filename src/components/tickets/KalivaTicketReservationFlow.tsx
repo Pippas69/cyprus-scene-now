@@ -1018,7 +1018,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             <DialogTitle className="text-sm font-bold">{t.title}</DialogTitle>
             <DialogDescription className="text-xs">{eventTitle}</DialogDescription>
           </DialogHeader>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-xs [&_textarea]:!text-xs">
             {content}
           </div>
         </DialogContent>
