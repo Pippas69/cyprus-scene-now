@@ -183,6 +183,8 @@ serve(async (req) => {
     }
 
     const prepaidAmountCents = priceTier.prepaid_min_charge_cents;
+    // Buyer pays processing fees on top
+    const stripeFeesCents = prepaidAmountCents > 0 ? Math.ceil(prepaidAmountCents * 0.029 + 25) : 0;
     const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
 
     // Create pending reservation
