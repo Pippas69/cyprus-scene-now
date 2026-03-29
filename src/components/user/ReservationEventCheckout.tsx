@@ -9,6 +9,7 @@ import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRe
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -117,6 +118,12 @@ const translations = {
     guestName: "Όνομα",
     guestAge: "Ηλικία",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
+    processingFee: "Έξοδα επεξεργασίας",
+    termsLabel: "Αποδέχομαι τους",
+    termsLink: "Όρους Χρήσης",
+    andThe: "και την",
+    privacyLink: "Πολιτική Απορρήτου",
+    termsRequired: "Πρέπει να αποδεχτείτε τους όρους χρήσης",
   },
   en: {
     title: "Book a Seat",
@@ -177,6 +184,12 @@ const translations = {
     guestName: "Name",
     guestAge: "Age",
     fillAllGuests: "Please fill in name and age for all guests",
+    processingFee: "Processing fee",
+    termsLabel: "I accept the",
+    termsLink: "Terms of Service",
+    andThe: "and the",
+    privacyLink: "Privacy Policy",
+    termsRequired: "You must accept the terms of service",
   },
 };
 
@@ -258,6 +271,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const profileName = useProfileName(currentUserId);
 
   // Auto-fill ONLY the first guest name with profile name
@@ -395,8 +409,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   };
 
   const price = getPrice();
-  // Customer pays the prepaid amount - always use real price
-  const total = price || 0;
+  const subtotal = price || 0;
+  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  const total = subtotal + stripeFeesCents;
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -420,6 +435,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
     if (!isEmailValidNow) {
       toast.error(language === 'el' ? 'Συμπληρώστε σωστό email' : 'Please enter a valid email');
+      return;
+    }
+    if (!termsAccepted) {
+      toast.error(t.termsRequired);
       return;
     }
 
@@ -821,18 +840,44 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t.prepaidAmount}</span>
                 <span>
-                  {price ? formatPrice(price) : '-'}
+                  {price ? formatPrice(subtotal) : '-'}
                 </span>
               </div>
+              {!isDeferredPayment && stripeFeesCents > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t.processingFee}</span>
+                  <span>{formatPrice(stripeFeesCents)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-lg">
                 <span>{t.total}</span>
-                <span className="text-primary">
+                <span className="text-foreground">
                   {isDeferredPayment
                     ? (language === 'el' ? 'Δέσμευση ' : 'Hold ') + formatPrice(total)
                     : formatPrice(total)
                   }
                 </span>
               </div>
+            </div>
+
+            <div className={cn(
+              "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
+              termsAccepted
+                ? "border-primary/40 bg-primary/5"
+                : "border-border/70 bg-card/60"
+            )}>
+              <Checkbox
+                id="reservation-terms-accept"
+                checked={termsAccepted}
+                onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                className="mt-0.5 rounded-[6px]"
+              />
+              <label htmlFor="reservation-terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
+                {t.termsLabel}{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
+                {' '}{t.andThe}{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
+              </label>
             </div>
           </div>
         );
@@ -882,7 +927,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         ) : (
           <Button
             onClick={handleCheckout}
-            disabled={submitting || !selectedSeating || !price}
+            disabled={submitting || !selectedSeating || !price || !termsAccepted}
             className="gap-2"
           >
             {submitting ? (
