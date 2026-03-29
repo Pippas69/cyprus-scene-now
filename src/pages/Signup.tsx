@@ -441,6 +441,72 @@ const Signup = () => {
   }
 
   // Regular signup form (when beta mode is disabled)
+  // OTP Verification Screen
+  if (showOtpScreen) {
+    return (
+      <>
+        <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
+        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
+              <div className="w-full h-full rounded-full bg-gradient-glow" />
+            </div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
+          </div>
+          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl">
+            <div className="text-center">
+              <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {language === 'el' ? 'Επαλήθευση Email' : 'Email Verification'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {language === 'el'
+                  ? `Εισάγετε τον 6ψήφιο κωδικό που στάλθηκε στο ${otpEmail}`
+                  : `Enter the 6-digit code sent to ${otpEmail}`}
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              variant="gradient"
+              size="lg"
+              className="w-full"
+              disabled={otpCode.length < 6 || verifyingOtp}
+              onClick={handleVerifyOtp}
+            >
+              {verifyingOtp
+                ? (language === 'el' ? 'Επαλήθευση...' : 'Verifying...')
+                : (language === 'el' ? 'Επαλήθευση' : 'Verify')}
+            </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                onClick={handleResendOtp}
+                disabled={verifyingOtp}
+              >
+                {language === 'el' ? 'Δεν λάβατε κωδικό; Αποστολή ξανά' : "Didn't receive a code? Resend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return <>
     <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
     <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
