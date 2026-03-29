@@ -288,6 +288,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     if (open) {
       setCheckoutUrl(null);
       setRedirectAttempted(false);
+      setPhoneNumber('');
+      setCustomerEmail('');
     }
   }, [open]);
 

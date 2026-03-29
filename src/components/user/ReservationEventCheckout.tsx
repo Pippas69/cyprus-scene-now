@@ -300,6 +300,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
+  useEffect(() => {
+    if (open) {
+      setPhoneNumber('');
+      setCustomerEmail('');
+    }
+  }, [open]);
+
   // Scroll to top when step changes
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });

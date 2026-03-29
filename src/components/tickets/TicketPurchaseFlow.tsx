@@ -329,6 +329,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       setCurrentStepIdx(0);
       setCheckoutUrl(null);
       setRedirectAttempted(false);
+      setCustomerPhone('');
+      setCustomerEmail('');
     }
   }, [open]);
 
