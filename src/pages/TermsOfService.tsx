@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import InfoNavbar from "@/components/info/InfoNavbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Users, Store, QrCode, Shield, AlertTriangle, Scale, CreditCard, Ban, UserX, Globe, Gavel, Clock, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Users, Store, QrCode, Shield, AlertTriangle, Scale, CreditCard, Ban, UserX, Globe, Gavel, Clock, Bell, ArrowLeft } from "lucide-react";
 
 const TermsOfService = () => {
   const { language } = useLanguage();
@@ -380,6 +382,21 @@ const TermsOfService = () => {
 
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-4 gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                window.close();
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {language === 'el' ? 'Πίσω' : 'Back'}
+          </Button>
           <h1 className="font-cinzel text-3xl md:text-4xl font-bold text-foreground mb-2 text-center">
             {content.title}
           </h1>
