@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
+import { forceLocalSignOut } from '@/lib/authSession';
 import { InAppNotificationsSheet } from '@/components/notifications/InAppNotificationsSheet';
 
 interface UserAccountDropdownProps {
@@ -33,11 +34,10 @@ export const UserAccountDropdown = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguage();
-  
-  // Detect if we're on a business dashboard route
+
   const isBusinessDashboard = location.pathname.startsWith('/dashboard-business');
   const notificationContext = isBusinessDashboard ? 'business' : 'user';
-  
+
   const { unreadCount } = useNotifications(userId, notificationContext);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -56,6 +56,7 @@ export const UserAccountDropdown = ({
         setIsAdmin(data?.role === 'admin');
       });
   }, [userId]);
+
   const translations = {
     el: {
       myAccount: 'Ο λογαριασμός μου',
@@ -78,8 +79,8 @@ export const UserAccountDropdown = ({
   const t = translations[language];
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    await forceLocalSignOut();
+    navigate('/', { replace: true });
   };
 
   const handleMyAccount = () => {
@@ -87,15 +88,14 @@ export const UserAccountDropdown = ({
     navigate('/feed');
   };
 
-  // Badge component for the bell icon only
   const NotificationBadge = ({ className = '' }: { className?: string }) => {
     if (unreadCount <= 0) return null;
     return (
       <Badge
         variant="destructive"
         className={cn(
-          "absolute h-5 min-w-5 flex items-center justify-center p-0 px-1.5 text-xs font-bold",
-          className
+          'absolute h-5 min-w-5 flex items-center justify-center p-0 px-1.5 text-xs font-bold',
+          className,
         )}
       >
         {unreadCount > 9 ? '9+' : unreadCount}
@@ -105,7 +105,6 @@ export const UserAccountDropdown = ({
 
   return (
     <div className="flex items-center gap-1">
-      {/* Full notifications panel (click-only) */}
       <InAppNotificationsSheet
         userId={userId}
         open={notificationsOpen}
@@ -114,7 +113,6 @@ export const UserAccountDropdown = ({
         context={notificationContext}
       />
 
-      {/* Bell button (always visible) */}
       <Button
         variant="ghost"
         size="icon"
@@ -126,7 +124,6 @@ export const UserAccountDropdown = ({
         <NotificationBadge className="-top-1 -right-1" />
       </Button>
 
-      {/* Account dropdown */}
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           {variant === 'button' ? (
@@ -152,24 +149,19 @@ export const UserAccountDropdown = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
-          {/* Context-aware Account Switcher */}
           {isBusinessDashboard ? (
-            // On Business Dashboard: Show "My Account" to go to user feed
-            <DropdownMenuItem 
-              onClick={handleMyAccount} 
-              className="text-sm cursor-pointer"
-            >
+            <DropdownMenuItem onClick={handleMyAccount} className="text-sm cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               {t.myAccount}
             </DropdownMenuItem>
           ) : (
-            // On User Dashboard: Show "My Business" if business owner
-            !isBusinessLoading && isBusinessOwner && (
-              <DropdownMenuItem 
+            !isBusinessLoading &&
+            isBusinessOwner && (
+              <DropdownMenuItem
                 onClick={() => {
                   setDropdownOpen(false);
                   navigate('/dashboard-business');
-                }} 
+                }}
                 className="text-sm cursor-pointer"
               >
                 <Building2 className="mr-2 h-4 w-4" />
@@ -178,7 +170,6 @@ export const UserAccountDropdown = ({
             )
           )}
 
-          {/* Admin Panel */}
           {isAdmin && (
             <DropdownMenuItem
               onClick={() => {
@@ -192,7 +183,6 @@ export const UserAccountDropdown = ({
             </DropdownMenuItem>
           )}
 
-          {/* Sign Out */}
           <DropdownMenuItem
             onClick={() => {
               setDropdownOpen(false);
