@@ -384,16 +384,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    supabase.auth.getUser().then(({ data }) => {
-      const authEmail = data.user?.email || '';
-      if (authEmail) {
-        setCustomerEmail(prev => prev.trim() ? prev : authEmail);
-      }
-    });
-  }, [isAuthenticated]);
+  // Phone and email are left empty for the user to fill freely
 
   // Seat toggle handler
   const handleSeatToggle = (seat: SelectedSeat) => {
