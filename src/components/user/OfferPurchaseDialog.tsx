@@ -1032,7 +1032,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             </div>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
             {formContent}
           </div>
         </DialogContent>
