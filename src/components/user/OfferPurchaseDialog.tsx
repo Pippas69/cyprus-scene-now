@@ -450,6 +450,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleClaim = async () => {
+    // If not authenticated, show auth gate
+    if (!isAuthenticated) {
+      setShowAuthGate(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
