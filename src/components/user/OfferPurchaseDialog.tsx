@@ -108,10 +108,19 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+      setIsAuthenticated(!!data.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -867,8 +876,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <Button variant="outline" onClick={onClose} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled}>
-          {isLoading ?
+        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled || !isAuthenticated}>
+          {!isAuthenticated ?
+        <>{language === 'el' ? 'Συνδεθείτε πρώτα' : 'Sign in first'}</> :
+        isLoading ?
         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
         <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
         }
