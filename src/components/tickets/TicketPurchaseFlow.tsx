@@ -795,8 +795,25 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const renderAuthStep = () => (
     <InlineAuthGate onAuthSuccess={() => {
-      // Auth succeeded, steps will recalculate (auth step removed), auto-advance
-      setCurrentStepIdx(prev => prev); // force re-render
+      setCurrentStepIdx(prev => prev);
+    }} />
+  );
+
+  const renderProfileStep = () => (
+    <ProfileCompletionGate onComplete={(profile) => {
+      setBuyerProfile(profile);
+      setProfileComplete(true);
+      // Auto-fill buyer as first guest and contact info
+      setGuestNames(prev => {
+        const updated = [...prev];
+        if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
+        return updated;
+      });
+      setCustomerPhone(profile.phone);
+      // Auto-fill email from auth
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user?.email) setCustomerEmail(data.user.email);
+      });
     }} />
   );
 
@@ -806,6 +823,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'seats': return renderSeatStep();
       case 'tickets': return renderTicketsStep();
       case 'auth': return renderAuthStep();
+      case 'profile': return renderProfileStep();
       case 'guests': return renderGuestsStep();
       case 'checkout': return renderCheckoutStep();
       default: return null;
