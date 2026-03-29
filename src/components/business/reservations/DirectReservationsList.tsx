@@ -1093,12 +1093,44 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        {ticket.buyer_city && (
+                        {/* City: read-only for buyer (from profile), editable for ghosts */}
+                        {ticket.is_buyer && ticket.buyer_city ? (
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3 shrink-0" />
                             {ticket.buyer_city}
                           </span>
-                        )}
+                        ) : !ticket.is_buyer ? (
+                          editingTicketCity === ticket.ticket_id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={ticketCityValue}
+                                onChange={(e) => setTicketCityValue(e.target.value)}
+                                className="h-7 text-xs w-24"
+                                placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
+                                  if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
+                                }}
+                              />
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
+                                <Check className="h-3 w-3 text-green-600" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
+                                <X className="h-3 w-3 text-red-500" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span
+                              className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer group/city"
+                              onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ''); }}
+                            >
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {ticket.guest_city || (language === 'el' ? '—' : '—')}
+                              <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
+                            </span>
+                          )
+                        ) : null}
                         {ticket.guest_age ? (
                           <span className="text-sm text-muted-foreground">
                             {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
