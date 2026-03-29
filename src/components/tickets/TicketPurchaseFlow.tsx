@@ -827,17 +827,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <ProfileCompletionGate onComplete={(profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Auto-fill buyer as first guest and contact info
+      // Only auto-fill buyer as first guest name
       setGuestNames(prev => {
         const updated = [...prev];
         if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
         return updated;
       });
-      setCustomerPhone(profile.phone);
-      // Auto-fill email from auth
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user?.email) setCustomerEmail(data.user.email);
-      });
+      // Phone and email are left empty for the user to fill
     }} />
   );
 
