@@ -1,0 +1,1 @@
+ALTER TABLE public.tickets ADD COLUMN guest_city TEXT DEFAULT NULL;

@@ -5317,6 +5317,7 @@ export type Database = {
           created_at: string
           event_id: string
           guest_age: number | null
+          guest_city: string | null
           guest_name: string | null
           id: string
           is_manual_entry: boolean
@@ -5339,6 +5340,7 @@ export type Database = {
           created_at?: string
           event_id: string
           guest_age?: number | null
+          guest_city?: string | null
           guest_name?: string | null
           id?: string
           is_manual_entry?: boolean
@@ -5361,6 +5363,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           guest_age?: number | null
+          guest_city?: string | null
           guest_name?: string | null
           id?: string
           is_manual_entry?: boolean
