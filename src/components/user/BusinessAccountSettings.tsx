@@ -908,7 +908,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           </div>
           <Button 
             onClick={handlePasswordChange}
-            disabled={isChanging || !currentPassword || !newPassword || !confirmPassword}
+            disabled={isChanging || !currentPassword || !newPassword || !confirmPassword || newPassword.length < 8 || confirmPassword.length < 8}
             className="text-xs sm:text-sm h-9 sm:h-10"
           >
             {t.changePassword}

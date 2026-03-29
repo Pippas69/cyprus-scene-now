@@ -526,7 +526,7 @@ const SignupBusiness = () => {
               variant="gradient" 
               size="lg" 
               className="w-full h-10 sm:h-12 text-sm sm:text-base" 
-              disabled={isSubmitting || (isBetaMode && inviteCodeStatus !== 'valid')}
+              disabled={isSubmitting || (isBetaMode && inviteCodeStatus !== 'valid') || (watch("password") || "").trim().length < 8 || (watch("confirmPassword") || "").trim().length < 8}
             >
               {isSubmitting 
                 ? (language === 'el' ? "Εγγραφή..." : "Registering...") 

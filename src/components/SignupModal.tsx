@@ -569,7 +569,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || formData.password.trim().length < 8}
               className="w-full bg-gradient-brand text-primary-foreground hover:opacity-90 transition-opacity mt-2"
             >
               {loading ? (
