@@ -70,7 +70,7 @@ const translations = {
     steps: {
       seating: "Τύπος Θέσης",
       details: "Στοιχεία Παρέας",
-      review: "Ανασκόπηση & Πληρωμή",
+      review: "Σύνοψη",
     },
     seatingTypes: {
       bar: "Μπαρ",
@@ -129,7 +129,7 @@ const translations = {
     steps: {
       seating: "Seating Type",
       details: "Party Details",
-      review: "Review & Pay",
+      review: "Summary",
     },
     seatingTypes: {
       bar: "Bar",
@@ -232,12 +232,15 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
+  const [isFreshSignup, setIsFreshSignup] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setIsAuthenticated(!!data.user);
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -694,8 +697,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
       <Separator />
 
-      {/* Phone - hide if auto-filled from profile */}
-      {!profileComplete || !phoneNumber ? (
+      {/* Phone - show always for existing users, hide for fresh signup */}
+      {!isFreshSignup && (
         <div className="space-y-1">
           <Label className="flex items-center gap-2 text-sm">
             <Phone className="h-3.5 w-3.5" />
@@ -709,10 +712,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             className="h-9 text-sm"
           />
         </div>
-      ) : null}
+      )}
 
-      {/* Email - hide if auto-filled from profile */}
-      {!profileComplete || !customerEmail ? (
+      {/* Email - show always for existing users, hide for fresh signup */}
+      {!isFreshSignup && (
         <div className="space-y-1">
           <Label className="flex items-center gap-2 text-sm">
             <Mail className="h-3.5 w-3.5" />
@@ -726,7 +729,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             className="h-9 text-sm"
           />
         </div>
-      ) : null}
+      )}
 
       {/* Arrival Hours */}
       {(reservationHoursFrom || reservationHoursTo) && (
@@ -838,7 +841,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             onCheckedChange={(checked) => setTermsAccepted(checked === true)}
             className="mt-0.5 rounded-[6px]"
           />
-          <label htmlFor="kaliva-terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
+          <label htmlFor="kaliva-terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
             {t.termsLabel}{' '}
             <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
             {' '}{t.andThe}{' '}
@@ -883,6 +886,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       return (
         <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
+          if (!wasAuthenticatedOnMount) {
+            setIsFreshSignup(true);
+          }
           // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
