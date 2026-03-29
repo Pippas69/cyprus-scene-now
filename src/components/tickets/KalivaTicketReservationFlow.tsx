@@ -808,15 +808,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       return (
         <ProfileCompletionGate onComplete={(profile) => {
           setProfileComplete(true);
+          // Only auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          setPhoneNumber(profile.phone);
-          supabase.auth.getUser().then(({ data }) => {
-            if (data.user?.email) setCustomerEmail(data.user.email);
-          });
+          // Phone and email are left empty for the user to fill
         }} />
       );
     }

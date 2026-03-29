@@ -260,10 +260,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [specialRequests, setSpecialRequests] = useState('');
   const profileName = useProfileName(currentUserId);
 
-  // Auto-fill reservation name and first guest with profile name
+  // Auto-fill ONLY the first guest name with profile name
+  // Reservation name, phone, and email are left empty for the user to fill freely
   useEffect(() => {
     if (profileName) {
-      setReservationName(profileName);
       setGuests(prev => {
         const updated = [...prev];
         if (updated.length > 0) updated[0] = { ...updated[0], name: profileName };
@@ -505,16 +505,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return (
         <ProfileCompletionGate onComplete={(profile) => {
           setProfileComplete(true);
-          setReservationName(`${profile.firstName} ${profile.lastName}`);
+          // Only auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          setPhoneNumber(profile.phone);
-          supabase.auth.getUser().then(({ data }) => {
-            if (data.user?.email) setCustomerEmail(data.user.email);
-          });
+          // Phone and email are left empty for the user to fill
         }} />
       );
     }
