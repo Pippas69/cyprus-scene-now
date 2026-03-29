@@ -48,12 +48,9 @@ export const UserAccountDropdown = ({
   useEffect(() => {
     if (!userId) return;
     supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single()
+      .rpc('has_role', { _user_id: userId, _role: 'admin' })
       .then(({ data }) => {
-        setIsAdmin(data?.role === 'admin');
+        setIsAdmin(data === true);
       });
   }, [userId]);
   const translations = {
