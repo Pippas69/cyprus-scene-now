@@ -20,6 +20,7 @@ interface EventOption {
   id: string;
   title: string;
   start_at: string;
+  end_at: string;
   event_type: string | null;
   reservationCount: number;
 }
@@ -47,12 +48,12 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const fetchArchivedEvents = useCallback(async () => {
     const { data } = await supabase
       .from('events')
-      .select('id, title, start_at, event_type')
+      .select('id, title, start_at, end_at, event_type')
       .eq('business_id', businessId)
       .not('archived_at', 'is', null)
       .order('start_at', { ascending: false });
     if (data) {
-      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })));
+      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })) as EventOption[]);
     }
   }, [businessId]);
 
@@ -159,7 +160,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, event_type')
+        .select('id, title, start_at, end_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
@@ -216,6 +217,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         id: e.id,
         title: e.title,
         start_at: e.start_at,
+        end_at: e.end_at,
         event_type: e.event_type,
         reservationCount: counts[e.id] || 0,
       }));
@@ -265,7 +267,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, event_type')
+        .select('id, title, start_at, end_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
@@ -318,6 +320,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         id: e.id,
         title: e.title,
         start_at: e.start_at,
+        end_at: e.end_at,
         event_type: e.event_type,
         reservationCount: counts[e.id] || 0,
       }));
@@ -476,22 +479,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
-      {/* Archive toggle */}
-      <div className="flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground gap-1.5"
-          onClick={() => setShowArchived(!showArchived)}
-        >
-          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
-          {showArchived 
-            ? (language === 'el' ? 'Ενεργές' : 'Active')
-            : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
-          }
-        </Button>
-      </div>
-
       {showArchived ? (
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">
@@ -732,10 +719,12 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         )}
       </Tabs>
 
-      {/* Archive button for ended events */}
+      {/* Archive button for ended events — only shows 12h after end_at */}
       {(() => {
         const eventToArchive = isTicketLinked ? selectedEvent : (isDiningEventMode ? diningSelectedEvent : null);
-        if (!eventToArchive || new Date(eventToArchive.start_at) >= new Date()) return null;
+        if (!eventToArchive) return null;
+        const twelveHoursAfterEnd = new Date(new Date(eventToArchive.end_at).getTime() + 12 * 60 * 60 * 1000);
+        if (new Date() < twelveHoursAfterEnd) return null;
         return (
           <div className="flex justify-center pt-2">
             <Button
@@ -750,6 +739,22 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </div>
         );
       })()}
+
+      {/* Archive toggle — bottom right */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground gap-1.5"
+          onClick={() => setShowArchived(!showArchived)}
+        >
+          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+          {showArchived 
+            ? (language === 'el' ? 'Ενεργές' : 'Active')
+            : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
+          }
+        </Button>
+      </div>
       </>
       )}
     </div>
