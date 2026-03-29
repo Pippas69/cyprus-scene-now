@@ -109,6 +109,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
