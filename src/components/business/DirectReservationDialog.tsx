@@ -97,7 +97,6 @@ export const DirectReservationDialog = ({
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
-  const [showAuthGate, setShowAuthGate] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -112,9 +111,9 @@ export const DirectReservationDialog = ({
   }, []);
 
   const isMobile = useIsMobile();
-  const profileName = useProfileName(currentUserId);
+  const { profileName, profilePhone, profileComplete } = useProfileData(currentUserId);
 
-  // Auto-fill reservation name and first guest slot with profile name
+  // Auto-fill reservation name, first guest slot, and phone with profile data
   useEffect(() => {
     if (profileName) {
       setFormData(prev => ({
@@ -124,6 +123,12 @@ export const DirectReservationDialog = ({
       }));
     }
   }, [profileName]);
+
+  useEffect(() => {
+    if (profilePhone) {
+      setFormData(prev => ({ ...prev, phone_number: profilePhone }));
+    }
+  }, [profilePhone]);
 
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
