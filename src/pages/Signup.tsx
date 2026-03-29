@@ -135,6 +135,18 @@ const Signup = () => {
         }
       }
       
+      // For the test email, delete existing user first to allow re-registration
+      const TEST_EMAIL = "marinoskoumi04@gmail.com";
+      if (values.email.toLowerCase() === TEST_EMAIL) {
+        try {
+          await supabase.functions.invoke('delete-test-user', {
+            body: { email: TEST_EMAIL }
+          });
+        } catch (e) {
+          console.log('Test user cleanup skipped:', e);
+        }
+      }
+
       const {
         data,
         error
