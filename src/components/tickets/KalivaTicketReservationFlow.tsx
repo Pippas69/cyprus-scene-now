@@ -169,6 +169,7 @@ const translations = {
     continuePayment: "Continue to Payment",
     cancel: "Cancel",
     specialRequests: "Special requests",
+    reservationName: "Reservation Name",
   },
 };
 
