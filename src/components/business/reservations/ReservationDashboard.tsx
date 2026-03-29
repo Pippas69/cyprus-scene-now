@@ -42,6 +42,23 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const selectedEventIdRef = useRef<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
   const [showArchived, setShowArchived] = useState(false);
+  const [archivedEvents, setArchivedEvents] = useState<EventOption[]>([]);
+
+  const fetchArchivedEvents = useCallback(async () => {
+    const { data } = await supabase
+      .from('events')
+      .select('id, title, start_at, event_type')
+      .eq('business_id', businessId)
+      .not('archived_at', 'is', null)
+      .order('start_at', { ascending: false });
+    if (data) {
+      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })));
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    if (showArchived) fetchArchivedEvents();
+  }, [showArchived, fetchArchivedEvents]);
 
   const archiveEvent = useCallback(async (eventId: string) => {
     const { error } = await supabase
@@ -68,7 +85,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     }
     toast.success(language === 'el' ? 'Επαναφέρθηκε' : 'Restored');
     fetchArchivedEvents();
-  }, [language]);
+  }, [language, fetchArchivedEvents]);
   const text = useMemo(
     () => ({
       el: {
