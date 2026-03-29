@@ -57,6 +57,7 @@ export const ReservationDialog = ({
   const [capacityLoading, setCapacityLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const profileName = useProfileName(currentUserId);
 
   useEffect(() => {
