@@ -8,6 +8,7 @@ import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRe
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -117,6 +118,12 @@ const translations = {
     cancel: "Ακύρωση",
     specialRequests: "Ειδικά αιτήματα",
     reservationName: "Όνομα Κράτησης",
+    processingFee: "Έξοδα επεξεργασίας",
+    termsLabel: "Αποδέχομαι τους",
+    termsLink: "Όρους Χρήσης",
+    andThe: "και την",
+    privacyLink: "Πολιτική Απορρήτου",
+    termsRequired: "Πρέπει να αποδεχτείτε τους όρους χρήσης",
   },
   en: {
     title: "Ticket & Reservation",
@@ -170,6 +177,12 @@ const translations = {
     cancel: "Cancel",
     specialRequests: "Special requests",
     reservationName: "Reservation Name",
+    processingFee: "Processing fee",
+    termsLabel: "I accept the",
+    termsLink: "Terms of Service",
+    andThe: "and the",
+    privacyLink: "Privacy Policy",
+    termsRequired: "You must accept the terms of service",
   },
 };
 
@@ -214,6 +227,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [reservationName, setReservationName] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
@@ -425,6 +439,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const ticketTier = getTicketTier();
   const ticketPricePerPerson = ticketTier?.price_cents || 0;
   const ticketTotal = ticketPricePerPerson * partySize;
+  const stripeFeesCents = ticketTotal > 0 ? Math.ceil(ticketTotal * 0.029 + 25) : 0;
+  const total = ticketTotal + stripeFeesCents;
   const isFreeOrder = ticketTotal === 0;
 
   // Validation
@@ -458,6 +474,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     }
     if (!isEmailValid) {
       toast.error(language === 'el' ? 'Συμπληρώστε σωστό email' : 'Please enter a valid email');
+      return;
+    }
+    if (!termsAccepted) {
+      toast.error(t.termsRequired);
       return;
     }
 
@@ -787,6 +807,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           </div>
         )}
 
+        {!isFreeOrder && stripeFeesCents > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{t.processingFee}</span>
+            <span className="font-medium">{formatPrice(stripeFeesCents)}</span>
+          </div>
+        )}
+
         {minChargeCents != null && minChargeCents > 0 && (
           <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 border border-border">
             <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
@@ -800,7 +827,27 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         <Separator />
         <div className="flex justify-between font-bold text-lg">
           <span>{t.total}</span>
-          <span className="text-primary">{isFreeOrder ? t.free : formatPrice(ticketTotal)}</span>
+          <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
+        </div>
+
+        <div className={cn(
+          "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
+          termsAccepted
+            ? "border-primary/40 bg-primary/5"
+            : "border-border/70 bg-card/60"
+        )}>
+          <Checkbox
+            id="kaliva-terms-accept"
+            checked={termsAccepted}
+            onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+            className="mt-0.5 rounded-[6px]"
+          />
+          <label htmlFor="kaliva-terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
+            {t.termsLabel}{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
+            {' '}{t.andThe}{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
+          </label>
         </div>
       </div>
 
@@ -915,13 +962,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleCheckout} disabled={submitting} className="gap-2">
+          <Button onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-2">
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" />{t.processing}</>
             ) : isFreeOrder ? (
               <><Ticket className="h-4 w-4" />{t.getTickets}</>
             ) : (
-              <><CreditCard className="h-4 w-4" />{t.pay} {formatPrice(ticketTotal)}</>
+              <><CreditCard className="h-4 w-4" />{t.pay} {formatPrice(total)}</>
             )}
           </Button>
         )}
