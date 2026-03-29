@@ -116,6 +116,7 @@ const translations = {
     continuePayment: "Συνέχεια στην Πληρωμή",
     cancel: "Ακύρωση",
     specialRequests: "Ειδικά αιτήματα",
+    reservationName: "Όνομα Κράτησης",
   },
   en: {
     title: "Ticket & Reservation",
