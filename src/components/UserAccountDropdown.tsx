@@ -17,7 +17,67 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 import { forceLocalSignOut } from '@/lib/authSession';
 import { InAppNotificationsSheet } from '@/components/notifications/InAppNotificationsSheet';
-...
+
+interface UserAccountDropdownProps {
+  userId?: string;
+  userName?: string;
+  avatarUrl?: string | null;
+  variant?: 'avatar' | 'button';
+}
+
+export const UserAccountDropdown = ({
+  userId,
+  userName = 'User',
+  avatarUrl,
+  variant = 'avatar',
+}: UserAccountDropdownProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { language } = useLanguage();
+
+  const isBusinessDashboard = location.pathname.startsWith('/dashboard-business');
+  const notificationContext = isBusinessDashboard ? 'business' : 'user';
+
+  const { unreadCount } = useNotifications(userId, notificationContext);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.role === 'admin');
+      });
+  }, [userId]);
+
+  const translations = {
+    el: {
+      myAccount: 'Ο λογαριασμός μου',
+      myBusiness: 'Η επιχείρησή μου',
+      myUserAccount: 'Ο προσωπικός μου λογαριασμός',
+      notifications: 'Ειδοποιήσεις',
+      admin: 'Admin',
+      signOut: 'Αποσύνδεση',
+    },
+    en: {
+      myAccount: 'My Account',
+      myBusiness: 'My Business',
+      myUserAccount: 'My User Account',
+      notifications: 'Notifications',
+      admin: 'Admin',
+      signOut: 'Sign Out',
+    },
+  };
+
+  const t = translations[language];
+
   const handleSignOut = async () => {
     await forceLocalSignOut();
     navigate('/', { replace: true });
@@ -28,15 +88,14 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
     navigate('/feed');
   };
 
-  // Badge component for the bell icon only
   const NotificationBadge = ({ className = '' }: { className?: string }) => {
     if (unreadCount <= 0) return null;
     return (
       <Badge
         variant="destructive"
         className={cn(
-          "absolute h-5 min-w-5 flex items-center justify-center p-0 px-1.5 text-xs font-bold",
-          className
+          'absolute h-5 min-w-5 flex items-center justify-center p-0 px-1.5 text-xs font-bold',
+          className,
         )}
       >
         {unreadCount > 9 ? '9+' : unreadCount}
@@ -46,7 +105,6 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
 
   return (
     <div className="flex items-center gap-1">
-      {/* Full notifications panel (click-only) */}
       <InAppNotificationsSheet
         userId={userId}
         open={notificationsOpen}
@@ -55,7 +113,6 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
         context={notificationContext}
       />
 
-      {/* Bell button (always visible) */}
       <Button
         variant="ghost"
         size="icon"
@@ -67,7 +124,6 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
         <NotificationBadge className="-top-1 -right-1" />
       </Button>
 
-      {/* Account dropdown */}
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           {variant === 'button' ? (
@@ -93,24 +149,19 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
-          {/* Context-aware Account Switcher */}
           {isBusinessDashboard ? (
-            // On Business Dashboard: Show "My Account" to go to user feed
-            <DropdownMenuItem 
-              onClick={handleMyAccount} 
-              className="text-sm cursor-pointer"
-            >
+            <DropdownMenuItem onClick={handleMyAccount} className="text-sm cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               {t.myAccount}
             </DropdownMenuItem>
           ) : (
-            // On User Dashboard: Show "My Business" if business owner
-            !isBusinessLoading && isBusinessOwner && (
-              <DropdownMenuItem 
+            !isBusinessLoading &&
+            isBusinessOwner && (
+              <DropdownMenuItem
                 onClick={() => {
                   setDropdownOpen(false);
                   navigate('/dashboard-business');
-                }} 
+                }}
                 className="text-sm cursor-pointer"
               >
                 <Building2 className="mr-2 h-4 w-4" />
@@ -119,7 +170,6 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
             )
           )}
 
-          {/* Admin Panel */}
           {isAdmin && (
             <DropdownMenuItem
               onClick={() => {
@@ -133,7 +183,6 @@ import { InAppNotificationsSheet } from '@/components/notifications/InAppNotific
             </DropdownMenuItem>
           )}
 
-          {/* Sign Out */}
           <DropdownMenuItem
             onClick={() => {
               setDropdownOpen(false);
