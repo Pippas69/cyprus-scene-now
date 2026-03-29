@@ -285,6 +285,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     if (hasSeating) steps.push('seats');
     if (!isSeatedWithPricing) steps.push('tickets');
     if (!isAuthenticated) steps.push('auth');
+    if (isAuthenticated && !profileComplete) steps.push('profile');
     steps.push('guests');
     steps.push('checkout');
     return steps;
