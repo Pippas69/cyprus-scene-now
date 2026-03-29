@@ -463,6 +463,16 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
+  // Dynamic step: after step 1, if not authenticated, show auth gate
+  // step values: 1 = seating, 'auth' = auth gate, 'profile' = profile gate, 2 = details, 3 = review
+  type StepType = number | 'auth' | 'profile';
+  const getEffectiveStep = (): StepType => {
+    if (step === 2 && !isAuthenticated) return 'auth';
+    if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
+    return step;
+  };
+  const effectiveStep = getEffectiveStep();
+
   // Step content
   const renderStepContent = () => {
     if (loading) {
@@ -481,6 +491,32 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">{t.errorNoSeating}</p>
         </div>
+      );
+    }
+
+    if (effectiveStep === 'auth') {
+      return (
+        <InlineAuthGate onAuthSuccess={() => {
+          // Auth state listener will update isAuthenticated
+        }} />
+      );
+    }
+
+    if (effectiveStep === 'profile') {
+      return (
+        <ProfileCompletionGate onComplete={(profile) => {
+          setProfileComplete(true);
+          setReservationName(`${profile.firstName} ${profile.lastName}`);
+          setGuests(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
+            return updated;
+          });
+          setPhoneNumber(profile.phone);
+          supabase.auth.getUser().then(({ data }) => {
+            if (data.user?.email) setCustomerEmail(data.user.email);
+          });
+        }} />
       );
     }
 
