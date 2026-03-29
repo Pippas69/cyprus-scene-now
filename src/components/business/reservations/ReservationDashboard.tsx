@@ -731,6 +731,23 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Archive button for ended events */}
+      {selectedEvent && new Date(selectedEvent.start_at) < new Date() && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs gap-1.5 text-muted-foreground"
+            onClick={() => archiveEvent(selectedEvent.id)}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            {language === 'el' ? 'Αρχειοθέτηση εκδήλωσης' : 'Archive event'}
+          </Button>
+        </div>
+      )}
+      </>
+      )}
     </div>
   );
 };
