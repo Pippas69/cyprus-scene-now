@@ -199,7 +199,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
-      setShowAuthGate(false);
+      // showAuthGate removed — auth is shown upfront
     }
   }, [isOpen]);
 
@@ -460,11 +460,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleClaim = async () => {
-    // If not authenticated, show auth gate
-    if (!isAuthenticated) {
-      setShowAuthGate(true);
-      return;
-    }
 
     setIsLoading(true);
     try {
@@ -863,17 +858,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
-      {/* Auth Gate - shown when user tries to claim without auth */}
-      {showAuthGate && !isAuthenticated && (
-        <div className="my-2 space-y-2">
-          <InlineAuthGate onAuthSuccess={() => {
-            setShowAuthGate(false);
-          }} />
-          <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
-            {language === 'el' ? '← Πίσω' : '← Back'}
-          </Button>
-        </div>
-      )}
+      {/* Auth gate removed — auth is shown upfront before the form */}
 
       <div className="h-1.5" />
 
