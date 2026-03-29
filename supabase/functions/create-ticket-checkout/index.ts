@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
     let subtotalCents = 0;
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     const ticketBreakdown: { tierId: string; tierName: string; quantity: number; priceEach: number }[] = [];
+    let ticketCurrency = "eur";
 
     for (const item of items) {
       const tier = tiers.find(t => t.id === item.tierId);
@@ -163,6 +164,7 @@ Deno.serve(async (req) => {
       }
 
       subtotalCents += tier.price_cents * item.quantity;
+      ticketCurrency = tier.currency || "eur";
       ticketBreakdown.push({
         tierId: tier.id,
         tierName: tier.name,
@@ -186,9 +188,26 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Buyer pays Stripe processing fees: 2.9% + €0.25 (on subtotal)
+    const stripeFeesCents = subtotalCents > 0 ? Math.ceil(subtotalCents * 0.029 + 25) : 0;
     const commissionCents = Math.round(subtotalCents * commissionPercent / 100);
-    const totalCents = subtotalCents; // User pays subtotal, commission is taken from business
-    logStep("Price calculated", { subtotalCents, commissionCents, totalCents });
+    const totalCents = subtotalCents + stripeFeesCents;
+    logStep("Price calculated", { subtotalCents, stripeFeesCents, commissionCents, totalCents });
+
+    // Add processing fee as separate line item
+    if (stripeFeesCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: ticketCurrency,
+          product_data: {
+            name: "Processing Fee",
+            description: "Payment processing fee",
+          },
+          unit_amount: stripeFeesCents,
+        },
+        quantity: 1,
+      });
+    }
 
     // Helper to mark seats as sold in show_instance_seats
     const markSeatsAsSold = async (orderId: string) => {
