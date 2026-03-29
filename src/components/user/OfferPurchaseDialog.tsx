@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarDays, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarDays, ChevronLeft, ChevronRight, User, Phone, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
