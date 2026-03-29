@@ -116,10 +116,10 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           onFocus={() => results.length > 0 && setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           className={cn(
-            "pl-5 md:pl-6 lg:pl-8 shadow-lg border-0",
-            "h-[26px] md:h-7 lg:h-8",
-            "text-[9px] md:text-[10px] lg:text-xs text-white placeholder:text-white/70",
-            "w-[100px] md:w-[130px] lg:w-[180px]"
+            "pl-5 md:pl-6 lg:pl-8 shadow-lg border-0 rounded-lg",
+            "h-[24px] md:h-[26px] lg:h-8",
+            "text-[8px] md:text-[9px] lg:text-xs text-white placeholder:text-white/70",
+            "w-[90px] md:w-[120px] lg:w-[180px]"
           )}
           style={{ backgroundColor: '#0D3B66' }}
         />
