@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
+import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
+import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 
 interface SeatingTypeOption {
   id: string;
@@ -50,7 +52,7 @@ interface ReservationEventCheckoutProps {
   maxPartySize: number;
   reservationHoursFrom?: string;
   reservationHoursTo?: string;
-  userId: string;
+  userId?: string;
   language: 'el' | 'en';
   onSuccess?: () => void;
 }
