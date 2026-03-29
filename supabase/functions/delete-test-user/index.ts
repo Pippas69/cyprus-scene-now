@@ -5,8 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-// ONLY this email can be deleted for testing purposes
-const ALLOWED_TEST_EMAIL = "marinoskoumi04@gmail.com"
+// ONLY these emails can be deleted for testing purposes
+const ALLOWED_TEST_EMAILS = new Set([
+  "marinoskoumi04@gmail.com",
+  "marinoskumi04@gmail.com",
+])
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,7 +19,9 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json()
 
-    if (email?.toLowerCase() !== ALLOWED_TEST_EMAIL) {
+    const normalizedEmail = email?.toLowerCase()
+
+    if (!normalizedEmail || !ALLOWED_TEST_EMAILS.has(normalizedEmail)) {
       return new Response(
         JSON.stringify({ error: "Not allowed" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -32,7 +37,7 @@ Deno.serve(async (req) => {
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
     if (listError) throw listError
 
-    const existingUser = users.find(u => u.email?.toLowerCase() === ALLOWED_TEST_EMAIL)
+    const existingUser = users.find(u => u.email?.toLowerCase() === normalizedEmail)
 
     if (existingUser) {
       // Delete profile first (cascade should handle but be safe)
@@ -40,7 +45,7 @@ Deno.serve(async (req) => {
       // Delete the auth user
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
       if (deleteError) throw deleteError
-      console.log("Test user deleted:", ALLOWED_TEST_EMAIL)
+      console.log("Test user deleted:", normalizedEmail)
     }
 
     return new Response(
