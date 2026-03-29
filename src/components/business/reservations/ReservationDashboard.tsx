@@ -217,6 +217,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         id: e.id,
         title: e.title,
         start_at: e.start_at,
+        end_at: e.end_at,
         event_type: e.event_type,
         reservationCount: counts[e.id] || 0,
       }));
@@ -319,6 +320,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         id: e.id,
         title: e.title,
         start_at: e.start_at,
+        end_at: e.end_at,
         event_type: e.event_type,
         reservationCount: counts[e.id] || 0,
       }));
