@@ -634,7 +634,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 <p className="text-xs text-muted-foreground">{t.email}</p>
                 <p className="text-sm font-medium break-all">{customerEmail || '-'}</p>
               </div>
-              <p className="text-[11px] text-muted-foreground">{t.autoFromAccount}</p>
+              <p className="text-[11px] text-muted-foreground">{language === 'el' ? 'Συμπληρώστε το τηλέφωνο και το email που θέλετε για τη συγκεκριμένη αγορά.' : 'Enter the phone and email you want for this specific purchase.'}</p>
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
