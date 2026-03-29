@@ -214,10 +214,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+      setIsAuthenticated(!!data.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
