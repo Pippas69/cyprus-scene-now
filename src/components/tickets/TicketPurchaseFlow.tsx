@@ -217,6 +217,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [customerPhone, setCustomerPhone] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
+  const [buyerProfile, setBuyerProfile] = useState<{ firstName: string; lastName: string; phone: string; city: string } | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Check auth on mount and listen for changes
   useEffect(() => {
