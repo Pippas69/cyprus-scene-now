@@ -388,6 +388,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       toast.error(t.fillAllNames);
       return;
     }
+    if (!termsAccepted) {
+      toast.error(t.termsRequired);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -888,7 +892,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleCheckout} disabled={submitting} className="gap-2">
+          <Button onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-2">
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" />{t.processing}</>
             ) : isFreeOrder ? (
