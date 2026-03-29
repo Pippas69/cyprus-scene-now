@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendPushIfEnabled, type PushPayload } from "../_shared/web-push-crypto.ts";
+import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,6 +62,11 @@ serve(async (req) => {
     const event = reservation.events;
     const business = event?.businesses;
 
+    let guestMetadata: Record<string, string | undefined> | null = null;
+    let guestSessionId: string | null = null;
+    let guestCustomerEmail: string | null = null;
+    let finalPaymentIntentId: string | null = reservation.stripe_payment_intent_id || null;
+
     if (reservation.deferred_payment_mode === "auth_hold") {
       // Capture the held payment intent
       if (!reservation.stripe_payment_intent_id) {
@@ -68,6 +74,30 @@ serve(async (req) => {
       }
 
       try {
+        const heldPaymentIntent = await stripe.paymentIntents.retrieve(reservation.stripe_payment_intent_id);
+        guestMetadata = (heldPaymentIntent.metadata as Record<string, string>) || null;
+        guestCustomerEmail = heldPaymentIntent.metadata?.customer_email || null;
+        finalPaymentIntentId = heldPaymentIntent.id;
+
+        try {
+          const sessionList = await stripe.checkout.sessions.list({
+            payment_intent: reservation.stripe_payment_intent_id,
+            limit: 1,
+          } as any);
+          const matchedSession = sessionList.data?.[0] ?? null;
+          if (matchedSession) {
+            guestSessionId = matchedSession.id;
+            if (!guestMetadata && matchedSession.metadata) {
+              guestMetadata = matchedSession.metadata as Record<string, string>;
+            }
+            if (!guestCustomerEmail) {
+              guestCustomerEmail = matchedSession.metadata?.customer_email || null;
+            }
+          }
+        } catch (sessionLookupErr) {
+          console.warn("[CONFIRM-DEFERRED] Failed to fetch auth_hold checkout session metadata", sessionLookupErr);
+        }
+
         await stripe.paymentIntents.capture(reservation.stripe_payment_intent_id);
         console.log("[CONFIRM-DEFERRED] Captured auth hold:", reservation.stripe_payment_intent_id);
       } catch (captureErr: any) {
@@ -94,8 +124,28 @@ serve(async (req) => {
 
       const setupIntent = await stripe.setupIntents.retrieve(reservation.stripe_setup_intent_id);
       const paymentMethodId = setupIntent.payment_method as string;
+      const customerId = setupIntent.customer as string | null;
 
       if (!paymentMethodId) throw new Error("No payment method on setup intent");
+
+      if (customerId) {
+        try {
+          const sessionList = await stripe.checkout.sessions.list({ customer: customerId, limit: 20 });
+          const matchedSession = sessionList.data.find(
+            (session) =>
+              session.metadata?.type === "deferred_reservation" &&
+              session.metadata?.reservation_id === reservation.id
+          );
+
+          if (matchedSession) {
+            guestSessionId = matchedSession.id;
+            guestMetadata = (matchedSession.metadata as Record<string, string>) || null;
+            guestCustomerEmail = matchedSession.metadata?.customer_email || null;
+          }
+        } catch (sessionLookupErr) {
+          console.warn("[CONFIRM-DEFERRED] Failed to fetch setup_intent checkout session metadata", sessionLookupErr);
+        }
+      }
 
       // Get commission
       const { data: subscription } = await supabaseClient
@@ -118,10 +168,17 @@ serve(async (req) => {
       const platformFeeCents = Math.round(reservation.prepaid_min_charge_cents * (commissionPercent / 100));
       const hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
 
+      const guestsMetaForPaymentIntent = Object.entries(guestMetadata || {}).reduce<Record<string, string>>((acc, [key, value]) => {
+        if ((key === "guests" || key.startsWith("guests_")) && typeof value === "string" && value.length > 0) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
       const piParams: any = {
         amount: reservation.prepaid_min_charge_cents,
         currency: "eur",
-        customer: (await stripe.setupIntents.retrieve(reservation.stripe_setup_intent_id)).customer as string,
+        customer: customerId,
         payment_method: paymentMethodId,
         off_session: true,
         confirm: true,
@@ -130,6 +187,8 @@ serve(async (req) => {
           reservation_id: reservation.id,
           event_id: event.id,
           business_id: business?.id ?? "",
+          customer_email: guestCustomerEmail || "",
+          ...guestsMetaForPaymentIntent,
         },
       };
 
@@ -161,6 +220,8 @@ serve(async (req) => {
         });
       }
 
+      finalPaymentIntentId = paymentIntent.id;
+
       // Store the new payment intent ID
       await supabaseClient.from("reservations").update({
         stripe_payment_intent_id: paymentIntent.id,
@@ -174,6 +235,28 @@ serve(async (req) => {
       status: "accepted",
       prepaid_charge_status: "paid",
     }).eq("id", reservation.id);
+
+    // Ensure per-person QR tickets are generated for reservation-only flows
+    try {
+      const createdTickets = await ensureReservationEventGuestTickets({
+        supabaseClient: supabaseService,
+        reservationId: reservation.id,
+        paymentIntentId: finalPaymentIntentId,
+        session: {
+          id: guestSessionId,
+          metadata: guestMetadata,
+          customer_details: { email: guestCustomerEmail },
+        },
+        customerEmail: guestCustomerEmail,
+      });
+
+      console.log("[CONFIRM-DEFERRED] Ensured reservation guest tickets", {
+        reservationId: reservation.id,
+        createdTickets,
+      });
+    } catch (ticketErr) {
+      console.error("[CONFIRM-DEFERRED] Failed to ensure reservation guest tickets", ticketErr);
+    }
 
     // Send notification to user
     await supabaseService.from("notifications").insert({
