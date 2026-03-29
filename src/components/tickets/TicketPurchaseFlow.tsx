@@ -382,7 +382,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
-  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
+  const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
+  const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
 
   // Phone and email are left empty for the user to fill freely
 
@@ -400,8 +401,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       toast.error(t.noTicketsSelected);
       return;
     }
-    if (!allGuestDetailsFilled) {
+    if (!allNamesFilled || !allAgesFilled) {
       toast.error(t.fillAllNames);
+      return;
+    }
+    if (!isValidCheckoutPhone(customerPhone)) {
+      toast.error(t.fillPhone);
+      return;
+    }
+    if (!isValidCheckoutEmail(customerEmail)) {
+      toast.error(t.fillEmail);
       return;
     }
     if (!termsAccepted) {
@@ -452,8 +461,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         eventId,
         items,
         customerName: guestNames[0].trim(),
-        customerEmail: customerEmail.trim() || user.email,
-        customerPhone: customerPhone.trim() || null,
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
         specialRequests: specialRequests.trim() || null,
         guests: guestNames.map((name, idx) => ({
           name: name.trim(),
