@@ -334,8 +334,8 @@ const Signup = () => {
         setOtpCode('');
       } else {
         confetti.trigger();
-        toast.success(language === 'el' ? 'Ο λογαριασμός σου επαληθεύτηκε!' : 'Your account has been verified!');
-        setTimeout(() => navigate(redirectAfterVerify), 1500);
+        setShowSuccessScreen(true);
+        setTimeout(() => navigate(redirectAfterVerify), 3500);
       }
     } catch (e) {
       toast.error(language === 'el' ? 'Κάτι πήγε στραβά' : 'Something went wrong');
@@ -640,7 +640,43 @@ const Signup = () => {
                     <FormMessage />
                   </FormItem>} />
 
-              <FormField control={form.control} name="gender" render={({
+              {/* Phone field with country selector */}
+              <div className="space-y-1.5">
+                <FormLabel className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" />
+                  {language === "el" ? "Τηλέφωνο" : "Phone"}
+                </FormLabel>
+                <div className="flex gap-2">
+                  <FormField control={form.control} name="phoneCountry" render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value || "CY"}>
+                      <FormControl>
+                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm w-[100px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="CY">🇨🇾 +357</SelectItem>
+                        <SelectItem value="GR">🇬🇷 +30</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          inputMode="numeric"
+                          placeholder={form.watch('phoneCountry') === 'CY' ? '99123456' : '6912345678'}
+                          {...field}
+                          className="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              </div>
+
               field
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
