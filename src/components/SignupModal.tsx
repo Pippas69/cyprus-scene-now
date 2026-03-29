@@ -52,6 +52,8 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     password: "",
     town: "",
     gender: "",
+    phone: "",
+    phoneCountry: "CY" as "CY" | "GR",
   });
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [isStudent, setIsStudent] = useState(false);
