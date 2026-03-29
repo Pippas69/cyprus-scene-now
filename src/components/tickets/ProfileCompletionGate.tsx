@@ -143,15 +143,11 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
   }, []);
 
   const getPhoneDigits = (val: string) => val.replace(/\D/g, '');
+  const expectedPhoneLength = country === 'CY' ? 8 : 10;
+  const phoneDigits = getPhoneDigits(phone);
+  const isPhoneLengthValid = phoneDigits.length === expectedPhoneLength;
 
-  const validatePhone = (): boolean => {
-    const digits = getPhoneDigits(phone);
-    if (country === 'CY') {
-      return digits.length === 8;
-    } else {
-      return digits.length === 10;
-    }
-  };
+  const validatePhone = (): boolean => isPhoneLengthValid;
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
@@ -175,7 +171,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const fullPhone = country === 'CY' ? `+357${phone}` : `+30${phone}`;
+      const localPhone = getPhoneDigits(phone);
+      const fullPhone = country === 'CY' ? `+357${localPhone}` : `+30${localPhone}`;
 
       const { error } = await supabase
         .from('profiles')
@@ -261,11 +258,11 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
             <Input
               type="tel"
               inputMode="numeric"
+              maxLength={expectedPhoneLength}
               value={phone}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^\d]/g, '');
-                const maxLen = country === 'CY' ? 8 : 10;
-                setPhone(val.slice(0, maxLen));
+                setPhone(val.slice(0, expectedPhoneLength));
               }}
               placeholder={country === 'CY' ? '99123456' : '6912345678'}
               className="h-9 text-sm flex-1"
@@ -274,6 +271,9 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           <p className="text-[10px] text-muted-foreground">
             {country === 'CY' ? t.cyprusPhoneHint : t.greecePhoneHint}
           </p>
+          {!!phoneDigits && !isPhoneLengthValid && (
+            <p className="text-[10px] text-destructive">{t.invalidPhone}</p>
+          )}
         </div>
 
         {/* City */}
@@ -306,7 +306,14 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
         <Button
           onClick={handleSave}
-          disabled={loading || !firstName.trim() || !lastName.trim() || !phone.trim() || (country === 'CY' ? !city : !greekCity.trim())}
+          disabled={
+            loading ||
+            !firstName.trim() ||
+            !lastName.trim() ||
+            !phone.trim() ||
+            !isPhoneLengthValid ||
+            (country === 'CY' ? !city : !greekCity.trim())
+          }
           className="w-full"
         >
           {loading ? (
