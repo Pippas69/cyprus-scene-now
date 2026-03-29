@@ -874,14 +874,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();
       setBuyerFullName(fullName);
-
-      // Only fresh signups get hidden contact autofill (fields stay hidden in UI)
-      if (!wasAuthenticatedOnMount) {
-        setIsFreshSignup(true);
-        if (profile.phone) setCustomerPhone(profile.phone);
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) setCustomerEmail(user.email);
-      }
     }} />
   );
 

@@ -872,12 +872,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       return (
         <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
-          if (!wasAuthenticatedOnMount) {
-            setIsFreshSignup(true);
-            if (profile.phone) setPhoneNumber(profile.phone);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email) setCustomerEmail(user.email);
-          }
+          // Keep contact fields manual in all event dialogs
           // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
