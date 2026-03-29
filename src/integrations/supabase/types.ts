@@ -2224,6 +2224,7 @@ export type Database = {
           appearance_end_at: string | null
           appearance_mode: string | null
           appearance_start_at: string | null
+          archived_at: string | null
           business_id: string
           category: string[]
           cover_image_url: string | null
@@ -2267,6 +2268,7 @@ export type Database = {
           appearance_end_at?: string | null
           appearance_mode?: string | null
           appearance_start_at?: string | null
+          archived_at?: string | null
           business_id: string
           category: string[]
           cover_image_url?: string | null
@@ -2310,6 +2312,7 @@ export type Database = {
           appearance_end_at?: string | null
           appearance_mode?: string | null
           appearance_start_at?: string | null
+          archived_at?: string | null
           business_id?: string
           category?: string[]
           cover_image_url?: string | null
