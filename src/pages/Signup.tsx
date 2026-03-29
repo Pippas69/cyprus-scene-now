@@ -27,6 +27,7 @@ import { CYPRUS_UNIVERSITIES, getUniversityByDomain, isValidUniversityEmail } fr
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getCityOptions, translateCity, cyprusCities } from "@/lib/cityTranslations";
 import { InterestSelectorList } from "@/components/categories/InterestSelectorList";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -93,6 +94,11 @@ const Signup = () => {
   const [studentEmailError, setStudentEmailError] = useState("");
   const [studentVerificationSent, setStudentVerificationSent] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
+  const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [redirectAfterVerify, setRedirectAfterVerify] = useState('/feed');
 
   // Validate university email when it changes
   useEffect(() => {
@@ -282,8 +288,11 @@ const Signup = () => {
           }
         }
         confetti.trigger();
-        toast.success(tt.created);
-        setTimeout(() => navigate(redirectUrl), 1500);
+        // Show OTP verification screen instead of navigating
+        setOtpEmail(values.email);
+        setRedirectAfterVerify(redirectUrl);
+        setShowOtpScreen(true);
+        toast.success(language === 'el' ? 'Έλεγξε το email σου για τον κωδικό επαλήθευσης' : 'Check your email for the verification code');
       }
     } catch (error) {
       toast.error(tt.failed);
@@ -294,6 +303,44 @@ const Signup = () => {
 
   const togglePreference = (category: string) => {
     setSelectedPreferences(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.length < 6) return;
+    setVerifyingOtp(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: otpEmail,
+        token: otpCode,
+        type: 'signup',
+      });
+      if (error) {
+        toast.error(language === 'el' ? 'Λάθος κωδικός επαλήθευσης. Δοκίμασε ξανά.' : 'Wrong verification code. Try again.');
+        setOtpCode('');
+      } else {
+        confetti.trigger();
+        toast.success(language === 'el' ? 'Ο λογαριασμός σου επαληθεύτηκε!' : 'Your account has been verified!');
+        setTimeout(() => navigate(redirectAfterVerify), 1500);
+      }
+    } catch (e) {
+      toast.error(language === 'el' ? 'Κάτι πήγε στραβά' : 'Something went wrong');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setVerifyingOtp(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: otpEmail });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success(language === 'el' ? 'Νέος κωδικός στάλθηκε στο email σου' : 'New code sent to your email');
+      }
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   // Show loading while checking beta mode
@@ -394,6 +441,72 @@ const Signup = () => {
   }
 
   // Regular signup form (when beta mode is disabled)
+  // OTP Verification Screen
+  if (showOtpScreen) {
+    return (
+      <>
+        <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
+        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
+              <div className="w-full h-full rounded-full bg-gradient-glow" />
+            </div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
+          </div>
+          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl">
+            <div className="text-center">
+              <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {language === 'el' ? 'Επαλήθευση Email' : 'Email Verification'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {language === 'el'
+                  ? `Εισάγετε τον 6ψήφιο κωδικό που στάλθηκε στο ${otpEmail}`
+                  : `Enter the 6-digit code sent to ${otpEmail}`}
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              variant="gradient"
+              size="lg"
+              className="w-full"
+              disabled={otpCode.length < 6 || verifyingOtp}
+              onClick={handleVerifyOtp}
+            >
+              {verifyingOtp
+                ? (language === 'el' ? 'Επαλήθευση...' : 'Verifying...')
+                : (language === 'el' ? 'Επαλήθευση' : 'Verify')}
+            </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                onClick={handleResendOtp}
+                disabled={verifyingOtp}
+              >
+                {language === 'el' ? 'Δεν λάβατε κωδικό; Αποστολή ξανά' : "Didn't receive a code? Resend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return <>
     <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
     <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
