@@ -585,6 +585,7 @@ export const DirectReservationDialog = ({
         setFormData(prev => ({
           ...prev,
           guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
+          phone_number: profile.phone || prev.phone_number,
         }));
       }} />
     </div>
@@ -768,7 +769,8 @@ export const DirectReservationDialog = ({
         }
           </div>
 
-          {/* Phone */}
+          {/* Phone - hide if auto-filled from profile */}
+          {!formData.phone_number || !profileComplete ? (
           <div className="space-y-1.5">
             <Label htmlFor="phone_number" className="flex items-center gap-2 text-xs sm:text-sm">
               <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -784,6 +786,7 @@ export const DirectReservationDialog = ({
           className="text-xs sm:text-sm h-9 sm:h-10" />
         
           </div>
+          ) : null}
 
           {/* Seating Preference (Optional) */}
           {settings?.reservation_seating_options && settings.reservation_seating_options.length > 0 &&

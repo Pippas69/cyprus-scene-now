@@ -843,6 +843,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           updated[0] = fullName;
           return updated;
         });
+        // Auto-fill phone from profile
+        if (profile.phone) setReservationPhone(profile.phone);
       }} />
     </div>
   ) :

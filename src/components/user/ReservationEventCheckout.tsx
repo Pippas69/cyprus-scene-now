@@ -539,15 +539,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     if (effectiveStep === 'profile') {
       return (
-        <ProfileCompletionGate onComplete={(profile) => {
+        <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
-          // Only auto-fill first guest name from profile
+          // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          // Phone and email are left empty for the user to fill
+          // Auto-fill phone and email from profile/auth
+          if (profile.phone) setPhoneNumber(profile.phone);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.email) setCustomerEmail(user.email);
         }} />
       );
     }
@@ -635,37 +638,41 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               />
             </div>
 
-            {/* Phone */}
-            <div className="space-y-1">
-              <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                <Phone className="h-3.5 w-3.5" />
-                {t.phone}
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+357 99 123456"
-                className="h-9 text-sm"
-              />
-            </div>
+            {/* Phone - hide if auto-filled from profile */}
+            {!profileComplete || !phoneNumber ? (
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5" />
+                  {t.phone}
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+357 99 123456"
+                  className="h-9 text-sm"
+                />
+              </div>
+            ) : null}
 
-            {/* Email */}
-            <div className="space-y-1">
-              <Label htmlFor="email" className="flex items-center gap-2 text-sm">
-                <Mail className="h-3.5 w-3.5" />
-                {t.email}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder={t.emailPlaceholder}
-                className="h-9 text-sm"
-              />
-            </div>
+            {/* Email - hide if auto-filled from profile */}
+            {!profileComplete || !customerEmail ? (
+              <div className="space-y-1">
+                <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                  <Mail className="h-3.5 w-3.5" />
+                  {t.email}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder={t.emailPlaceholder}
+                  className="h-9 text-sm"
+                />
+              </div>
+            ) : null}
 
             {/* Party Size */}
             <div className="space-y-1">

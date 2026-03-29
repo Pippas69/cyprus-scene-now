@@ -288,9 +288,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     const steps: string[] = [];
     if (hasMultipleShows) steps.push('showSelect');
     if (hasSeating) steps.push('seats');
+    // Auth-first for ticket-only (non-seated) events
+    if (!hasSeating && !isAuthenticated) steps.push('auth');
+    if (!hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
     if (!isSeatedWithPricing) steps.push('tickets');
-    if (!isAuthenticated) steps.push('auth');
-    if (isAuthenticated && !profileComplete) steps.push('profile');
+    // Auth after seat selection for seated events
+    if (hasSeating && !isAuthenticated) steps.push('auth');
+    if (hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
     steps.push('guests');
     steps.push('checkout');
     return steps;
@@ -620,32 +624,36 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         )}
 
         {/* Account contact */}
-        {totalTickets > 0 && (
+        {totalTickets > 0 && (!buyerProfile?.phone || !customerEmail) && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">{t.accountContact}</Label>
             <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
-                <Input
-                  id="ticket-checkout-phone"
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+357 99 123456"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
-                <Input
-                  id="ticket-checkout-email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="example@email.com"
-                  className="h-9 text-sm"
-                />
-              </div>
+              {!buyerProfile?.phone && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
+                  <Input
+                    id="ticket-checkout-phone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="+357 99 123456"
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
+              {!customerEmail && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
+                  <Input
+                    id="ticket-checkout-email"
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="example@email.com"
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -655,6 +663,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               optionalLabel={t.optional}
             />
           </div>
+        )}
+        {/* Special Requests when account details are auto-filled */}
+        {totalTickets > 0 && buyerProfile?.phone && customerEmail && (
+          <CollapsibleSpecialRequests
+            value={specialRequests}
+            onChange={setSpecialRequests}
+            label={t.specialRequests}
+            optionalLabel={t.optional}
+          />
         )}
       </div>
     );
@@ -835,16 +852,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   );
 
   const renderProfileStep = () => (
-    <ProfileCompletionGate onComplete={(profile) => {
+    <ProfileCompletionGate onComplete={async (profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Only auto-fill buyer as first guest name
+      // Auto-fill buyer as first guest name
       setGuestNames(prev => {
         const updated = [...prev];
         if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
         return updated;
       });
-      // Phone and email are left empty for the user to fill
+      // Auto-fill phone from profile
+      if (profile.phone) setCustomerPhone(profile.phone);
+      // Auto-fill email from auth user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) setCustomerEmail(user.email);
     }} />
   );
 
