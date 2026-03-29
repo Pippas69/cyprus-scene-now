@@ -778,12 +778,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       </div>
 
       {/* Terms checkbox */}
-      <div className={cn(
-        "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
-        termsAccepted
-          ? "border-primary/40 bg-primary/5"
-          : "border-border/70 bg-card/60"
-      )}>
+      <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
         <Checkbox
           id="terms-accept"
           checked={termsAccepted}
@@ -792,15 +787,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         />
         <label htmlFor="terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
           {t.termsLabel}{' '}
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
           {' '}{t.andThe}{' '}
-          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
         </label>
       </div>
 
       {/* QR info */}
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
-        <Ticket className="h-4 w-4 text-primary shrink-0" />
+      <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-card/60">
+        <Ticket className="h-4 w-4 text-muted-foreground shrink-0" />
         <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
       </div>
     </div>
