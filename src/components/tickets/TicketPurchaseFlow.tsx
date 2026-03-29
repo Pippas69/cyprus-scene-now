@@ -23,6 +23,7 @@ import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { InlineAuthGate } from "./InlineAuthGate";
 import { ProfileCompletionGate } from "./ProfileCompletionGate";
+import { isValidPhone } from "@/lib/phoneValidation";
 
 interface TicketTier {
   id: string;
@@ -318,13 +319,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   const totalTickets = isSeatedWithPricing ? seatCount : tierTotalTickets;
 
-  const isValidCheckoutPhone = (raw: string) => {
-    const digits = raw.replace(/\D/g, '');
-    if (!digits) return false;
-    if (digits.startsWith('357')) return digits.length === 11;
-    if (digits.startsWith('30')) return digits.length === 12;
-    return false;
-  };
+  const isValidCheckoutPhone = (raw: string) => isValidPhone(raw.trim());
 
   const isValidCheckoutEmail = (raw: string) => /\S+@\S+\.\S+/.test(raw.trim());
 
