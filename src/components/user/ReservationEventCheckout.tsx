@@ -300,6 +300,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
+  useEffect(() => {
+    if (open) {
+      setPhoneNumber('');
+      setCustomerEmail('');
+    }
+  }, [open]);
+
   // Scroll to top when step changes
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -543,19 +550,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return (
         <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
-          if (!wasAuthenticatedOnMount) {
-            setIsFreshSignup(true);
-          }
+          // Keep contact fields manual in all event dialogs
           // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          // Auto-fill phone and email from profile/auth
-          if (profile.phone) setPhoneNumber(profile.phone);
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user?.email) setCustomerEmail(user.email);
         }} />
       );
     }
@@ -865,7 +866,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
+            <div className="flex items-start gap-2.5 pt-1">
               <Checkbox
                 id="reservation-terms-accept"
                 checked={termsAccepted}
