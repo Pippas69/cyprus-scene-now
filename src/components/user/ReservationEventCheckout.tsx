@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
+import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
+import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 
 interface SeatingTypeOption {
   id: string;
@@ -50,7 +52,7 @@ interface ReservationEventCheckoutProps {
   maxPartySize: number;
   reservationHoursFrom?: string;
   reservationHoursTo?: string;
-  userId: string;
+  userId?: string;
   language: 'el' | 'en';
   onSuccess?: () => void;
 }
@@ -211,7 +213,22 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const navigate = useNavigate();
   const t = translations[language];
 
-  // REMOVED: Preview-only free booking logic - always use Stripe checkout
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [profileComplete, setProfileComplete] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setCurrentUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // State
   const [step, setStep] = useState(1);
@@ -241,7 +258,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const profileName = useProfileName(userId);
+  const profileName = useProfileName(currentUserId);
 
   // Auto-fill reservation name and first guest with profile name
   useEffect(() => {
@@ -446,6 +463,15 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
+  // Dynamic step: after step 1, if not authenticated, show auth gate
+  // step values: 1 = seating, 'auth' = auth gate, 'profile' = profile gate, 2 = details, 3 = review
+  const getEffectiveStep = (): number | 'auth' | 'profile' => {
+    if (step === 2 && !isAuthenticated) return 'auth';
+    if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
+    return step;
+  };
+  const effectiveStep = getEffectiveStep();
+
   // Step content
   const renderStepContent = () => {
     if (loading) {
@@ -464,6 +490,32 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">{t.errorNoSeating}</p>
         </div>
+      );
+    }
+
+    if (effectiveStep === 'auth') {
+      return (
+        <InlineAuthGate onAuthSuccess={() => {
+          // Auth state listener will update isAuthenticated
+        }} />
+      );
+    }
+
+    if (effectiveStep === 'profile') {
+      return (
+        <ProfileCompletionGate onComplete={(profile) => {
+          setProfileComplete(true);
+          setReservationName(`${profile.firstName} ${profile.lastName}`);
+          setGuests(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
+            return updated;
+          });
+          setPhoneNumber(profile.phone);
+          supabase.auth.getUser().then(({ data }) => {
+            if (data.user?.email) setCustomerEmail(data.user.email);
+          });
+        }} />
       );
     }
 
@@ -778,54 +830,70 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   };
 
   // Navigation
-  const renderNavigation = () => (
-    <div className="flex justify-between pt-4">
-      {step > 1 ? (
-        <Button variant="outline" onClick={() => setStep(step - 1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t.back}
-        </Button>
-      ) : (
-        <div />
-      )}
+  const renderNavigation = () => {
+    // Hide navigation on auth/profile gates
+    if (effectiveStep === 'auth' || effectiveStep === 'profile') {
+      return (
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+          <div />
+        </div>
+      );
+    }
 
-      {step < 3 ? (
-        <Button
-          onClick={() => setStep(step + 1)}
-          disabled={
-            (step === 1 && !canProceedToStep2) ||
-            (step === 2 && !canProceedToStep3)
-          }
-        >
-          {t.next}
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-      ) : (
-        <Button
-          onClick={handleCheckout}
-          disabled={submitting || !selectedSeating || !price}
-          className="gap-2"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t.processing}
-            </>
-          ) : (
-            <>
-              <CreditCard className="h-4 w-4" />
-              {isDeferredPayment
-                ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
-                : `${t.pay} ${formatPrice(total)}`
-              }
-            </>
-          )}
-        </Button>
-      )}
-    </div>
-  );
+    return (
+      <div className="flex justify-between pt-4">
+        {step > 1 ? (
+          <Button variant="outline" onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+        ) : (
+          <div />
+        )}
+
+        {step < 3 ? (
+          <Button
+            onClick={() => setStep(step + 1)}
+            disabled={
+              (step === 1 && !canProceedToStep2) ||
+              (step === 2 && !canProceedToStep3)
+            }
+          >
+            {t.next}
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleCheckout}
+            disabled={submitting || !selectedSeating || !price}
+            className="gap-2"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t.processing}
+              </>
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                {isDeferredPayment
+                  ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
+                  : `${t.pay} ${formatPrice(total)}`
+                }
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   // Step indicator
+  const stepIndicatorValue = effectiveStep === 'auth' || effectiveStep === 'profile' ? 1.5 : step;
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
       {[1, 2, 3].map(s => (
@@ -833,7 +901,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           key={s}
           className={cn(
             "w-2 h-2 rounded-full transition-colors",
-            s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
+            s === step && effectiveStep !== 'auth' && effectiveStep !== 'profile' ? "bg-primary w-4" : 
+            s < step || (s === 1 && (effectiveStep === 'auth' || effectiveStep === 'profile')) ? "bg-primary/50" : 
+            (effectiveStep === 'auth' || effectiveStep === 'profile') && s === 2 ? "bg-primary w-4" : "bg-muted"
           )}
         />
       ))}
@@ -872,7 +942,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       {renderStepIndicator()}
       <div className="text-center mb-4">
         <Badge variant="outline">
-          {Object.values(t.steps)[step - 1]}
+          {effectiveStep === 'auth' 
+            ? (language === 'el' ? 'Σύνδεση' : 'Sign In')
+            : effectiveStep === 'profile'
+            ? (language === 'el' ? 'Στοιχεία Προφίλ' : 'Profile Details')
+            : Object.values(t.steps)[step - 1]}
         </Badge>
       </div>
       {renderStepContent()}

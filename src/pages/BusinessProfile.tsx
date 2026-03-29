@@ -538,10 +538,6 @@ const BusinessProfile = () => {
 
             <RippleButton
             onClick={() => {
-              if (!user) {
-                toast.error(t.loginToReserve);
-                return;
-              }
               setReservationDialogOpen(true);
             }}
             className="h-8 gap-1 text-xs px-2 py-0 sm:h-11 sm:gap-2 sm:text-sm sm:px-4 sm:py-2">
@@ -681,16 +677,15 @@ const BusinessProfile = () => {
       </div>
 
       {/* Direct Reservation Dialog */}
-      {business && user &&
+      {business &&
       <DirectReservationDialog
         open={reservationDialogOpen}
         onOpenChange={setReservationDialogOpen}
         businessId={business.id}
         businessName={business.name}
         language={language}
-        userId={user.id}
+        userId={user?.id}
         onSuccess={() => setReservationDialogOpen(false)} />
-
       }
 
       {/* Share Profile Dialog */}

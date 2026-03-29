@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,7 +28,7 @@ interface ReservationDialogProps {
   eventStartAt: string;
   seatingOptions: string[];
   language: 'el' | 'en';
-  userId: string;
+  userId?: string;
   onSuccess: () => void;
 }
 
@@ -54,7 +55,21 @@ export const ReservationDialog = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [capacityLoading, setCapacityLoading] = useState(false);
-  const profileName = useProfileName(userId);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const profileName = useProfileName(currentUserId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setCurrentUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Auto-fill reservation name with profile name
   useEffect(() => {
@@ -211,6 +226,11 @@ export const ReservationDialog = ({
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!isAuthenticated && (
+        <div className="mb-4">
+          <InlineAuthGate onAuthSuccess={() => {}} />
+        </div>
+      )}
       {capacityLoading ? (
         <div className="text-sm text-muted-foreground">
           {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}

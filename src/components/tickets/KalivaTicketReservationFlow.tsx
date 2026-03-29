@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useProfileName } from '@/hooks/useProfileName';
+import { InlineAuthGate } from './InlineAuthGate';
+import { ProfileCompletionGate } from './ProfileCompletionGate';
 
 interface SeatingTypeOption {
   id: string;
@@ -212,10 +214,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+      setIsAuthenticated(!!data.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -417,6 +429,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber) && isEmailValid;
+
+  // Dynamic step: auth/profile gate between step 1 and step 2
+  const getEffectiveStep = (): number | 'auth' | 'profile' => {
+    if (step === 2 && !isAuthenticated) return 'auth';
+    if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
+    return step;
+  };
+  const effectiveStep = getEffectiveStep();
 
   const handleCheckout = async () => {
     if (!allGuestsFilled) {
@@ -777,6 +797,30 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         </div>
       );
     }
+
+    if (effectiveStep === 'auth') {
+      return (
+        <InlineAuthGate onAuthSuccess={() => {}} />
+      );
+    }
+
+    if (effectiveStep === 'profile') {
+      return (
+        <ProfileCompletionGate onComplete={(profile) => {
+          setProfileComplete(true);
+          setGuests(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
+            return updated;
+          });
+          setPhoneNumber(profile.phone);
+          supabase.auth.getUser().then(({ data }) => {
+            if (data.user?.email) setCustomerEmail(data.user.email);
+          });
+        }} />
+      );
+    }
+
     switch (step) {
       case 1: return renderStep1();
       case 2: return renderStep2();
@@ -786,6 +830,19 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   };
 
   const renderNavigation = () => {
+    // Auth/profile gate: show back button only
+    if (effectiveStep === 'auth' || effectiveStep === 'profile') {
+      return (
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+          <div />
+        </div>
+      );
+    }
+
     // If we're on step 3 and checkout URL is active
     if (step === 3 && checkoutUrl) {
       return (
@@ -857,7 +914,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     <div className="space-y-4">
       {renderStepIndicator()}
       <div className="text-center mb-4">
-        <Badge variant="outline">{Object.values(t.steps)[step - 1]}</Badge>
+        <Badge variant="outline">
+          {effectiveStep === 'auth' 
+            ? (language === 'el' ? 'Σύνδεση' : 'Sign In')
+            : effectiveStep === 'profile'
+            ? (language === 'el' ? 'Στοιχεία Προφίλ' : 'Profile Details')
+            : Object.values(t.steps)[step - 1]}
+        </Badge>
       </div>
       {renderStepContent()}
       {!loading && seatingOptions.length > 0 && renderNavigation()}
