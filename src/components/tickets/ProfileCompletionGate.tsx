@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, User, Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCityOptions } from "@/lib/cityTranslations";
+import { InlineAuthGate } from "./InlineAuthGate";
 
 const translations = {
   el: {
@@ -64,6 +65,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
   const [greekCity, setGreekCity] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [authRetryTick, setAuthRetryTick] = useState(0);
 
   const cityOptions = getCityOptions(language);
 
@@ -90,11 +93,22 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     return null;
   };
 
-  // Check if profile is already complete
+  // Check if profile is already complete; if not authenticated, show auth gate first
   useEffect(() => {
     const checkProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setChecking(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      let user = session?.user ?? null;
+      if (!user) {
+        user = (await supabase.auth.getUser()).data.user ?? null;
+      }
+
+      if (!user) {
+        setAuthRequired(true);
+        setChecking(false);
+        return;
+      }
+
+      setAuthRequired(false);
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -140,7 +154,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       setChecking(false);
     };
     checkProfile();
-  }, []);
+  }, [authRetryTick]);
 
   const getPhoneDigits = (val: string) => val.replace(/\D/g, '');
   const expectedPhoneLength = country === 'CY' ? 8 : 10;
@@ -199,6 +213,9 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
         city: selectedCity.trim(),
       });
     } catch (err: any) {
+      if (err?.message === 'Not authenticated') {
+        setAuthRequired(true);
+      }
       toast.error(err.message || 'Failed to save profile');
     } finally {
       setLoading(false);
@@ -209,6 +226,18 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (authRequired) {
+    return (
+      <div className="space-y-4">
+        <InlineAuthGate onAuthSuccess={() => {
+          setAuthRequired(false);
+          setChecking(true);
+          setAuthRetryTick((prev) => prev + 1);
+        }} />
       </div>
     );
   }
