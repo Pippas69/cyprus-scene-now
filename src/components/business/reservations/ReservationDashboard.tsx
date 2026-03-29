@@ -117,7 +117,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .select('id, title, start_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
-        .gte('end_at', new Date().toISOString())
+        .is('archived_at', null)
         .order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
@@ -223,7 +223,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .select('id, title, start_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
-        .gte('end_at', new Date().toISOString())
+        .is('archived_at', null)
         .order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
