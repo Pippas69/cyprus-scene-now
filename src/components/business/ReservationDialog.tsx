@@ -55,7 +55,21 @@ export const ReservationDialog = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [capacityLoading, setCapacityLoading] = useState(false);
-  const profileName = useProfileName(userId);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const profileName = useProfileName(currentUserId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setCurrentUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Auto-fill reservation name with profile name
   useEffect(() => {
