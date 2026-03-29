@@ -6391,6 +6391,21 @@ export type Database = {
           total_visits: number
         }[]
       }
+      get_crm_guest_stats_v2: {
+        Args: { p_business_id: string }
+        Returns: {
+          avg_party_size: number
+          favorite_table: string
+          first_visit: string
+          guest_id: string
+          last_visit: string
+          total_cancellations: number
+          total_no_shows: number
+          total_reservations: number
+          total_spend_cents: number
+          total_visits: number
+        }[]
+      }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       get_event_attendees_with_similarity: {
         Args: { current_user_id: string; event_id_param: string }
