@@ -574,12 +574,17 @@ export const DirectReservationDialog = ({
     }
   }, [formData.preferred_date, timeSlots.length, fullyBookedSlots, closedSlots]);
 
-  const formContent =
+  const formContent = showAuthGate && !isAuthenticated ? (
+    <div className="space-y-4">
+      <InlineAuthGate onAuthSuccess={() => {
+        setShowAuthGate(false);
+      }} />
+      <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
+        {language === 'el' ? '← Πίσω στη φόρμα' : '← Back to form'}
+      </Button>
+    </div>
+  ) : (
   <form onSubmit={handleSubmit} className="space-y-4">
-      {!isAuthenticated && (
-        <div className="mb-4">
-          <InlineAuthGate onAuthSuccess={() => {}} />
-        </div>
       )}
       {settingsLoading ?
     <div className="text-sm text-muted-foreground text-center py-4">
@@ -817,12 +822,12 @@ export const DirectReservationDialog = ({
         
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || !isAuthenticated || availableCapacity === 0 || timeSlots.length === 0}>
-            {!isAuthenticated ? (language === 'el' ? 'Συνδεθείτε πρώτα' : 'Sign in first') : loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
+          <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0 || timeSlots.length === 0}>
+            {loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
           </Button>
         </>
     }
-    </form>;
+    </form>);
 
 
   if (isMobile) {
