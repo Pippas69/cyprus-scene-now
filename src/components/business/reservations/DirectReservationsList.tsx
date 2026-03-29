@@ -501,6 +501,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0, userId: o.user_id };
       });
 
+      // Count tickets per order for per-ticket price calculation
+      const completedTickets = tickets.filter(t => completedOrderIds.has(t.order_id));
+      completedTickets.forEach(t => {
+        if (orderMap[t.order_id]) orderMap[t.order_id].ticketCount++;
+      });
+
       // Fetch account cities from profiles (city or fallback town)
       const userIds = [...new Set(completedTickets.map((t: any) => t.user_id).filter(Boolean))];
       const cityMap: Record<string, string | null> = {};
@@ -512,12 +518,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (isStaleRequest()) return;
         (profiles || []).forEach(p => { cityMap[p.id] = p.city || (p as any).town || null; });
       }
-
-      // Count tickets per order for per-ticket price calculation
-      const completedTickets = tickets.filter(t => completedOrderIds.has(t.order_id));
-      completedTickets.forEach(t => {
-        if (orderMap[t.order_id]) orderMap[t.order_id].ticketCount++;
-      });
 
       // Get tier names
       const tierIds = [...new Set(completedTickets.map(t => t.tier_id).filter(Boolean))];
@@ -538,8 +538,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const perTicketPrice = order && order.ticketCount > 0
           ? Math.round(order.subtotal / order.ticketCount)
           : 0;
-        const accountCity = cityMap[(t as any).user_id] || null;
-        const isAccountUser = !!accountCity;
+        const ticketUserId = (t as any).user_id as string | null;
+        const accountCity = ticketUserId ? (cityMap[ticketUserId] || null) : null;
+        const isAccountUser = !!ticketUserId;
 
         return {
           id: t.order_id,
