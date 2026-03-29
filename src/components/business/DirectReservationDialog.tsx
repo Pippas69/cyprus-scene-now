@@ -628,8 +628,7 @@ export const DirectReservationDialog = ({
             onChange={(e) => setFormData({ ...formData, reservation_name: e.target.value })}
             placeholder={t.namePlaceholder}
             required
-            readOnly={!!profileName}
-            className={`text-xs sm:text-sm h-9 sm:h-10 ${profileName ? 'bg-muted cursor-not-allowed' : ''}`} />
+            className="text-xs sm:text-sm h-9 sm:h-10" />
           
             </div>
             <div className="space-y-1.5">
