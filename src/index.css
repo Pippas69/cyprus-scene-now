@@ -35,6 +35,18 @@ input[type="password"]::-webkit-caps-lock-indicator {
   pointer-events: none;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus — inputs must be ≥16px */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea, [contenteditable] {
+    font-size: 16px !important;
+  }
+}
+@media screen and (max-width: 768px) {
+  input, select, textarea, [contenteditable] {
+    font-size: 16px !important;
+  }
+}
+
 /* White autofill for light-themed sections (e.g. Waitlist) */
 .bg-white input:-webkit-autofill,
 .bg-white input:-webkit-autofill:hover,
