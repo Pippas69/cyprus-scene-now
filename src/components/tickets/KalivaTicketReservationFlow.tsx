@@ -430,6 +430,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
   const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber) && isEmailValid;
 
+  // Dynamic step: auth/profile gate between step 1 and step 2
+  const getEffectiveStep = (): number | 'auth' | 'profile' => {
+    if (step === 2 && !isAuthenticated) return 'auth';
+    if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
+    return step;
+  };
+  const effectiveStep = getEffectiveStep();
+
   const handleCheckout = async () => {
     if (!allGuestsFilled) {
       toast.error(t.fillAllGuests);
@@ -789,6 +797,30 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         </div>
       );
     }
+
+    if (effectiveStep === 'auth') {
+      return (
+        <InlineAuthGate onAuthSuccess={() => {}} />
+      );
+    }
+
+    if (effectiveStep === 'profile') {
+      return (
+        <ProfileCompletionGate onComplete={(profile) => {
+          setProfileComplete(true);
+          setGuests(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
+            return updated;
+          });
+          setPhoneNumber(profile.phone);
+          supabase.auth.getUser().then(({ data }) => {
+            if (data.user?.email) setCustomerEmail(data.user.email);
+          });
+        }} />
+      );
+    }
+
     switch (step) {
       case 1: return renderStep1();
       case 2: return renderStep2();
@@ -798,6 +830,19 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   };
 
   const renderNavigation = () => {
+    // Auth/profile gate: show back button only
+    if (effectiveStep === 'auth' || effectiveStep === 'profile') {
+      return (
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+          <div />
+        </div>
+      );
+    }
+
     // If we're on step 3 and checkout URL is active
     if (step === 3 && checkoutUrl) {
       return (
