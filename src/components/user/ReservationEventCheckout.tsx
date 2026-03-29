@@ -866,6 +866,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
 
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {language === 'el'
+                ? 'Κάθε άτομο θα λάβει ξεχωριστό QR code.'
+                : 'Each person will receive an individual QR code.'}
+            </p>
+
             <div className="flex items-start gap-2.5 pt-1">
               <Checkbox
                 id="reservation-terms-accept"
