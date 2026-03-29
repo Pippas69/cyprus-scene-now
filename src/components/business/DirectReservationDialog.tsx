@@ -418,6 +418,12 @@ export const DirectReservationDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // If not authenticated, show auth gate instead of submitting
+    if (!isAuthenticated) {
+      setShowAuthGate(true);
+      return;
+    }
+
     if (!formData.reservation_name.trim()) {
       toast.error(language === 'el' ? 'Παρακαλώ εισάγετε όνομα' : 'Please enter a name');
       return;
