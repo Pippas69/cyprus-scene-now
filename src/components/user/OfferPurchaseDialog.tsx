@@ -199,10 +199,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setWantsReservation(false);
       setReservationDate(undefined);
       setReservationTime("");
+      setReservationName('');
+      setReservationPhone('');
+      setReservationSeating('none');
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
-      // showAuthGate removed — auth is shown upfront
     }
   }, [isOpen]);
 
@@ -483,7 +485,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         requestBody.reservationData = {
           preferred_date: format(reservationDate, 'yyyy-MM-dd'),
           preferred_time: reservationTime,
-          party_size: partySize
+          party_size: partySize,
+          reservation_name: reservationName.trim() || guestNames[0]?.trim() || '',
+          phone_number: reservationPhone.trim() || '',
+          seating_preference: reservationSeating !== 'none' ? reservationSeating : null,
         };
       }
 
