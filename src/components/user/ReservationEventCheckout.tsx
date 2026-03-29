@@ -62,8 +62,8 @@ const translations = {
     title: "Κράτηση Θέσης",
     steps: {
       seating: "Επιλογή Θέσης",
-      details: "Στοιχεία",
-      review: "Επισκόπηση",
+      details: "Στοιχεία Παρέας",
+      review: "Σύνοψη",
     },
     seatingTypes: {
       bar: "Μπαρ",
@@ -128,8 +128,8 @@ const translations = {
     title: "Book a Seat",
     steps: {
       seating: "Choose Seating",
-      details: "Your Details",
-      review: "Review",
+      details: "Party Details",
+      review: "Summary",
     },
     seatingTypes: {
       bar: "Bar",
@@ -229,11 +229,14 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
   const [profileComplete, setProfileComplete] = useState(false);
+  const [isFreshSignup, setIsFreshSignup] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
       if (data.user) setCurrentUserId(data.user.id);
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -540,6 +543,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return (
         <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
+          if (!wasAuthenticatedOnMount) {
+            setIsFreshSignup(true);
+          }
           // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
@@ -637,8 +643,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               />
             </div>
 
-            {/* Phone - hide if auto-filled from profile */}
-            {!profileComplete || !phoneNumber ? (
+            {/* Phone - show always for existing users, hide for fresh signup */}
+            {!isFreshSignup && (
               <div className="space-y-1">
                 <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
                   <Phone className="h-3.5 w-3.5" />
@@ -653,10 +659,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   className="h-9 text-sm"
                 />
               </div>
-            ) : null}
+            )}
 
-            {/* Email - hide if auto-filled from profile */}
-            {!profileComplete || !customerEmail ? (
+            {/* Email - show always for existing users, hide for fresh signup */}
+            {!isFreshSignup && (
               <div className="space-y-1">
                 <Label htmlFor="email" className="flex items-center gap-2 text-sm">
                   <Mail className="h-3.5 w-3.5" />
@@ -671,7 +677,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   className="h-9 text-sm"
                 />
               </div>
-            ) : null}
+            )}
 
             {/* Party Size */}
             <div className="space-y-1">
@@ -818,15 +824,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
-            {selectedSeating && (
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium mb-1">{t.policies}</p>
-                <p>{t.noShowPolicy[selectedSeating.no_show_policy as keyof typeof t.noShowPolicy]}</p>
-              </div>
-            )}
-
-            <Separator />
-
             {isDeferredPayment && (
               <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm space-y-1">
                 <p className="font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
@@ -875,7 +872,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 className="mt-0.5 rounded-[6px]"
               />
-              <label htmlFor="reservation-terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
+              <label htmlFor="reservation-terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
                 {t.termsLabel}{' '}
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
                 {' '}{t.andThe}{' '}

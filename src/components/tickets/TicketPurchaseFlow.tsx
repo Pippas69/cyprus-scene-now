@@ -75,8 +75,8 @@ const translations = {
       tickets: "Επιλογή Εισιτηρίων",
       auth: "Σύνδεση",
       profile: "Στοιχεία Προφίλ",
-      guests: "Στοιχεία Καλεσμένων",
-      checkout: "Ολοκλήρωση",
+      guests: "Ονόματα Καλεσμένων",
+      checkout: "Σύνοψη",
     },
     available: "διαθέσιμα",
     soldOut: "Εξαντλήθηκαν",
@@ -129,8 +129,8 @@ const translations = {
       tickets: "Select Tickets",
       auth: "Sign In",
       profile: "Profile Details",
-      guests: "Guest Details",
-      checkout: "Checkout",
+      guests: "Guest Names",
+      checkout: "Summary",
     },
     available: "available",
     soldOut: "Sold Out",
@@ -227,6 +227,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [buyerFullName, setBuyerFullName] = useState('');
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [isFreshSignup, setIsFreshSignup] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
@@ -236,6 +238,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
       setAuthUserId(data.user?.id ?? null);
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -602,7 +605,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               <Users className="h-3.5 w-3.5" />
               {t.guestDetails} ({totalTickets} {t.people})
             </Label>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
+            
             <div className="space-y-1.5 max-h-52 overflow-y-auto">
               {guestNames.map((name, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -645,37 +648,33 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         )}
 
-        {/* Account contact */}
-        {totalTickets > 0 && (!buyerProfile?.phone || !customerEmail) && (
+        {/* Account contact — show phone/email if NOT a fresh signup */}
+        {totalTickets > 0 && !isFreshSignup && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">{t.accountContact}</Label>
             <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-3">
-              {!buyerProfile?.phone && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
-                  <Input
-                    id="ticket-checkout-phone"
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="+357 99 123456"
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-              {!customerEmail && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
-                  <Input
-                    id="ticket-checkout-email"
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="example@email.com"
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
+                <Input
+                  id="ticket-checkout-phone"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+357 99 123456"
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
+                <Input
+                  id="ticket-checkout-email"
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  className="h-9 text-sm"
+                />
+              </div>
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -686,8 +685,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             />
           </div>
         )}
-        {/* Special Requests when account details are auto-filled */}
-        {totalTickets > 0 && buyerProfile?.phone && customerEmail && (
+        {/* Special Requests when fresh signup (contact auto-filled) */}
+        {totalTickets > 0 && isFreshSignup && (
           <CollapsibleSpecialRequests
             value={specialRequests}
             onChange={setSpecialRequests}
@@ -785,7 +784,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           onCheckedChange={(checked) => setTermsAccepted(checked === true)}
           className="mt-0.5 rounded-[6px]"
         />
-        <label htmlFor="terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
+        <label htmlFor="terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
           {t.termsLabel}{' '}
           <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
           {' '}{t.andThe}{' '}
@@ -872,6 +871,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <ProfileCompletionGate onComplete={async (profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
+      // Mark as fresh signup if user was NOT authenticated when dialog opened
+      if (!wasAuthenticatedOnMount) {
+        setIsFreshSignup(true);
+      }
       // Buffer buyer name — will be applied to guestNames[0] via useEffect
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();
       setBuyerFullName(fullName);
