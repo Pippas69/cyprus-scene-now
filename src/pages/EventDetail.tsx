@@ -853,28 +853,6 @@ export default function EventDetail() {
               }
             </div>
 
-            {/* Similar Events */}
-            <div className="mt-4">
-              <h2 className="text-lg sm:text-xl font-bold mb-3">{text.similarEvents}</h2>
-              {similarEvents.length > 0 ?
-              <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible">
-                
-                  {similarEvents.map((similar) =>
-                <motion.div key={similar.id} variants={itemVariants}>
-                      <UnifiedEventCard event={similar} language={language} size="mobileFixed" />
-                    </motion.div>
-                )}
-                </motion.div> :
-
-              <p className="text-sm text-muted-foreground">
-                  {language === 'el' ? 'Δεν βρέθηκαν παρόμοια events' : 'No similar events found'}
-                </p>
-              }
-            </div>
           </div>
 
           {/* Sidebar - hidden on mobile/tablet, shown on desktop (lg+) */}
