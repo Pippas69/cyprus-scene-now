@@ -844,7 +844,7 @@ export const DirectReservationDialog = ({
               <DialogTitle className="text-sm font-bold">{t.title}</DialogTitle>
               <DialogDescription className="text-xs">{t.description}</DialogDescription>
             </DialogHeader>
-            <div className="flex-1 overflow-y-auto px-4 py-4">{formContent}</div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 [&_input]:!text-xs [&_textarea]:!text-xs">{formContent}</div>
           </DialogContent>
         </Dialog>
         <ReservationSuccessDialog
