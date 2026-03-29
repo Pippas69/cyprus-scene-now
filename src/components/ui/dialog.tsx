@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "dialog-content fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-premium sm:rounded-xl",
-        "[&_input]:text-[16px] [&_textarea]:text-[16px] [&_select]:text-[16px] md:[&_input]:text-sm md:[&_textarea]:text-sm md:[&_select]:text-sm",
+        "[&_input]:!text-base [&_textarea]:!text-base [&_select]:!text-base md:[&_input]:!text-sm md:[&_textarea]:!text-sm md:[&_select]:!text-sm",
         // Partiful-style spring animation
         "data-[state=open]:animate-[dialog-spring-in_0.4s_cubic-bezier(0.34,1.56,0.64,1)]",
         "data-[state=closed]:animate-[dialog-spring-out_0.2s_ease-out]",
