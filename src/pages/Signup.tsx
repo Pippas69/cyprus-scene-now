@@ -33,6 +33,7 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
@@ -158,12 +159,27 @@ const Signup = () => {
       if (error) {
         if (error.message.includes("already registered")) {
           toast.error(language === "el" ? "Αυτό το email είναι ήδη καταχωρημένο" : "This email is already registered");
+        } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("rate_limit")) {
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+          if (newAttempts >= 5) {
+            toast.error(language === "el" ? "Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά αργότερα." : "Too many failed attempts. Please try again later.");
+          } else {
+            toast.error(language === "el" ? "Κάτι πήγε στραβά. Δοκιμάστε ξανά." : "Something went wrong. Please try again.");
+          }
         } else {
-          toast.error(error.message);
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+          if (newAttempts >= 5 && (error.message.toLowerCase().includes("email") || error.message.toLowerCase().includes("limit"))) {
+            toast.error(language === "el" ? "Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά αργότερα." : "Too many failed attempts. Please try again later.");
+          } else {
+            toast.error(error.message);
+          }
         }
         return;
       }
       if (data.user) {
+        setFailedAttempts(0);
         // Ensure demographic/profile fields are persisted immediately (do not rely on triggers)
         const { error: profileUpsertError } = await supabase
           .from("profiles")

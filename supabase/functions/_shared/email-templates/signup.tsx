@@ -21,40 +21,45 @@ interface SignupEmailProps {
   siteUrl: string
   recipient: string
   confirmationUrl: string
+  token?: string
 }
 
 export const SignupEmail = ({
   siteName,
   siteUrl,
   recipient,
+  token,
+  confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta charSet="utf-8" /></Head>
-    <Preview>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F! \uD83C\uDF89'}</Preview>
+    <Preview>{'Ο κωδικός επαλήθευσής σου για το ΦΟΜΟ'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
           <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u039A\u03B1\u03BB\u03CE\u03C2 \u03AE\u03C1\u03B8\u03B5\u03C2! \uD83C\uDF89'}</Heading>
+        <Heading style={h1}>{'Επαλήθευσε τον λογαριασμό σου'}</Heading>
         <Text style={text}>
-          {'\u0397 \u03B5\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE \u03C3\u03BF\u03C5 \u03C3\u03C4\u03BF'}{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{'\u03A6\u039F\u039C\u039F'}</strong>
-          </Link>{' '}
-          {'\u03BF\u03BB\u03BF\u03BA\u03BB\u03B7\u03C1\u03CE\u03B8\u03B7\u03BA\u03B5 \u03B5\u03C0\u03B9\u03C4\u03C5\u03C7\u03CE\u03C2!'}
+          {'Ευχαριστούμε για την εγγραφή σου στο ΦΟΜΟ! Χρησιμοποίησε τον παρακάτω κωδικό για να επαληθεύσεις τον λογαριασμό σου:'}
         </Text>
+        {token ? (
+          <Section style={codeSection}>
+            <Text style={codeText}>{token}</Text>
+          </Section>
+        ) : confirmationUrl ? (
+          <Section style={buttonSection}>
+            <Button style={button} href={confirmationUrl}>
+              {'Επαλήθευση Email →'}
+            </Button>
+          </Section>
+        ) : null}
         <Text style={text}>
-          {'\u039C\u03C0\u03BF\u03C1\u03B5\u03AF\u03C2 \u03C4\u03CE\u03C1\u03B1 \u03BD\u03B1 \u03B1\u03BD\u03B1\u03BA\u03B1\u03BB\u03CD\u03C8\u03B5\u03B9\u03C2 \u03C4\u03B1 \u03BA\u03B1\u03BB\u03CD\u03C4\u03B5\u03C1\u03B1 events, \u03C0\u03C1\u03BF\u03C3\u03C6\u03BF\u03C1\u03AD\u03C2 \u03BA\u03B1\u03B9 \u03B5\u03BC\u03C0\u03B5\u03B9\u03C1\u03AF\u03B5\u03C2 \u03C3\u03C4\u03B7\u03BD \u039A\u03CD\u03C0\u03C1\u03BF.'}
+          {'Ο κωδικός αυτός ισχύει για 15 λεπτά. Αν δεν ζήτησες εσύ αυτόν τον κωδικό, αγνόησε αυτό το email.'}
         </Text>
-        <Section style={buttonSection}>
-          <Button style={button} href={siteUrl}>
-            {'\u039E\u03B5\u03BA\u03AF\u03BD\u03B1 \u03A4\u03CE\u03C1\u03B1 \u2192'}
-          </Button>
-        </Section>
         <Text style={footer}>
-          {'\u0391\u03BD \u03B4\u03B5\u03BD \u03B4\u03B7\u03BC\u03B9\u03BF\u03CD\u03C1\u03B3\u03B7\u03C3\u03B5\u03C2 \u03B5\u03C3\u03CD \u03BB\u03BF\u03B3\u03B1\u03C1\u03B9\u03B1\u03C3\u03BC\u03CC, \u03B1\u03B3\u03BD\u03CC\u03B7\u03C3\u03B5 \u03B1\u03C5\u03C4\u03CC \u03C4\u03BF email.'}
+          {'Αν δεν δημιούργησες εσύ λογαριασμό, αγνόησε αυτό το email.'}
         </Text>
         <Hr style={divider} />
         <Text style={brand}>{'\u00A9 2026 \u03A6\u039F\u039C\u039F \u00B7 fomo.com.cy'}</Text>
@@ -75,5 +80,7 @@ const text = { fontSize: '14px', color: '#334155', lineHeight: '1.6', margin: '0
 const link = { color: '#4ECDC4', textDecoration: 'underline' }
 const buttonSection = { textAlign: 'center' as const, margin: '24px 0' }
 const button = { backgroundColor: '#0D3B66', color: '#ffffff', fontSize: '14px', borderRadius: '16px', padding: '12px 28px', textDecoration: 'none', fontWeight: 'bold' as const }
+const codeSection = { textAlign: 'center' as const, margin: '24px 0', padding: '20px', backgroundColor: '#f1f5f9', borderRadius: '12px' }
+const codeText = { fontSize: '32px', fontWeight: 'bold' as const, color: '#0D3B66', letterSpacing: '6px', margin: '0', textAlign: 'center' as const }
 const footer = { fontSize: '12px', color: '#94a3b8', margin: '24px 0 0' }
 const brand = { fontSize: '11px', color: '#cbd5e1', textAlign: 'center' as const, margin: '0' }
