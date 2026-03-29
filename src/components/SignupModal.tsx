@@ -202,6 +202,10 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     try {
       const redirectUrl = `${window.location.origin}/ekdiloseis`;
       
+      // Format full phone number
+      const phonePrefix = formData.phoneCountry === 'CY' ? '+357' : '+30';
+      const fullPhone = phonePrefix + formData.phone.replace(/\D/g, '');
+
       // Sign up with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -213,6 +217,7 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
             last_name: formData.lastName,
             age: formData.age,
             town: formData.town,
+            phone: fullPhone,
             gender: formData.gender || null,
             preferences: selectedPreferences,
             is_student: isStudent,
@@ -231,6 +236,9 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
           .upsert(
             {
               id: authData.user.id,
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              phone: fullPhone,
               gender: formData.gender || null,
               age: typeof formData.age === "number" ? formData.age : null,
               town: formData.town,
