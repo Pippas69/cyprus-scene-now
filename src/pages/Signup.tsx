@@ -84,6 +84,7 @@ const Signup = () => {
       selectedUniversity: ""
     }
   });
+  const watchedPassword = form.watch("password");
   
   const [isStudent, setIsStudent] = useState(false);
   const [universityEmail, setUniversityEmail] = useState("");
