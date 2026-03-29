@@ -825,7 +825,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   // === CLAIM FORM ===
   const canClaim = (peopleRemaining === null || peopleRemaining >= partySize) && !isLoading;
-  const reservationValid = !wantsReservation || (reservationName.trim() !== '' && reservationPhone.replace(/\D/g, '').length >= 8 && reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError);
+  const reservationPhoneDigits = reservationPhone.replace(/\D/g, '').length;
+  const reservationValid = !wantsReservation || (reservationName.trim() !== '' && reservationPhoneDigits >= 8 && reservationPhoneDigits <= 15 && reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError);
   const claimEnabled = canClaim && reservationValid;
 
   const formContent = !isAuthenticated ? (
@@ -957,7 +958,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       <div className="h-1.5" />
 
       {/* RESERVATION SECTION */}
-      <ReservationSection />
+      {ReservationSection()}
 
       {/* Walk-in Note */}
       {!wantsReservation && (

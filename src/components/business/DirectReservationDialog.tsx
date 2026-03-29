@@ -579,9 +579,7 @@ export const DirectReservationDialog = ({
       <ProfileCompletionGate onComplete={(profile) => {
         setFormData(prev => ({
           ...prev,
-          reservation_name: `${profile.firstName} ${profile.lastName}`,
           guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
-          phone_number: profile.phone,
         }));
       }} />
     </div>
