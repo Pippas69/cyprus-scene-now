@@ -142,7 +142,7 @@ const ResetPassword = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={loading || (form.getValues("password") || "").length < 8 || (form.getValues("confirmPassword") || "").length < 8 || form.getValues("password") !== form.getValues("confirmPassword")}>
+              <Button type="submit" className="w-full" disabled={loading || (form.watch("password") || "").length < 8 || (form.watch("confirmPassword") || "").length < 8 || form.watch("password") !== form.watch("confirmPassword")}>
                 {loading 
                   ? (language === 'el' ? "Αποθήκευση..." : "Saving...") 
                   : (language === 'el' ? "Αλλαγή Κωδικού" : "Change Password")}
