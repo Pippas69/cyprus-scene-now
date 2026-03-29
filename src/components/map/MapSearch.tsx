@@ -123,7 +123,6 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
             "[&]:pb-0 [&]:pt-0 [-webkit-appearance:none]"
           )}
           style={{ backgroundColor: '#0D3B66', paddingBottom: '2px', paddingTop: '0px' }}
-          style={{ backgroundColor: '#0D3B66' }}
         />
       </div>
 
