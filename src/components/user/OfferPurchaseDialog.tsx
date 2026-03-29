@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { InlineAuthGate } from "@/components/tickets/InlineAuthGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -443,7 +444,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error(t("errorAuth"));
+        setIsLoading(false);
         return;
       }
 

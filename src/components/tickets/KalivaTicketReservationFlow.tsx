@@ -914,7 +914,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     <div className="space-y-4">
       {renderStepIndicator()}
       <div className="text-center mb-4">
-        <Badge variant="outline">{Object.values(t.steps)[step - 1]}</Badge>
+        <Badge variant="outline">
+          {effectiveStep === 'auth' 
+            ? (language === 'el' ? 'Σύνδεση' : 'Sign In')
+            : effectiveStep === 'profile'
+            ? (language === 'el' ? 'Στοιχεία Προφίλ' : 'Profile Details')
+            : Object.values(t.steps)[step - 1]}
+        </Badge>
       </div>
       {renderStepContent()}
       {!loading && seatingOptions.length > 0 && renderNavigation()}
