@@ -824,15 +824,6 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
-            {selectedSeating && (
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium mb-1">{t.policies}</p>
-                <p>{t.noShowPolicy[selectedSeating.no_show_policy as keyof typeof t.noShowPolicy]}</p>
-              </div>
-            )}
-
-            <Separator />
-
             {isDeferredPayment && (
               <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm space-y-1">
                 <p className="font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
@@ -881,7 +872,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 className="mt-0.5 rounded-[6px]"
               />
-              <label htmlFor="reservation-terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
+              <label htmlFor="reservation-terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
                 {t.termsLabel}{' '}
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
                 {' '}{t.andThe}{' '}
