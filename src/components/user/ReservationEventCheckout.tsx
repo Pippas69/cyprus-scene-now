@@ -679,29 +679,31 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 <Users className="h-3.5 w-3.5" />
                 {t.partySize}
               </Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
-                  disabled={partySize <= partySizeLimits.min}
-                >
-                  -
-                </Button>
-                <span className="text-lg font-bold min-w-[2ch] text-center">
-                  {partySize}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
-                  disabled={partySize >= partySizeLimits.max}
-                >
-                  +
-                </Button>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">{t.people}</span>
+              <div className="rounded-lg border border-border bg-card px-2.5 py-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
+                    disabled={partySize <= partySizeLimits.min}
+                  >
+                    -
+                  </Button>
+                  <span className="text-base font-semibold min-w-[2ch] text-center">
+                    {partySize}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
+                    disabled={partySize >= partySizeLimits.max}
+                  >
+                    +
+                  </Button>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t.people}</span>
+                </div>
               </div>
             </div>
 
@@ -741,9 +743,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
             {price ? (
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary">
+              <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                 <span className="text-sm font-medium">{t.prepaidAmount}</span>
-                <span className="text-base font-bold text-primary ml-3 shrink-0">
+                <span className="text-base font-semibold text-foreground ml-3 shrink-0">
                   {formatPrice(price)}
                 </span>
               </div>
@@ -866,23 +868,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               </div>
             </div>
 
-            <div className={cn(
-              "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
-              termsAccepted
-                ? "border-primary/40 bg-primary/5"
-                : "border-border/70 bg-card/60"
-            )}>
+            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
               <Checkbox
                 id="reservation-terms-accept"
                 checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
                 className="mt-0.5 rounded-[6px]"
               />
-              <label htmlFor="reservation-terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
+              <label htmlFor="reservation-terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
                 {t.termsLabel}{' '}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
                 {' '}{t.andThe}{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
               </label>
             </div>
           </div>

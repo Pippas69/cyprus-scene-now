@@ -624,21 +624,21 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             </Label>
           )}
         </div>
-        <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-2.5">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card p-2">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
+            <Button variant="outline" size="icon" className="h-7 w-7 shrink-0"
               onClick={() => setPartySize(Math.max(partySizeLimits.min, partySize - 1))}
               disabled={partySize <= partySizeLimits.min}
             >-</Button>
-            <span className="text-lg font-bold min-w-[2ch] text-center">{partySize}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0"
+            <span className="text-base font-semibold min-w-[2ch] text-center">{partySize}</span>
+            <Button variant="outline" size="icon" className="h-7 w-7 shrink-0"
               onClick={() => setPartySize(Math.min(partySizeLimits.max, partySize + 1))}
               disabled={partySize >= partySizeLimits.max}
             >+</Button>
-            <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
           {ticketTier && ticketPricePerPerson > 0 && (
-            <span className="text-lg font-bold text-foreground">{formatPrice(ticketTotal)}</span>
+            <span className="text-base font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
           )}
           {ticketTier && ticketPricePerPerson === 0 && (
             <span className="text-sm font-medium text-foreground">{t.free}</span>
@@ -648,12 +648,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
       {/* Min Charge Info */}
       {minChargeCents != null && minChargeCents > 0 && (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted border border-border">
-          <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-          <div className="text-xs text-muted-foreground whitespace-pre-line">
+        <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card/60">
+          <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <div className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{t.minimumCharge}: {formatPrice(minChargeCents)}</span>
-            <br />
-            {t.paidAtVenue}
           </div>
         </div>
       )}
@@ -818,8 +816,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
 
         {minChargeCents != null && minChargeCents > 0 && (
-          <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 border border-border">
-            <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-2 rounded-lg border border-border bg-card/60">
+            <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
             <div className="text-xs text-muted-foreground whitespace-pre-line">
               {t.minimumCharge}: <strong className="text-foreground">{formatPrice(minChargeCents)}</strong>
               <br />{t.paidAtVenue}
@@ -833,30 +831,25 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
         </div>
 
-        <div className={cn(
-          "flex items-start gap-3 p-3.5 rounded-xl border transition-colors",
-          termsAccepted
-            ? "border-primary/40 bg-primary/5"
-            : "border-border/70 bg-card/60"
-        )}>
+        <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
           <Checkbox
             id="kaliva-terms-accept"
             checked={termsAccepted}
             onCheckedChange={(checked) => setTermsAccepted(checked === true)}
             className="mt-0.5 rounded-[6px]"
           />
-          <label htmlFor="kaliva-terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
+          <label htmlFor="kaliva-terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
             {t.termsLabel}{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
             {' '}{t.andThe}{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.privacyLink}</a>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
           </label>
         </div>
       </div>
 
       {/* QR info */}
-      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
-        <Ticket className="h-4 w-4 text-primary shrink-0" />
+      <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-card/60">
+        <Ticket className="h-4 w-4 text-muted-foreground shrink-0" />
         <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
       </div>
     </div>
