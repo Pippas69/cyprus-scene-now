@@ -568,12 +568,16 @@ export default function EventDetail() {
       </div>
       
       <div className="container mx-auto px-4 py-4 lg:py-8 pt-2 lg:pt-24">
-        {/* Desktop-only back button */}
+        {/* Back button — above image on mobile, inline on desktop */}
+        <button
+          onClick={() => navigate(-1)}
+          className="lg:hidden mb-3 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/50 hover:bg-card transition-colors">
+          <ArrowLeft className="h-4 w-4 text-foreground" />
+        </button>
         <RippleButton
           variant="ghost"
           onClick={() => navigate(-1)}
           className="mb-4 gap-2 relative z-20 hidden lg:inline-flex">
-          
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
         </RippleButton>
@@ -583,7 +587,7 @@ export default function EventDetail() {
           <div className="lg:col-span-2 space-y-4">
             {/* Hero Image — premium style with title + price overlaid */}
             <motion.div
-              className="relative rounded-2xl shadow-lg overflow-hidden -mx-4 sm:mx-0 lg:rounded-xl"
+              className="relative rounded-2xl shadow-lg overflow-hidden sm:mx-0 lg:rounded-xl"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}>
@@ -595,7 +599,6 @@ export default function EventDetail() {
                   alt={event.title}
                   className="w-full h-full object-cover" /> :
 
-
                 <div className="w-full h-full bg-muted flex items-center justify-center">
                     <PartyPopper className="h-16 w-16 text-muted-foreground/40" />
                   </div>
@@ -604,14 +607,6 @@ export default function EventDetail() {
 
               {/* Gradient overlay at bottom for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-
-              {/* Back arrow — overlaid on image (mobile/tablet only) */}
-              <button
-                onClick={() => navigate(-1)}
-                className="lg:hidden absolute top-3 left-3 sm:left-4 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/15 z-10 hover:bg-black/60 transition-colors">
-                
-                <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
-              </button>
 
               {/* RSVP — top right on image */}
               <div className="absolute top-3 right-3 sm:right-4 flex items-center gap-3 z-10">
