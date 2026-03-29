@@ -302,6 +302,20 @@ const SignupBusiness = () => {
         // Silent fail - email notification is not critical
       }
 
+      // Send welcome email (non-blocking)
+      try {
+        await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'welcome-business',
+            recipientEmail: data.email,
+            idempotencyKey: `welcome-business-${authData.user.id}`,
+            templateData: { businessName: data.businessName },
+          },
+        });
+      } catch (welcomeErr) {
+        console.error('Welcome email error:', welcomeErr);
+      }
+
       // Show detailed success message
       toast({
         title: language === 'el' ? "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!" : "Registration completed successfully!",
