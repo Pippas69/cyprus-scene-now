@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
@@ -839,23 +838,22 @@ export const DirectReservationDialog = ({
   if (isMobile) {
     return (
       <>
-        <Drawer open={open} onOpenChange={onOpenChange}>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{t.title}</DrawerTitle>
-              <DrawerDescription>{t.description}</DrawerDescription>
-            </DrawerHeader>
-            <div className="px-4 pb-4 max-h-[70vh] overflow-y-auto">{formContent}</div>
-          </DrawerContent>
-        </Drawer>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
+              <DialogTitle className="text-sm font-bold">{t.title}</DialogTitle>
+              <DialogDescription className="text-xs">{t.description}</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto px-4 py-4">{formContent}</div>
+          </DialogContent>
+        </Dialog>
         <ReservationSuccessDialog
           open={successDialog.open}
           onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
           reservation={successDialog.reservation}
           language={language} />
-        
-      </>);
-
+      </>
+    );
   }
 
   return (
