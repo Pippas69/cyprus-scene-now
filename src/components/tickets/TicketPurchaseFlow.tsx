@@ -323,7 +323,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     if (!digits) return false;
     if (digits.startsWith('357')) return digits.length === 11;
     if (digits.startsWith('30')) return digits.length === 12;
-    return digits.length === 8 || digits.length === 10;
+    return false;
   };
 
   const isValidCheckoutEmail = (raw: string) => /\S+@\S+\.\S+/.test(raw.trim());
