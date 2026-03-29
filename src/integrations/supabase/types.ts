@@ -3682,6 +3682,7 @@ export type Database = {
           is_waitlist: boolean | null
           last_name: string | null
           name: string | null
+          phone: string | null
           preferences: string[] | null
           reservation_cancellation_count: number | null
           reservation_restricted_until: string | null
@@ -3712,6 +3713,7 @@ export type Database = {
           is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
+          phone?: string | null
           preferences?: string[] | null
           reservation_cancellation_count?: number | null
           reservation_restricted_until?: string | null
@@ -3742,6 +3744,7 @@ export type Database = {
           is_waitlist?: boolean | null
           last_name?: string | null
           name?: string | null
+          phone?: string | null
           preferences?: string[] | null
           reservation_cancellation_count?: number | null
           reservation_restricted_until?: string | null
