@@ -107,7 +107,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 text-white h-3 w-3 md:h-3.5 md:w-3.5" />
+        <Search className="absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 text-white h-2.5 w-2.5 md:h-3 md:w-3 lg:h-3.5 lg:w-3.5" />
         <Input
           type="text"
           placeholder={text[language].placeholder}
