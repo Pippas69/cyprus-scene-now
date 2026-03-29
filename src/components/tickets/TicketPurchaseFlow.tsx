@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { el as elLocale, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
@@ -1007,30 +1006,26 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[95vh]">
-          <DrawerHeader className="pb-2">
-            <DrawerTitle className="text-base">{t.title}</DrawerTitle>
-            <DrawerDescription className="text-xs">{eventTitle}</DrawerDescription>
-          </DrawerHeader>
-          <div ref={scrollRef} className="px-4 pb-6 overflow-y-auto">
-            {content}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={scrollRef} className={cn("max-h-[90vh] overflow-y-auto", hasSeating && currentStep === 'seats' ? "max-w-2xl" : "max-w-md")}>
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <DialogDescription>{eventTitle}</DialogDescription>
+      <DialogContent 
+        ref={scrollRef}
+        className={cn(
+          isMobile 
+            ? "max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" 
+            : cn("max-h-[90vh] overflow-y-auto", hasSeating && currentStep === 'seats' ? "max-w-2xl" : "max-w-md")
+        )}
+        onOpenAutoFocus={(e) => isMobile && e.preventDefault()}
+      >
+        <DialogHeader className={cn(
+          isMobile && "flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4"
+        )}>
+          <DialogTitle className={cn(isMobile && "text-sm font-bold")}>{t.title}</DialogTitle>
+          <DialogDescription className={cn(isMobile && "text-xs")}>{eventTitle}</DialogDescription>
         </DialogHeader>
-        {content}
+        <div className={cn(isMobile ? "flex-1 overflow-y-auto px-4 py-4" : "")}>
+          {content}
+        </div>
       </DialogContent>
     </Dialog>
   );

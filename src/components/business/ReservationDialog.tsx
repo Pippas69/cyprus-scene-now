@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
@@ -397,30 +397,25 @@ export const ReservationDialog = ({
     </form>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>{t.title}</DrawerTitle>
-            <DrawerDescription>{t.description}</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-4">
-            {formContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <DialogDescription>{t.description}</DialogDescription>
+      <DialogContent 
+        className={cn(
+          isMobile 
+            ? "max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" 
+            : "sm:max-w-[500px]"
+        )}
+        onOpenAutoFocus={(e) => isMobile && e.preventDefault()}
+      >
+        <DialogHeader className={cn(
+          isMobile && "flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4"
+        )}>
+          <DialogTitle className={cn(isMobile && "text-sm font-bold")}>{t.title}</DialogTitle>
+          <DialogDescription className={cn(isMobile && "text-xs")}>{t.description}</DialogDescription>
         </DialogHeader>
-        {formContent}
+        <div className={cn(isMobile && "flex-1 overflow-y-auto px-4 py-4")}>
+          {formContent}
+        </div>
       </DialogContent>
     </Dialog>
   );

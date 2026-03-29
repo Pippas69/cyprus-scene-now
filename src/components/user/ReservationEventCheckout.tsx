@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1019,30 +1018,26 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh]">
-          <DrawerHeader>
-            <DrawerTitle>{t.title}</DrawerTitle>
-            <DrawerDescription>{eventTitle}</DrawerDescription>
-          </DrawerHeader>
-          <div ref={scrollRef} className="px-4 pb-6 overflow-y-auto">
-            {content}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={scrollRef} className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <DialogDescription>{eventTitle}</DialogDescription>
+      <DialogContent 
+        ref={scrollRef}
+        className={cn(
+          isMobile 
+            ? "max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" 
+            : "max-w-md max-h-[90vh] overflow-y-auto"
+        )}
+        onOpenAutoFocus={(e) => isMobile && e.preventDefault()}
+      >
+        <DialogHeader className={cn(
+          isMobile && "flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4"
+        )}>
+          <DialogTitle className={cn(isMobile && "text-sm font-bold")}>{t.title}</DialogTitle>
+          <DialogDescription className={cn(isMobile && "text-xs")}>{eventTitle}</DialogDescription>
         </DialogHeader>
-        {content}
+        <div className={cn(isMobile ? "flex-1 overflow-y-auto px-4 py-4" : "")}>
+          {content}
+        </div>
       </DialogContent>
     </Dialog>
   );
