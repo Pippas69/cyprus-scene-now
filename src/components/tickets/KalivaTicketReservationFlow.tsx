@@ -211,6 +211,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [reservationName, setReservationName] = useState('');
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
@@ -470,6 +471,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         customerPhone: phoneNumber.trim() || null,
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,
+        reservationName: reservationName.trim() || guests[0].name.trim(),
         guests: guests.map(g => ({
           name: g.name.trim(),
           age: parseInt(g.age) || 0,
