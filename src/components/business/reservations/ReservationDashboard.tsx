@@ -53,7 +53,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       .not('archived_at', 'is', null)
       .order('start_at', { ascending: false });
     if (data) {
-      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })));
+      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })) as EventOption[]);
     }
   }, [businessId]);
 
