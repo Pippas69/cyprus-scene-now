@@ -75,24 +75,26 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('first_name, last_name, phone, city')
+        .select('first_name, last_name, phone, city, town')
         .eq('id', user.id)
         .single();
 
-      if (profile?.first_name && profile?.last_name && profile?.phone && profile?.city) {
-        // Profile already complete
-        onComplete({
-          firstName: profile.first_name,
-          lastName: profile.last_name,
-          phone: profile.phone,
-          city: profile.city,
-        });
-      } else {
-        // Pre-fill with existing data
-        if (profile?.first_name) setFirstName(profile.first_name);
-        if (profile?.last_name) setLastName(profile.last_name);
-        if (profile?.phone) setPhone(profile.phone);
-        if (profile?.city) setCity(profile.city);
+      if (profile) {
+        const p = profile as any;
+        const profileCity = p.city || p.town || '';
+        if (p.first_name && p.last_name && p.phone && profileCity) {
+          onComplete({
+            firstName: p.first_name,
+            lastName: p.last_name,
+            phone: p.phone,
+            city: profileCity,
+          });
+        } else {
+          if (p.first_name) setFirstName(p.first_name);
+          if (p.last_name) setLastName(p.last_name);
+          if (p.phone) setPhone(p.phone);
+          if (profileCity) setCity(profileCity);
+        }
       }
       setChecking(false);
     };
@@ -132,13 +134,16 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const fullPhone = country === 'CY' ? `+357${phone}` : `+30${phone}`;
+
       const { error } = await supabase
         .from('profiles')
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          phone: phone.trim(),
+          phone: fullPhone,
           city: selectedCity.trim(),
+          town: selectedCity.trim(),
         })
         .eq('id', user.id);
 
@@ -147,7 +152,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       onComplete({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim(),
+        phone: fullPhone,
         city: selectedCity.trim(),
       });
     } catch (err: any) {
@@ -203,7 +208,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
             <Phone className="h-3.5 w-3.5" /> {t.phone}
           </Label>
           <div className="flex gap-2">
-            <Select value={country} onValueChange={(val) => setCountry(val as 'CY' | 'GR')}>
+            <Select value={country} onValueChange={(val) => { setCountry(val as 'CY' | 'GR'); setPhone(''); }}>
               <SelectTrigger className="h-9 w-[100px] text-sm shrink-0">
                 <SelectValue />
               </SelectTrigger>
