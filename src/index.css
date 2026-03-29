@@ -1052,3 +1052,21 @@ All colors MUST be HSL.
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide all scrollbars inside dialogs/drawers globally */
+.dialog-content,
+.dialog-content *,
+.drawer-content,
+.drawer-content * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.dialog-content::-webkit-scrollbar,
+.dialog-content *::-webkit-scrollbar,
+.drawer-content::-webkit-scrollbar,
+.drawer-content *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+  background: transparent;
+}
