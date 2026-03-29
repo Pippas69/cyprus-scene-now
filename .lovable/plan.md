@@ -1,65 +1,22 @@
 
 
-## Πλάνο: Ενιαίο Premium Dialog Design σε Mobile (αντί Drawer)
+## Πλάνο: Μικρότερα γράμματα στα input fields του DirectReservationDialog (mobile)
 
 ### Πρόβλημα
-Αυτή τη στιγμή σε κινητό:
-- **Προσφορές** → χρησιμοποιούν κεντραρισμένο `Dialog` (premium, scrollable, σταθερό)
-- **Κρατήσεις, Εισιτήρια, Υβριδικά** → χρησιμοποιούν `Drawer` (bottom sheet) που είναι λιγότερο σταθερό και ασυνεπές
+Τα input fields (Όνομα Κράτησης, Αριθμός Ατόμων, Ονόματα Ατόμων, Τηλέφωνο, Ειδικές Απαιτήσεις) εμφανίζουν μεγαλύτερο κείμενο από το Select "Ώρα Άφιξης". Αυτό συμβαίνει γιατί το base `Input` component έχει `text-base` (16px) στις default classes, και παρόλο που περνάμε `text-xs`, ενδέχεται η σειρά εφαρμογής να μην λειτουργεί σωστά σε όλα τα στοιχεία.
 
-### Στόχος
-Αντικατάσταση του `Drawer` με `Dialog` σε **4 αρχεία** για mobile, ακολουθώντας ακριβώς το pattern της προσφοράς:
-- Κεντραρισμένο modal (`max-w-[92vw] max-h-[85vh]`)
-- Fixed header με border-bottom
-- Scrollable content area (`overflow-y-auto`)
+### Λύση
+Αλλαγή **μόνο** στο `src/components/business/DirectReservationDialog.tsx` — εφαρμογή μικρότερου ύψους και font size στα mobile inputs:
 
-### Αρχεία που αλλάζουν
+1. **Reservation Name Input** (γραμμή ~634): Προσθήκη `[&]:text-xs` για αναγκαστική εφαρμογή σε mobile
+2. **NumberInput (Party Size)** (γραμμή ~658): Ήδη μικρό, θα επιβεβαιωθεί
+3. **Guest Name Inputs** (γραμμή ~683): Ίδια αλλαγή `[&]:text-xs`
+4. **Phone Input** (γραμμή ~785): Ίδια αλλαγή
+5. **Special Requests Textarea** (γραμμή ~826): Ίδια αλλαγή
 
-**1. `src/components/business/ReservationDialog.tsx`** (Κράτηση μέσω προφίλ)
-- Αφαίρεση `Drawer/DrawerContent/DrawerHeader/DrawerTitle/DrawerDescription` imports
-- Αντικατάσταση mobile block (γραμμές 400-413) με `Dialog` + `DialogContent` με classes: `max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0`
-- Header: `DialogHeader` με `flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4`
-- Content: `div` με `flex-1 overflow-y-auto px-4 py-4`
+### Τεχνική Προσέγγιση
+Αντί `text-xs sm:text-sm`, θα χρησιμοποιηθεί `text-[12px] sm:text-sm` ή εναλλακτικά wrapper με `[&_input]:text-xs [&_textarea]:text-xs` στο mobile form container, ώστε να εφαρμόζεται καθολικά σε όλα τα πεδία χωρίς conflict με το base `text-base` του Input component.
 
-**2. `src/components/user/ReservationEventCheckout.tsx`** (Κράτηση μέσω εκδήλωσης)
-- Ίδια αλλαγή: αντικατάσταση mobile `Drawer` block (γραμμές 1022-1035) με `Dialog`
-- Ίδιο pattern classes
-
-**3. `src/components/tickets/TicketPurchaseFlow.tsx`** (Εισιτήριο μέσω εκδήλωσης)
-- Αντικατάσταση mobile `Drawer` block (γραμμές 1010-1023) με `Dialog`
-- Ίδιο pattern classes
-
-**4. `src/components/tickets/KalivaTicketReservationFlow.tsx`** (Εισιτήριο + Κράτηση υβριδικό)
-- Αντικατάσταση mobile `Drawer` block (γραμμές 1014-1027) με `Dialog`
-- Ίδιο pattern classes
-
-### Τεχνικό Pattern (κοινό σε όλα)
-```tsx
-// Πριν (Drawer):
-<Drawer open={open} onOpenChange={onOpenChange}>
-  <DrawerContent>
-    <DrawerHeader>...</DrawerHeader>
-    <div className="px-4 pb-6 overflow-y-auto">{content}</div>
-  </DrawerContent>
-</Drawer>
-
-// Μετά (Dialog - ίδιο με Offer):
-<Dialog open={open} onOpenChange={onOpenChange}>
-  <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0"
-    onOpenAutoFocus={(e) => e.preventDefault()}>
-    <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
-      <DialogTitle className="text-sm font-bold">{title}</DialogTitle>
-      <DialogDescription className="text-xs">{description}</DialogDescription>
-    </DialogHeader>
-    <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
-      {content}
-    </div>
-  </DialogContent>
-</Dialog>
-```
-
-### Τι δεν αλλάζει
-- Desktop rendering (παραμένει ως έχει σε όλα τα αρχεία)
-- Όλη η λογική forms, validation, βήματα (steps)
-- Μόνο το mobile container wrapper αλλάζει
+### Αρχείο
+- `src/components/business/DirectReservationDialog.tsx` — μόνο mobile styling, χωρίς αλλαγή λογικής
 
