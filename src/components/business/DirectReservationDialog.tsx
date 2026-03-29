@@ -569,6 +569,11 @@ export const DirectReservationDialog = ({
 
   const formContent =
   <form onSubmit={handleSubmit} className="space-y-4">
+      {!isAuthenticated && (
+        <div className="mb-4">
+          <InlineAuthGate onAuthSuccess={() => {}} />
+        </div>
+      )}
       {settingsLoading ?
     <div className="text-sm text-muted-foreground text-center py-4">
           {language === 'el' ? 'Φόρτωση...' : 'Loading...'}
