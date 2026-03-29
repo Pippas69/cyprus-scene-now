@@ -552,6 +552,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           guest_age: t.guest_age,
           buyer_phone: order?.phone || null,
           buyer_city: isBuyerTicket ? (cityMap[order?.userId] || null) : null,
+          guest_city: (t as any).guest_city || null,
+          is_buyer: isBuyerTicket,
           subtotal_cents: perTicketPrice,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
