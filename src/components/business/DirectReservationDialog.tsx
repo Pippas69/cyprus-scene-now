@@ -585,7 +585,6 @@ export const DirectReservationDialog = ({
     </div>
   ) : (
   <form onSubmit={handleSubmit} className="space-y-4">
-      )}
       {settingsLoading ?
     <div className="text-sm text-muted-foreground text-center py-4">
           {language === 'el' ? 'Φόρτωση...' : 'Loading...'}
