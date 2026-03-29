@@ -289,7 +289,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     steps.push('guests');
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
