@@ -599,11 +599,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         {/* Guest names & ages */}
         {totalTickets > 0 && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1.5">
+          <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
               {t.guestDetails} ({totalTickets} {t.people})
             </Label>
-            <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
             <div className="space-y-1.5 max-h-52 overflow-y-auto">
               {guestNames.map((name, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -620,7 +620,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                         return updated;
                       });
                     }}
-                    className={cn("h-9 text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
+                    className={cn("h-8 sm:h-9 text-xs sm:text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
                   />
                   <Input
                     placeholder={t.age}
@@ -638,7 +638,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                         });
                       }
                     }}
-                    className="h-9 text-sm w-20"
+                    className="h-8 sm:h-9 text-xs sm:text-sm w-16 sm:w-20"
                   />
                 </div>
               ))}
@@ -702,7 +702,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const renderCheckoutStep = () => (
     <div className="space-y-4">
-      <h3 className="font-semibold">{t.summary}</h3>
+      <h3 className="font-semibold text-sm sm:text-base">{t.summary}</h3>
 
       {/* Ticket/seat summary */}
       <div className="space-y-2 text-sm">
@@ -773,7 +773,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       <Separator />
 
       {/* Total */}
-      <div className="flex justify-between font-bold text-lg">
+      <div className="flex justify-between font-bold text-base sm:text-lg">
         <span>{t.total}</span>
         <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
       </div>
@@ -791,7 +791,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           onCheckedChange={(checked) => setTermsAccepted(checked === true)}
           className="mt-0.5 rounded-[6px]"
         />
-        <label htmlFor="terms-accept" className="text-sm text-foreground/90 leading-relaxed cursor-pointer">
+        <label htmlFor="terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
           {t.termsLabel}{' '}
           <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline underline-offset-2">{t.termsLink}</a>
           {' '}{t.andThe}{' '}
@@ -1009,10 +1009,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh]">
-          <DrawerHeader>
-            <DrawerTitle>{t.title}</DrawerTitle>
-            <DrawerDescription>{eventTitle}</DrawerDescription>
+      <DrawerContent className="max-h-[95vh]">
+          <DrawerHeader className="pb-2">
+            <DrawerTitle className="text-base">{t.title}</DrawerTitle>
+            <DrawerDescription className="text-xs">{eventTitle}</DrawerDescription>
           </DrawerHeader>
           <div ref={scrollRef} className="px-4 pb-6 overflow-y-auto">
             {content}
