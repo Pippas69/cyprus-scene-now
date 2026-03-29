@@ -151,6 +151,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [wantsReservation, setWantsReservation] = useState(false);
   const [reservationDate, setReservationDate] = useState<Date | undefined>(undefined);
   const [reservationTime, setReservationTime] = useState<string>("");
+  const [reservationName, setReservationName] = useState('');
+  const [reservationPhone, setReservationPhone] = useState('');
+  const [reservationSeating, setReservationSeating] = useState('none');
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);

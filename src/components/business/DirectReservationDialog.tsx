@@ -113,22 +113,16 @@ export const DirectReservationDialog = ({
   const isMobile = useIsMobile();
   const { profileName, profilePhone, profileComplete } = useProfileData(currentUserId);
 
-  // Auto-fill reservation name, first guest slot, and phone with profile data
+  // Auto-fill ONLY the first guest name with profile data
+  // Reservation name and phone are left empty for the user to fill freely
   useEffect(() => {
     if (profileName) {
       setFormData(prev => ({
         ...prev,
-        reservation_name: profileName,
         guest_names: [profileName, ...prev.guest_names.slice(1)],
       }));
     }
   }, [profileName]);
-
-  useEffect(() => {
-    if (profilePhone) {
-      setFormData(prev => ({ ...prev, phone_number: profilePhone }));
-    }
-  }, [profilePhone]);
 
   // Fetch closed slots for the selected date
   const { closedSlots } = useClosedSlots(businessId, formData.preferred_date);
