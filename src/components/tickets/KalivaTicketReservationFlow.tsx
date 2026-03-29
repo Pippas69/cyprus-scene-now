@@ -766,7 +766,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t.seatingType}</span>
           <span className="flex items-center gap-1.5 font-medium">
-            {selectedSeating && (seatingTypeIcons[selectedSeating.seating_type] ? 
+            {selectedSeating && (seatingTypeIcons[selectedSeating.seating_type] ?
               React.cloneElement(seatingTypeIcons[selectedSeating.seating_type] as React.ReactElement, { className: 'h-4 w-4' }) : null)}
             {selectedSeating && (t.seatingTypes[selectedSeating.seating_type as keyof typeof t.seatingTypes] || selectedSeating.seating_type)}
           </span>
@@ -780,29 +780,19 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <span>{guests[0]?.name}</span>
         </div>
         {phoneNumber && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t.phone}</span>
-            <span>{phoneNumber}</span>
-          </div>
+          <>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.phone}</span>
+              <span>{phoneNumber}</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{t.eachPersonGetsQR}</p>
+          </>
         )}
       </div>
 
       <Separator />
 
-      {/* Guest list */}
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-muted-foreground">{t.guestDetails}</p>
-        {guests.map((g, i) => (
-          <div key={i} className="flex justify-between text-sm">
-            <span>{i + 1}. {g.name}</span>
-            <span className="text-muted-foreground">{t.age}: {g.age}</span>
-          </div>
-        ))}
-      </div>
-
-      <Separator />
-
-      {/* Ticket cost */}
+      {/* Costs */}
       <div className="space-y-2">
         {ticketTier && (
           <div className="flex justify-between text-sm">
@@ -821,41 +811,35 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
 
         {minChargeCents != null && minChargeCents > 0 && (
-          <div className="flex items-start gap-2 p-2 rounded-lg border border-border bg-card/60">
-            <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-            <div className="text-xs text-muted-foreground whitespace-pre-line">
-              {t.minimumCharge}: <strong className="text-foreground">{formatPrice(minChargeCents)}</strong>
-              <br />{t.paidAtVenue}
-            </div>
+          <div className="rounded-lg border border-border bg-card/40 p-2.5 space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {t.minimumCharge}: <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{t.paidAtVenue}</p>
           </div>
         )}
 
         <Separator />
+
         <div className="flex justify-between font-bold text-lg">
           <span>{t.total}</span>
           <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
         </div>
-
-        <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
-          <Checkbox
-            id="kaliva-terms-accept"
-            checked={termsAccepted}
-            onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-            className="mt-0.5 rounded-[6px]"
-          />
-          <label htmlFor="kaliva-terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
-            {t.termsLabel}{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
-            {' '}{t.andThe}{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
-          </label>
-        </div>
       </div>
 
-      {/* QR info */}
-      <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-card/60">
-        <Ticket className="h-4 w-4 text-muted-foreground shrink-0" />
-        <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
+      <div className="flex items-start gap-2.5 pt-1">
+        <Checkbox
+          id="kaliva-terms-accept"
+          checked={termsAccepted}
+          onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+          className="mt-0.5 rounded-[6px]"
+        />
+        <label htmlFor="kaliva-terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
+          {t.termsLabel}{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
+          {' '}{t.andThe}{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
+        </label>
       </div>
     </div>
   );
@@ -890,6 +874,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           setProfileComplete(true);
           if (!wasAuthenticatedOnMount) {
             setIsFreshSignup(true);
+            if (profile.phone) setPhoneNumber(profile.phone);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) setCustomerEmail(user.email);
           }
           // Auto-fill first guest name from profile
           setGuests(prev => {
@@ -897,10 +884,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
-          // Auto-fill phone and email from profile/auth
-          if (profile.phone) setPhoneNumber(profile.phone);
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user?.email) setCustomerEmail(user.email);
         }} />
       );
     }

@@ -776,8 +776,14 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
       </div>
 
+      {/* QR info */}
+      <div className="flex items-start gap-2">
+        <Ticket className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">{t.eachPersonGetsQR}</p>
+      </div>
+
       {/* Terms checkbox */}
-      <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-card/60">
+      <div className="flex items-start gap-2.5 pt-1">
         <Checkbox
           id="terms-accept"
           checked={termsAccepted}
@@ -790,12 +796,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           {' '}{t.andThe}{' '}
           <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.privacyLink}</a>
         </label>
-      </div>
-
-      {/* QR info */}
-      <div className="flex items-center gap-2 p-2 rounded-lg border border-border bg-card/60">
-        <Ticket className="h-4 w-4 text-muted-foreground shrink-0" />
-        <p className="text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
       </div>
     </div>
   );
@@ -871,18 +871,17 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     <ProfileCompletionGate onComplete={async (profile) => {
       setBuyerProfile(profile);
       setProfileComplete(true);
-      // Mark as fresh signup if user was NOT authenticated when dialog opened
-      if (!wasAuthenticatedOnMount) {
-        setIsFreshSignup(true);
-      }
-      // Buffer buyer name — will be applied to guestNames[0] via useEffect
+
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();
       setBuyerFullName(fullName);
-      // Auto-fill phone from profile
-      if (profile.phone) setCustomerPhone(profile.phone);
-      // Auto-fill email from auth user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) setCustomerEmail(user.email);
+
+      // Only fresh signups get hidden contact autofill (fields stay hidden in UI)
+      if (!wasAuthenticatedOnMount) {
+        setIsFreshSignup(true);
+        if (profile.phone) setCustomerPhone(profile.phone);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) setCustomerEmail(user.email);
+      }
     }} />
   );
 
@@ -972,15 +971,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     );
   };
 
-  const stepLabelMap: Record<string, string> = {
-    showSelect: t.steps.showSelect,
-    seats: t.steps.seats,
-    tickets: t.steps.tickets,
-    auth: t.steps.auth,
-    profile: t.steps.profile,
-    guests: t.steps.guests,
-    checkout: t.steps.checkout,
-  };
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
