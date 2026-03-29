@@ -54,6 +54,9 @@ const ResetPassword = () => {
     },
   });
 
+  const watchedPassword = form.watch("password");
+  const watchedConfirmPassword = form.watch("confirmPassword");
+
   const onSubmit = async (values: ResetPasswordFormValues) => {
     setLoading(true);
 
