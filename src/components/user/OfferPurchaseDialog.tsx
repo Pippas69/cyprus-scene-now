@@ -114,13 +114,21 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const profileName = useProfileName(userId);
 
   useEffect(() => {
+    const checkProfile = async (uid: string) => {
+      const { data } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', uid).single();
+      if (data) setProfileComplete(!!(data.first_name && data.last_name && data.phone));
+    };
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setIsAuthenticated(!!data.user);
+      if (data.user) checkProfile(data.user.id);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
-      if (session?.user) setUserId(session.user.id);
+      if (session?.user) {
+        setUserId(session.user.id);
+        checkProfile(session.user.id);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
