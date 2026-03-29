@@ -168,7 +168,16 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    const hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
+    let hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
+    // Verify the connected account actually exists in Stripe
+    if (hasConnectSetup) {
+      try {
+        await stripe.accounts.retrieve(business.stripe_account_id);
+      } catch {
+        console.warn("[DEFERRED-CHECKOUT] Connect account invalid, falling back to platform checkout");
+        hasConnectSetup = false;
+      }
+    }
     const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
 
     const seatingTypeLabels: Record<string, string> = { bar: "Bar", table: "Table", vip: "VIP", sofa: "Sofa" };
