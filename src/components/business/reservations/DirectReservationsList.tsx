@@ -76,9 +76,9 @@ interface TicketOnlyOrder {
   guest_name: string;
   guest_age: number | null;
   buyer_phone: string | null;
-  buyer_city: string | null;
+  account_city: string | null;
   guest_city: string | null;
-  is_buyer: boolean;
+  is_account_user: boolean;
   subtotal_cents: number;
   status: string;
   checked_in: boolean;
@@ -474,7 +474,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
+        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, user_id')
         .eq('event_id', eventId)
         .order('guest_name', { ascending: true });
 
@@ -501,16 +501,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0, userId: o.user_id };
       });
 
-      // Fetch buyer cities from profiles
-      const userIds = [...new Set((orders || []).map(o => o.user_id).filter(Boolean))];
+      // Fetch account cities from profiles (city or fallback town)
+      const userIds = [...new Set(completedTickets.map((t: any) => t.user_id).filter(Boolean))];
       const cityMap: Record<string, string | null> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, city')
+          .select('id, city, town')
           .in('id', userIds);
         if (isStaleRequest()) return;
-        (profiles || []).forEach(p => { cityMap[p.id] = p.city; });
+        (profiles || []).forEach(p => { cityMap[p.id] = p.city || (p as any).town || null; });
       }
 
       // Count tickets per order for per-ticket price calculation
@@ -533,30 +533,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
-      // Determine which ticket is the "first" per order (the buyer's ticket)
-      const firstTicketPerOrder = new Map<string, string>();
-      completedTickets.forEach(t => {
-        if (!firstTicketPerOrder.has(t.order_id)) {
-          firstTicketPerOrder.set(t.order_id, t.id);
-        }
-      });
-
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
         const order = orderMap[t.order_id];
         const perTicketPrice = order && order.ticketCount > 0
           ? Math.round(order.subtotal / order.ticketCount)
           : 0;
-        // Only the first ticket in each order gets the buyer's city
-        const isBuyerTicket = firstTicketPerOrder.get(t.order_id) === t.id;
+        const accountCity = cityMap[(t as any).user_id] || null;
+        const isAccountUser = !!accountCity;
+
         return {
           id: t.order_id,
           ticket_id: t.id,
           guest_name: t.guest_name || '-',
           guest_age: t.guest_age,
           buyer_phone: order?.phone || null,
-          buyer_city: isBuyerTicket ? (cityMap[order?.userId] || null) : null,
+          account_city: accountCity,
           guest_city: (t as any).guest_city || null,
-          is_buyer: isBuyerTicket,
+          is_account_user: isAccountUser,
           subtotal_cents: perTicketPrice,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
@@ -1093,13 +1086,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        {/* City: read-only for buyer (from profile), editable for ghosts */}
-                        {ticket.is_buyer && ticket.buyer_city ? (
+                        {/* City: read-only for account users, editable for ghosts */}
+                        {ticket.is_account_user ? (
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3 shrink-0" />
-                            {ticket.buyer_city}
+                            {ticket.account_city || (language === 'el' ? '—' : '—')}
                           </span>
-                        ) : !ticket.is_buyer ? (
+                        ) : (
                           editingTicketCity === ticket.ticket_id ? (
                             <div className="flex items-center gap-1">
                               <Input
@@ -1130,7 +1123,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
                             </span>
                           )
-                        ) : null}
+                        )}
                         {ticket.guest_age ? (
                           <span className="text-sm text-muted-foreground">
                             {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
