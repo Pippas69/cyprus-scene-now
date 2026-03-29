@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarDays, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Loader2, Tag, Store, Clock, AlertCircle, Users, CheckCircle, CalendarDays, ChevronLeft, ChevronRight, User, Phone, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -73,6 +73,7 @@ interface Offer {
     accepts_direct_reservations?: boolean;
     reservation_time_slots?: TimeSlot[] | null;
     reservation_days?: string[] | null;
+    reservation_seating_options?: string[] | null;
   };
 }
 
@@ -151,6 +152,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [wantsReservation, setWantsReservation] = useState(false);
   const [reservationDate, setReservationDate] = useState<Date | undefined>(undefined);
   const [reservationTime, setReservationTime] = useState<string>("");
+  const [reservationName, setReservationName] = useState('');
+  const [reservationPhone, setReservationPhone] = useState('');
+  const [reservationSeating, setReservationSeating] = useState('none');
   const [availableCapacity, setAvailableCapacity] = useState<number | null>(null);
   const [checkingCapacity, setCheckingCapacity] = useState(false);
   const [capacityError, setCapacityError] = useState<string | null>(null);
@@ -171,7 +175,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
             total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
             offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
-            businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days)
+            businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days, reservation_seating_options)
           `).
         eq('id', initialOffer.id).
         single();
@@ -196,10 +200,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setWantsReservation(false);
       setReservationDate(undefined);
       setReservationTime("");
+      setReservationName('');
+      setReservationPhone('');
+      setReservationSeating('none');
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
-      // showAuthGate removed — auth is shown upfront
     }
   }, [isOpen]);
 
@@ -281,7 +287,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     wantReservation: { el: "Θέλετε να κλείσετε τραπέζι στις ώρες έκπτωσης;", en: "Want to book a table during discount hours?" },
     selectDate: { el: "Επιλέξτε ημερομηνία", en: "Select date" },
     selectTime: { el: "Επιλέξτε ώρα", en: "Select time" },
-    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" }
+    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
+    reservationName: { el: "Όνομα Κράτησης", en: "Reservation Name" },
+    phone: { el: "Τηλέφωνο", en: "Phone" },
+    seatingPreference: { el: "Προτίμηση Θέσης (Προαιρετικό)", en: "Seating Preference (Optional)" },
+    noPreference: { el: "Χωρίς Προτίμηση", en: "No Preference" },
+    indoor: { el: "Εσωτερικός Χώρος", en: "Indoor" },
+    outdoor: { el: "Εξωτερικός Χώρος", en: "Outdoor" }
   };
 
   const t = (key: keyof typeof text) => text[key][language];
@@ -461,6 +473,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   const handleClaim = async () => {
 
+    // Validate reservation fields if reservation is selected
+    if (wantsReservation) {
+      if (!reservationName.trim()) {
+        toast.error(language === "el" ? "Παρακαλώ εισάγετε όνομα κράτησης" : "Please enter a reservation name");
+        return;
+      }
+      if (!reservationPhone.trim()) {
+        toast.error(language === "el" ? "Παρακαλώ εισάγετε τηλέφωνο" : "Please enter a phone number");
+        return;
+      }
+      const phoneDigits = reservationPhone.replace(/\D/g, '').length;
+      if (phoneDigits < 8 || phoneDigits > 15) {
+        toast.error(language === "el" ? "Το τηλέφωνο πρέπει να έχει 8-15 ψηφία" : "Phone must have 8-15 digits");
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -480,7 +509,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         requestBody.reservationData = {
           preferred_date: format(reservationDate, 'yyyy-MM-dd'),
           preferred_time: reservationTime,
-          party_size: partySize
+          party_size: partySize,
+          reservation_name: reservationName.trim() || guestNames[0]?.trim() || '',
+          phone_number: reservationPhone.trim() || '',
+          seating_preference: reservationSeating !== 'none' ? reservationSeating : null,
         };
       }
 
@@ -550,8 +582,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const ReservationSection = () => {
     if (!showReservationOption) return null;
 
-    const canProceedWithReservation = wantsReservation && reservationDate && reservationTime &&
-    availableCapacity !== null && availableCapacity >= partySize && !capacityError;
+    const seatingOptions = offer.businesses?.reservation_seating_options || [];
 
     return (
       <div className="space-y-3 sm:space-y-4">
@@ -566,6 +597,9 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
               if (!checked) {
                 setReservationDate(undefined);
                 setReservationTime("");
+                setReservationName('');
+                setReservationPhone('');
+                setReservationSeating('none');
                 setAvailableCapacity(null);
                 setCapacityError(null);
               }
@@ -581,9 +615,35 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             `Book a table during the discount hours (${formatTimeRange(offer.valid_start_time || null, offer.valid_end_time || null)}). `}
             </p>
 
+            {/* Reservation Name */}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <User className="h-3 w-3" />
+                {t("reservationName")}
+              </Label>
+              <Input
+                value={reservationName}
+                onChange={(e) => setReservationName(e.target.value)}
+                placeholder={language === "el" ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Doe"}
+                className="h-9 sm:h-10 text-xs sm:text-sm" />
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                {t("phone")}
+              </Label>
+              <Input
+                value={reservationPhone}
+                onChange={(e) => setReservationPhone(e.target.value)}
+                placeholder={language === "el" ? "π.χ. 99123456" : "e.g. 99123456"}
+                className="h-9 sm:h-10 text-xs sm:text-sm"
+                type="tel" />
+            </div>
+
             {/* Date Selection */}
             <div className="space-y-1.5">
-              
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal text-xs sm:text-sm h-9">
@@ -609,7 +669,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   modifiers={closedDatesModifiers}
                   modifiersStyles={closedDatesModifiersStyles}
                   initialFocus />
-                
                 </PopoverContent>
               </Popover>
             </div>
@@ -625,7 +684,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                   </div> :
             timeSlots.length === 0 ?
             <p className="text-xs text-muted-foreground">{t("noSlotsForDay")}</p> :
-
             <div className="flex flex-wrap gap-1.5">
                     {timeSlots.map((slot) => {
                 const isPassed = isSlotPassed(slot);
@@ -637,15 +695,36 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                     className="text-xs h-7 px-2.5"
                     disabled={isPassed}
                     onClick={() => setReservationTime(slot)}>
-                    
                           {slot}
                         </Button>);
-
               })}
                   </div>
             }
               </div>
           }
+
+            {/* Seating Preference (Optional) - below date/time */}
+            {seatingOptions.length > 0 &&
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                {t("seatingPreference")}
+              </Label>
+              <Select value={reservationSeating} onValueChange={setReservationSeating}>
+                <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("noPreference")}</SelectItem>
+                  {seatingOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option === 'indoor' ? t("indoor") : option === 'outdoor' ? t("outdoor") : option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            }
 
             {/* Capacity Check */}
             {checkingCapacity &&
@@ -667,7 +746,6 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           </div>
         }
       </div>);
-
   };
 
   // === SUCCESS VIEW ===
