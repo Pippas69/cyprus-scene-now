@@ -118,11 +118,10 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           className={cn(
             "pl-6 md:pl-8 shadow-lg border-0",
             "h-7 md:h-8",
-            "text-[9px] md:text-[10px] lg:text-xs text-white placeholder:text-white/70",
-            "w-[110px] md:w-[150px] lg:w-[180px]",
-            "[&]:pb-0 [&]:pt-0 [-webkit-appearance:none]"
+            "!text-[10px] md:!text-xs font-normal text-white placeholder:text-white/70",
+            "w-[110px] md:w-[150px] lg:w-[180px]"
           )}
-          style={{ backgroundColor: '#0D3B66', paddingBottom: '2px', paddingTop: '0px' }}
+          style={{ backgroundColor: '#0D3B66', fontSize: '10px' }}
         />
       </div>
 
