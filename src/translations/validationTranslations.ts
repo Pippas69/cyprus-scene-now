@@ -9,7 +9,7 @@ export const validationTranslations = {
     // Password validation
     passwordMin: "Ο κωδικός πρέπει να έχει τουλάχιστον {min} χαρακτήρες",
     passwordsNoMatch: "Οι κωδικοί δεν ταιριάζουν",
-    passwordTooShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες",
+    passwordTooShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες",
     
     // String length validation
     minLength: "Πρέπει να έχει τουλάχιστον {min} χαρακτήρες",
@@ -62,7 +62,7 @@ export const validationTranslations = {
     // Password validation
     passwordMin: "Password must be at least {min} characters",
     passwordsNoMatch: "Passwords don't match",
-    passwordTooShort: "Password must be at least 6 characters",
+    passwordTooShort: "Password must be at least 8 characters",
     
     // String length validation
     minLength: "Must be at least {min} characters",

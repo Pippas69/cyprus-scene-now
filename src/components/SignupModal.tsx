@@ -36,7 +36,7 @@ const createSignupSchema = (language: "el" | "en") => {
     lastName: z.string().trim().min(2, vt.nameRequired),
     age: z.coerce.number().min(15, formatValidationMessage(vt.minValue, { min: 15 })).max(100),
     email: z.string().trim().email(vt.invalidEmail),
-    password: z.string().min(6, vt.passwordTooShort),
+    password: z.string().min(8, vt.passwordTooShort),
     town: z.string().min(1, vt.selectOption),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),

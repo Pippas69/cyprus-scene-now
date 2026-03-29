@@ -27,7 +27,7 @@ const createResetPasswordSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
   
   return z.object({
-    password: z.string().min(6, { message: v.passwordTooShort }),
+    password: z.string().min(8, { message: v.passwordTooShort }),
     confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: v.passwordsNoMatch,

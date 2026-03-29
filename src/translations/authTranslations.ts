@@ -40,7 +40,7 @@ export const authTranslations = {
     
     // Validation messages
     invalidEmail: "Μη έγκυρη διεύθυνση email",
-    passwordTooShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες",
+    passwordTooShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες",
     passwordsDontMatch: "Οι κωδικοί δεν ταιριάζουν",
     nameRequired: "Το όνομα είναι υποχρεωτικό",
     
@@ -97,7 +97,7 @@ export const authTranslations = {
     
     // Validation messages
     invalidEmail: "Invalid email address",
-    passwordTooShort: "Password must be at least 6 characters",
+    passwordTooShort: "Password must be at least 8 characters",
     passwordsDontMatch: "Passwords don't match",
     nameRequired: "Name is required",
     
