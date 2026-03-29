@@ -168,7 +168,12 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let user = (await supabase.auth.getUser()).data.user;
+      if (!user) {
+        // Fallback: session may exist but getUser failed (timing after OTP)
+        const { data: { session } } = await supabase.auth.getSession();
+        user = session?.user ?? null;
+      }
       if (!user) throw new Error('Not authenticated');
 
       const localPhone = getPhoneDigits(phone);
