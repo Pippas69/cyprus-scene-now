@@ -564,6 +564,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const renderStep2 = () => (
     <div className="space-y-4">
+      {/* Reservation Name */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-2 text-sm">
+          <User className="h-3.5 w-3.5" />
+          {t.reservationName}
+        </Label>
+        <Input
+          value={reservationName}
+          onChange={(e) => setReservationName(e.target.value)}
+          placeholder={language === 'el' ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Doe"}
+          className="h-9 text-sm"
+        />
+      </div>
+
       {/* Party Size + Ticket Price - Same Row */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
