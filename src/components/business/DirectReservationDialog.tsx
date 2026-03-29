@@ -810,8 +810,8 @@ export const DirectReservationDialog = ({
         
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0 || timeSlots.length === 0}>
-            {loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
+          <Button type="submit" className="w-full" disabled={loading || !isAuthenticated || availableCapacity === 0 || timeSlots.length === 0}>
+            {!isAuthenticated ? (language === 'el' ? 'Συνδεθείτε πρώτα' : 'Sign in first') : loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
           </Button>
         </>
     }
