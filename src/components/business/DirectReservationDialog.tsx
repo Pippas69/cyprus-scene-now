@@ -96,6 +96,7 @@ export const DirectReservationDialog = ({
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
