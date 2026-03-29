@@ -23,6 +23,7 @@ import { useClosedSlots } from '@/hooks/useClosedSlots';
 import { useClosedDates } from '@/hooks/useClosedDates';
 import { useSlotAvailability } from '@/hooks/useSlotAvailability';
 import { useProfileData } from '@/hooks/useProfileData';
+import { isValidPhone } from '@/lib/phoneValidation';
 
 interface DirectReservationDialogProps {
   open: boolean;
@@ -435,8 +436,7 @@ export const DirectReservationDialog = ({
       return;
     }
 
-    const phoneDigits = formData.phone_number.replace(/\D/g, '').length;
-    if (phoneDigits < 8 || phoneDigits > 15) {
+    if (!isValidPhone(formData.phone_number.trim())) {
       toast.error(language === 'el' ? 'Το τηλέφωνο πρέπει να έχει 8-15 ψηφία' : 'Phone must have 8-15 digits');
       return;
     }
@@ -551,6 +551,11 @@ export const DirectReservationDialog = ({
   };
 
   const timeSlots = getAvailableTimeSlots();
+  const hasRequiredReservationName = formData.reservation_name.trim().length > 0;
+  const hasRequiredGuestNames = formData.guest_names.length === formData.party_size && formData.guest_names.every((name) => name.trim().length > 0);
+  const hasRequiredPhone = isValidPhone(formData.phone_number.trim());
+  const hasRequiredTime = !!formData.preferred_time;
+  const canSubmitReservation = hasRequiredReservationName && hasRequiredGuestNames && hasRequiredPhone && hasRequiredTime;
 
   // Set default time when date changes and slots are available
   // Skip closed, fully booked, and passed slots when auto-selecting
@@ -820,7 +825,7 @@ export const DirectReservationDialog = ({
         
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || availableCapacity === 0 || timeSlots.length === 0}>
+          <Button type="submit" className="w-full" disabled={loading || !canSubmitReservation || availableCapacity === 0 || timeSlots.length === 0}>
             {loading ? t.submitting : availableCapacity === 0 || timeSlots.length === 0 ? t.fullyBooked : t.submit}
           </Button>
         </>
