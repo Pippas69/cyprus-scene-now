@@ -286,7 +286,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     wantReservation: { el: "Θέλετε να κλείσετε τραπέζι στις ώρες έκπτωσης;", en: "Want to book a table during discount hours?" },
     selectDate: { el: "Επιλέξτε ημερομηνία", en: "Select date" },
     selectTime: { el: "Επιλέξτε ώρα", en: "Select time" },
-    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" }
+    noSlotsForDay: { el: "Δεν υπάρχουν διαθέσιμα slots για αυτή την ημέρα", en: "No available slots for this day" },
+    reservationName: { el: "Όνομα Κράτησης", en: "Reservation Name" },
+    phone: { el: "Τηλέφωνο", en: "Phone" },
+    seatingPreference: { el: "Προτίμηση Θέσης (Προαιρετικό)", en: "Seating Preference (Optional)" },
+    noPreference: { el: "Χωρίς Προτίμηση", en: "No Preference" },
+    indoor: { el: "Εσωτερικός Χώρος", en: "Indoor" },
+    outdoor: { el: "Εξωτερικός Χώρος", en: "Outdoor" }
   };
 
   const t = (key: keyof typeof text) => text[key][language];
