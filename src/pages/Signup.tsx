@@ -62,6 +62,10 @@ const Signup = () => {
     town: z.string().min(1, {
       message: vt.selectOption
     }),
+    phone: z.string().min(1, {
+      message: language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'
+    }),
+    phoneCountry: z.enum(['CY', 'GR']).default('CY'),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
     isStudent: z.boolean().optional(),
@@ -79,6 +83,8 @@ const Signup = () => {
       email: "",
       password: "",
       town: "",
+      phone: "",
+      phoneCountry: "CY" as const,
       gender: undefined,
       preferences: [],
       isStudent: false,
