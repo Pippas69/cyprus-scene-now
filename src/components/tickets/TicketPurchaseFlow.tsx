@@ -637,7 +637,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {/* Ticket/seat summary */}
       <div className="space-y-2 text-sm">
         {isSeatedWithPricing ? (
-          // Grouped by zone
           (() => {
             const groups = new Map<string, { zoneName: string; count: number; priceCents: number }>();
             selectedSeats.forEach(seat => {
@@ -671,6 +670,23 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         )}
       </div>
 
+      {/* Processing fee line */}
+      {!isFreeOrder && stripeFeesCents > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.ticketCost}</span>
+              <span>{formatPrice(subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.processingFee}</span>
+              <span>{formatPrice(stripeFeesCents)}</span>
+            </div>
+          </div>
+        </>
+      )}
+
       <Separator />
 
       {/* Guest list */}
@@ -690,6 +706,22 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       <div className="flex justify-between font-bold text-lg">
         <span>{t.total}</span>
         <span className="text-primary">{isFreeOrder ? t.free : formatPrice(total)}</span>
+      </div>
+
+      {/* Terms checkbox */}
+      <div className="flex items-start gap-2 p-3 rounded-lg border bg-muted/20">
+        <Checkbox
+          id="terms-accept"
+          checked={termsAccepted}
+          onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+          className="mt-0.5"
+        />
+        <label htmlFor="terms-accept" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+          {t.termsLabel}{' '}
+          <a href="/terms" target="_blank" className="text-primary underline">{t.termsLink}</a>
+          {' '}{t.andThe}{' '}
+          <a href="/privacy" target="_blank" className="text-primary underline">{t.privacyLink}</a>
+        </label>
       </div>
 
       {/* QR info */}
