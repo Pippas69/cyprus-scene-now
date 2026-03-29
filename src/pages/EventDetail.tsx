@@ -724,7 +724,7 @@ export default function EventDetail() {
               {/* Tickets/Reservations */}
               {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowTicketFlow(true)}>
-                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Ticket className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.buyTickets}</span>
                 </CardContent>
@@ -735,13 +735,13 @@ export default function EventDetail() {
               {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
               <div className="w-full space-y-1">
                   {kalivaFullySoldOut ?
-                <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
+                <div className="w-full h-9 text-sm rounded-md flex items-center justify-start gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                       <Ticket className="h-3.5 w-3.5" />
                       <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                     </div> :
                 reservationsSoldOut ?
                 <>
-                      <div className="w-full h-9 text-sm rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                      <div className="w-full h-9 text-sm rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
                         <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                         <span className="text-[10px] font-medium text-destructive/80 ml-1">
@@ -761,7 +761,7 @@ export default function EventDetail() {
 
                 <>
                       <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
-                        <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                        <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                           <Ticket className="h-4 w-4 text-foreground shrink-0" />
                           <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                         </CardContent>
@@ -782,7 +782,7 @@ export default function EventDetail() {
 
               {eventHasReservation && event.event_type === 'reservation' && user &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
-                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
                 </CardContent>
@@ -791,7 +791,7 @@ export default function EventDetail() {
 
               {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
-                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
                 </CardContent>
@@ -800,7 +800,7 @@ export default function EventDetail() {
 
               {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationDialog(true)}>
-                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
                 </CardContent>
@@ -841,7 +841,7 @@ export default function EventDetail() {
 
               {/* Share Button */}
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={handleShare}>
-                <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Share2 className="h-4 w-4 text-foreground shrink-0" />
                   <span className="text-sm font-medium text-foreground">{text.share}</span>
                 </CardContent>
@@ -950,7 +950,7 @@ export default function EventDetail() {
             {/* Tickets/Reservations */}
             {eventHasTickets && hasNativeTickets && !(isBusinessTicketLinked && event.event_type === 'ticket_and_reservation') &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowTicketFlow(true)}>
-              <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+              <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Ticket className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.buyTickets}</span>
               </CardContent>
@@ -961,13 +961,13 @@ export default function EventDetail() {
             {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
             <div className="w-full space-y-1">
                 {kalivaFullySoldOut ?
-              <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
+              <div className="w-full h-10 rounded-md flex items-center justify-start gap-2 bg-destructive/10 border border-destructive/30 text-destructive cursor-default">
                     <Ticket className="h-4 w-4" />
                     <span className="font-medium">{language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}</span>
                   </div> :
               reservationsSoldOut ?
               <>
-                    <div className="w-full h-10 rounded-md flex items-center justify-center gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
+                    <div className="w-full h-10 rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
                       <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                       <span className="text-[10px] font-medium text-destructive/80 ml-1">
@@ -987,7 +987,7 @@ export default function EventDetail() {
 
               <>
                     <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
-                      <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+                      <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                         <Ticket className="h-4 w-4 text-foreground shrink-0" />
                         <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
                       </CardContent>
@@ -1008,7 +1008,7 @@ export default function EventDetail() {
 
             {eventHasReservation && event.event_type === 'reservation' && user &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
-              <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+              <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
               </CardContent>
@@ -1017,7 +1017,7 @@ export default function EventDetail() {
 
             {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
-              <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+              <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
               </CardContent>
@@ -1026,7 +1026,7 @@ export default function EventDetail() {
 
             {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationDialog(true)}>
-              <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+              <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
               </CardContent>
@@ -1035,7 +1035,7 @@ export default function EventDetail() {
 
             {/* Share Button */}
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={handleShare}>
-              <CardContent className="py-3 px-4 flex items-center justify-center gap-2">
+              <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Share2 className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.share}</span>
               </CardContent>
