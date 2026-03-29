@@ -54,8 +54,9 @@ const ResetPassword = () => {
     },
   });
 
-  const watchedPassword = useWatch({ control: form.control, name: "password" });
-  const watchedConfirmPassword = useWatch({ control: form.control, name: "confirmPassword" });
+  const [pwLen, setPwLen] = useState(0);
+  const [cpwLen, setCpwLen] = useState(0);
+  const [pwMatch, setPwMatch] = useState(true);
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
     setLoading(true);
