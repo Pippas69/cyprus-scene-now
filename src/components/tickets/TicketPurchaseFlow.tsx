@@ -9,6 +9,7 @@ import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRe
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { InlineAuthGate } from "./InlineAuthGate";
+import { ProfileCompletionGate } from "./ProfileCompletionGate";
 
 interface TicketTier {
   id: string;
@@ -71,6 +73,7 @@ const translations = {
       seats: "Επιλογή Θέσεων",
       tickets: "Επιλογή Εισιτηρίων",
       auth: "Σύνδεση",
+      profile: "Στοιχεία Προφίλ",
       guests: "Στοιχεία Καλεσμένων",
       checkout: "Ολοκλήρωση",
     },
@@ -102,12 +105,18 @@ const translations = {
     cancel: "Ακύρωση",
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
+    processingFee: "Έξοδα επεξεργασίας",
     selectedSeats: "Επιλεγμένες θέσεις",
     row: "Σειρά",
     seat: "Θέση",
     zone: "Ζώνη",
     specialRequests: "Ειδικά αιτήματα",
     optional: "προαιρετικό",
+    termsLabel: "Αποδέχομαι τους",
+    termsLink: "Όρους Χρήσης",
+    andThe: "και την",
+    privacyLink: "Πολιτική Απορρήτου",
+    termsRequired: "Πρέπει να αποδεχτείτε τους όρους χρήσης",
   },
   en: {
     title: "Tickets",
@@ -116,6 +125,7 @@ const translations = {
       seats: "Select Seats",
       tickets: "Select Tickets",
       auth: "Sign In",
+      profile: "Profile Details",
       guests: "Guest Details",
       checkout: "Checkout",
     },
@@ -147,12 +157,18 @@ const translations = {
     cancel: "Cancel",
     summary: "Summary",
     ticketCost: "Ticket cost",
+    processingFee: "Processing fee",
     selectedSeats: "Selected seats",
     row: "Row",
     seat: "Seat",
     zone: "Zone",
     specialRequests: "Special requests",
     optional: "optional",
+    termsLabel: "I accept the",
+    termsLink: "Terms of Service",
+    andThe: "and the",
+    privacyLink: "Privacy Policy",
+    termsRequired: "You must accept the terms of service",
   },
 };
 
@@ -201,6 +217,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [customerPhone, setCustomerPhone] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(false);
+  const [buyerProfile, setBuyerProfile] = useState<{ firstName: string; lastName: string; phone: string; city: string } | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Check auth on mount and listen for changes
   useEffect(() => {
@@ -266,10 +285,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     if (hasSeating) steps.push('seats');
     if (!isSeatedWithPricing) steps.push('tickets');
     if (!isAuthenticated) steps.push('auth');
+    if (isAuthenticated && !profileComplete) steps.push('profile');
     steps.push('guests');
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
@@ -341,8 +361,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     }, 0);
   };
 
-  const total = calculateTotal();
-  const isFreeOrder = total === 0 && totalTickets > 0;
+  const subtotal = calculateTotal();
+  // Stripe fees: 2.9% + €0.25 (only for paid orders)
+  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  const total = subtotal + stripeFeesCents;
+  const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && customerPhone.trim().length >= 8 && customerEmail.trim().length > 0;
@@ -614,7 +637,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {/* Ticket/seat summary */}
       <div className="space-y-2 text-sm">
         {isSeatedWithPricing ? (
-          // Grouped by zone
           (() => {
             const groups = new Map<string, { zoneName: string; count: number; priceCents: number }>();
             selectedSeats.forEach(seat => {
@@ -648,6 +670,23 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         )}
       </div>
 
+      {/* Processing fee line */}
+      {!isFreeOrder && stripeFeesCents > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.ticketCost}</span>
+              <span>{formatPrice(subtotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t.processingFee}</span>
+              <span>{formatPrice(stripeFeesCents)}</span>
+            </div>
+          </div>
+        </>
+      )}
+
       <Separator />
 
       {/* Guest list */}
@@ -667,6 +706,22 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       <div className="flex justify-between font-bold text-lg">
         <span>{t.total}</span>
         <span className="text-primary">{isFreeOrder ? t.free : formatPrice(total)}</span>
+      </div>
+
+      {/* Terms checkbox */}
+      <div className="flex items-start gap-2 p-3 rounded-lg border bg-muted/20">
+        <Checkbox
+          id="terms-accept"
+          checked={termsAccepted}
+          onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+          className="mt-0.5"
+        />
+        <label htmlFor="terms-accept" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+          {t.termsLabel}{' '}
+          <a href="/terms" target="_blank" className="text-primary underline">{t.termsLink}</a>
+          {' '}{t.andThe}{' '}
+          <a href="/privacy" target="_blank" className="text-primary underline">{t.privacyLink}</a>
+        </label>
       </div>
 
       {/* QR info */}
@@ -740,8 +795,25 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   const renderAuthStep = () => (
     <InlineAuthGate onAuthSuccess={() => {
-      // Auth succeeded, steps will recalculate (auth step removed), auto-advance
-      setCurrentStepIdx(prev => prev); // force re-render
+      setCurrentStepIdx(prev => prev);
+    }} />
+  );
+
+  const renderProfileStep = () => (
+    <ProfileCompletionGate onComplete={(profile) => {
+      setBuyerProfile(profile);
+      setProfileComplete(true);
+      // Auto-fill buyer as first guest and contact info
+      setGuestNames(prev => {
+        const updated = [...prev];
+        if (updated.length > 0) updated[0] = `${profile.firstName} ${profile.lastName}`;
+        return updated;
+      });
+      setCustomerPhone(profile.phone);
+      // Auto-fill email from auth
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user?.email) setCustomerEmail(data.user.email);
+      });
     }} />
   );
 
@@ -751,6 +823,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'seats': return renderSeatStep();
       case 'tickets': return renderTicketsStep();
       case 'auth': return renderAuthStep();
+      case 'profile': return renderProfileStep();
       case 'guests': return renderGuestsStep();
       case 'checkout': return renderCheckoutStep();
       default: return null;
@@ -763,8 +836,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'seats': return selectedSeats.length > 0;
       case 'tickets': return tierTotalTickets > 0;
       case 'auth': return isAuthenticated;
+      case 'profile': return profileComplete;
       case 'guests': return allGuestDetailsFilled && totalTickets > 0;
-      case 'checkout': return true;
+      case 'checkout': return termsAccepted;
       default: return true;
     }
   };
@@ -832,6 +906,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     showSelect: t.steps.showSelect,
     seats: t.steps.seats,
     tickets: t.steps.tickets,
+    auth: t.steps.auth,
+    profile: t.steps.profile,
     guests: t.steps.guests,
     checkout: t.steps.checkout,
   };
