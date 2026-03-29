@@ -284,6 +284,18 @@ serve(async (req) => {
           },
           quantity: 1,
         },
+        // Buyer pays processing fee as separate line item
+        ...(stripeFeesCents > 0 ? [{
+          price_data: {
+            currency: priceTier.currency || "eur",
+            product_data: {
+              name: "Processing Fee",
+              description: "Payment processing fee",
+            },
+            unit_amount: stripeFeesCents,
+          },
+          quantity: 1,
+        }] : []),
       ],
       mode: "payment",
       success_url:
@@ -303,7 +315,6 @@ serve(async (req) => {
         customer_email: customer_email || customerEmail || "",
         ...(guests && Array.isArray(guests) ? (() => {
           const guestsJson = JSON.stringify(guests);
-          // Stripe metadata limit: 500 chars per value. Split if needed.
           const meta: Record<string, string> = {};
           if (guestsJson.length <= 500) {
             meta.guests = guestsJson;
@@ -323,8 +334,8 @@ serve(async (req) => {
         ? {
             ...baseSessionParams,
             payment_intent_data: {
-              // Stripe processing fees: 2.9% + €0.25 — charged to connected account
-              application_fee_amount: platformFeeCents + Math.ceil(prepaidAmountCents * 0.029 + 25),
+              // application_fee = commission + processing fees → business receives full prepaid amount
+              application_fee_amount: platformFeeCents + stripeFeesCents,
               transfer_data: {
                 destination: business.stripe_account_id,
               },
