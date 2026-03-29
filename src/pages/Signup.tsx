@@ -65,7 +65,10 @@ const Signup = () => {
     }),
     phone: z.string().min(1, {
       message: language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'
-    }),
+    }).refine((val) => {
+      const digits = val.replace(/\D/g, '').length;
+      return digits >= 8;
+    }, { message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number' }),
     phoneCountry: z.enum(['CY', 'GR']).default('CY'),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),

@@ -38,7 +38,10 @@ const createSignupSchema = (language: "el" | "en") => {
     email: z.string().trim().email(vt.invalidEmail),
     password: z.string().min(8, vt.passwordTooShort),
     town: z.string().min(1, vt.selectOption),
-    phone: z.string().min(1, language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'),
+    phone: z.string().min(1, language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required')
+      .refine((val) => val.replace(/\D/g, '').length >= 8, {
+        message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number'
+      }),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
   });
