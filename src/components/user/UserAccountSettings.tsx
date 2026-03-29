@@ -273,7 +273,7 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           </div>
           <Button 
             onClick={handlePasswordChange}
-            disabled={isChanging || !currentPassword || !newPassword || !confirmPassword}
+            disabled={isChanging || !currentPassword || !newPassword || !confirmPassword || newPassword.length < 8 || confirmPassword.length < 8}
           >
             {t.changePassword}
           </Button>

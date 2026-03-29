@@ -239,7 +239,7 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
 
         <Button
           onClick={mode === 'signup' ? handleEmailSignup : handleLogin}
-          disabled={loading || !email || !password}
+          disabled={loading || !email || !password || (mode === 'signup' && password.trim().length < 8)}
           className="w-full"
         >
           {loading ? (

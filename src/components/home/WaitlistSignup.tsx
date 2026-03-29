@@ -168,7 +168,7 @@ const WaitlistSignup = ({ language }: WaitlistSignupProps) => {
             </div>
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !firstName.trim() || !lastName.trim() || !email.trim() || password.trim().length < 8}
               className="w-full h-12 bg-gradient-to-r from-seafoam to-seafoam/80 hover:from-seafoam/90 hover:to-seafoam/70 text-aegean font-semibold text-sm sm:text-base rounded-xl transition-all duration-300">
 
               {isLoading ?
