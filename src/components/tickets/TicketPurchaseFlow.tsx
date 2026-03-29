@@ -648,33 +648,31 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         )}
 
-        {/* Account contact — show phone/email if NOT a fresh signup */}
+        {/* Phone & Email — show for existing users, hide for fresh signup */}
         {totalTickets > 0 && !isFreshSignup && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">{t.accountContact}</Label>
-            <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
-                <Input
-                  id="ticket-checkout-phone"
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+357 99 123456"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
-                <Input
-                  id="ticket-checkout-email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="example@email.com"
-                  className="h-9 text-sm"
-                />
-              </div>
+          <>
+            <Separator />
+            <div className="space-y-1.5">
+              <Label htmlFor="ticket-checkout-phone" className="text-xs sm:text-sm">{t.phone}</Label>
+              <Input
+                id="ticket-checkout-phone"
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="+357 99 123456"
+                className="h-8 sm:h-9 text-xs sm:text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ticket-checkout-email" className="text-xs sm:text-sm">{t.email}</Label>
+              <Input
+                id="ticket-checkout-email"
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="example@email.com"
+                className="h-8 sm:h-9 text-xs sm:text-sm"
+              />
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
@@ -683,7 +681,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               label={t.specialRequests}
               optionalLabel={t.optional}
             />
-          </div>
+          </>
         )}
         {/* Special Requests when fresh signup (contact auto-filled) */}
         {totalTickets > 0 && isFreshSignup && (
@@ -738,6 +736,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         )}
       </div>
 
+      <Separator />
+
+      {/* Guest list */}
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-muted-foreground">{t.guestDetails}</p>
+        {guestNames.map((name, i) => (
+          <div key={i} className="text-sm flex justify-between">
+            <span>{i + 1}. {name}</span>
+            <span className="text-muted-foreground">{guestAges[i] || '-'}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Processing fee line */}
       {!isFreeOrder && stripeFeesCents > 0 && (
         <>
@@ -754,19 +765,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         </>
       )}
-
-      <Separator />
-
-      {/* Guest list */}
-      <div className="space-y-1">
-        <p className="text-xs font-medium text-muted-foreground">{t.guestDetails}</p>
-        {guestNames.map((name, i) => (
-          <div key={i} className="text-sm flex justify-between">
-            <span>{i + 1}. {name}</span>
-            <span className="text-muted-foreground">{guestAges[i] || '-'}</span>
-          </div>
-        ))}
-      </div>
 
       <Separator />
 
@@ -996,9 +994,6 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const content = (
     <div className="space-y-4">
       {renderStepIndicator()}
-      <div className="text-center mb-4">
-        <Badge variant="outline">{stepLabelMap[currentStep]}</Badge>
-      </div>
       {renderStepContent()}
       {renderNavigation()}
     </div>
