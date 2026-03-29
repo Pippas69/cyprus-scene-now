@@ -507,8 +507,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (orderMap[t.order_id]) orderMap[t.order_id].ticketCount++;
       });
 
+      // Identify account-linked tickets:
+      // - first ticket of each order belongs to buyer account
+      // - any ticket with user_id different from buyer user_id belongs to that account
+      const firstTicketPerOrder = new Map<string, string>();
+      completedTickets.forEach(t => {
+        if (!firstTicketPerOrder.has(t.order_id)) {
+          firstTicketPerOrder.set(t.order_id, t.id);
+        }
+      });
+
+      const accountUserIds = new Set<string>();
+      completedTickets.forEach((t: any) => {
+        const order = orderMap[t.order_id];
+        const buyerUserId = order?.userId;
+        const ticketUserId = t.user_id as string | null;
+        const isFirstTicket = firstTicketPerOrder.get(t.order_id) === t.id;
+        const accountUserId = ticketUserId && ticketUserId !== buyerUserId
+          ? ticketUserId
+          : isFirstTicket
+            ? buyerUserId
+            : null;
+
+        if (accountUserId) accountUserIds.add(accountUserId);
+      });
+
       // Fetch account cities from profiles (city or fallback town)
-      const userIds = [...new Set(completedTickets.map((t: any) => t.user_id).filter(Boolean))];
+      const userIds = [...accountUserIds];
       const cityMap: Record<string, string | null> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -538,9 +563,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const perTicketPrice = order && order.ticketCount > 0
           ? Math.round(order.subtotal / order.ticketCount)
           : 0;
+        const buyerUserId = order?.userId;
         const ticketUserId = (t as any).user_id as string | null;
-        const accountCity = ticketUserId ? (cityMap[ticketUserId] || null) : null;
-        const isAccountUser = !!ticketUserId;
+        const isFirstTicket = firstTicketPerOrder.get(t.order_id) === t.id;
+        const accountUserId = ticketUserId && ticketUserId !== buyerUserId
+          ? ticketUserId
+          : isFirstTicket
+            ? buyerUserId
+            : null;
+        const accountCity = accountUserId ? (cityMap[accountUserId] || null) : null;
+        const isAccountUser = !!accountUserId;
 
         return {
           id: t.order_id,
