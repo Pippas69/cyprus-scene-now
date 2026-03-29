@@ -175,7 +175,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
             valid_days, valid_start_time, valid_end_time, category, discount_type, special_deal_text,
             total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
             offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
-            businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days)
+            businesses!inner (id, name, logo_url, cover_url, city, accepts_direct_reservations, reservation_time_slots, reservation_days, reservation_seating_options)
           `).
         eq('id', initialOffer.id).
         single();
