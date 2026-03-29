@@ -465,8 +465,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Dynamic step: after step 1, if not authenticated, show auth gate
   // step values: 1 = seating, 'auth' = auth gate, 'profile' = profile gate, 2 = details, 3 = review
-  type StepType = number | 'auth' | 'profile';
-  const getEffectiveStep = (): StepType => {
+  const getEffectiveStep = (): number | 'auth' | 'profile' => {
     if (step === 2 && !isAuthenticated) return 'auth';
     if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
     return step;
