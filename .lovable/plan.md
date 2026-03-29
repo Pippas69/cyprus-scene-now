@@ -1,37 +1,41 @@
 
 
-## Πλάνο: Ομοιόμορφα μεγέθη γραμμάτων & premium mobile UI σε όλα τα dialogs
-
-### Πρόβλημα
-Τα input fields σε mobile στα dialogs προσφορών (OfferPurchaseDialog) και εκδηλώσεων (TicketPurchaseFlow, ReservationEventCheckout, KalivaTicketReservationFlow) έχουν ανομοιόμορφα μεγέθη κειμένου. Επίσης, το τηλέφωνο στις προσφορές γεμίζει αυτόματα από το προφίλ ενώ πρέπει να είναι κενό.
+## Πλάνο: Ενοποίηση UX σε όλα τα checkout flows (Events)
 
 ### Αλλαγές
 
-**1. Ομοιόμορφα μεγέθη γραμμάτων σε mobile (4 αρχεία)**
+**1. Αφαίρεση Google/Apple Sign-In** (`InlineAuthGate.tsx`)
+- Αφαίρεση κουμπιών Google & Apple, divider "ή συνεχίστε με", και σχετικών functions
+- Μόνο Email/Password signup + login + OTP verification
 
-Προσθήκη `[&_input]:!text-xs [&_textarea]:!text-xs [&_select]:!text-xs` στο mobile scroll container κάθε dialog — ακριβώς όπως έγινε στο DirectReservationDialog:
+**2. Μετονομασίες Step Labels** (3 αρχεία)
+- `TicketPurchaseFlow.tsx`: step "guests" → "Ονόματα Καλεσμένων", step "checkout" → "Σύνοψη"
+- `KalivaTicketReservationFlow.tsx`: step "details" → "Στοιχεία Παρέας" (ήδη OK), step "review" → "Σύνοψη"
+- `ReservationEventCheckout.tsx`: step "details" → "Στοιχεία Παρέας", step "review" → "Σύνοψη"
 
-- `src/components/user/OfferPurchaseDialog.tsx` — γραμμή 1035
-- `src/components/tickets/TicketPurchaseFlow.tsx` — γραμμή 1017
-- `src/components/user/ReservationEventCheckout.tsx` — γραμμή 1029
-- `src/components/tickets/KalivaTicketReservationFlow.tsx` — γραμμή 1021
+**3. Αφαίρεση "Κάθε άτομο θα λάβει ξεχωριστό QR code" από guest step** (`TicketPurchaseFlow.tsx`)
+- Αφαίρεση της γραμμής `eachPersonGetsQR` από το renderGuestsStep (παραμένει μόνο στο checkout/σύνοψη)
 
-Κάθε mobile scroll div αλλάζει από:
-```
-className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide"
-```
-σε:
-```
-className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-xs [&_textarea]:!text-xs"
-```
+**4. Λογική Phone/Email — Ήδη συνδεδεμένοι vs Fresh Signup** (3 αρχεία)
+- **Fresh signup** (profileComplete γίνεται true κατά τη διάρκεια του checkout): Τα πεδία phone/email κρύβονται (auto-filled)
+- **Ήδη συνδεδεμένοι** (ο χρήστης είχε account πριν ανοίξει το dialog): Τα πεδία phone/email εμφανίζονται ΠΑΝΤΑ κενά, υποχρεωτικά
+- Υλοποίηση: Νέο flag `isFreshSignup` — γίνεται `true` μόνο όταν το ProfileCompletionGate ολοκληρωθεί μέσα στο checkout. Αν ο χρήστης ήταν ήδη authenticated κατά το mount, `isFreshSignup = false`
+- **TicketPurchaseFlow**: Αλλαγή visibility logic: `!isFreshSignup` → δείξε phone + email
+- **KalivaTicketReservationFlow**: Ίδια αλλαγή
+- **ReservationEventCheckout**: Ίδια αλλαγή
 
-**2. Τηλέφωνο κενό στις προσφορές (1 αρχείο)**
+**5. Αφαίρεση "Πολιτικές" (no-show policy)** από review step (`ReservationEventCheckout.tsx`)
+- Αφαίρεση του section "Πολιτικές" + no_show_policy text από step 3
 
-`src/components/user/OfferPurchaseDialog.tsx` — γραμμή 847: Αφαίρεση του auto-fill `if (profile.phone) setReservationPhone(profile.phone);` ώστε το πεδίο τηλεφώνου να παραμένει κενό και να το συμπληρώνει ο χρήστης.
+**6. Μικρότερα γράμματα στο Terms checkbox** (3 αρχεία)
+- Αλλαγή terms label σε `text-[10px] sm:text-xs` αντί `text-xs sm:text-sm` σε όλα τα checkout dialogs
+
+**7. Αφαίρεση "Πληρώνεται στο κατάστημα..." από step 2** (`KalivaTicketReservationFlow.tsx`)
+- Η πληροφορία "Πληρώνεται στο κατάστημα (η τιμή των εισιτηρίων συμπεριλαμβάνεται στο τελικό ποσό)" εμφανίζεται μόνο στο step 3 (Σύνοψη)
 
 ### Αρχεία
-- `src/components/user/OfferPurchaseDialog.tsx`
+- `src/components/tickets/InlineAuthGate.tsx`
 - `src/components/tickets/TicketPurchaseFlow.tsx`
-- `src/components/user/ReservationEventCheckout.tsx`
 - `src/components/tickets/KalivaTicketReservationFlow.tsx`
+- `src/components/user/ReservationEventCheckout.tsx`
 
