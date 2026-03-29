@@ -118,7 +118,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
           className={cn(
             "pl-6 md:pl-8 shadow-lg border-0",
             "h-7 md:h-8",
-            "text-[10px] md:text-xs text-white placeholder:text-white/70",
+            "text-[9px] md:text-[10px] lg:text-xs leading-none text-white placeholder:text-[9px] md:placeholder:text-[10px] lg:placeholder:text-xs placeholder:text-white/70",
             "w-[110px] md:w-[150px] lg:w-[180px]"
           )}
           style={{ backgroundColor: '#0D3B66' }}
