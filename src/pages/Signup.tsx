@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeSelectChange } from "@/lib/formSafeUpdate";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2 } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2, Phone } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -20,6 +20,7 @@ import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { validationTranslations, formatValidationMessage } from "@/translations/validationTranslations";
 import { Confetti, useConfetti } from "@/components/ui/confetti";
+import { SuccessCheckmark } from "@/components/ui/success-animation";
 import { useBetaMode } from "@/hooks/useBetaMode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { getCategoriesForUser } from "@/lib/unifiedCategories";
@@ -101,6 +102,7 @@ const Signup = () => {
   const [studentVerificationSent, setStudentVerificationSent] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
@@ -159,6 +161,10 @@ const Signup = () => {
         }
       }
 
+      // Format full phone number
+      const phonePrefix = values.phoneCountry === 'CY' ? '+357' : '+30';
+      const fullPhone = phonePrefix + values.phone.replace(/\D/g, '');
+
       const {
         data,
         error
@@ -172,6 +178,7 @@ const Signup = () => {
             last_name: values.lastName,
             age: values.age,
             town: values.town,
+            phone: fullPhone,
             gender: values.gender,
             preferences: selectedPreferences,
             is_student: isStudent,
