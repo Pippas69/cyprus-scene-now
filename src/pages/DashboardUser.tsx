@@ -7,55 +7,40 @@ import { MyReservations } from '@/components/user/MyReservations';
 import { MyOffers } from '@/components/user/MyOffers';
 import { useLanguage } from '@/hooks/useLanguage';
 import { UserSettings } from '@/components/user/UserSettings';
-
-const DashboardUser = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const { language } = useLanguage();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
-
-  // View tracking is now handled centrally in analyticsTracking.ts
-  // Views are ALLOWED from "offers" and "events" tabs ONLY
-  // Other tabs (reservations, settings) will NOT count views
-
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    const tab = searchParams.get('tab') || 'events';
-    // Redirect old tabs to settings
-    if (tab === 'profile' || tab === 'account') {
-      navigate('/dashboard-user?tab=settings', { replace: true });
-      return;
-    }
-    setActiveTab(tab);
-  }, [searchParams, navigate]);
-
+import { forceLocalSignOut } from '@/lib/authSession';
+...
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      navigate('/login');
-      return;
+      if (error || !user) {
+        await forceLocalSignOut();
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      // Check if user is a business
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role === 'business') {
+        navigate('/dashboard-business', { replace: true });
+        return;
+      }
+
+      setUser(user);
+      setLoading(false);
+    } catch (error) {
+      console.warn('Dashboard user auth check failed:', error);
+      await forceLocalSignOut();
+      navigate('/login', { replace: true });
     }
-
-    // Check if user is a business
-    const { data: profile } = await supabase.
-    from('profiles').
-    select('role').
-    eq('id', user.id).
-    single();
-
-    if (profile?.role === 'business') {
-      navigate('/dashboard-business');
-      return;
-    }
-
-    setUser(user);
-    setLoading(false);
   };
 
   const text = {

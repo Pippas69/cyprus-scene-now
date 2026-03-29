@@ -15,71 +15,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
+import { forceLocalSignOut } from '@/lib/authSession';
 import { InAppNotificationsSheet } from '@/components/notifications/InAppNotificationsSheet';
-
-interface UserAccountDropdownProps {
-  userId?: string;
-  userName?: string;
-  avatarUrl?: string | null;
-  variant?: 'avatar' | 'button';
-}
-
-export const UserAccountDropdown = ({
-  userId,
-  userName = 'User',
-  avatarUrl,
-  variant = 'avatar',
-}: UserAccountDropdownProps) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { language } = useLanguage();
-  
-  // Detect if we're on a business dashboard route
-  const isBusinessDashboard = location.pathname.startsWith('/dashboard-business');
-  const notificationContext = isBusinessDashboard ? 'business' : 'user';
-  
-  const { unreadCount } = useNotifications(userId, notificationContext);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
-
-  const [isAdmin, setIsAdmin] = useState(false);
-  useEffect(() => {
-    if (!userId) return;
-    supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        setIsAdmin(data?.role === 'admin');
-      });
-  }, [userId]);
-  const translations = {
-    el: {
-      myAccount: 'Ο λογαριασμός μου',
-      myBusiness: 'Η επιχείρησή μου',
-      myUserAccount: 'Ο προσωπικός μου λογαριασμός',
-      notifications: 'Ειδοποιήσεις',
-      admin: 'Admin',
-      signOut: 'Αποσύνδεση',
-    },
-    en: {
-      myAccount: 'My Account',
-      myBusiness: 'My Business',
-      myUserAccount: 'My User Account',
-      notifications: 'Notifications',
-      admin: 'Admin',
-      signOut: 'Sign Out',
-    },
-  };
-
-  const t = translations[language];
-
+...
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    await forceLocalSignOut();
+    navigate('/', { replace: true });
   };
 
   const handleMyAccount = () => {

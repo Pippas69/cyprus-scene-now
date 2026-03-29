@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket, LogOut } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { forceLocalSignOut } from '@/lib/authSession';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const translations = {
     reservations: 'Οι Κρατήσεις Μου',
     myOffers: 'Οι Προσφορές Μου',
     settings: 'Ρυθμίσεις',
+    signOut: 'Αποσύνδεση',
   },
   en: {
     feed: 'Feed',
@@ -37,6 +39,7 @@ const translations = {
     reservations: 'My Reservations',
     myOffers: 'My Offers',
     settings: 'Settings',
+    signOut: 'Sign Out',
   },
 };
 
@@ -52,35 +55,60 @@ export function UserSidebar() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name, avatar_url')
-          .eq('id', user.id)
-          .single();
-        
-        setUserName(profile?.name || user.email?.split('@')[0] || 'User');
-        setUserAvatar(profile?.avatar_url || null);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        setUser(null);
+        setUserName('');
+        setUserAvatar(null);
+
+        if (error) {
+          console.warn('Invalid auth session detected in sidebar:', error.message);
+          await forceLocalSignOut();
+        }
+
+        return;
       }
+
+      setUser(user);
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        setUserName(user.email?.split('@')[0] || 'User');
+        setUserAvatar(null);
+        return;
+      }
+
+      setUserName(profile?.name || user.email?.split('@')[0] || 'User');
+      setUserAvatar(profile?.avatar_url || null);
     };
 
-    getUser();
+    void getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => {
-          getUser();
-        }, 0);
+      if (!session?.user) {
+        setUserName('');
+        setUserAvatar(null);
+        return;
       }
+
+      setTimeout(() => {
+        void getUser();
+      }, 0);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-  
+
   const currentPath = location.pathname;
   const searchParams = new URLSearchParams(location.search);
   const currentTab = searchParams.get('tab');
@@ -117,6 +145,14 @@ export function UserSidebar() {
       setOpenMobile(false);
     }
     navigate(`/dashboard-user?tab=${tab}`, { replace: true });
+  }, [isMobile, navigate, setOpenMobile]);
+
+  const handleSignOut = useCallback(async () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    await forceLocalSignOut();
+    navigate('/', { replace: true });
   }, [isMobile, navigate, setOpenMobile]);
 
   return (
@@ -174,6 +210,22 @@ export function UserSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 text-destructive cursor-pointer hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{t.signOut}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
