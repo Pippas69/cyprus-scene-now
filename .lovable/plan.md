@@ -1,58 +1,75 @@
 
 
-# Σχέδιο Υλοποίησης — 3 Αλλαγές
+## Πρόβλημα
 
-## 1. Εμφάνιση μόνο ώρας έναρξης στη σελίδα εκδήλωσης
+Στο **TicketPurchaseFlow** (εκδηλώσεις μόνο με εισιτήρια), όταν ο χρήστης κάνει εγγραφή κατά τη διάρκεια της ροής, το όνομά του **χάνεται** γιατί:
 
-**Πρόβλημα:** Στο EventDetail.tsx, η ώρα εμφανίζεται ως "23:27 – 02:27". Πρέπει να φαίνεται μόνο "23:27".
+1. Η σειρά βημάτων είναι: **Auth → Profile → Tickets → Guests**
+2. Όταν ολοκληρώνεται το Profile, ο κώδικας προσπαθεί να βάλει το όνομα στο `guestNames[0]`, αλλά ο πίνακας `guestNames` είναι ακόμα **κενός** (`[]`) γιατί ο χρήστης δεν έχει επιλέξει εισιτήρια ακόμα
+3. Αποτέλεσμα: το `if (updated.length > 0)` αποτυγχάνει → το όνομα δεν αποθηκεύεται ποτέ
 
-**Αλλαγή:** Στο `src/pages/EventDetail.tsx` — 2 σημεία (γραμμές ~670 και ~899):
-- Αντικατάσταση `{format(..., 'HH:mm')} – {format(new Date(event.end_at), 'HH:mm')}` → `{format(new Date(event.start_at), 'HH:mm')}`
-
-Μικρή, ασφαλής αλλαγή — μόνο UI, χωρίς επίπτωση σε λογική.
-
----
-
-## 2. Διατήρηση δεδομένων μετά τη λήξη event — Κουμπί "Αρχειοθέτηση"
-
-**Πρόβλημα:** Τώρα, τα events φιλτράρονται με `.gte('end_at', now)` στη διαχείριση, οπότε μόλις λήξουν εξαφανίζονται μαζί με κρατήσεις/εισιτήρια.
-
-**Λύση — Σύστημα Αρχειοθέτησης:**
-
-1. **Νέα στήλη στη βάση:** `events.archived_at` (timestamp, nullable). Όταν είναι `NULL`, το event είναι ενεργό/ορατό στη διαχείριση.
-
-2. **Αλλαγή φίλτρου στη διαχείριση:** Αντικατάσταση του `.gte('end_at', now)` → εμφάνιση events που **δεν** είναι αρχειοθετημένα (`.is('archived_at', null)`). Έτσι ακόμα και μετά τη λήξη, τα δεδομένα παραμένουν ορατά.
-
-3. **Κουμπί "Αρχειοθέτηση" (Αρχειοθέτηση / Επαναφορά):**
-   - Εμφανίζεται στη διαχείριση κάθε event **μόνο μετά τη λήξη** του.
-   - Πατώντας "Αρχειοθέτηση" → ορίζει `archived_at = now()` → το event εξαφανίζεται από τη λίστα.
-   - Ένα tab/toggle "Αρχειοθετημένα" επιτρέπει στον επιχειρηματία να δει τα αρχειοθετημένα events και να τα επαναφέρει (set `archived_at = null`).
-
-4. **Εφαρμογή σε όλους τους τύπους:** Ticket-only, Reservation-only, Hybrid — ίδια λογική.
-
-5. **Επιχειρήσεις με κρατήσεις (Direct Reservations):** Η ίδια λογική θα ισχύει — οι ημερήσιες κρατήσεις θα παραμένουν μέχρι να αρχειοθετηθούν χειροκίνητα.
-
-**Αρχεία που θα αλλάξουν:**
-- Migration: Προσθήκη `archived_at` στον πίνακα `events`
-- `ReservationDashboard.tsx`: Αλλαγή φίλτρου + κουμπί αρχειοθέτησης + tab αρχειοθετημένων
-- `KalivaStaffControls.tsx`, `FloorPlanEditor.tsx`: Ίδια αλλαγή φίλτρου
+Επιπλέον, το `TicketPurchaseFlow` δεν χρησιμοποιεί το `useProfileName` hook (σε αντίθεση με όλα τα άλλα flows), οπότε δεν υπάρχει fallback.
 
 ---
 
-## 3. Ενεργοποίηση Elite Plan για rami@fomo.com.cy
+## Λύση
 
-**Ενέργεια:** Θα χρησιμοποιήσω τα Stripe tools + database query για να:
-1. Βρω το business ID που αντιστοιχεί στο email `rami@fomo.com.cy`
-2. Δημιουργήσω/ενεργοποιήσω Elite subscription μέσω Stripe (live mode) ή ενημερώσω απευθείας τη βάση αν υπάρχει ήδη εγγραφή
-3. Επιβεβαιώσω ότι το `business_subscriptions` αντικατοπτρίζει Elite status
+### 1. Αποθήκευση ονόματος σε buffer (TicketPurchaseFlow.tsx)
+
+Αντί να γράφουμε απευθείας στο `guestNames[0]` στο `onComplete` του ProfileCompletionGate, αποθηκεύουμε το όνομα σε μια μεταβλητή `buyerFullName`:
+
+```typescript
+const [buyerFullName, setBuyerFullName] = useState('');
+```
+
+Στο `renderProfileStep → onComplete`:
+```typescript
+const fullName = `${profile.firstName} ${profile.lastName}`;
+setBuyerFullName(fullName);
+```
+
+### 2. Εφαρμογή ονόματος όταν δημιουργηθούν τα slots (TicketPurchaseFlow.tsx)
+
+Στο υπάρχον `useEffect` που συγχρονίζει το `guestNames` με `totalTickets`, προσθέτουμε λογική:
+
+```typescript
+useEffect(() => {
+  setGuestNames(prev => {
+    let updated = [...prev];
+    // Resize array
+    if (updated.length < totalTickets) {
+      updated = [...updated, ...Array(totalTickets - updated.length).fill('')];
+    } else if (updated.length > totalTickets) {
+      updated = updated.slice(0, totalTickets);
+    }
+    // Apply buyer name to slot 0 if available and empty
+    if (updated.length > 0 && !updated[0] && buyerFullName) {
+      updated[0] = buyerFullName;
+    }
+    return updated;
+  });
+}, [totalTickets, buyerFullName]);
+```
+
+### 3. Fallback με useProfileName (TicketPurchaseFlow.tsx)
+
+Προσθήκη του `useProfileName` hook ως fallback για returning users:
+
+```typescript
+const profileName = useProfileName(/* userId from auth */);
+```
+
+Και ένα `useEffect` που εφαρμόζει το `profileName` στο `guestNames[0]` αν είναι κενό.
+
+### 4. Lock πρώτου ονόματος
+
+Η μεταβλητή `lockFirstGuestName` ήδη λειτουργεί σωστά — απλά δεν είχε ποτέ τιμή για να κλειδώσει. Με τις παραπάνω αλλαγές, θα λειτουργήσει αυτόματα.
 
 ---
 
-## Τεχνική Περίληψη
+## Αρχεία που αλλάζουν
 
-| # | Αλλαγή | Αρχεία | Ρίσκο |
-|---|--------|--------|-------|
-| 1 | Μόνο ώρα έναρξης | EventDetail.tsx | Χαμηλό |
-| 2 | Αρχειοθέτηση events | Migration + 3-4 components | Μέτριο |
-| 3 | Elite plan activation | Stripe + DB | Χαμηλό |
+- **`src/components/tickets/TicketPurchaseFlow.tsx`** — Κύρια διόρθωση: buffer ονόματος, useProfileName, sync logic
+
+Τα υπόλοιπα flows (ReservationEventCheckout, KalivaTicketReservationFlow, OfferPurchaseDialog, DirectReservationDialog) χρησιμοποιούν ήδη `useProfileName` και δουλεύουν σωστά.
 
