@@ -1,41 +1,42 @@
 
 
-## Πλάνο: Ενοποίηση UX σε όλα τα checkout flows (Events)
+## Πλάνο: Προσθήκη τηλεφώνου στο signup + μήνυμα επιτυχίας μετά OTP
+
+### Πρόβλημα 1: Το ProfileCompletionGate ξαναεμφανίζεται μετά το signup
+Η φόρμα εγγραφής (Signup.tsx & SignupModal.tsx) **δεν συλλέγει τηλέφωνο**. Το ProfileCompletionGate απαιτεί `first_name + last_name + phone + city` για να θεωρήσει το προφίλ πλήρες. Επίσης, η εγγραφή αποθηκεύει `town/city` αλλά **όχι** `first_name/last_name` στον πίνακα profiles — τα αφήνει στο auth metadata και στο trigger, που όμως δεν αποθηκεύει τηλέφωνο.
+
+### Πρόβλημα 2: Δεν εμφανίζεται μήνυμα επιτυχίας μετά την επαλήθευση OTP
+Μετά την εισαγωγή του OTP κωδικού, εμφανίζεται μόνο ένα μικρό toast notification και γίνεται redirect μετά 1.5 δευτερόλεπτα. Ο χρήστης θέλει ένα ξεκάθαρο, ορατό μήνυμα επιτυχίας.
+
+---
 
 ### Αλλαγές
 
-**1. Αφαίρεση Google/Apple Sign-In** (`InlineAuthGate.tsx`)
-- Αφαίρεση κουμπιών Google & Apple, divider "ή συνεχίστε με", και σχετικών functions
-- Μόνο Email/Password signup + login + OTP verification
+**1. Προσθήκη πεδίου τηλεφώνου στις φόρμες εγγραφής** (`Signup.tsx`, `SignupModal.tsx`)
+- Πεδίο τηλεφώνου με επιλογή χώρας (CY: +357, GR: +30) — ίδιο pattern με το ProfileCompletionGate
+- Validation: 8 ψηφία για Κύπρο, 10 ψηφία για Ελλάδα
+- Τοποθέτηση μετά το πεδίο πόλης
 
-**2. Μετονομασίες Step Labels** (3 αρχεία)
-- `TicketPurchaseFlow.tsx`: step "guests" → "Ονόματα Καλεσμένων", step "checkout" → "Σύνοψη"
-- `KalivaTicketReservationFlow.tsx`: step "details" → "Στοιχεία Παρέας" (ήδη OK), step "review" → "Σύνοψη"
-- `ReservationEventCheckout.tsx`: step "details" → "Στοιχεία Παρέας", step "review" → "Σύνοψη"
+**2. Αποθήκευση phone + first_name + last_name στο profile κατά το signup** (`Signup.tsx`, `SignupModal.tsx`)
+- Στο profile upsert, προσθήκη `first_name`, `last_name`, `phone` (formatted ως `+357XXXXXXXX` ή `+30XXXXXXXXXX`)
+- Έτσι το ProfileCompletionGate θα βρίσκει πλήρες προφίλ και θα κάνει auto-pass
 
-**3. Αφαίρεση "Κάθε άτομο θα λάβει ξεχωριστό QR code" από guest step** (`TicketPurchaseFlow.tsx`)
-- Αφαίρεση της γραμμής `eachPersonGetsQR` από το renderGuestsStep (παραμένει μόνο στο checkout/σύνοψη)
+**3. Ενημέρωση database trigger** (νέο migration)
+- Update του `handle_new_user()` trigger ώστε να αποθηκεύει και `phone` από τα `raw_user_meta_data`
 
-**4. Λογική Phone/Email — Ήδη συνδεδεμένοι vs Fresh Signup** (3 αρχεία)
-- **Fresh signup** (profileComplete γίνεται true κατά τη διάρκεια του checkout): Τα πεδία phone/email κρύβονται (auto-filled)
-- **Ήδη συνδεδεμένοι** (ο χρήστης είχε account πριν ανοίξει το dialog): Τα πεδία phone/email εμφανίζονται ΠΑΝΤΑ κενά, υποχρεωτικά
-- Υλοποίηση: Νέο flag `isFreshSignup` — γίνεται `true` μόνο όταν το ProfileCompletionGate ολοκληρωθεί μέσα στο checkout. Αν ο χρήστης ήταν ήδη authenticated κατά το mount, `isFreshSignup = false`
-- **TicketPurchaseFlow**: Αλλαγή visibility logic: `!isFreshSignup` → δείξε phone + email
-- **KalivaTicketReservationFlow**: Ίδια αλλαγή
-- **ReservationEventCheckout**: Ίδια αλλαγή
+**4. Οθόνη επιτυχίας μετά OTP verification** (`Signup.tsx`)
+- Αντί για toast + instant redirect, εμφάνιση ξεκάθαρης οθόνης επιτυχίας με:
+  - Checkmark animation (SuccessCheckmark component)
+  - Confetti
+  - Μήνυμα: "Η εγγραφή σου ολοκληρώθηκε επιτυχώς! Καλωσόρισες στο ΦΟΜΟ!"
+  - Auto-redirect μετά 3 δευτερόλεπτα
 
-**5. Αφαίρεση "Πολιτικές" (no-show policy)** από review step (`ReservationEventCheckout.tsx`)
-- Αφαίρεση του section "Πολιτικές" + no_show_policy text από step 3
-
-**6. Μικρότερα γράμματα στο Terms checkbox** (3 αρχεία)
-- Αλλαγή terms label σε `text-[10px] sm:text-xs` αντί `text-xs sm:text-sm` σε όλα τα checkout dialogs
-
-**7. Αφαίρεση "Πληρώνεται στο κατάστημα..." από step 2** (`KalivaTicketReservationFlow.tsx`)
-- Η πληροφορία "Πληρώνεται στο κατάστημα (η τιμή των εισιτηρίων συμπεριλαμβάνεται στο τελικό ποσό)" εμφανίζεται μόνο στο step 3 (Σύνοψη)
+**5. Διαγραφή test account** 
+- Κλήση delete-test-user για `marinoskoumi04@gmail.com` ώστε να γίνει εκ νέου δοκιμή signup
 
 ### Αρχεία
-- `src/components/tickets/InlineAuthGate.tsx`
-- `src/components/tickets/TicketPurchaseFlow.tsx`
-- `src/components/tickets/KalivaTicketReservationFlow.tsx`
-- `src/components/user/ReservationEventCheckout.tsx`
+- `src/pages/Signup.tsx` — πεδίο τηλεφώνου + αποθήκευση στο profile + success screen
+- `src/components/SignupModal.tsx` — πεδίο τηλεφώνου + αποθήκευση στο profile
+- Νέο migration — update `handle_new_user()` trigger για phone
+- Κλήση delete-test-user edge function
 
