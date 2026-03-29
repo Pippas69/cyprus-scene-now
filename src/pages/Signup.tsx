@@ -606,7 +606,7 @@ const Signup = () => {
                 )}
               </div>
 
-              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || (form.watch("password") || "").trim().length < 8}>
+              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || (watchedPassword || "").trim().length < 8}>
                 {isLoading ? t.signingUp : t.signupButton}
               </Button>
 
