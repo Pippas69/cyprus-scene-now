@@ -836,8 +836,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       case 'seats': return selectedSeats.length > 0;
       case 'tickets': return tierTotalTickets > 0;
       case 'auth': return isAuthenticated;
+      case 'profile': return profileComplete;
       case 'guests': return allGuestDetailsFilled && totalTickets > 0;
-      case 'checkout': return true;
+      case 'checkout': return termsAccepted;
       default: return true;
     }
   };
