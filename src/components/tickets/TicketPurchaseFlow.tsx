@@ -943,30 +943,31 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     const isLastStep = currentStep === 'checkout';
 
     return (
-      <div className="flex justify-between pt-4">
+      <div className="flex justify-between pt-3 sm:pt-4">
         {!isFirstStep ? (
-          <Button variant="outline" onClick={() => setCurrentStepIdx(currentStepIdx - 1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setCurrentStepIdx(currentStepIdx - 1)}>
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
             {t.back}
           </Button>
         ) : <div />}
 
         {!isLastStep ? (
           <Button
+            size={isMobile ? "sm" : "default"}
             onClick={() => setCurrentStepIdx(currentStepIdx + 1)}
             disabled={!canProceedFromCurrentStep()}
           >
             {t.next}
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1.5 sm:ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-2">
+          <Button size={isMobile ? "sm" : "default"} onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-1.5 sm:gap-2">
             {submitting ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />{t.processing}</>
+              <><Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />{t.processing}</>
             ) : isFreeOrder ? (
-              <><Ticket className="h-4 w-4" />{t.getTickets}</>
+              <><Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{t.getTickets}</>
             ) : (
-              <><CreditCard className="h-4 w-4" />{t.pay} {formatPrice(total)}</>
+              <><CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{t.pay} {formatPrice(total)}</>
             )}
           </Button>
         )}
