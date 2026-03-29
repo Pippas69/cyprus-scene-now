@@ -943,7 +943,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       {renderStepIndicator()}
       <div className="text-center mb-4">
         <Badge variant="outline">
-          {Object.values(t.steps)[step - 1]}
+          {effectiveStep === 'auth' 
+            ? (language === 'el' ? 'Σύνδεση' : 'Sign In')
+            : effectiveStep === 'profile'
+            ? (language === 'el' ? 'Στοιχεία Προφίλ' : 'Profile Details')
+            : Object.values(t.steps)[step - 1]}
         </Badge>
       </div>
       {renderStepContent()}
