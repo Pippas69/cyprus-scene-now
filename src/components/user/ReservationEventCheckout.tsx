@@ -595,8 +595,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
-                className={`h-9 text-sm ${profileName ? 'bg-muted cursor-not-allowed' : ''}`}
-                readOnly={!!profileName}
+                className="h-9 text-sm"
               />
             </div>
 
