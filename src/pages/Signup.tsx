@@ -226,11 +226,7 @@ const Signup = () => {
               city: values.town,
             } as any,
             { onConflict: "id" }
-              // We treat “Περιοχή” as city/town for analytics
-              town: values.town,
-              city: values.town,
-            } as any,
-            { onConflict: "id" }
+          );
           );
 
         if (profileUpsertError) {
