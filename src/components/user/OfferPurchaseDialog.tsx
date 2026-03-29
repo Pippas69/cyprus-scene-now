@@ -109,6 +109,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
@@ -189,6 +190,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       setAvailableCapacity(null);
       setCapacityError(null);
       setFreshOffer(null);
+      setShowAuthGate(false);
     }
   }, [isOpen]);
 
@@ -449,6 +451,12 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleClaim = async () => {
+    // If not authenticated, show auth gate
+    if (!isAuthenticated) {
+      setShowAuthGate(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -846,10 +854,15 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
-      {/* Auth Gate for unauthenticated users */}
-      {!isAuthenticated && (
-        <div className="my-2">
-          <InlineAuthGate onAuthSuccess={() => {}} />
+      {/* Auth Gate - shown when user tries to claim without auth */}
+      {showAuthGate && !isAuthenticated && (
+        <div className="my-2 space-y-2">
+          <InlineAuthGate onAuthSuccess={() => {
+            setShowAuthGate(false);
+          }} />
+          <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
+            {language === 'el' ? '← Πίσω' : '← Back'}
+          </Button>
         </div>
       )}
 
@@ -883,10 +896,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <Button variant="outline" onClick={onClose} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled || !isAuthenticated}>
-          {!isAuthenticated ?
-        <>{language === 'el' ? 'Συνδεθείτε πρώτα' : 'Sign in first'}</> :
-        isLoading ?
+        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled || isLoading}>
+          {isLoading ?
         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
         <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
         }

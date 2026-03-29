@@ -57,6 +57,7 @@ export const ReservationDialog = ({
   const [capacityLoading, setCapacityLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const profileName = useProfileName(currentUserId);
 
   useEffect(() => {
@@ -148,6 +149,12 @@ export const ReservationDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If not authenticated, show auth gate instead of submitting
+    if (!isAuthenticated) {
+      setShowAuthGate(true);
+      return;
+    }
     
     // Validate with Zod schema
     try {
@@ -224,13 +231,17 @@ export const ReservationDialog = ({
     }
   };
 
-  const formContent = (
+  const formContent = showAuthGate && !isAuthenticated ? (
+    <div className="space-y-4">
+      <InlineAuthGate onAuthSuccess={() => {
+        setShowAuthGate(false);
+      }} />
+      <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
+        {language === 'el' ? '← Πίσω στη φόρμα' : '← Back to form'}
+      </Button>
+    </div>
+  ) : (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!isAuthenticated && (
-        <div className="mb-4">
-          <InlineAuthGate onAuthSuccess={() => {}} />
-        </div>
-      )}
       {capacityLoading ? (
         <div className="text-sm text-muted-foreground">
           {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
