@@ -853,10 +853,15 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         </div>
     }
 
-      {/* Auth Gate for unauthenticated users */}
-      {!isAuthenticated && (
-        <div className="my-2">
-          <InlineAuthGate onAuthSuccess={() => {}} />
+      {/* Auth Gate - shown when user tries to claim without auth */}
+      {showAuthGate && !isAuthenticated && (
+        <div className="my-2 space-y-2">
+          <InlineAuthGate onAuthSuccess={() => {
+            setShowAuthGate(false);
+          }} />
+          <Button variant="ghost" size="sm" onClick={() => setShowAuthGate(false)} className="w-full text-xs">
+            {language === 'el' ? '← Πίσω' : '← Back'}
+          </Button>
         </div>
       )}
 
@@ -890,10 +895,8 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
         <Button variant="outline" onClick={onClose} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm" disabled={isLoading}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled || !isAuthenticated}>
-          {!isAuthenticated ?
-        <>{language === 'el' ? 'Συνδεθείτε πρώτα' : 'Sign in first'}</> :
-        isLoading ?
+        <Button onClick={handleClaim} className="flex-1 h-10 sm:h-11 text-xs sm:text-sm font-semibold" disabled={!claimEnabled || isLoading}>
+          {isLoading ?
         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t("processing")}</> :
         <><Tag className="mr-2 h-4 w-4" />{t("claimOffer")}</>
         }
