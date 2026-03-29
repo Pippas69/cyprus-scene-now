@@ -697,35 +697,39 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
       <Separator />
 
-      {/* Phone */}
-      <div className="space-y-1">
-        <Label className="flex items-center gap-2 text-sm">
-          <Phone className="h-3.5 w-3.5" />
-          {t.phone}
-        </Label>
-        <Input
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="+357 99 123456"
-          className="h-9 text-sm"
-        />
-      </div>
+      {/* Phone - hide if auto-filled from profile */}
+      {!profileComplete || !phoneNumber ? (
+        <div className="space-y-1">
+          <Label className="flex items-center gap-2 text-sm">
+            <Phone className="h-3.5 w-3.5" />
+            {t.phone}
+          </Label>
+          <Input
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="+357 99 123456"
+            className="h-9 text-sm"
+          />
+        </div>
+      ) : null}
 
-      {/* Email */}
-      <div className="space-y-1">
-        <Label className="flex items-center gap-2 text-sm">
-          <Mail className="h-3.5 w-3.5" />
-          {t.email}
-        </Label>
-        <Input
-          type="email"
-          value={customerEmail}
-          onChange={(e) => setCustomerEmail(e.target.value)}
-          placeholder={t.emailPlaceholder}
-          className="h-9 text-sm"
-        />
-      </div>
+      {/* Email - hide if auto-filled from profile */}
+      {!profileComplete || !customerEmail ? (
+        <div className="space-y-1">
+          <Label className="flex items-center gap-2 text-sm">
+            <Mail className="h-3.5 w-3.5" />
+            {t.email}
+          </Label>
+          <Input
+            type="email"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            placeholder={t.emailPlaceholder}
+            className="h-9 text-sm"
+          />
+        </div>
+      ) : null}
 
       {/* Arrival Hours */}
       {(reservationHoursFrom || reservationHoursTo) && (
