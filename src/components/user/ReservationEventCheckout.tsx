@@ -213,7 +213,22 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const navigate = useNavigate();
   const t = translations[language];
 
-  // REMOVED: Preview-only free booking logic - always use Stripe checkout
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [profileComplete, setProfileComplete] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setCurrentUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // State
   const [step, setStep] = useState(1);
@@ -243,7 +258,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const profileName = useProfileName(userId);
+  const profileName = useProfileName(currentUserId);
 
   // Auto-fill reservation name and first guest with profile name
   useEffect(() => {
