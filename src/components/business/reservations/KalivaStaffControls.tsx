@@ -119,7 +119,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
       from('events').
       select('id, title, start_at').
       eq('business_id', businessId).
-      gte('end_at', new Date().toISOString()).
+      is('archived_at', null).
       order('start_at', { ascending: true });
 
       if (!eventsData || eventsData.length === 0) {

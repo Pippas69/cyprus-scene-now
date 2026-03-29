@@ -6,9 +6,10 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Archive, ArchiveRestore } from 'lucide-react';
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -40,7 +41,51 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [diningEventsHydrated, setDiningEventsHydrated] = useState(false);
   const selectedEventIdRef = useRef<string | null>(null);
   const fetchEventsRequestRef = useRef(0);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedEvents, setArchivedEvents] = useState<EventOption[]>([]);
 
+  const fetchArchivedEvents = useCallback(async () => {
+    const { data } = await supabase
+      .from('events')
+      .select('id, title, start_at, event_type')
+      .eq('business_id', businessId)
+      .not('archived_at', 'is', null)
+      .order('start_at', { ascending: false });
+    if (data) {
+      setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })));
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    if (showArchived) fetchArchivedEvents();
+  }, [showArchived, fetchArchivedEvents]);
+
+  const archiveEvent = useCallback(async (eventId: string) => {
+    const { error } = await supabase
+      .from('events')
+      .update({ archived_at: new Date().toISOString() } as any)
+      .eq('id', eventId);
+    if (error) {
+      toast.error('Error archiving event');
+      return;
+    }
+    toast.success(language === 'el' ? 'Αρχειοθετήθηκε' : 'Archived');
+    fetchEvents();
+    fetchDiningEvents();
+  }, [language]);
+
+  const restoreEvent = useCallback(async (eventId: string) => {
+    const { error } = await supabase
+      .from('events')
+      .update({ archived_at: null } as any)
+      .eq('id', eventId);
+    if (error) {
+      toast.error('Error restoring event');
+      return;
+    }
+    toast.success(language === 'el' ? 'Επαναφέρθηκε' : 'Restored');
+    fetchArchivedEvents();
+  }, [language, fetchArchivedEvents]);
   const text = useMemo(
     () => ({
       el: {
@@ -117,7 +162,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .select('id, title, start_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
-        .gte('end_at', new Date().toISOString())
+        .is('archived_at', null)
         .order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
@@ -223,7 +268,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .select('id, title, start_at, event_type')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
-        .gte('end_at', new Date().toISOString())
+        .is('archived_at', null)
         .order('start_at', { ascending: true });
 
       if (eventsError) throw eventsError;
@@ -431,6 +476,61 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
+      {/* Archive toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground gap-1.5"
+          onClick={() => setShowArchived(!showArchived)}
+        >
+          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+          {showArchived 
+            ? (language === 'el' ? 'Ενεργές' : 'Active')
+            : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
+          }
+        </Button>
+      </div>
+
+      {showArchived ? (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            {language === 'el' ? 'Αρχειοθετημένες Εκδηλώσεις' : 'Archived Events'}
+          </h3>
+          {archivedEvents.length === 0 ? (
+            <p className="text-sm text-muted-foreground/60 text-center py-8">
+              {language === 'el' ? 'Δεν υπάρχουν αρχειοθετημένες εκδηλώσεις' : 'No archived events'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {archivedEvents.map((event) => {
+                const dateStr = new Date(event.start_at).toLocaleDateString(
+                  language === 'el' ? 'el-GR' : 'en-US',
+                  { day: 'numeric', month: 'long', year: 'numeric' }
+                );
+                return (
+                  <div key={event.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border/50">
+                    <div>
+                      <p className="text-sm font-medium">{event.title}</p>
+                      <p className="text-xs text-muted-foreground">{dateStr}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs gap-1.5"
+                      onClick={() => restoreEvent(event.id)}
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                      {language === 'el' ? 'Επαναφορά' : 'Restore'}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <div className="min-w-0 space-y-3">
         {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
@@ -631,6 +731,27 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Archive button for ended events */}
+      {(() => {
+        const eventToArchive = isTicketLinked ? selectedEvent : (isDiningEventMode ? diningSelectedEvent : null);
+        if (!eventToArchive || new Date(eventToArchive.start_at) >= new Date()) return null;
+        return (
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 text-muted-foreground"
+              onClick={() => archiveEvent(eventToArchive.id)}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              {language === 'el' ? 'Αρχειοθέτηση εκδήλωσης' : 'Archive event'}
+            </Button>
+          </div>
+        );
+      })()}
+      </>
+      )}
     </div>
   );
 };

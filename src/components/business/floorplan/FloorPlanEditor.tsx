@@ -189,7 +189,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
       .from('events')
       .select('id, title, start_at')
       .eq('business_id', businessId)
-      .gte('end_at', now)
+      .is('archived_at', null)
       .order('start_at', { ascending: true });
     
     const loadedEvents = (data || []) as FloorPlanEvent[];
