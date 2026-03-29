@@ -145,7 +145,7 @@ const ResetPassword = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={loading || (form.watch("password") || "").length < 8 || (form.watch("confirmPassword") || "").length < 8 || form.watch("password") !== form.watch("confirmPassword")}>
+              <Button type="submit" className="w-full" disabled={loading || (watchedPassword || "").length < 8 || (watchedConfirmPassword || "").length < 8 || watchedPassword !== watchedConfirmPassword}>
                 {loading 
                   ? (language === 'el' ? "Αποθήκευση..." : "Saving...") 
                   : (language === 'el' ? "Αλλαγή Κωδικού" : "Change Password")}
