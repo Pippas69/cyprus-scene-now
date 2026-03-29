@@ -384,6 +384,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)));
   const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
+  const lockFirstGuestName = isAuthenticated && profileComplete && (guestNames[0]?.trim().length ?? 0) > 0;
 
   // Phone and email are left empty for the user to fill freely
 
@@ -588,14 +589,16 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                   <Input
                     placeholder={`${t.guestN} ${idx + 1}`}
                     value={name}
+                    readOnly={idx === 0 && lockFirstGuestName}
                     onChange={(e) => {
+                      if (idx === 0 && lockFirstGuestName) return;
                       setGuestNames(prev => {
                         const updated = [...prev];
                         updated[idx] = e.target.value;
                         return updated;
                       });
                     }}
-                    className="h-9 text-sm flex-1"
+                    className={cn("h-9 text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
                   />
                   <Input
                     placeholder={t.age}
@@ -621,20 +624,33 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           </div>
         )}
 
-        {/* Account contact (already captured during auth/profile) */}
+        {/* Account contact */}
         {totalTickets > 0 && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">{t.accountContact}</Label>
-            <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-2">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">{t.phone}</p>
-                <p className="text-sm font-medium break-all">{customerPhone || '-'}</p>
+            <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ticket-checkout-phone" className="text-xs text-muted-foreground">{t.phone}</Label>
+                <Input
+                  id="ticket-checkout-phone"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+357 99 123456"
+                  className="h-9 text-sm"
+                />
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">{t.email}</p>
-                <p className="text-sm font-medium break-all">{customerEmail || '-'}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor="ticket-checkout-email" className="text-xs text-muted-foreground">{t.email}</Label>
+                <Input
+                  id="ticket-checkout-email"
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  className="h-9 text-sm"
+                />
               </div>
-              <p className="text-[11px] text-muted-foreground">{language === 'el' ? 'Συμπληρώστε το τηλέφωνο και το email που θέλετε για τη συγκεκριμένη αγορά.' : 'Enter the phone and email you want for this specific purchase.'}</p>
             </div>
             {/* Special Requests */}
             <CollapsibleSpecialRequests
