@@ -431,6 +431,39 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
               </Select>
             </div>
 
+            {/* Phone */}
+            <div>
+              <Label className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary" />
+                {t.phone}
+              </Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.phoneCountry}
+                  onValueChange={(value) => setFormData({ ...formData, phoneCountry: value as "CY" | "GR" })}
+                  disabled={loading}
+                >
+                  <SelectTrigger className="rounded-xl w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CY">🇨🇾 +357</SelectItem>
+                    <SelectItem value="GR">🇬🇷 +30</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder={formData.phoneCountry === 'CY' ? '99123456' : '6912345678'}
+                  disabled={loading}
+                  className="rounded-xl flex-1"
+                  required
+                />
+              </div>
+            </div>
+
             {/* Gender */}
             <div>
               <Label htmlFor="gender">{t.gender}</Label>
