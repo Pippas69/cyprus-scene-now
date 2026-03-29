@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { toast } from 'sonner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -92,8 +93,24 @@ export const DirectReservationDialog = ({
     } | null;
   }>({ open: false, reservation: null });
 
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user);
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsAuthenticated(!!session?.user);
+      if (session?.user) setCurrentUserId(session.user.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const isMobile = useIsMobile();
-  const profileName = useProfileName(userId);
+  const profileName = useProfileName(currentUserId);
 
   // Auto-fill reservation name and first guest slot with profile name
   useEffect(() => {
