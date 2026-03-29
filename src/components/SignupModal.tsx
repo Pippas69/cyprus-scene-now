@@ -274,6 +274,20 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
           }
         }
 
+        // Send welcome email (non-blocking)
+        try {
+          await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'welcome-user',
+              recipientEmail: formData.email,
+              idempotencyKey: `welcome-user-${authData.user.id}`,
+              templateData: { name: formData.firstName },
+            },
+          });
+        } catch (welcomeEmailErr) {
+          console.error('Welcome email error:', welcomeEmailErr);
+        }
+
         toast({
           title: t.success,
           description: "",
