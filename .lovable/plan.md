@@ -39,3 +39,13 @@
 - `src/components/tickets/KalivaTicketReservationFlow.tsx`
 - `src/components/user/ReservationEventCheckout.tsx`
 
+---
+
+## ✅ Ολοκληρωμένο: Προσθήκη τηλεφώνου στο signup + μήνυμα επιτυχίας μετά OTP
+
+### Αλλαγές που έγιναν
+1. **Πεδίο τηλεφώνου** με επιλογή χώρας (CY/GR) σε `Signup.tsx` και `SignupModal.tsx`
+2. **Αποθήκευση** first_name, last_name, phone στο profiles upsert κατά το signup
+3. **Database trigger** ενημερώθηκε να αποθηκεύει phone από metadata
+4. **Οθόνη επιτυχίας** με checkmark animation + confetti μετά OTP verification
+5. **Test account** `marinoskoumi04@gmail.com` διαγράφηκε
