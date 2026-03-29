@@ -227,7 +227,6 @@ const Signup = () => {
             } as any,
             { onConflict: "id" }
           );
-          );
 
         if (profileUpsertError) {
           console.error("Profile upsert error on signup:", profileUpsertError);
