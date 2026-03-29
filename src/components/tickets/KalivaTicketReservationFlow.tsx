@@ -430,8 +430,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+  const hasReservationName = reservationName.trim().length >= 2;
+  const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = allGuestsFilled && partySize > 0 && isValidPhone(phoneNumber) && isEmailValid;
+  const canProceedToStep3 = hasReservationName && allGuestsFilled && partySize > 0 && isPhoneValid && isEmailValid;
 
   // Dynamic step: auth/profile gate between step 1 and step 2
   const getEffectiveStep = (): number | 'auth' | 'profile' => {
