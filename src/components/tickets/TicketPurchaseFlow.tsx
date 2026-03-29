@@ -906,6 +906,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     showSelect: t.steps.showSelect,
     seats: t.steps.seats,
     tickets: t.steps.tickets,
+    auth: t.steps.auth,
+    profile: t.steps.profile,
     guests: t.steps.guests,
     checkout: t.steps.checkout,
   };
