@@ -476,6 +476,61 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   return (
     <div className="p-4 md:p-6 space-y-4 w-full max-w-full overflow-x-hidden">
+      {/* Archive toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground gap-1.5"
+          onClick={() => setShowArchived(!showArchived)}
+        >
+          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+          {showArchived 
+            ? (language === 'el' ? 'Ενεργές' : 'Active')
+            : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
+          }
+        </Button>
+      </div>
+
+      {showArchived ? (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            {language === 'el' ? 'Αρχειοθετημένες Εκδηλώσεις' : 'Archived Events'}
+          </h3>
+          {archivedEvents.length === 0 ? (
+            <p className="text-sm text-muted-foreground/60 text-center py-8">
+              {language === 'el' ? 'Δεν υπάρχουν αρχειοθετημένες εκδηλώσεις' : 'No archived events'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {archivedEvents.map((event) => {
+                const dateStr = new Date(event.start_at).toLocaleDateString(
+                  language === 'el' ? 'el-GR' : 'en-US',
+                  { day: 'numeric', month: 'long', year: 'numeric' }
+                );
+                return (
+                  <div key={event.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border/50">
+                    <div>
+                      <p className="text-sm font-medium">{event.title}</p>
+                      <p className="text-xs text-muted-foreground">{dateStr}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs gap-1.5"
+                      onClick={() => restoreEvent(event.id)}
+                    >
+                      <ArchiveRestore className="h-3.5 w-3.5" />
+                      {language === 'el' ? 'Επαναφορά' : 'Restore'}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <div className="min-w-0 space-y-3">
         {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
