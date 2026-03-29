@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useProfileName } from '@/hooks/useProfileName';
+import { InlineAuthGate } from './InlineAuthGate';
+import { ProfileCompletionGate } from './ProfileCompletionGate';
 
 interface SeatingTypeOption {
   id: string;
