@@ -480,21 +480,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         return;
       }
 
-      // Get order info for phone numbers and prices
+      // Get order info for phone numbers, prices and user_ids
       const orderIds = [...new Set(tickets.map(t => t.order_id))];
       const { data: orders } = await supabase
         .from('ticket_orders')
-        .select('id, customer_phone, subtotal_cents, status')
+        .select('id, customer_phone, subtotal_cents, status, user_id')
         .in('id', orderIds)
         .eq('status', 'completed');
 
       if (isStaleRequest()) return;
 
       const completedOrderIds = new Set((orders || []).map(o => o.id));
-      const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number }> = {};
+      const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number; userId: string }> = {};
       (orders || []).forEach(o => {
-        orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0 };
+        orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0, userId: o.user_id };
       });
+
+      // Fetch buyer cities from profiles
+      const userIds = [...new Set((orders || []).map(o => o.user_id).filter(Boolean))];
+      const cityMap: Record<string, string | null> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, city')
+          .in('id', userIds);
+        if (isStaleRequest()) return;
+        (profiles || []).forEach(p => { cityMap[p.id] = p.city; });
+      }
 
       // Count tickets per order for per-ticket price calculation
       const completedTickets = tickets.filter(t => completedOrderIds.has(t.order_id));
@@ -516,17 +528,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
       }
 
+      // Determine which ticket is the "first" per order (the buyer's ticket)
+      const firstTicketPerOrder = new Map<string, string>();
+      completedTickets.forEach(t => {
+        if (!firstTicketPerOrder.has(t.order_id)) {
+          firstTicketPerOrder.set(t.order_id, t.id);
+        }
+      });
+
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
         const order = orderMap[t.order_id];
         const perTicketPrice = order && order.ticketCount > 0
           ? Math.round(order.subtotal / order.ticketCount)
           : 0;
+        // Only the first ticket in each order gets the buyer's city
+        const isBuyerTicket = firstTicketPerOrder.get(t.order_id) === t.id;
         return {
           id: t.order_id,
           ticket_id: t.id,
           guest_name: t.guest_name || '-',
           guest_age: t.guest_age,
           buyer_phone: order?.phone || null,
+          buyer_city: isBuyerTicket ? (cityMap[order?.userId] || null) : null,
           subtotal_cents: perTicketPrice,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
