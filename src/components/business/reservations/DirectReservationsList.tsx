@@ -77,6 +77,8 @@ interface TicketOnlyOrder {
   guest_age: number | null;
   buyer_phone: string | null;
   buyer_city: string | null;
+  guest_city: string | null;
+  is_buyer: boolean;
   subtotal_cents: number;
   status: string;
   checked_in: boolean;
@@ -110,6 +112,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Ticket name editing (for ticket-only mode)
   const [editingTicketName, setEditingTicketName] = useState<string | null>(null);
   const [ticketNameValue, setTicketNameValue] = useState('');
+  // Ticket city editing (for ghost guests in ticket-only mode)
+  const [editingTicketCity, setEditingTicketCity] = useState<string | null>(null);
+  const [ticketCityValue, setTicketCityValue] = useState('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
   // Floor plan assignment dialog
@@ -469,7 +474,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
+        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo')
         .eq('event_id', eventId)
         .order('guest_name', { ascending: true });
 
@@ -550,6 +555,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           guest_age: t.guest_age,
           buyer_phone: order?.phone || null,
           buyer_city: isBuyerTicket ? (cityMap[order?.userId] || null) : null,
+          guest_city: (t as any).guest_city || null,
+          is_buyer: isBuyerTicket,
           subtotal_cents: perTicketPrice,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
@@ -867,7 +874,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  // Render ticket memo cell
+  // Save ticket guest city (for ghost guests)
+  const handleSaveTicketCity = async (ticketId: string) => {
+    try {
+      const trimmed = ticketCityValue.trim();
+      const { error } = await supabase
+        .from('tickets')
+        .update({ guest_city: trimmed || null } as any)
+        .eq('id', ticketId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketCity(null);
+      setTicketCityValue('');
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_city: trimmed || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket city:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
@@ -1068,12 +1093,44 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        {ticket.buyer_city && (
+                        {/* City: read-only for buyer (from profile), editable for ghosts */}
+                        {ticket.is_buyer && ticket.buyer_city ? (
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3 shrink-0" />
                             {ticket.buyer_city}
                           </span>
-                        )}
+                        ) : !ticket.is_buyer ? (
+                          editingTicketCity === ticket.ticket_id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={ticketCityValue}
+                                onChange={(e) => setTicketCityValue(e.target.value)}
+                                className="h-7 text-xs w-24"
+                                placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
+                                  if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
+                                }}
+                              />
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
+                                <Check className="h-3 w-3 text-green-600" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
+                                <X className="h-3 w-3 text-red-500" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span
+                              className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer group/city"
+                              onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ''); }}
+                            >
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {ticket.guest_city || (language === 'el' ? '—' : '—')}
+                              <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
+                            </span>
+                          )
+                        ) : null}
                         {ticket.guest_age ? (
                           <span className="text-sm text-muted-foreground">
                             {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
