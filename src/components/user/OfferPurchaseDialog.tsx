@@ -750,7 +750,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const reservationValid = !wantsReservation || reservationDate && reservationTime && availableCapacity !== null && availableCapacity >= partySize && !capacityError;
   const claimEnabled = canClaim && reservationValid;
 
-  const formContent =
+  const formContent = !isAuthenticated ? (
+    <div className="space-y-4 py-4">
+      <InlineAuthGate onAuthSuccess={() => {}} />
+    </div>
+  ) : !profileComplete ? (
+    <div className="space-y-4 py-4">
+      <ProfileCompletionGate onComplete={(profile) => {
+        setProfileComplete(true);
+        const fullName = `${profile.firstName} ${profile.lastName}`;
+        setGuestNames(prev => {
+          const updated = [...prev];
+          updated[0] = fullName;
+          return updated;
+        });
+      }} />
+    </div>
+  ) :
   <div className="space-y-1.5">
       {/* Description */}
       {offer.description && (
