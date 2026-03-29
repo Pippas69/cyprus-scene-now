@@ -226,6 +226,11 @@ export const ReservationDialog = ({
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!isAuthenticated && (
+        <div className="mb-4">
+          <InlineAuthGate onAuthSuccess={() => {}} />
+        </div>
+      )}
       {capacityLoading ? (
         <div className="text-sm text-muted-foreground">
           {language === 'el' ? 'Έλεγχος διαθεσιμότητας...' : 'Checking availability...'}
