@@ -75,8 +75,8 @@ const translations = {
       tickets: "Επιλογή Εισιτηρίων",
       auth: "Σύνδεση",
       profile: "Στοιχεία Προφίλ",
-      guests: "Στοιχεία Καλεσμένων",
-      checkout: "Ολοκλήρωση",
+      guests: "Ονόματα Καλεσμένων",
+      checkout: "Σύνοψη",
     },
     available: "διαθέσιμα",
     soldOut: "Εξαντλήθηκαν",
@@ -129,8 +129,8 @@ const translations = {
       tickets: "Select Tickets",
       auth: "Sign In",
       profile: "Profile Details",
-      guests: "Guest Details",
-      checkout: "Checkout",
+      guests: "Guest Names",
+      checkout: "Summary",
     },
     available: "available",
     soldOut: "Sold Out",
@@ -602,7 +602,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               <Users className="h-3.5 w-3.5" />
               {t.guestDetails} ({totalTickets} {t.people})
             </Label>
-            <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eachPersonGetsQR}</p>
+            
             <div className="space-y-1.5 max-h-52 overflow-y-auto">
               {guestNames.map((name, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
@@ -785,7 +785,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           onCheckedChange={(checked) => setTermsAccepted(checked === true)}
           className="mt-0.5 rounded-[6px]"
         />
-        <label htmlFor="terms-accept" className="text-xs sm:text-sm text-foreground/90 leading-relaxed cursor-pointer">
+        <label htmlFor="terms-accept" className="text-[10px] sm:text-xs text-foreground/90 leading-relaxed cursor-pointer">
           {t.termsLabel}{' '}
           <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground font-semibold underline underline-offset-2">{t.termsLink}</a>
           {' '}{t.andThe}{' '}
