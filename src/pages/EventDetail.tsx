@@ -587,12 +587,12 @@ export default function EventDetail() {
           <div className="lg:col-span-2 space-y-4">
             {/* Hero Image — premium style with title + price overlaid */}
             <motion.div
-              className="relative rounded-2xl shadow-lg overflow-hidden sm:mx-0 lg:rounded-xl md:max-h-[360px] lg:max-h-[400px]"
+              className="relative rounded-2xl shadow-lg overflow-hidden sm:mx-0 lg:rounded-xl"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}>
               
-              <div className="aspect-video">
+              <div className="aspect-video md:aspect-[21/9]">
                 {event.cover_image_url ?
                 <img
                   src={event.cover_image_url}
