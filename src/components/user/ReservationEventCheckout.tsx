@@ -1018,26 +1018,30 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     </div>
   );
 
+  if (isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader className="flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4">
+            <DialogTitle className="text-sm font-bold">{t.title}</DialogTitle>
+            <DialogDescription className="text-xs">{eventTitle}</DialogDescription>
+          </DialogHeader>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+            {content}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        ref={scrollRef}
-        className={cn(
-          isMobile 
-            ? "max-w-[92vw] max-h-[85vh] flex flex-col p-0 gap-0" 
-            : "max-w-md max-h-[90vh] overflow-y-auto"
-        )}
-        onOpenAutoFocus={(e) => isMobile && e.preventDefault()}
-      >
-        <DialogHeader className={cn(
-          isMobile && "flex-shrink-0 border-b border-border/50 pb-3 px-4 pt-4"
-        )}>
-          <DialogTitle className={cn(isMobile && "text-sm font-bold")}>{t.title}</DialogTitle>
-          <DialogDescription className={cn(isMobile && "text-xs")}>{eventTitle}</DialogDescription>
+      <DialogContent ref={scrollRef} className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t.title}</DialogTitle>
+          <DialogDescription>{eventTitle}</DialogDescription>
         </DialogHeader>
-        <div className={cn(isMobile ? "flex-1 overflow-y-auto px-4 py-4" : "")}>
-          {content}
-        </div>
+        {content}
       </DialogContent>
     </Dialog>
   );
