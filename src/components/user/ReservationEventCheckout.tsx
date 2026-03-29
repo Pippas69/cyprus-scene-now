@@ -831,54 +831,70 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   };
 
   // Navigation
-  const renderNavigation = () => (
-    <div className="flex justify-between pt-4">
-      {step > 1 ? (
-        <Button variant="outline" onClick={() => setStep(step - 1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t.back}
-        </Button>
-      ) : (
-        <div />
-      )}
+  const renderNavigation = () => {
+    // Hide navigation on auth/profile gates
+    if (effectiveStep === 'auth' || effectiveStep === 'profile') {
+      return (
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={() => setStep(1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+          <div />
+        </div>
+      );
+    }
 
-      {step < 3 ? (
-        <Button
-          onClick={() => setStep(step + 1)}
-          disabled={
-            (step === 1 && !canProceedToStep2) ||
-            (step === 2 && !canProceedToStep3)
-          }
-        >
-          {t.next}
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-      ) : (
-        <Button
-          onClick={handleCheckout}
-          disabled={submitting || !selectedSeating || !price}
-          className="gap-2"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t.processing}
-            </>
-          ) : (
-            <>
-              <CreditCard className="h-4 w-4" />
-              {isDeferredPayment
-                ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
-                : `${t.pay} ${formatPrice(total)}`
-              }
-            </>
-          )}
-        </Button>
-      )}
-    </div>
-  );
+    return (
+      <div className="flex justify-between pt-4">
+        {step > 1 ? (
+          <Button variant="outline" onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.back}
+          </Button>
+        ) : (
+          <div />
+        )}
+
+        {step < 3 ? (
+          <Button
+            onClick={() => setStep(step + 1)}
+            disabled={
+              (step === 1 && !canProceedToStep2) ||
+              (step === 2 && !canProceedToStep3)
+            }
+          >
+            {t.next}
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleCheckout}
+            disabled={submitting || !selectedSeating || !price}
+            className="gap-2"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t.processing}
+              </>
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                {isDeferredPayment
+                  ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
+                  : `${t.pay} ${formatPrice(total)}`
+                }
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   // Step indicator
+  const stepIndicatorValue = effectiveStep === 'auth' || effectiveStep === 'profile' ? 1.5 : step;
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
       {[1, 2, 3].map(s => (
@@ -886,7 +902,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           key={s}
           className={cn(
             "w-2 h-2 rounded-full transition-colors",
-            s === step ? "bg-primary w-4" : s < step ? "bg-primary/50" : "bg-muted"
+            s === step && effectiveStep !== 'auth' && effectiveStep !== 'profile' ? "bg-primary w-4" : 
+            s < step || (s === 1 && (effectiveStep === 'auth' || effectiveStep === 'profile')) ? "bg-primary/50" : 
+            (effectiveStep === 'auth' || effectiveStep === 'profile') && s === 2 ? "bg-primary w-4" : "bg-muted"
           )}
         />
       ))}
