@@ -217,8 +217,15 @@ const Signup = () => {
           .upsert(
             {
               id: data.user.id,
+              first_name: values.firstName,
+              last_name: values.lastName,
+              phone: fullPhone,
               gender: values.gender ?? null,
               age: typeof values.age === "number" ? values.age : null,
+              town: values.town,
+              city: values.town,
+            } as any,
+            { onConflict: "id" }
               // We treat “Περιοχή” as city/town for analytics
               town: values.town,
               city: values.town,
