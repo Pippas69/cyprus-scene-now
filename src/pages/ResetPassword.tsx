@@ -122,6 +122,7 @@ const ResetPassword = () => {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        onChange={(e) => { field.onChange(e); setPwLen(e.target.value.length); setPwMatch(e.target.value === form.getValues("confirmPassword")); }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -139,6 +140,7 @@ const ResetPassword = () => {
                       <PasswordInput
                         placeholder="••••••••"
                         {...field}
+                        onChange={(e) => { field.onChange(e); setCpwLen(e.target.value.length); setPwMatch(e.target.value === form.getValues("password")); }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -146,7 +148,7 @@ const ResetPassword = () => {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={loading || (watchedPassword || "").length < 8 || (watchedConfirmPassword || "").length < 8 || watchedPassword !== watchedConfirmPassword}>
+              <Button type="submit" className="w-full" disabled={loading || pwLen < 8 || cpwLen < 8 || !pwMatch}>
                 {loading 
                   ? (language === 'el' ? "Αποθήκευση..." : "Saving...") 
                   : (language === 'el' ? "Αλλαγή Κωδικού" : "Change Password")}
