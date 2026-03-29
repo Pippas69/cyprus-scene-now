@@ -780,7 +780,7 @@ export default function EventDetail() {
                 </div>
               }
 
-              {eventHasReservation && event.event_type === 'reservation' && user &&
+              {eventHasReservation && event.event_type === 'reservation' &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
                 <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -789,7 +789,7 @@ export default function EventDetail() {
               </Card>
               }
 
-              {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
+              {eventHasReservation && event.event_type === 'ticket_and_reservation' && !isBusinessTicketLinked &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
                 <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -798,7 +798,7 @@ export default function EventDetail() {
               </Card>
               }
 
-              {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
+              {event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
               <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationDialog(true)}>
                 <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                   <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -1006,7 +1006,7 @@ export default function EventDetail() {
               </div>
             }
 
-            {eventHasReservation && event.event_type === 'reservation' && user &&
+            {eventHasReservation && event.event_type === 'reservation' &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
               <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -1015,7 +1015,7 @@ export default function EventDetail() {
             </Card>
             }
 
-            {eventHasReservation && event.event_type === 'ticket_and_reservation' && user && !isBusinessTicketLinked &&
+            {eventHasReservation && event.event_type === 'ticket_and_reservation' && !isBusinessTicketLinked &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
               <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -1024,7 +1024,7 @@ export default function EventDetail() {
             </Card>
             }
 
-            {user && event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
+            {event.accepts_reservations && event.event_type !== 'reservation' && event.event_type !== 'ticket_and_reservation' &&
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationDialog(true)}>
               <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
@@ -1054,14 +1054,13 @@ export default function EventDetail() {
       <Footer />
 
       {/* Reservation Dialog */}
-      {user &&
       <ReservationDialog
         eventId={event.id}
         eventTitle={event.title}
         eventStartAt={event.start_at}
         seatingOptions={event.seating_options || []}
         language={language}
-        userId={user.id}
+        userId={user?.id}
         open={showReservationDialog}
         onOpenChange={setShowReservationDialog}
         onSuccess={() => {
@@ -1069,10 +1068,8 @@ export default function EventDetail() {
           toast.success(language === 'el' ? 'Η κράτησή σας υποβλήθηκε!' : 'Reservation submitted!');
         }} />
 
-      }
-
       {/* Reservation Event Checkout Dialog */}
-      {user && (event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') &&
+      {(event.event_type === 'reservation' || event.event_type === 'ticket_and_reservation') &&
       <ReservationEventCheckout
         open={showReservationCheckout}
         onOpenChange={setShowReservationCheckout}
@@ -1084,17 +1081,16 @@ export default function EventDetail() {
         maxPartySize={event.max_party_size || 10}
         reservationHoursFrom={event.reservation_hours_from}
         reservationHoursTo={event.reservation_hours_to}
-        userId={user.id}
+        userId={user?.id}
         language={language}
         onSuccess={() => {
           setShowReservationCheckout(false);
           toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
         }} />
-
       }
 
       {/* Kaliva Ticket + Reservation Flow */}
-      {user && hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
+      {hasNativeTickets && isBusinessTicketLinked && event.event_type === 'ticket_and_reservation' &&
       <KalivaTicketReservationFlow
         open={showKalivaFlow}
         onOpenChange={setShowKalivaFlow}
@@ -1107,7 +1103,6 @@ export default function EventDetail() {
             toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
           }
         }} />
-
       }
 
       {/* Ticket Purchase Flow */}
