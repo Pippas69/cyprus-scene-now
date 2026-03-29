@@ -73,6 +73,7 @@ interface Offer {
     accepts_direct_reservations?: boolean;
     reservation_time_slots?: TimeSlot[] | null;
     reservation_days?: string[] | null;
+    reservation_seating_options?: string[] | null;
   };
 }
 
