@@ -473,6 +473,23 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
 
   const handleClaim = async () => {
 
+    // Validate reservation fields if reservation is selected
+    if (wantsReservation) {
+      if (!reservationName.trim()) {
+        toast.error(language === "el" ? "Παρακαλώ εισάγετε όνομα κράτησης" : "Please enter a reservation name");
+        return;
+      }
+      if (!reservationPhone.trim()) {
+        toast.error(language === "el" ? "Παρακαλώ εισάγετε τηλέφωνο" : "Please enter a phone number");
+        return;
+      }
+      const phoneDigits = reservationPhone.replace(/\D/g, '').length;
+      if (phoneDigits < 8 || phoneDigits > 15) {
+        toast.error(language === "el" ? "Το τηλέφωνο πρέπει να έχει 8-15 ψηφία" : "Phone must have 8-15 digits");
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
