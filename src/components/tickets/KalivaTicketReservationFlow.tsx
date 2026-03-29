@@ -600,7 +600,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             {t.partySize}
           </Label>
           {ticketTier && ticketPricePerPerson > 0 && (
-            <Label className="text-sm text-primary font-medium">
+            <Label className="text-sm text-foreground font-medium">
               {language === 'el' ? 'Τιμή εισιτηρίων' : 'Ticket price'}
             </Label>
           )}
@@ -619,10 +619,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
           {ticketTier && ticketPricePerPerson > 0 && (
-            <span className="text-lg font-bold text-primary">{formatPrice(ticketTotal)}</span>
+            <span className="text-lg font-bold text-foreground">{formatPrice(ticketTotal)}</span>
           )}
           {ticketTier && ticketPricePerPerson === 0 && (
-            <span className="text-sm font-medium text-primary">{t.free}</span>
+            <span className="text-sm font-medium text-foreground">{t.free}</span>
           )}
         </div>
       </div>
