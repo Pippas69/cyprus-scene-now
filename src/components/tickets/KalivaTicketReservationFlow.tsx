@@ -444,8 +444,20 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const effectiveStep = getEffectiveStep();
 
   const handleCheckout = async () => {
+    if (!hasReservationName) {
+      toast.error(language === 'el' ? 'Συμπληρώστε όνομα κράτησης' : 'Please enter reservation name');
+      return;
+    }
     if (!allGuestsFilled) {
       toast.error(t.fillAllGuests);
+      return;
+    }
+    if (!isPhoneValid) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό τηλέφωνο' : 'Please enter a valid phone number');
+      return;
+    }
+    if (!isEmailValid) {
+      toast.error(language === 'el' ? 'Συμπληρώστε σωστό email' : 'Please enter a valid email');
       return;
     }
 
@@ -471,11 +483,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         eventId,
         items: [{ tierId: ticketTier.id, quantity: partySize }],
         customerName: guests[0].name.trim(),
-        customerEmail: customerEmail.trim() || user.email,
-        customerPhone: phoneNumber.trim() || null,
+        customerEmail: customerEmail.trim(),
+        customerPhone: phoneNumber.trim(),
         specialRequests: specialRequests.trim() || null,
         seatingTypeId: selectedSeating?.id || null,
-        reservationName: reservationName.trim() || guests[0].name.trim(),
+        reservationName: reservationName.trim(),
         guests: guests.map(g => ({
           name: g.name.trim(),
           age: parseInt(g.age) || 0,
