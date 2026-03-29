@@ -724,7 +724,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {/* Total */}
       <div className="flex justify-between font-bold text-lg">
         <span>{t.total}</span>
-        <span className="text-primary">{isFreeOrder ? t.free : formatPrice(total)}</span>
+        <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
       </div>
 
       {/* Terms checkbox */}
