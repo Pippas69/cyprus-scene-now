@@ -677,6 +677,7 @@ const Signup = () => {
                 </div>
               </div>
 
+              <FormField control={form.control} name="gender" render={({
               field
             }) => <FormItem>
                     <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
