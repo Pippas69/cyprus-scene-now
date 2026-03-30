@@ -63,15 +63,12 @@ export const ManualStatusToggle = ({
         const updateData: Record<string, any> = { manual_status: value };
         
         if (value === 'arrived') {
-          updateData.checked_in = true;
           updateData.checked_in_at = new Date().toISOString();
           updateData.status = 'used';
         } else if (value === 'no_show') {
-          updateData.checked_in = false;
           updateData.checked_in_at = null;
           updateData.status = 'valid';
         } else {
-          updateData.checked_in = false;
           updateData.checked_in_at = null;
           updateData.status = 'valid';
         }
