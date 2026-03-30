@@ -92,9 +92,7 @@ const Login = () => {
           successMessage = t.adminWelcome;
         } else if (business) {
           redirectPath = "/dashboard-business";
-          successMessage = business.verified ?
-          t.businessWelcome :
-          t.businessPendingVerification;
+          successMessage = t.businessWelcome;
         }
 
         toast.success(successMessage);
