@@ -943,27 +943,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     try {
       const trimmed = ticketNameValue.trim();
       if (!trimmed) return;
+      
+      // Get old name before updating
+      const ticket = ticketOnlyOrders.find(t => t.ticket_id === ticketId);
+      const oldName = ticket?.guest_name;
+
       const { error } = await supabase
         .from('tickets')
         .update({ guest_name: trimmed } as any)
         .eq('id', ticketId);
       if (error) throw error;
 
-      // Also update the existing CRM guest record if one exists (prevent duplicates)
-      const ticket = ticketOnlyOrders.find(t => t.ticket_id === ticketId);
-      if (ticket?.order_id) {
-        // Find linked CRM guest via the order's crm_guest_id or by matching ticket
-        const { data: orderData } = await supabase
-          .from('ticket_orders')
-          .select('crm_guest_id')
-          .eq('id', ticket.order_id)
-          .maybeSingle();
-        if (orderData?.crm_guest_id) {
-          await supabase
-            .from('crm_guests')
-            .update({ guest_name: trimmed })
-            .eq('id', orderData.crm_guest_id);
-        }
+      // Update existing CRM guest record if one exists (by old name + business)
+      if (oldName && oldName !== '-' && businessId) {
+        await supabase
+          .from('crm_guests')
+          .update({ guest_name: trimmed })
+          .eq('business_id', businessId)
+          .eq('guest_name', oldName)
+          .eq('profile_type', 'ghost');
       }
 
       toast.success(t.saved);
