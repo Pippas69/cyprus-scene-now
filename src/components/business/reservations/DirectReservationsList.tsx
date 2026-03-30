@@ -95,6 +95,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
+  // City data per reservation (from user profiles)
+  const [cityByReservation, setCityByReservation] = useState<Record<string, string>>({});
   // Kaliva: seating tiers for min charge calculation
   const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
   // Seating type names by seating_type_id
@@ -348,6 +350,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!isTicketOnlyMode) {
           fetchAgesForReservations(reservationIds);
           fetchCheckInCounts(reservationIds);
+          // Fetch cities from user profiles for reservations
+          fetchCitiesForReservations(sortedByName);
           const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
@@ -401,6 +405,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     });
 
     setAgesByReservation(agesMap);
+  };
+
+  const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
+    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))];
+    if (userIds.length === 0) return;
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, city, town')
+      .in('id', userIds);
+
+    if (!profiles) return;
+
+    const cityMap: Record<string, string> = {};
+    reservations.forEach(r => {
+      if (!r.user_id) return;
+      const profile = profiles.find(p => p.id === r.user_id);
+      const city = profile?.city || profile?.town || '';
+      if (city) cityMap[r.id] = city;
+    });
+
+    setCityByReservation(cityMap);
   };
 
   const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
@@ -1299,6 +1325,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={String(reservation.party_size)} />
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
+                          {cityByReservation[reservation.id] && (
+                            <span className="text-sm text-muted-foreground flex items-center gap-1 ml-2">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {cityByReservation[reservation.id]}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1459,6 +1491,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         />
                       </div>
                       <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
+                      {cityByReservation[reservation.id] && (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1 ml-4">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {cityByReservation[reservation.id]}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
 
