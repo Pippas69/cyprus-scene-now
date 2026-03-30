@@ -1341,7 +1341,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={reservation.reservation_name} />
                             {reservation.phone_number &&
                           <span className="text-sm text-muted-foreground -ml-1.5">
-                                {reservation.phone_number}
+                            {reservation.phone_number.replace(/^\+357/, '')}
                               </span>
                           }
                           </div>
