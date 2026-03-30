@@ -719,7 +719,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const filteredReservations = reservations;
+  const filteredReservations = useMemo(() => {
+    if (!searchQuery?.trim()) return reservations;
+    const q = searchQuery.trim().toLowerCase();
+    return reservations.filter(r => r.reservation_name?.toLowerCase().includes(q));
+  }, [reservations, searchQuery]);
 
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');
