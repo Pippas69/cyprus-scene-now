@@ -24,7 +24,7 @@ const WelcomeBusinessEmail = ({ businessName }: WelcomeBusinessProps) => (
 
         <Section style={contentSection}>
           <Heading style={h1}>
-            {businessName ? `Καλωσορίσατε, ${businessName}!` : 'Καλωσορίσατε!'}
+            {'Καλωσορίσατε!'}
           </Heading>
 
           <Text style={text}>
