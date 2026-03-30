@@ -221,7 +221,7 @@ export const ManualEntryDialog = ({
         const orderId = crypto.randomUUID();
         const resolvedTierId = ticketTierId || null;
 
-        const selectedTier = ticketTiers.find(t => t.id === resolvedTierId);
+        const selectedTier = resolvedTierId ? ticketTiers.find(t => t.id === resolvedTierId) : null;
         const priceCents = selectedTier?.price_cents ?? 0;
         const customerEmail = user.email || `manual+${orderId}@noemail.local`;
 
