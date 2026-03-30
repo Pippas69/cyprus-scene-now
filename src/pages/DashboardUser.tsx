@@ -1,13 +1,12 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
+import { MyReservations } from '@/components/user/MyReservations';
+import { MyOffers } from '@/components/user/MyOffers';
 import { useLanguage } from '@/hooks/useLanguage';
-
-const MyReservations = lazy(() => import('@/components/user/MyReservations').then(m => ({ default: m.MyReservations })));
-const MyOffers = lazy(() => import('@/components/user/MyOffers').then(m => ({ default: m.MyOffers })));
-const UserSettings = lazy(() => import('@/components/user/UserSettings').then(m => ({ default: m.UserSettings })));
+import { UserSettings } from '@/components/user/UserSettings';
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
