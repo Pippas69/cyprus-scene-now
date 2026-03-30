@@ -205,6 +205,11 @@ export const ManualEntryDialog = ({
       toast.error(txt.nameRequired);
       return;
     }
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      toast.error(txt.phoneRequired);
+      return;
+    }
 
     setSaving(true);
     try {
