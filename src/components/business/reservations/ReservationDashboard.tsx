@@ -559,13 +559,40 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0"
+                className={`rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0 ${searchOpen ? 'bg-primary text-primary-foreground' : ''}`}
+                onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setSearchQuery(''); }}
+                title={language === 'el' ? 'Αναζήτηση' : 'Search'}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 flex-shrink-0"
                 onClick={() => setManualEntryOpen(true)}
                 title={language === 'el' ? 'Προσθήκη' : 'Add'}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
+
+            {searchOpen && (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={language === 'el' ? 'Αναζήτηση ονόματος...' : 'Search name...'}
+                  className="h-8 text-sm rounded-full"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); } }}
+                />
+                {searchQuery && (
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={() => setSearchQuery('')}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Per-tab event dropdown (only if 2+ events in active tab) */}
             {activeTabEvents.length > 1 && (
