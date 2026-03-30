@@ -50,6 +50,7 @@ export const ManualEntryDialog = ({
 }: ManualEntryDialogProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [city, setCity] = useState('');
   const [partySize, setPartySize] = useState('1');
   const [dateTime, setDateTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
