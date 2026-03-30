@@ -1,0 +1,1 @@
+ALTER TABLE public.tickets ALTER COLUMN tier_id DROP NOT NULL;
