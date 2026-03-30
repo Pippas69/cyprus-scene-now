@@ -558,16 +558,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (accountUserId) accountUserIds.add(accountUserId);
       });
 
-      // Fetch account cities from profiles (city or fallback town)
+      // Fetch account cities via security definer RPC (bypasses RLS)
       const userIds = [...accountUserIds];
       const cityMap: Record<string, string | null> = {};
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('public_profiles' as any)
-          .select('id, city, town')
-          .in('id', userIds);
+        const { data: cityRows } = await supabase.rpc('get_user_cities', { p_user_ids: userIds });
         if (isStaleRequest()) return;
-        ((profiles || []) as any[]).forEach(p => { cityMap[p.id] = p.city || p.town || null; });
+        ((cityRows || []) as any[]).forEach((r: any) => {
+          const c = (r.city && r.city.trim()) || (r.town && r.town.trim()) || null;
+          cityMap[r.user_id] = c;
+        });
       }
 
       // Get tier names
