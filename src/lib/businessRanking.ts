@@ -95,29 +95,62 @@ export const getCityDistance = (cityA: string | null | undefined, cityB: string 
 };
 
 /**
- * Sort businesses by STRICT plan hierarchy + geographic proximity
+ * MANUAL ELITE SORT ORDER (temporary)
+ * Maps business ID → display position for Elite tier.
+ * Elite businesses not in this map go after the listed ones.
+ */
+export const ELITE_MANUAL_ORDER: Record<string, number> = {
+  'f39d1fff-32bb-40d0-b00f-8194178bab97': 1,  // Kaliva on the Beach
+  'eca5ab71-77af-498f-a06e-3be2b6903c44': 2,  // Σουαρέ
+  '3db13910-c0e0-443e-96fc-81d9bc9b94ad': 3,  // Blue Martini
+  '8924d110-fb6a-4ad5-8c20-ca5d74d75161': 4,  // Hot Spot
+  'ffb0b280-5402-45e2-aad7-a3b6dd239e06': 5,  // Lost + Found
+  'e9aace3e-3b79-4700-8643-6be9084b59ee': 6,  // Amnesia
+  'bca2cb97-1723-4358-87b1-130d279e60a6': 7,  // Asmation Experience
+  '6c947179-9873-4008-bfd3-d77f0541fbe1': 8,  // Sugar Wave
+  '3f45ba54-3e15-443c-8d29-152a1fcdebd1': 9,  // Element X
+  'e8d549c0-0180-43e3-8e1f-ac86e9c62a82': 10, // Dirty Island
+  '5aa0ec88-645a-40c0-9bd1-7beb1dd0ca19': 11, // PEAK
+  '42e51a41-38bf-464b-9eae-f6cddaba36cf': 12, // Crosta Nostra
+  '8cd6732f-1bc5-4ce9-94d4-cc21863c3377': 13, // La Fiesta
+  'b846e46c-5318-4059-b390-94ef6a4783df': 14, // Mr. Mellow
+  'af2abac6-c5de-4b48-8f2c-893e7dac68b5': 15, // Legacy
+  '4c7e388f-343c-45ee-861b-390f4c058d28': 16, // Notes and Spirits
+  'cacc28f8-918f-49ab-8b81-9fac86739981': 17, // Eterna
+  'c1685cb9-9d7e-4353-af35-e9d479269d33': 18, // Test Account
+};
+
+/**
+ * Sort businesses by STRICT plan hierarchy + manual Elite order
  * 
  * DISPLAY ORDER:
- * 1. ALL Elite businesses (sorted by proximity within tier)
+ * 1. ALL Elite businesses (sorted by MANUAL ORDER above)
  * 2. ALL Pro businesses (sorted by proximity within tier)
  * 3. ALL Basic businesses (sorted by proximity within tier)
  * 4. ALL Free businesses (sorted by proximity within tier)
  * 
  * NO ROTATION. NO RANDOMNESS. PLAN HIERARCHY NEVER BREAKS.
  */
-export const sortBusinessesByPlanAndProximity = <T extends { planTierIndex: number; city: string }>(
+export const sortBusinessesByPlanAndProximity = <T extends { id?: string; planTierIndex: number; city: string }>(
   businesses: T[],
   userCity: string | null | undefined
 ): T[] => {
   return [...businesses].sort((a, b) => {
     // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
-    // LOWER index = HIGHER priority = appears FIRST
     if (a.planTierIndex !== b.planTierIndex) {
       return a.planTierIndex - b.planTierIndex;
     }
     
-    // SECONDARY: Geographic proximity (within same plan tier)
-    // LOWER distance = CLOSER = appears first within tier
+    // SECONDARY for Elite: Manual order
+    if (a.planTierIndex === 0) {
+      const aId = (a as any).id || '';
+      const bId = (b as any).id || '';
+      const orderA = ELITE_MANUAL_ORDER[aId] ?? 999;
+      const orderB = ELITE_MANUAL_ORDER[bId] ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+    }
+    
+    // TERTIARY: Geographic proximity (within same plan tier)
     const distanceA = getCityDistance(userCity, a.city);
     const distanceB = getCityDistance(userCity, b.city);
     return distanceA - distanceB;
