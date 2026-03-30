@@ -1,32 +1,38 @@
 
 
-## Δύο Αλλαγές: Realtime Check-ins + Αφαίρεση +357
+## Τρεις Αλλαγές: Πόλη στη Φόρμα + Clickable Status + CRM Spend Fix
 
-### 1. Realtime Check-ins χωρίς Refresh
+### 1. Προσθήκη πεδίου Πόλης στη φόρμα "Προσθήκη εισιτηρίου"
 
-**Πρόβλημα**: Το component ήδη ακούει realtime αλλαγές στον πίνακα `reservations`, αλλά **δεν ακούει αλλαγές στον πίνακα `tickets`**. Όταν γίνεται check-in (scan QR), η στήλη `status` στο `tickets` αλλάζει σε `used`, αλλά ο υπάλληλος δεν το βλέπει χωρίς refresh.
+**Αρχείο: `ManualEntryDialog.tsx`**
 
-**Λύση στο `DirectReservationsList.tsx` (γραμμές 243-254)**:
-- Προσθήκη δεύτερου realtime channel που ακούει `postgres_changes` στον πίνακα `tickets`
-- Όταν αλλάξει κάτι στα tickets, καλείται `fetchReservations(true)` (silent refresh) -- ίδιο pattern με τις reservations
-- Cleanup στο return: `supabase.removeChannel()` και για τα δύο channels
+- Νέο state: `city` (string)
+- Νέο πεδίο Input μετά το Τηλέφωνο (γρ. 345), πριν το Ηλικία (γρ. 377) — μόνο για `entryType === 'ticket'`
+- Label: "Πόλη" / "City"
+- Κατά το save (γρ. 229-241), προσθήκη `guest_city: city.trim() || null` στο insert του tickets
+- Reset στο `resetForm()`
 
-**Database**: Το `tickets` table πρέπει να είναι στο realtime publication. Θα χρειαστεί migration: `ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;`
+### 2. Clickable "Επιβεβαιωμένη" για manual ticket entries
 
-### 2. Αφαίρεση +357 από τηλέφωνα
+**Αρχείο: `DirectReservationsList.tsx`**
 
-**Πρόβλημα**: Τα τηλέφωνα εμφανίζονται ολόκληρα (π.χ. `+35799123456`) και χαλάνε το design.
+- Προσθήκη `is_manual_entry` στο query tickets (γρ. 527) και στο `TicketOnlyOrder` interface (γρ. 74-90)
+- Αποθήκευση στο enrichment (γρ. 627-643): `is_manual_entry: (t as any).is_manual_entry || false`
+- Στο status cell (γρ. 1240-1246): Αν `ticket.is_manual_entry && !ticket.checked_in`, αντί για static "Επιβεβαιωμένη" text, render `ManualStatusToggle` με `table="tickets"` — ίδιο pattern με τις reservations. Αυτό επιτρέπει στον επιχειρηματία να κάνει click και να επιλέξει check-in ή no-show.
+- Η `onStatusChange` θα ενημερώνει τοπικά το state (checked_in, status) χωρίς refresh.
 
-**Λύση στο `DirectReservationsList.tsx`**:
-- Προσθήκη helper function `stripCountryCode` που αφαιρεί το `+357` (ή οποιοδήποτε country code) από την αρχή του αριθμού
-- Εφαρμογή σε **όλα τα σημεία** που εμφανίζεται `phone_number` ή `buyer_phone`:
-  - Γραμμή 1164-1165 (ticket-only: buyer_phone)
-  - Γραμμή 1332-1335 (reservation mode: phone_number)
-  - Γραμμή 1478-1482 (hybrid mode: phone_number)
+### 3. Fix CRM Spend για Manual Tickets
 
-Η function θα αφαιρεί μόνο το `+357` (Cyprus code) αφού αυτό ζητήθηκε, αφήνοντας τον 8ψήφιο αριθμό.
+**Πρόβλημα**: Η `standalone_ticket_spend` CTE στο `get_crm_guest_stats` υπολογίζει spend ως `SUM(tt.price_cents)` — δηλαδή παίρνει την τιμή από τον πίνακα `ticket_tiers`. Για manual entries, ο επιχειρηματίας βάζει custom τιμή (π.χ. €5) που αποθηκεύεται στο `ticket_orders.subtotal_cents`, αλλά η tier μπορεί να έχει διαφορετική τιμή (π.χ. €1). Αυτό εξηγεί γιατί στο CRM φαίνεται €1 αντί €5.
+
+**Database migration**: Αλλαγή στο `standalone_ticket_spend` CTE:
+- Αντί `SUM(COALESCE(tt.price_cents, 0))`, χρήση: per-ticket price από order = `COALESCE(tord.subtotal_cents, 0) / GREATEST(ticket_count_in_order, 1)`
+- Εναλλακτικά, πιο απλά: JOIN `ticket_orders` και χρήση `tord.subtotal_cents / (count of tickets in order)` αντί tier price
+
+Η ακριβής αλλαγή: Αντικατάσταση `SUM(COALESCE(tt.price_cents, 0))` με υπολογισμό βάσει `ticket_orders.subtotal_cents` διαιρεμένο ανά αριθμό tickets στο ίδιο order. Αυτό εξασφαλίζει ότι η πραγματική τιμή που πλήρωσε (ή καταχωρήθηκε) ο πελάτης αντικατοπτρίζεται στο CRM.
 
 ### Αρχεία
-- `DirectReservationsList.tsx`: realtime tickets channel + stripCountryCode helper
-- Database migration: enable realtime on tickets table
+- `ManualEntryDialog.tsx`: πεδίο πόλης
+- `DirectReservationsList.tsx`: is_manual_entry + ManualStatusToggle στα tickets
+- Database migration: fix standalone_ticket_spend formula
 
