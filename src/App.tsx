@@ -74,24 +74,6 @@ const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
 const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
 
-const preloadPriorityRoutes = () => {
-  void Promise.allSettled([
-    import("./pages/Xartis"),
-    import("./pages/BusinessProfile"),
-    import("./pages/EventDetail"),
-  ]);
-};
-
-const preloadSecondaryRoutes = () => {
-  void Promise.allSettled([
-    import("./pages/Offers"),
-    import("./pages/Messages"),
-    import("./pages/ReservationView"),
-    import("./pages/OfferView"),
-    import("./pages/TicketView"),
-  ]);
-};
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -126,7 +108,7 @@ function AppContent() {
       <ScrollToTop />
       <div className={`min-h-screen ${hideBottomNav ? '' : 'pb-16'} md:pb-0`}>
         <Suspense fallback={null}>
-        <AnimatePresence mode="sync">
+        <AnimatePresence mode="wait">
           <Routes location={location} key={routesKey}>
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
@@ -199,7 +181,7 @@ const App = () => {
     const splash = document.getElementById('inline-splash');
     if (!splash) return;
 
-    const MIN_SPLASH_MS = 900;
+    const MIN_SPLASH_MS = 2800;
     const splashStart = (window as { __fomoSplashStart?: number }).__fomoSplashStart ?? performance.now();
     let timer: number | undefined;
 
@@ -223,33 +205,6 @@ const App = () => {
     return () => {
       if (timer) window.clearTimeout(timer);
       window.removeEventListener('load', scheduleRemoval);
-    };
-  }, []);
-
-  useEffect(() => {
-    const priorityTimer = window.setTimeout(preloadPriorityRoutes, 350);
-
-    const idleWindow = window as Window & {
-      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-
-    let idleId: number | undefined;
-    if (idleWindow.requestIdleCallback) {
-      idleId = idleWindow.requestIdleCallback(preloadSecondaryRoutes, { timeout: 1500 });
-    } else {
-      idleId = window.setTimeout(preloadSecondaryRoutes, 1200);
-    }
-
-    return () => {
-      window.clearTimeout(priorityTimer);
-      if (typeof idleId === "number") {
-        if (idleWindow.cancelIdleCallback && idleWindow.requestIdleCallback) {
-          idleWindow.cancelIdleCallback(idleId);
-        } else {
-          window.clearTimeout(idleId);
-        }
-      }
     };
   }, []);
 
