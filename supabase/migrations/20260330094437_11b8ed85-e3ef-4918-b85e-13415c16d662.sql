@@ -1,0 +1,1 @@
+UPDATE profiles SET role = 'business' WHERE id = '1a552681-3d3c-4b70-ad18-6f1b32a2dff3';

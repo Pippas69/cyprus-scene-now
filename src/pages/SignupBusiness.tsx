@@ -186,6 +186,15 @@ const SignupBusiness = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Αποτυχία δημιουργίας λογαριασμού");
 
+      // Auto-confirm business email (no OTP needed for businesses)
+      try {
+        await supabase.functions.invoke('confirm-business-email', {
+          body: { user_id: authData.user.id }
+        });
+      } catch (confirmErr) {
+        console.error('Auto-confirm error:', confirmErr);
+      }
+
       // Upload logo if provided
       let logoUrl = null;
       if (logoFile) {
