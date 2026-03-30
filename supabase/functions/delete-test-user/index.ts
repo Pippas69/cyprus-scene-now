@@ -10,6 +10,7 @@ const ALLOWED_TEST_EMAILS = new Set([
   "marinoskoumi04@gmail.com",
   "marinoskumi04@gmail.com",
   "myriapanayi80@gmail.com",
+  "christoskoumi80@mail.com",
 ])
 
 Deno.serve(async (req) => {
