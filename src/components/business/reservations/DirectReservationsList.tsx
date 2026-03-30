@@ -95,6 +95,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
   const [agesByReservation, setAgesByReservation] = useState<Record<string, number[]>>({});
+  // City data per reservation (from user profiles)
+  const [cityByReservation, setCityByReservation] = useState<Record<string, string>>({});
   // Kaliva: seating tiers for min charge calculation
   const [seatingTiers, setSeatingTiers] = useState<Record<string, SeatingTier[]>>({});
   // Seating type names by seating_type_id
@@ -348,6 +350,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!isTicketOnlyMode) {
           fetchAgesForReservations(reservationIds);
           fetchCheckInCounts(reservationIds);
+          // Fetch cities from user profiles for reservations
+          fetchCitiesForReservations(sortedByName);
           const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
