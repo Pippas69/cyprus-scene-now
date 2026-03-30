@@ -13,12 +13,12 @@ interface WelcomeBusinessProps {
 
 const WelcomeBusinessEmail = ({ businessName }: WelcomeBusinessProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
-    <Preview>Η επιχείρησή σας εγγράφηκε στο ΦΟΜΟ!</Preview>
+    <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
+    <Preview>{'Η επιχείρησή σας εγγράφηκε στο ΦΟΜΟ!'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
-          <Heading style={logo}>ΦΟΜΟ</Heading>
+          <Heading style={logo}>{'\u03A6\u039F\u039C\u039F'}</Heading>
           <Text style={headerSub}>for Business</Text>
         </Section>
 
@@ -28,20 +28,8 @@ const WelcomeBusinessEmail = ({ businessName }: WelcomeBusinessProps) => (
           </Heading>
 
           <Text style={text}>
-            Η εγγραφή σας στο <strong>ΦΟΜΟ</strong> ολοκληρώθηκε επιτυχώς.
-            Η ομάδα μας θα ελέγξει τα στοιχεία σας και θα ενεργοποιήσει 
-            τον λογαριασμό σας σύντομα.
+            {'Η εγγραφή σας στο '}<strong>{'\u03A6\u039F\u039C\u039F'}</strong>{' ολοκληρώθηκε επιτυχώς. Η ομάδα μας θα ελέγξει τα στοιχεία σας και θα ενεργοποιήσει τον λογαριασμό σας σύντομα.'}
           </Text>
-
-          <Text style={text}>
-            Μόλις εγκριθεί ο λογαριασμός σας, θα μπορείτε να δημιουργήσετε 
-            εκδηλώσεις, να διαχειριστείτε κρατήσεις και να προσελκύσετε 
-            νέους πελάτες μέσα από την πλατφόρμα.
-          </Text>
-
-          <Button href="https://fomo.com.cy/for-businesses" style={button}>
-            Μάθετε Περισσότερα
-          </Button>
         </Section>
 
         <Hr style={hr} />
