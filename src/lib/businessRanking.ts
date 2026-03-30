@@ -101,13 +101,13 @@ export const getCityDistance = (cityA: string | null | undefined, cityB: string 
  */
 export const ELITE_MANUAL_ORDER: Record<string, number> = {
   'f39d1fff-32bb-40d0-b00f-8194178bab97': 1,  // Kaliva on the Beach
-  'eca5ab71-77af-498f-a06e-3be2b6903c44': 2,  // Σουαρέ
-  '3db13910-c0e0-443e-96fc-81d9bc9b94ad': 3,  // Blue Martini
+  '3db13910-c0e0-443e-96fc-81d9bc9b94ad': 2,  // Blue Martini
+  'eca5ab71-77af-498f-a06e-3be2b6903c44': 3,  // Σουαρέ
   '8924d110-fb6a-4ad5-8c20-ca5d74d75161': 4,  // Hot Spot
-  'ffb0b280-5402-45e2-aad7-a3b6dd239e06': 5,  // Lost + Found
-  'e9aace3e-3b79-4700-8643-6be9084b59ee': 6,  // Amnesia
-  'bca2cb97-1723-4358-87b1-130d279e60a6': 7,  // Asmation Experience
-  '6c947179-9873-4008-bfd3-d77f0541fbe1': 8,  // Sugar Wave
+  'e9aace3e-3b79-4700-8643-6be9084b59ee': 5,  // Amnesia
+  'ffb0b280-5402-45e2-aad7-a3b6dd239e06': 6,  // Lost + Found
+  '6c947179-9873-4008-bfd3-d77f0541fbe1': 7,  // Sugar Wave
+  'bca2cb97-1723-4358-87b1-130d279e60a6': 8,  // Asmation Experience
   '3f45ba54-3e15-443c-8d29-152a1fcdebd1': 9,  // Element X
   'e8d549c0-0180-43e3-8e1f-ac86e9c62a82': 10, // Dirty Island
   '5aa0ec88-645a-40c0-9bd1-7beb1dd0ca19': 11, // PEAK
