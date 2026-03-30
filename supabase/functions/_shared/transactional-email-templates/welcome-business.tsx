@@ -23,10 +23,6 @@ const WelcomeBusinessEmail = ({ businessName }: WelcomeBusinessProps) => (
         </Section>
 
         <Section style={contentSection}>
-          <Heading style={h1}>
-            {'Καλωσορίσατε!'}
-          </Heading>
-
           <Text style={text}>
             {'Η εγγραφή σας στο '}<strong>{'\u03A6\u039F\u039C\u039F'}</strong>{' ολοκληρώθηκε επιτυχώς. Η ομάδα μας θα ελέγξει τα στοιχεία σας και θα ενεργοποιήσει τον λογαριασμό σας σύντομα.'}
           </Text>
