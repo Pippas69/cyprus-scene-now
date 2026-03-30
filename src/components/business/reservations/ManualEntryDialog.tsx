@@ -179,6 +179,7 @@ export const ManualEntryDialog = ({
   const resetForm = () => {
     setName('');
     setPhone('');
+    setCity('');
     setPartySize('1');
     setDateTime('');
     setSeatingPreference('');
