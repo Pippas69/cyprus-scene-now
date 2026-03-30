@@ -80,9 +80,11 @@ interface TicketOnlyOrder {
   account_city: string | null;
   guest_city: string | null;
   is_account_user: boolean;
+  is_manual_entry: boolean;
   subtotal_cents: number;
   status: string;
   checked_in: boolean;
+  manual_status: string | null;
   created_at: string;
   tier_name: string;
   ticket_code: string | null;
