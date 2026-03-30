@@ -10,7 +10,6 @@ import { useCallback, useRef } from "react";
 import { trackEngagement, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
 import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
-import { preloadBusinessProfilePage } from "@/lib/routePreload";
 interface Business {
   id: string;
   name: string;
@@ -197,7 +196,7 @@ const BusinessCard = ({
       trackEngagement(business.id, 'profile_click', 'business', business.id, {
         source: 'feed'
       });
-    }} onMouseEnter={preloadBusinessProfilePage} onTouchStart={preloadBusinessProfilePage} className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
+    }} className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block">
         {/* Full background image - uses logo */}
         <div className="absolute inset-0 bg-cover bg-center" style={{
         backgroundImage: business.logo_url ? `url(${business.logo_url})` : undefined,

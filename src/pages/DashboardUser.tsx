@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
-import { MyReservations } from '@/components/user/MyReservations';
-import { MyOffers } from '@/components/user/MyOffers';
 import { useLanguage } from '@/hooks/useLanguage';
-import { UserSettings } from '@/components/user/UserSettings';
+
+const MyReservations = lazy(() => import('@/components/user/MyReservations').then(m => ({ default: m.MyReservations })));
+const MyOffers = lazy(() => import('@/components/user/MyOffers').then(m => ({ default: m.MyOffers })));
+const UserSettings = lazy(() => import('@/components/user/UserSettings').then(m => ({ default: m.UserSettings })));
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -114,20 +115,26 @@ const DashboardUser = () => {
         }}
         className="w-full">
 
-        <TabsContent value="events" forceMount className={`animate-fade-in ${activeTab !== 'events' ? 'hidden' : ''}`}>
+        <TabsContent value="events" className="animate-fade-in">
           <MyEvents userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="reservations" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'reservations' ? 'hidden' : ''}`}>
-          <MyReservations userId={user.id} language={language} />
+        <TabsContent value="reservations" className="mt-4 animate-fade-in">
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <MyReservations userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
 
-        <TabsContent value="offers" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'offers' ? 'hidden' : ''}`}>
-          <MyOffers userId={user.id} language={language} />
+        <TabsContent value="offers" className="mt-4 animate-fade-in">
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <MyOffers userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
 
-        <TabsContent value="settings" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'settings' ? 'hidden' : ''}`}>
-          <UserSettings userId={user.id} language={language} />
+        <TabsContent value="settings" className="mt-4 animate-fade-in">
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <UserSettings userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
       </Tabs>
 

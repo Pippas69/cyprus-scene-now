@@ -16,7 +16,6 @@ import { toastTranslations } from "@/translations/toastTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { ReservationDialog } from "@/components/business/ReservationDialog";
 import LiveBadge from "@/components/feed/LiveBadge";
-import { preloadEventDetailPage, preloadEventCheckoutFlows } from "@/lib/routePreload";
 import { formatDistanceToNow } from "date-fns";
 import { el, enUS } from "date-fns/locale";
 import { useViewTracking, trackEventView } from "@/lib/analyticsTracking";
@@ -348,8 +347,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         style={{ ...style, ...tiltStyle }}
         onClick={() => navigate(`/event/${event.id}`)}
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => { setIsHovering(true); preloadEventDetailPage(); preloadEventCheckoutFlows(); }}
-        onTouchStart={() => { preloadEventDetailPage(); preloadEventCheckoutFlows(); }}
+        onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={handleMouseLeave}
       >
         {/* Glass glare effect on hover */}

@@ -12,7 +12,6 @@ import { getOptimizedImageUrl } from "@/lib/imageLoader";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
 import { ShareDialog } from "@/components/sharing/ShareDialog";
-import { preloadEventDetailPage } from "@/lib/routePreload";
 
 interface UnifiedEventCardProps {
   event: {
@@ -207,8 +206,6 @@ export const UnifiedEventCard = ({
         ref={cardRef as any}
         to={`/event/${event.id}${linkSearch || ""}`}
         onClick={handleCardClick}
-        onMouseEnter={preloadEventDetailPage}
-        onTouchStart={preloadEventDetailPage}
         className={cn(
           "flex flex-col rounded-xl bg-card border border-border",
           "[@media(hover:hover)]:hover:border-primary/50 [@media(hover:hover)]:hover:shadow-lg transition-colors duration-200",

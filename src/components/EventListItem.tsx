@@ -8,7 +8,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import type { User } from "@supabase/supabase-js";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
-import { preloadEventDetailPage } from "@/lib/routePreload";
 
 interface EventListItemProps {
   event: any;
@@ -47,7 +46,7 @@ const EventListItem = ({
   const t = translations[language];
 
   return (
-    <div className="group relative bg-card rounded-lg border border-border hover:border-primary/50 transition-all overflow-hidden" onMouseEnter={preloadEventDetailPage} onTouchStart={preloadEventDetailPage}>
+    <div className="group relative bg-card rounded-lg border border-border hover:border-primary/50 transition-all overflow-hidden">
       <div className="flex gap-4 p-3">
         {/* Thumbnail Image */}
         <div className="relative flex-shrink-0 w-32 h-24 rounded-md overflow-hidden">

@@ -8,7 +8,6 @@ import { getCategoryLabel } from "@/lib/categoryTranslations";
 import { cn } from "@/lib/utils";
 import { useCallback, useRef } from "react";
 import { trackEngagement, trackEventView, useViewTracking } from "@/lib/analyticsTracking";
-import { preloadEventDetailPage } from "@/lib/routePreload";
 import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
 interface FeaturedEventCardProps {
@@ -56,8 +55,6 @@ const FeaturedEventCard = ({ event, language, user }: FeaturedEventCardProps) =>
       ref={cardRef}
       to={`/ekdiloseis/${event.id}`}
       onClick={handleCardClick}
-      onMouseEnter={preloadEventDetailPage}
-      onTouchStart={preloadEventDetailPage}
       className="block group"
     >
       <div className={cn(
