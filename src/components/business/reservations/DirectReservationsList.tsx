@@ -59,6 +59,7 @@ interface DirectReservationsListProps {
   forceEventMode?: boolean;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
+  searchQuery?: string;
 }
 
 // Cache for seating tiers
@@ -87,7 +88,7 @@ interface TicketOnlyOrder {
   ticket_code: string | null;
   staff_memo: string | null;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -718,7 +719,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const filteredReservations = reservations;
+  const filteredReservations = useMemo(() => {
+    if (!searchQuery?.trim()) return reservations;
+    const q = searchQuery.trim().toLowerCase();
+    return reservations.filter(r => r.reservation_name?.toLowerCase().includes(q));
+  }, [reservations, searchQuery]);
 
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');
@@ -1103,6 +1108,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ? (language === 'el' ? 'Τιμή' : 'Price')
       : (language === 'el' ? 'Ελάχιστη Χρέωση' : 'Minimum Charge');
 
+    // Filtered ticket orders for search
+    const filteredTicketOrders = searchQuery?.trim()
+      ? ticketOnlyOrders.filter(t => t.guest_name?.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+      : ticketOnlyOrders;
+
     // TICKET-ONLY: show ticket orders with same layout as hybrid
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
@@ -1119,7 +1129,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ticketOnlyOrders.map((ticket) => (
+                {filteredTicketOrders.map((ticket) => (
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
@@ -1158,45 +1168,43 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        {/* City: read-only for account users, editable for ghosts */}
-                        {ticket.is_account_user ? (
-                          ticket.account_city ? (
-                            <span className="text-sm text-foreground">{ticket.account_city}</span>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )
+                        {/* City: editable for ALL users */}
+                        {editingTicketCity === ticket.ticket_id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={ticketCityValue}
+                              onChange={(e) => setTicketCityValue(e.target.value)}
+                              className="h-7 text-xs w-24"
+                              placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
+                                if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
+                              }}
+                            />
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
+                              <Check className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
+                              <X className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </div>
+                        ) : (ticket.guest_city || ticket.account_city) ? (
+                          <span
+                            className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city"
+                            onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
+                          >
+                            {ticket.guest_city || ticket.account_city}
+                            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
+                          </span>
                         ) : (
-                          editingTicketCity === ticket.ticket_id ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                value={ticketCityValue}
-                                onChange={(e) => setTicketCityValue(e.target.value)}
-                                className="h-7 text-xs w-24"
-                                placeholder={language === 'el' ? 'Πόλη' : 'City'}
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
-                                  if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
-                                }}
-                              />
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
-                                <Check className="h-3 w-3 text-green-600" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
-                                <X className="h-3 w-3 text-red-500" />
-                              </Button>
-                            </div>
-                          ) : (ticket.account_city || ticket.guest_city) ? (
-                            <span className="text-sm text-foreground">{ticket.account_city || ticket.guest_city}</span>
-                          ) : (
-                            <span
-                              className="text-sm text-muted-foreground cursor-pointer group/city"
-                              onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ''); }}
-                            >
-                              —
-                              <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
-                            </span>
-                          )
+                          <span
+                            className="text-sm text-muted-foreground cursor-pointer group/city"
+                            onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
+                          >
+                            —
+                            <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
+                          </span>
                         )}
                         {ticket.guest_age ? (
                           <span className="text-sm text-muted-foreground">
