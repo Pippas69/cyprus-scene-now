@@ -1,38 +1,60 @@
 
 
-## Πλάνο: Διόρθωση QR codes στα emails ώστε να σκανάρονται σωστά
+## Πλάνο: Διόρθωση Fresh Signup Flow & Εμφάνιση Πόλης στις Λεπτομέρειες
 
-### Πρόβλημα
-Τα QR codes στα emails δεν μπορούν να σκαναριστούν. Υπάρχουν δύο αιτίες:
+### Πρόβλημα 1: Fresh Signup ζητάει ξανά τηλέφωνο/email
+Το `isFreshSignup` αρχικοποιείται ως `false` και **δεν γίνεται ποτέ `true`**. Έτσι τα πεδία τηλεφώνου/email εμφανίζονται πάντα, ακόμα κι αν ο χρήστης μόλις έκανε signup.
 
-1. **`border-radius` στα QR code images**: Τα `<img>` tags έχουν `border-radius: 6px` ή `8px`, που **κόβει τις γωνίες του QR code** και καταστρέφει τα positioning patterns (τα τετράγωνα στις γωνίες). Αυτό κάνει το QR code μη αναγνωρίσιμο από scanners.
+### Πρόβλημα 2: Εισιτήρια & Ονόματα σε ξεχωριστά βήματα
+Ο χρήστης θέλει σε fresh signup (non-seated), το βήμα "tickets" να περιλαμβάνει **και** τα ονόματα καλεσμένων κάτω από τα εισιτήρια — χωρίς να αλλάζει dialog.
 
-2. **Μικρό μέγεθος εμφάνισης**: Στο `send-ticket-email`, τα QR codes εμφανίζονται σε `140x140px`, που είναι πολύ μικρό για αξιόπιστη σάρωση από οθόνη κινητού.
+### Πρόβλημα 3: Πόλη δεν φαίνεται στις Λεπτομέρειες
+Στο ticket-only view η πόλη εμφανίζεται σωστά, αλλά στα reservation/hybrid views η στήλη "Λεπτομέρειες" δείχνει μόνο party size & ηλικία χωρίς πόλη.
+
+---
 
 ### Αλλαγές
 
-**1. Αφαίρεση `border-radius` από όλα τα QR code images**
+**Αρχείο 1: `src/components/tickets/TicketPurchaseFlow.tsx`**
 
-- `supabase/functions/_shared/email-templates.ts` → `qrCodeSection()`: Αφαίρεση `border-radius: 8px` από το `<img>`, αύξηση μεγέθους σε `200x200px`
-- `supabase/functions/send-ticket-email/index.ts`: Αφαίρεση `border-radius: 6px` από τα inline QR images, αύξηση μεγέθους από `140x140px` σε `200x200px`
-- `supabase/functions/send-offer-email/index.ts`: Έλεγχος & διόρθωση αν υπάρχει border-radius
-- `supabase/functions/send-offer-expiry-reminders/index.ts`: Ίδια διόρθωση
-- `supabase/functions/send-reservation-reminders/index.ts`: Ίδια διόρθωση
+1. **Fix `isFreshSignup`**: Στο `renderProfileStep` → `onComplete`, set `setIsFreshSignup(true)` αν `!wasAuthenticatedOnMount`. Αυτό θα αποκρύψει τα πεδία phone/email στο guests step.
 
-**2. Αύξηση του source QR size**: Αλλαγή `size=400x400` σε `size=600x600` στο URL του `api.qrserver.com` για καλύτερη ανάλυση.
+2. **Συγχώνευση tickets + guests σε ένα step**: Για non-seated events + fresh signup:
+   - Στο `renderTicketsStep`, αν `isFreshSignup && !hasSeating`, εμφάνιση guest names/ages κάτω από τους ticket tiers (μόλις `totalTickets > 0`)
+   - Αφαίρεση του ξεχωριστού 'guests' step από τα steps array όταν `isFreshSignup && !hasSeating`
+   - Μετά τα tickets → κατευθείαν checkout
 
-**3. Deploy** όλων των edge functions που αλλάζουν.
+3. **Auto-fill phone/email**: Στο `renderProfileStep` → `onComplete`, set `customerPhone` και `customerEmail` από τα profile data, ώστε να χρησιμοποιηθούν στο checkout χωρίς re-entry.
 
-### Αρχεία
-- `supabase/functions/_shared/email-templates.ts`
-- `supabase/functions/send-ticket-email/index.ts`
-- `supabase/functions/send-offer-email/index.ts`
-- `supabase/functions/send-offer-claim-email/index.ts`
-- `supabase/functions/send-offer-expiry-reminders/index.ts`
-- `supabase/functions/send-reservation-reminders/index.ts`
-- `supabase/functions/send-reservation-notification/index.ts`
-- `supabase/functions/process-reservation-event-payment/index.ts`
+**Αρχείο 2: `src/components/business/reservations/DirectReservationsList.tsx`**
 
-### Σημείωση για το scanning
-Το scanning στο ΦΟΜΟ app (UnifiedQRScanner) λειτουργεί ήδη σε κινητό, tablet και desktop — χρησιμοποιεί την κάμερα της συσκευής μέσω `qr-scanner`. Δεν χρειάζεται αλλαγή στον κώδικα scanning. Το πρόβλημα είναι αποκλειστικά στην **εμφάνιση** των QR codes στα emails.
+4. **Πόλη στα reservation/hybrid views**: Στη στήλη "Λεπτομέρειες" (γύρω από γραμμές 1292-1302 και 1450-1462), προσθήκη εμφάνισης πόλης:
+   - Fetch πόλη από profiles table (ίδια λογική με τα ticket-only orders) για reservations που έχουν `user_id`
+   - Εμφάνιση `<MapPin>` + πόλη δίπλα στην ηλικία
+   - Για reservations χωρίς user_id (manual/ghost), εμφάνιση "—"
+
+### Τεχνικές Λεπτομέρειες
+
+```text
+FRESH SIGNUP FLOW (non-seated):
+Step 1: Auth (email/password)
+Step 2: OTP verification  
+Step 3: Profile (name, phone, city)
+Step 4: Tickets + Guest Names (merged) ← ΝΕΟ
+Step 5: Checkout/Payment
+
+RETURNING USER FLOW (non-seated):
+Step 1: Auth
+Step 2: Tickets
+Step 3: Guests (with phone/email fields)
+Step 4: Checkout
+```
+
+- `isFreshSignup` = `true` αν ο χρήστης δεν ήταν authenticated κατά το mount **ΚΑΙ** πέρασε από profile completion
+- `getSteps()` θα παραλείψει το 'guests' step όταν `isFreshSignup && !hasSeating` (τα guest fields ενσωματώνονται στο tickets step)
+- Για seated events, η λογική παραμένει ίδια (separate guests step)
+
+### Αρχεία που θα τροποποιηθούν
+- `src/components/tickets/TicketPurchaseFlow.tsx`
+- `src/components/business/reservations/DirectReservationsList.tsx`
 
