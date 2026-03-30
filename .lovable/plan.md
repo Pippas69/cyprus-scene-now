@@ -1,33 +1,34 @@
 
-Σωστά — το έχω εντοπίσει ακριβώς από το screenshot και τον κώδικα. Το πρόβλημα **δεν είναι μόνο UI**, είναι και data source.
 
-1) Root cause που κρατάει την πόλη ως "—"
-- Στο `DirectReservationsList.tsx` η πόλη για account users διαβάζεται από `profiles` (client-side query).
-- Στο business dashboard αυτό μπλοκάρεται από RLS (ο επιχειρηματίας δεν μπορεί να κάνει SELECT σε ξένα πλήρη profiles), άρα έρχεται κενό city.
-- Επιπλέον, στο ticket-only render υπάρχει branch που για `is_account_user` δείχνει πάντα muted/παύλα λογική πριν φτάσει στο σωστό style branch.
+## Δύο Αλλαγές: Editable Πόλη (Ticket-Only) + Κουμπί Αναζήτησης
 
-2) Τι θα αλλάξω
-- `src/components/business/reservations/DirectReservationsList.tsx`
-  - `fetchTicketOnlyOrders`:
-    - αντικατάσταση query από `profiles` -> `public_profiles` (μόνο safe πεδία: `id, city, town`).
-    - ίδιο fallback `city || town`.
-  - `fetchCitiesForReservations`:
-    - ίδια αλλαγή σε `public_profiles`, για reservation/hybrid ροές.
-  - Ticket-only "Λεπτομέρειες" render:
-    - Νέα προτεραιότητα:
-      1. Αν υπάρχει `account_city` => δείξε πόλη με `text-foreground` (λευκά, non-editable).
-      2. Αν είναι account user αλλά χωρίς πόλη => δείξε `—` muted, non-editable.
-      3. Αν ghost => `—` / `guest_city` clickable-editable (όπως τώρα).
-  - Reservation/Hybrid "Λεπτομέρειες":
-    - όπου δείχνουμε `cityByReservation[...]`, θα γίνει `text-foreground` ώστε οι πόλεις account χρηστών να φαίνονται καθαρά (όχι faded).
+### 1. Editable Πόλη για ΟΛΟΥΣ στο Ticket-Only Mode
 
-3) Τι ΔΕΝ θα αλλάξει
-- Για users χωρίς account (ghost): το `—` παραμένει clickable/editable από τον επιχειρηματία.
-- Δεν χρειάζεται migration ή αλλαγή backend schema.
-- Δεν αγγίζω checkout/payment flows εδώ.
+**Αρχείο: `DirectReservationsList.tsx` (γραμμές 1159-1200)**
 
-4) Έλεγχοι αποδοχής (για να επιβεβαιωθεί ότι “διορθώθηκε”)
-- Περίπτωση Α: account user με δηλωμένη πόλη -> εμφανίζεται η σωστή πόλη με λευκά γράμματα στη στήλη "Λεπτομέρειες".
-- Περίπτωση Β: account user χωρίς πόλη -> εμφανίζεται απλή παύλα `—` (όχι editable).
-- Περίπτωση Γ: ghost user -> `—` clickable, αποθήκευση `guest_city` δουλεύει και μένει στο row.
-- Έλεγχος και στα 3 modes λίστας: Ticket-only, Reservation-only, Hybrid, σε mobile viewport όπως στο screenshot.
+Αφαίρεση του `if (ticket.is_account_user)` branch (γρ. 1162-1167) που κάνει read-only τις πόλεις account users. Αντ' αυτού, ΟΛΕΣ οι πόλεις (account + ghost, με ή χωρίς τιμή) θα χρησιμοποιούν το ίδιο editable pattern που ήδη υπάρχει για τους ghost users — click για edit, input field με Check/X buttons, αποθήκευση στο `guest_city` του πίνακα `tickets`.
+
+Η λογική θα είναι:
+- Αν γίνεται editing → input + Check/X (ίδιο με τώρα)
+- Αν υπάρχει πόλη (account_city ή guest_city) → εμφάνιση με Edit2 icon on hover, clickable
+- Αν δεν υπάρχει πόλη → `—` με Edit2 icon on hover, clickable
+
+Ουσιαστικά αφαιρείται μόνο ο έλεγχος `is_account_user` και η αρχική τιμή στο editing θα είναι `ticket.guest_city || ticket.account_city || ''`.
+
+### 2. Κουμπί Αναζήτησης δίπλα στο (+)
+
+**Αρχείο: `ReservationDashboard.tsx`**
+
+- Import `Search` icon από lucide-react
+- Νέο state: `searchQuery` (string), `searchOpen` (boolean)
+- Ακριβώς αριστερά από το κυκλικό κουμπί `+` (γρ. 557-565 και 654-662), προσθήκη κυκλικού κουμπιού Search (ίδιο style: `rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0`)
+- Όταν πατηθεί, toggle ενός Input field κάτω/πάνω από τα tabs για πληκτρολόγηση ονόματος
+- Το `searchQuery` περνάει ως νέο prop στο `DirectReservationsList`
+
+**Αρχείο: `DirectReservationsList.tsx`**
+
+- Νέο prop: `searchQuery?: string`
+- Πριν το sorting, φιλτράρισμα: ticket-only → `guest_name`, reservation/hybrid → `reservation_name`, case-insensitive `includes`
+
+### Καμία αλλαγή database — δεν χρειάζεται migration
+
