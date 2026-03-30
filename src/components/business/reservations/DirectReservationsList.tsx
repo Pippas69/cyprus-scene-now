@@ -623,8 +623,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           : isFirstTicket
             ? buyerUserId
             : null;
-        const accountCity = accountUserId ? (cityMap[accountUserId] || null) : null;
-        const isAccountUser = !!accountUserId;
+        const accountCity = (!(t as any).is_manual_entry && accountUserId) ? (cityMap[accountUserId] || null) : null;
+        const isAccountUser = !(t as any).is_manual_entry && !!accountUserId;
 
         return {
           id: t.order_id,
