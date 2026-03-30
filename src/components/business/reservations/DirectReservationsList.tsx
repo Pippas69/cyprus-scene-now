@@ -407,7 +407,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setAgesByReservation(agesMap);
   };
 
-  const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
+  const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
+    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))];
+    if (userIds.length === 0) return;
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, city, town')
+      .in('id', userIds);
+
+    if (!profiles) return;
+
+    const cityMap: Record<string, string> = {};
+    reservations.forEach(r => {
+      if (!r.user_id) return;
+      const profile = profiles.find(p => p.id === r.user_id);
+      const city = profile?.city || profile?.town || '';
+      if (city) cityMap[r.id] = city;
+    });
+
+    setCityByReservation(cityMap);
+  };
+
     const tiersMap: Record<string, SeatingTier[]> = {};
     for (const stId of seatingTypeIds) {
       const { data } = await supabase.
