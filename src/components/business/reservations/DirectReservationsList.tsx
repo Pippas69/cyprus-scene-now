@@ -1265,15 +1265,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">
-                          {ticket.subtotal_cents > 0 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
-                        </span>
                         {ticket.tier_name ? (
-                          <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
-                            {ticket.tier_name}
-                          </span>
+                          <>
+                            <span className="text-sm font-medium">
+                              {ticket.subtotal_cents > 0 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                            </span>
+                            <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                              {ticket.tier_name}
+                            </span>
+                          </>
                         ) : (
-                          <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">—</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
