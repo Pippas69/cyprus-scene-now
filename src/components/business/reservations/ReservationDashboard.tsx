@@ -760,6 +760,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
+              searchQuery={searchQuery}
             />
           )}
         </TabsContent>
