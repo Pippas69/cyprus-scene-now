@@ -1172,7 +1172,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </span>
                         )}
                         {ticket.buyer_phone && (
-                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone}</span>
+                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone.replace(/^\+357/, '')}</span>
                         )}
                       </div>
                     </TableCell>
