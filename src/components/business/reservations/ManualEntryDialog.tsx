@@ -161,6 +161,13 @@ export const ManualEntryDialog = ({
       .then(({ data }) => setTicketTiers(data || []));
   }, [eventId, entryType]);
 
+  // Auto-select tier when only one exists
+  useEffect(() => {
+    if (ticketTiers.length === 1 && !ticketTierId) {
+      setTicketTierId(ticketTiers[0].id);
+    }
+  }, [ticketTiers, ticketTierId]);
+
   // Fetch floor plan tables for business
   useEffect(() => {
     if (entryType === 'ticket' || entryType === 'direct') {
