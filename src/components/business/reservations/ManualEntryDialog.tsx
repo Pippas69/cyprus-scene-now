@@ -108,6 +108,7 @@ export const ManualEntryDialog = ({
       save: 'Save',
       cancel: 'Cancel',
       nameRequired: 'Name is required',
+      phoneRequired: 'Phone is required',
       saved: 'Added successfully!',
       error: 'Error saving',
       indoor: 'Indoor',
