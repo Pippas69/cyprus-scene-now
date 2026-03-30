@@ -80,9 +80,11 @@ interface TicketOnlyOrder {
   account_city: string | null;
   guest_city: string | null;
   is_account_user: boolean;
+  is_manual_entry: boolean;
   subtotal_cents: number;
   status: string;
   checked_in: boolean;
+  manual_status: string | null;
   created_at: string;
   tier_name: string;
   ticket_code: string | null;
@@ -524,7 +526,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, user_id')
+        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, user_id, is_manual_entry, manual_status')
         .eq('event_id', eventId)
         .order('guest_name', { ascending: true });
 
@@ -633,9 +635,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           account_city: accountCity,
           guest_city: (t as any).guest_city || null,
           is_account_user: isAccountUser,
+          is_manual_entry: (t as any).is_manual_entry || false,
           subtotal_cents: perTicketPrice,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
+          manual_status: (t as any).manual_status || null,
           created_at: t.created_at,
           tier_name: tierNames[t.tier_id] || '',
           ticket_code: t.ticket_code || null,
@@ -1240,6 +1244,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <TableCell>
                       {ticket.checked_in ? (
                         <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
+                      ) : ticket.manual_status === 'no_show' ? (
+                        <Badge variant="destructive" className="whitespace-nowrap">{language === 'el' ? 'Δεν ήρθε' : 'No-show'}</Badge>
+                      ) : ticket.is_manual_entry ? (
+                        <ManualStatusToggle
+                          id={ticket.ticket_id}
+                          currentStatus={ticket.manual_status}
+                          table="tickets"
+                          language={language}
+                          onStatusChange={(newStatus) => {
+                            setTicketOnlyOrders(prev => prev.map(t =>
+                              t.ticket_id === ticket.ticket_id
+                                ? {
+                                    ...t,
+                                    manual_status: newStatus,
+                                    checked_in: newStatus === 'arrived',
+                                  }
+                                : t
+                            ));
+                          }}
+                        />
                       ) : (
                         <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>
                       )}

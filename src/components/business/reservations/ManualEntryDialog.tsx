@@ -50,6 +50,7 @@ export const ManualEntryDialog = ({
 }: ManualEntryDialogProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [city, setCity] = useState('');
   const [partySize, setPartySize] = useState('1');
   const [dateTime, setDateTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
@@ -178,6 +179,7 @@ export const ManualEntryDialog = ({
   const resetForm = () => {
     setName('');
     setPhone('');
+    setCity('');
     setPartySize('1');
     setDateTime('');
     setSeatingPreference('');
@@ -231,6 +233,7 @@ export const ManualEntryDialog = ({
           user_id: user.id,
           guest_name: trimmedName,
           guest_age: minAge ? parseInt(minAge) : null,
+          guest_city: city.trim() || null,
           status: 'valid',
           is_manual_entry: true,
           manual_status: null,
@@ -343,6 +346,19 @@ export const ManualEntryDialog = ({
               className={inputClass}
             />
           </div>
+
+          {/* === TICKET: City === */}
+          {entryType === 'ticket' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                className={inputClass}
+              />
+            </div>
+          )}
 
           {/* === DIRECT: Date & Time === */}
           {entryType === 'direct' && (
