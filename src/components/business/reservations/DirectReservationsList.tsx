@@ -948,6 +948,24 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         .update({ guest_name: trimmed } as any)
         .eq('id', ticketId);
       if (error) throw error;
+
+      // Also update the existing CRM guest record if one exists (prevent duplicates)
+      const ticket = ticketOnlyOrders.find(t => t.ticket_id === ticketId);
+      if (ticket?.order_id) {
+        // Find linked CRM guest via the order's crm_guest_id or by matching ticket
+        const { data: orderData } = await supabase
+          .from('ticket_orders')
+          .select('crm_guest_id')
+          .eq('id', ticket.order_id)
+          .maybeSingle();
+        if (orderData?.crm_guest_id) {
+          await supabase
+            .from('crm_guests')
+            .update({ guest_name: trimmed })
+            .eq('id', orderData.crm_guest_id);
+        }
+      }
+
       toast.success(t.saved);
       setEditingTicketName(null);
       setTicketNameValue('');
