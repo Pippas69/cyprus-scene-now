@@ -314,10 +314,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     // Auth after seat selection for seated events
     if (hasSeating && !isAuthenticated) steps.push('auth');
     if (hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
-    steps.push('guests');
+    // Skip separate guests step for fresh signup non-seated (merged into tickets)
+    if (!(isFreshSignup && !hasSeating)) {
+      steps.push('guests');
+    }
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete, isFreshSignup]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
@@ -527,53 +530,114 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
   // ========= RENDER STEPS =========
 
-  const renderTicketsStep = () => (
-    <div className="space-y-4">
-      {ticketTiers.map((tier) => {
-        const available = tier.quantity_total - tier.quantity_sold;
-        const isSoldOut = available <= 0;
-        const qty = quantities[tier.id] || 0;
+  const renderTicketsStep = () => {
+    const showMergedGuests = isFreshSignup && !hasSeating && tierTotalTickets > 0;
+    return (
+      <div className="space-y-4">
+        {ticketTiers.map((tier) => {
+          const available = tier.quantity_total - tier.quantity_sold;
+          const isSoldOut = available <= 0;
+          const qty = quantities[tier.id] || 0;
 
-        return (
-          <div key={tier.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-            <div className="flex-1 min-w-0 pr-2">
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-sm truncate">{tier.name}</span>
-                {isSoldOut && (
-                  <Badge variant="destructive" className="text-[10px] shrink-0">{t.soldOut}</Badge>
+          return (
+            <div key={tier.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+              <div className="flex-1 min-w-0 pr-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-sm truncate">{tier.name}</span>
+                  {isSoldOut && (
+                    <Badge variant="destructive" className="text-[10px] shrink-0">{t.soldOut}</Badge>
+                  )}
+                </div>
+                {tier.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">{tier.description}</p>
                 )}
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="font-semibold text-primary text-sm">{formatPrice(tier.price_cents)}</span>
+                  {!isSoldOut && (
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      ({available} {t.available})
+                    </span>
+                  )}
+                </div>
               </div>
-              {tier.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">{tier.description}</p>
+
+              {!isSoldOut && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                    onClick={() => updateQuantity(tier.id, -1)} disabled={qty === 0}>
+                    <Minus className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="w-6 text-center font-medium text-sm">{qty}</span>
+                  <Button type="button" variant="outline" size="icon" className="h-7 w-7"
+                    onClick={() => updateQuantity(tier.id, 1)} disabled={qty >= tier.max_per_order || qty >= available}>
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-semibold text-primary text-sm">{formatPrice(tier.price_cents)}</span>
-                {!isSoldOut && (
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                    ({available} {t.available})
-                  </span>
-                )}
+            </div>
+          );
+        })}
+
+        {/* Merged guest names for fresh signup */}
+        {showMergedGuests && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                {t.guestDetails} ({tierTotalTickets} {t.people})
+              </Label>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                {guestNames.map((name, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                    <Input
+                      placeholder={`${t.guestN} ${idx + 1}`}
+                      value={name}
+                      readOnly={idx === 0 && lockFirstGuestName}
+                      onChange={(e) => {
+                        if (idx === 0 && lockFirstGuestName) return;
+                        setGuestNames(prev => {
+                          const updated = [...prev];
+                          updated[idx] = e.target.value;
+                          return updated;
+                        });
+                      }}
+                      className={cn("h-8 sm:h-9 text-xs sm:text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
+                    />
+                    <Input
+                      placeholder={t.age}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={guestAges[idx] || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d{0,3}$/.test(val)) {
+                          setGuestAges(prev => {
+                            const updated = [...prev];
+                            updated[idx] = val;
+                            return updated;
+                          });
+                        }
+                      }}
+                      className="h-8 sm:h-9 text-xs sm:text-sm w-16 sm:w-20"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-
-            {!isSoldOut && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                  onClick={() => updateQuantity(tier.id, -1)} disabled={qty === 0}>
-                  <Minus className="h-3.5 w-3.5" />
-                </Button>
-                <span className="w-6 text-center font-medium text-sm">{qty}</span>
-                <Button type="button" variant="outline" size="icon" className="h-7 w-7"
-                  onClick={() => updateQuantity(tier.id, 1)} disabled={qty >= tier.max_per_order || qty >= available}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+            <CollapsibleSpecialRequests
+              value={specialRequests}
+              onChange={setSpecialRequests}
+              label={t.specialRequests}
+              optionalLabel={t.optional}
+            />
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderGuestsStep = () => {
     // For seated events, also show selected seats summary
@@ -874,6 +938,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();
       setBuyerFullName(fullName);
+
+      // Auto-fill phone & email for fresh signups
+      if (!wasAuthenticatedOnMount) {
+        setIsFreshSignup(true);
+        setCustomerPhone(profile.phone);
+        // Get email from auth user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) setCustomerEmail(user.email);
+      }
     }} />
   );
 
@@ -894,7 +967,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     switch (currentStep) {
       case 'showSelect': return !!selectedShowId;
       case 'seats': return selectedSeats.length > 0;
-      case 'tickets': return tierTotalTickets > 0;
+      case 'tickets': {
+        if (isFreshSignup && !hasSeating) {
+          // Merged step: need tickets + all guest details filled
+          return tierTotalTickets > 0 && allNamesFilled && allAgesFilled;
+        }
+        return tierTotalTickets > 0;
+      }
       case 'auth': return isAuthenticated;
       case 'profile': return profileComplete;
       case 'guests': return allGuestDetailsFilled && totalTickets > 0;
