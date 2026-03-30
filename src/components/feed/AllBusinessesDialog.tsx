@@ -147,12 +147,14 @@ export const AllBusinessesDialog = ({
       // STRICT SORTING: Plan hierarchy first (Elite>Pro>Basic>Free), then proximity
       // NO ROTATION. NO RANDOMNESS.
       return businessesWithTiers.sort((a, b) => {
-        // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
         if (a.planTierIndex !== b.planTierIndex) {
           return a.planTierIndex - b.planTierIndex;
         }
-        
-        // SECONDARY: Geographic proximity (within same plan tier)
+        if (a.planTierIndex === 0) {
+          const orderA = ELITE_MANUAL_ORDER[a.id] ?? 999;
+          const orderB = ELITE_MANUAL_ORDER[b.id] ?? 999;
+          if (orderA !== orderB) return orderA - orderB;
+        }
         const distanceA = getCityDistance(userCity, a.city);
         const distanceB = getCityDistance(userCity, b.city);
         return distanceA - distanceB;
