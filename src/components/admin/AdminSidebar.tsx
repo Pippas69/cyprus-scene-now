@@ -8,6 +8,7 @@ import {
   Settings, 
   MapPin,
   Database,
+  Building2,
   Ticket,
   ClipboardList,
   GraduationCap,
