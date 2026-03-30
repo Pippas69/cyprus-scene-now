@@ -240,7 +240,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const { count } = await supabase.from('floor_plan_zones').select('id', { count: 'exact', head: true }).eq('business_id', businessId);
       setHasFloorPlan((count || 0) > 0);
     });
-    const channel = supabase.
+    const reservationsChannel = supabase.
     channel('direct_reservations_changes').
     on(
       'postgres_changes',
@@ -249,8 +249,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     ).
     subscribe();
 
+    const ticketsChannel = supabase.
+    channel('direct_tickets_changes').
+    on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'tickets' },
+      () => fetchReservations(true)
+    ).
+    subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(reservationsChannel);
+      supabase.removeChannel(ticketsChannel);
     };
   }, [businessId, selectedEventId, selectedEventType, forceEventMode]);
 
@@ -1162,7 +1172,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </span>
                         )}
                         {ticket.buyer_phone && (
-                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone}</span>
+                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone.replace(/^\+357/, '')}</span>
                         )}
                       </div>
                     </TableCell>
@@ -1331,7 +1341,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={reservation.reservation_name} />
                             {reservation.phone_number &&
                           <span className="text-sm text-muted-foreground -ml-1.5">
-                                {reservation.phone_number}
+                            {reservation.phone_number.replace(/^\+357/, '')}
                               </span>
                           }
                           </div>
@@ -1478,7 +1488,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       {reservation.phone_number &&
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5 min-w-0">
                           <Phone className="h-3 w-3 flex-shrink-0" />
-                          <span className="whitespace-nowrap">{reservation.phone_number}</span>
+                          <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
                         </div>
                       }
                     </div>
