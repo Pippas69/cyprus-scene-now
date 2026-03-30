@@ -203,21 +203,32 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const t = text[language];
 
-  const nameCollator = useMemo(
-    () => new Intl.Collator(language === 'el' ? 'el' : 'en', { sensitivity: 'base', numeric: true }),
-    [language]
-  );
+  const isGreek = (str: string) => /[\u0370-\u03FF\u1F00-\u1FFF]/.test(str);
+
+  const greekCollator = useMemo(() => new Intl.Collator('el', { sensitivity: 'base', numeric: true }), []);
+  const latinCollator = useMemo(() => new Intl.Collator('en', { sensitivity: 'base', numeric: true }), []);
+
+  const compareNames = useCallback((nameA: string, nameB: string) => {
+    const aIsGreek = isGreek(nameA);
+    const bIsGreek = isGreek(nameB);
+    // Greek names first, then Latin
+    if (aIsGreek && !bIsGreek) return -1;
+    if (!aIsGreek && bIsGreek) return 1;
+    // Same script: sort alphabetically with appropriate collator
+    const collator = aIsGreek ? greekCollator : latinCollator;
+    return collator.compare(nameA, nameB);
+  }, [greekCollator, latinCollator]);
 
   const sortReservationsByName = useCallback(
     (items: DirectReservation[]) =>
-      [...items].sort((a, b) => nameCollator.compare(a.reservation_name || '', b.reservation_name || '')),
-    [nameCollator]
+      [...items].sort((a, b) => compareNames(a.reservation_name || '', b.reservation_name || '')),
+    [compareNames]
   );
 
   const sortTicketOrdersByName = useCallback(
     (items: TicketOnlyOrder[]) =>
-      [...items].sort((a, b) => nameCollator.compare(a.guest_name || '', b.guest_name || '')),
-    [nameCollator]
+      [...items].sort((a, b) => compareNames(a.guest_name || '', b.guest_name || '')),
+    [compareNames]
   );
 
   useEffect(() => {
