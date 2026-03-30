@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ThreeStepDeleteDialog } from '@/components/user/ThreeStepDeleteDialog';
 import { Separator } from '@/components/ui/separator';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { usePasswordChange } from '@/hooks/usePasswordChange';

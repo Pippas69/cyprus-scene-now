@@ -7,7 +7,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ThreeStepDeleteDialog } from '@/components/user/ThreeStepDeleteDialog';
 import { Separator } from '@/components/ui/separator';
 // Push notifications are always enabled - no separate toggle needed
 import { useUserPreferences } from '@/hooks/useUserPreferences';
