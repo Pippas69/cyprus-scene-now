@@ -1172,13 +1172,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 <X className="h-3 w-3 text-red-500" />
                               </Button>
                             </div>
+                          ) : ticket.account_city ? (
+                            <span className="text-sm text-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {ticket.account_city}
+                            </span>
                           ) : (
                             <span
                               className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer group/city"
                               onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ''); }}
                             >
                               <MapPin className="h-3 w-3 shrink-0" />
-                              {ticket.guest_city || (language === 'el' ? '—' : '—')}
+                              {ticket.guest_city || '—'}
                               <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
                             </span>
                           )
