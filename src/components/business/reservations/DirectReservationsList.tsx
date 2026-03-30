@@ -429,6 +429,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setCityByReservation(cityMap);
   };
 
+  const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
     const tiersMap: Record<string, SeatingTier[]> = {};
     for (const stId of seatingTypeIds) {
       const { data } = await supabase.
