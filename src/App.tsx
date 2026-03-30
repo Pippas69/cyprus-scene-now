@@ -157,6 +157,7 @@ function AppContent() {
             <Route path="student-verification" element={<AdminStudentVerification />} />
             <Route path="student-partners" element={<AdminStudentPartners />} />
             <Route path="student-subsidies" element={<AdminStudentSubsidies />} />
+            <Route path="businesses" element={<AdminBusinesses />} />
           </Route>
           <Route path="/admin/forbidden" element={<AdminForbidden />} />
           

@@ -113,6 +113,11 @@ export const AdminSidebar = () => {
       icon: FileText,
       href: '/admin/student-subsidies',
     },
+    {
+      title: language === 'el' ? 'Επιχειρήσεις' : 'Businesses',
+      icon: Building2,
+      href: '/admin/businesses',
+    },
   ];
 
   return (
