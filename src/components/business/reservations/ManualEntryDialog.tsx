@@ -413,7 +413,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === TICKET: Ticket tier selector === */}
-          {entryType === 'ticket' && ticketTiers.length > 1 && (
+          {entryType === 'ticket' && ticketTiers.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.ticketType}</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
