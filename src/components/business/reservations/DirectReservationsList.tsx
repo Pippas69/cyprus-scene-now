@@ -1244,6 +1244,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <TableCell>
                       {ticket.checked_in ? (
                         <Badge className="bg-green-600 text-white whitespace-nowrap">check in</Badge>
+                      ) : ticket.manual_status === 'no_show' ? (
+                        <Badge variant="destructive" className="whitespace-nowrap">{language === 'el' ? 'Δεν ήρθε' : 'No-show'}</Badge>
+                      ) : ticket.is_manual_entry ? (
+                        <ManualStatusToggle
+                          id={ticket.ticket_id}
+                          currentStatus={ticket.manual_status}
+                          table="tickets"
+                          language={language}
+                          onStatusChange={(newStatus) => {
+                            setTicketOnlyOrders(prev => prev.map(t =>
+                              t.ticket_id === ticket.ticket_id
+                                ? {
+                                    ...t,
+                                    manual_status: newStatus,
+                                    checked_in: newStatus === 'arrived',
+                                  }
+                                : t
+                            ));
+                          }}
+                        />
                       ) : (
                         <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>
                       )}
