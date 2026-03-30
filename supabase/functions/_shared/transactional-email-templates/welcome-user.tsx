@@ -13,12 +13,12 @@ interface WelcomeUserProps {
 
 const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
   <Html lang="el" dir="ltr">
-    <Head />
-    <Preview>Καλωσόρισες στο ΦΟΜΟ — Μη χάσεις τίποτα!</Preview>
+    <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
+    <Preview>{'Καλωσόρισες στο ΦΟΜΟ — Μη χάσεις τίποτα!'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
-          <Heading style={logo}>ΦΟΜΟ</Heading>
+          <Heading style={logo}>{'\u03A6\u039F\u039C\u039F'}</Heading>
         </Section>
 
         <Section style={contentSection}>
@@ -27,19 +27,12 @@ const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
           </Heading>
 
           <Text style={text}>
-            Χαιρόμαστε που είσαι πλέον μέλος του <strong>ΦΟΜΟ</strong> — 
-            η πλατφόρμα που σε κρατάει ενημερωμένο για τα καλύτερα events 
-            και τις πιο hot προσφορές στην Κύπρο.
+            {'Χαιρόμαστε που είσαι πλέον μέλος του '}<strong>{'\u03A6\u039F\u039C\u039F'}</strong>{' — η πλατφόρμα που σε κρατάει ενημερωμένο για τα καλύτερα events και τις πιο hot προσφορές στην Κύπρο.'}
           </Text>
 
           <Text style={text}>
-            Ανακάλυψε εκδηλώσεις, κάνε κρατήσεις, εξασφάλισε αποκλειστικές 
-            προσφορές και μη χάσεις τίποτα.
+            {'Ανακάλυψε εκδηλώσεις, κάνε κρατήσεις, εξασφάλισε αποκλειστικές προσφορές και μη χάσεις τίποτα.'}
           </Text>
-
-          <Button href="https://fomo.com.cy/ekdiloseis" style={button}>
-            Εξερεύνησε Events
-          </Button>
         </Section>
 
         <Hr style={hr} />
