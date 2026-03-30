@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { MyEvents } from '@/components/user/MyEvents';
-import { MyReservations } from '@/components/user/MyReservations';
-import { MyOffers } from '@/components/user/MyOffers';
 import { useLanguage } from '@/hooks/useLanguage';
-import { UserSettings } from '@/components/user/UserSettings';
+
+const MyReservations = lazy(() => import('@/components/user/MyReservations').then(m => ({ default: m.MyReservations })));
+const MyOffers = lazy(() => import('@/components/user/MyOffers').then(m => ({ default: m.MyOffers })));
+const UserSettings = lazy(() => import('@/components/user/UserSettings').then(m => ({ default: m.UserSettings })));
 
 const DashboardUser = () => {
   const [user, setUser] = useState<any>(null);
@@ -42,12 +43,12 @@ const DashboardUser = () => {
       return;
     }
 
-    // Check if user is a business
-    const { data: profile } = await supabase.
-    from('profiles').
-    select('role').
-    eq('id', user.id).
-    single();
+    // Run profile check — no need to wait for auth again
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
     if (profile?.role === 'business') {
       navigate('/dashboard-business');
@@ -119,15 +120,21 @@ const DashboardUser = () => {
         </TabsContent>
 
         <TabsContent value="reservations" className="mt-4 animate-fade-in">
-          <MyReservations userId={user.id} language={language} />
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <MyReservations userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="offers" className="mt-4 animate-fade-in">
-          <MyOffers userId={user.id} language={language} />
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <MyOffers userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4 animate-fade-in">
-          <UserSettings userId={user.id} language={language} />
+          <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <UserSettings userId={user.id} language={language} />
+          </Suspense>
         </TabsContent>
       </Tabs>
 
