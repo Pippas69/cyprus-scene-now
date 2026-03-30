@@ -80,6 +80,7 @@ export const ManualEntryDialog = ({
       save: 'Αποθήκευση',
       cancel: 'Ακύρωση',
       nameRequired: 'Το όνομα είναι υποχρεωτικό',
+      phoneRequired: 'Το τηλέφωνο είναι υποχρεωτικό',
       saved: 'Προστέθηκε επιτυχώς!',
       error: 'Σφάλμα κατά την αποθήκευση',
       indoor: 'Εσωτερικά',
@@ -107,6 +108,7 @@ export const ManualEntryDialog = ({
       save: 'Save',
       cancel: 'Cancel',
       nameRequired: 'Name is required',
+      phoneRequired: 'Phone is required',
       saved: 'Added successfully!',
       error: 'Error saving',
       indoor: 'Indoor',
@@ -161,12 +163,7 @@ export const ManualEntryDialog = ({
       .then(({ data }) => setTicketTiers(data || []));
   }, [eventId, entryType]);
 
-  // Auto-select tier when only one exists
-  useEffect(() => {
-    if (ticketTiers.length === 1 && !ticketTierId) {
-      setTicketTierId(ticketTiers[0].id);
-    }
-  }, [ticketTiers, ticketTierId]);
+  // No auto-select — tier is optional for manual entries
 
   // Fetch floor plan tables for business
   useEffect(() => {
@@ -203,6 +200,11 @@ export const ManualEntryDialog = ({
       toast.error(txt.nameRequired);
       return;
     }
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      toast.error(txt.phoneRequired);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -212,10 +214,9 @@ export const ManualEntryDialog = ({
       if (entryType === 'ticket' && eventId) {
         // Create ticket_order first (tickets.order_id FK)
         const orderId = crypto.randomUUID();
-        const resolvedTierId = ticketTierId || ticketTiers[0]?.id;
-        if (!resolvedTierId) throw new Error('No ticket tier selected');
+        const resolvedTierId = ticketTierId || null;
 
-        const selectedTier = ticketTiers.find(t => t.id === resolvedTierId);
+        const selectedTier = resolvedTierId ? ticketTiers.find(t => t.id === resolvedTierId) : null;
         const priceCents = selectedTier?.price_cents ?? 0;
         const customerEmail = user.email || `manual+${orderId}@noemail.local`;
 
@@ -342,7 +343,7 @@ export const ManualEntryDialog = ({
 
           {/* Phone */}
           <div className={fieldClass}>
-            <Label className={labelClass}>{txt.phone}</Label>
+            <Label className={labelClass}>{txt.phone} *</Label>
             <Input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -412,7 +413,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === TICKET: Ticket tier selector === */}
-          {entryType === 'ticket' && ticketTiers.length > 1 && (
+          {entryType === 'ticket' && ticketTiers.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.ticketType}</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
