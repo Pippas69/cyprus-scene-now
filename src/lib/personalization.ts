@@ -186,14 +186,23 @@ export const sortBusinessesByPlanAndProximity = <T extends { id: string; city: s
   businesses: T[],
   userCity: string | null
 ): T[] => {
+  // Import manual Elite order from businessRanking
+  const { ELITE_MANUAL_ORDER } = require('@/lib/businessRanking');
+  
   return [...businesses].sort((a, b) => {
     // PRIMARY: Plan tier (Elite=0, Pro=1, Basic=2, Free=3)
-    // Lower index = higher priority
     if (a.planTierIndex !== b.planTierIndex) {
       return a.planTierIndex - b.planTierIndex;
     }
     
-    // SECONDARY: Geographic proximity (within same plan tier)
+    // SECONDARY for Elite: Manual order
+    if (a.planTierIndex === 0) {
+      const orderA = ELITE_MANUAL_ORDER[a.id] ?? 999;
+      const orderB = ELITE_MANUAL_ORDER[b.id] ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+    }
+    
+    // TERTIARY: Geographic proximity (within same plan tier)
     const distanceA = getCityDistance(userCity, a.city);
     const distanceB = getCityDistance(userCity, b.city);
     return distanceA - distanceB;
