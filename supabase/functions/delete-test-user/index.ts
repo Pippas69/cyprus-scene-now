@@ -9,6 +9,7 @@ const corsHeaders = {
 const ALLOWED_TEST_EMAILS = new Set([
   "marinoskoumi04@gmail.com",
   "marinoskumi04@gmail.com",
+  "myriapanayi80@gmail.com",
 ])
 
 Deno.serve(async (req) => {
