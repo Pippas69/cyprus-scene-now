@@ -18,17 +18,4 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['react', 'react-dom', '@tanstack/react-query'],
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-ui': ['framer-motion', 'sonner', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-          'vendor-map': ['mapbox-gl'],
-          'vendor-charts': ['recharts'],
-        },
-      },
-    },
-  },
 }));
