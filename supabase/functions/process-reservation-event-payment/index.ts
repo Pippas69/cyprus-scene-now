@@ -295,7 +295,7 @@ serve(async (req) => {
       if (userEmail) {
         try {
           const qrCodeUrl = reservation.qr_code_token 
-            ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=000000`
+            ? `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=000000`
             : null;
 
           const userName = profile?.name || reservation.reservation_name || 'φίλε';

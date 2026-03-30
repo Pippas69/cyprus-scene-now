@@ -135,7 +135,7 @@ export function qrCodeSection(qrUrl: string, code?: string, subtitle?: string): 
           <table cellpadding="0" cellspacing="0" border="0" style="background-color: ${BRAND_COLORS.white}; border: 2px solid ${BRAND_COLORS.teal}; border-radius: 16px; padding: 20px;">
             <tr>
               <td align="center">
-                <img src="${qrUrl}" alt="QR Code" style="width: 160px; height: 160px; display: block; border-radius: 8px;" />
+                <img src="${qrUrl}" alt="QR Code" style="width: 200px; height: 200px; display: block;" />
               </td>
             </tr>
             ${code ? `
