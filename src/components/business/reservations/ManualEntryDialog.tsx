@@ -57,7 +57,6 @@ export const ManualEntryDialog = ({
   const [notes, setNotes] = useState('');
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
-  const [ticketPrice, setTicketPrice] = useState('');
   const [seatingTypeId, setSeatingTypeId] = useState('');
   const [ticketTierId, setTicketTierId] = useState('');
   const [tableId, setTableId] = useState('');
@@ -162,6 +161,13 @@ export const ManualEntryDialog = ({
       .then(({ data }) => setTicketTiers(data || []));
   }, [eventId, entryType]);
 
+  // Auto-select tier when only one exists
+  useEffect(() => {
+    if (ticketTiers.length === 1 && !ticketTierId) {
+      setTicketTierId(ticketTiers[0].id);
+    }
+  }, [ticketTiers, ticketTierId]);
+
   // Fetch floor plan tables for business
   useEffect(() => {
     if (entryType === 'ticket' || entryType === 'direct') {
@@ -186,7 +192,6 @@ export const ManualEntryDialog = ({
     setNotes('');
     setMinAge('');
     setMinCharge('');
-    setTicketPrice('');
     setSeatingTypeId('');
     setTicketTierId('');
     setTableId('');
@@ -210,8 +215,8 @@ export const ManualEntryDialog = ({
         const resolvedTierId = ticketTierId || ticketTiers[0]?.id;
         if (!resolvedTierId) throw new Error('No ticket tier selected');
 
-        const parsedPrice = ticketPrice.trim() ? Number(ticketPrice) : 0;
-        const priceCents = Number.isFinite(parsedPrice) ? Math.max(0, Math.round(parsedPrice * 100)) : 0;
+        const selectedTier = ticketTiers.find(t => t.id === resolvedTierId);
+        const priceCents = selectedTier?.price_cents ?? 0;
         const customerEmail = user.email || `manual+${orderId}@noemail.local`;
 
         const { error: orderError } = await supabase.from('ticket_orders').insert({
@@ -406,20 +411,22 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET: Ticket price === */}
-          {entryType === 'ticket' && (
+          {/* === TICKET: Ticket tier selector === */}
+          {entryType === 'ticket' && ticketTiers.length > 1 && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.ticketPrice}</Label>
-              <Input
-                value={ticketPrice}
-                onChange={(e) => setTicketPrice(e.target.value)}
-                onWheel={(e) => e.currentTarget.blur()}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                className={inputClass}
-              />
+              <Label className={labelClass}>{txt.ticketType}</Label>
+              <Select value={ticketTierId} onValueChange={setTicketTierId}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={txt.selectOption} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ticketTiers.map((tier) => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      {tier.name} — €{(tier.price_cents / 100).toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 ...
