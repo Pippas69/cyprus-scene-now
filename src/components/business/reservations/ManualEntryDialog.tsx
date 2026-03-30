@@ -404,20 +404,22 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET: Ticket price === */}
-          {entryType === 'ticket' && (
+          {/* === TICKET: Ticket tier selector === */}
+          {entryType === 'ticket' && ticketTiers.length > 1 && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.ticketPrice}</Label>
-              <Input
-                value={ticketPrice}
-                onChange={(e) => setTicketPrice(e.target.value)}
-                onWheel={(e) => e.currentTarget.blur()}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                className={inputClass}
-              />
+              <Label className={labelClass}>{txt.ticketType}</Label>
+              <Select value={ticketTierId} onValueChange={setTicketTierId}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={txt.selectOption} />
+                </SelectTrigger>
+                <SelectContent>
+                  {ticketTiers.map((tier) => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      {tier.name} — €{(tier.price_cents / 100).toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 ...
