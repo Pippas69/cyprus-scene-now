@@ -208,8 +208,8 @@ export const ManualEntryDialog = ({
         const resolvedTierId = ticketTierId || ticketTiers[0]?.id;
         if (!resolvedTierId) throw new Error('No ticket tier selected');
 
-        const parsedPrice = ticketPrice.trim() ? Number(ticketPrice) : 0;
-        const priceCents = Number.isFinite(parsedPrice) ? Math.max(0, Math.round(parsedPrice * 100)) : 0;
+        const selectedTier = ticketTiers.find(t => t.id === resolvedTierId);
+        const priceCents = selectedTier?.price_cents ?? 0;
         const customerEmail = user.email || `manual+${orderId}@noemail.local`;
 
         const { error: orderError } = await supabase.from('ticket_orders').insert({
