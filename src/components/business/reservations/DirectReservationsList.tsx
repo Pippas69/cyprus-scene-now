@@ -408,21 +408,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
-    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))];
+    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))] as string[];
     if (userIds.length === 0) return;
 
-    const { data: profiles } = await supabase
-      .from('public_profiles' as any)
-      .select('id, city, town')
-      .in('id', userIds);
+    const { data: cityRows } = await supabase.rpc('get_user_cities', { p_user_ids: userIds });
 
-    if (!profiles) return;
+    if (!cityRows) return;
+
+    const profileMap: Record<string, { city: string | null; town: string | null }> = {};
+    ((cityRows || []) as any[]).forEach((r: any) => {
+      profileMap[r.user_id] = { city: r.city, town: r.town };
+    });
 
     const cityMap: Record<string, string> = {};
     reservations.forEach(r => {
       if (!r.user_id) return;
-      const profile = (profiles as any[]).find(p => p.id === r.user_id);
-      const city = profile?.city || profile?.town || '';
+      const profile = profileMap[r.user_id];
+      const city = (profile?.city && profile.city.trim()) || (profile?.town && profile.town.trim()) || '';
       if (city) cityMap[r.id] = city;
     });
 
@@ -558,16 +560,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (accountUserId) accountUserIds.add(accountUserId);
       });
 
-      // Fetch account cities from profiles (city or fallback town)
+      // Fetch account cities via security definer RPC (bypasses RLS)
       const userIds = [...accountUserIds];
       const cityMap: Record<string, string | null> = {};
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('public_profiles' as any)
-          .select('id, city, town')
-          .in('id', userIds);
+        const { data: cityRows } = await supabase.rpc('get_user_cities', { p_user_ids: userIds });
         if (isStaleRequest()) return;
-        ((profiles || []) as any[]).forEach(p => { cityMap[p.id] = p.city || p.town || null; });
+        ((cityRows || []) as any[]).forEach((r: any) => {
+          const c = (r.city && r.city.trim()) || (r.town && r.town.trim()) || null;
+          cityMap[r.user_id] = c;
+        });
       }
 
       // Get tier names
