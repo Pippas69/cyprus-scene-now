@@ -1,52 +1,38 @@
 
 
-## Πλάνο: Προσθήκη τηλεφώνου στο signup + μήνυμα επιτυχίας μετά OTP
+## Πλάνο: Διόρθωση QR codes στα emails ώστε να σκανάρονται σωστά
 
-### Πρόβλημα 1: Το ProfileCompletionGate ξαναεμφανίζεται μετά το signup
-Η φόρμα εγγραφής (Signup.tsx & SignupModal.tsx) **δεν συλλέγει τηλέφωνο**. Το ProfileCompletionGate απαιτεί `first_name + last_name + phone + city` για να θεωρήσει το προφίλ πλήρες. Επίσης, η εγγραφή αποθηκεύει `town/city` αλλά **όχι** `first_name/last_name` στον πίνακα profiles — τα αφήνει στο auth metadata και στο trigger, που όμως δεν αποθηκεύει τηλέφωνο.
+### Πρόβλημα
+Τα QR codes στα emails δεν μπορούν να σκαναριστούν. Υπάρχουν δύο αιτίες:
 
-### Πρόβλημα 2: Δεν εμφανίζεται μήνυμα επιτυχίας μετά την επαλήθευση OTP
-Μετά την εισαγωγή του OTP κωδικού, εμφανίζεται μόνο ένα μικρό toast notification και γίνεται redirect μετά 1.5 δευτερόλεπτα. Ο χρήστης θέλει ένα ξεκάθαρο, ορατό μήνυμα επιτυχίας.
+1. **`border-radius` στα QR code images**: Τα `<img>` tags έχουν `border-radius: 6px` ή `8px`, που **κόβει τις γωνίες του QR code** και καταστρέφει τα positioning patterns (τα τετράγωνα στις γωνίες). Αυτό κάνει το QR code μη αναγνωρίσιμο από scanners.
 
----
+2. **Μικρό μέγεθος εμφάνισης**: Στο `send-ticket-email`, τα QR codes εμφανίζονται σε `140x140px`, που είναι πολύ μικρό για αξιόπιστη σάρωση από οθόνη κινητού.
 
 ### Αλλαγές
 
-**1. Προσθήκη πεδίου τηλεφώνου στις φόρμες εγγραφής** (`Signup.tsx`, `SignupModal.tsx`)
-- Πεδίο τηλεφώνου με επιλογή χώρας (CY: +357, GR: +30) — ίδιο pattern με το ProfileCompletionGate
-- Validation: 8 ψηφία για Κύπρο, 10 ψηφία για Ελλάδα
-- Τοποθέτηση μετά το πεδίο πόλης
+**1. Αφαίρεση `border-radius` από όλα τα QR code images**
 
-**2. Αποθήκευση phone + first_name + last_name στο profile κατά το signup** (`Signup.tsx`, `SignupModal.tsx`)
-- Στο profile upsert, προσθήκη `first_name`, `last_name`, `phone` (formatted ως `+357XXXXXXXX` ή `+30XXXXXXXXXX`)
-- Έτσι το ProfileCompletionGate θα βρίσκει πλήρες προφίλ και θα κάνει auto-pass
+- `supabase/functions/_shared/email-templates.ts` → `qrCodeSection()`: Αφαίρεση `border-radius: 8px` από το `<img>`, αύξηση μεγέθους σε `200x200px`
+- `supabase/functions/send-ticket-email/index.ts`: Αφαίρεση `border-radius: 6px` από τα inline QR images, αύξηση μεγέθους από `140x140px` σε `200x200px`
+- `supabase/functions/send-offer-email/index.ts`: Έλεγχος & διόρθωση αν υπάρχει border-radius
+- `supabase/functions/send-offer-expiry-reminders/index.ts`: Ίδια διόρθωση
+- `supabase/functions/send-reservation-reminders/index.ts`: Ίδια διόρθωση
 
-**3. Ενημέρωση database trigger** (νέο migration)
-- Update του `handle_new_user()` trigger ώστε να αποθηκεύει και `phone` από τα `raw_user_meta_data`
+**2. Αύξηση του source QR size**: Αλλαγή `size=400x400` σε `size=600x600` στο URL του `api.qrserver.com` για καλύτερη ανάλυση.
 
-**4. Οθόνη επιτυχίας μετά OTP verification** (`Signup.tsx`)
-- Αντί για toast + instant redirect, εμφάνιση ξεκάθαρης οθόνης επιτυχίας με:
-  - Checkmark animation (SuccessCheckmark component)
-  - Confetti
-  - Μήνυμα: "Η εγγραφή σου ολοκληρώθηκε επιτυχώς! Καλωσόρισες στο ΦΟΜΟ!"
-  - Auto-redirect μετά 3 δευτερόλεπτα
-
-**5. Διαγραφή test account** 
-- Κλήση delete-test-user για `marinoskoumi04@gmail.com` ώστε να γίνει εκ νέου δοκιμή signup
+**3. Deploy** όλων των edge functions που αλλάζουν.
 
 ### Αρχεία
-- `src/pages/Signup.tsx` — πεδίο τηλεφώνου + αποθήκευση στο profile + success screen
-- `src/components/SignupModal.tsx` — πεδίο τηλεφώνου + αποθήκευση στο profile
-- Νέο migration — update `handle_new_user()` trigger για phone
-- Κλήση delete-test-user edge function
+- `supabase/functions/_shared/email-templates.ts`
+- `supabase/functions/send-ticket-email/index.ts`
+- `supabase/functions/send-offer-email/index.ts`
+- `supabase/functions/send-offer-claim-email/index.ts`
+- `supabase/functions/send-offer-expiry-reminders/index.ts`
+- `supabase/functions/send-reservation-reminders/index.ts`
+- `supabase/functions/send-reservation-notification/index.ts`
+- `supabase/functions/process-reservation-event-payment/index.ts`
 
----
+### Σημείωση για το scanning
+Το scanning στο ΦΟΜΟ app (UnifiedQRScanner) λειτουργεί ήδη σε κινητό, tablet και desktop — χρησιμοποιεί την κάμερα της συσκευής μέσω `qr-scanner`. Δεν χρειάζεται αλλαγή στον κώδικα scanning. Το πρόβλημα είναι αποκλειστικά στην **εμφάνιση** των QR codes στα emails.
 
-## ✅ Ολοκληρωμένο: Προσθήκη τηλεφώνου στο signup + μήνυμα επιτυχίας μετά OTP
-
-### Αλλαγές που έγιναν
-1. **Πεδίο τηλεφώνου** με επιλογή χώρας (CY/GR) σε `Signup.tsx` και `SignupModal.tsx`
-2. **Αποθήκευση** first_name, last_name, phone στο profiles upsert κατά το signup
-3. **Database trigger** ενημερώθηκε να αποθηκεύει phone από metadata
-4. **Οθόνη επιτυχίας** με checkmark animation + confetti μετά OTP verification
-5. **Test account** `marinoskoumi04@gmail.com` διαγράφηκε
