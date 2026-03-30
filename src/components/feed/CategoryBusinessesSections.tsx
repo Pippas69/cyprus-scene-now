@@ -11,6 +11,7 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { getPlanTierIndex, getCityDistance, type PlanSlug } from "@/lib/businessRanking";
 import { translateCity } from "@/lib/cityTranslations";
 import { getCategoryLabel } from "@/lib/categoryTranslations";
+import { preloadBusinessProfilePage } from "@/lib/routePreload";
 
 type CategoryKey = "nightlife" | "clubs" | "dining" | "beach";
 
@@ -216,6 +217,8 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
                 >
                   <Link
                     to={`/business/${business.id}`}
+                    onMouseEnter={preloadBusinessProfilePage}
+                    onTouchStart={preloadBusinessProfilePage}
                     className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 group"
                   >
                     <div className="relative">

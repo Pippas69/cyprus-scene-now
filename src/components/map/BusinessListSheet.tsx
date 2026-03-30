@@ -11,6 +11,7 @@ import { getDirectionsUrl } from "@/lib/mapUtils";
 import { trackEngagement } from "@/lib/analyticsTracking";
 import type { BusinessLocation } from "@/hooks/useMapBusinesses";
 import { cn } from "@/lib/utils";
+import { preloadBusinessProfilePage } from "@/lib/routePreload";
 
 interface BusinessListSheetProps {
   businesses: BusinessLocation[];
@@ -126,6 +127,7 @@ export const BusinessListSheet = ({ businesses, language, onBusinessClick }: Bus
 
   const handleProfile = (e: React.MouseEvent, business: BusinessLocation) => {
     e.stopPropagation();
+    preloadBusinessProfilePage();
     setIsOpen(false);
 
     // Profile interaction: clicking the "Profile" badge counts as a profile_click.
