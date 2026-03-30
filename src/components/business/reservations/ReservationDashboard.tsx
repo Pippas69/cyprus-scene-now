@@ -44,6 +44,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const fetchEventsRequestRef = useRef(0);
   const [showArchived, setShowArchived] = useState(false);
   const [archivedEvents, setArchivedEvents] = useState<EventOption[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchArchivedEvents = useCallback(async () => {
     const { data } = await supabase
