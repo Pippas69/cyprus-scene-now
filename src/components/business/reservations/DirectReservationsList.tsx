@@ -1108,6 +1108,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       ? (language === 'el' ? 'Τιμή' : 'Price')
       : (language === 'el' ? 'Ελάχιστη Χρέωση' : 'Minimum Charge');
 
+    // Filtered ticket orders for search
+    const filteredTicketOrders = searchQuery?.trim()
+      ? ticketOnlyOrders.filter(t => t.guest_name?.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+      : ticketOnlyOrders;
+
     // TICKET-ONLY: show ticket orders with same layout as hybrid
     if (isTicketOnly && ticketOnlyOrders.length > 0) {
       return (
@@ -1124,7 +1129,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ticketOnlyOrders.map((ticket) => (
+                {filteredTicketOrders.map((ticket) => (
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
