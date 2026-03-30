@@ -10,6 +10,7 @@ import { Loader2, Plus, Archive, ArchiveRestore, Search, X } from 'lucide-react'
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 
 interface ReservationDashboardProps {
   businessId: string;
