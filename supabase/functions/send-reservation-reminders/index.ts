@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
       if (loggedSet.has(logKey)) continue;
 
       const qrCodeUrl = reminder.qrCodeToken
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`
         : null;
 
       const formattedTime = new Date(reminder.reservationTime).toLocaleString('el-GR', {
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
           <div style="text-align: center; margin: 28px 0;">
             <p style="color: #102b4a; font-weight: bold; margin: 0 0 12px 0;">Ο Κωδικός σου</p>
             <div style="background: #ffffff; border: 3px solid #3ec3b7; border-radius: 16px; padding: 20px; display: inline-block;">
-              <img src="${qrCodeUrl}" alt="QR Code" style="width: 150px; height: 150px; display: block;" />
+              <img src="${qrCodeUrl}" alt="QR Code" style="width: 200px; height: 200px; display: block;" />
             </div>
             <p style="color: #102b4a; font-size: 20px; font-weight: bold; margin: 12px 0 0 0; letter-spacing: 2px;">${reminder.confirmationCode}</p>
           </div>
