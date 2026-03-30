@@ -80,6 +80,7 @@ export const ManualEntryDialog = ({
       save: 'Αποθήκευση',
       cancel: 'Ακύρωση',
       nameRequired: 'Το όνομα είναι υποχρεωτικό',
+      phoneRequired: 'Το τηλέφωνο είναι υποχρεωτικό',
       saved: 'Προστέθηκε επιτυχώς!',
       error: 'Σφάλμα κατά την αποθήκευση',
       indoor: 'Εσωτερικά',
