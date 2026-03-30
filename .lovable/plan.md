@@ -1,32 +1,27 @@
 
 
-## Αντικατάσταση "Τιμή εισιτηρίου" με Dropdown επιλογής Tier
+## Διόρθωση: Check-in δημιουργεί duplicate CRM entries
 
-### Πρόβλημα
-Στη φόρμα "Προσθήκη εισιτηρίου", ο επιχειρηματίας βάζει χειροκίνητα τιμή. Αυτό είναι λάθος γιατί η τιμή πρέπει να καθορίζεται αυτόματα από τον τύπο εισιτηρίου (π.χ. Γενική Είσοδος €10, VIP €50). Επίσης, πρέπει να αφαιρείται η διαθεσιμότητα από τον σωστό τύπο.
+### Αιτία
+Ο trigger `trg_crm_guest_from_ticket` ακούει σε `UPDATE OF user_id, event_id, order_id, status`. Όταν ο ManualStatusToggle αλλάζει `status` σε `'used'` (Ήρθε), ο trigger εκτελείται και καλεί `upsert_crm_guest_identity` η οποία για ghosts κάνει ΠΑΝΤΑ INSERT. Αποτέλεσμα: κάθε check-in = νέος πελάτης.
 
-### Αλλαγές στο `ManualEntryDialog.tsx`
+### Λύση
 
-1. **Αφαίρεση πεδίου "Τιμή εισιτηρίου (€)"** — το manual input τιμής (γρ. 409-425) αντικαθίσταται.
+#### 1. Database Migration — Αφαίρεση `status` από το trigger
+```sql
+DROP TRIGGER IF EXISTS trg_crm_guest_from_ticket ON public.tickets;
+CREATE TRIGGER trg_crm_guest_from_ticket
+AFTER INSERT OR UPDATE OF user_id, event_id, order_id
+ON public.tickets
+FOR EACH ROW
+EXECUTE FUNCTION public.auto_create_crm_guest_from_ticket();
+```
 
-2. **Προσθήκη dropdown "Τύπος εισιτηρίου"** μετά το πεδίο Πόλη και πριν την Ηλικία:
-   - Select με τα διαθέσιμα tiers (ήδη φορτώνονται στο `ticketTiers` state, γρ. 150-163)
-   - Κάθε option εμφανίζει: `tier.name — €X.XX` (π.χ. "VIP — €50.00")
-   - Αν υπάρχει μόνο 1 tier, αυτόματη προεπιλογή
-   - Η τιμή καθορίζεται αυτόματα από το επιλεγμένο tier
+Ο CRM guest δημιουργείται μόνο κατά το INSERT (νέο εισιτήριο) ή αλλαγή `user_id/event_id/order_id`. Η αλλαγή `status` (check-in, no-show) δεν ενεργοποιεί πλέον τον trigger.
 
-3. **Ενημέρωση `handleSave`** (γρ. 207-244):
-   - Αντί `parsedPrice` από manual input, χρήση `selectedTier.price_cents` από το επιλεγμένο tier
-   - Το `subtotal_cents` και `total_cents` στο ticket_order παίρνουν την τιμή του tier
-   - Το `tier_id` ήδη χρησιμοποιεί `ticketTierId` — αυτό παραμένει
-
-4. **Αφαίρεση `ticketPrice` state** — δεν χρειάζεται πλέον
-
-### Αποτέλεσμα
-- Real-time δεδομένα: η σωστή τιμή αποθηκεύεται στο order
-- Σωστή διαθεσιμότητα: αφαιρείται ticket από τον σωστό tier
-- CRM spend: εμφανίζει τη σωστή τιμή (βάσει tier)
+#### 2. Cleanup — Διαγραφή duplicate που δημιουργήθηκε
+Διαγραφή του duplicate ghost "Ανδρέας" που δημιουργήθηκε από το check-in, διατηρώντας τον αρχικό.
 
 ### Αρχεία
-- `ManualEntryDialog.tsx`: αντικατάσταση price input με tier dropdown
+- Database migration: trigger fix + cleanup
 
