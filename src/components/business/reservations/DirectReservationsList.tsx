@@ -412,7 +412,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (userIds.length === 0) return;
 
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('public_profiles' as any)
       .select('id, city, town')
       .in('id', userIds);
 
@@ -421,7 +421,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const cityMap: Record<string, string> = {};
     reservations.forEach(r => {
       if (!r.user_id) return;
-      const profile = profiles.find(p => p.id === r.user_id);
+      const profile = (profiles as any[]).find(p => p.id === r.user_id);
       const city = profile?.city || profile?.town || '';
       if (city) cityMap[r.id] = city;
     });
@@ -563,11 +563,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const cityMap: Record<string, string | null> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('public_profiles' as any)
           .select('id, city, town')
           .in('id', userIds);
         if (isStaleRequest()) return;
-        (profiles || []).forEach(p => { cityMap[p.id] = p.city || (p as any).town || null; });
+        ((profiles || []) as any[]).forEach(p => { cityMap[p.id] = p.city || p.town || null; });
       }
 
       // Get tier names
@@ -1147,9 +1147,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <div className="flex flex-col gap-0.5">
                         {/* City: read-only for account users, editable for ghosts */}
                         {ticket.is_account_user ? (
-                          <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <span className={`text-sm flex items-center gap-1 ${ticket.account_city ? 'text-foreground' : 'text-muted-foreground'}`}>
                             <MapPin className="h-3 w-3 shrink-0" />
-                            {ticket.account_city || (language === 'el' ? '—' : '—')}
+                            {ticket.account_city || '—'}
                           </span>
                         ) : (
                           editingTicketCity === ticket.ticket_id ? (
@@ -1331,7 +1331,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
                           {cityByReservation[reservation.id] && (
-                            <span className="text-sm text-muted-foreground flex items-center gap-1 ml-2">
+                            <span className="text-sm text-foreground flex items-center gap-1 ml-2">
                               <MapPin className="h-3 w-3 shrink-0" />
                               {cityByReservation[reservation.id]}
                             </span>
@@ -1497,7 +1497,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </div>
                       <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
                       {cityByReservation[reservation.id] && (
-                        <span className="text-sm text-muted-foreground flex items-center gap-1 ml-4">
+                        <span className="text-sm text-foreground flex items-center gap-1 ml-4">
                           <MapPin className="h-3 w-3 shrink-0" />
                           {cityByReservation[reservation.id]}
                         </span>
