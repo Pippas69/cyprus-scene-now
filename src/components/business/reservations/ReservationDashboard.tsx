@@ -716,6 +716,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               )}
             </div>
           )}
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full">
