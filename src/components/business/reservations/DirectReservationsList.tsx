@@ -1328,10 +1328,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
                           {cityByReservation[reservation.id] && (
-                            <span className="text-sm text-foreground flex items-center gap-1 ml-2">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              {cityByReservation[reservation.id]}
-                            </span>
+                            <span className="text-sm text-foreground ml-2">{cityByReservation[reservation.id]}</span>
                           )}
                         </div>
                       </TableCell>
