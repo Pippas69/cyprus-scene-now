@@ -57,7 +57,6 @@ export const ManualEntryDialog = ({
   const [notes, setNotes] = useState('');
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
-  const [ticketPrice, setTicketPrice] = useState('');
   const [seatingTypeId, setSeatingTypeId] = useState('');
   const [ticketTierId, setTicketTierId] = useState('');
   const [tableId, setTableId] = useState('');
