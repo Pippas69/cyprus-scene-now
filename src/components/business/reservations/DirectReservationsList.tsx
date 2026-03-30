@@ -1198,51 +1198,69 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
-                        {/* City: editable for ALL users */}
-                        {editingTicketCity === ticket.ticket_id ? (
-                          <div className="flex items-center gap-1">
-                            <Input
-                              value={ticketCityValue}
-                              onChange={(e) => setTicketCityValue(e.target.value)}
-                              className="h-7 text-xs w-24"
-                              placeholder={language === 'el' ? 'Πόλη' : 'City'}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
-                                if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
-                              }}
-                            />
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
-                              <Check className="h-3 w-3 text-green-600" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
-                              <X className="h-3 w-3 text-red-500" />
-                            </Button>
-                          </div>
-                        ) : (ticket.guest_city || ticket.account_city) ? (
-                          <span
-                            className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city"
-                            onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
-                          >
-                            {ticket.guest_city || ticket.account_city}
-                            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
-                          </span>
-                        ) : (
-                          <span
-                            className="text-sm text-muted-foreground cursor-pointer group/city"
-                            onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
-                          >
-                            —
-                            <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
-                          </span>
-                        )}
-                        {ticket.guest_age ? (
-                          <span className="text-sm text-muted-foreground">
-                            {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
+                        {(() => {
+                          const hasCity = !!(ticket.guest_city || ticket.account_city);
+                          const hasAge = !!ticket.guest_age;
+                          // If neither city nor age, show single dash
+                          if (!hasCity && !hasAge && editingTicketCity !== ticket.ticket_id) {
+                            return (
+                              <span
+                                className="text-sm text-muted-foreground cursor-pointer group/city"
+                                onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
+                              >
+                                —
+                                <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
+                              </span>
+                            );
+                          }
+                          return (
+                            <>
+                              {/* City: editable for ALL users */}
+                              {editingTicketCity === ticket.ticket_id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={ticketCityValue}
+                                    onChange={(e) => setTicketCityValue(e.target.value)}
+                                    className="h-7 text-xs w-24"
+                                    placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveTicketCity(ticket.ticket_id);
+                                      if (e.key === 'Escape') { setEditingTicketCity(null); setTicketCityValue(''); }
+                                    }}
+                                  />
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCity(ticket.ticket_id)}>
+                                    <Check className="h-3 w-3 text-green-600" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCity(null); setTicketCityValue(''); }}>
+                                    <X className="h-3 w-3 text-red-500" />
+                                  </Button>
+                                </div>
+                              ) : hasCity ? (
+                                <span
+                                  className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city"
+                                  onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
+                                >
+                                  {ticket.guest_city || ticket.account_city}
+                                  <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-sm text-muted-foreground cursor-pointer group/city"
+                                  onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
+                                >
+                                  —
+                                  <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
+                                </span>
+                              )}
+                              {hasAge && (
+                                <span className="text-sm text-muted-foreground">
+                                  {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </TableCell>
                     <TableCell>
