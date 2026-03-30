@@ -498,12 +498,13 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
     }
   };
 
-  const handleDeleteAccount = async () => {
+    const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const { data, error: fnError } = await supabase.functions.invoke('delete-user-account');
       
-      if (error) throw error;
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: 'Account deleted',
