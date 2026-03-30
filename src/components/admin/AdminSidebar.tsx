@@ -8,6 +8,7 @@ import {
   Settings, 
   MapPin,
   Database,
+  Building2,
   Ticket,
   ClipboardList,
   GraduationCap,
@@ -112,6 +113,11 @@ export const AdminSidebar = () => {
       title: language === 'el' ? 'Επιδοτήσεις Φοιτητών' : 'Student Subsidies',
       icon: FileText,
       href: '/admin/student-subsidies',
+    },
+    {
+      title: language === 'el' ? 'Επιχειρήσεις' : 'Businesses',
+      icon: Building2,
+      href: '/admin/businesses',
     },
   ];
 

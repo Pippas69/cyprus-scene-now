@@ -47,6 +47,7 @@ const AdminWaitlist = lazy(() => import("./pages/AdminWaitlist"));
 const AdminStudentVerification = lazy(() => import("./pages/AdminStudentVerification"));
 const AdminStudentPartners = lazy(() => import("./pages/AdminStudentPartners"));
 const AdminStudentSubsidies = lazy(() => import("./pages/AdminStudentSubsidies"));
+const AdminBusinesses = lazy(() => import("./pages/AdminBusinesses"));
 const AdminForbidden = lazy(() => import("./pages/AdminForbidden"));
 const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
@@ -156,6 +157,7 @@ function AppContent() {
             <Route path="student-verification" element={<AdminStudentVerification />} />
             <Route path="student-partners" element={<AdminStudentPartners />} />
             <Route path="student-subsidies" element={<AdminStudentSubsidies />} />
+            <Route path="businesses" element={<AdminBusinesses />} />
           </Route>
           <Route path="/admin/forbidden" element={<AdminForbidden />} />
           
