@@ -1,34 +1,32 @@
 
 
-## Δύο Αλλαγές: Editable Πόλη (Ticket-Only) + Κουμπί Αναζήτησης
+## Δύο Αλλαγές: Realtime Check-ins + Αφαίρεση +357
 
-### 1. Editable Πόλη για ΟΛΟΥΣ στο Ticket-Only Mode
+### 1. Realtime Check-ins χωρίς Refresh
 
-**Αρχείο: `DirectReservationsList.tsx` (γραμμές 1159-1200)**
+**Πρόβλημα**: Το component ήδη ακούει realtime αλλαγές στον πίνακα `reservations`, αλλά **δεν ακούει αλλαγές στον πίνακα `tickets`**. Όταν γίνεται check-in (scan QR), η στήλη `status` στο `tickets` αλλάζει σε `used`, αλλά ο υπάλληλος δεν το βλέπει χωρίς refresh.
 
-Αφαίρεση του `if (ticket.is_account_user)` branch (γρ. 1162-1167) που κάνει read-only τις πόλεις account users. Αντ' αυτού, ΟΛΕΣ οι πόλεις (account + ghost, με ή χωρίς τιμή) θα χρησιμοποιούν το ίδιο editable pattern που ήδη υπάρχει για τους ghost users — click για edit, input field με Check/X buttons, αποθήκευση στο `guest_city` του πίνακα `tickets`.
+**Λύση στο `DirectReservationsList.tsx` (γραμμές 243-254)**:
+- Προσθήκη δεύτερου realtime channel που ακούει `postgres_changes` στον πίνακα `tickets`
+- Όταν αλλάξει κάτι στα tickets, καλείται `fetchReservations(true)` (silent refresh) -- ίδιο pattern με τις reservations
+- Cleanup στο return: `supabase.removeChannel()` και για τα δύο channels
 
-Η λογική θα είναι:
-- Αν γίνεται editing → input + Check/X (ίδιο με τώρα)
-- Αν υπάρχει πόλη (account_city ή guest_city) → εμφάνιση με Edit2 icon on hover, clickable
-- Αν δεν υπάρχει πόλη → `—` με Edit2 icon on hover, clickable
+**Database**: Το `tickets` table πρέπει να είναι στο realtime publication. Θα χρειαστεί migration: `ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;`
 
-Ουσιαστικά αφαιρείται μόνο ο έλεγχος `is_account_user` και η αρχική τιμή στο editing θα είναι `ticket.guest_city || ticket.account_city || ''`.
+### 2. Αφαίρεση +357 από τηλέφωνα
 
-### 2. Κουμπί Αναζήτησης δίπλα στο (+)
+**Πρόβλημα**: Τα τηλέφωνα εμφανίζονται ολόκληρα (π.χ. `+35799123456`) και χαλάνε το design.
 
-**Αρχείο: `ReservationDashboard.tsx`**
+**Λύση στο `DirectReservationsList.tsx`**:
+- Προσθήκη helper function `stripCountryCode` που αφαιρεί το `+357` (ή οποιοδήποτε country code) από την αρχή του αριθμού
+- Εφαρμογή σε **όλα τα σημεία** που εμφανίζεται `phone_number` ή `buyer_phone`:
+  - Γραμμή 1164-1165 (ticket-only: buyer_phone)
+  - Γραμμή 1332-1335 (reservation mode: phone_number)
+  - Γραμμή 1478-1482 (hybrid mode: phone_number)
 
-- Import `Search` icon από lucide-react
-- Νέο state: `searchQuery` (string), `searchOpen` (boolean)
-- Ακριβώς αριστερά από το κυκλικό κουμπί `+` (γρ. 557-565 και 654-662), προσθήκη κυκλικού κουμπιού Search (ίδιο style: `rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0`)
-- Όταν πατηθεί, toggle ενός Input field κάτω/πάνω από τα tabs για πληκτρολόγηση ονόματος
-- Το `searchQuery` περνάει ως νέο prop στο `DirectReservationsList`
+Η function θα αφαιρεί μόνο το `+357` (Cyprus code) αφού αυτό ζητήθηκε, αφήνοντας τον 8ψήφιο αριθμό.
 
-**Αρχείο: `DirectReservationsList.tsx`**
-
-- Νέο prop: `searchQuery?: string`
-- Πριν το sorting, φιλτράρισμα: ticket-only → `guest_name`, reservation/hybrid → `reservation_name`, case-insensitive `includes`
-
-### Καμία αλλαγή database — δεν χρειάζεται migration
+### Αρχεία
+- `DirectReservationsList.tsx`: realtime tickets channel + stripCountryCode helper
+- Database migration: enable realtime on tickets table
 
