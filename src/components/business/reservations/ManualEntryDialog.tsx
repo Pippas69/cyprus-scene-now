@@ -348,7 +348,7 @@ export const ManualEntryDialog = ({
 
           {/* Phone */}
           <div className={fieldClass}>
-            <Label className={labelClass}>{txt.phone}</Label>
+            <Label className={labelClass}>{txt.phone} *</Label>
             <Input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
