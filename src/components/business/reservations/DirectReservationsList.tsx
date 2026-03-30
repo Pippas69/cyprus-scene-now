@@ -1147,10 +1147,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <div className="flex flex-col gap-0.5">
                         {/* City: read-only for account users, editable for ghosts */}
                         {ticket.is_account_user ? (
-                          <span className={`text-sm flex items-center gap-1 ${ticket.account_city ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            <MapPin className="h-3 w-3 shrink-0" />
-                            {ticket.account_city || '—'}
-                          </span>
+                          ticket.account_city ? (
+                            <span className="text-sm text-foreground">{ticket.account_city}</span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )
                         ) : (
                           editingTicketCity === ticket.ticket_id ? (
                             <div className="flex items-center gap-1">
@@ -1172,19 +1173,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 <X className="h-3 w-3 text-red-500" />
                               </Button>
                             </div>
-                          ) : ticket.account_city ? (
-                            <span className="text-sm text-foreground flex items-center gap-1">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              {ticket.account_city}
-                            </span>
+                          ) : (ticket.account_city || ticket.guest_city) ? (
+                            <span className="text-sm text-foreground">{ticket.account_city || ticket.guest_city}</span>
                           ) : (
                             <span
-                              className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer group/city"
+                              className="text-sm text-muted-foreground cursor-pointer group/city"
                               onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ''); }}
                             >
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              {ticket.guest_city || '—'}
-                              <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
+                              —
+                              <Edit2 className="h-3 w-3 inline ml-1 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity" />
                             </span>
                           )
                         )}
@@ -1331,10 +1328,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
                           {cityByReservation[reservation.id] && (
-                            <span className="text-sm text-foreground flex items-center gap-1 ml-2">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              {cityByReservation[reservation.id]}
-                            </span>
+                            <span className="text-sm text-foreground ml-2">{cityByReservation[reservation.id]}</span>
                           )}
                         </div>
                       </TableCell>
@@ -1497,10 +1491,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </div>
                       <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
                       {cityByReservation[reservation.id] && (
-                        <span className="text-sm text-foreground flex items-center gap-1 ml-4">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          {cityByReservation[reservation.id]}
-                        </span>
+                        <span className="text-sm text-foreground ml-4">{cityByReservation[reservation.id]}</span>
                       )}
                     </div>
                   </TableCell>
