@@ -749,6 +749,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               forceEventMode
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
+              searchQuery={searchQuery}
             />
           ) : (
             <DirectReservationsList
