@@ -17,19 +17,21 @@ import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
 
-// Core user navigation pages loaded eagerly to avoid sidebar/layout remount flicker
+// Only the landing page loaded eagerly - everything else lazy for fast initial load
 import Index from "./pages/Index";
-import Feed from "./pages/Feed";
-import Ekdiloseis from "./pages/Ekdiloseis";
-import Xartis from "./pages/Xartis";
-import Offers from "./pages/Offers";
 
-// Auth pages loaded eagerly to avoid layout flicker from landing page
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import SignupBusiness from "./pages/SignupBusiness";
+// Core navigation pages - lazy loaded (only fetched when user navigates)
+const Feed = lazy(() => import("./pages/Feed"));
+const Ekdiloseis = lazy(() => import("./pages/Ekdiloseis"));
+const Xartis = lazy(() => import("./pages/Xartis"));
+const Offers = lazy(() => import("./pages/Offers"));
+
+// Auth pages - lazy loaded
+const Signup = lazy(() => import("./pages/Signup"));
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const SignupBusiness = lazy(() => import("./pages/SignupBusiness"));
 
 // Secondary pages lazy-loaded for reduced initial bundle
 const DashboardBusiness = lazy(() => import("./pages/DashboardBusiness"));

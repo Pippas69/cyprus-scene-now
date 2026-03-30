@@ -24,13 +24,16 @@
     <meta property="og:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
     <meta name="twitter:description" content="Discover what&#39;s happening now in Cyprus. Live events, trending places, exclusive QR discounts from partner businesses.">
 
+    <!-- Preconnect to external origins for faster resource fetching -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://iasahlgurfxufrtdigcr.supabase.co">
+
     <!-- Preload hero background image -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&q=80" fetchpriority="high">
 
-    <!-- Preconnect to Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Fonts async (avoid render-blocking white screen before splash) -->
+    <!-- Fonts async with minimal weights (avoid render-blocking) -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet"></noscript>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@900&family=Poppins:wght@500;600;700&family=Cinzel+Decorative:wght@900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
