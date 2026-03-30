@@ -240,7 +240,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const { count } = await supabase.from('floor_plan_zones').select('id', { count: 'exact', head: true }).eq('business_id', businessId);
       setHasFloorPlan((count || 0) > 0);
     });
-    const channel = supabase.
+    const reservationsChannel = supabase.
     channel('direct_reservations_changes').
     on(
       'postgres_changes',
@@ -249,8 +249,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     ).
     subscribe();
 
+    const ticketsChannel = supabase.
+    channel('direct_tickets_changes').
+    on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'tickets' },
+      () => fetchReservations(true)
+    ).
+    subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(reservationsChannel);
+      supabase.removeChannel(ticketsChannel);
     };
   }, [businessId, selectedEventId, selectedEventType, forceEventMode]);
 
