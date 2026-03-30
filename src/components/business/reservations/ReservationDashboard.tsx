@@ -628,94 +628,96 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
         {/* Dining/bar businesses: badges layout */}
         {!isTicketLinked && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {isDiningBar && (
-              <button
-                onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
-                className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
-                  diningSelectedEventId === null
-                    ? 'bg-card text-foreground shadow-sm border border-border/50'
-                    : 'text-foreground/50 hover:text-foreground/70'
-                }`}
-              >
-                {t.directReservations}
-              </button>
-            )}
-
-            {isDiningBar && diningEvents.length > 0 && (
-              <Select
-                value={diningSelectedEventId || ''}
-                onValueChange={(val) => {
-                  setDiningSelectedEventId(val);
-                  setActiveTab('list');
-                }}
-              >
-                <SelectTrigger className={`h-8 sm:h-9 text-xs sm:text-sm w-auto min-w-[140px] sm:min-w-[180px] max-w-xs rounded-full gap-2 px-3 sm:px-4 transition-all ${
-                  diningSelectedEventId !== null
-                    ? 'bg-card text-foreground shadow-sm border border-border/50'
-                    : 'text-foreground/50 border-0 hover:text-foreground/70'
-                }`}>
-                  <SelectValue placeholder={t.events} />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg">
-                  {diningEvents.map((event) => {
-                    const dateStr = new Date(event.start_at).toLocaleDateString(
-                      language === 'el' ? 'el-GR' : 'en-US',
-                      { day: 'numeric', month: 'long' }
-                    );
-                    const typeLabel = getEventTypeLabel(event.event_type);
-                    return (
-                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm">{dateStr}</span>
-                          <span className="text-xs text-foreground">({typeLabel})</span>
-                          <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
-                            {event.reservationCount}
-                          </span>
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              className={`rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0 ${searchOpen ? 'bg-primary text-primary-foreground' : ''}`}
-              onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setSearchQuery(''); }}
-              title={language === 'el' ? 'Αναζήτηση' : 'Search'}
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 flex-shrink-0"
-              onClick={() => setManualEntryOpen(true)}
-              title={language === 'el' ? 'Προσθήκη' : 'Add'}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          {searchOpen && (
-            <div className="flex items-center gap-2">
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={language === 'el' ? 'Αναζήτηση ονόματος...' : 'Search name...'}
-                className="h-8 text-sm rounded-full"
-                autoFocus
-                onKeyDown={(e) => { if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); } }}
-              />
-              {searchQuery && (
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={() => setSearchQuery('')}>
-                  <X className="h-3 w-3" />
-                </Button>
+          <>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {isDiningBar && (
+                <button
+                  onClick={() => { setDiningSelectedEventId(null); setActiveTab('list'); }}
+                  className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
+                    diningSelectedEventId === null
+                      ? 'bg-card text-foreground shadow-sm border border-border/50'
+                      : 'text-foreground/50 hover:text-foreground/70'
+                  }`}
+                >
+                  {t.directReservations}
+                </button>
               )}
+
+              {isDiningBar && diningEvents.length > 0 && (
+                <Select
+                  value={diningSelectedEventId || ''}
+                  onValueChange={(val) => {
+                    setDiningSelectedEventId(val);
+                    setActiveTab('list');
+                  }}
+                >
+                  <SelectTrigger className={`h-8 sm:h-9 text-xs sm:text-sm w-auto min-w-[140px] sm:min-w-[180px] max-w-xs rounded-full gap-2 px-3 sm:px-4 transition-all ${
+                    diningSelectedEventId !== null
+                      ? 'bg-card text-foreground shadow-sm border border-border/50'
+                      : 'text-foreground/50 border-0 hover:text-foreground/70'
+                  }`}>
+                    <SelectValue placeholder={t.events} />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-lg">
+                    {diningEvents.map((event) => {
+                      const dateStr = new Date(event.start_at).toLocaleDateString(
+                        language === 'el' ? 'el-GR' : 'en-US',
+                        { day: 'numeric', month: 'long' }
+                      );
+                      const typeLabel = getEventTypeLabel(event.event_type);
+                      return (
+                        <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                          <span className="flex items-center gap-2">
+                            <span className="text-sm">{dateStr}</span>
+                            <span className="text-xs text-foreground">({typeLabel})</span>
+                            <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                              {event.reservationCount}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className={`rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 ml-auto flex-shrink-0 ${searchOpen ? 'bg-primary text-primary-foreground' : ''}`}
+                onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setSearchQuery(''); }}
+                title={language === 'el' ? 'Αναζήτηση' : 'Search'}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 flex-shrink-0"
+                onClick={() => setManualEntryOpen(true)}
+                title={language === 'el' ? 'Προσθήκη' : 'Add'}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+            {searchOpen && (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={language === 'el' ? 'Αναζήτηση ονόματος...' : 'Search name...'}
+                  className="h-8 text-sm rounded-full"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); } }}
+                />
+                {searchQuery && (
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={() => setSearchQuery('')}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
