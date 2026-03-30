@@ -31,34 +31,32 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
-    <Preview>{'\u0391\u03BB\u03BB\u03B1\u03B3\u03AE email \u2014 \u03A6\u039F\u039C\u039F'}</Preview>
+    <Preview>Αλλαγή email — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
+          <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u0391\u03BB\u03BB\u03B1\u03B3\u03AE email \u2709\uFE0F'}</Heading>
+        <Heading style={h1}>Αλλαγή email ✉️</Heading>
         <Text style={text}>
-          {'\u0396\u03AE\u03C4\u03B7\u03C3\u03B5\u03C2 \u03B1\u03BB\u03BB\u03B1\u03B3\u03AE \u03C4\u03BF\u03C5 email \u03C3\u03BF\u03C5 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F \u03B1\u03C0\u03CC '}
-          <Link href={`mailto:${email}`} style={link}>{email}</Link>
-          {' \u03C3\u03B5 '}
-          <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>
-          {'.'}
+          Ζήτησες αλλαγή του email σου στο ΦΟΜΟ από{' '}
+          <Link href={`mailto:${email}`} style={link}>{email}</Link> σε{' '}
+          <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
         </Text>
         <Text style={text}>
-          {'\u03A0\u03AC\u03C4\u03B7\u03C3\u03B5 \u03C4\u03BF \u03C0\u03B1\u03C1\u03B1\u03BA\u03AC\u03C4\u03C9 \u03BA\u03BF\u03C5\u03BC\u03C0\u03AF \u03B3\u03B9\u03B1 \u03B5\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03AF\u03C9\u03C3\u03B7:'}
+          Πάτησε το παρακάτω κουμπί για επιβεβαίωση:
         </Text>
         <Section style={buttonSection}>
           <Button style={button} href={confirmationUrl}>
-            {'\u0395\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03AF\u03C9\u03C3\u03B7 \u0391\u03BB\u03BB\u03B1\u03B3\u03AE\u03C2'}
+            Επιβεβαίωση Αλλαγής
           </Button>
         </Section>
         <Text style={footer}>
-          {'\u0391\u03BD \u03B4\u03B5\u03BD \u03B6\u03AE\u03C4\u03B7\u03C3\u03B5\u03C2 \u03B5\u03C3\u03CD \u03B1\u03C5\u03C4\u03AE \u03C4\u03B7\u03BD \u03B1\u03BB\u03BB\u03B1\u03B3\u03AE, \u03B1\u03C3\u03C6\u03AC\u03BB\u03B9\u03C3\u03B5 \u03B1\u03BC\u03AD\u03C3\u03C9\u03C2 \u03C4\u03BF\u03BD \u03BB\u03BF\u03B3\u03B1\u03C1\u03B9\u03B1\u03C3\u03BC\u03CC \u03C3\u03BF\u03C5.'}
+          Αν δεν ζήτησες εσύ αυτή την αλλαγή, ασφάλισε αμέσως τον λογαριασμό σου.
         </Text>
         <Hr style={divider} />
-        <Text style={brand}>{'\u00A9 2026 \u03A6\u039F\u039C\u039F \u00B7 fomo.com.cy'}</Text>
+        <Text style={brand}>© 2026 ΦΟΜΟ · fomo.com.cy</Text>
       </Container>
     </Body>
   </Html>

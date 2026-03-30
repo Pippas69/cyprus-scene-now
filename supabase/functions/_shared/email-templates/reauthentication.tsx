@@ -21,23 +21,23 @@ interface ReauthenticationEmailProps {
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
-    <Preview>{'\u039A\u03C9\u03B4\u03B9\u03BA\u03CC\u03C2 \u03B5\u03C0\u03B1\u03BB\u03AE\u03B8\u03B5\u03C5\u03C3\u03B7\u03C2 \u2014 \u03A6\u039F\u039C\u039F'}</Preview>
+    <Preview>Κωδικός επαλήθευσης — ΦΟΜΟ</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
-          <Text style={logoIcon}>{'\u03A6\u039F\u039C\u039F'}</Text>
+          <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>{'\u039A\u03C9\u03B4\u03B9\u03BA\u03CC\u03C2 \u03B5\u03C0\u03B1\u03BB\u03AE\u03B8\u03B5\u03C5\u03C3\u03B7\u03C2 \uD83D\uDD11'}</Heading>
-        <Text style={text}>{'\u03A7\u03C1\u03B7\u03C3\u03B9\u03BC\u03BF\u03C0\u03BF\u03AF\u03B7\u03C3\u03B5 \u03C4\u03BF\u03BD \u03C0\u03B1\u03C1\u03B1\u03BA\u03AC\u03C4\u03C9 \u03BA\u03C9\u03B4\u03B9\u03BA\u03CC \u03B3\u03B9\u03B1 \u03BD\u03B1 \u03B5\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03B9\u03CE\u03C3\u03B5\u03B9\u03C2 \u03C4\u03B7\u03BD \u03C4\u03B1\u03C5\u03C4\u03CC\u03C4\u03B7\u03C4\u03AC \u03C3\u03BF\u03C5:'}</Text>
+        <Heading style={h1}>Κωδικός επαλήθευσης 🔑</Heading>
+        <Text style={text}>Χρησιμοποίησε τον παρακάτω κωδικό για να επιβεβαιώσεις την ταυτότητά σου:</Text>
         <Section style={codeSection}>
           <Text style={codeStyle}>{token}</Text>
         </Section>
         <Text style={footer}>
-          {'\u039F \u03BA\u03C9\u03B4\u03B9\u03BA\u03CC\u03C2 \u03BB\u03AE\u03B3\u03B5\u03B9 \u03C3\u03CD\u03BD\u03C4\u03BF\u03BC\u03B1. \u0391\u03BD \u03B4\u03B5\u03BD \u03B6\u03AE\u03C4\u03B7\u03C3\u03B5\u03C2 \u03B5\u03C3\u03CD \u03B1\u03C5\u03C4\u03CC\u03BD \u03C4\u03BF\u03BD \u03BA\u03C9\u03B4\u03B9\u03BA\u03CC, \u03B1\u03B3\u03BD\u03CC\u03B7\u03C3\u03B5 \u03B1\u03C5\u03C4\u03CC \u03C4\u03BF email.'}
+          Ο κωδικός λήγει σύντομα. Αν δεν ζήτησες εσύ αυτόν τον κωδικό, αγνόησε αυτό το email.
         </Text>
         <Hr style={divider} />
-        <Text style={brand}>{'\u00A9 2026 \u03A6\u039F\u039C\u039F \u00B7 fomo.com.cy'}</Text>
+        <Text style={brand}>© 2026 ΦΟΜΟ · fomo.com.cy</Text>
       </Container>
     </Body>
   </Html>
