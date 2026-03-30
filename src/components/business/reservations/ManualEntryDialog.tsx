@@ -233,6 +233,7 @@ export const ManualEntryDialog = ({
           user_id: user.id,
           guest_name: trimmedName,
           guest_age: minAge ? parseInt(minAge) : null,
+          guest_city: city.trim() || null,
           status: 'valid',
           is_manual_entry: true,
           manual_status: null,
