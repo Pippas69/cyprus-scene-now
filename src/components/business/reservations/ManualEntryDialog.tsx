@@ -347,6 +347,19 @@ export const ManualEntryDialog = ({
             />
           </div>
 
+          {/* === TICKET: City === */}
+          {entryType === 'ticket' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Input
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder={language === 'el' ? 'Πόλη' : 'City'}
+                className={inputClass}
+              />
+            </div>
+          )}
+
           {/* === DIRECT: Date & Time === */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
