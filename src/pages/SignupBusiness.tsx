@@ -320,18 +320,18 @@ const SignupBusiness = () => {
       toast({
         title: language === 'el' ? "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!" : "Registration completed successfully!",
         description: language === 'el' 
-          ? "Θα λάβετε email επιβεβαίωσης. Μετά την επαλήθευση από τον διαχειριστή, μπορείτε να συνδεθείτε."
-          : "You will receive a confirmation email. After verification by the administrator, you can log in.",
+          ? "Θα λάβετε email επιβεβαίωσης. Μπορείτε να συνδεθείτε αμέσως!"
+          : "You will receive a confirmation email. You can log in right away!",
         duration: 6000,
       });
 
-      // Wait a moment, then redirect to login with message
+      // Wait a moment, then redirect to login
       setTimeout(() => {
         navigate("/login", { 
           state: { 
             message: language === 'el'
-              ? "Η εγγραφή σας ολοκληρώθηκε! Συνδεθείτε μετά την επαλήθευση από τον διαχειριστή."
-              : "Registration complete! Log in after verification by the administrator."
+              ? "Η εγγραφή σας ολοκληρώθηκε! Μπορείτε να συνδεθείτε τώρα."
+              : "Registration complete! You can log in now."
           } 
         });
       }, 3000);
