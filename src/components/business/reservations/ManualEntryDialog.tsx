@@ -219,8 +219,7 @@ export const ManualEntryDialog = ({
       if (entryType === 'ticket' && eventId) {
         // Create ticket_order first (tickets.order_id FK)
         const orderId = crypto.randomUUID();
-        const resolvedTierId = ticketTierId || ticketTiers[0]?.id;
-        if (!resolvedTierId) throw new Error('No ticket tier selected');
+        const resolvedTierId = ticketTierId || null;
 
         const selectedTier = ticketTiers.find(t => t.id === resolvedTierId);
         const priceCents = selectedTier?.price_cents ?? 0;
