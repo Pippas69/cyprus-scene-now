@@ -1,11 +1,9 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Button, Hr, Section,
+  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
-
-const SITE_NAME = 'ΦΟΜΟ'
 
 interface WelcomeUserProps {
   name?: string
@@ -14,7 +12,7 @@ interface WelcomeUserProps {
 const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
   <Html lang="el" dir="ltr">
     <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
-    <Preview>{'Καλωσόρισες στο ΦΟΜΟ — Μη χάσεις τίποτα!'}</Preview>
+    <Preview>{'\u039A\u03B1\u03BB\u03C9\u03C3\u03CC\u03C1\u03B9\u03C3\u03B5\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F \u2014 \u039C\u03B7 \u03C7\u03AC\u03C3\u03B5\u03B9\u03C2 \u03C4\u03AF\u03C0\u03BF\u03C4\u03B1!'}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
@@ -23,15 +21,17 @@ const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
 
         <Section style={contentSection}>
           <Heading style={h1}>
-            {name ? `Γεια σου, ${name}! 👋` : 'Καλωσόρισες! 👋'}
+            {name
+              ? <>{'\u0393\u03B5\u03B9\u03B1 \u03C3\u03BF\u03C5, '}{name}{'! \uD83D\uDC4B'}</>
+              : '\u039A\u03B1\u03BB\u03C9\u03C3\u03CC\u03C1\u03B9\u03C3\u03B5\u03C2! \uD83D\uDC4B'}
           </Heading>
 
           <Text style={text}>
-            {'Χαιρόμαστε που είσαι πλέον μέλος του '}<strong>{'\u03A6\u039F\u039C\u039F'}</strong>{' — η πλατφόρμα που σε κρατάει ενημερωμένο για τα καλύτερα events και τις πιο hot προσφορές στην Κύπρο.'}
+            {'\u03A7\u03B1\u03B9\u03C1\u03CC\u03BC\u03B1\u03C3\u03C4\u03B5 \u03C0\u03BF\u03C5 \u03B5\u03AF\u03C3\u03B1\u03B9 \u03C0\u03BB\u03AD\u03BF\u03BD \u03BC\u03AD\u03BB\u03BF\u03C2 \u03C4\u03BF\u03C5 '}<strong>{'\u03A6\u039F\u039C\u039F'}</strong>{' \u2014 \u03B7 \u03C0\u03BB\u03B1\u03C4\u03C6\u03CC\u03C1\u03BC\u03B1 \u03C0\u03BF\u03C5 \u03C3\u03B5 \u03BA\u03C1\u03B1\u03C4\u03AC\u03B5\u03B9 \u03B5\u03BD\u03B7\u03BC\u03B5\u03C1\u03C9\u03BC\u03AD\u03BD\u03BF \u03B3\u03B9\u03B1 \u03C4\u03B1 \u03BA\u03B1\u03BB\u03CD\u03C4\u03B5\u03C1\u03B1 events \u03BA\u03B1\u03B9 \u03C4\u03B9\u03C2 \u03C0\u03B9\u03BF hot \u03C0\u03C1\u03BF\u03C3\u03C6\u03BF\u03C1\u03AD\u03C2 \u03C3\u03C4\u03B7\u03BD \u039A\u03CD\u03C0\u03C1\u03BF.'}
           </Text>
 
           <Text style={text}>
-            {'Ανακάλυψε εκδηλώσεις, κάνε κρατήσεις, εξασφάλισε αποκλειστικές προσφορές και μη χάσεις τίποτα.'}
+            {'\u0391\u03BD\u03B1\u03BA\u03AC\u03BB\u03C5\u03C8\u03B5 \u03B5\u03BA\u03B4\u03B7\u03BB\u03CE\u03C3\u03B5\u03B9\u03C2, \u03BA\u03AC\u03BD\u03B5 \u03BA\u03C1\u03B1\u03C4\u03AE\u03C3\u03B5\u03B9\u03C2, \u03B5\u03BE\u03B1\u03C3\u03C6\u03AC\u03BB\u03B9\u03C3\u03B5 \u03B1\u03C0\u03BF\u03BA\u03BB\u03B5\u03B9\u03C3\u03C4\u03B9\u03BA\u03AD\u03C2 \u03C0\u03C1\u03BF\u03C3\u03C6\u03BF\u03C1\u03AD\u03C2 \u03BA\u03B1\u03B9 \u03BC\u03B7 \u03C7\u03AC\u03C3\u03B5\u03B9\u03C2 \u03C4\u03AF\u03C0\u03BF\u03C4\u03B1.'}
           </Text>
         </Section>
 
@@ -39,7 +39,7 @@ const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
 
         <Section style={footerSection}>
           <Text style={footer}>
-            ΦΟΜΟ Cyprus — Never miss out!
+            {'\u03A6\u039F\u039C\u039F Cyprus \u2014 Never miss out!'}
           </Text>
         </Section>
       </Container>
@@ -49,19 +49,17 @@ const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
 
 export const template = {
   component: WelcomeUserEmail,
-  subject: 'Καλωσόρισες στο ΦΟΜΟ! 🎉',
-  displayName: 'Welcome — User',
-  previewData: { name: 'Μαρίνος' },
+  subject: '\u039A\u03B1\u03BB\u03C9\u03C3\u03CC\u03C1\u03B9\u03C3\u03B5\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F! \uD83C\uDF89',
+  displayName: 'Welcome \u2014 User',
+  previewData: { name: '\u039C\u03B1\u03C1\u03AF\u03BD\u03BF\u03C2' },
 } satisfies TemplateEntry
 
-// Styles — Mediterranean brand: Aegean #0D3B66, Seafoam #4ECDC4
 const main = { backgroundColor: '#ffffff', fontFamily: "'Helvetica Neue', Arial, sans-serif" }
 const container = { maxWidth: '520px', margin: '0 auto' }
 const headerSection = { 
   background: 'linear-gradient(135deg, #0D3B66 0%, #164e80 50%, #1a6b5a 100%)', 
   padding: '40px 30px 32px', 
   textAlign: 'center' as const,
-  borderRadius: '0 0 0 0',
 }
 const logo = { 
   color: '#4ECDC4', 
@@ -73,18 +71,6 @@ const logo = {
 const contentSection = { padding: '36px 30px 24px' }
 const h1 = { fontSize: '22px', fontWeight: '700' as const, color: '#0D3B66', margin: '0 0 20px' }
 const text = { fontSize: '15px', color: '#3a3a3a', lineHeight: '1.65', margin: '0 0 18px' }
-const button = {
-  backgroundColor: '#0D3B66',
-  color: '#ffffff',
-  padding: '14px 32px',
-  borderRadius: '12px',
-  fontSize: '15px',
-  fontWeight: '600' as const,
-  textDecoration: 'none',
-  display: 'inline-block' as const,
-  textAlign: 'center' as const,
-  marginTop: '4px',
-}
 const hr = { borderColor: '#e8e8e8', margin: '0' }
 const footerSection = { padding: '20px 30px' }
 const footer = { fontSize: '12px', color: '#999999', margin: '0', textAlign: 'center' as const }
