@@ -380,26 +380,11 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           <div className="space-y-2">
             <Label className="text-destructive">{t.deleteAccount}</Label>
             <p className="text-sm text-muted-foreground">{t.deleteWarning}</p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t.deleteAccount}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t.deleteAccount}</AlertDialogTitle>
-                  <AlertDialogDescription>{t.deleteWarning}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting}>
-                    {t.deleteConfirm}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <ThreeStepDeleteDialog
+              onConfirmDelete={handleDeleteAccount}
+              isDeleting={isDeleting}
+              isBusiness={false}
+            />
           </div>
         </CardContent>
       </Card>

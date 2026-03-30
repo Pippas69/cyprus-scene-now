@@ -720,26 +720,11 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           <div className="space-y-1.5 sm:space-y-2">
             <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
             <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full text-xs sm:text-sm h-9 sm:h-10">
-                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                  {t.deleteAccount}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t.deleteAccount}</AlertDialogTitle>
-                  <AlertDialogDescription>{t.deleteWarning}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting}>
-                    {t.deleteConfirm}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <ThreeStepDeleteDialog
+              onConfirmDelete={handleDeleteAccount}
+              isDeleting={isDeleting}
+              isBusiness={false}
+            />
           </div>
         </CardContent>
       </Card>

@@ -929,26 +929,11 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           {/* Delete Account */}
           <div className="pt-3 sm:pt-4 border-t border-border/50 space-y-2 sm:space-y-3">
             <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full text-xs sm:text-sm h-9 sm:h-10">
-                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                  {t.deleteAccount}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t.deleteAccount}</AlertDialogTitle>
-                  <AlertDialogDescription>{t.deleteWarning}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting}>
-                    {t.deleteConfirm}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <ThreeStepDeleteDialog
+              onConfirmDelete={handleDeleteAccount}
+              isDeleting={isDeleting}
+              isBusiness={true}
+            />
           </div>
         </CardContent>
       </Card>
