@@ -10,6 +10,7 @@ import { useCallback, useRef } from "react";
 import { trackEngagement, useViewTracking } from "@/lib/analyticsTracking";
 import { translateCity } from "@/lib/cityTranslations";
 import { mapFilterIdsToDbCategories } from "@/lib/categoryFilterMapping";
+import { preloadBusinessProfilePage } from "@/lib/routePreload";
 interface Business {
   id: string;
   name: string;

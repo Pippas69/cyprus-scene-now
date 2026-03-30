@@ -14,6 +14,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { trackEngagement } from '@/lib/analyticsTracking';
 import { Button } from '@/components/ui/button';
 import { getDirectionsUrl } from '@/lib/mapUtils';
+import { preloadBusinessProfilePage } from '@/lib/routePreload';
 
 interface RealMapProps {
   city: string;
@@ -339,6 +340,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
         trackEngagement(b.id, 'profile_click', 'business', b.id, { source: 'map_popup_photo' });
       }
 
+      preloadBusinessProfilePage();
       navigate(`/business/${b.id}`, {
         state: {
           analyticsTracked: true,

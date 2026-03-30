@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { preloadBusinessProfilePage } from "@/lib/routePreload";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import { supabase } from "@/integrations/supabase/client";
@@ -230,6 +231,8 @@ export const AllBusinessesDialog = ({
                   <Link
                     to={`/business/${business.id}`}
                     onClick={handleBusinessClick}
+                    onMouseEnter={preloadBusinessProfilePage}
+                    onTouchStart={preloadBusinessProfilePage}
                     className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition-all duration-200 group"
                   >
                     <div className="relative">

@@ -8,6 +8,7 @@ import { BusinessBoostBadges } from "./BusinessBoostBadges";
 import type { ActiveProfileBoost } from "@/hooks/useActiveProfileBoosts";
 import { DISPLAY_CAPS } from "@/lib/personalization";
 import { translateCity } from "@/lib/cityTranslations";
+import { preloadBusinessProfilePage } from "@/lib/routePreload";
 
 interface BoostedProfilesScrollerProps {
   profiles: ActiveProfileBoost[];
@@ -57,6 +58,8 @@ export const BoostedProfilesScroller = ({
             >
               <Link
                 to={`/business/${profile.business_id}`}
+                onMouseEnter={preloadBusinessProfilePage}
+                onTouchStart={preloadBusinessProfilePage}
                 className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all duration-200 min-w-[80px] sm:min-w-[100px] group"
               >
                 {/* Avatar with premium ring for premium tier */}
