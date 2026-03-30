@@ -1325,6 +1325,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={String(reservation.party_size)} />
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
+                          {cityByReservation[reservation.id] && (
+                            <span className="text-sm text-muted-foreground flex items-center gap-1 ml-2">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {cityByReservation[reservation.id]}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -1485,6 +1491,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         />
                       </div>
                       <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
+                      {cityByReservation[reservation.id] && (
+                        <span className="text-sm text-muted-foreground flex items-center gap-1 ml-4">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {cityByReservation[reservation.id]}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
 
