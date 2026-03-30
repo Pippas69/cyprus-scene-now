@@ -79,7 +79,7 @@ const Login = () => {
         // Check if user owns a business
         const { data: business } = await supabase.
         from("businesses").
-        select("id, verified").
+        select("id").
         eq("user_id", data.user.id).
         maybeSingle();
 
