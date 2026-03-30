@@ -5441,7 +5441,7 @@ export type Database = {
           staff_memo: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           ticket_code: string | null
-          tier_id: string
+          tier_id: string | null
           user_id: string
           venue_seat_id: string | null
         }
@@ -5464,7 +5464,7 @@ export type Database = {
           staff_memo?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
-          tier_id: string
+          tier_id?: string | null
           user_id: string
           venue_seat_id?: string | null
         }
@@ -5487,7 +5487,7 @@ export type Database = {
           staff_memo?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
-          tier_id?: string
+          tier_id?: string | null
           user_id?: string
           venue_seat_id?: string | null
         }
