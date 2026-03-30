@@ -185,7 +185,6 @@ export const ManualEntryDialog = ({
     setNotes('');
     setMinAge('');
     setMinCharge('');
-    setTicketPrice('');
     setSeatingTypeId('');
     setTicketTierId('');
     setTableId('');
