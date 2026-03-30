@@ -6761,6 +6761,14 @@ export type Database = {
         }[]
       }
       get_unread_message_count: { Args: never; Returns: number }
+      get_user_cities: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          city: string
+          town: string
+          user_id: string
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       has_role: {
         Args: {
