@@ -720,7 +720,7 @@ const ForBusinesses = () => {
                     <CardFooter className="pt-4 border-t">
                       <Button
                         asChild
-                        className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`}
+                        className={`w-full ${isMostPopular ? 'bg-primary hover:bg-primary/90' : ''}`}
                         variant={isMostPopular ? "default" : "outline"}
                         size="lg"
                       >
