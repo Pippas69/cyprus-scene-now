@@ -151,6 +151,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       lastName: 'Last Name',
       age: 'Age',
       email: 'Email',
+      phone: 'Phone',
       town: 'Town',
       townPlaceholder: 'Select town',
       gender: 'Gender',
