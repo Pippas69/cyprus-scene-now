@@ -216,15 +216,16 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
 
   // Pre-compute row labels
   const rowLabels = React.useMemo(() => {
-    const rowMap = new Map<string, { minX: number; maxX: number; y: number }>();
+    const rowMap = new Map<string, { minX: number; maxX: number; y: number; count: number }>();
     for (const seat of seats) {
       const cx = seat.x - bounds.minX;
       const cy = seat.y - bounds.minY;
       const key = `${seat.zone_id}-${seat.row_label}`;
       const existing = rowMap.get(key);
       if (!existing) {
-        rowMap.set(key, { minX: cx, maxX: cx, y: cy });
+        rowMap.set(key, { minX: cx, maxX: cx, y: cy, count: 1 });
       } else {
+        existing.count++;
         if (cx < existing.minX) existing.minX = cx;
         if (cx > existing.maxX) existing.maxX = cx;
       }
@@ -232,8 +233,10 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const labels: React.ReactNode[] = [];
     const rowLabelsSeen = new Set<string>();
     rowMap.forEach((pos, key) => {
+      // Skip orphan labels — only show if the row has at least 3 seats in this zone
+      if (pos.count < 3) return;
       const rowLabel = key.split('-').pop()!;
-      const labelKey = `${rowLabel}-${Math.round(pos.y)}`;
+      const labelKey = `${rowLabel}-${Math.round(pos.y / 10)}`;
       if (rowLabelsSeen.has(labelKey)) return;
       rowLabelsSeen.add(labelKey);
       labels.push(
