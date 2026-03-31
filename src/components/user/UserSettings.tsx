@@ -227,6 +227,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         town: profile.town,
         city: profile.town,
         gender: profile.gender,
+        phone: profile.phone,
         preferences: profile.preferences || [],
       })
       .eq('id', userId);
