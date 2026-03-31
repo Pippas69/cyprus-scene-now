@@ -33,21 +33,22 @@ import InfoNavbar from "@/components/info/InfoNavbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// Plan configuration matching SubscriptionPlans.tsx
+// Plan configuration matching SubscriptionPlans.tsx — unified FOMO ocean gradient
+const FOMO_GRADIENT = 'from-[hsl(174,62%,45%)] to-[hsl(174,50%,35%)]';
 const PLAN_CONFIG = {
   basic: {
     icon: Zap,
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 5999,
   },
   pro: {
     icon: Star,
-    gradient: 'from-primary to-sunset-coral',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 11999,
   },
   elite: {
     icon: Crown,
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 23999,
   },
 };
