@@ -1,37 +1,36 @@
 
 
-## Σχέδιο: Διόρθωση Πληροφοριών Πελατών
+## Σχέδιο: Προσθήκη στηλών Ηλικία & Πόλη στον πίνακα CRM
 
-### Τι θα γίνει
+### Τι αλλάζει
 
-Οι Πληροφορίες Πελατών θα αντικατοπτρίζουν **όλα** τα δεδομένα από όλες τις πηγές: εγγεγραμμένους χρήστες ΚΑΙ χειροκίνητες καταχωρήσεις.
+Προσθήκη δύο νέων στηλών **Ηλικία** και **Πόλη** στον πίνακα πελατών του CRM, αμέσως μετά το No-shows και πριν τις Σημειώσεις. Τα δεδομένα αντλούνται 1:1 από τη διαχείριση (tickets.guest_age, tickets.guest_city).
 
-### Βήμα 1: Ενημέρωση SQL function `get_audience_demographics`
+### Αρχεία & αλλαγές
 
-Αλλαγές στη λογική:
+**1. SQL Migration — Επέκταση `get_crm_guest_stats`**
+- Προσθήκη δύο νέων στηλών στο RETURNS TABLE: `guest_age integer`, `guest_city text`
+- Για κάθε CRM guest, αντλεί από τα mapped tickets το πιο πρόσφατο μη-κενό `guest_age` και `guest_city`
+- Για registered users χωρίς ticket data, fallback στο `profiles.age` / `profiles.city` (ίδια λογική με τα demographics analytics)
 
-- **Συμπερίληψη manual entries**: Τα εισιτήρια χωρίς `user_id` (χειροκίνητες καταχωρήσεις) θα συμπεριλαμβάνονται στους υπολογισμούς. Αντί να αγνοούνται (`WHERE user_id IS NOT NULL`), θα δημιουργείται ξεχωριστό CTE για αυτά.
-- **Fallback για ηλικία**: `COALESCE(profiles.age, tickets.guest_age)` — αν ο χρήστης έχει ηλικία στο profile, χρησιμοποιείται αυτή. Αλλιώς, χρησιμοποιείται η ηλικία από το εισιτήριο.
-- **Fallback για πόλη**: `COALESCE(profiles.city, profiles.town, tickets.guest_city)` — ίδια λογική.
-- **Φύλο**: Μόνο από `profiles.gender` (χωρίς fallback, αφού μόνο η πλήρης εγγραφή FOMO δίνει φύλο).
-- **Αφαίρεση LIMIT 6** στις πόλεις — θα εμφανίζονται όλες.
+**2. `src/hooks/useCrmGuests.ts`**
+- Προσθήκη `guest_age: number | null` και `guest_city: string | null` στο interface `CrmGuest`
+- Mapping των νέων πεδίων από τα stats results στο guest object
 
-Δομή του νέου SQL:
-1. CTE `registered_customers`: χρήστες με `user_id` — demographics από profiles με fallback σε ticket guest data
-2. CTE `manual_customers`: εισιτήρια χωρίς `user_id` — demographics από `guest_age`/`guest_city` απευθείας
-3. UNION ALL των δύο → υπολογισμός gender/age/cities στατιστικών
+**3. `src/components/business/crm/CrmGuestTable.tsx`**
+- Δύο νέα `<TableHead>` μετά το No-shows: "Ηλικία" και "Πόλη"
+- Δύο νέα `<TableCell>` ανά γραμμή:
+  - **Ηλικία**: εμφανίζει τον αριθμό ή `—` αν δεν υπάρχει
+  - **Πόλη**: εμφανίζει το όνομα ή `—` αν δεν υπάρχει
+- Σταθερό styling: `text-sm text-foreground` για τιμές, `text-muted-foreground/40` για παύλα
 
-### Βήμα 2: Ενημέρωση UI (`AudienceTab.tsx`)
+### Σειρά στηλών (τελική)
 
-- Αφαίρεση του `.slice(0, 6)` στις πόλεις ώστε να εμφανίζονται όλες
+```text
+Πελάτης | Επισκέψεις | Τελευταία | Έξοδα | No-shows | Ηλικία | Πόλη | Σημειώσεις | Tags | Email
+```
 
-### Βήμα 3: Cache invalidation
+### Τεχνική σημείωση
 
-- Στα σημεία όπου ο επιχειρηματίας κάνει edit στοιχεία πελάτη (guest_city, guest_age σε manual entries), θα γίνεται invalidation του query `audience-metrics` ώστε τα analytics να ανανεώνονται αμέσως.
-
-### Τεχνικά αρχεία που θα τροποποιηθούν
-
-1. **Νέο SQL migration** — επανασύνταξη `get_audience_demographics` με τα παραπάνω
-2. **`src/components/business/analytics/AudienceTab.tsx`** — αφαίρεση slice(0, 6)
-3. **Management components** (edit guest) — προσθήκη invalidation για `audience-metrics` query key
+Η ηλικία και πόλη ανά CRM guest υπολογίζονται στη βάση (RPC) χρησιμοποιώντας τα ίδια ticket mappings που χρησιμοποιούνται ήδη για visits/spend, οπότε τα δεδομένα είναι 100% συνεπή με τη διαχείριση.
 
