@@ -179,8 +179,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   }, [venueId, showInstanceId]);
 
   // ── Compute SVG viewBox bounds from seat data ──
-  const PAD = 50;
-  const STAGE_EXTRA = 100; // extra space below seats for stage
+  const PAD = 60;
+  const STAGE_EXTRA = 80;
 
   const bounds = useMemo(() => {
     if (seats.length === 0) return { minX: 0, maxX: 1200, minY: 0, maxY: 900 };
@@ -215,169 +215,44 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   );
 
   const isHighDensity = seats.length > 500;
+  const seatRadius = isHighDensity ? 3 : 6;
 
-  // ── Reset view to fit all seats ──
+  // ── Reset view ──
   const resetView = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
   }, []);
 
-  // Auto-fit on initial load
   useEffect(() => {
-    if (!loading && seats.length > 0) {
-      resetView();
-    }
+    if (!loading && seats.length > 0) resetView();
   }, [loading, seats.length, resetView]);
 
-  // ── Compute zone boundary data for radial lines & labels ──
-  const { zoneBoundaryLines, zoneLabels } = useMemo(() => {
-    if (seats.length === 0 || zones.length === 0) return { zoneBoundaryLines: [], zoneLabels: [] };
-
-    // Stage center (used as radial origin)
-    const stageCX = (bounds.minX + bounds.maxX) / 2;
-    // Stage is at bottom of seat area — find max Y of seats and go a bit further
-    const maxSeatY = Math.max(...seats.map(s => s.y));
-    const stageCY = maxSeatY + 40;
-
-    // Group seats by zone
-    const seatsByZone = new Map<string, VenueSeat[]>();
-    for (const s of seats) {
-      if (!seatsByZone.has(s.zone_id)) seatsByZone.set(s.zone_id, []);
-      seatsByZone.get(s.zone_id)!.push(s);
-    }
-
-    // Compute angle range for each zone
-    interface ZoneAngleInfo {
-      zone: VenueZone;
-      minAngle: number;
-      maxAngle: number;
-      avgAngle: number;
-      minR: number;
-      maxR: number;
-    }
-
-    const zoneAngles: ZoneAngleInfo[] = [];
-    for (const z of zones) {
-      const zSeats = seatsByZone.get(z.id);
-      if (!zSeats || zSeats.length === 0) continue;
-      let minA = Infinity, maxA = -Infinity, sumA = 0;
-      let minR = Infinity, maxR = -Infinity;
-      for (const s of zSeats) {
-        const dx = s.x - stageCX;
-        const dy = stageCY - s.y;
-        const angle = Math.atan2(dy, dx);
-        const r = Math.sqrt(dx * dx + dy * dy);
-        sumA += angle;
-        if (angle < minA) minA = angle;
-        if (angle > maxA) maxA = angle;
-        if (r < minR) minR = r;
-        if (r > maxR) maxR = r;
-      }
-      zoneAngles.push({
-        zone: z,
-        minAngle: minA,
-        maxAngle: maxA,
-        avgAngle: sumA / zSeats.length,
-        minR,
-        maxR,
-      });
-    }
-
-    // Sort by average angle (left to right = high angle to low)
-    zoneAngles.sort((a, b) => b.avgAngle - a.avgAngle);
-
-    const lines: React.ReactNode[] = [];
-    const labels: React.ReactNode[] = [];
-
-    // Draw boundary lines between adjacent zones
-    for (let i = 0; i < zoneAngles.length - 1; i++) {
-      const left = zoneAngles[i];
-      const right = zoneAngles[i + 1];
-      const gapAngle = (left.minAngle + right.maxAngle) / 2;
-
-      const innerR = Math.min(left.minR, right.minR) - 10;
-      const outerR = Math.max(left.maxR, right.maxR) + 10;
-
-      const x1 = stageCX + innerR * Math.cos(gapAngle) - bounds.minX;
-      const y1 = stageCY - innerR * Math.sin(gapAngle) - bounds.minY;
-      const x2 = stageCX + outerR * Math.cos(gapAngle) - bounds.minX;
-      const y2 = stageCY - outerR * Math.sin(gapAngle) - bounds.minY;
-
-      lines.push(
-        <line
-          key={`boundary-${i}`}
-          x1={x1}
-          y1={y1}
-          x2={x2}
-          y2={y2}
-          stroke="hsl(var(--border))"
-          strokeWidth={1}
-          strokeDasharray="4 3"
-          opacity={0.6}
-        />
-      );
-    }
-
-    // Zone labels placed at outer edge of each zone
-    for (const za of zoneAngles) {
-      const labelR = za.maxR + 25;
-      const lx = stageCX + labelR * Math.cos(za.avgAngle) - bounds.minX;
-      const ly = stageCY - labelR * Math.sin(za.avgAngle) - bounds.minY;
-
-      labels.push(
-        <g key={`zlabel-${za.zone.id}`}>
-          <text
-            x={lx}
-            y={ly}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize={isHighDensity ? 9 : 11}
-            fontWeight={700}
-            fill={za.zone.color}
-            stroke="hsl(var(--background))"
-            strokeWidth={3}
-            paintOrder="stroke"
-            className="select-none pointer-events-none"
-          >
-            {za.zone.name}
-          </text>
-        </g>
-      );
-    }
-
-    return { zoneBoundaryLines: lines, zoneLabels: labels };
-  }, [seats, zones, bounds, isHighDensity]);
-
-  // ── Stage rendering data ──
+  // ── Stage rendering ──
   const stageElements = useMemo(() => {
     if (seats.length === 0) return null;
 
-    const stageCX = (bounds.minX + bounds.maxX) / 2 - bounds.minX;
+    const stageCX = (bounds.maxX - bounds.minX) / 2;
     const maxSeatY = Math.max(...seats.map(s => s.y));
-    const stageCY = maxSeatY + 40 - bounds.minY;
-    const stageR = 80;
+    const stageCY = maxSeatY + 30 - bounds.minY;
+    const stageR = isHighDensity ? 60 : 80;
 
-    // Semicircle arc (opening upward toward seats)
     const x1 = stageCX - stageR;
-    const y1 = stageCY;
     const x2 = stageCX + stageR;
-    const y2 = stageCY;
 
     return (
       <g>
-        {/* Filled semicircle */}
         <path
-          d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 0 0 ${x2} ${y2} Z`}
-          fill="hsl(var(--primary) / 0.15)"
-          stroke="hsl(var(--primary))"
-          strokeWidth={2}
+          d={`M ${x1} ${stageCY} A ${stageR} ${stageR} 0 0 0 ${x2} ${stageCY} Z`}
+          fill="hsl(var(--primary) / 0.12)"
+          stroke="hsl(var(--primary) / 0.5)"
+          strokeWidth={1.5}
         />
         <text
           x={stageCX}
           y={stageCY - stageR / 3}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={14}
+          fontSize={isHighDensity ? 10 : 14}
           fontWeight={700}
           fill="hsl(var(--primary))"
           className="select-none pointer-events-none"
@@ -386,7 +261,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         </text>
       </g>
     );
-  }, [seats, bounds, t.stage]);
+  }, [seats, bounds, t.stage, isHighDensity]);
 
   // ── Seat click handler ──
   const handleSeatClick = useCallback(
@@ -446,7 +321,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     setIsPanning(false);
   }, []);
 
-  const handleZoomIn = () => setZoom(z => Math.min(z + 0.3, 3));
+  const handleZoomIn = () => setZoom(z => Math.min(z + 0.3, 4));
   const handleZoomOut = () => setZoom(z => Math.max(z - 0.3, 0.5));
 
   // Pinch-to-zoom
@@ -459,7 +334,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (lastTouchDist.current !== null) {
         const delta = (dist - lastTouchDist.current) * 0.005;
-        setZoom(z => Math.max(0.5, Math.min(3, z + delta)));
+        setZoom(z => Math.max(0.5, Math.min(4, z + delta)));
       }
       lastTouchDist.current = dist;
     }
@@ -469,119 +344,53 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     lastTouchDist.current = null;
   }, []);
 
-  // Mouse wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(z => Math.max(0.5, Math.min(3, z + delta)));
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    setZoom(z => Math.max(0.5, Math.min(4, z + delta)));
   }, []);
 
-  // ── Precomputed stage center for rotation ──
-  const stageCenter = useMemo(() => {
-    if (seats.length === 0) return { cx: 0, cy: 0 };
-    const maxSeatY = Math.max(...seats.map(s => s.y));
-    return {
-      cx: (bounds.minX + bounds.maxX) / 2 - bounds.minX,
-      cy: maxSeatY + 40 - bounds.minY,
-    };
-  }, [seats, bounds]);
+  // ── Render seats as simple circles (high performance) ──
+  const seatElements = useMemo(() => {
+    return seats.map(seat => {
+      const isSold = soldSeats.has(seat.id);
+      const isSelected = selectedIds.has(seat.id);
+      const isWheelchair = seat.seat_type === 'wheelchair';
+      const zone = zoneMap.get(seat.zone_id);
 
-  // ── Render seat ──
-  const SEAT_W = isHighDensity ? 8 : 20;
-  const SEAT_H = isHighDensity ? 8 : 18;
+      let fill: string;
+      if (isSelected) fill = SEAT_COLORS.selected;
+      else if (isSold) fill = SEAT_COLORS.unavailable;
+      else if (isWheelchair) fill = SEAT_COLORS.wheelchair;
+      else fill = zone?.color || 'hsl(var(--muted-foreground) / 0.45)';
 
-  const renderSeat = useCallback((seat: VenueSeat) => {
-    const isSold = soldSeats.has(seat.id);
-    const isSelected = selectedIds.has(seat.id);
-    const isWheelchair = seat.seat_type === 'wheelchair';
-    const zone = zoneMap.get(seat.zone_id);
+      const cx = seat.x - bounds.minX;
+      const cy = seat.y - bounds.minY;
 
-    let fill: string;
-    if (isSelected) fill = SEAT_COLORS.selected;
-    else if (isSold) fill = SEAT_COLORS.unavailable;
-    else if (isWheelchair) fill = SEAT_COLORS.wheelchair;
-    else fill = zone?.color || 'hsl(var(--muted-foreground) / 0.45)';
-
-    const cx = seat.x - bounds.minX;
-    const cy = seat.y - bounds.minY;
-
-    const angleDeg = Math.atan2(stageCenter.cy - cy, cx - stageCenter.cx) * (180 / Math.PI);
-    const rotation = 90 - angleDeg;
-
-    return (
-      <g
-        key={seat.id}
-        className={cn(
-          'transition-colors duration-100',
-          !isSold && 'cursor-pointer',
-          isSold && 'opacity-40 cursor-not-allowed'
-        )}
-        onClick={() => handleSeatClick(seat)}
-        onPointerEnter={(e) => {
-          if (zone) setTooltip({ seat, zone, x: e.clientX, y: e.clientY });
-        }}
-        onPointerLeave={() => setTooltip(null)}
-        data-seat="true"
-        transform={`rotate(${rotation}, ${cx}, ${cy})`}
-      >
-        {isHighDensity ? (
-          // Simple circle for high density
-          <circle
-            data-seat="true"
-            cx={cx}
-            cy={cy}
-            r={3.5}
-            fill={fill}
-            stroke={isSelected ? 'white' : 'rgba(0,0,0,0.15)'}
-            strokeWidth={isSelected ? 1.5 : 0.3}
-          />
-        ) : (
-          <>
-            <path
-              data-seat="true"
-              d={`
-                M ${cx - SEAT_W/2 + 2} ${cy + SEAT_H/2}
-                L ${cx - SEAT_W/2 + 2} ${cy - SEAT_H/2 + 4}
-                Q ${cx - SEAT_W/2 + 2} ${cy - SEAT_H/2}, ${cx - SEAT_W/2 + 6} ${cy - SEAT_H/2}
-                L ${cx + SEAT_W/2 - 6} ${cy - SEAT_H/2}
-                Q ${cx + SEAT_W/2 - 2} ${cy - SEAT_H/2}, ${cx + SEAT_W/2 - 2} ${cy - SEAT_H/2 + 4}
-                L ${cx + SEAT_W/2 - 2} ${cy + SEAT_H/2}
-                Z
-              `}
-              fill={fill}
-              stroke={isSelected ? 'white' : 'rgba(0,0,0,0.15)'}
-              strokeWidth={isSelected ? 2 : 0.5}
-            />
-            <rect
-              data-seat="true"
-              x={cx - SEAT_W/2 + 3}
-              y={cy + 2}
-              width={SEAT_W - 6}
-              height={SEAT_H/3}
-              rx={2}
-              fill={isSelected ? 'hsl(var(--primary-foreground) / 0.3)' : 'rgba(0,0,0,0.1)'}
-              className="pointer-events-none"
-            />
-          </>
-        )}
-        {zoom >= (isHighDensity ? 2.0 : 1.2) && (
-          <text
-            data-seat="true"
-            x={cx}
-            y={cy - 1}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize={isHighDensity ? 5 : 7}
-            fill={isSelected ? 'white' : isSold ? 'hsl(var(--muted-foreground))' : 'white'}
-            className="pointer-events-none select-none"
-            fontWeight={isSelected ? 700 : 500}
-          >
-            {seat.seat_number}
-          </text>
-        )}
-      </g>
-    );
-  }, [soldSeats, selectedIds, zoneMap, bounds, stageCenter, handleSeatClick, zoom, isHighDensity, SEAT_W, SEAT_H]);
+      return (
+        <circle
+          key={seat.id}
+          data-seat="true"
+          cx={cx}
+          cy={cy}
+          r={seatRadius}
+          fill={fill}
+          stroke={isSelected ? 'white' : 'rgba(0,0,0,0.1)'}
+          strokeWidth={isSelected ? 1.5 : 0.3}
+          className={cn(
+            'transition-colors duration-75',
+            !isSold && 'cursor-pointer',
+            isSold && 'opacity-30 cursor-not-allowed'
+          )}
+          onClick={() => handleSeatClick(seat)}
+          onPointerEnter={(e) => {
+            if (zone) setTooltip({ seat, zone, x: e.clientX, y: e.clientY });
+          }}
+          onPointerLeave={() => setTooltip(null)}
+        />
+      );
+    });
+  }, [seats, soldSeats, selectedIds, zoneMap, bounds, seatRadius, handleSeatClick]);
 
   if (loading) {
     return (
@@ -594,20 +403,20 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   return (
     <div className="w-full space-y-3">
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-3 md:gap-5 px-2">
+      <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 px-2">
         {zones.map(zone => (
           <div key={zone.id} className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: zone.color }} />
-            <span className="text-xs text-muted-foreground">{zone.name}</span>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zone.color }} />
+            <span className="text-[11px] text-muted-foreground">{zone.name}</span>
           </div>
         ))}
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: SEAT_COLORS.unavailable }} />
-          <span className="text-xs text-muted-foreground">{t.unavailable}</span>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: SEAT_COLORS.unavailable }} />
+          <span className="text-[11px] text-muted-foreground">{t.unavailable}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: SEAT_COLORS.selected }} />
-          <span className="text-xs text-muted-foreground">{t.selected}</span>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: SEAT_COLORS.selected }} />
+          <span className="text-[11px] text-muted-foreground">{t.selected}</span>
         </div>
       </div>
 
@@ -653,17 +462,11 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Zone boundary lines */}
-          {zoneBoundaryLines}
-
           {/* Stage */}
           {stageElements}
 
           {/* All seats */}
-          {seats.map(renderSeat)}
-
-          {/* Zone labels (on top of seats) */}
-          {zoneLabels}
+          {seatElements}
         </svg>
       </div>
 
