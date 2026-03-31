@@ -556,35 +556,33 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Stage indicator — semicircle at bottom */}
+          {/* Stage indicator — small decorative arc at bottom center */}
           <g>
             {(() => {
-              // Stage center in SVG coords
               const scx = 600 - bounds.minX;
               const scy = 870 - bounds.minY;
-              // Radius matches outermost row (Σ = index 17)
-              const stageR = 100 + 17 * 26; // 542
-              // Draw a semicircle arc below the seats (from 175° to 5°)
-              const a1 = (175 * Math.PI) / 180;
-              const a2 = (5 * Math.PI) / 180;
+              const stageR = 70;
+              // Small arc from 150° to 30° (facing upward toward seats)
+              const a1 = (150 * Math.PI) / 180;
+              const a2 = (30 * Math.PI) / 180;
               const x1 = scx + stageR * Math.cos(a1);
               const y1 = scy - stageR * Math.sin(a1);
               const x2 = scx + stageR * Math.cos(a2);
               const y2 = scy - stageR * Math.sin(a2);
               return (
                 <>
-                  {/* Filled semicircle (below seats) */}
                   <path
-                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 0 1 ${x2} ${y2} L ${scx} ${scy} Z`}
-                    fill="hsl(var(--primary) / 0.08)"
+                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 0 0 ${x2} ${y2}`}
+                    fill="none"
                     stroke="hsl(var(--primary))"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
                   />
                   <text
                     x={scx}
-                    y={scy + 20}
+                    y={scy - 10}
                     textAnchor="middle"
-                    fontSize={16}
+                    fontSize={14}
                     fontWeight={700}
                     fill="hsl(var(--primary))"
                     className="select-none"
