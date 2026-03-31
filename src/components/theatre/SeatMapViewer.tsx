@@ -140,7 +140,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
             .from('venue_seats')
             .select('*')
             .eq('venue_id', venueId)
-            .eq('is_active', true),
+            .eq('is_active', true)
+            .limit(5000),
         ]);
 
         if (zonesRes.data) setZones(zonesRes.data as VenueZone[]);
