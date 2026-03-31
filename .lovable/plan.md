@@ -1,65 +1,71 @@
 
 
-# Fix Παττίχειο Layout — Unified Arc Model
+# Fix Παττίχειο Seat Map — Semicircle with Stage Inside + Proper Spacing and Labels
 
-## The Core Problem
+## What's Changing
 
-The current coordinates place wing sections as **diagonal straight lines extending BELOW the stage**. In the SVG, higher Y = lower on screen. The stage is at `y≈850`, but wing seats go to `y=1326`. This creates the broken, asymmetric shape you see.
+The stage sits **at the center of the semicircle** — its curved edge aligns with the outermost row. All seats radiate inward from the stage center on concentric arcs forming a true semicircle. Row labels must appear in the inter-zone gaps at the correct radial position.
 
-**In a real amphitheatre, ALL seats are above (in front of) the stage — never behind it.**
-
-## Root Cause
-
-Previous scripts treated each wing as an independent geometric shape with its own center/angle range that went past 180°. The correct model: **every seat in the entire venue sits on a concentric arc sharing ONE center point (the stage), within a specific angular sector. No angles go below the horizontal.**
-
-## The Fix: Unified Concentric Arc Model
-
-**How it works:**
-- Stage center at `(600, 850)`. ALL seats have `y < 850`.
-- Each row label (Α, Β, Γ, ... Σ) maps to a specific radius from stage center.
-- Each zone is defined by an angular range (sector of the semicircle).
-- A seat at row X in zone Y = point on arc at `radius(X)` within `angle_range(Y)`.
+## Geometry Model
 
 ```text
-Angular sectors (0° = right, 180° = left, 90° = center top):
-
-  Α   Β   Γ    Δ    Πλατεία    Ε    Ζ   Η   Θ
- 180°←175°←168°←155°←← 90° →→25°→12°→5°→0°
-  |    |    |    |      ↑       |    |   |   |
-  far  far  left left  center  right right far far
-  left left              right      right
+        ·  ·  ·  ·  ·  ·  ·       ← outermost row (Σ) — largest radius
+       ·  ·  ·  ·  ·  ·  ·  ·
+      ·  ·  ·  ·  ·  ·  ·  ·  ·
+     ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ← inner rows
+      ·  ·  ·  ·  ·  ·  ·  ·  ·
+        ╭━━━━━━━━━━━━━━━━━╮        ← STAGE (semicircle, radius = outermost row radius)
+        ┃     ΣΚΗΝΗ       ┃
+        ╰━━━━━━━━━━━━━━━━━╯
 ```
 
-- Πλατεία (center): ~155° to ~25° (wide central bowl)
-- Δ (left outer rows): ~155° to ~90° (left half of outer ring)
-- Ε (right outer rows): ~90° to ~25° (right half of outer ring)
-- Γ: ~168° to ~155° | Ζ: ~25° to ~12°
-- Β: ~175° to ~168° | Η: ~12° to ~5°
-- Α: ~180° to ~175° | Θ: ~5° to ~0°
+- **Stage center**: `(600, 870)` — this is the geometric center shared by all arcs AND the stage semicircle
+- **Stage radius** = same as outermost row radius (so the stage's curved top edge meets the last row)
+- All seats have `y < 870` (above the stage center line)
+- Semicircle angular range: **5° to 175°** (0°=right, 180°=left)
 
-This naturally creates one continuous horseshoe shape because every seat shares the same center.
+### Parameters
+- **Base radius**: 100px (innermost row Α)
+- **Row step**: 26px per row outward (18 rows Α–Σ → max radius = 100 + 17×26 = 542px)
+- **Minimum seat spacing**: 8px between adjacent seats on same arc
+- **Inter-zone gaps**: 3° (where row labels are placed)
+- **Intra-zone aisle**: 2° gap splitting each zone into left/right halves
+
+### Angular Sectors
+```text
+Left ←————————————————————————→ Right
+ Α      Β      Γ      Δ    Πλατεία    Ε      Ζ      Η      Θ
+175°   165°   153°   140°    113°     67°    40°    27°    15°
+ ↕      ↕      ↕      ↕      ↕        ↕      ↕      ↕      ↕
+170°   158°   146°   116°    67°     40°    30°    18°     5°
+```
 
 ## Implementation Steps
 
-### Step 1: Generate correct coordinates via Python script
-- Define radius per row: `radius = BASE_R + row_index * ROW_STEP`
-- Define angular range per zone (as above)
-- For each zone+row combo, distribute `N` seats evenly along the arc within that sector
-- Compute `x = cx + r * cos(θ)`, `y = cy - r * sin(θ)` (minus because SVG y-axis is inverted)
-- Verify: ALL `y < 850`, total = 2007, per-zone counts match existing
+### Step 1: Python script to generate coordinates
+- For each zone → each row → split seats into two halves
+- Left half: `[zone_start, zone_mid - 1°]`, Right half: `[zone_mid + 1°, zone_end]`
+- `x = 600 + r × cos(θ)`, `y = 870 - r × sin(θ)`
+- Enforce minimum 8px spacing; if arc too short, log warning
+- Output SQL INSERT statements
+- Verify: all y < 870, total = 2,007
 
-### Step 2: SQL migration
-- DELETE all existing seats for this venue
-- INSERT the regenerated seats with correct (x, y) coordinates
+### Step 2: Database data update
+- DELETE all existing seats for venue `b3c3805f-6fb6-4c0e-a6a5-907dfe43b6b7`
+- INSERT 2,007 regenerated seats with correct coordinates
 
-### Step 3: Zone color update
-- Match PDF palette (currently too many distinct colors — Δ and Ε should share a color, Γ and Ζ share a color, etc.)
+### Step 3: Update stage rendering in SeatMapViewer.tsx
+- Replace the current straight-line stage indicator with a **filled semicircle arc** whose radius matches the outermost seat row
+- The stage semicircle sits below all seats, curving from the leftmost to rightmost seat positions
+- Stage label ("ΣΚΗΝΗ") centered inside
 
-### Step 4: SeatMapViewer already fixed
-- The cluster-based label logic from the previous edit is fine — it only needs correct coordinate data to work properly.
+### Step 4: Fix row label placement in SeatMapViewer.tsx
+- Replace current cluster-based label logic (lines 220-279)
+- New approach: For each inter-zone gap (8 gaps between 9 zones), compute the angular midpoint of the gap
+- For each row that exists in both adjacent zones, place the label at `(cx + r·cos(gap_mid_angle), cy - r·sin(gap_mid_angle))`
+- This places row letters on the radial dividing lines between sections, matching the PDF
 
 ## Files Changed
-
-1. **Database migration**: DELETE + INSERT ~2007 seats with corrected coordinates; UPDATE zone colors
-2. No viewer code changes needed — the rendering logic is correct, only the data was wrong
+- **Database**: `venue_seats` table — DELETE + INSERT via data tool
+- **`src/components/theatre/SeatMapViewer.tsx`**: Stage shape rendering (semicircle) + row label logic (inter-zone gap placement)
 
