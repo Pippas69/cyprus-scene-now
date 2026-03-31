@@ -781,9 +781,9 @@ export default function SubscriptionPlans({
                       </Badge>
                     )}
 
-                    {/* Price - blurred */}
+                    {/* Price - hidden */}
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold blur-md select-none">{formatPrice(price)}</span>
+                      <span className="text-3xl font-bold">???</span>
                       <span className="text-sm text-muted-foreground">{t.perMonth}</span>
                     </div>
                     {billingCycle === 'annual' && <p className="text-xs text-muted-foreground mt-1">

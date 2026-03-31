@@ -695,9 +695,9 @@ const ForBusinesses = () => {
                       {/* Plan Name — no icon */}
                       <h3 className="text-lg sm:text-xl font-bold uppercase mb-3">{planSlug}</h3>
 
-                      {/* Price - blurred */}
+                      {/* Price - hidden */}
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl sm:text-3xl font-bold blur-md select-none">{formatPrice(price)}</span>
+                        <span className="text-2xl sm:text-3xl font-bold">???</span>
                         <span className="text-xs sm:text-sm text-muted-foreground">{content.pricing.perMonth}</span>
                       </div>
                       {billingCycle === 'annual' && (
