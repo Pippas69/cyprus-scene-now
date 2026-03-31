@@ -117,13 +117,29 @@ const AdminVerification = () => {
 
   const handleApprove = async (businessId: string) => {
     try {
+      const business = businesses.find(b => b.id === businessId);
+      if (!business?.user_id) {
+        throw new Error("Missing business owner");
+      }
+
       const { error } = await supabase.from("businesses").update({
         verified: true,
         verified_at: new Date().toISOString()
       }).eq("id", businessId);
       if (error) throw error;
 
-      const business = businesses.find(b => b.id === businessId);
+      const { error: confirmError } = await supabase.functions.invoke('confirm-business-email', {
+        body: { user_id: business.user_id }
+      });
+
+      if (confirmError) {
+        await supabase.from("businesses").update({
+          verified: false,
+          verified_at: null
+        }).eq("id", businessId);
+        throw confirmError;
+      }
+
       if (business?.profiles?.email) {
         try {
           await supabase.functions.invoke('send-business-notification', {
