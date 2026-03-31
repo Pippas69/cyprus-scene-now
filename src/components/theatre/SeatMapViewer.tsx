@@ -214,39 +214,59 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     [selectedSeats]
   );
 
-  // Pre-compute row labels
+  // Detect high-density venue (>500 seats)
+  const isHighDensity = seats.length > 500;
+
+  // Pre-compute row labels using connected-cluster analysis
   const rowLabels = React.useMemo(() => {
-    const rowMap = new Map<string, { minX: number; maxX: number; y: number; count: number }>();
+    // Group seats by row_label (across all zones)
+    const rowGroups = new Map<string, { x: number; y: number }[]>();
     for (const seat of seats) {
       const cx = seat.x - bounds.minX;
       const cy = seat.y - bounds.minY;
-      const key = `${seat.zone_id}-${seat.row_label}`;
-      const existing = rowMap.get(key);
-      if (!existing) {
-        rowMap.set(key, { minX: cx, maxX: cx, y: cy, count: 1 });
-      } else {
-        existing.count++;
-        if (cx < existing.minX) existing.minX = cx;
-        if (cx > existing.maxX) existing.maxX = cx;
-      }
+      const key = seat.row_label;
+      if (!rowGroups.has(key)) rowGroups.set(key, []);
+      rowGroups.get(key)!.push({ x: cx, y: cy });
     }
+
     const labels: React.ReactNode[] = [];
-    const rowLabelsSeen = new Set<string>();
-    rowMap.forEach((pos, key) => {
-      // Skip orphan labels — only show if the row has at least 3 seats in this zone
-      if (pos.count < 3) return;
-      const rowLabel = key.split('-').pop()!;
-      const labelKey = `${rowLabel}-${Math.round(pos.y / 10)}`;
-      if (rowLabelsSeen.has(labelKey)) return;
-      rowLabelsSeen.add(labelKey);
+
+    rowGroups.forEach((positions, rowLabel) => {
+      if (positions.length < 5) return; // Skip tiny rows
+
+      // Sort by x to find connected clusters
+      const sorted = [...positions].sort((a, b) => a.x - b.x);
+      
+      // Find the largest connected cluster (seats within 40px of neighbors)
+      const clusterGap = 40;
+      let bestCluster: typeof sorted = [];
+      let currentCluster: typeof sorted = [sorted[0]];
+      
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i].x - sorted[i - 1].x < clusterGap) {
+          currentCluster.push(sorted[i]);
+        } else {
+          if (currentCluster.length > bestCluster.length) bestCluster = currentCluster;
+          currentCluster = [sorted[i]];
+        }
+      }
+      if (currentCluster.length > bestCluster.length) bestCluster = currentCluster;
+
+      // Only label if the dominant cluster has enough seats
+      if (bestCluster.length < 5) return;
+
+      // Place label at the left edge of the dominant cluster
+      const leftmost = bestCluster[0];
+      const avgY = bestCluster.reduce((s, p) => s + p.y, 0) / bestCluster.length;
+
       labels.push(
         <text
-          key={`row-left-${key}`}
-          x={pos.minX - 18}
-          y={pos.y + 1}
+          key={`row-label-${rowLabel}`}
+          x={leftmost.x - (isHighDensity ? 12 : 18)}
+          y={avgY + 1}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={9}
+          fontSize={isHighDensity ? 7 : 9}
           fontWeight={600}
           fill="hsl(var(--muted-foreground))"
           className="select-none"
@@ -256,7 +276,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       );
     });
     return labels;
-  }, [seats, bounds]);
+  }, [seats, bounds, isHighDensity]);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
@@ -333,8 +353,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   }, []);
 
   // ── Render seat ──
-  const SEAT_W = 20;
-  const SEAT_H = 18;
+  const SEAT_W = isHighDensity ? 14 : 20;
+  const SEAT_H = isHighDensity ? 12 : 18;
   const renderSeat = (seat: VenueSeat) => {
     const isSold = soldSeats.has(seat.id);
     const isSelected = selectedIds.has(seat.id);
@@ -400,7 +420,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           className="pointer-events-none"
         />
         {/* Seat label (only visible at higher zoom) */}
-        {zoom >= 1.2 && (
+        {zoom >= (isHighDensity ? 1.8 : 1.2) && (
           <text
             data-seat="true"
             x={cx}
