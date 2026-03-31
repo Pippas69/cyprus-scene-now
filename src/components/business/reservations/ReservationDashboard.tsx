@@ -476,9 +476,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   };
 
   const getTypeTabLabel = (type: EventTypeTab) => {
-    if (type === 'ticket') return t.ticket;
-    if (type === 'reservation') return t.reservation;
-    return t.ticketReservation;
+    const evts = type === 'ticket' ? ticketEvents : type === 'reservation' ? reservationEvents : hybridEvents;
+    const plural = evts.length > 1;
+    if (type === 'ticket') return plural ? t.tickets : t.ticket;
+    if (type === 'reservation') return plural ? t.reservations_plural : t.reservation;
+    return plural ? t.ticketReservations : t.ticketReservation;
   };
 
   const getTypeTabCount = (type: EventTypeTab) => {
