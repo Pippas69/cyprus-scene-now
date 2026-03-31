@@ -127,9 +127,11 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const isNewInstance = showInstanceId === '__new__';
 
     const loadData = async (isInitial = false) => {
-      if (isInitial) setLoading(true);
-
       if (isInitial) {
+        setLoading(true);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+
         const [zonesRes, seatsRes] = await Promise.all([
           supabase
             .from('venue_zones')
@@ -173,6 +175,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       } else {
         setSoldSeats(new Set());
       }
+
       if (isInitial) setLoading(false);
     };
 
@@ -385,8 +388,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   }, []);
 
   // ── Render seat ──
-  const SEAT_W = isHighDensity ? 14 : 20;
-  const SEAT_H = isHighDensity ? 12 : 18;
+  const SEAT_W = isHighDensity ? 8 : 20;
+  const SEAT_H = isHighDensity ? 8 : 18;
   const renderSeat = (seat: VenueSeat) => {
     const isSold = soldSeats.has(seat.id);
     const isSelected = selectedIds.has(seat.id);
@@ -397,10 +400,9 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     if (isSelected) fill = SEAT_COLORS.selected;
     else if (isSold) fill = SEAT_COLORS.unavailable;
     else if (isWheelchair) fill = SEAT_COLORS.wheelchair;
-    else fill = zone?.color || '#94a3b8'; // Use zone color for available seats
+    else fill = zone?.color || 'hsl(var(--muted-foreground) / 0.45)';
 
     const cx = seat.x - bounds.minX;
-    // Row A (high y value = front) appears at bottom, stage at top
     const cy = seat.y - bounds.minY;
 
     // Cinema-style chair shape
@@ -418,7 +420,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const stageCX = 600 - bounds.minX;
     const stageCY = 870 - bounds.minY;
     const angleDeg = Math.atan2(stageCY - cy, cx - stageCX) * (180 / Math.PI);
-    const rotation = -(90 - angleDeg);
+    const rotation = 90 - angleDeg;
 
     return (
       <g
