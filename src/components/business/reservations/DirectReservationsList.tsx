@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
