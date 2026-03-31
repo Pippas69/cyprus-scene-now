@@ -127,9 +127,11 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const isNewInstance = showInstanceId === '__new__';
 
     const loadData = async (isInitial = false) => {
-      if (isInitial) setLoading(true);
-
       if (isInitial) {
+        setLoading(true);
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+      }
         const [zonesRes, seatsRes] = await Promise.all([
           supabase
             .from('venue_zones')
