@@ -102,8 +102,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         directReservations: 'Κρατήσεις',
         events: 'Εκδηλώσεις',
         ticket: 'Εισιτήριο',
+        tickets: 'Εισιτήρια',
         reservation: 'Κράτηση',
+        reservations_plural: 'Κρατήσεις',
         ticketReservation: 'Εισιτήριο & Κράτηση',
+        ticketReservations: 'Εισιτήρια & Κρατήσεις',
       },
       en: {
         pageTitle: 'Management',
