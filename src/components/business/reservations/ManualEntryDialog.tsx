@@ -208,6 +208,10 @@ export const ManualEntryDialog = ({
       toast.error(txt.phoneRequired);
       return;
     }
+    if (getDigitCount(trimmedPhone) < 8) {
+      toast.error(language === 'el' ? 'Το τηλέφωνο πρέπει να έχει τουλάχιστον 8 ψηφία' : 'Phone must be at least 8 digits');
+      return;
+    }
 
     setSaving(true);
     try {
