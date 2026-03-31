@@ -102,8 +102,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         directReservations: 'Κρατήσεις',
         events: 'Εκδηλώσεις',
         ticket: 'Εισιτήριο',
+        tickets: 'Εισιτήρια',
         reservation: 'Κράτηση',
+        reservations_plural: 'Κρατήσεις',
         ticketReservation: 'Εισιτήριο & Κράτηση',
+        ticketReservations: 'Εισιτήρια & Κρατήσεις',
       },
       en: {
         pageTitle: 'Management',
@@ -115,8 +118,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         directReservations: 'Reservations',
         events: 'Events',
         ticket: 'Ticket',
+        tickets: 'Tickets',
         reservation: 'Reservation',
+        reservations_plural: 'Reservations',
         ticketReservation: 'Ticket & Reservation',
+        ticketReservations: 'Tickets & Reservations',
       }
     }),
     []
@@ -470,9 +476,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   };
 
   const getTypeTabLabel = (type: EventTypeTab) => {
-    if (type === 'ticket') return t.ticket;
-    if (type === 'reservation') return t.reservation;
-    return t.ticketReservation;
+    const evts = type === 'ticket' ? ticketEvents : type === 'reservation' ? reservationEvents : hybridEvents;
+    const plural = evts.length > 1;
+    if (type === 'ticket') return plural ? t.tickets : t.ticket;
+    if (type === 'reservation') return plural ? t.reservations_plural : t.reservation;
+    return plural ? t.ticketReservations : t.ticketReservation;
   };
 
   const getTypeTabCount = (type: EventTypeTab) => {
@@ -534,29 +542,87 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       <>
       {/* Header */}
       <div className="min-w-0 space-y-3">
-        {/* Ticket-linked businesses: type tabs + per-tab dropdown */}
+        {/* Ticket-linked businesses: unified dropdown badges per type */}
         {isTicketLinked && availableTabs.length > 0 && (
           <div className="space-y-3">
-            {/* Type tabs + add button */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {availableTabs.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setActiveTypeTab(type)}
-                  className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
-                    activeTypeTab === type
-                      ? 'bg-card text-foreground shadow-sm border border-border/50'
-                      : 'text-foreground/50 hover:text-foreground/70'
-                  }`}
-                >
-                  {getTypeTabLabel(type)}
-                  {getTypeTabCount(type) > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full border border-foreground/40 text-foreground">
-                      {getTypeTabCount(type)}
-                    </span>
-                  )}
-                </button>
-              ))}
+              {availableTabs.map((type) => {
+                const evts = type === 'ticket' ? ticketEvents : type === 'reservation' ? reservationEvents : hybridEvents;
+                const totalCount = getTypeTabCount(type);
+                const isActive = activeTypeTab === type;
+
+                // Single event: simple button
+                if (evts.length === 1) {
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setActiveTypeTab(type);
+                        setSelectedEventId(evts[0].id);
+                      }}
+                      className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
+                        isActive
+                          ? 'bg-card text-foreground shadow-sm border border-border/50'
+                          : 'text-foreground/50 hover:text-foreground/70'
+                      }`}
+                    >
+                      {getTypeTabLabel(type)}
+                      {totalCount > 0 && (
+                        <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full border border-foreground/40 text-foreground">
+                          {totalCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+
+                // Multiple events: dropdown badge
+                return (
+                  <Select
+                    key={type}
+                    value={isActive ? (selectedEventId || '') : ''}
+                    onValueChange={(val) => {
+                      setActiveTypeTab(type);
+                      setSelectedEventId(val);
+                    }}
+                  >
+                    <SelectTrigger
+                      className={`h-8 sm:h-9 text-xs sm:text-sm w-auto min-w-0 max-w-[200px] rounded-full gap-1.5 px-2.5 sm:px-4 transition-all border ${
+                        isActive
+                          ? 'bg-card text-foreground shadow-sm border-border/50'
+                          : 'text-foreground/50 border-transparent hover:text-foreground/70'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className="truncate">{getTypeTabLabel(type)}</span>
+                        {totalCount > 0 && (
+                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full border border-foreground/40 text-foreground flex-shrink-0">
+                            {totalCount}
+                          </span>
+                        )}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-lg">
+                      {evts.map((event) => {
+                        const dateStr = new Date(event.start_at).toLocaleDateString(
+                          language === 'el' ? 'el-GR' : 'en-US',
+                          { day: 'numeric', month: 'long' }
+                        );
+                        return (
+                          <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
+                            <span className="flex items-center gap-2">
+                              <span className="text-sm">{dateStr}</span>
+                              <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
+                                {event.reservationCount}
+                              </span>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                );
+              })}
               <Button
                 variant="outline"
                 size="sm"
@@ -593,36 +659,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                   </Button>
                 )}
               </div>
-            )}
-
-            {/* Per-tab event dropdown (only if 2+ events in active tab) */}
-            {activeTabEvents.length > 1 && (
-              <Select
-                value={selectedEventId || ''}
-                onValueChange={(val) => setSelectedEventId(val)}
-              >
-                <SelectTrigger className="h-9 text-sm w-auto min-w-[180px] max-w-xs rounded-full gap-2 px-4 transition-all bg-card text-foreground shadow-sm border border-border/50">
-                  <SelectValue placeholder={t.selectEvent} />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg">
-                  {activeTabEvents.map((event) => {
-                    const dateStr = new Date(event.start_at).toLocaleDateString(
-                      language === 'el' ? 'el-GR' : 'en-US',
-                      { day: 'numeric', month: 'long' }
-                    );
-                    return (
-                      <SelectItem key={event.id} value={event.id} className="text-sm rounded-md">
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm">{dateStr}</span>
-                          <span className="inline-flex items-center justify-center rounded-full border border-foreground/40 text-foreground text-[11px] font-bold px-1.5 min-w-[18px] h-[18px]">
-                            {event.reservationCount}
-                          </span>
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
             )}
           </div>
         )}
