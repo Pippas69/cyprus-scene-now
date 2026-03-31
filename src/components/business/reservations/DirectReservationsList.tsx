@@ -93,6 +93,7 @@ interface TicketOnlyOrder {
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
