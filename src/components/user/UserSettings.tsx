@@ -524,87 +524,58 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             />
           </div>
 
-          {/* Push Notifications */}
-          {pushSupported && (
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 flex-1 min-w-0">
-                <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                  <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
-                  {t.pushNotifications}
-                </Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.pushNotificationsDesc}</p>
-                {permissionState === 'denied' && (
-                  <p className="text-[10px] sm:text-xs text-destructive">{t.pushDenied}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                {pushSubscribed && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
-                    onClick={async () => {
-                      setIsSendingTest(true);
-                      try {
-                        const { data, error } = await supabase.functions.invoke('test-push-notification');
-                        if (error) throw error;
-                        toast({
-                          title: language === 'el' ? 'Ειδοποίηση εστάλη!' : 'Notification sent!',
-                          description: language === 'el' ? 'Ελέγξτε τη συσκευή σας' : 'Check your device',
-                        });
-                      } catch (err) {
-                        toast({
-                          title: language === 'el' ? 'Αποτυχία' : 'Failed',
-                          description: err instanceof Error ? err.message : 'Unknown error',
-                          variant: 'destructive',
-                        });
-                      } finally {
-                        setIsSendingTest(false);
-                      }
-                    }}
-                    disabled={isSendingTest}
-                  >
-                    <Send className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                    {isSendingTest ? t.sendingTest : t.testPush}
-                  </Button>
-                )}
-                <Switch
-                  checked={pushSubscribed}
-                  disabled={pushLoading || permissionState === 'denied'}
-                  onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
-                  className="scale-90 sm:scale-100"
-                />
-              </div>
+          {/* Push Notifications - always show, no browser warning */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-0.5 flex-1 min-w-0">
+              <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
+                {t.pushNotifications}
+              </Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.pushNotificationsDesc}</p>
             </div>
-          )}
-
-          <Separator />
-
-          {/* Suggestions for You - Optional toggle */}
-          <div className="space-y-3 sm:space-y-4">
-            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
-              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-              {t.suggestionsForYou}
-            </h4>
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0 flex-1">
-                <Label htmlFor="suggestions-toggle" className="text-xs sm:text-sm">{t.suggestionsForYou}</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.suggestionsForYouDesc}</p>
-              </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              {pushSubscribed && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
+                  onClick={async () => {
+                    setIsSendingTest(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('test-push-notification');
+                      if (error) throw error;
+                      toast({
+                        title: language === 'el' ? 'Ειδοποίηση εστάλη!' : 'Notification sent!',
+                        description: language === 'el' ? 'Ελέγξτε τη συσκευή σας' : 'Check your device',
+                      });
+                    } catch (err) {
+                      toast({
+                        title: language === 'el' ? 'Αποτυχία' : 'Failed',
+                        description: err instanceof Error ? err.message : 'Unknown error',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      setIsSendingTest(false);
+                    }
+                  }}
+                  disabled={isSendingTest}
+                >
+                  <Send className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                  {isSendingTest ? t.sendingTest : t.testPush}
+                </Button>
+              )}
               <Switch
-                id="suggestions-toggle"
-                checked={preferences.notification_boosted_content ?? true}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_boosted_content: checked })
-                }
-                className="scale-90 sm:scale-100 flex-shrink-0"
+                checked={pushSubscribed}
+                disabled={pushLoading}
+                onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
+                className="scale-90 sm:scale-100"
               />
             </div>
           </div>
 
           <Separator />
 
-          {/* Reminders */}
+          {/* Reminders - start disabled */}
           <div className="space-y-3 sm:space-y-4">
             <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -617,7 +588,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
               <Switch
                 id="event-reminders"
-                checked={preferences.notification_event_reminders}
+                checked={preferences.notification_event_reminders ?? false}
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_event_reminders: checked })
                 }
@@ -631,7 +602,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
               <Switch
                 id="reservation-reminders"
-                checked={preferences.notification_reservations}
+                checked={preferences.notification_reservations ?? false}
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_reservations: checked })
                 }
@@ -645,7 +616,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               </div>
               <Switch
                 id="expiring-offers"
-                checked={preferences.notification_expiring_offers ?? true}
+                checked={preferences.notification_expiring_offers ?? false}
                 onCheckedChange={(checked) =>
                   updatePreferences({ notification_expiring_offers: checked })
                 }
