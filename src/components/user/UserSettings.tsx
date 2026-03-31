@@ -88,6 +88,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       lastName: 'Επίθετο',
       age: 'Ηλικία',
       email: 'Email',
+      phone: 'Τηλέφωνο',
       town: 'Πόλη',
       townPlaceholder: 'Επιλέξτε πόλη',
       gender: 'Φύλο',
