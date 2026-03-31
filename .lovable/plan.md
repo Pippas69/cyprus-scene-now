@@ -1,39 +1,33 @@
 
 
-## Πλάνο: Πληροφορίες Πελατών & Τηλέφωνο στα Settings
+## Πλάνο: Σωστά δημογραφικά + Editable τηλέφωνο + Αγία Νάπα
 
-### Αλλαγή 1: Μετονομασία + Αλλαγή λογικής δημογραφικών
+### Αλλαγή 1: SQL Migration — Demographics με fallback σε ticket/guest data
 
-**Τι αλλάζει:** Η ενότητα "Κοινό που επισκέφθηκε το μαγαζί" μετονομάζεται σε **"Πληροφορίες Πελατών"** και τα δημογραφικά (φύλο, ηλικία, πόλη) θα υπολογίζονται για **όλους τους πελάτες** — όχι μόνο αυτούς με check-in.
+Η τρέχουσα RPC `get_audience_demographics` διαβάζει **μόνο** `profiles.age`, `profiles.city`, `profiles.gender`. Αλλά πολλοί πελάτες έχουν ηλικία/πόλη αποθηκευμένη στο `tickets.guest_age`/`tickets.guest_city` και δεν έχουν `user_id` (manual entries).
 
-**Τεχνικά:**
-- **SQL Migration** — Νέα έκδοση του `get_audience_demographics` RPC:
-  - Αφαίρεση του φίλτρου `checked_in_at IS NOT NULL` από tickets, reservations, και offer_purchases
-  - Tickets: κάθε ticket με status `valid` ή `used` μετράει (αντί μόνο checked-in)
-  - Reservations: κάθε κράτηση (εκτός cancelled) μετράει
-  - Offer purchases: κάθε αγορά προσφοράς μετράει (εκτός cancelled)
-  - Τα δεδομένα φύλου/ηλικίας/πόλης αντλούνται από `profiles` (ό,τι έχει δηλώσει ο χρήστης)
+Νέα λογική:
+- **Tickets με `user_id`**: `COALESCE(profiles.age, tickets.guest_age)` και `COALESCE(profiles.city, tickets.guest_city)` — fallback στα guest data αν το profile είναι κενό
+- **Tickets χωρίς `user_id` (manual entries)**: Χρήση `tickets.guest_age`, `tickets.guest_city` απευθείας (φύλο = "other" αφού δεν δηλώνεται)
+- Αφαίρεση `WHERE user_id IS NOT NULL` ώστε να μετρούν **όλοι** οι πελάτες
+- Ίδια λογική fallback για reservations (`guest_city`)
 
-- **`src/components/business/analytics/AudienceTab.tsx`**:
-  - Τίτλος: "Κοινό που επισκέφθηκε το μαγαζί" → "Πληροφορίες Πελατών"
-  - Ενημέρωση tooltips/explanations ώστε να αντικατοπτρίζουν τη νέα λογική
-  
-- **`src/components/business/analytics/PerformanceTab.tsx`**:
-  - Ενημέρωση τίτλου εκεί επίσης
+### Αλλαγή 2: Τηλέφωνο editable στα Settings + χωρίς +357
 
-### Αλλαγή 2: Τηλέφωνο στα User Settings
+**Αρχείο:** `src/components/user/UserSettings.tsx`
+- Αφαίρεση `disabled` από το πεδίο τηλεφώνου — γίνεται editable
+- Αφαίρεση τυχόν prefix "+357" — εμφανίζεται μόνο ο αριθμός
+- Αποθήκευση `phone` στο `handleProfileUpdate`
+- Εμφάνιση πάντα (όχι μόνο `if profile.phone`)
 
-**Τι αλλάζει:** Προσθήκη πεδίου τηλεφώνου (read-only) στα Settings του χρήστη, δίπλα στο email. Το τηλέφωνο υπάρχει ήδη στο `profiles.phone` (αποθηκεύεται κατά το signup).
+### Αλλαγή 3: "Αγία Νάπα" σε μία γραμμή
 
-**Τεχνικά:**
-- **`src/components/user/UserSettings.tsx`**:
-  - Προσθήκη πεδίου "Τηλέφωνο" κάτω από το Email (disabled, read-only, ίδιο στυλ)
-  - Translations: `phone: 'Τηλέφωνο'` / `phone: 'Phone'`
+**Αρχείο:** `src/components/business/reservations/DirectReservationsList.tsx`
+- Προσθήκη `whitespace-nowrap` στο span πόλης (~γραμμή 1241)
 
 ### Αρχεία που αλλάζουν
 
-1. **SQL Migration** — Νέα έκδοση `get_audience_demographics` (χωρίς check-in filter)
-2. **`src/components/business/analytics/AudienceTab.tsx`** — Νέος τίτλος + tooltips
-3. **`src/components/business/analytics/PerformanceTab.tsx`** — Νέος τίτλος
-4. **`src/components/user/UserSettings.tsx`** — Πεδίο τηλεφώνου
+1. **SQL Migration** — Νέα `get_audience_demographics` με fallback σε `guest_age`/`guest_city` + manual entries
+2. **`src/components/user/UserSettings.tsx`** — Τηλέφωνο editable, χωρίς +357, ομοιόμορφα μικρά γράμματα
+3. **`src/components/business/reservations/DirectReservationsList.tsx`** — `whitespace-nowrap` στην πόλη
 
