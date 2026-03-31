@@ -1,33 +1,37 @@
 
 
-## Πλάνο: Σωστά δημογραφικά + Editable τηλέφωνο + Αγία Νάπα
+## Σχέδιο: Διόρθωση Πληροφοριών Πελατών
 
-### Αλλαγή 1: SQL Migration — Demographics με fallback σε ticket/guest data
+### Τι θα γίνει
 
-Η τρέχουσα RPC `get_audience_demographics` διαβάζει **μόνο** `profiles.age`, `profiles.city`, `profiles.gender`. Αλλά πολλοί πελάτες έχουν ηλικία/πόλη αποθηκευμένη στο `tickets.guest_age`/`tickets.guest_city` και δεν έχουν `user_id` (manual entries).
+Οι Πληροφορίες Πελατών θα αντικατοπτρίζουν **όλα** τα δεδομένα από όλες τις πηγές: εγγεγραμμένους χρήστες ΚΑΙ χειροκίνητες καταχωρήσεις.
 
-Νέα λογική:
-- **Tickets με `user_id`**: `COALESCE(profiles.age, tickets.guest_age)` και `COALESCE(profiles.city, tickets.guest_city)` — fallback στα guest data αν το profile είναι κενό
-- **Tickets χωρίς `user_id` (manual entries)**: Χρήση `tickets.guest_age`, `tickets.guest_city` απευθείας (φύλο = "other" αφού δεν δηλώνεται)
-- Αφαίρεση `WHERE user_id IS NOT NULL` ώστε να μετρούν **όλοι** οι πελάτες
-- Ίδια λογική fallback για reservations (`guest_city`)
+### Βήμα 1: Ενημέρωση SQL function `get_audience_demographics`
 
-### Αλλαγή 2: Τηλέφωνο editable στα Settings + χωρίς +357
+Αλλαγές στη λογική:
 
-**Αρχείο:** `src/components/user/UserSettings.tsx`
-- Αφαίρεση `disabled` από το πεδίο τηλεφώνου — γίνεται editable
-- Αφαίρεση τυχόν prefix "+357" — εμφανίζεται μόνο ο αριθμός
-- Αποθήκευση `phone` στο `handleProfileUpdate`
-- Εμφάνιση πάντα (όχι μόνο `if profile.phone`)
+- **Συμπερίληψη manual entries**: Τα εισιτήρια χωρίς `user_id` (χειροκίνητες καταχωρήσεις) θα συμπεριλαμβάνονται στους υπολογισμούς. Αντί να αγνοούνται (`WHERE user_id IS NOT NULL`), θα δημιουργείται ξεχωριστό CTE για αυτά.
+- **Fallback για ηλικία**: `COALESCE(profiles.age, tickets.guest_age)` — αν ο χρήστης έχει ηλικία στο profile, χρησιμοποιείται αυτή. Αλλιώς, χρησιμοποιείται η ηλικία από το εισιτήριο.
+- **Fallback για πόλη**: `COALESCE(profiles.city, profiles.town, tickets.guest_city)` — ίδια λογική.
+- **Φύλο**: Μόνο από `profiles.gender` (χωρίς fallback, αφού μόνο η πλήρης εγγραφή FOMO δίνει φύλο).
+- **Αφαίρεση LIMIT 6** στις πόλεις — θα εμφανίζονται όλες.
 
-### Αλλαγή 3: "Αγία Νάπα" σε μία γραμμή
+Δομή του νέου SQL:
+1. CTE `registered_customers`: χρήστες με `user_id` — demographics από profiles με fallback σε ticket guest data
+2. CTE `manual_customers`: εισιτήρια χωρίς `user_id` — demographics από `guest_age`/`guest_city` απευθείας
+3. UNION ALL των δύο → υπολογισμός gender/age/cities στατιστικών
 
-**Αρχείο:** `src/components/business/reservations/DirectReservationsList.tsx`
-- Προσθήκη `whitespace-nowrap` στο span πόλης (~γραμμή 1241)
+### Βήμα 2: Ενημέρωση UI (`AudienceTab.tsx`)
 
-### Αρχεία που αλλάζουν
+- Αφαίρεση του `.slice(0, 6)` στις πόλεις ώστε να εμφανίζονται όλες
 
-1. **SQL Migration** — Νέα `get_audience_demographics` με fallback σε `guest_age`/`guest_city` + manual entries
-2. **`src/components/user/UserSettings.tsx`** — Τηλέφωνο editable, χωρίς +357, ομοιόμορφα μικρά γράμματα
-3. **`src/components/business/reservations/DirectReservationsList.tsx`** — `whitespace-nowrap` στην πόλη
+### Βήμα 3: Cache invalidation
+
+- Στα σημεία όπου ο επιχειρηματίας κάνει edit στοιχεία πελάτη (guest_city, guest_age σε manual entries), θα γίνεται invalidation του query `audience-metrics` ώστε τα analytics να ανανεώνονται αμέσως.
+
+### Τεχνικά αρχεία που θα τροποποιηθούν
+
+1. **Νέο SQL migration** — επανασύνταξη `get_audience_demographics` με τα παραπάνω
+2. **`src/components/business/analytics/AudienceTab.tsx`** — αφαίρεση slice(0, 6)
+3. **Management components** (edit guest) — προσθήκη invalidation για `audience-metrics` query key
 
