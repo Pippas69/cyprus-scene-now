@@ -420,7 +420,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           className="pointer-events-none"
         />
         {/* Seat label (only visible at higher zoom) */}
-        {zoom >= 1.2 && (
+        {zoom >= (isHighDensity ? 1.8 : 1.2) && (
           <text
             data-seat="true"
             x={cx}
