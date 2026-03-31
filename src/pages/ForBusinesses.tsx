@@ -33,21 +33,22 @@ import InfoNavbar from "@/components/info/InfoNavbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// Plan configuration matching SubscriptionPlans.tsx
+// Plan configuration matching SubscriptionPlans.tsx — unified FOMO ocean gradient
+const FOMO_GRADIENT = 'from-[hsl(174,62%,45%)] to-[hsl(174,50%,35%)]';
 const PLAN_CONFIG = {
   basic: {
     icon: Zap,
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 5999,
   },
   pro: {
     icon: Star,
-    gradient: 'from-primary to-sunset-coral',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 11999,
   },
   elite: {
     icon: Crown,
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: FOMO_GRADIENT,
     monthlyPrice: 23999,
   },
 };
@@ -641,10 +642,10 @@ const ForBusinesses = () => {
                 }`}
               >
                 {content.pricing.annual}
-                <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-[10px] sm:text-xs">
-                  <Sparkles className="w-3 h-3 mr-1" />
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary-foreground text-primary text-[10px] sm:text-xs font-medium whitespace-nowrap">
+                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   {content.pricing.saveMonths}
-                </Badge>
+                </span>
               </button>
             </div>
           </motion.div>
@@ -719,7 +720,7 @@ const ForBusinesses = () => {
                     <CardFooter className="pt-4 border-t">
                       <Button
                         asChild
-                        className={`w-full ${isMostPopular ? `bg-gradient-to-r ${config.gradient} hover:opacity-90` : ''}`}
+                        className={`w-full ${isMostPopular ? 'bg-primary hover:bg-primary/90' : ''}`}
                         variant={isMostPopular ? "default" : "outline"}
                         size="lg"
                       >
