@@ -476,6 +476,16 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     setZoom(z => Math.max(0.5, Math.min(3, z + delta)));
   }, []);
 
+  // ── Precomputed stage center for rotation ──
+  const stageCenter = useMemo(() => {
+    if (seats.length === 0) return { cx: 0, cy: 0 };
+    const maxSeatY = Math.max(...seats.map(s => s.y));
+    return {
+      cx: (bounds.minX + bounds.maxX) / 2 - bounds.minX,
+      cy: maxSeatY + 40 - bounds.minY,
+    };
+  }, [seats, bounds]);
+
   // ── Render seat ──
   const SEAT_W = isHighDensity ? 8 : 20;
   const SEAT_H = isHighDensity ? 8 : 18;
@@ -495,11 +505,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
     const cx = seat.x - bounds.minX;
     const cy = seat.y - bounds.minY;
 
-    // Compute stage center for rotation
-    const maxSeatY = Math.max(...seats.map(s => s.y));
-    const stageCX = (bounds.minX + bounds.maxX) / 2 - bounds.minX;
-    const stageCY = maxSeatY + 40 - bounds.minY;
-    const angleDeg = Math.atan2(stageCY - cy, cx - stageCX) * (180 / Math.PI);
+    const angleDeg = Math.atan2(stageCenter.cy - cy, cx - stageCenter.cx) * (180 / Math.PI);
     const rotation = 90 - angleDeg;
 
     return (
@@ -575,7 +581,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         )}
       </g>
     );
-  }, [soldSeats, selectedIds, zoneMap, bounds, seats, handleSeatClick, zoom, isHighDensity, SEAT_W, SEAT_H]);
+  }, [soldSeats, selectedIds, zoneMap, bounds, stageCenter, handleSeatClick, zoom, isHighDensity, SEAT_W, SEAT_H]);
 
   if (loading) {
     return (
