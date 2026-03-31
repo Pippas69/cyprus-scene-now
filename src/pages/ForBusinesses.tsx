@@ -742,7 +742,7 @@ const ForBusinesses = () => {
             <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
               <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                  <div className="p-2 sm:p-3 rounded-xl bg-primary text-primary-foreground">
                     <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div>
