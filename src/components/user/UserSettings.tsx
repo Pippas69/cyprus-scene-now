@@ -450,6 +450,19 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
               />
             </div>
 
+            {/* Phone below */}
+            {profile.phone && (
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
+                <Input
+                  id="phone"
+                  value={profile.phone}
+                  disabled
+                  className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
+                />
+              </div>
+            )}
+
             {/* Interests - list rows (match Signup mock) */}
             <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
               <div>
