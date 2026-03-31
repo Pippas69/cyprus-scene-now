@@ -118,8 +118,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         directReservations: 'Reservations',
         events: 'Events',
         ticket: 'Ticket',
+        tickets: 'Tickets',
         reservation: 'Reservation',
+        reservations_plural: 'Reservations',
         ticketReservation: 'Ticket & Reservation',
+        ticketReservations: 'Tickets & Reservations',
       }
     }),
     []
