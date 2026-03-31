@@ -24,7 +24,7 @@ const translations = {
     male: 'Άνδρες',
     female: 'Γυναίκες',
     other: 'Άλλο',
-    audienceSubtitle: 'Δημογραφικά από επαληθευμένες επισκέψεις (QR εξαργύρωση / check-in).',
+    audienceSubtitle: 'Δημογραφικά στοιχεία όλων των πελατών σας.',
     totalVisitsLabel: 'Σύνολο επισκέψεων',
     profileDesc: 'Συνολικές ενέργειες στο προφίλ',
     offersDesc: 'Συνολικές ενέργειες στις προσφορές',
