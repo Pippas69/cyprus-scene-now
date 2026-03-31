@@ -186,15 +186,6 @@ const SignupBusiness = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Αποτυχία δημιουργίας λογαριασμού");
 
-      // Auto-confirm business email (no OTP needed for businesses)
-      try {
-        await supabase.functions.invoke('confirm-business-email', {
-          body: { user_id: authData.user.id }
-        });
-      } catch (confirmErr) {
-        console.error('Auto-confirm error:', confirmErr);
-      }
-
       // Upload logo if provided
       let logoUrl = null;
       if (logoFile) {
@@ -329,8 +320,8 @@ const SignupBusiness = () => {
       toast({
         title: language === 'el' ? "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!" : "Registration completed successfully!",
         description: language === 'el' 
-          ? "Θα λάβετε email επιβεβαίωσης. Μπορείτε να συνδεθείτε αμέσως!"
-          : "You will receive a confirmation email. You can log in right away!",
+          ? "Το αίτημά σας στάλθηκε για έγκριση. Μόλις εγκριθεί από διαχειριστή, θα μπορείτε να συνδεθείτε άμεσα."
+          : "Your request was submitted for review. Once approved by an admin, you can log in immediately.",
         duration: 6000,
       });
 
@@ -339,8 +330,8 @@ const SignupBusiness = () => {
         navigate("/login", { 
           state: { 
             message: language === 'el'
-              ? "Η εγγραφή σας ολοκληρώθηκε! Μπορείτε να συνδεθείτε τώρα."
-              : "Registration complete! You can log in now."
+              ? "Η εγγραφή ολοκληρώθηκε. Περιμένετε έγκριση διαχειριστή για να ενεργοποιηθεί η πρόσβασή σας."
+              : "Registration complete. Please wait for admin approval to activate your access."
           } 
         });
       }, 3000);
