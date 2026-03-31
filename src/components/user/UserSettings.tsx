@@ -370,21 +370,21 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           <form onSubmit={handleProfileUpdate} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="firstName" className="text-xs sm:text-sm">{t.firstName}</Label>
+                <Label htmlFor="firstName" className="text-sm">{t.firstName}</Label>
                 <Input
                   id="firstName"
                   value={profile.first_name || ''}
                   onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
+                  className="rounded-xl text-sm h-9 sm:h-10"
                 />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="lastName" className="text-xs sm:text-sm">{t.lastName}</Label>
+                <Label htmlFor="lastName" className="text-sm">{t.lastName}</Label>
                 <Input
                   id="lastName"
                   value={profile.last_name || ''}
                   onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
+                  className="rounded-xl text-sm h-9 sm:h-10"
                 />
               </div>
             </div>
@@ -393,29 +393,29 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             <div className="flex items-end gap-4 sm:gap-6">
               {/* Age - narrow fixed width */}
               <div className="w-16 sm:w-20 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
+                <Label htmlFor="age" className="text-sm">{t.age}</Label>
                 <NumberInput
                   value={profile.age || 18}
                   onChange={(value) => setProfile({ ...profile, age: value })}
                   min={13}
                   max={120}
-                  className="rounded-xl text-xs sm:text-sm h-8 sm:h-10 w-full"
+                  className="rounded-xl text-sm h-9 sm:h-10 w-full"
                 />
               </div>
 
               {/* City - flexible, equal to Gender */}
               <div className="flex-1 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="town" className="text-xs sm:text-sm">{t.town}</Label>
+                <Label htmlFor="town" className="text-sm">{t.town}</Label>
                 <Select
                   value={profile.town || ''}
                   onValueChange={(value) => setProfile({ ...profile, town: value })}
                 >
-                  <SelectTrigger id="town" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10 w-full">
+                  <SelectTrigger id="town" className="rounded-xl text-sm h-9 sm:h-10 w-full">
                     <SelectValue placeholder={t.townPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {getCityOptions(language).map(city => (
-                      <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
+                      <SelectItem key={city.value} value={city.value} className="text-sm">{city.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -423,18 +423,18 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
               {/* Gender - flexible, equal to City */}
               <div className="flex-1 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
+                <Label htmlFor="gender" className="text-sm">{t.gender}</Label>
                 <Select
                   value={profile.gender || ''}
                   onValueChange={(value) => setProfile({ ...profile, gender: value })}
                 >
-                  <SelectTrigger id="gender" className="rounded-xl text-xs sm:text-sm h-8 sm:h-10 w-full">
+                  <SelectTrigger id="gender" className="rounded-xl text-sm h-9 sm:h-10 w-full">
                     <SelectValue placeholder={t.genderPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
-                    <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
-                    <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
+                    <SelectItem value="male" className="text-sm">{t.male}</SelectItem>
+                    <SelectItem value="female" className="text-sm">{t.female}</SelectItem>
+                    <SelectItem value="other" className="text-sm">{t.other}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -442,23 +442,23 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
             {/* Email below */}
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
+              <Label htmlFor="email" className="text-sm">{t.email}</Label>
               <Input
                 id="email"
                 value={profile.email || ''}
                 disabled
-                className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
+                className="rounded-xl bg-muted text-sm h-9 sm:h-10"
               />
             </div>
 
             {/* Phone below */}
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
+              <Label htmlFor="phone" className="text-sm">{t.phone}</Label>
               <Input
                 id="phone"
                 value={(profile.phone || '').replace(/^\+357\s*/, '')}
                 onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
+                className="rounded-xl text-sm h-9 sm:h-10"
               />
             </div>
 
