@@ -6,7 +6,6 @@ import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import ScrollProgress from "@/components/ui/scroll-progress";
 import FAQSection from "@/components/home/FAQSection";
-import WaitlistSignup from "@/components/home/WaitlistSignup";
 import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
 import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
@@ -77,7 +76,6 @@ const Index = () => {
       </div>
       <FeaturesSection language={language} />
       <UpcomingEventsPreview language={language} />
-      <WaitlistSignup language={language} />
       <FAQSection language={language} />
       <Footer />
     </div>
