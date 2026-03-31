@@ -69,6 +69,7 @@ export function useCrmGuests(businessId: string | null) {
   const guestsQuery = useQuery({
     queryKey: ["crm-guests", businessId],
     enabled: !!businessId,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       if (!businessId) return [];
 
