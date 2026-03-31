@@ -375,7 +375,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   id="firstName"
                   value={profile.first_name || ''}
                   onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="rounded-xl text-xs h-8 sm:text-sm sm:h-10"
+                  className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
                 />
               </div>
               <div className="space-y-1.5 sm:space-y-2">
@@ -384,7 +384,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                   id="lastName"
                   value={profile.last_name || ''}
                   onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="rounded-xl text-xs h-8 sm:text-sm sm:h-10"
+                  className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
                 />
               </div>
             </div>
@@ -442,7 +442,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 id="email"
                 value={profile.email || ''}
                 disabled
-                className="rounded-xl bg-muted text-xs h-8 sm:text-sm sm:h-10"
+                className="rounded-xl bg-muted !text-xs h-8 sm:!text-sm sm:h-10"
               />
             </div>
 
@@ -453,7 +453,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
                 id="phone"
                 value={(profile.phone || '').replace(/^\+357\s*/, '')}
                 onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                className="rounded-xl text-xs h-8 sm:text-sm sm:h-10"
+                className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
               />
             </div>
 
