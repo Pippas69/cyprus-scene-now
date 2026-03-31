@@ -989,6 +989,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       setEditingTicketCity(null);
       setTicketCityValue('');
       setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_city: trimmed || null } : t));
+      queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] });
     } catch (error) {
       console.error('Error saving ticket city:', error);
       toast.error(t.errorSaving);
