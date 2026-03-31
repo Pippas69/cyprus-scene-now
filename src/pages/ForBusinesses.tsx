@@ -388,9 +388,7 @@ const ForBusinesses = () => {
 
   const renderFeatureItem = (feature: { icon: any; text: string; note?: string }, gradient: string, index: number) => (
     <li key={index} className="flex items-start gap-2.5">
-      <div className={`p-0.5 rounded-full bg-gradient-to-br ${gradient} mt-0.5 shrink-0`}>
-        <Check className="w-3 h-3 text-white" />
-      </div>
+      <span className="text-sm text-foreground/80 mt-0.5">•</span>
       <div className="flex flex-col">
         <span className="text-xs sm:text-sm text-foreground/90">{feature.text}</span>
         {feature.note && (
@@ -628,7 +626,7 @@ const ForBusinesses = () => {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                   billingCycle === 'monthly'
-                    ? 'bg-background text-foreground shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -638,7 +636,7 @@ const ForBusinesses = () => {
                 onClick={() => setBillingCycle('annual')}
                 className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                   billingCycle === 'annual'
-                    ? 'bg-background text-foreground shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -680,31 +678,26 @@ const ForBusinesses = () => {
                       isMostPopular ? 'shadow-lg border-primary/30' : ''
                     }`}
                   >
-                    {/* Gradient Top Border & Most Popular Badge for Pro */}
+                    {/* Gradient Top Border on ALL cards */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
+
+                    {/* Most Popular Badge for Pro */}
                     {isMostPopular && (
-                      <>
-                        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.gradient} rounded-t-lg`} />
-                        <div className="absolute -top-3 left-4">
-                          <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 shadow-md px-2 sm:px-3 py-1 text-[10px] sm:text-xs`}>
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            {content.pricing.mostPopular}
-                          </Badge>
-                        </div>
-                      </>
+                      <div className="absolute -top-3 left-4">
+                        <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 shadow-md px-2 sm:px-3 py-1 text-[10px] sm:text-xs`}>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          {content.pricing.mostPopular}
+                        </Badge>
+                      </div>
                     )}
                     
                     <CardHeader className="pb-3">
-                      {/* Plan Icon & Name */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`p-2 sm:p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} text-white`}>
-                          <PlanIconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-bold uppercase">{planSlug}</h3>
-                      </div>
+                      {/* Plan Name — no icon */}
+                      <h3 className="text-lg sm:text-xl font-bold uppercase mb-3">{planSlug}</h3>
 
-                      {/* Price */}
+                      {/* Price - blurred */}
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl sm:text-3xl font-bold">{formatPrice(price)}</span>
+                        <span className="text-2xl sm:text-3xl font-bold blur-md select-none">{formatPrice(price)}</span>
                         <span className="text-xs sm:text-sm text-muted-foreground">{content.pricing.perMonth}</span>
                       </div>
                       {billingCycle === 'annual' && (
@@ -749,7 +742,7 @@ const ForBusinesses = () => {
             <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 border border-border/50">
               <div className="flex flex-col items-center gap-4 lg:flex-row lg:justify-between">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                  <div className="p-2 sm:p-3 rounded-xl bg-primary text-primary-foreground">
                     <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div>
