@@ -158,6 +158,12 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
           <TableHead className="text-center w-20 whitespace-nowrap">
             <SortableHeader label={t.noShows} column="no_shows" sortConfig={sortConfig} onSort={onSort} />
           </TableHead>
+          <TableHead className="text-center w-16">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.age}</span>
+          </TableHead>
+          <TableHead className="min-w-[80px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.city}</span>
+          </TableHead>
           {floorPlanEnabled && (
             <TableHead className="min-w-[80px]">
               <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.table}</span>
