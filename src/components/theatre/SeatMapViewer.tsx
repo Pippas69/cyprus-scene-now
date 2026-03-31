@@ -581,7 +581,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         )}
       </g>
     );
-  }, [soldSeats, selectedIds, zoneMap, bounds, seats, handleSeatClick, zoom, isHighDensity, SEAT_W, SEAT_H]);
+  }, [soldSeats, selectedIds, zoneMap, bounds, stageCenter, handleSeatClick, zoom, isHighDensity, SEAT_W, SEAT_H]);
 
   if (loading) {
     return (
