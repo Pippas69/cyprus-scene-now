@@ -1,49 +1,66 @@
 
 
-# Fix Seat Map — Correct Angular Distribution + Stage Arc
+# Fix Seat Map — Proportional Angular Distribution, Stage, and Seat Rotation
 
-## Root Cause
+## Root Cause Analysis
 
-The coordinate-generation script used angular ranges roughly **half** the planned width. For example, Πλατεία spans 80°–103° (23°) instead of the planned 67°–113° (46°). This compresses all seats into the center, creating the clumped mess visible in the screenshot. The stage arc path also uses the wrong SVG arc flag, drawing a V-shape instead of a semicircle.
+Three issues visible in the screenshot:
 
-## Fix: Regenerate All 2,007 Coordinates
+### 1. Seats overlapping — angular spans are disproportionate
+The angular widths assigned to each zone don't match their seat counts. For example, Τμήμα Α has 171 seats crammed into just 5° (seats ~1.9px apart), while Πλατεία has 336 seats across 46° (plenty of room). This makes some zones invisible — seats stack on top of each other.
 
-Re-run the Python script with **correct angular ranges** matching the plan:
-
+**Current vs needed (approximate):**
 ```text
-Zone           Planned Start°  Planned End°   Span
-─────────────────────────────────────────────────
-Τμήμα Θ         5              15             10°
-Τμήμα Η        18              27              9°
-Τμήμα Ζ        30              40             10°
-Τμήμα Ε        43              64             21°
-Πλατεία        67             113             46°
-Τμήμα Δ       116             137             21°
-Τμήμα Γ       140             153             13°
-Τμήμα Β       156             168             12°
-Τμήμα Α       171             176              5°
+Zone        Seats  Current°  Needed° (proportional)
+────────────────────────────────────────────────────
+Τμήμα Α      171     5°        12°
+Τμήμα Β      204    12°        15°
+Τμήμα Γ      109    13°         8°
+Τμήμα Δ      327    21°        24°
+Πλατεία      336    46°        24°
+Τμήμα Ε      327    21°        24°
+Τμήμα Ζ      204    10°        15°
+Τμήμα Η      216     9°        16°
+Τμήμα Θ      113    10°         8°
+                   ────        ────
+Available:         146°        146° (170° total - 8×3° gaps)
 ```
 
-- 3° gap between each adjacent zone (for row labels)
-- 2° internal gap splitting each zone into left/right halves
-- Base radius 100px, row step 26px, min 8px seat spacing
-- `x = 600 + r·cos(θ)`, `y = 870 - r·sin(θ)`
+### 2. Stage renders as a V-shape
+The SVG path draws an arc with radius 542 (same as outermost row). The actual arc goes far below the viewport, leaving only the two straight lines visible as a "V". The stage should be a **small decorative arc** near the bottom center — not a full-radius shape.
 
-**Adjusted angular widths**: Πλατεία gets the largest span (46°) as the center section. Δ/Ε get 21° each as the next-largest flanking sections. Γ gets 13° (more than the broken 5.6° it currently has). Wing zones Α/Θ get smaller spans matching their fewer seats.
+### 3. Seats all face the same direction
+Every seat shape points straight up. In a semicircular layout, seats should **rotate to face the stage** — the chair back should point away from center. This requires adding a `transform="rotate(angle)"` to each seat based on its angle from the stage center.
 
-## Fix: Stage Semicircle Rendering
+## Fix Steps
 
-The SVG arc in `SeatMapViewer.tsx` line 571 uses `0 1 0` (large-arc, counter-clockwise) which draws the arc the wrong way. Fix: change the arc flag to `0 0 1` (small-arc, clockwise) to draw the **upper** semicircle that sits below the seats, curving downward.
+### Step 1: Regenerate all 2,007 seat coordinates
+Run a Python script that distributes angular spans **proportional to each zone's seat count**:
+- Total available: 170° (5°–175°) minus 8 × 3° gaps = 146°
+- Each zone gets: `(zone_seats / total_seats) × 146°`
+- Same geometry: center (600, 870), base radius 100px, row step 26px
+- Minimum 8px seat spacing enforced; if arc is too short for a row, slightly expand
+- 2° internal gap per zone for radial aisle
 
-Also move the stage label inside the semicircle (adjust y position).
+### Step 2: Fix stage rendering in SeatMapViewer.tsx
+Replace the full-radius semicircle with a **small flat arc** at the bottom:
+- Radius = ~70px (just a visual indicator, not matching seat radius)
+- Simple SVG arc centered at (scx, scy) with "ΣΚΗΝΗ" label inside
+- No lines to center, no filled wedge — just a curved bar
 
-## Steps
+### Step 3: Rotate seats to face the stage
+In the `renderSeat` function, compute each seat's angle from center:
+```
+angle = atan2(stageCY - seat.y, seat.x - stageCX)
+rotation = 90° - angle_in_degrees
+```
+Apply `transform="rotate(rotation, cx, cy)"` to each seat `<g>` so the chair back faces outward.
 
-1. **Python script** — regenerate all 2,007 seat (x, y) coordinates with the correct angular distribution above
-2. **Database update** — DELETE all seats for this venue, INSERT regenerated seats
-3. **Fix stage arc** in `SeatMapViewer.tsx` — correct the SVG arc flag from `0 1 0` to `0 0 1` so the semicircle curves properly below the seats
+### Step 4: Database update
+- DELETE all existing seats for venue `b3c3805f-6fb6-4c0e-a6a5-907dfe43b6b7`
+- INSERT 2,007 regenerated seats with new coordinates
 
 ## Files Changed
-- **Database**: `venue_seats` table (DELETE + INSERT)
-- **`src/components/theatre/SeatMapViewer.tsx`**: Fix stage arc path (line ~571)
+- **Database**: `venue_seats` table (DELETE + INSERT via data tool)
+- **`src/components/theatre/SeatMapViewer.tsx`**: Stage rendering (small arc) + seat rotation
 
