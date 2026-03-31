@@ -11,7 +11,7 @@ import { CITY_ORDER, normalizeCityDbValue, translateCity } from '@/lib/cityTrans
 const translations = {
   el: {
     performanceTitle: 'Απόδοση Στοιχείων',
-    audienceTitle: 'Κοινό που επισκέφθηκε το μαγαζί',
+    audienceTitle: 'Πληροφορίες Πελατών',
     profile: 'Προφίλ',
     offers: 'Προσφορές',
     events: 'Εκδηλώσεις',
