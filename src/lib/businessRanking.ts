@@ -109,15 +109,16 @@ export const ELITE_MANUAL_ORDER: Record<string, number> = {
   '6c947179-9873-4008-bfd3-d77f0541fbe1': 7,  // Sugar Wave
   'bca2cb97-1723-4358-87b1-130d279e60a6': 8,  // Asmation Experience
   '3f45ba54-3e15-443c-8d29-152a1fcdebd1': 9,  // Element X
-  'e8d549c0-0180-43e3-8e1f-ac86e9c62a82': 10, // Dirty Island
-  '5aa0ec88-645a-40c0-9bd1-7beb1dd0ca19': 11, // PEAK
-  '42e51a41-38bf-464b-9eae-f6cddaba36cf': 12, // Crosta Nostra
-  '8cd6732f-1bc5-4ce9-94d4-cc21863c3377': 13, // La Fiesta
-  'b846e46c-5318-4059-b390-94ef6a4783df': 14, // Mr. Mellow
-  'af2abac6-c5de-4b48-8f2c-893e7dac68b5': 15, // Legacy
-  '4c7e388f-343c-45ee-861b-390f4c058d28': 16, // Notes and Spirits
-  'cacc28f8-918f-49ab-8b81-9fac86739981': 17, // Eterna
-  'c1685cb9-9d7e-4353-af35-e9d479269d33': 18, // Test Account
+  'df24815c-a8bb-46c8-bf7b-bbb10565f51c': 10, // 24seven
+  'e8d549c0-0180-43e3-8e1f-ac86e9c62a82': 11, // Dirty Island
+  '5aa0ec88-645a-40c0-9bd1-7beb1dd0ca19': 12, // PEAK
+  '42e51a41-38bf-464b-9eae-f6cddaba36cf': 13, // Crosta Nostra
+  '8cd6732f-1bc5-4ce9-94d4-cc21863c3377': 14, // La Fiesta
+  'b846e46c-5318-4059-b390-94ef6a4783df': 15, // Mr. Mellow
+  'af2abac6-c5de-4b48-8f2c-893e7dac68b5': 16, // Legacy
+  '4c7e388f-343c-45ee-861b-390f4c058d28': 17, // Notes and Spirits
+  'cacc28f8-918f-49ab-8b81-9fac86739981': 18, // Eterna
+  'c1685cb9-9d7e-4353-af35-e9d479269d33': 19, // Test Account
 };
 
 /**
