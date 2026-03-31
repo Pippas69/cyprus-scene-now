@@ -306,6 +306,22 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
                 </span>
               </TableCell>
 
+              <TableCell className="text-center py-2.5">
+                {guest.guest_age ? (
+                  <span className="text-sm text-foreground">{guest.guest_age}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
+                )}
+              </TableCell>
+
+              <TableCell className="py-2.5">
+                {guest.guest_city ? (
+                  <span className="text-sm text-foreground">{guest.guest_city}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
+                )}
+              </TableCell>
+
               {floorPlanEnabled && (
                 <TableCell className="py-2.5">
                   {guest.total_visits > 0 && guest.favorite_table ? (
