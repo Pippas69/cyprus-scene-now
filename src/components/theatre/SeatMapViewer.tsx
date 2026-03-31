@@ -414,6 +414,12 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       Z
     `;
 
+    // Rotate seat to face stage center
+    const stageCX = 600 - bounds.minX;
+    const stageCY = 870 - bounds.minY;
+    const angleDeg = Math.atan2(stageCY - cy, cx - stageCX) * (180 / Math.PI);
+    const rotation = -(90 - angleDeg);
+
     return (
       <g
         key={seat.id}
@@ -430,6 +436,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         }}
         onPointerLeave={() => setTooltip(null)}
         data-seat="true"
+        transform={`rotate(${rotation}, ${cx}, ${cy})`}
       >
         {/* Chair backrest (rounded top) */}
         <path
