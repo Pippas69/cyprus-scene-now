@@ -1,31 +1,39 @@
 
 
-## Ανάλυση Προβλημάτων & Πλάνο Επιδιόρθωσης
+## Πλάνο: Πληροφορίες Πελατών & Τηλέφωνο στα Settings
 
-### Πρόβλημα 1: Χαμηλά δεδομένα στο "Κοινό που επισκέφθηκε το μαγαζί"
+### Αλλαγή 1: Μετονομασία + Αλλαγή λογικής δημογραφικών
 
-**Αιτία (Πόλεις):** Η RPC function επιστρέφει το key `cities`, αλλά ο κώδικας στο frontend διαβάζει `result.region`. Αυτό σημαίνει ότι τα δεδομένα πόλης **υπάρχουν** αλλά δεν εμφανίζονται ποτέ γιατί ο κώδικας ψάχνει λάθος πεδίο.
+**Τι αλλάζει:** Η ενότητα "Κοινό που επισκέφθηκε το μαγαζί" μετονομάζεται σε **"Πληροφορίες Πελατών"** και τα δημογραφικά (φύλο, ηλικία, πόλη) θα υπολογίζονται για **όλους τους πελάτες** — όχι μόνο αυτούς με check-in.
 
-**Αιτία (Φύλο/Ηλικία):** Η function μετράει ΜΟΝΟ επισκέψεις με `checked_in_at IS NOT NULL`. Αν οι περισσότεροι πελάτες δεν έχουν γίνει check-in (QR scan), δεν μετρούν. Επίσης, αν οι χρήστες δεν έχουν συμπληρώσει φύλο/ηλικία στο προφίλ τους, πέφτουν στο "Άλλο"/"Άγνωστο". Αυτό είναι σωστή συμπεριφορά — τα demographics βασίζονται μόνο σε επαληθευμένες επισκέψεις.
+**Τεχνικά:**
+- **SQL Migration** — Νέα έκδοση του `get_audience_demographics` RPC:
+  - Αφαίρεση του φίλτρου `checked_in_at IS NOT NULL` από tickets, reservations, και offer_purchases
+  - Tickets: κάθε ticket με status `valid` ή `used` μετράει (αντί μόνο checked-in)
+  - Reservations: κάθε κράτηση (εκτός cancelled) μετράει
+  - Offer purchases: κάθε αγορά προσφοράς μετράει (εκτός cancelled)
+  - Τα δεδομένα φύλου/ηλικίας/πόλης αντλούνται από `profiles` (ό,τι έχει δηλώσει ο χρήστης)
 
-**Επιδιόρθωση:** Αλλαγή στο `useAudienceMetrics.ts` ώστε να διαβάζει `result.cities` αντί `result.region`.
+- **`src/components/business/analytics/AudienceTab.tsx`**:
+  - Τίτλος: "Κοινό που επισκέφθηκε το μαγαζί" → "Πληροφορίες Πελατών"
+  - Ενημέρωση tooltips/explanations ώστε να αντικατοπτρίζουν τη νέα λογική
+  
+- **`src/components/business/analytics/PerformanceTab.tsx`**:
+  - Ενημέρωση τίτλου εκεί επίσης
 
----
+### Αλλαγή 2: Τηλέφωνο στα User Settings
 
-### Πρόβλημα 2: Πόλη στην Προσθήκη Εισιτηρίου — Dropdown αντί free text
+**Τι αλλάζει:** Προσθήκη πεδίου τηλεφώνου (read-only) στα Settings του χρήστη, δίπλα στο email. Το τηλέφωνο υπάρχει ήδη στο `profiles.phone` (αποθηκεύεται κατά το signup).
 
-Αντικατάσταση του πεδίου ελεύθερου κειμένου (Input) για την πόλη με Select dropdown που περιέχει τις πόλεις: Λευκωσία, Λεμεσός, Λάρνακα, Πάφος, Παραλίμνι, Αγία Νάπα, Αμμόχωστος.
+**Τεχνικά:**
+- **`src/components/user/UserSettings.tsx`**:
+  - Προσθήκη πεδίου "Τηλέφωνο" κάτω από το Email (disabled, read-only, ίδιο στυλ)
+  - Translations: `phone: 'Τηλέφωνο'` / `phone: 'Phone'`
 
----
+### Αρχεία που αλλάζουν
 
-### Πρόβλημα 3: Validation τηλεφώνου — Τουλάχιστον 8 ψηφία
-
-Προσθήκη validation στο `ManualEntryDialog.tsx` ώστε το τηλέφωνο να απαιτεί τουλάχιστον 8 ψηφία πριν επιτραπεί η αποθήκευση (χρησιμοποιώντας το υπάρχον `getDigitCount` helper).
-
----
-
-### Αρχεία που θα αλλάξουν
-
-1. **`src/hooks/useAudienceMetrics.ts`** — Fix: `result.cities` αντί `result.region`
-2. **`src/components/business/reservations/ManualEntryDialog.tsx`** — City dropdown + phone validation (min 8 digits)
+1. **SQL Migration** — Νέα έκδοση `get_audience_demographics` (χωρίς check-in filter)
+2. **`src/components/business/analytics/AudienceTab.tsx`** — Νέος τίτλος + tooltips
+3. **`src/components/business/analytics/PerformanceTab.tsx`** — Νέος τίτλος
+4. **`src/components/user/UserSettings.tsx`** — Πεδίο τηλεφώνου
 
