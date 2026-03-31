@@ -14,7 +14,7 @@ import {
 
 const translations = {
   el: {
-    title: "Κοινό που επισκέφθηκε το μαγαζί",
+    title: "Πληροφορίες Πελατών",
     subtitle: "",
     genderTitle: "Φύλο",
     ageTitle: "Ηλικία",
