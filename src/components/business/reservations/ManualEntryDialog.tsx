@@ -364,12 +364,16 @@ export const ManualEntryDialog = ({
           {entryType === 'ticket' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder={language === 'el' ? 'Πόλη' : 'City'}
-                className={inputClass}
-              />
+              <Select value={city} onValueChange={setCity}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {CYPRUS_CITIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
