@@ -227,6 +227,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         town: profile.town,
         city: profile.town,
         gender: profile.gender,
+        phone: profile.phone,
         preferences: profile.preferences || [],
       })
       .eq('id', userId);
@@ -451,17 +452,15 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
             </div>
 
             {/* Phone below */}
-            {profile.phone && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
-                <Input
-                  id="phone"
-                  value={profile.phone}
-                  disabled
-                  className="rounded-xl bg-muted text-xs sm:text-sm h-8 sm:h-10"
-                />
-              </div>
-            )}
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
+              <Input
+                id="phone"
+                value={(profile.phone || '').replace(/^\+357\s*/, '')}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                className="rounded-xl text-xs sm:text-sm h-8 sm:h-10"
+              />
+            </div>
 
             {/* Interests - list rows (match Signup mock) */}
             <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
