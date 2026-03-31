@@ -21,7 +21,7 @@ export function useRealtimeCrm(businessId: string | null) {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const debouncedInvalidate = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(invalidate, 500);
+      timer = setTimeout(invalidate, 300);
     };
 
     const channel = supabase

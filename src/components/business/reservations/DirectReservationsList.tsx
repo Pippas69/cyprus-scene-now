@@ -366,10 +366,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
         // For ticket-only events, fetch ticket orders and wait before removing loader
         if (isTicketOnlyMode && selectedEventId) {
-          setTicketOnlyOrders([]);
           await fetchTicketOnlyOrders(selectedEventId, requestId);
-        } else {
-          setTicketOnlyOrders([]);
         }
 
         // Fetch enrichment data only for reservation/hybrid flows
