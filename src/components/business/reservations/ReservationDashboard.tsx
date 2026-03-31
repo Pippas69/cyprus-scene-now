@@ -593,14 +593,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                           : 'text-foreground/50 border-transparent hover:text-foreground/70'
                       }`}
                     >
-                      <span className="flex items-center gap-1.5 truncate">
-                        <span className="truncate">{getTypeTabLabel(type)}</span>
-                        {totalCount > 0 && (
-                          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full border border-foreground/40 text-foreground flex-shrink-0">
-                            {totalCount}
-                          </span>
-                        )}
-                      </span>
+                      <span className="truncate">{getTypeTabLabel(type)}</span>
                     </SelectTrigger>
                     <SelectContent className="rounded-lg">
                       {evts.map((event) => {
