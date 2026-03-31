@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,6 +93,7 @@ interface TicketOnlyOrder {
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
@@ -987,6 +989,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       setEditingTicketCity(null);
       setTicketCityValue('');
       setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, guest_city: trimmed || null } : t));
+      queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] });
     } catch (error) {
       console.error('Error saving ticket city:', error);
       toast.error(t.errorSaving);
@@ -1321,7 +1324,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => fetchReservations(true)}
+            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
           />
         </div>
       );
@@ -1344,7 +1347,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => fetchReservations(true)}
+            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
           />
         </div>
       );
@@ -1487,7 +1490,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           language={language}
           entryType={getEntryType()}
           eventId={selectedEventId}
-          onSuccess={() => fetchReservations(true)}
+          onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
         />
       </div>);
 
@@ -1629,7 +1632,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         language={language}
         entryType={getEntryType()}
         eventId={selectedEventId}
-        onSuccess={() => fetchReservations(true)}
+        onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
       />
     </div>);
 };
