@@ -1,0 +1,1 @@
+DELETE FROM venue_seats WHERE venue_id = 'b3c3805f-6fb6-4c0e-a6a5-907dfe43b6b7';
