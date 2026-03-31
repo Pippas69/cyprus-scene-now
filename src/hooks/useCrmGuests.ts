@@ -33,6 +33,8 @@ export interface CrmGuest {
   avg_party_size: number;
   favorite_table: string | null;
   total_reservations: number;
+  guest_age: number | null;
+  guest_city: string | null;
   // Joined data
   tags: CrmGuestTag[];
   notes_count: number;
