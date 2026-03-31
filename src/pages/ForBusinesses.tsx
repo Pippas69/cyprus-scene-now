@@ -642,10 +642,10 @@ const ForBusinesses = () => {
                 }`}
               >
                 {content.pricing.annual}
-                <Badge className="bg-gradient-to-r from-primary to-sunset-coral text-white border-0 text-[10px] sm:text-xs">
-                  <Sparkles className="w-3 h-3 mr-1" />
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary-foreground text-primary text-[10px] sm:text-xs font-medium whitespace-nowrap">
+                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   {content.pricing.saveMonths}
-                </Badge>
+                </span>
               </button>
             </div>
           </motion.div>
