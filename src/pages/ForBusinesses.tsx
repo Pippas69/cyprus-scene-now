@@ -388,9 +388,7 @@ const ForBusinesses = () => {
 
   const renderFeatureItem = (feature: { icon: any; text: string; note?: string }, gradient: string, index: number) => (
     <li key={index} className="flex items-start gap-2.5">
-      <div className={`p-0.5 rounded-full bg-gradient-to-br ${gradient} mt-0.5 shrink-0`}>
-        <Check className="w-3 h-3 text-white" />
-      </div>
+      <span className="text-sm text-foreground/80 mt-0.5">•</span>
       <div className="flex flex-col">
         <span className="text-xs sm:text-sm text-foreground/90">{feature.text}</span>
         {feature.note && (
