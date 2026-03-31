@@ -11,7 +11,7 @@ import { CITY_ORDER, normalizeCityDbValue, translateCity } from '@/lib/cityTrans
 const translations = {
   el: {
     performanceTitle: 'Απόδοση Στοιχείων',
-    audienceTitle: 'Κοινό που επισκέφθηκε το μαγαζί',
+    audienceTitle: 'Πληροφορίες Πελατών',
     profile: 'Προφίλ',
     offers: 'Προσφορές',
     events: 'Εκδηλώσεις',
@@ -24,14 +24,14 @@ const translations = {
     male: 'Άνδρες',
     female: 'Γυναίκες',
     other: 'Άλλο',
-    audienceSubtitle: 'Δημογραφικά από επαληθευμένες επισκέψεις (QR εξαργύρωση / check-in).',
+    audienceSubtitle: 'Δημογραφικά στοιχεία όλων των πελατών σας.',
     totalVisitsLabel: 'Σύνολο επισκέψεων',
     profileDesc: 'Συνολικές ενέργειες στο προφίλ',
     offersDesc: 'Συνολικές ενέργειες στις προσφορές',
     eventsDesc: 'Συνολικές ενέργειες στις εκδηλώσεις',
-    genderExplanation: 'Φύλο πελατών που ΕΠΑΛΗΘΕΥΜΕΝΑ επισκέφθηκαν το μαγαζί (QR scan / check-in).',
-    ageExplanation: 'Ηλικιακές ομάδες πελατών που ΕΠΑΛΗΘΕΥΜΕΝΑ επισκέφθηκαν το μαγαζί (QR scan / check-in).',
-    regionExplanation: 'Πόλεις πελατών που ΕΠΑΛΗΘΕΥΜΕΝΑ επισκέφθηκαν το μαγαζί (QR scan / check-in).',
+    genderExplanation: 'Φύλο πελατών βάσει των στοιχείων που δήλωσαν κατά την εγγραφή τους.',
+    ageExplanation: 'Ηλικιακές ομάδες πελατών βάσει των στοιχείων που δήλωσαν.',
+    regionExplanation: 'Πόλεις πελατών βάσει των στοιχείων που δήλωσαν.',
     regionNoData: 'Δεν υπάρχουν δεδομένα πόλης για επισκέψεις. Θα εμφανιστούν όταν οι πελάτες έχουν συμπληρώσει πόλη στο sign up.',
     dataSource: 'Πηγή δεδομένων',
     // Views - πόσες φορές είδαν οι χρήστες το περιεχόμενο από οπουδήποτε
