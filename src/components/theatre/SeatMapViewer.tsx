@@ -217,66 +217,98 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   // Detect high-density venue (>500 seats)
   const isHighDensity = seats.length > 500;
 
-  // Pre-compute row labels using connected-cluster analysis
+  // Pre-compute row labels placed in inter-zone gaps
   const rowLabels = React.useMemo(() => {
-    // Group seats by row_label (across all zones)
-    const rowGroups = new Map<string, { x: number; y: number }[]>();
-    for (const seat of seats) {
-      const cx = seat.x - bounds.minX;
-      const cy = seat.y - bounds.minY;
-      const key = seat.row_label;
-      if (!rowGroups.has(key)) rowGroups.set(key, []);
-      rowGroups.get(key)!.push({ x: cx, y: cy });
+    if (seats.length === 0 || zones.length === 0) return [];
+
+    // Group seats by zone_id
+    const seatsByZone = new Map<string, VenueSeat[]>();
+    for (const s of seats) {
+      if (!seatsByZone.has(s.zone_id)) seatsByZone.set(s.zone_id, []);
+      seatsByZone.get(s.zone_id)!.push(s);
     }
 
-    const labels: React.ReactNode[] = [];
+    // The stage center in our coordinate system
+    const stageCX = 600;
+    const stageCY = 870;
 
-    rowGroups.forEach((positions, rowLabel) => {
-      if (positions.length < 5) return; // Skip tiny rows
-
-      // Sort by x to find connected clusters
-      const sorted = [...positions].sort((a, b) => a.x - b.x);
-      
-      // Find the largest connected cluster (seats within 40px of neighbors)
-      const clusterGap = 40;
-      let bestCluster: typeof sorted = [];
-      let currentCluster: typeof sorted = [sorted[0]];
-      
-      for (let i = 1; i < sorted.length; i++) {
-        if (sorted[i].x - sorted[i - 1].x < clusterGap) {
-          currentCluster.push(sorted[i]);
-        } else {
-          if (currentCluster.length > bestCluster.length) bestCluster = currentCluster;
-          currentCluster = [sorted[i]];
-        }
+    // Compute each zone's angular center (average angle of all its seats)
+    const zoneAngles: { zoneId: string; avgAngle: number }[] = [];
+    zones.forEach(z => {
+      const zSeats = seatsByZone.get(z.id);
+      if (!zSeats || zSeats.length === 0) return;
+      let sumAngle = 0;
+      for (const s of zSeats) {
+        const dx = s.x - stageCX;
+        const dy = stageCY - s.y;
+        sumAngle += Math.atan2(dy, dx);
       }
-      if (currentCluster.length > bestCluster.length) bestCluster = currentCluster;
-
-      // Only label if the dominant cluster has enough seats
-      if (bestCluster.length < 5) return;
-
-      // Place label at the left edge of the dominant cluster
-      const leftmost = bestCluster[0];
-      const avgY = bestCluster.reduce((s, p) => s + p.y, 0) / bestCluster.length;
-
-      labels.push(
-        <text
-          key={`row-label-${rowLabel}`}
-          x={leftmost.x - (isHighDensity ? 12 : 18)}
-          y={avgY + 1}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={isHighDensity ? 7 : 9}
-          fontWeight={600}
-          fill="hsl(var(--muted-foreground))"
-          className="select-none"
-        >
-          {rowLabel}
-        </text>
-      );
+      zoneAngles.push({ zoneId: z.id, avgAngle: sumAngle / zSeats.length });
     });
+
+    // Sort zones by angle descending (left=high angle to right=low angle)
+    zoneAngles.sort((a, b) => b.avgAngle - a.avgAngle);
+
+    // For each pair of adjacent zones, find the angular gap midpoint
+    const labels: React.ReactNode[] = [];
+    const BASE_R = 100;
+    const ROW_STEP = 26;
+    const ROW_LABELS_ORDER = ['Α','Β','Γ','Δ','Ε','Ζ','Η','Θ','Ι','Κ','Λ','Μ','Ν','Ξ','Ο','Π','Ρ','Σ'];
+    const ROW_IDX_MAP: Record<string, number> = {};
+    ROW_LABELS_ORDER.forEach((l, i) => { ROW_IDX_MAP[l] = i; });
+
+    for (let i = 0; i < zoneAngles.length - 1; i++) {
+      const leftZoneId = zoneAngles[i].zoneId;
+      const rightZoneId = zoneAngles[i + 1].zoneId;
+
+      // Find the boundary: min angle of left zone, max angle of right zone
+      const leftSeats = seatsByZone.get(leftZoneId) || [];
+      const rightSeats = seatsByZone.get(rightZoneId) || [];
+
+      let leftMinAngle = Infinity;
+      for (const s of leftSeats) {
+        const a = Math.atan2(stageCY - s.y, s.x - stageCX);
+        if (a < leftMinAngle) leftMinAngle = a;
+      }
+      let rightMaxAngle = -Infinity;
+      for (const s of rightSeats) {
+        const a = Math.atan2(stageCY - s.y, s.x - stageCX);
+        if (a > rightMaxAngle) rightMaxAngle = a;
+      }
+
+      const gapMidAngle = (leftMinAngle + rightMaxAngle) / 2;
+
+      // Find which rows exist in BOTH adjacent zones
+      const leftRows = new Set(leftSeats.map(s => s.row_label));
+      const rightRows = new Set(rightSeats.map(s => s.row_label));
+      const commonRows = [...leftRows].filter(r => rightRows.has(r) && r !== 'WC');
+
+      for (const rowLabel of commonRows) {
+        const rowIdx = ROW_IDX_MAP[rowLabel];
+        if (rowIdx === undefined) continue;
+        const radius = BASE_R + rowIdx * ROW_STEP;
+        const lx = stageCX + radius * Math.cos(gapMidAngle) - bounds.minX;
+        const ly = stageCY - radius * Math.sin(gapMidAngle) - bounds.minY;
+
+        labels.push(
+          <text
+            key={`row-label-${rowLabel}-gap-${i}`}
+            x={lx}
+            y={ly + 1}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={isHighDensity ? 7 : 9}
+            fontWeight={600}
+            fill="hsl(var(--muted-foreground))"
+            className="select-none"
+          >
+            {rowLabel}
+          </text>
+        );
+      }
+    }
     return labels;
-  }, [seats, bounds, isHighDensity]);
+  }, [seats, zones, bounds, isHighDensity]);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
@@ -517,37 +549,44 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Stage indicator at bottom */}
+          {/* Stage indicator — semicircle at bottom */}
           <g>
-            {/* Stage curved line */}
-            <path
-              d={`M ${viewWidth * 0.15} ${viewHeight + 20} Q ${viewWidth * 0.5} ${viewHeight + 50} ${viewWidth * 0.85} ${viewHeight + 20}`}
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth={3}
-              strokeLinecap="round"
-            />
-            <text
-              x={viewWidth / 2}
-              y={viewHeight + 35}
-              textAnchor="middle"
-              fontSize={14}
-              fontWeight={700}
-              fill="hsl(var(--primary))"
-              className="select-none"
-            >
-              {t.stage}
-            </text>
-            <text
-              x={viewWidth / 2}
-              y={viewHeight + 50}
-              textAnchor="middle"
-              fontSize={9}
-              fill="hsl(var(--muted-foreground))"
-              className="select-none"
-            >
-              {t.frontOfTheatre}
-            </text>
+            {(() => {
+              // Stage center in SVG coords
+              const scx = 600 - bounds.minX;
+              const scy = 870 - bounds.minY;
+              // Radius matches outermost row (Σ = index 17)
+              const stageR = 100 + 17 * 26; // 542
+              // Draw a semicircle arc below the seats (from 175° to 5°)
+              const a1 = (175 * Math.PI) / 180;
+              const a2 = (5 * Math.PI) / 180;
+              const x1 = scx + stageR * Math.cos(a1);
+              const y1 = scy - stageR * Math.sin(a1);
+              const x2 = scx + stageR * Math.cos(a2);
+              const y2 = scy - stageR * Math.sin(a2);
+              return (
+                <>
+                  {/* Filled semicircle (below seats) */}
+                  <path
+                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 1 0 ${x2} ${y2} L ${scx} ${scy} Z`}
+                    fill="hsl(var(--primary) / 0.08)"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                  />
+                  <text
+                    x={scx}
+                    y={scy + 20}
+                    textAnchor="middle"
+                    fontSize={16}
+                    fontWeight={700}
+                    fill="hsl(var(--primary))"
+                    className="select-none"
+                  >
+                    {t.stage}
+                  </text>
+                </>
+              );
+            })()}
           </g>
 
           {/* Row labels */}
