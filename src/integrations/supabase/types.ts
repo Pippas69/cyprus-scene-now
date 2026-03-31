@@ -6507,6 +6507,8 @@ export type Database = {
           avg_party_size: number
           favorite_table: string
           first_visit: string
+          guest_age: number
+          guest_city: string
           guest_id: string
           last_visit: string
           total_cancellations: number
@@ -6522,6 +6524,8 @@ export type Database = {
           avg_party_size: number
           favorite_table: string
           first_visit: string
+          guest_age: number
+          guest_city: string
           guest_id: string
           last_visit: string
           total_cancellations: number

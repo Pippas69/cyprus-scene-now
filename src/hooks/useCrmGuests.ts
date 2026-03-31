@@ -33,6 +33,8 @@ export interface CrmGuest {
   avg_party_size: number;
   favorite_table: string | null;
   total_reservations: number;
+  guest_age: number | null;
+  guest_city: string | null;
   // Joined data
   tags: CrmGuestTag[];
   notes_count: number;
@@ -175,6 +177,8 @@ export function useCrmGuests(businessId: string | null) {
           avg_party_size: Number(stats.avg_party_size || 0),
           favorite_table: (stats.favorite_table as string) || null,
           total_reservations: Number(stats.total_reservations || 0),
+          guest_age: stats.guest_age != null ? Number(stats.guest_age) : null,
+          guest_city: (stats.guest_city as string) || null,
           tags: tagMap.get(g.id) || [],
           notes_count: notesCountMap.get(g.id) || 0,
           pinned_notes: pinnedNotesMap.get(g.id) || [],

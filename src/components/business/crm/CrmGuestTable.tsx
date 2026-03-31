@@ -40,6 +40,8 @@ const translations = {
     lastVisit: "Τελευταία",
     spend: "Έξοδα",
     noShows: "No-shows",
+    age: "Ηλικία",
+    city: "Πόλη",
     tags: "Tags",
     email: "Email",
     table: "Τραπέζι",
@@ -53,6 +55,8 @@ const translations = {
     lastVisit: "Last visit",
     spend: "Spend",
     noShows: "No-shows",
+    age: "Age",
+    city: "City",
     tags: "Tags",
     email: "Email",
     table: "Table",
@@ -153,6 +157,12 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
           </TableHead>
           <TableHead className="text-center w-20 whitespace-nowrap">
             <SortableHeader label={t.noShows} column="no_shows" sortConfig={sortConfig} onSort={onSort} />
+          </TableHead>
+          <TableHead className="text-center w-16">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.age}</span>
+          </TableHead>
+          <TableHead className="min-w-[80px]">
+            <span className="text-[11px] tracking-wide font-medium text-muted-foreground">{t.city}</span>
           </TableHead>
           {floorPlanEnabled && (
             <TableHead className="min-w-[80px]">
@@ -294,6 +304,22 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
                 <span className={`text-sm ${guest.total_no_shows >= 2 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                   {guest.total_no_shows}
                 </span>
+              </TableCell>
+
+              <TableCell className="text-center py-2.5">
+                {guest.guest_age ? (
+                  <span className="text-sm text-foreground">{guest.guest_age}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
+                )}
+              </TableCell>
+
+              <TableCell className="py-2.5">
+                {guest.guest_city ? (
+                  <span className="text-sm text-foreground">{guest.guest_city}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground/40">—</span>
+                )}
               </TableCell>
 
               {floorPlanEnabled && (
