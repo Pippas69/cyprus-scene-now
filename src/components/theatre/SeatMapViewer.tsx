@@ -131,7 +131,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
         setLoading(true);
         setZoom(1);
         setPan({ x: 0, y: 0 });
-      }
+
         const [zonesRes, seatsRes] = await Promise.all([
           supabase
             .from('venue_zones')
@@ -175,6 +175,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
       } else {
         setSoldSeats(new Set());
       }
+
       if (isInitial) setLoading(false);
     };
 
