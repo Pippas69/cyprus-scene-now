@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { getDigitCount } from '@/lib/phoneValidation';
+
+const CYPRUS_CITIES = ['Λευκωσία', 'Λεμεσός', 'Λάρνακα', 'Πάφος', 'Παραλίμνι', 'Αγία Νάπα', 'Αμμόχωστος'];
 
 type EntryType = 'direct' | 'ticket' | 'reservation' | 'hybrid';
 
@@ -205,6 +208,10 @@ export const ManualEntryDialog = ({
       toast.error(txt.phoneRequired);
       return;
     }
+    if (getDigitCount(trimmedPhone) < 8) {
+      toast.error(language === 'el' ? 'Το τηλέφωνο πρέπει να έχει τουλάχιστον 8 ψηφία' : 'Phone must be at least 8 digits');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -357,12 +364,16 @@ export const ManualEntryDialog = ({
           {entryType === 'ticket' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder={language === 'el' ? 'Πόλη' : 'City'}
-                className={inputClass}
-              />
+              <Select value={city} onValueChange={setCity}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {CYPRUS_CITIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

@@ -43,7 +43,7 @@ export const useAudienceMetrics = (
       return {
         gender: result?.gender || { male: 0, female: 0, other: 0 },
         age: result?.age || { "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0, "55+": 0, "Άγνωστο": 0 },
-        region: result?.region || {},
+        region: (result as any)?.cities || result?.region || {},
       };
     },
     enabled: !!businessId,
