@@ -549,37 +549,44 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
           }}
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Stage indicator at bottom */}
+          {/* Stage indicator — semicircle at bottom */}
           <g>
-            {/* Stage curved line */}
-            <path
-              d={`M ${viewWidth * 0.15} ${viewHeight + 20} Q ${viewWidth * 0.5} ${viewHeight + 50} ${viewWidth * 0.85} ${viewHeight + 20}`}
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth={3}
-              strokeLinecap="round"
-            />
-            <text
-              x={viewWidth / 2}
-              y={viewHeight + 35}
-              textAnchor="middle"
-              fontSize={14}
-              fontWeight={700}
-              fill="hsl(var(--primary))"
-              className="select-none"
-            >
-              {t.stage}
-            </text>
-            <text
-              x={viewWidth / 2}
-              y={viewHeight + 50}
-              textAnchor="middle"
-              fontSize={9}
-              fill="hsl(var(--muted-foreground))"
-              className="select-none"
-            >
-              {t.frontOfTheatre}
-            </text>
+            {(() => {
+              // Stage center in SVG coords
+              const scx = 600 - bounds.minX;
+              const scy = 870 - bounds.minY;
+              // Radius matches outermost row (Σ = index 17)
+              const stageR = 100 + 17 * 26; // 542
+              // Draw a semicircle arc below the seats (from 175° to 5°)
+              const a1 = (175 * Math.PI) / 180;
+              const a2 = (5 * Math.PI) / 180;
+              const x1 = scx + stageR * Math.cos(a1);
+              const y1 = scy - stageR * Math.sin(a1);
+              const x2 = scx + stageR * Math.cos(a2);
+              const y2 = scy - stageR * Math.sin(a2);
+              return (
+                <>
+                  {/* Filled semicircle (below seats) */}
+                  <path
+                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 1 0 ${x2} ${y2} L ${scx} ${scy} Z`}
+                    fill="hsl(var(--primary) / 0.08)"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                  />
+                  <text
+                    x={scx}
+                    y={scy + 20}
+                    textAnchor="middle"
+                    fontSize={16}
+                    fontWeight={700}
+                    fill="hsl(var(--primary))"
+                    className="select-none"
+                  >
+                    {t.stage}
+                  </text>
+                </>
+              );
+            })()}
           </g>
 
           {/* Row labels */}
