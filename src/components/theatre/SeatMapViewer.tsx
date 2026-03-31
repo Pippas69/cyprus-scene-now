@@ -353,8 +353,8 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
   }, []);
 
   // ── Render seat ──
-  const SEAT_W = 20;
-  const SEAT_H = 18;
+  const SEAT_W = isHighDensity ? 14 : 20;
+  const SEAT_H = isHighDensity ? 12 : 18;
   const renderSeat = (seat: VenueSeat) => {
     const isSold = soldSeats.has(seat.id);
     const isSelected = selectedIds.has(seat.id);
