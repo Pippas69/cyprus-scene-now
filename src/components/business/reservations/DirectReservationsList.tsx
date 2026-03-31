@@ -1238,7 +1238,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               ) : hasCity ? (
                                 <span
-                                  className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city"
+                                  className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city whitespace-nowrap"
                                   onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
                                 >
                                   {ticket.guest_city || ticket.account_city}
