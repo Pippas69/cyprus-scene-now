@@ -218,7 +218,7 @@ export const AudienceTab = ({ businessId, dateRange, language }: AudienceTabProp
           explanation={t.explanations.region}
           details={t.explanations.regionDetails}
         >
-          {regionEntries.slice(0, 6).map(([city, count]) => (
+          {regionEntries.map(([city, count]) => (
             <MetricItem 
               key={city} 
               label={translateCity(city, language)} 
