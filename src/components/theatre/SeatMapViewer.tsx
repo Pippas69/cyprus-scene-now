@@ -568,7 +568,7 @@ export const SeatMapViewer: React.FC<SeatMapViewerProps> = ({
                 <>
                   {/* Filled semicircle (below seats) */}
                   <path
-                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 1 0 ${x2} ${y2} L ${scx} ${scy} Z`}
+                    d={`M ${x1} ${y1} A ${stageR} ${stageR} 0 0 1 ${x2} ${y2} L ${scx} ${scy} Z`}
                     fill="hsl(var(--primary) / 0.08)"
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
