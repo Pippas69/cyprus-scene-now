@@ -29,6 +29,7 @@ const t = {
     discount: "DISCOUNT",
     expires: "EXPIRES",
     scanAtVenue: "Scan at the venue",
+    saveHint: "Save this QR (or screenshot). Show at the venue.",
     copy: "Copy",
     copied: "Link copied!",
     notFound: "Offer not found",
