@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
@@ -50,23 +50,25 @@ const translations = {
 };
 
 const HC = { x: 500, y: 760 };
-const BASE_RADIUS = 180;
-const ROW_SPACING = 44;
-const SEAT_RADIUS = 12;
-const SECTION_GAP = 92;
+const BASE_RADIUS = 140;
+const SECTION_GAP = 50;
 const EDGE_PAD_DEG = 3;
-const UPPER_SECTION_INSET_DEG = 8;
+const UPPER_SECTION_INSET_DEG = 6;
 
-// Fixed 18-row scaffold — always rendered for every zone
-// Outer section (far from stage): Σ Ρ Π Ο Ξ Ν Μ Λ Κ
-// Inner section (near stage):     Ι Θ Η Ζ Ε Δ Γ Β Α
 const OUTER_ROWS = ['Σ', 'Ρ', 'Π', 'Ο', 'Ξ', 'Ν', 'Μ', 'Λ', 'Κ'] as const;
 const INNER_ROWS = ['Ι', 'Θ', 'Η', 'Ζ', 'Ε', 'Δ', 'Γ', 'Β', 'Α'] as const;
-const FULL_ROWS_DESC = [...OUTER_ROWS, ...INNER_ROWS]; // outermost first
-const INNER_COUNT = INNER_ROWS.length; // 9
-const OUTER_COUNT = OUTER_ROWS.length; // 9
+const FULL_ROWS_DESC = [...OUTER_ROWS, ...INNER_ROWS];
+const INNER_COUNT = INNER_ROWS.length;
+const OUTER_COUNT = OUTER_ROWS.length;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+// Dynamic sizing based on density
+function getDynamicSizes(maxSeatsInRow: number) {
+  if (maxSeatsInRow <= 20) return { seatRadius: 12, rowSpacing: 40 };
+  if (maxSeatsInRow <= 35) return { seatRadius: 9, rowSpacing: 32 };
+  return { seatRadius: 7, rowSpacing: 26 };
+}
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   venueId,
@@ -86,6 +88,14 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   const [soldSeatIds, setSoldSeatIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
+
+  // Zoom & pan state
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const lastTouchDist = useRef<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -144,9 +154,14 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     load();
   }, [venueId, zoneId, showInstanceId]);
 
+  // Reset zoom/pan when zone changes
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [zoneId]);
+
   const selectedIds = useMemo(() => new Set(selectedSeats.map((seat) => seat.seatId)), [selectedSeats]);
 
-  // Group seats by row_label from the actual data
   const seatsByRow = useMemo(() => {
     const grouped = new Map<string, VenueSeat[]>();
     for (const seat of seats) {
@@ -160,24 +175,25 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   const overviewArc = ZONE_ARCS[zoneName];
   const zoneMidDeg = ((overviewArc?.startDeg ?? 200) + (overviewArc?.endDeg ?? 340)) / 2;
 
-  const maxSeatsInRow = useMemo(
-    () => {
-      let max = 0;
-      seatsByRow.forEach((rowSeats) => { max = Math.max(max, rowSeats.length); });
-      return Math.max(max, 10); // minimum for layout
-    },
-    [seatsByRow]
-  );
+  const maxSeatsInRow = useMemo(() => {
+    let max = 0;
+    seatsByRow.forEach((rowSeats) => { max = Math.max(max, rowSeats.length); });
+    return Math.max(max, 10);
+  }, [seatsByRow]);
 
-  const detailSpanDeg = useMemo(
-    () => clamp(maxSeatsInRow * 4.8, 104, 176),
-    [maxSeatsInRow]
-  );
+  const { seatRadius, rowSpacing } = useMemo(() => getDynamicSizes(maxSeatsInRow), [maxSeatsInRow]);
+
+  // Wider arc for dense zones — ensure minimum angular separation
+  const detailSpanDeg = useMemo(() => {
+    const minAngularSep = (seatRadius * 2.4) / (BASE_RADIUS + INNER_COUNT * rowSpacing);
+    const minSpanRad = minAngularSep * maxSeatsInRow;
+    const minSpanDeg = (minSpanRad * 180) / Math.PI;
+    return clamp(Math.max(maxSeatsInRow * 3.2, minSpanDeg), 90, 176);
+  }, [maxSeatsInRow, seatRadius, rowSpacing]);
 
   const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
   const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
 
-  // Fixed 18-row layout — always computed for all rows regardless of data
   const rowLayouts = useMemo(() => {
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
       const isOuter = idx < OUTER_COUNT;
@@ -185,14 +201,12 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
       let radius: number;
       if (isOuter) {
-        // Outer rows: Σ(idx=0) gets largest radius, Κ(idx=8) gets smallest of outer
-        const localIdx = OUTER_COUNT - 1 - idx; // Σ=8, Κ=0
-        radius = BASE_RADIUS + INNER_COUNT * ROW_SPACING + SECTION_GAP + localIdx * ROW_SPACING;
+        const localIdx = OUTER_COUNT - 1 - idx;
+        radius = BASE_RADIUS + INNER_COUNT * rowSpacing + SECTION_GAP + localIdx * rowSpacing;
       } else {
-        // Inner rows: Ι(idx=9) gets largest inner radius, Α(idx=17) gets smallest
         const innerIdx = idx - OUTER_COUNT;
-        const localIdx = INNER_COUNT - 1 - innerIdx; // Ι=8, Α=0
-        radius = BASE_RADIUS + localIdx * ROW_SPACING;
+        const localIdx = INNER_COUNT - 1 - innerIdx;
+        radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
       const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuter ? UPPER_SECTION_INSET_DEG : 0);
@@ -208,7 +222,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         hasData: rowSeats.length > 0,
       };
     });
-  }, [seatsByRow, detailStartDeg, detailEndDeg]);
+  }, [seatsByRow, detailStartDeg, detailEndDeg, rowSpacing]);
 
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
@@ -230,72 +244,97 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return positions;
   }, [rowLayouts]);
 
-  // Always use the fixed outermost row (Σ) radius
-  const outermostRadius = rowLayouts[0].radius + SEAT_RADIUS + 28;
-  const titleRadius = outermostRadius + 46;
-  const stageRadius = Math.max(72, BASE_RADIUS - 78);
-  const svgMinWidth = Math.max(980, maxSeatsInRow * 30);
-
-  const outerSection = rowLayouts.slice(0, OUTER_COUNT);
-  const innerSection = rowLayouts.slice(OUTER_COUNT);
-
+  // Simple bounding-box viewBox from actual seat positions + row endpoints
   const viewBox = useMemo(() => {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-    // Include all row positions (even empty rows) for consistent viewBox
+    const expand = (x: number, y: number) => {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    };
+
+    // Include all row arc endpoints
     rowLayouts.forEach(({ radius, startDeg, endDeg }) => {
       [startDeg, (startDeg + endDeg) / 2, endDeg].forEach((deg) => {
         const rad = toRad(deg);
-        const bx = HC.x + radius * Math.cos(rad);
-        const by = HC.y + radius * Math.sin(rad);
-        minX = Math.min(minX, bx);
-        minY = Math.min(minY, by);
-        maxX = Math.max(maxX, bx);
-        maxY = Math.max(maxY, by);
+        expand(HC.x + radius * Math.cos(rad), HC.y + radius * Math.sin(rad));
       });
     });
 
-    // Include boundary arcs
-    const boundaryAngles = [detailStartDeg, zoneMidDeg, detailEndDeg].map(toRad);
-    boundaryAngles.forEach((rad) => {
-      const bx = HC.x + outermostRadius * Math.cos(rad);
-      const by = HC.y + outermostRadius * Math.sin(rad);
-      minX = Math.min(minX, bx);
-      minY = Math.min(minY, by);
-      maxX = Math.max(maxX, bx);
-      maxY = Math.max(maxY, by);
-    });
+    // Include seat positions
+    seatPositions.forEach(({ x, y }) => expand(x, y));
 
-    const titleRad = toRad(zoneMidDeg);
-    const titleX = HC.x + titleRadius * Math.cos(titleRad);
-    const titleY = HC.y + titleRadius * Math.sin(titleRad);
-    minX = Math.min(minX, titleX);
-    minY = Math.min(minY, titleY);
-    maxX = Math.max(maxX, titleX);
-    maxY = Math.max(maxY, titleY);
-
+    // Include stage label area
+    const stageR = Math.max(60, BASE_RADIUS - 60);
     const stageRad = toRad(zoneMidDeg);
-    const stageX = HC.x + stageRadius * Math.cos(stageRad);
-    const stageY = HC.y + stageRadius * Math.sin(stageRad);
-    minX = Math.min(minX, stageX);
-    minY = Math.min(minY, stageY);
-    maxX = Math.max(maxX, stageX);
-    maxY = Math.max(maxY, stageY);
+    expand(HC.x + stageR * Math.cos(stageRad), HC.y + stageR * Math.sin(stageRad));
 
-    const padX = 90;
-    const padTop = 90;
-    const padBottom = 80;
-    const width = maxX - minX + padX * 2;
-    const height = maxY - minY + padTop + padBottom;
+    const pad = 60;
+    const width = maxX - minX + pad * 2;
+    const height = maxY - minY + pad * 2;
+    return `${minX - pad} ${minY - pad} ${width} ${height}`;
+  }, [rowLayouts, seatPositions, zoneMidDeg]);
 
-    return `${minX - padX} ${minY - padTop} ${width} ${height}`;
-  }, [rowLayouts, detailStartDeg, zoneMidDeg, detailEndDeg, outermostRadius, titleRadius, stageRadius]);
+  // Zoom/pan handlers
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom((z) => clamp(z * delta, 0.5, 4));
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPan({
+      x: dragStart.current.panX + (e.clientX - dragStart.current.x),
+      y: dragStart.current.panY + (e.clientY - dragStart.current.y),
+    });
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => setIsDragging(false), []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist.current = Math.sqrt(dx * dx + dy * dy);
+    } else if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX: pan.x, panY: pan.y };
+    }
+  }, [pan]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDist.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scale = dist / lastTouchDist.current;
+      lastTouchDist.current = dist;
+      setZoom((z) => clamp(z * scale, 0.5, 4));
+    } else if (e.touches.length === 1 && isDragging) {
+      setPan({
+        x: dragStart.current.panX + (e.touches[0].clientX - dragStart.current.x),
+        y: dragStart.current.panY + (e.touches[0].clientY - dragStart.current.y),
+      });
+    }
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    lastTouchDist.current = null;
+  }, []);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
+      if (isDragging) return;
       if (soldSeatIds.has(seat.id)) return;
 
       const seatData: SelectedSeat = {
@@ -312,7 +351,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         onSeatToggle(seatData);
       }
     },
-    [soldSeatIds, zoneName, zoneId, zoneColor, selectedIds, selectedSeats.length, maxSeats, onSeatToggle]
+    [isDragging, soldSeatIds, zoneName, zoneId, zoneColor, selectedIds, selectedSeats.length, maxSeats, onSeatToggle]
   );
 
   if (loading) {
@@ -328,6 +367,9 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   }
 
   const zoneLetter = zoneName.replace('Τμήμα ', '');
+  const outerSection = rowLayouts.slice(0, OUTER_COUNT);
+  const innerSection = rowLayouts.slice(OUTER_COUNT);
+  const stageRadius = Math.max(60, BASE_RADIUS - 60);
 
   return (
     <div className="w-full space-y-3">
@@ -366,23 +408,40 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         </div>
       </div>
 
-      <div className="w-full overflow-auto rounded-md" style={{ maxHeight: '72vh', WebkitOverflowScrolling: 'touch' }}>
+      {/* Zoomable/pannable container */}
+      <div
+        ref={containerRef}
+        className="w-full overflow-hidden rounded-md touch-none"
+        style={{ maxHeight: '72vh', cursor: isDragging ? 'grabbing' : 'grab' }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <svg
           viewBox={viewBox}
           className="block h-auto w-full"
           preserveAspectRatio="xMidYMid meet"
-          style={{ minWidth: `${svgMinWidth}px` }}
+          style={{
+            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+            transformOrigin: 'center center',
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          }}
         >
-          {/* Zone letter title */}
+          {/* Zone letter title — compact */}
           <text
-            x={HC.x + titleRadius * Math.cos(toRad(zoneMidDeg))}
-            y={HC.y + titleRadius * Math.sin(toRad(zoneMidDeg))}
+            x={HC.x + (rowLayouts[0].radius + seatRadius + 36) * Math.cos(toRad(zoneMidDeg))}
+            y={HC.y + (rowLayouts[0].radius + seatRadius + 36) * Math.sin(toRad(zoneMidDeg))}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize={34}
+            fontSize={22}
             fontWeight={800}
             fill={zoneColor}
-            opacity={0.9}
+            opacity={0.8}
             className="pointer-events-none select-none"
           >
             {zoneLetter}
@@ -393,16 +452,16 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             d={annularSectorPath(
               HC.x,
               HC.y,
-              Math.max(48, innerSection[innerSection.length - 1].radius - 28),
-              innerSection[0].radius + 26,
+              Math.max(48, innerSection[innerSection.length - 1].radius - 20),
+              innerSection[0].radius + 18,
               detailStartDeg,
               detailEndDeg
             )}
             fill={zoneColor}
-            fillOpacity={0.06}
+            fillOpacity={0.05}
             stroke={zoneColor}
-            strokeOpacity={0.24}
-            strokeWidth={1.5}
+            strokeOpacity={0.18}
+            strokeWidth={1}
           />
 
           {/* Outer section background */}
@@ -410,49 +469,39 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             d={annularSectorPath(
               HC.x,
               HC.y,
-              outerSection[outerSection.length - 1].radius - 28,
-              outerSection[0].radius + 26,
+              outerSection[outerSection.length - 1].radius - 20,
+              outerSection[0].radius + 18,
               detailStartDeg + UPPER_SECTION_INSET_DEG,
               detailEndDeg - UPPER_SECTION_INSET_DEG
             )}
             fill={zoneColor}
-            fillOpacity={0.06}
+            fillOpacity={0.05}
             stroke={zoneColor}
-            strokeOpacity={0.24}
-            strokeWidth={1.5}
+            strokeOpacity={0.18}
+            strokeWidth={1}
           />
 
-          {/* Red boundary arc */}
-          <path
-            d={`M ${HC.x + outermostRadius * Math.cos(toRad(detailStartDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailStartDeg))} A ${outermostRadius} ${outermostRadius} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + outermostRadius * Math.cos(toRad(detailEndDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailEndDeg))}`}
-            fill="none"
-            stroke="hsl(var(--destructive) / 0.7)"
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
+          {/* Simple section gap divider */}
+          {(() => {
+            const gapR = (innerSection[0].radius + outerSection[outerSection.length - 1].radius) / 2;
+            const s = toRad(detailStartDeg + EDGE_PAD_DEG);
+            const e = toRad(detailEndDeg - EDGE_PAD_DEG);
+            return (
+              <path
+                d={`M ${HC.x + gapR * Math.cos(s)} ${HC.y + gapR * Math.sin(s)} A ${gapR} ${gapR} 0 0 1 ${HC.x + gapR * Math.cos(e)} ${HC.y + gapR * Math.sin(e)}`}
+                fill="none"
+                stroke={zoneColor}
+                strokeOpacity={0.15}
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+            );
+          })()}
 
-          {/* Section gap dashed lines */}
-          <path
-            d={`M ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${innerSection[0].radius + 22} ${innerSection[0].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
-            fill="none"
-            stroke={zoneColor}
-            strokeOpacity={0.2}
-            strokeWidth={1.5}
-            strokeDasharray="6 6"
-          />
-          <path
-            d={`M ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${outerSection[outerSection.length - 1].radius - 22} ${outerSection[outerSection.length - 1].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
-            fill="none"
-            stroke={zoneColor}
-            strokeOpacity={0.2}
-            strokeWidth={1.5}
-            strokeDasharray="6 6"
-          />
-
-          {/* Row labels — always all 18 */}
+          {/* Row labels */}
           {rowLayouts.map(({ rowLabel, radius, startDeg, endDeg, hasData }) => {
-            const leftAngle = toRad(startDeg - 4);
-            const rightAngle = toRad(endDeg + 4);
+            const leftAngle = toRad(startDeg - 3);
+            const rightAngle = toRad(endDeg + 3);
             const leftX = HC.x + radius * Math.cos(leftAngle);
             const leftY = HC.y + radius * Math.sin(leftAngle);
             const rightX = HC.x + radius * Math.cos(rightAngle);
@@ -465,10 +514,10 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                   y={leftY}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize={12}
+                  fontSize={10}
                   fontWeight={700}
                   fill="hsl(var(--muted-foreground))"
-                  opacity={hasData ? 1 : 0.35}
+                  opacity={hasData ? 1 : 0.3}
                   className="pointer-events-none select-none"
                 >
                   {rowLabel}
@@ -478,10 +527,10 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                   y={rightY}
                   textAnchor="start"
                   dominantBaseline="middle"
-                  fontSize={12}
+                  fontSize={10}
                   fontWeight={700}
                   fill="hsl(var(--muted-foreground))"
-                  opacity={hasData ? 1 : 0.35}
+                  opacity={hasData ? 1 : 0.3}
                   className="pointer-events-none select-none"
                 >
                   {rowLabel}
@@ -490,7 +539,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             );
           })}
 
-          {/* Seats — only where data exists */}
+          {/* Seats */}
           {rowLayouts.flatMap(({ rowSeats }) =>
             rowSeats.map((seat) => {
               const position = seatPositions.get(seat.id);
@@ -504,7 +553,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
               let fill = 'transparent';
               let stroke = zoneColor;
               let textColor = zoneColor;
-              let strokeWidth = 1.6;
+              let strokeWidth = 1.4;
               let opacity = 1;
               let cursor: React.CSSProperties['cursor'] = 'pointer';
 
@@ -524,7 +573,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
               } else if (isHovered) {
                 fill = zoneColor;
                 textColor = 'hsl(var(--background))';
-                strokeWidth = 2.2;
+                strokeWidth = 2;
               }
 
               return (
@@ -538,38 +587,40 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                   <circle
                     cx={position.x}
                     cy={position.y}
-                    r={SEAT_RADIUS}
+                    r={seatRadius}
                     fill={fill}
                     stroke={stroke}
                     strokeWidth={strokeWidth}
                   />
-                  <text
-                    x={position.x}
-                    y={position.y + 0.5}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize={8}
-                    fontWeight={700}
-                    fill={textColor}
-                    className="pointer-events-none select-none"
-                  >
-                    {seat.seat_number}
-                  </text>
+                  {seatRadius >= 8 && (
+                    <text
+                      x={position.x}
+                      y={position.y + 0.5}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={seatRadius >= 10 ? 8 : 6}
+                      fontWeight={700}
+                      fill={textColor}
+                      className="pointer-events-none select-none"
+                    >
+                      {seat.seat_number}
+                    </text>
+                  )}
                 </g>
               );
             })
           )}
 
-          {/* Stage indicator */}
+          {/* Stage indicator — fixed below inner arc */}
           <text
             x={HC.x + stageRadius * Math.cos(toRad(zoneMidDeg))}
             y={HC.y + stageRadius * Math.sin(toRad(zoneMidDeg))}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize={14}
-            fontWeight={800}
-            fill="hsl(var(--primary) / 0.55)"
-            letterSpacing="0.08em"
+            fontSize={12}
+            fontWeight={700}
+            fill="hsl(var(--primary) / 0.5)"
+            letterSpacing="0.1em"
             className="pointer-events-none select-none"
           >
             ↓ {t.stage}
