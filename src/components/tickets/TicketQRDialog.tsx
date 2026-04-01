@@ -57,6 +57,7 @@ const t = {
   },
   en: {
     scanAtEntry: "Scan at entry",
+    saveHint: "Save this QR (or screenshot). Show at entry.",
     downloadQR: "QR Image",
     downloadPdf: "PDF Ticket",
     name: "NAME",
