@@ -40,7 +40,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { language } = useLanguage();
-  const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
+  const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string; end_at: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [showExpired, setShowExpired] = useState(false);
   
@@ -325,7 +325,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setBoostingOffer({ id: offer.id, title: offer.title })}
+                    onClick={() => setBoostingOffer({ id: offer.id, title: offer.title, end_at: offer.end_at })}
                     title={t.boost}
                     className="h-7 w-7 md:h-8 md:w-8 text-primary hover:text-primary"
                   >
@@ -434,6 +434,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
           offerTitle={boostingOffer.title}
           hasActiveSubscription={subscriptionData?.subscribed || false}
           remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+          offerEndAt={boostingOffer.end_at}
         />
       )}
 

@@ -28,6 +28,8 @@ interface OfferBoostSectionProps {
   }) => void;
   hasActiveSubscription?: boolean;
   remainingBudgetCents?: number;
+  /** The FOMO visibility end time (end_at) – caps max boost duration */
+  offerEndAt?: string | null;
 }
 
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,7 @@ const OfferBoostSection = ({
   onBoostChange,
   hasActiveSubscription = false,
   remainingBudgetCents = 0,
+  offerEndAt,
 }: OfferBoostSectionProps) => {
   const { language } = useLanguage();
   const [boostEnabled, setBoostEnabled] = useState(false);
@@ -45,6 +48,17 @@ const OfferBoostSection = ({
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 7));
   const [durationHours, setDurationHours] = useState<number>(3);
   const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
+
+  // Calculate remaining hours until offer FOMO end
+  const maxRemainingHours = (() => {
+    if (!offerEndAt) return null;
+    const diff = new Date(offerEndAt).getTime() - Date.now();
+    if (diff <= 0) return 0;
+    return Math.floor(diff / (1000 * 60 * 60));
+  })();
+
+  const maxEndDate = offerEndAt ? new Date(offerEndAt) : null;
+  const effectiveMaxHours = maxRemainingHours !== null ? Math.min(24, maxRemainingHours) : 24;
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
@@ -174,6 +188,18 @@ const OfferBoostSection = ({
 
       {boostEnabled && (
         <div className="space-y-6 pt-4 border-t">
+          {/* Boost Ceiling Warning */}
+          {maxRemainingHours !== null && maxRemainingHours <= 48 && maxRemainingHours > 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+              <Clock className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                {language === "el"
+                  ? `Η προσφορά σου λήγει σε ${maxRemainingHours} ώρες στο FOMO. Μπορείς να κάνεις boost μέχρι τότε.`
+                  : `Your offer expires in ${maxRemainingHours} hours on FOMO. You can boost up to that point.`}
+              </p>
+            </div>
+          )}
+
           {/* Free Plan No-Refund Disclaimer */}
           {!hasActiveSubscription && (
             <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
@@ -294,13 +320,13 @@ const OfferBoostSection = ({
                         if (raw === '' || /^\d+$/.test(raw)) {
                           setDurationHoursInput(raw);
                           const v = parseInt(raw);
-                          if (!isNaN(v) && v >= 1 && v <= 24) handleDurationHoursChange(v);
+                          if (!isNaN(v) && v >= 1 && v <= effectiveMaxHours) handleDurationHoursChange(v);
                         }
                       }}
                       onBlur={() => {
                         const v = parseInt(durationHoursInput);
                         if (isNaN(v) || v < 1) { handleDurationHoursChange(1); setDurationHoursInput("1"); }
-                        else if (v > 24) { handleDurationHoursChange(24); setDurationHoursInput("24"); }
+                        else if (v > effectiveMaxHours) { handleDurationHoursChange(effectiveMaxHours); setDurationHoursInput(String(effectiveMaxHours)); }
                         else { setDurationHoursInput(String(v)); }
                       }}
                       className="w-16 text-center"
@@ -312,8 +338,8 @@ const OfferBoostSection = ({
                     variant="outline"
                     size="icon"
                     className="h-9 w-9 shrink-0"
-                    onClick={() => { const v = Math.min(24, durationHours + 1); handleDurationHoursChange(v); setDurationHoursInput(String(v)); }}
-                    disabled={durationHours >= 24}
+                    onClick={() => { const v = Math.min(effectiveMaxHours, durationHours + 1); handleDurationHoursChange(v); setDurationHoursInput(String(v)); }}
+                    disabled={durationHours >= effectiveMaxHours}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -361,7 +387,7 @@ const OfferBoostSection = ({
                       mode="single"
                       selected={endDate}
                       onSelect={handleEndDateChange}
-                      disabled={(date) => date <= startDate}
+                      disabled={(date) => date <= startDate || (maxEndDate ? date > maxEndDate : false)}
                     />
                   </PopoverContent>
                 </Popover>

@@ -24,6 +24,8 @@ interface OfferBoostDialogProps {
   offerTitle: string;
   hasActiveSubscription: boolean;
   remainingBudgetCents: number;
+  /** The FOMO visibility end time (end_at) – caps max boost duration */
+  offerEndAt?: string | null;
 }
 
 const OfferBoostDialog = ({
@@ -33,6 +35,7 @@ const OfferBoostDialog = ({
   offerTitle,
   hasActiveSubscription,
   remainingBudgetCents,
+  offerEndAt,
 }: OfferBoostDialogProps) => {
   const { language } = useLanguage();
   const [tier, setTier] = useState<BoostTier>("standard");
@@ -46,6 +49,18 @@ const OfferBoostDialog = ({
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
+  // Calculate remaining hours until offer FOMO end
+  const maxRemainingHours = (() => {
+    if (!offerEndAt) return null;
+    const diff = new Date(offerEndAt).getTime() - Date.now();
+    if (diff <= 0) return 0;
+    return Math.floor(diff / (1000 * 60 * 60));
+  })();
+
+  const maxEndDate = offerEndAt ? new Date(offerEndAt) : null;
+  const isExpired = maxRemainingHours !== null && maxRemainingHours <= 0;
+  const effectiveMaxHours = maxRemainingHours !== null ? Math.min(24, maxRemainingHours) : 24;
+
   useEffect(() => {
     if (!open) {
       setCheckoutUrl(null);
@@ -53,6 +68,15 @@ const OfferBoostDialog = ({
       setIsSubmitting(false);
     }
   }, [open]);
+
+  // Cap duration when maxRemainingHours changes
+  useEffect(() => {
+    if (effectiveMaxHours < durationHours) {
+      const capped = Math.max(1, effectiveMaxHours);
+      setDurationHours(capped);
+      setDurationHoursInput(String(capped));
+    }
+  }, [effectiveMaxHours]);
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
@@ -234,8 +258,36 @@ const OfferBoostDialog = ({
                 </Button>
               </div>
             </div>
+          ) : isExpired ? (
+            <div className="flex items-start gap-2 p-4 rounded-lg border border-destructive/50 bg-destructive/5">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-destructive">
+                  {language === "el"
+                    ? "Η προσφορά έχει λήξει στο FOMO"
+                    : "This offer has expired on FOMO"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === "el"
+                    ? "Δεν μπορείτε να κάνετε boost. Επεκτείνετε τη διάρκεια εμφάνισης από την Επεξεργασία για να συνεχίσετε."
+                    : "You cannot boost this offer. Extend the appearance duration from Edit to continue."}
+                </p>
+              </div>
+            </div>
           ) : (
             <>
+              {/* Boost Ceiling Warning */}
+              {maxRemainingHours !== null && maxRemainingHours <= 48 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+                  <Clock className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-800 dark:text-blue-300">
+                    {language === "el"
+                      ? `Η προσφορά σου λήγει σε ${maxRemainingHours} ώρες στο FOMO. Μπορείς να κάνεις boost μέχρι τότε. Για περισσότερο, επέκτεινε τη διάρκεια από την Επεξεργασία.`
+                      : `Your offer expires in ${maxRemainingHours} hours on FOMO. You can boost up to that point. For more, extend the duration from Edit.`}
+                  </p>
+                </div>
+              )}
+
               {/* Free Plan No-Refund Disclaimer */}
               {!hasActiveSubscription && (
                 <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
@@ -355,13 +407,13 @@ const OfferBoostDialog = ({
                             if (raw === '' || /^\d+$/.test(raw)) {
                               setDurationHoursInput(raw);
                               const v = parseInt(raw);
-                              if (!isNaN(v) && v >= 1 && v <= 24) setDurationHours(v);
+                              if (!isNaN(v) && v >= 1 && v <= effectiveMaxHours) setDurationHours(v);
                             }
                           }}
                           onBlur={() => {
                             const v = parseInt(durationHoursInput);
                             if (isNaN(v) || v < 1) { setDurationHours(1); setDurationHoursInput("1"); }
-                            else if (v > 24) { setDurationHours(24); setDurationHoursInput("24"); }
+                            else if (v > effectiveMaxHours) { setDurationHours(effectiveMaxHours); setDurationHoursInput(String(effectiveMaxHours)); }
                             else { setDurationHours(v); setDurationHoursInput(String(v)); }
                           }}
                           className="w-16 text-center"
@@ -373,8 +425,8 @@ const OfferBoostDialog = ({
                         variant="outline"
                         size="icon"
                         className="h-9 w-9 shrink-0"
-                        onClick={() => { const v = Math.min(24, durationHours + 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
-                        disabled={durationHours >= 24}
+                        onClick={() => { const v = Math.min(effectiveMaxHours, durationHours + 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
+                        disabled={durationHours >= effectiveMaxHours}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -424,7 +476,7 @@ const OfferBoostDialog = ({
                           mode="single"
                           selected={endDate}
                           onSelect={(date) => date && setEndDate(date)}
-                          disabled={(date) => date <= startDate}
+                          disabled={(date) => date <= startDate || (maxEndDate ? date > maxEndDate : false)}
                         />
                       </PopoverContent>
                     </Popover>

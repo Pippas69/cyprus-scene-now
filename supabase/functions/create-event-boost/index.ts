@@ -41,12 +41,38 @@ Deno.serve(async (req) => {
     // Get business ID for this event
     const { data: eventData, error: eventError } = await supabaseClient
       .from("events")
-      .select("business_id")
+      .select("business_id, appearance_end_at, end_at")
       .eq("id", eventId)
       .single();
 
     if (eventError) throw eventError;
     const businessId = eventData.business_id;
+
+    // Validate boost doesn't exceed event FOMO end time
+    const eventFomoEnd = eventData.appearance_end_at || eventData.end_at;
+    if (eventFomoEnd) {
+      const fomoEndTime = new Date(eventFomoEnd).getTime();
+      const now = Date.now();
+      if (fomoEndTime <= now) {
+        throw new Error("Cannot boost: this event has already expired on FOMO");
+      }
+      // For hourly: check if boost end exceeds FOMO end
+      if (durationMode === "hourly" && durationHours) {
+        const boostEndTime = now + durationHours * 60 * 60 * 1000;
+        if (boostEndTime > fomoEndTime) {
+          const maxHours = Math.floor((fomoEndTime - now) / (1000 * 60 * 60));
+          throw new Error(`Boost duration exceeds event FOMO end. Maximum allowed: ${maxHours} hours`);
+        }
+      }
+      // For daily: check if end date exceeds FOMO end
+      if (durationMode === "daily" && endDate) {
+        const boostEnd = new Date(endDate);
+        boostEnd.setHours(23, 59, 59, 999);
+        if (boostEnd.getTime() > fomoEndTime) {
+          throw new Error("Boost end date exceeds event FOMO end date");
+        }
+      }
+    }
 
     // Verify user owns this business
     const { data: businessData, error: businessError } = await supabaseClient

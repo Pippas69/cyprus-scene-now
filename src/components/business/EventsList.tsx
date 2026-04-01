@@ -609,7 +609,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
         eventId={boostingEvent.id}
         eventTitle={boostingEvent.title}
         hasActiveSubscription={subscriptionData?.subscribed || false}
-        remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0} />
+        remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+        eventEndAt={boostingEvent.appearance_end_at || boostingEvent.end_at} />
 
       }
 
