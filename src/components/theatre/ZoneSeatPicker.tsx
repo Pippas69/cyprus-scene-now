@@ -207,7 +207,8 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       if (isOuterSection) {
         // Outer section: first in array (Σ) gets largest radius, last (Κ) gets smallest of outer
         const localIdx = outerSectionRowCount - 1 - rowIdx; // Σ=highest localIdx, Κ=0
-        radius = BASE_RADIUS + innerSectionRowCount * ROW_SPACING + SECTION_GAP + localIdx * ROW_SPACING;
+        const gap = innerSectionRowCount > 0 ? SECTION_GAP : 0;
+        radius = BASE_RADIUS + innerSectionRowCount * ROW_SPACING + gap + localIdx * ROW_SPACING;
       } else {
         // Inner section: first inner row (Ι) gets largest inner radius, last (Α) gets smallest
         const innerIdx = rowIdx - outerSectionRowCount;
