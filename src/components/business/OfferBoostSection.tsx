@@ -188,6 +188,18 @@ const OfferBoostSection = ({
 
       {boostEnabled && (
         <div className="space-y-6 pt-4 border-t">
+          {/* Boost Ceiling Warning */}
+          {maxRemainingHours !== null && maxRemainingHours <= 48 && maxRemainingHours > 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+              <Clock className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                {language === "el"
+                  ? `Η προσφορά σου λήγει σε ${maxRemainingHours} ώρες στο FOMO. Μπορείς να κάνεις boost μέχρι τότε.`
+                  : `Your offer expires in ${maxRemainingHours} hours on FOMO. You can boost up to that point.`}
+              </p>
+            </div>
+          )}
+
           {/* Free Plan No-Refund Disclaimer */}
           {!hasActiveSubscription && (
             <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
