@@ -94,6 +94,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       showQR: 'QR',
       valid: 'Έγκυρο',
       used: 'Χρησιμοποιημένο',
+      expired: 'Έληξε',
       browseEvents: 'Εξερεύνηση Εκδηλώσεων',
       free: 'Δωρεάν',
     },
@@ -110,6 +111,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       showQR: 'QR',
       valid: 'Valid',
       used: 'Used',
+      expired: 'Expired',
       browseEvents: 'Browse Events',
       free: 'Free',
     },
@@ -136,76 +138,6 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     return `€${(priceCents / 100).toFixed(2)}`;
   };
 
-  const renderEvents = (eventsList: any[], emptyMessage: string, isRsvp = false) => {
-    if (eventsList.length === 0) {
-      return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
-    }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {eventsList.map(item => {
-          const rawEvent = isRsvp ? item.event : item;
-          const key = isRsvp ? item.id : rawEvent.id;
-          const isBoosted = rawEvent.isBoosted || false;
-          // Map business (singular) to businesses (plural) for UnifiedEventCard
-          const event = {
-            ...rawEvent,
-            businesses: rawEvent.business || rawEvent.businesses,
-          };
-          return (
-            <div key={key} className="relative">
-              {/* Use mobile card style on all devices for visual consistency */}
-              <UnifiedEventCard
-                event={event}
-                language={language}
-                size="full"
-                isBoosted={isBoosted}
-                disableViewTracking
-                linkSearch="?src=dashboard_user"
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderPastEvents = (eventsList: any[], isRsvp = false) => {
-    if (eventsList.length === 0) {
-      return <p className="text-center text-muted-foreground py-6 text-sm">{t.noHistory}</p>;
-    }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {eventsList.map(item => {
-          const rawEvent = isRsvp ? item.event : item;
-          const key = isRsvp ? item.id : rawEvent.id;
-          const isBoosted = rawEvent.isBoosted || false;
-          // Map business (singular) to businesses (plural) for UnifiedEventCard
-          const event = {
-            ...rawEvent,
-            businesses: rawEvent.business || rawEvent.businesses,
-          };
-          return (
-            <div key={key} className="relative opacity-60">
-              {/* Use mobile card style on all devices for visual consistency */}
-              <UnifiedEventCard
-                event={event}
-                language={language}
-                size="full"
-                isBoosted={isBoosted}
-                disableViewTracking
-                linkSearch="?src=dashboard_user"
-              />
-              <Badge variant="secondary" className="absolute top-2 right-2 bg-background/90 backdrop-blur text-xs z-20">
-                <Clock className="h-3 w-3 mr-1" />
-                {t.eventEnded}
-              </Badge>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const renderTickets = (ticketsList: any[], emptyMessage: string, isPast = false) => {
     if (ticketsList.length === 0) {
       return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
@@ -214,6 +146,12 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ticketsList.map(ticket => {
           const businessName = (ticket.events as any)?.businesses?.name;
+          const eventEndOrStart = ticket.events?.end_at || ticket.events?.start_at;
+          const isTimeExpired = !eventEndOrStart || new Date(eventEndOrStart) < now;
+          const isExpiredTicket = ticket.status === 'valid' && isTimeExpired;
+          const statusText = ticket.status === 'used' ? t.used : isExpiredTicket ? t.expired : t.valid;
+          const statusVariant = isExpiredTicket ? 'secondary' : ticket.status === 'valid' ? 'default' : 'secondary';
+
           return (
             <Card key={ticket.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
               {/* Image section - same as event/offer cards */}
@@ -228,10 +166,10 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                   
                   {/* Status badge */}
                   <Badge 
-                    variant={ticket.status === 'valid' ? 'default' : 'secondary'} 
+                    variant={statusVariant}
                     className="absolute top-2 right-2 text-[10px] px-1.5 py-0"
                   >
-                    {ticket.status === 'valid' ? t.valid : t.used}
+                    {statusText}
                   </Badge>
                 </div>
               )}
