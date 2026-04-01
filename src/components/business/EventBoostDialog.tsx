@@ -24,6 +24,8 @@ interface EventBoostDialogProps {
   eventTitle: string;
   hasActiveSubscription: boolean;
   remainingBudgetCents: number;
+  /** The FOMO visibility end time (appearance_end_at or end_at) – caps max boost duration */
+  eventEndAt?: string | null;
 }
 
 const EventBoostDialog = ({
