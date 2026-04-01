@@ -198,11 +198,13 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
   const initZonePrices = (venueZones: typeof zones) => {
     if (!venueZones || venueZones.length === 0) return;
     if (instance.zone_prices.length > 0) return;
-    const prices: ZonePrice[] = venueZones.map((z) => ({
-      zone_id: z.id,
-      zone_name: z.name,
-      price_cents: 1500,
-    }));
+    const prices: ZonePrice[] = venueZones
+      .filter((z) => z.name !== 'Πλατεία')
+      .map((z) => ({
+        zone_id: z.id,
+        zone_name: z.name,
+        price_cents: 1500,
+      }));
     onUpdate({ zone_prices: prices });
   };
 
