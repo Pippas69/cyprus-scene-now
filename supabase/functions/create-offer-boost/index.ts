@@ -54,12 +54,36 @@ Deno.serve(async (req) => {
     // Get discount and verify ownership
     const { data: discountData, error: discountError } = await supabaseClient
       .from("discounts")
-      .select("business_id")
+      .select("business_id, end_at")
       .eq("id", discountId)
       .single();
 
     if (discountError) throw discountError;
     const businessId = discountData.business_id;
+
+    // Validate boost doesn't exceed offer FOMO end time
+    const offerFomoEnd = discountData.end_at;
+    if (offerFomoEnd) {
+      const fomoEndTime = new Date(offerFomoEnd).getTime();
+      const now = Date.now();
+      if (fomoEndTime <= now) {
+        throw new Error("Cannot boost: this offer has already expired on FOMO");
+      }
+      if (durationMode === "hourly" && durationHours) {
+        const boostEndTime = now + durationHours * 60 * 60 * 1000;
+        if (boostEndTime > fomoEndTime) {
+          const maxHours = Math.floor((fomoEndTime - now) / (1000 * 60 * 60));
+          throw new Error(`Boost duration exceeds offer FOMO end. Maximum allowed: ${maxHours} hours`);
+        }
+      }
+      if (durationMode === "daily" && endDate) {
+        const boostEnd = new Date(endDate);
+        boostEnd.setHours(23, 59, 59, 999);
+        if (boostEnd.getTime() > fomoEndTime) {
+          throw new Error("Boost end date exceeds offer FOMO end date");
+        }
+      }
+    }
 
     // Verify user owns this business
     const { data: businessData, error: businessError } = await supabaseClient

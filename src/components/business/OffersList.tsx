@@ -434,6 +434,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
           offerTitle={boostingOffer.title}
           hasActiveSubscription={subscriptionData?.subscribed || false}
           remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+          offerEndAt={boostingOffer.end_at}
         />
       )}
 
