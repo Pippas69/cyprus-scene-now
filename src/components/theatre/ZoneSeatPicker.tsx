@@ -196,27 +196,40 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return count;
   }, [rowGroups, splitRowOrderIdx]);
 
-  const rowLayouts = useMemo(() => {
-    return rowGroups.map(([rowLabel, rowSeats], rowIdx) => {
-      const isLowerSection = rowIdx < lowerSectionRowCount;
-      const localRowIdx = isLowerSection ? rowIdx : rowIdx - lowerSectionRowCount;
-      const radius = isLowerSection
-        ? BASE_RADIUS + localRowIdx * ROW_SPACING
-        : BASE_RADIUS + lowerSectionRowCount * ROW_SPACING + SECTION_GAP + localRowIdx * ROW_SPACING;
+  const innerSectionRowCount = rowGroups.length - outerSectionRowCount;
 
-      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isLowerSection ? 0 : UPPER_SECTION_INSET_DEG);
-      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isLowerSection ? 0 : UPPER_SECTION_INSET_DEG);
+  const rowLayouts = useMemo(() => {
+    // Array order: outer rows (Σ→Κ) then inner rows (Ι→Α)
+    // Outer rows get larger radii, inner rows get smaller radii
+    return rowGroups.map(([rowLabel, rowSeats], rowIdx) => {
+      const isOuterSection = rowIdx < outerSectionRowCount;
+      const isInnerSection = !isOuterSection;
+
+      let radius: number;
+      if (isOuterSection) {
+        // Outer section: first in array (Σ) gets largest radius, last (Κ) gets smallest of outer
+        const localIdx = outerSectionRowCount - 1 - rowIdx; // Σ=highest localIdx, Κ=0
+        radius = BASE_RADIUS + innerSectionRowCount * ROW_SPACING + SECTION_GAP + localIdx * ROW_SPACING;
+      } else {
+        // Inner section: first inner row (Ι) gets largest inner radius, last (Α) gets smallest
+        const innerIdx = rowIdx - outerSectionRowCount;
+        const localIdx = innerSectionRowCount - 1 - innerIdx; // Ι=highest, Α=0
+        radius = BASE_RADIUS + localIdx * ROW_SPACING;
+      }
+
+      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuterSection ? UPPER_SECTION_INSET_DEG : 0);
+      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isOuterSection ? UPPER_SECTION_INSET_DEG : 0);
 
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
-        isLowerSection,
+        isLowerSection: isInnerSection,
         startDeg,
         endDeg,
       };
     });
-  }, [rowGroups, lowerSectionRowCount, detailStartDeg, detailEndDeg]);
+  }, [rowGroups, outerSectionRowCount, innerSectionRowCount, detailStartDeg, detailEndDeg]);
 
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
