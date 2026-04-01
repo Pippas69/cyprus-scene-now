@@ -45,6 +45,7 @@ const translations = {
   },
   en: {
     scanAtVenue: "Scan at the venue",
+    saveHint: "Save this QR (or screenshot). Show at the venue.",
     downloadQR: "QR Image",
     date: "DATE",
     time: "TIME",
