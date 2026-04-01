@@ -49,6 +49,17 @@ const OfferBoostSection = ({
   const [durationHours, setDurationHours] = useState<number>(3);
   const [durationHoursInput, setDurationHoursInput] = useState<string>("3");
 
+  // Calculate remaining hours until offer FOMO end
+  const maxRemainingHours = (() => {
+    if (!offerEndAt) return null;
+    const diff = new Date(offerEndAt).getTime() - Date.now();
+    if (diff <= 0) return 0;
+    return Math.floor(diff / (1000 * 60 * 60));
+  })();
+
+  const maxEndDate = offerEndAt ? new Date(offerEndAt) : null;
+  const effectiveMaxHours = maxRemainingHours !== null ? Math.min(24, maxRemainingHours) : 24;
+
   // 2-tier boost system with hourly and daily rates
   const tiers = {
     standard: { 
