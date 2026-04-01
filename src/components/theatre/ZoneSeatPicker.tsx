@@ -251,7 +251,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return positions;
   }, [rowLayouts]);
 
-  const outermostRadius = rowLayouts.length > 0 ? rowLayouts[rowLayouts.length - 1].radius + SEAT_RADIUS + 28 : BASE_RADIUS + 80;
+  const outermostRadius = rowLayouts.length > 0 ? rowLayouts[0].radius + SEAT_RADIUS + 28 : BASE_RADIUS + 80;
   const titleRadius = outermostRadius + 46;
   const stageRadius = Math.max(72, BASE_RADIUS - 78);
   const svgMinWidth = Math.max(980, maxSeatsInRow * 30);
