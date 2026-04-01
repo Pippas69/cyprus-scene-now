@@ -402,13 +402,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             {zoneLetter}
           </text>
 
-          {lowerSection.length > 0 && (
+          {innerSection.length > 0 && (
             <path
               d={annularSectorPath(
                 HC.x,
                 HC.y,
-                Math.max(48, lowerSection[0].radius - 28),
-                lowerSection[lowerSection.length - 1].radius + 26,
+                Math.max(48, innerSection[innerSection.length - 1].radius - 28),
+                innerSection[0].radius + 26,
                 detailStartDeg,
                 detailEndDeg
               )}
@@ -420,13 +420,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             />
           )}
 
-          {upperSection.length > 0 && (
+          {outerSection.length > 0 && (
             <path
               d={annularSectorPath(
                 HC.x,
                 HC.y,
-                upperSection[0].radius - 28,
-                upperSection[upperSection.length - 1].radius + 26,
+                outerSection[outerSection.length - 1].radius - 28,
+                outerSection[0].radius + 26,
                 detailStartDeg + UPPER_SECTION_INSET_DEG,
                 detailEndDeg - UPPER_SECTION_INSET_DEG
               )}
@@ -446,10 +446,10 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             strokeLinecap="round"
           />
 
-          {upperSection.length > 0 && (
+          {outerSection.length > 0 && innerSection.length > 0 && (
             <>
               <path
-                d={`M ${HC.x + (lowerSection[lowerSection.length - 1].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (lowerSection[lowerSection.length - 1].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${lowerSection[lowerSection.length - 1].radius + 22} ${lowerSection[lowerSection.length - 1].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (lowerSection[lowerSection.length - 1].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (lowerSection[lowerSection.length - 1].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
+                d={`M ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${innerSection[0].radius + 22} ${innerSection[0].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
                 fill="none"
                 stroke={zoneColor}
                 strokeOpacity={0.2}
@@ -457,7 +457,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                 strokeDasharray="6 6"
               />
               <path
-                d={`M ${HC.x + (upperSection[0].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (upperSection[0].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${upperSection[0].radius - 22} ${upperSection[0].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (upperSection[0].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (upperSection[0].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
+                d={`M ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${outerSection[outerSection.length - 1].radius - 22} ${outerSection[outerSection.length - 1].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
                 fill="none"
                 stroke={zoneColor}
                 strokeOpacity={0.2}
