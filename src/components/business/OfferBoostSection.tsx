@@ -326,8 +326,8 @@ const OfferBoostSection = ({
                     variant="outline"
                     size="icon"
                     className="h-9 w-9 shrink-0"
-                    onClick={() => { const v = Math.min(24, durationHours + 1); handleDurationHoursChange(v); setDurationHoursInput(String(v)); }}
-                    disabled={durationHours >= 24}
+                    onClick={() => { const v = Math.min(effectiveMaxHours, durationHours + 1); handleDurationHoursChange(v); setDurationHoursInput(String(v)); }}
+                    disabled={durationHours >= effectiveMaxHours}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
