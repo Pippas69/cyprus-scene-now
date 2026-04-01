@@ -35,6 +35,7 @@ const EventBoostDialog = ({
   eventTitle,
   hasActiveSubscription,
   remainingBudgetCents,
+  eventEndAt,
 }: EventBoostDialogProps) => {
   const { language } = useLanguage();
   const [tier, setTier] = useState<BoostTier>("standard");
