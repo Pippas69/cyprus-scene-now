@@ -191,8 +191,6 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         count++;
       }
     }
-    // If all rows are on one side of the split, no gap needed
-    if (count === 0 || count === rowGroups.length) return rowGroups.length;
     return count;
   }, [rowGroups, splitRowOrderIdx]);
 
