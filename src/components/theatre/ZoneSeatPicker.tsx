@@ -57,6 +57,15 @@ const SECTION_GAP = 92;
 const EDGE_PAD_DEG = 3;
 const UPPER_SECTION_INSET_DEG = 8;
 
+// Fixed 18-row scaffold — always rendered for every zone
+// Outer section (far from stage): Σ Ρ Π Ο Ξ Ν Μ Λ Κ
+// Inner section (near stage):     Ι Θ Η Ζ Ε Δ Γ Β Α
+const OUTER_ROWS = ['Σ', 'Ρ', 'Π', 'Ο', 'Ξ', 'Ν', 'Μ', 'Λ', 'Κ'] as const;
+const INNER_ROWS = ['Ι', 'Θ', 'Η', 'Ζ', 'Ε', 'Δ', 'Γ', 'Β', 'Α'] as const;
+const FULL_ROWS_DESC = [...OUTER_ROWS, ...INNER_ROWS]; // outermost first
+const INNER_COUNT = INNER_ROWS.length; // 9
+const OUTER_COUNT = OUTER_ROWS.length; // 9
+
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
@@ -137,36 +146,27 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const selectedIds = useMemo(() => new Set(selectedSeats.map((seat) => seat.seatId)), [selectedSeats]);
 
-  const rowGroups = useMemo(() => {
+  // Group seats by row_label from the actual data
+  const seatsByRow = useMemo(() => {
     const grouped = new Map<string, VenueSeat[]>();
-
     for (const seat of seats) {
       const existing = grouped.get(seat.row_label) || [];
       existing.push(seat);
       grouped.set(seat.row_label, existing);
     }
-
-    const entries = Array.from(grouped.entries());
-    // Sort descending by ROW_ORDER index so outermost rows (Σ) come first,
-    // innermost rows (Α) come last — matching the physical theatre layout:
-    // Σ→Ρ→Π→Ο→Ξ→Ν→Μ→Λ→Κ [GAP] Ι→Θ→Η→Ζ→Ε→Δ→Γ→Β→Α
-    entries.sort((a, b) => {
-      const indexA = ROW_ORDER.indexOf(a[0]);
-      const indexB = ROW_ORDER.indexOf(b[0]);
-
-      if (indexA !== -1 && indexB !== -1) return indexB - indexA;
-      return b[0].localeCompare(a[0]);
-    });
-
-    return entries;
+    return grouped;
   }, [seats]);
 
   const overviewArc = ZONE_ARCS[zoneName];
   const zoneMidDeg = ((overviewArc?.startDeg ?? 200) + (overviewArc?.endDeg ?? 340)) / 2;
 
   const maxSeatsInRow = useMemo(
-    () => rowGroups.reduce((max, [, rowSeats]) => Math.max(max, rowSeats.length), 0),
-    [rowGroups]
+    () => {
+      let max = 0;
+      seatsByRow.forEach((rowSeats) => { max = Math.max(max, rowSeats.length); });
+      return Math.max(max, 10); // minimum for layout
+    },
+    [seatsByRow]
   );
 
   const detailSpanDeg = useMemo(
@@ -176,59 +176,39 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
   const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
-  // Split at the boundary between Ι and Κ — rows Α-Ι are the inner (near-stage) section,
-  // rows Κ-Σ are the outer section. The gap appears between Ι and Κ.
-  const SPLIT_ROW = 'Κ'; // first row of the outer section
-  const splitRowOrderIdx = ROW_ORDER.indexOf(SPLIT_ROW);
 
-  // With descending sort, outer rows (Σ→Κ) come first, inner rows (Ι→Α) come after.
-  // "outerSectionRowCount" = count of outer rows (index >= splitRowOrderIdx i.e. Κ onward)
-  const outerSectionRowCount = useMemo(() => {
-    let count = 0;
-    for (const [rowLabel] of rowGroups) {
-      const idx = ROW_ORDER.indexOf(rowLabel);
-      if (idx !== -1 && idx >= splitRowOrderIdx) {
-        count++;
-      }
-    }
-    return count;
-  }, [rowGroups, splitRowOrderIdx]);
-
-  const innerSectionRowCount = rowGroups.length - outerSectionRowCount;
-
+  // Fixed 18-row layout — always computed for all rows regardless of data
   const rowLayouts = useMemo(() => {
-    // Array order: outer rows (Σ→Κ) then inner rows (Ι→Α)
-    // Outer rows get larger radii, inner rows get smaller radii
-    return rowGroups.map(([rowLabel, rowSeats], rowIdx) => {
-      const isOuterSection = rowIdx < outerSectionRowCount;
-      const isInnerSection = !isOuterSection;
+    return FULL_ROWS_DESC.map((rowLabel, idx) => {
+      const isOuter = idx < OUTER_COUNT;
+      const rowSeats = seatsByRow.get(rowLabel) || [];
 
       let radius: number;
-      if (isOuterSection) {
-        // Outer section: first in array (Σ) gets largest radius, last (Κ) gets smallest of outer
-        const localIdx = outerSectionRowCount - 1 - rowIdx; // Σ=highest localIdx, Κ=0
-        const gap = innerSectionRowCount > 0 ? SECTION_GAP : 0;
-        radius = BASE_RADIUS + innerSectionRowCount * ROW_SPACING + gap + localIdx * ROW_SPACING;
+      if (isOuter) {
+        // Outer rows: Σ(idx=0) gets largest radius, Κ(idx=8) gets smallest of outer
+        const localIdx = OUTER_COUNT - 1 - idx; // Σ=8, Κ=0
+        radius = BASE_RADIUS + INNER_COUNT * ROW_SPACING + SECTION_GAP + localIdx * ROW_SPACING;
       } else {
-        // Inner section: first inner row (Ι) gets largest inner radius, last (Α) gets smallest
-        const innerIdx = rowIdx - outerSectionRowCount;
-        const localIdx = innerSectionRowCount - 1 - innerIdx; // Ι=highest, Α=0
+        // Inner rows: Ι(idx=9) gets largest inner radius, Α(idx=17) gets smallest
+        const innerIdx = idx - OUTER_COUNT;
+        const localIdx = INNER_COUNT - 1 - innerIdx; // Ι=8, Α=0
         radius = BASE_RADIUS + localIdx * ROW_SPACING;
       }
 
-      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuterSection ? UPPER_SECTION_INSET_DEG : 0);
-      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isOuterSection ? UPPER_SECTION_INSET_DEG : 0);
+      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuter ? UPPER_SECTION_INSET_DEG : 0);
+      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isOuter ? UPPER_SECTION_INSET_DEG : 0);
 
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
-        isLowerSection: isInnerSection,
+        isOuter,
         startDeg,
         endDeg,
+        hasData: rowSeats.length > 0,
       };
     });
-  }, [rowGroups, outerSectionRowCount, innerSectionRowCount, detailStartDeg, detailEndDeg]);
+  }, [seatsByRow, detailStartDeg, detailEndDeg]);
 
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
@@ -250,26 +230,35 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return positions;
   }, [rowLayouts]);
 
-  const outermostRadius = rowLayouts.length > 0 ? rowLayouts[0].radius + SEAT_RADIUS + 28 : BASE_RADIUS + 80;
+  // Always use the fixed outermost row (Σ) radius
+  const outermostRadius = rowLayouts[0].radius + SEAT_RADIUS + 28;
   const titleRadius = outermostRadius + 46;
   const stageRadius = Math.max(72, BASE_RADIUS - 78);
   const svgMinWidth = Math.max(980, maxSeatsInRow * 30);
 
-  const viewBox = useMemo(() => {
-    if (seatPositions.size === 0) return '0 0 1200 900';
+  const outerSection = rowLayouts.slice(0, OUTER_COUNT);
+  const innerSection = rowLayouts.slice(OUTER_COUNT);
 
+  const viewBox = useMemo(() => {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    seatPositions.forEach(({ x, y }) => {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
+    // Include all row positions (even empty rows) for consistent viewBox
+    rowLayouts.forEach(({ radius, startDeg, endDeg }) => {
+      [startDeg, (startDeg + endDeg) / 2, endDeg].forEach((deg) => {
+        const rad = toRad(deg);
+        const bx = HC.x + radius * Math.cos(rad);
+        const by = HC.y + radius * Math.sin(rad);
+        minX = Math.min(minX, bx);
+        minY = Math.min(minY, by);
+        maxX = Math.max(maxX, bx);
+        maxY = Math.max(maxY, by);
+      });
     });
 
+    // Include boundary arcs
     const boundaryAngles = [detailStartDeg, zoneMidDeg, detailEndDeg].map(toRad);
     boundaryAngles.forEach((rad) => {
       const bx = HC.x + outermostRadius * Math.cos(rad);
@@ -303,10 +292,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     const height = maxY - minY + padTop + padBottom;
 
     return `${minX - padX} ${minY - padTop} ${width} ${height}`;
-  }, [seatPositions, detailStartDeg, zoneMidDeg, detailEndDeg, outermostRadius, titleRadius, stageRadius]);
-
-  const outerSection = rowLayouts.slice(0, outerSectionRowCount);
-  const innerSection = rowLayouts.slice(outerSectionRowCount);
+  }, [rowLayouts, detailStartDeg, zoneMidDeg, detailEndDeg, outermostRadius, titleRadius, stageRadius]);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
@@ -337,7 +323,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     );
   }
 
-  if (rowGroups.length === 0) {
+  if (seats.length === 0) {
     return <p className="py-8 text-center text-sm text-muted-foreground">{t.noSeats}</p>;
   }
 
@@ -387,6 +373,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
           preserveAspectRatio="xMidYMid meet"
           style={{ minWidth: `${svgMinWidth}px` }}
         >
+          {/* Zone letter title */}
           <text
             x={HC.x + titleRadius * Math.cos(toRad(zoneMidDeg))}
             y={HC.y + titleRadius * Math.sin(toRad(zoneMidDeg))}
@@ -401,42 +388,41 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             {zoneLetter}
           </text>
 
-          {innerSection.length > 0 && (
-            <path
-              d={annularSectorPath(
-                HC.x,
-                HC.y,
-                Math.max(48, innerSection[innerSection.length - 1].radius - 28),
-                innerSection[0].radius + 26,
-                detailStartDeg,
-                detailEndDeg
-              )}
-              fill={zoneColor}
-              fillOpacity={0.06}
-              stroke={zoneColor}
-              strokeOpacity={0.24}
-              strokeWidth={1.5}
-            />
-          )}
+          {/* Inner section background */}
+          <path
+            d={annularSectorPath(
+              HC.x,
+              HC.y,
+              Math.max(48, innerSection[innerSection.length - 1].radius - 28),
+              innerSection[0].radius + 26,
+              detailStartDeg,
+              detailEndDeg
+            )}
+            fill={zoneColor}
+            fillOpacity={0.06}
+            stroke={zoneColor}
+            strokeOpacity={0.24}
+            strokeWidth={1.5}
+          />
 
-          {outerSection.length > 0 && (
-            <path
-              d={annularSectorPath(
-                HC.x,
-                HC.y,
-                outerSection[outerSection.length - 1].radius - 28,
-                outerSection[0].radius + 26,
-                detailStartDeg + UPPER_SECTION_INSET_DEG,
-                detailEndDeg - UPPER_SECTION_INSET_DEG
-              )}
-              fill={zoneColor}
-              fillOpacity={0.06}
-              stroke={zoneColor}
-              strokeOpacity={0.24}
-              strokeWidth={1.5}
-            />
-          )}
+          {/* Outer section background */}
+          <path
+            d={annularSectorPath(
+              HC.x,
+              HC.y,
+              outerSection[outerSection.length - 1].radius - 28,
+              outerSection[0].radius + 26,
+              detailStartDeg + UPPER_SECTION_INSET_DEG,
+              detailEndDeg - UPPER_SECTION_INSET_DEG
+            )}
+            fill={zoneColor}
+            fillOpacity={0.06}
+            stroke={zoneColor}
+            strokeOpacity={0.24}
+            strokeWidth={1.5}
+          />
 
+          {/* Red boundary arc */}
           <path
             d={`M ${HC.x + outermostRadius * Math.cos(toRad(detailStartDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailStartDeg))} A ${outermostRadius} ${outermostRadius} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + outermostRadius * Math.cos(toRad(detailEndDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailEndDeg))}`}
             fill="none"
@@ -445,28 +431,26 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             strokeLinecap="round"
           />
 
-          {outerSection.length > 0 && innerSection.length > 0 && (
-            <>
-              <path
-                d={`M ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${innerSection[0].radius + 22} ${innerSection[0].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
-                fill="none"
-                stroke={zoneColor}
-                strokeOpacity={0.2}
-                strokeWidth={1.5}
-                strokeDasharray="6 6"
-              />
-              <path
-                d={`M ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${outerSection[outerSection.length - 1].radius - 22} ${outerSection[outerSection.length - 1].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
-                fill="none"
-                stroke={zoneColor}
-                strokeOpacity={0.2}
-                strokeWidth={1.5}
-                strokeDasharray="6 6"
-              />
-            </>
-          )}
+          {/* Section gap dashed lines */}
+          <path
+            d={`M ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${innerSection[0].radius + 22} ${innerSection[0].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (innerSection[0].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (innerSection[0].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
+            fill="none"
+            stroke={zoneColor}
+            strokeOpacity={0.2}
+            strokeWidth={1.5}
+            strokeDasharray="6 6"
+          />
+          <path
+            d={`M ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${outerSection[outerSection.length - 1].radius - 22} ${outerSection[outerSection.length - 1].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (outerSection[outerSection.length - 1].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (outerSection[outerSection.length - 1].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
+            fill="none"
+            stroke={zoneColor}
+            strokeOpacity={0.2}
+            strokeWidth={1.5}
+            strokeDasharray="6 6"
+          />
 
-          {rowLayouts.map(({ rowLabel, radius, startDeg, endDeg }) => {
+          {/* Row labels — always all 18 */}
+          {rowLayouts.map(({ rowLabel, radius, startDeg, endDeg, hasData }) => {
             const leftAngle = toRad(startDeg - 4);
             const rightAngle = toRad(endDeg + 4);
             const leftX = HC.x + radius * Math.cos(leftAngle);
@@ -484,6 +468,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                   fontSize={12}
                   fontWeight={700}
                   fill="hsl(var(--muted-foreground))"
+                  opacity={hasData ? 1 : 0.35}
                   className="pointer-events-none select-none"
                 >
                   {rowLabel}
@@ -496,6 +481,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                   fontSize={12}
                   fontWeight={700}
                   fill="hsl(var(--muted-foreground))"
+                  opacity={hasData ? 1 : 0.35}
                   className="pointer-events-none select-none"
                 >
                   {rowLabel}
@@ -504,6 +490,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             );
           })}
 
+          {/* Seats — only where data exists */}
           {rowLayouts.flatMap(({ rowSeats }) =>
             rowSeats.map((seat) => {
               const position = seatPositions.get(seat.id);
@@ -573,6 +560,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             })
           )}
 
+          {/* Stage indicator */}
           <text
             x={HC.x + stageRadius * Math.cos(toRad(zoneMidDeg))}
             y={HC.y + stageRadius * Math.sin(toRad(zoneMidDeg))}
