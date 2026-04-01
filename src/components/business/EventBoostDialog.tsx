@@ -264,8 +264,36 @@ const EventBoostDialog = ({
                   : "This ensures payment opens reliably even on iPhone/Safari."}
               </p>
             </div>
+          ) : isExpired ? (
+            <div className="flex items-start gap-2 p-4 rounded-lg border border-destructive/50 bg-destructive/5">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-destructive">
+                  {language === "el"
+                    ? "Η εκδήλωση έχει λήξει στο FOMO"
+                    : "This event has expired on FOMO"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === "el"
+                    ? "Δεν μπορείτε να κάνετε boost. Επεκτείνετε τη διάρκεια εμφάνισης από την Επεξεργασία για να συνεχίσετε."
+                    : "You cannot boost this event. Extend the appearance duration from Edit to continue."}
+                </p>
+              </div>
+            </div>
           ) : (
             <>
+              {/* Boost Ceiling Warning */}
+              {maxRemainingHours !== null && maxRemainingHours <= 48 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg border border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+                  <Clock className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-800 dark:text-blue-300">
+                    {language === "el"
+                      ? `Η εκδήλωσή σου λήγει σε ${maxRemainingHours} ώρες στο FOMO. Μπορείς να κάνεις boost μέχρι τότε. Για περισσότερο, επέκτεινε τη διάρκεια από την Επεξεργασία.`
+                      : `Your event expires in ${maxRemainingHours} hours on FOMO. You can boost up to that point. For more, extend the duration from Edit.`}
+                  </p>
+                </div>
+              )}
+
               {/* Free Plan No-Refund Disclaimer */}
               {!hasActiveSubscription && (
                 <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
