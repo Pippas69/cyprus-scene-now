@@ -1,30 +1,27 @@
 
 
-## Remove Πλατεία and assign unique colors to all 8 zones
+# Add Center Gap Between Zones Δ and Ε
 
-### What's wrong
-1. `ZONE_ARCS` in `ZoneOverviewMap.tsx` includes a `'Πλατεία'` entry (line 87) — this zone doesn't exist in the PDF layout. All seats belong to zones Α–Θ only.
-2. Zone colors come from the database, and some zones share the same color, making them hard to distinguish.
+The PDF shows a clear horizontal aisle/gap running through the middle of the horseshoe (at the top center, 270°). Currently Δ ends at 282° and Ε starts at 284° — only a 2° gap, barely visible.
 
-### Changes
+## Change
 
-**File: `src/components/theatre/ZoneOverviewMap.tsx`**
-- Remove the `'Πλατεία'` entry from `ZONE_ARCS` (line 87)
-- That's it — since zones are matched by name from the DB, if there's no `Πλατεία` zone in the DB it won't render anyway, but the arc definition should be cleaned up regardless
+**File: `src/components/theatre/ZoneOverviewMap.tsx`** — Widen the gap between Δ and Ε to ~6-8° centered on 270°:
 
-**Database migration — update zone colors to be unique:**
-Update the `venue_zones` table so each zone has a distinct color:
-- Α → `#E91E63` (magenta/pink)
-- Β → `#F44336` (red)  
-- Γ → `#4CAF50` (green)
-- Δ → `#FF9800` (orange)
-- Ε → `#2196F3` (blue)
-- Ζ → `#795548` (brown)
-- Η → `#00BCD4` (cyan)
-- Θ → `#9C27B0` (purple)
+- Δ: `260°–266°` (was 260–282, shift end back)
+- Ε: `274°–306°` (was 284–306, shift start back)
 
-If a `Πλατεία` zone exists in the database, we should also remove it (or the user can confirm whether it has seats assigned).
+Wait — that shrinks them too much. Better approach: keep zone sizes but shift them apart symmetrically around 270°:
 
-### No other files affected
-The `SeatSelectionStep.tsx` and `ZoneSeatPicker.tsx` remain unchanged — they already filter by zone and will simply no longer see a Πλατεία zone.
+- Δ: `256°–266°` (ends 4° before center)
+- Ε: `274°–296°` (starts 4° after center)
+
+Actually, simplest fix: just increase the gap from 2° to ~8° while keeping the overall layout balanced:
+
+- **Line 82**: Change Δ from `{ startDeg: 260, endDeg: 282 }` → `{ startDeg: 258, endDeg: 276 }`
+- **Line 83**: Change Ε from `{ startDeg: 284, endDeg: 306 }` → `{ startDeg: 284, endDeg: 308 }`
+
+This creates an 8° gap (276°→284°) centered around 280° — close to the vertical center line. The zones keep their angular width (~18° and ~24°).
+
+No other files affected.
 
