@@ -1,36 +1,24 @@
 
 
-# Fix Zone Detail View: No Cutoff, More Spacing, Two Sections
+# Fix Row Letter Ordering in Zone Detail View
 
-## Problems
-1. **Zones cut off**: SVG container has `maxHeight: '55vh'` and `overflow-hidden` -- larger zones get clipped
-2. **Seats too cramped**: `ROW_SPACING = 22` and `SEAT_RADIUS = 8` make it impossible to tap individual seats on mobile
-3. **Missing two-section layout**: Each zone's seats are split into two groups (left/right halves) with an aisle gap between them, but currently all seats render as one continuous arc
+## The Issue
+The row labels are appearing in wrong order. The correct order from outermost (farthest from stage) to innermost (nearest to stage) should be:
 
-## Solution
+**Outer section:** Σ → Ρ → Π → Ο → Ξ → Ν → Μ → Λ → Κ
+**[GAP]**
+**Inner section:** Ι → Θ → Η → Ζ → Ε → Δ → Γ → Β → Α
 
-### File: `src/components/theatre/ZoneSeatPicker.tsx`
+This means Σ gets the **largest radius** (outermost) and Α gets the **smallest radius** (closest to stage).
 
-**1. Make scrollable instead of clipped**
-- Remove `maxHeight: '55vh'` and `overflow-hidden`
-- Replace with `overflow-auto` so users can scroll/drag to see the full zone
-- Add touch-friendly scrolling with `-webkit-overflow-scrolling: touch`
+## Root Cause
+The `rowGroups` sort currently sorts by ascending ROW_ORDER index (Α=0 first), which assigns Α the smallest radius. This part is actually correct geometrically — but the visual rendering on the horseshoe arcs (which point upward on screen for most zones) may be displaying them inverted compared to what's expected.
 
-**2. Increase spacing**
-- `ROW_SPACING`: 22 -> 32 (more gap between rows)
-- `SEAT_RADIUS`: 8 -> 10 (bigger tap targets)
-- Increase `padDeg` from 0.8 to 1.5 so seats don't bunch at arc edges
+## Fix — `src/components/theatre/ZoneSeatPicker.tsx`
 
-**3. Two-section split with aisle gap**
-- For each row, sort seats by `seat_number` and split into two halves (first half and second half)
-- Render the first half across the first portion of the arc (startDeg to midDeg - gapDeg)
-- Render the second half across the second portion (midDeg + gapDeg to endDeg)
-- This creates a visible aisle/gap in the middle of each row, matching the PDF layout
-- The gap width will be ~3-4 degrees
+1. **Reverse the row rendering order** so that within each section, rows render from outermost to innermost (Σ at the largest radius down to Α at the smallest), matching the user's expected visual top-to-bottom reading order
+2. Ensure the **section split** is correctly between Κ (last outer row) and Ι (first inner row) — the gap separates these two groups
+3. Verify the radius assignment: outermost rows (Σ side) get larger radii, innermost rows (Α side) get smaller radii, with the SECTION_GAP between Κ and Ι
 
-**4. Adjust viewBox padding**
-- Increase `padX` and `padBottom` to ensure the boundary arc and labels aren't clipped
-- The viewBox auto-calculates from seat positions, so larger spacing will naturally expand it
-
-No other files need changes -- this is all within ZoneSeatPicker.
+This is a sort-order and radius-assignment fix in the existing `rowLayouts` and `rowGroups` memos. No structural changes needed.
 
