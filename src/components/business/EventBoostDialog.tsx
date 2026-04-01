@@ -454,7 +454,7 @@ const EventBoostDialog = ({
                           mode="single"
                           selected={endDate}
                           onSelect={(date) => date && setEndDate(date)}
-                          disabled={(date) => date <= startDate}
+                          disabled={(date) => date <= startDate || (maxEndDate ? date > maxEndDate : false)}
                         />
                       </PopoverContent>
                     </Popover>
