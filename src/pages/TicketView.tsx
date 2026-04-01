@@ -27,6 +27,7 @@ const t = {
     date: "DATE",
     time: "TIME",
     scanAtEntry: "Scan at entry",
+    saveHint: "Save this QR (or screenshot). Show at entry.",
     copy: "Copy",
     copied: "Link copied!",
     notFound: "Ticket not found",
