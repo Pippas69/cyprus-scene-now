@@ -375,12 +375,14 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
           {/* Interactive seat map */}
           {showSeatMap && (
             <div className="border rounded-lg overflow-hidden bg-muted/10">
-              <SeatMapViewer
-                venueId={instance.venue_id}
+              <SeatSelectionStep
+                venueId={instance.venue_id!}
                 showInstanceId="__new__"
                 maxSeats={999}
                 selectedSeats={instance.house_seats || []}
                 onSeatToggle={handleSeatToggle}
+                eventTitle={t.houseSeats}
+                eventDate=""
               />
             </div>
           )}
