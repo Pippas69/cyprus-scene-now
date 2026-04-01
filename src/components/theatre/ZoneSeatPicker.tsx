@@ -173,7 +173,28 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
   const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
-  const lowerSectionRowCount = rowGroups.length <= 1 ? rowGroups.length : Math.ceil(rowGroups.length / 2);
+  // Split at the boundary between Ι and Κ — rows Α-Ι are the inner (near-stage) section,
+  // rows Κ-Σ are the outer section. The gap appears between Ι and Κ.
+  const SPLIT_ROW = 'Κ'; // first row of the outer section
+  const splitRowOrderIdx = ROW_ORDER.indexOf(SPLIT_ROW);
+
+  const lowerSectionRowCount = useMemo(() => {
+    // "lower section" = inner/near-stage rows (Α through Ι)
+    // Count how many rows in this zone fall before the split point
+    let count = 0;
+    for (const [rowLabel] of rowGroups) {
+      const idx = ROW_ORDER.indexOf(rowLabel);
+      if (idx !== -1 && idx < splitRowOrderIdx) {
+        count++;
+      } else if (idx === -1) {
+        // Non-standard row labels go to inner section
+        count++;
+      }
+    }
+    // If all rows are on one side of the split, no gap needed
+    if (count === 0 || count === rowGroups.length) return rowGroups.length;
+    return count;
+  }, [rowGroups, splitRowOrderIdx]);
 
   const rowLayouts = useMemo(() => {
     return rowGroups.map(([rowLabel, rowSeats], rowIdx) => {
