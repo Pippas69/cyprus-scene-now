@@ -185,7 +185,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return positions;
   }, [rowGroups, startDeg, endDeg]);
 
-  // Compute viewBox to fit all seats with padding
+  // Compute viewBox to fit all seats with padding, plus space for title and boundary
   const viewBox = useMemo(() => {
     if (seatPositions.size === 0) return '0 0 1000 500';
     
@@ -196,12 +196,28 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       maxX = Math.max(maxX, x);
       maxY = Math.max(maxY, y);
     });
+
+    // Also account for boundary arc (outermost row + extra)
+    const boundaryR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 16;
+    const bStartRad = toRad(startDeg);
+    const bEndRad = toRad(endDeg);
+    const bMidRad = toRad((startDeg + endDeg) / 2);
+    for (const rad of [bStartRad, bEndRad, bMidRad]) {
+      const bx = HC.x + boundaryR * Math.cos(rad);
+      const by = HC.y + boundaryR * Math.sin(rad);
+      minX = Math.min(minX, bx);
+      minY = Math.min(minY, by);
+      maxX = Math.max(maxX, bx);
+      maxY = Math.max(maxY, by);
+    }
     
-    const pad = 40;
-    const w = maxX - minX + pad * 2;
-    const h = maxY - minY + pad * 2;
-    return `${minX - pad} ${minY - pad} ${w} ${h}`;
-  }, [seatPositions]);
+    const padX = 50;
+    const padTop = 55; // extra top space for large zone title
+    const padBottom = 40;
+    const w = maxX - minX + padX * 2;
+    const h = maxY - minY + padTop + padBottom;
+    return `${minX - padX} ${minY - padTop} ${w} ${h}`;
+  }, [seatPositions, rowGroups, startDeg, endDeg]);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
