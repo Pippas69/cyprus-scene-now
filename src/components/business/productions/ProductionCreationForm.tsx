@@ -637,6 +637,7 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
           eventTitle={title}
           hasActiveSubscription={!!activeSubscription}
           remainingBudgetCents={activeSubscription?.monthly_budget_remaining_cents ?? 0}
+          eventEndAt={appearanceEnd?.toISOString() || null}
           open={boostDialogOpen}
           onOpenChange={(open) => {
             setBoostDialogOpen(open);

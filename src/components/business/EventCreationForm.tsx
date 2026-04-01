@@ -1238,7 +1238,7 @@ const EventCreationForm = ({
       <ImageCropDialog open={cropDialogOpen} onClose={() => setCropDialogOpen(false)} imageSrc={tempImageSrc} onCropComplete={handleCropComplete} />
 
       {/* Boost Dialog */}
-      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={hasActiveSubscription} remainingBudgetCents={remainingBudgetCents} open={boostDialogOpen} onOpenChange={(open) => {
+      {createdEventId && <EventBoostDialog eventId={createdEventId} eventTitle={formData.title} hasActiveSubscription={hasActiveSubscription} remainingBudgetCents={remainingBudgetCents} eventEndAt={calculateAppearanceDates().end?.toISOString() || null} open={boostDialogOpen} onOpenChange={(open) => {
       setBoostDialogOpen(open);
       if (!open) {
         navigate('/dashboard-business/events');
