@@ -84,7 +84,6 @@ const ZONE_ARCS: Record<string, { startDeg: number; endDeg: number; inner?: numb
   'Τμήμα Ζ': { startDeg: 308, endDeg: 324 },
   'Τμήμα Η': { startDeg: 326, endDeg: 342 },
   'Τμήμα Θ': { startDeg: 344, endDeg: 358 },
-  'Πλατεία':  { startDeg: 245, endDeg: 295, inner: 60, outer: 140 },
 };
 
 const CX = 300;
