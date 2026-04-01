@@ -8,7 +8,8 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { NumberInput } from "@/components/ui/number-input";
 import { Plus, Trash2, Calendar, Clock, Euro, Armchair, ChevronDown, ChevronUp } from "lucide-react";
 import { VenueSelector } from "./VenueSelector";
-import { SeatMapViewer, SelectedSeat } from "@/components/theatre/SeatMapViewer";
+import { type SelectedSeat } from "@/components/theatre/SeatMapViewer";
+import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 
 export interface ZonePrice {
   zone_id: string;
@@ -374,12 +375,14 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
           {/* Interactive seat map */}
           {showSeatMap && (
             <div className="border rounded-lg overflow-hidden bg-muted/10">
-              <SeatMapViewer
-                venueId={instance.venue_id}
+              <SeatSelectionStep
+                venueId={instance.venue_id!}
                 showInstanceId="__new__"
                 maxSeats={999}
                 selectedSeats={instance.house_seats || []}
                 onSeatToggle={handleSeatToggle}
+                eventTitle={t.houseSeats}
+                eventDate=""
               />
             </div>
           )}
