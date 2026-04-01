@@ -375,7 +375,7 @@ const EventBoostDialog = ({
                         <Minus className="h-4 w-4" />
                       </Button>
                       <div className="flex items-center gap-1.5">
-                        <Input
+                    <Input
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
@@ -385,13 +385,13 @@ const EventBoostDialog = ({
                             if (raw === '' || /^\d+$/.test(raw)) {
                               setDurationHoursInput(raw);
                               const v = parseInt(raw);
-                              if (!isNaN(v) && v >= 1 && v <= 24) setDurationHours(v);
+                              if (!isNaN(v) && v >= 1 && v <= effectiveMaxHours) setDurationHours(v);
                             }
                           }}
                           onBlur={() => {
                             const v = parseInt(durationHoursInput);
                             if (isNaN(v) || v < 1) { setDurationHours(1); setDurationHoursInput("1"); }
-                            else if (v > 24) { setDurationHours(24); setDurationHoursInput("24"); }
+                            else if (v > effectiveMaxHours) { setDurationHours(effectiveMaxHours); setDurationHoursInput(String(effectiveMaxHours)); }
                             else { setDurationHours(v); setDurationHoursInput(String(v)); }
                           }}
                           className="w-16 text-center"
@@ -403,8 +403,8 @@ const EventBoostDialog = ({
                         variant="outline"
                         size="icon"
                         className="h-9 w-9 shrink-0"
-                        onClick={() => { const v = Math.min(24, durationHours + 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
-                        disabled={durationHours >= 24}
+                        onClick={() => { const v = Math.min(effectiveMaxHours, durationHours + 1); setDurationHours(v); setDurationHoursInput(String(v)); }}
+                        disabled={durationHours >= effectiveMaxHours}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
