@@ -298,7 +298,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       {rowGroups.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">{t.noSeats}</p>
       ) : (
-        <div className="w-full overflow-hidden" style={{ maxHeight: '55vh' }}>
+        <div className="w-full overflow-auto" style={{ maxHeight: '65vh', WebkitOverflowScrolling: 'touch' }}>
           <svg
             ref={svgRef}
             viewBox={viewBox}
