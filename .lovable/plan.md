@@ -1,34 +1,39 @@
 
 
-# Fix Zone Proportions to Match PDF
+# Fix Zone Proportions — Make Layout Symmetric
 
 ## Problem
-The angular sizes of zones don't match their actual seat counts. For example, Δ (327 seats) and Ε (327 seats) should be equal in size but currently Δ is 18° and Ε is 24°. Similarly Β and Ζ (both 204 seats) differ in width.
+The current layout is asymmetric: left side spans 86° (190°→276°) but right side only 74° (284°→358°). This makes zones like Δ(32°) vs Ε(26°) look unequal despite having the same seat count (327 each). The PDF shows a clearly symmetric horseshoe.
 
 ## Solution
-Recalculate all zone arcs proportionally based on seat counts, with 2° gaps between adjacent zones and the existing 8° center gap between Δ and Ε.
+Make both sides span equally around the center (270°), then distribute proportionally by seat count within each side.
 
-**File: `src/components/theatre/ZoneOverviewMap.tsx`** — Update `ZONE_ARCS` (lines 78-87):
+**Symmetric span**: Left 186°→266° (80°), Right 274°→354° (80°), with 8° center gap.
 
-**Left side** (190°→276°, 86° total, minus 6° for 3 inter-zone gaps = 80° usable):
+Each side: 80° minus 6° (three 2° inter-zone gaps) = 74° usable.
+
+**Left side** (seats total: 811):
 | Zone | Seats | Arc° | Range |
 |------|-------|------|-------|
-| Α | 171 | 17° | 190–207 |
-| Β | 204 | 20° | 209–229 |
-| Γ | 109 | 11° | 231–242 |
-| Δ | 327 | 32° | 244–276 |
+| Α | 171 | 16° | 186–202 |
+| Β | 204 | 19° | 204–223 |
+| Γ | 109 | 10° | 225–235 |
+| Δ | 327 | 29° | 237–266 |
 
-**8° center gap (276°→284°)**
+**8° center gap (266°→274°)**
 
-**Right side** (284°→358°, 74° total, minus 6° for 3 gaps = 68° usable):
+**Right side** (seats total: 860):
 | Zone | Seats | Arc° | Range |
 |------|-------|------|-------|
-| Ε | 327 | 26° | 284–310 |
-| Ζ | 204 | 16° | 312–328 |
-| Η | 216 | 17° | 330–347 |
-| Θ | 113 | 9° | 349–358 |
+| Ε | 327 | 28° | 274–302 |
+| Ζ | 204 | 18° | 304–322 |
+| Η | 216 | 18° | 324–342 |
+| Θ | 113 | 10° | 344–354 |
 
-Now Δ and Ε are visually the largest (matching their 327 seats), Α/Θ and Γ are the smallest, and Β/Ζ/Η are mid-sized — matching the PDF proportions.
+Now Δ(29°) ≈ Ε(28°), Β(19°) ≈ Ζ(18°) ≈ Η(18°), and Γ(10°) ≈ Θ(10°) — matching the symmetric horseshoe in the PDF.
 
-No other files changed.
+### File change
+**`src/components/theatre/ZoneOverviewMap.tsx`** — Update `ZONE_ARCS` values (lines 78-87).
+
+No other files affected.
 
