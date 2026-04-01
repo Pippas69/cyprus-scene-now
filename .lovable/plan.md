@@ -1,32 +1,36 @@
 
 
-# Redesign Zone Detail View to Match PDF Layout
+# Fix Zone Detail View: No Cutoff, More Spacing, Two Sections
 
-## What's wrong now
-The current `ZoneSeatPicker` renders seats on curved arcs but doesn't match the PDF reference:
-- Zone name is small, inline with the back button
-- Row labels only on the left side
-- No theatre boundary line (red arc) showing context
-- Missing the prominent zone title at top center
+## Problems
+1. **Zones cut off**: SVG container has `maxHeight: '55vh'` and `overflow-hidden` -- larger zones get clipped
+2. **Seats too cramped**: `ROW_SPACING = 22` and `SEAT_RADIUS = 8` make it impossible to tap individual seats on mobile
+3. **Missing two-section layout**: Each zone's seats are split into two groups (left/right halves) with an aisle gap between them, but currently all seats render as one continuous arc
 
-## What the PDF shows
-From the uploaded screenshots, each zone detail view has:
-1. **Large zone name** centered at the top (e.g. "Θ", "Ε", "Ζ", "Δ")
-2. **Row labels on BOTH sides** of each row (left and right)
-3. **Red curved boundary lines** at the outer edge showing the theatre wall
-4. Seats arranged in curved arcs matching that zone's horseshoe position
-
-## Changes
+## Solution
 
 ### File: `src/components/theatre/ZoneSeatPicker.tsx`
 
-1. **Large zone title**: Add a prominent zone name text element at the top-center of the SVG, large font (e.g. 24px), bold
+**1. Make scrollable instead of clipped**
+- Remove `maxHeight: '55vh'` and `overflow-hidden`
+- Replace with `overflow-auto` so users can scroll/drag to see the full zone
+- Add touch-friendly scrolling with `-webkit-overflow-scrolling: touch`
 
-2. **Row labels on both sides**: Currently labels are only placed at `startDeg - 2`. Add a second label at `endDeg + 2` for each row, so the Greek letter appears on both ends of each arc row
+**2. Increase spacing**
+- `ROW_SPACING`: 22 -> 32 (more gap between rows)
+- `SEAT_RADIUS`: 8 -> 10 (bigger tap targets)
+- Increase `padDeg` from 0.8 to 1.5 so seats don't bunch at arc edges
 
-3. **Theatre boundary arc**: Draw a red/coral curved line at the outer edge of the zone (just beyond the outermost row) using the zone's arc angles, to give visual context of the theatre wall — matching the red lines in the PDF
+**3. Two-section split with aisle gap**
+- For each row, sort seats by `seat_number` and split into two halves (first half and second half)
+- Render the first half across the first portion of the arc (startDeg to midDeg - gapDeg)
+- Render the second half across the second portion (midDeg + gapDeg to endDeg)
+- This creates a visible aisle/gap in the middle of each row, matching the PDF layout
+- The gap width will be ~3-4 degrees
 
-4. **Adjust zone name in header**: Keep the back button but make the inline zone name smaller since the SVG now has the prominent title
+**4. Adjust viewBox padding**
+- Increase `padX` and `padBottom` to ensure the boundary arc and labels aren't clipped
+- The viewBox auto-calculates from seat positions, so larger spacing will naturally expand it
 
-These are purely visual/SVG additions — no data logic changes needed.
+No other files need changes -- this is all within ZoneSeatPicker.
 
