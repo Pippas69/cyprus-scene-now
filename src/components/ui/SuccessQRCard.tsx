@@ -61,6 +61,12 @@ const translations = {
       offer: "Δείξτε αυτόν τον κώδικα στο κατάστημα",
       event_reservation: "Σαρώστε στην επιχείρηση",
     },
+    saveHint: {
+      ticket: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην είσοδο.",
+      reservation: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
+      offer: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στο κατάστημα.",
+      event_reservation: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
+    },
     downloadQR: "QR Εικόνα",
     copyLink: "Αντιγραφή",
     copied: "Αντιγράφηκε!",
