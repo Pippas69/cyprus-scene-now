@@ -15,6 +15,7 @@ const t = {
     time: "ΩΡΑ",
     party: "ΑΤΟΜΑ",
     scanAtVenue: "Σαρώστε στην επιχείρηση",
+    saveHint: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
     copy: "Αντιγραφή",
     copied: "Ο σύνδεσμος αντιγράφηκε!",
     notFound: "Η κράτηση δεν βρέθηκε",
@@ -27,6 +28,7 @@ const t = {
     time: "TIME",
     party: "PARTY",
     scanAtVenue: "Scan at the venue",
+    saveHint: "Save this QR (or screenshot). Show at the venue.",
     copy: "Copy",
     copied: "Link copied!",
     notFound: "Reservation not found",
@@ -151,6 +153,7 @@ const ReservationView = () => {
                 <img src={qrDataUrl} alt="Reservation QR Code" className="w-44 h-44" />
               </div>
               <p className="text-[10px] text-[#64748b] mt-2">{text.scanAtVenue}</p>
+              <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">{text.saveHint}</p>
             </div>
           )}
 

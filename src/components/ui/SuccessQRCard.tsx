@@ -61,6 +61,12 @@ const translations = {
       offer: "Δείξτε αυτόν τον κώδικα στο κατάστημα",
       event_reservation: "Σαρώστε στην επιχείρηση",
     },
+    saveHint: {
+      ticket: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην είσοδο.",
+      reservation: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
+      offer: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στο κατάστημα.",
+      event_reservation: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
+    },
     downloadQR: "QR Εικόνα",
     copyLink: "Αντιγραφή",
     copied: "Αντιγράφηκε!",
@@ -89,6 +95,12 @@ const translations = {
       reservation: "Scan at the venue",
       offer: "Show this code at the venue",
       event_reservation: "Scan at the venue",
+    },
+    saveHint: {
+      ticket: "Save this QR (or screenshot). Show at entry.",
+      reservation: "Save this QR (or screenshot). Show at the venue.",
+      offer: "Save this QR (or screenshot). Show at the venue.",
+      event_reservation: "Save this QR (or screenshot). Show at the venue.",
     },
     downloadQR: "QR Image",
     copyLink: "Copy",
@@ -385,6 +397,9 @@ export const SuccessQRCard = ({
             </div>
             <p className="text-[10px] text-[#64748b] mt-2 text-center">
               {text.scanAt[type]}
+            </p>
+            <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">
+              {text.saveHint[type]}
             </p>
           </div>
         )}
