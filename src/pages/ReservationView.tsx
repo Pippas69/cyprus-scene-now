@@ -28,6 +28,7 @@ const t = {
     time: "TIME",
     party: "PARTY",
     scanAtVenue: "Scan at the venue",
+    saveHint: "Save this QR (or screenshot). Show at the venue.",
     copy: "Copy",
     copied: "Link copied!",
     notFound: "Reservation not found",
