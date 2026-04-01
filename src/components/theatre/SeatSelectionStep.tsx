@@ -1,5 +1,7 @@
-import React from 'react';
-import { SeatMapViewer, type SelectedSeat } from './SeatMapViewer';
+import React, { useState } from 'react';
+import { type SelectedSeat } from './SeatMapViewer';
+import { ZoneOverviewMap } from './ZoneOverviewMap';
+import { ZoneSeatPicker } from './ZoneSeatPicker';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -26,6 +28,12 @@ const translations = {
   },
 };
 
+interface ActiveZone {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   venueId,
   showInstanceId,
@@ -37,6 +45,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
 }) => {
   const { language } = useLanguage();
   const t = translations[language];
+  const [activeZone, setActiveZone] = useState<ActiveZone | null>(null);
 
   return (
     <div className="space-y-4">
@@ -55,9 +64,9 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
           <span className="text-sm font-medium">
             {t.selectedCount}: {selectedSeats.length} {t.of} {maxSeats}
           </span>
-          {/* Seat dots */}
+          {/* Seat dots - cap at 10 to avoid overflow */}
           <div className="flex gap-0.5">
-            {Array.from({ length: maxSeats }).map((_, i) => (
+            {Array.from({ length: Math.min(maxSeats, 10) }).map((_, i) => (
               <div
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors ${
@@ -71,14 +80,45 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         </div>
       </div>
 
-      {/* The seat map */}
-      <SeatMapViewer
-        venueId={venueId}
-        showInstanceId={showInstanceId}
-        maxSeats={maxSeats}
-        selectedSeats={selectedSeats}
-        onSeatToggle={onSeatToggle}
-      />
+      {/* 2-step flow: zone overview OR zone detail */}
+      {activeZone ? (
+        <ZoneSeatPicker
+          venueId={venueId}
+          showInstanceId={showInstanceId}
+          zoneId={activeZone.id}
+          zoneName={activeZone.name}
+          zoneColor={activeZone.color}
+          maxSeats={maxSeats}
+          selectedSeats={selectedSeats}
+          onSeatToggle={onSeatToggle}
+          onBack={() => setActiveZone(null)}
+        />
+      ) : (
+        <ZoneOverviewMap
+          venueId={venueId}
+          showInstanceId={showInstanceId}
+          selectedSeats={selectedSeats}
+          onZoneClick={(zone) =>
+            setActiveZone({ id: zone.id, name: zone.name, color: zone.color })
+          }
+        />
+      )}
+
+      {/* All selected seats summary (shown in overview mode) */}
+      {!activeZone && selectedSeats.length > 0 && (
+        <div className="flex flex-wrap gap-1 px-1 pt-1 border-t">
+          {selectedSeats.map(s => (
+            <button
+              key={s.seatId}
+              onClick={() => onSeatToggle(s)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
+            >
+              {s.label}
+              <span className="text-[10px] opacity-70">✕</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
