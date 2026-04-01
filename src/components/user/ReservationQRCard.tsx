@@ -205,6 +205,7 @@ export const ReservationQRCard = ({ reservation, language, onClose }: Reservatio
               <img src={qrDataUrl} alt="Reservation QR Code" className="w-44 h-44" />
             </div>
             <p className="text-[10px] text-[#64748b] mt-2 text-center">{text.scanAtVenue}</p>
+            <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">{text.saveHint}</p>
           </div>
         )}
 
