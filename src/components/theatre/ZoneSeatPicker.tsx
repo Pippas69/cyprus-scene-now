@@ -56,8 +56,9 @@ const translations = {
 // Horseshoe center for the curved layout
 const HC = { x: 500, y: 600 };
 const BASE_RADIUS = 120;
-const ROW_SPACING = 22;
-const SEAT_RADIUS = 8;
+const ROW_SPACING = 32;
+const SEAT_RADIUS = 10;
+const AISLE_GAP_DEG = 3.5; // gap in degrees between two sections
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   venueId,
