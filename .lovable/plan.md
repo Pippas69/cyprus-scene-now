@@ -1,39 +1,53 @@
 
 
-# Fix Zone Proportions — Make Layout Symmetric
+# Fix All Zone Proportions to Match PDF
 
-## Problem
-The current layout is asymmetric: left side spans 86° (190°→276°) but right side only 74° (284°→358°). This makes zones like Δ(32°) vs Ε(26°) look unequal despite having the same seat count (327 each). The PDF shows a clearly symmetric horseshoe.
+## Current vs Correct Proportions
 
-## Solution
-Make both sides span equally around the center (270°), then distribute proportionally by seat count within each side.
+The current arc degrees don't properly reflect the seat count ratios. Here's the recalculation using strict proportionality.
 
-**Symmetric span**: Left 186°→266° (80°), Right 274°→354° (80°), with 8° center gap.
+**Seat counts**: A=171, B=204, Γ=109, Δ=327, E=327, Z=204, H=216, Θ=113
 
-Each side: 80° minus 6° (three 2° inter-zone gaps) = 74° usable.
+**Layout**: Both sides get 80° each (186°-266° left, 274°-354° right), with 2° gaps between zones and 8° center gap.
 
-**Left side** (seats total: 811):
-| Zone | Seats | Arc° | Range |
-|------|-------|------|-------|
-| Α | 171 | 16° | 186–202 |
-| Β | 204 | 19° | 204–223 |
-| Γ | 109 | 10° | 225–235 |
-| Δ | 327 | 29° | 237–266 |
+### Left side (186°-266°, 80° total, 74° usable after 3x2° gaps)
 
-**8° center gap (266°→274°)**
+| Zone | Seats | Ratio | Arc° | Range |
+|------|-------|-------|------|-------|
+| Α | 171 | 21.1% | 16° | 186–202 |
+| Β | 204 | 25.2% | 19° | 204–223 |
+| Γ | 109 | 13.4% | 10° | 225–235 |
+| Δ | 327 | 40.3% | 29° | 237–266 |
 
-**Right side** (seats total: 860):
-| Zone | Seats | Arc° | Range |
-|------|-------|------|-------|
-| Ε | 327 | 28° | 274–302 |
-| Ζ | 204 | 18° | 304–322 |
-| Η | 216 | 18° | 324–342 |
-| Θ | 113 | 10° | 344–354 |
+These are already correct from the last update.
 
-Now Δ(29°) ≈ Ε(28°), Β(19°) ≈ Ζ(18°) ≈ Η(18°), and Γ(10°) ≈ Θ(10°) — matching the symmetric horseshoe in the PDF.
+### Right side (274°-354°, 80° total, 74° usable after 3x2° gaps)
+
+| Zone | Seats | Ratio | Arc° (current) | Arc° (correct) | Range |
+|------|-------|-------|-----------------|-----------------|-------|
+| Ε | 327 | 38.0% | 28° | 28° | 274–302 |
+| Ζ | 204 | 23.7% | 18° | 18° | 304–322 |
+| Η | 216 | 25.1% | 18° | 18° | 324–342 |
+| Θ | 113 | 13.1% | 10° | 10° | 344–354 |
+
+The numbers are actually already proportional. The issue may be that the **visual appearance** differs from the PDF because:
+1. Zones near the sides (A, Θ) appear visually narrower due to the horseshoe curvature
+2. The font sizes or label positions may make some zones look cramped
+
+### Proposed Adjustments
+To better match the PDF visually, I will slightly widen the outer zones (Α, Θ) and compress the inner zones (Δ, Ε) by ~2° each, since the curvature makes equal-degree arcs look unequal:
+
+| Zone | New Range |
+|------|-----------|
+| Α | 184–202 (18°) |
+| Β | 204–222 (18°) |
+| Γ | 224–234 (10°) |
+| Δ | 236–266 (30°) |
+| Ε | 274–302 (28°) |
+| Ζ | 304–320 (16°) |
+| Η | 322–340 (18°) |
+| Θ | 342–354 (12°) |
 
 ### File change
-**`src/components/theatre/ZoneOverviewMap.tsx`** — Update `ZONE_ARCS` values (lines 78-87).
-
-No other files affected.
+**`src/components/theatre/ZoneOverviewMap.tsx`** — Update `ZONE_ARCS` (lines 78-87).
 
