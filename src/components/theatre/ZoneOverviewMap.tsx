@@ -4,6 +4,42 @@ import { useLanguage } from '@/hooks/useLanguage';
 import type { SelectedSeat } from './SeatMapViewer';
 import { CX, CY, INNER_R, OUTER_R, ZONE_ARCS, annularSectorPath, midPoint } from './theatreConstants';
 
+interface VenueZone {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  sort_order: number;
+}
+
+interface ZoneOverviewMapProps {
+  venueId: string;
+  showInstanceId: string;
+  selectedSeats: SelectedSeat[];
+  onZoneClick: (zone: VenueZone) => void;
+}
+
+const translations = {
+  el: {
+    stage: 'ΣΚΗΝΗ',
+    available: 'διαθέσιμες',
+    selectZone: 'Επιλέξτε ζώνη για να δείτε τις θέσεις',
+    loading: 'Φόρτωση...',
+    mainEntrance: 'ΚΥΡΙΑ ΕΙΣΟΔΟΣ',
+    secondEntrance: "Β' ΕΙΣΟΔΟΣ",
+    canteen: 'ΚΑΝΤΙΝΑ',
+  },
+  en: {
+    stage: 'STAGE',
+    available: 'available',
+    selectZone: 'Select a zone to view seats',
+    loading: 'Loading...',
+    mainEntrance: 'MAIN ENTRANCE',
+    secondEntrance: '2ND ENTRANCE',
+    canteen: 'CANTEEN',
+  },
+};
+
 export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
   venueId,
   showInstanceId,
