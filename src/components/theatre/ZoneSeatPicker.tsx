@@ -147,12 +147,15 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     }
 
     const entries = Array.from(grouped.entries());
+    // Sort descending by ROW_ORDER index so outermost rows (Σ) come first,
+    // innermost rows (Α) come last — matching the physical theatre layout:
+    // Σ→Ρ→Π→Ο→Ξ→Ν→Μ→Λ→Κ [GAP] Ι→Θ→Η→Ζ→Ε→Δ→Γ→Β→Α
     entries.sort((a, b) => {
       const indexA = ROW_ORDER.indexOf(a[0]);
       const indexB = ROW_ORDER.indexOf(b[0]);
 
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      return a[0].localeCompare(b[0]);
+      if (indexA !== -1 && indexB !== -1) return indexB - indexA;
+      return b[0].localeCompare(a[0]);
     });
 
     return entries;
