@@ -56,8 +56,9 @@ const translations = {
 // Horseshoe center for the curved layout
 const HC = { x: 500, y: 600 };
 const BASE_RADIUS = 120;
-const ROW_SPACING = 22;
-const SEAT_RADIUS = 8;
+const ROW_SPACING = 32;
+const SEAT_RADIUS = 10;
+const AISLE_GAP_DEG = 3.5; // gap in degrees between two sections
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   venueId,
@@ -161,24 +162,37 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
     rowGroups.forEach(([rowLabel, rowSeats], rowIdx) => {
       const r = BASE_RADIUS + rowIdx * ROW_SPACING;
-      const numSeats = rowSeats.length;
+      const sorted = [...rowSeats].sort((a, b) => a.seat_number - b.seat_number);
+      const numSeats = sorted.length;
       
-      // Add small padding at edges so seats don't touch the arc boundary
-      const padDeg = 0.8;
+      const padDeg = 1.5;
       const arcStart = startDeg + padDeg;
       const arcEnd = endDeg - padDeg;
-      
-      rowSeats.forEach((seat, seatIdx) => {
-        // Distribute seats evenly along the arc
-        const angle = numSeats === 1
-          ? (arcStart + arcEnd) / 2
-          : arcStart + (seatIdx / (numSeats - 1)) * (arcEnd - arcStart);
-        
+      const midDeg = (arcStart + arcEnd) / 2;
+
+      // Split into two halves with an aisle gap
+      const halfCount = Math.ceil(numSeats / 2);
+      const firstHalf = sorted.slice(0, halfCount);
+      const secondHalf = sorted.slice(halfCount);
+
+      // First half: arcStart to midDeg - gap
+      const firstEnd = midDeg - AISLE_GAP_DEG;
+      firstHalf.forEach((seat, seatIdx) => {
+        const angle = firstHalf.length === 1
+          ? (arcStart + firstEnd) / 2
+          : arcStart + (seatIdx / (firstHalf.length - 1)) * (firstEnd - arcStart);
         const rad = toRad(angle);
-        positions.set(seat.id, {
-          x: HC.x + r * Math.cos(rad),
-          y: HC.y + r * Math.sin(rad),
-        });
+        positions.set(seat.id, { x: HC.x + r * Math.cos(rad), y: HC.y + r * Math.sin(rad) });
+      });
+
+      // Second half: midDeg + gap to arcEnd
+      const secondStart = midDeg + AISLE_GAP_DEG;
+      secondHalf.forEach((seat, seatIdx) => {
+        const angle = secondHalf.length === 1
+          ? (secondStart + arcEnd) / 2
+          : secondStart + (seatIdx / (secondHalf.length - 1)) * (arcEnd - secondStart);
+        const rad = toRad(angle);
+        positions.set(seat.id, { x: HC.x + r * Math.cos(rad), y: HC.y + r * Math.sin(rad) });
       });
     });
 
@@ -284,7 +298,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       {rowGroups.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">{t.noSeats}</p>
       ) : (
-        <div className="w-full overflow-hidden" style={{ maxHeight: '55vh' }}>
+        <div className="w-full overflow-auto" style={{ maxHeight: '65vh', WebkitOverflowScrolling: 'touch' }}>
           <svg
             ref={svgRef}
             viewBox={viewBox}
