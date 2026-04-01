@@ -36,6 +36,7 @@ interface ReservationQRCardProps {
 const translations = {
   el: {
     scanAtVenue: "Σαρώστε στην επιχείρηση",
+    saveHint: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην επιχείρηση.",
     downloadQR: "QR Εικόνα",
     date: "ΗΜΕΡΟΜΗΝΙΑ",
     time: "ΩΡΑ",
