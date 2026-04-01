@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { SelectedSeat } from './SeatMapViewer';
+import { ZONE_ARCS, ROW_ORDER, toRad } from './theatreConstants';
 
 interface VenueSeat {
   id: string;
@@ -38,6 +38,7 @@ const translations = {
     selected: 'Επιλεγμένη',
     noSeats: 'Δεν υπάρχουν θέσεις σε αυτή τη ζώνη',
     maxReached: 'Μέγιστος αριθμός θέσεων',
+    stage: 'ΣΚΗΝΗ',
   },
   en: {
     back: 'Back to zones',
@@ -48,8 +49,15 @@ const translations = {
     selected: 'Selected',
     noSeats: 'No seats in this zone',
     maxReached: 'Maximum seats reached',
+    stage: 'STAGE',
   },
 };
+
+// Horseshoe center for the curved layout
+const HC = { x: 500, y: 600 };
+const BASE_RADIUS = 120;
+const ROW_SPACING = 22;
+const SEAT_RADIUS = 8;
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   venueId,
@@ -64,10 +72,12 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 }) => {
   const { language } = useLanguage();
   const t = translations[language];
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const [seats, setSeats] = useState<VenueSeat[]>([]);
   const [soldSeatIds, setSoldSeatIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -121,7 +131,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     [selectedSeats]
   );
 
-  // Group seats by row
+  // Group seats by row, sorted by row order
   const rowGroups = useMemo(() => {
     const map = new Map<string, VenueSeat[]>();
     for (const seat of seats) {
@@ -129,16 +139,69 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       existing.push(seat);
       map.set(seat.row_label, existing);
     }
-    // Sort rows naturally
     const entries = Array.from(map.entries());
     entries.sort((a, b) => {
-      const numA = parseInt(a[0]);
-      const numB = parseInt(b[0]);
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      const idxA = ROW_ORDER.indexOf(a[0]);
+      const idxB = ROW_ORDER.indexOf(b[0]);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
       return a[0].localeCompare(b[0]);
     });
     return entries;
   }, [seats]);
+
+  // Get the arc angles for this zone
+  const arc = ZONE_ARCS[zoneName];
+  const startDeg = arc?.startDeg ?? 200;
+  const endDeg = arc?.endDeg ?? 340;
+
+  // Compute seat positions on curved arcs
+  const seatPositions = useMemo(() => {
+    const positions = new Map<string, { x: number; y: number }>();
+    if (!rowGroups.length) return positions;
+
+    rowGroups.forEach(([rowLabel, rowSeats], rowIdx) => {
+      const r = BASE_RADIUS + rowIdx * ROW_SPACING;
+      const numSeats = rowSeats.length;
+      
+      // Add small padding at edges so seats don't touch the arc boundary
+      const padDeg = 0.8;
+      const arcStart = startDeg + padDeg;
+      const arcEnd = endDeg - padDeg;
+      
+      rowSeats.forEach((seat, seatIdx) => {
+        // Distribute seats evenly along the arc
+        const angle = numSeats === 1
+          ? (arcStart + arcEnd) / 2
+          : arcStart + (seatIdx / (numSeats - 1)) * (arcEnd - arcStart);
+        
+        const rad = toRad(angle);
+        positions.set(seat.id, {
+          x: HC.x + r * Math.cos(rad),
+          y: HC.y + r * Math.sin(rad),
+        });
+      });
+    });
+
+    return positions;
+  }, [rowGroups, startDeg, endDeg]);
+
+  // Compute viewBox to fit all seats with padding
+  const viewBox = useMemo(() => {
+    if (seatPositions.size === 0) return '0 0 1000 500';
+    
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    seatPositions.forEach(({ x, y }) => {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+    
+    const pad = 40;
+    const w = maxX - minX + pad * 2;
+    const h = maxY - minY + pad * 2;
+    return `${minX - pad} ${minY - pad} ${w} ${h}`;
+  }, [seatPositions]);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
@@ -188,63 +251,176 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       {/* Legend */}
       <div className="flex items-center gap-4 px-1">
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded border-2 flex items-center justify-center text-[9px]" style={{ borderColor: zoneColor, color: zoneColor }}>1</div>
+          <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center text-[7px]" style={{ borderColor: zoneColor, color: zoneColor }}>1</div>
           <span className="text-[11px] text-muted-foreground">{t.available}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded bg-muted-foreground/20 flex items-center justify-center text-[9px] text-muted-foreground/40">1</div>
+          <div className="w-5 h-5 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[7px] text-muted-foreground/40">1</div>
           <span className="text-[11px] text-muted-foreground">{t.sold}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded flex items-center justify-center text-[9px] text-primary-foreground bg-primary">1</div>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] text-primary-foreground bg-primary">1</div>
           <span className="text-[11px] text-muted-foreground">{t.selected}</span>
         </div>
       </div>
 
-      {/* Seat grid by row */}
+      {/* Curved seat map */}
       {rowGroups.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">{t.noSeats}</p>
       ) : (
-        <div className="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
-          {rowGroups.map(([rowLabel, rowSeats]) => (
-            <div key={rowLabel} className="flex items-center gap-2">
-              {/* Row label */}
-              <div className="w-8 text-right text-[10px] font-medium text-muted-foreground shrink-0">
-                {rowLabel}
-              </div>
-              {/* Seats */}
-              <div className="flex flex-wrap gap-0.5">
-                {rowSeats.map((seat) => {
-                  const isSold = soldSeatIds.has(seat.id);
-                  const isSelected = selectedIds.has(seat.id);
-                  const atMax = selectedSeats.length >= maxSeats && !isSelected;
+        <div className="w-full overflow-hidden" style={{ maxHeight: '55vh' }}>
+          <svg
+            ref={svgRef}
+            viewBox={viewBox}
+            className="w-full"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Zone arc background */}
+            {rowGroups.length > 0 && (
+              <path
+                d={(() => {
+                  const innerR = BASE_RADIUS - 8;
+                  const outerR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 4;
+                  const s = toRad(startDeg);
+                  const e = toRad(endDeg);
+                  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+                  const ox1 = HC.x + outerR * Math.cos(s);
+                  const oy1 = HC.y + outerR * Math.sin(s);
+                  const ox2 = HC.x + outerR * Math.cos(e);
+                  const oy2 = HC.y + outerR * Math.sin(e);
+                  const ix1 = HC.x + innerR * Math.cos(e);
+                  const iy1 = HC.y + innerR * Math.sin(e);
+                  const ix2 = HC.x + innerR * Math.cos(s);
+                  const iy2 = HC.y + innerR * Math.sin(s);
+                  return `M ${ox1} ${oy1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${ox2} ${oy2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`;
+                })()}
+                fill={zoneColor}
+                fillOpacity={0.06}
+                stroke={zoneColor}
+                strokeWidth={1}
+                strokeOpacity={0.2}
+              />
+            )}
 
-                  return (
-                    <button
-                      key={seat.id}
-                      disabled={isSold || atMax}
-                      onClick={() => handleSeatClick(seat)}
-                      title={seat.seat_label}
-                      className={cn(
-                        'w-6 h-6 rounded text-[8px] font-medium transition-all duration-100 flex items-center justify-center',
-                        isSold && 'bg-muted-foreground/15 text-muted-foreground/30 cursor-not-allowed',
-                        isSelected && 'bg-primary text-primary-foreground shadow-sm',
-                        !isSold && !isSelected && !atMax && 'border-2 hover:opacity-80 cursor-pointer',
-                        !isSold && !isSelected && atMax && 'border opacity-40 cursor-not-allowed',
-                      )}
-                      style={
-                        !isSold && !isSelected
-                          ? { borderColor: zoneColor, color: zoneColor }
-                          : undefined
-                      }
+            {/* Row labels along the outer edge */}
+            {rowGroups.map(([rowLabel], rowIdx) => {
+              const r = BASE_RADIUS + rowIdx * ROW_SPACING;
+              // Place label just outside the start of the arc
+              const labelAngle = toRad(startDeg - 2);
+              const lx = HC.x + r * Math.cos(labelAngle);
+              const ly = HC.y + r * Math.sin(labelAngle);
+              return (
+                <text
+                  key={`label-${rowLabel}`}
+                  x={lx}
+                  y={ly}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                  fontSize={8}
+                  fontWeight={600}
+                  fill="hsl(var(--muted-foreground))"
+                  className="select-none pointer-events-none"
+                >
+                  {rowLabel}
+                </text>
+              );
+            })}
+
+            {/* Seats */}
+            {rowGroups.map(([rowLabel, rowSeats]) =>
+              rowSeats.map((seat) => {
+                const pos = seatPositions.get(seat.id);
+                if (!pos) return null;
+
+                const isSold = soldSeatIds.has(seat.id);
+                const isSelected = selectedIds.has(seat.id);
+                const atMax = selectedSeats.length >= maxSeats && !isSelected;
+                const isHovered = hoveredSeat === seat.id;
+
+                let fill = 'transparent';
+                let stroke = zoneColor;
+                let strokeWidth = 1.2;
+                let textColor = zoneColor;
+                let opacity = 1;
+                let cursor = 'pointer';
+
+                if (isSold) {
+                  fill = 'hsl(var(--muted-foreground) / 0.15)';
+                  stroke = 'hsl(var(--muted-foreground) / 0.2)';
+                  textColor = 'hsl(var(--muted-foreground) / 0.3)';
+                  cursor = 'not-allowed';
+                } else if (isSelected) {
+                  fill = 'hsl(var(--primary))';
+                  stroke = 'hsl(var(--primary))';
+                  textColor = 'hsl(var(--primary-foreground))';
+                  strokeWidth = 1.5;
+                } else if (atMax) {
+                  opacity = 0.35;
+                  cursor = 'not-allowed';
+                } else if (isHovered) {
+                  fill = zoneColor;
+                  textColor = '#fff';
+                  strokeWidth = 2;
+                }
+
+                return (
+                  <g
+                    key={seat.id}
+                    className="transition-all duration-100"
+                    style={{ cursor, opacity }}
+                    onClick={() => handleSeatClick(seat)}
+                    onMouseEnter={() => setHoveredSeat(seat.id)}
+                    onMouseLeave={() => setHoveredSeat(null)}
+                  >
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r={SEAT_RADIUS}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={strokeWidth}
+                    />
+                    <text
+                      x={pos.x}
+                      y={pos.y + 0.5}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={6}
+                      fontWeight={500}
+                      fill={textColor}
+                      className="select-none pointer-events-none"
                     >
                       {seat.seat_number}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                    </text>
+                  </g>
+                );
+              })
+            )}
+
+            {/* Stage indicator at the center bottom */}
+            {(() => {
+              const midAngle = (startDeg + endDeg) / 2;
+              const stageR = BASE_RADIUS - 30;
+              const rad = toRad(midAngle);
+              const sx = HC.x + stageR * Math.cos(rad);
+              const sy = HC.y + stageR * Math.sin(rad);
+              return (
+                <text
+                  x={sx}
+                  y={sy}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={10}
+                  fontWeight={700}
+                  fill="hsl(var(--primary) / 0.5)"
+                  letterSpacing="0.1em"
+                  className="select-none pointer-events-none"
+                >
+                  ↓ {t.stage}
+                </text>
+              );
+            })()}
+          </svg>
         </div>
       )}
 
