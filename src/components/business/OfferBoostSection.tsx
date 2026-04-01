@@ -375,7 +375,7 @@ const OfferBoostSection = ({
                       mode="single"
                       selected={endDate}
                       onSelect={handleEndDateChange}
-                      disabled={(date) => date <= startDate}
+                      disabled={(date) => date <= startDate || (maxEndDate ? date > maxEndDate : false)}
                     />
                   </PopoverContent>
                 </Popover>
