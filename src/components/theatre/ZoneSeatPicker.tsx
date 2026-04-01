@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { SelectedSeat } from './SeatMapViewer';
-import { ZONE_ARCS, ROW_ORDER, toRad } from './theatreConstants';
+import { ZONE_ARCS, ROW_ORDER, toRad, annularSectorPath } from './theatreConstants';
 
 interface VenueSeat {
   id: string;
@@ -31,34 +31,33 @@ interface ZoneSeatPickerProps {
 const translations = {
   el: {
     back: 'Πίσω στις ζώνες',
-    row: 'Σειρά',
     loading: 'Φόρτωση θέσεων...',
     available: 'Διαθέσιμη',
     sold: 'Πωλημένη',
     selected: 'Επιλεγμένη',
     noSeats: 'Δεν υπάρχουν θέσεις σε αυτή τη ζώνη',
-    maxReached: 'Μέγιστος αριθμός θέσεων',
     stage: 'ΣΚΗΝΗ',
   },
   en: {
     back: 'Back to zones',
-    row: 'Row',
     loading: 'Loading seats...',
     available: 'Available',
     sold: 'Sold',
     selected: 'Selected',
     noSeats: 'No seats in this zone',
-    maxReached: 'Maximum seats reached',
     stage: 'STAGE',
   },
 };
 
-// Horseshoe center for the curved layout
-const HC = { x: 500, y: 600 };
-const BASE_RADIUS = 120;
-const ROW_SPACING = 32;
-const SEAT_RADIUS = 10;
-const AISLE_GAP_DEG = 3.5; // gap in degrees between two sections
+const HC = { x: 500, y: 760 };
+const BASE_RADIUS = 180;
+const ROW_SPACING = 44;
+const SEAT_RADIUS = 12;
+const SECTION_GAP = 92;
+const EDGE_PAD_DEG = 3;
+const UPPER_SECTION_INSET_DEG = 8;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   venueId,
@@ -73,7 +72,6 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 }) => {
   const { language } = useLanguage();
   const t = translations[language];
-  const svgRef = useRef<SVGSVGElement>(null);
 
   const [seats, setSeats] = useState<VenueSeat[]>([]);
   const [soldSeatIds, setSoldSeatIds] = useState<Set<string>>(new Set());
@@ -94,10 +92,12 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         .order('seat_number')
         .limit(1000);
 
-      setSeats((seatsRes.data || []) as VenueSeat[]);
+      const loadedSeats = (seatsRes.data || []) as VenueSeat[];
+      setSeats(loadedSeats);
 
       if (showInstanceId !== '__new__') {
-        const seatIds = (seatsRes.data || []).map((s: any) => s.id);
+        const seatIds = loadedSeats.map((seat) => seat.id);
+
         if (seatIds.length > 0) {
           const soldRes = await supabase
             .from('show_instance_seats')
@@ -108,17 +108,25 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
           if (soldRes.data) {
             const now = new Date();
-            setSoldSeatIds(new Set(
-              soldRes.data
-                .filter((s: any) => {
-                  if (s.status === 'sold') return true;
-                  if (s.status === 'held' && s.held_until) return new Date(s.held_until) > now;
-                  return false;
-                })
-                .map((s: any) => s.venue_seat_id)
-            ));
+            setSoldSeatIds(
+              new Set(
+                soldRes.data
+                  .filter((seat: any) => {
+                    if (seat.status === 'sold') return true;
+                    if (seat.status === 'held' && seat.held_until) return new Date(seat.held_until) > now;
+                    return false;
+                  })
+                  .map((seat: any) => seat.venue_seat_id)
+              )
+            );
+          } else {
+            setSoldSeatIds(new Set());
           }
+        } else {
+          setSoldSeatIds(new Set());
         }
+      } else {
+        setSoldSeatIds(new Set());
       }
 
       setLoading(false);
@@ -127,83 +135,101 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     load();
   }, [venueId, zoneId, showInstanceId]);
 
-  const selectedIds = useMemo(
-    () => new Set(selectedSeats.map(s => s.seatId)),
-    [selectedSeats]
-  );
+  const selectedIds = useMemo(() => new Set(selectedSeats.map((seat) => seat.seatId)), [selectedSeats]);
 
-  // Group seats by row, sorted by row order
   const rowGroups = useMemo(() => {
-    const map = new Map<string, VenueSeat[]>();
+    const grouped = new Map<string, VenueSeat[]>();
+
     for (const seat of seats) {
-      const existing = map.get(seat.row_label) || [];
+      const existing = grouped.get(seat.row_label) || [];
       existing.push(seat);
-      map.set(seat.row_label, existing);
+      grouped.set(seat.row_label, existing);
     }
-    const entries = Array.from(map.entries());
+
+    const entries = Array.from(grouped.entries());
     entries.sort((a, b) => {
-      const idxA = ROW_ORDER.indexOf(a[0]);
-      const idxB = ROW_ORDER.indexOf(b[0]);
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      const indexA = ROW_ORDER.indexOf(a[0]);
+      const indexB = ROW_ORDER.indexOf(b[0]);
+
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       return a[0].localeCompare(b[0]);
     });
+
     return entries;
   }, [seats]);
 
-  // Get the arc angles for this zone
-  const arc = ZONE_ARCS[zoneName];
-  const startDeg = arc?.startDeg ?? 200;
-  const endDeg = arc?.endDeg ?? 340;
+  const overviewArc = ZONE_ARCS[zoneName];
+  const zoneMidDeg = ((overviewArc?.startDeg ?? 200) + (overviewArc?.endDeg ?? 340)) / 2;
 
-  // Compute seat positions on curved arcs
+  const maxSeatsInRow = useMemo(
+    () => rowGroups.reduce((max, [, rowSeats]) => Math.max(max, rowSeats.length), 0),
+    [rowGroups]
+  );
+
+  const detailSpanDeg = useMemo(
+    () => clamp(maxSeatsInRow * 4.8, 104, 176),
+    [maxSeatsInRow]
+  );
+
+  const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
+  const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
+  const lowerSectionRowCount = rowGroups.length <= 1 ? rowGroups.length : Math.ceil(rowGroups.length / 2);
+
+  const rowLayouts = useMemo(() => {
+    return rowGroups.map(([rowLabel, rowSeats], rowIdx) => {
+      const isLowerSection = rowIdx < lowerSectionRowCount;
+      const localRowIdx = isLowerSection ? rowIdx : rowIdx - lowerSectionRowCount;
+      const radius = isLowerSection
+        ? BASE_RADIUS + localRowIdx * ROW_SPACING
+        : BASE_RADIUS + lowerSectionRowCount * ROW_SPACING + SECTION_GAP + localRowIdx * ROW_SPACING;
+
+      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isLowerSection ? 0 : UPPER_SECTION_INSET_DEG);
+      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isLowerSection ? 0 : UPPER_SECTION_INSET_DEG);
+
+      return {
+        rowLabel,
+        rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
+        radius,
+        isLowerSection,
+        startDeg,
+        endDeg,
+      };
+    });
+  }, [rowGroups, lowerSectionRowCount, detailStartDeg, detailEndDeg]);
+
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
-    if (!rowGroups.length) return positions;
 
-    rowGroups.forEach(([rowLabel, rowSeats], rowIdx) => {
-      const r = BASE_RADIUS + rowIdx * ROW_SPACING;
-      const sorted = [...rowSeats].sort((a, b) => a.seat_number - b.seat_number);
-      const numSeats = sorted.length;
-      
-      const padDeg = 1.5;
-      const arcStart = startDeg + padDeg;
-      const arcEnd = endDeg - padDeg;
-      const midDeg = (arcStart + arcEnd) / 2;
+    rowLayouts.forEach(({ rowSeats, radius, startDeg, endDeg }) => {
+      rowSeats.forEach((seat, seatIdx) => {
+        const angle = rowSeats.length === 1
+          ? (startDeg + endDeg) / 2
+          : startDeg + (seatIdx / (rowSeats.length - 1)) * (endDeg - startDeg);
 
-      // Split into two halves with an aisle gap
-      const halfCount = Math.ceil(numSeats / 2);
-      const firstHalf = sorted.slice(0, halfCount);
-      const secondHalf = sorted.slice(halfCount);
-
-      // First half: arcStart to midDeg - gap
-      const firstEnd = midDeg - AISLE_GAP_DEG;
-      firstHalf.forEach((seat, seatIdx) => {
-        const angle = firstHalf.length === 1
-          ? (arcStart + firstEnd) / 2
-          : arcStart + (seatIdx / (firstHalf.length - 1)) * (firstEnd - arcStart);
         const rad = toRad(angle);
-        positions.set(seat.id, { x: HC.x + r * Math.cos(rad), y: HC.y + r * Math.sin(rad) });
-      });
-
-      // Second half: midDeg + gap to arcEnd
-      const secondStart = midDeg + AISLE_GAP_DEG;
-      secondHalf.forEach((seat, seatIdx) => {
-        const angle = secondHalf.length === 1
-          ? (secondStart + arcEnd) / 2
-          : secondStart + (seatIdx / (secondHalf.length - 1)) * (arcEnd - secondStart);
-        const rad = toRad(angle);
-        positions.set(seat.id, { x: HC.x + r * Math.cos(rad), y: HC.y + r * Math.sin(rad) });
+        positions.set(seat.id, {
+          x: HC.x + radius * Math.cos(rad),
+          y: HC.y + radius * Math.sin(rad),
+        });
       });
     });
 
     return positions;
-  }, [rowGroups, startDeg, endDeg]);
+  }, [rowLayouts]);
 
-  // Compute viewBox to fit all seats with padding, plus space for title and boundary
+  const outermostRadius = rowLayouts.length > 0 ? rowLayouts[rowLayouts.length - 1].radius + SEAT_RADIUS + 28 : BASE_RADIUS + 80;
+  const titleRadius = outermostRadius + 46;
+  const stageRadius = Math.max(72, BASE_RADIUS - 78);
+  const svgMinWidth = Math.max(980, maxSeatsInRow * 30);
+
   const viewBox = useMemo(() => {
-    if (seatPositions.size === 0) return '0 0 1000 500';
-    
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    if (seatPositions.size === 0) return '0 0 1200 900';
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
     seatPositions.forEach(({ x, y }) => {
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);
@@ -211,27 +237,43 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       maxY = Math.max(maxY, y);
     });
 
-    // Also account for boundary arc (outermost row + extra)
-    const boundaryR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 16;
-    const bStartRad = toRad(startDeg);
-    const bEndRad = toRad(endDeg);
-    const bMidRad = toRad((startDeg + endDeg) / 2);
-    for (const rad of [bStartRad, bEndRad, bMidRad]) {
-      const bx = HC.x + boundaryR * Math.cos(rad);
-      const by = HC.y + boundaryR * Math.sin(rad);
+    const boundaryAngles = [detailStartDeg, zoneMidDeg, detailEndDeg].map(toRad);
+    boundaryAngles.forEach((rad) => {
+      const bx = HC.x + outermostRadius * Math.cos(rad);
+      const by = HC.y + outermostRadius * Math.sin(rad);
       minX = Math.min(minX, bx);
       minY = Math.min(minY, by);
       maxX = Math.max(maxX, bx);
       maxY = Math.max(maxY, by);
-    }
-    
-    const padX = 50;
-    const padTop = 55; // extra top space for large zone title
-    const padBottom = 40;
-    const w = maxX - minX + padX * 2;
-    const h = maxY - minY + padTop + padBottom;
-    return `${minX - padX} ${minY - padTop} ${w} ${h}`;
-  }, [seatPositions, rowGroups, startDeg, endDeg]);
+    });
+
+    const titleRad = toRad(zoneMidDeg);
+    const titleX = HC.x + titleRadius * Math.cos(titleRad);
+    const titleY = HC.y + titleRadius * Math.sin(titleRad);
+    minX = Math.min(minX, titleX);
+    minY = Math.min(minY, titleY);
+    maxX = Math.max(maxX, titleX);
+    maxY = Math.max(maxY, titleY);
+
+    const stageRad = toRad(zoneMidDeg);
+    const stageX = HC.x + stageRadius * Math.cos(stageRad);
+    const stageY = HC.y + stageRadius * Math.sin(stageRad);
+    minX = Math.min(minX, stageX);
+    minY = Math.min(minY, stageY);
+    maxX = Math.max(maxX, stageX);
+    maxY = Math.max(maxY, stageY);
+
+    const padX = 90;
+    const padTop = 90;
+    const padBottom = 80;
+    const width = maxX - minX + padX * 2;
+    const height = maxY - minY + padTop + padBottom;
+
+    return `${minX - padX} ${minY - padTop} ${width} ${height}`;
+  }, [seatPositions, detailStartDeg, zoneMidDeg, detailEndDeg, outermostRadius, titleRadius, stageRadius]);
+
+  const lowerSection = rowLayouts.slice(0, lowerSectionRowCount);
+  const upperSection = rowLayouts.slice(lowerSectionRowCount);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
@@ -247,287 +289,284 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         seatNumber: seat.seat_number,
       };
 
-      if (selectedIds.has(seat.id)) {
-        onSeatToggle(seatData);
-      } else if (selectedSeats.length < maxSeats) {
+      if (selectedIds.has(seat.id) || selectedSeats.length < maxSeats) {
         onSeatToggle(seatData);
       }
     },
-    [soldSeatIds, selectedIds, selectedSeats.length, maxSeats, onSeatToggle, zoneName, zoneId, zoneColor]
+    [soldSeatIds, zoneName, zoneId, zoneColor, selectedIds, selectedSeats.length, maxSeats, onSeatToggle]
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground">
+      <div className="flex h-48 items-center justify-center text-muted-foreground">
         <div className="animate-pulse text-sm">{t.loading}</div>
       </div>
     );
   }
 
+  if (rowGroups.length === 0) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">{t.noSeats}</p>;
+  }
+
+  const zoneLetter = zoneName.replace('Τμήμα ', '');
+
   return (
     <div className="w-full space-y-3">
-      {/* Header */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 text-xs h-8 px-2">
+        <Button variant="ghost" size="sm" onClick={onBack} className="h-8 gap-1 px-2 text-xs">
           <ArrowLeft className="h-3.5 w-3.5" />
           {t.back}
         </Button>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: zoneColor }} />
+          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: zoneColor }} />
           <span className="text-sm font-semibold">{zoneName}</span>
         </div>
       </div>
 
-      {/* Legend */}
       <div className="flex items-center gap-4 px-1">
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center text-[7px]" style={{ borderColor: zoneColor, color: zoneColor }}>1</div>
+          <div
+            className="flex h-6 w-6 items-center justify-center rounded-full border-2 text-[8px]"
+            style={{ borderColor: zoneColor, color: zoneColor }}
+          >
+            1
+          </div>
           <span className="text-[11px] text-muted-foreground">{t.available}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[7px] text-muted-foreground/40">1</div>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60 text-[8px] text-muted-foreground/50">
+            1
+          </div>
           <span className="text-[11px] text-muted-foreground">{t.sold}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] text-primary-foreground bg-primary">1</div>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
+            1
+          </div>
           <span className="text-[11px] text-muted-foreground">{t.selected}</span>
         </div>
       </div>
 
-      {/* Curved seat map */}
-      {rowGroups.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">{t.noSeats}</p>
-      ) : (
-        <div className="w-full overflow-auto" style={{ maxHeight: '65vh', WebkitOverflowScrolling: 'touch' }}>
-          <svg
-            ref={svgRef}
-            viewBox={viewBox}
-            className="w-full"
-            preserveAspectRatio="xMidYMid meet"
+      <div className="w-full overflow-auto rounded-md" style={{ maxHeight: '72vh', WebkitOverflowScrolling: 'touch' }}>
+        <svg
+          viewBox={viewBox}
+          className="block h-auto w-full"
+          preserveAspectRatio="xMidYMid meet"
+          style={{ minWidth: `${svgMinWidth}px` }}
+        >
+          <text
+            x={HC.x + titleRadius * Math.cos(toRad(zoneMidDeg))}
+            y={HC.y + titleRadius * Math.sin(toRad(zoneMidDeg))}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={34}
+            fontWeight={800}
+            fill={zoneColor}
+            opacity={0.9}
+            className="pointer-events-none select-none"
           >
-            {/* Large zone title centered at the top */}
-            {(() => {
-              const midAngle = (startDeg + endDeg) / 2;
-              const titleR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 35;
-              const rad = toRad(midAngle);
-              const tx = HC.x + titleR * Math.cos(rad);
-              const ty = HC.y + titleR * Math.sin(rad);
-              // Extract the Greek letter from zone name (e.g. "Τμήμα Δ" -> "Δ")
-              const zoneLetter = zoneName.split(' ').pop() || zoneName;
-              return (
-                <text
-                  x={tx}
-                  y={ty}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={28}
-                  fontWeight={800}
-                  fill={zoneColor}
-                  opacity={0.85}
-                  className="select-none pointer-events-none"
-                >
-                  {zoneLetter}
-                </text>
-              );
-            })()}
+            {zoneLetter}
+          </text>
 
-            {/* Red/coral theatre boundary arc at outer edge */}
-            {rowGroups.length > 0 && (
+          {lowerSection.length > 0 && (
+            <path
+              d={annularSectorPath(
+                HC.x,
+                HC.y,
+                Math.max(48, lowerSection[0].radius - 28),
+                lowerSection[lowerSection.length - 1].radius + 26,
+                detailStartDeg,
+                detailEndDeg
+              )}
+              fill={zoneColor}
+              fillOpacity={0.06}
+              stroke={zoneColor}
+              strokeOpacity={0.24}
+              strokeWidth={1.5}
+            />
+          )}
+
+          {upperSection.length > 0 && (
+            <path
+              d={annularSectorPath(
+                HC.x,
+                HC.y,
+                upperSection[0].radius - 28,
+                upperSection[upperSection.length - 1].radius + 26,
+                detailStartDeg + UPPER_SECTION_INSET_DEG,
+                detailEndDeg - UPPER_SECTION_INSET_DEG
+              )}
+              fill={zoneColor}
+              fillOpacity={0.06}
+              stroke={zoneColor}
+              strokeOpacity={0.24}
+              strokeWidth={1.5}
+            />
+          )}
+
+          <path
+            d={`M ${HC.x + outermostRadius * Math.cos(toRad(detailStartDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailStartDeg))} A ${outermostRadius} ${outermostRadius} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + outermostRadius * Math.cos(toRad(detailEndDeg))} ${HC.y + outermostRadius * Math.sin(toRad(detailEndDeg))}`}
+            fill="none"
+            stroke="hsl(var(--destructive) / 0.7)"
+            strokeWidth={3}
+            strokeLinecap="round"
+          />
+
+          {upperSection.length > 0 && (
+            <>
               <path
-                d={(() => {
-                  const boundaryR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 12;
-                  const s = toRad(startDeg);
-                  const e = toRad(endDeg);
-                  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
-                  const x1 = HC.x + boundaryR * Math.cos(s);
-                  const y1 = HC.y + boundaryR * Math.sin(s);
-                  const x2 = HC.x + boundaryR * Math.cos(e);
-                  const y2 = HC.y + boundaryR * Math.sin(e);
-                  return `M ${x1} ${y1} A ${boundaryR} ${boundaryR} 0 ${largeArc} 1 ${x2} ${y2}`;
-                })()}
+                d={`M ${HC.x + (lowerSection[lowerSection.length - 1].radius + 22) * Math.cos(toRad(detailStartDeg))} ${HC.y + (lowerSection[lowerSection.length - 1].radius + 22) * Math.sin(toRad(detailStartDeg))} A ${lowerSection[lowerSection.length - 1].radius + 22} ${lowerSection[lowerSection.length - 1].radius + 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (lowerSection[lowerSection.length - 1].radius + 22) * Math.cos(toRad(detailEndDeg))} ${HC.y + (lowerSection[lowerSection.length - 1].radius + 22) * Math.sin(toRad(detailEndDeg))}`}
                 fill="none"
-                stroke="#E85D5D"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-              />
-            )}
-
-            {/* Zone arc background */}
-            {rowGroups.length > 0 && (
-              <path
-                d={(() => {
-                  const innerR = BASE_RADIUS - 8;
-                  const outerR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 4;
-                  const s = toRad(startDeg);
-                  const e = toRad(endDeg);
-                  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
-                  const ox1 = HC.x + outerR * Math.cos(s);
-                  const oy1 = HC.y + outerR * Math.sin(s);
-                  const ox2 = HC.x + outerR * Math.cos(e);
-                  const oy2 = HC.y + outerR * Math.sin(e);
-                  const ix1 = HC.x + innerR * Math.cos(e);
-                  const iy1 = HC.y + innerR * Math.sin(e);
-                  const ix2 = HC.x + innerR * Math.cos(s);
-                  const iy2 = HC.y + innerR * Math.sin(s);
-                  return `M ${ox1} ${oy1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${ox2} ${oy2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`;
-                })()}
-                fill={zoneColor}
-                fillOpacity={0.06}
                 stroke={zoneColor}
-                strokeWidth={1}
                 strokeOpacity={0.2}
+                strokeWidth={1.5}
+                strokeDasharray="6 6"
               />
-            )}
+              <path
+                d={`M ${HC.x + (upperSection[0].radius - 22) * Math.cos(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} ${HC.y + (upperSection[0].radius - 22) * Math.sin(toRad(detailStartDeg + UPPER_SECTION_INSET_DEG))} A ${upperSection[0].radius - 22} ${upperSection[0].radius - 22} 0 ${Math.abs(detailEndDeg - detailStartDeg) > 180 ? 1 : 0} 1 ${HC.x + (upperSection[0].radius - 22) * Math.cos(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))} ${HC.y + (upperSection[0].radius - 22) * Math.sin(toRad(detailEndDeg - UPPER_SECTION_INSET_DEG))}`}
+                fill="none"
+                stroke={zoneColor}
+                strokeOpacity={0.2}
+                strokeWidth={1.5}
+                strokeDasharray="6 6"
+              />
+            </>
+          )}
 
-            {/* Row labels on BOTH sides */}
-            {rowGroups.map(([rowLabel], rowIdx) => {
-              const r = BASE_RADIUS + rowIdx * ROW_SPACING;
-              const leftAngle = toRad(startDeg - 3);
-              const rightAngle = toRad(endDeg + 3);
-              const lx = HC.x + r * Math.cos(leftAngle);
-              const ly = HC.y + r * Math.sin(leftAngle);
-              const rx = HC.x + r * Math.cos(rightAngle);
-              const ry = HC.y + r * Math.sin(rightAngle);
-              return (
-                <React.Fragment key={`label-${rowLabel}`}>
-                  <text
-                    x={lx}
-                    y={ly}
-                    textAnchor="end"
-                    dominantBaseline="middle"
-                    fontSize={8}
-                    fontWeight={600}
-                    fill="hsl(var(--muted-foreground))"
-                    className="select-none pointer-events-none"
-                  >
-                    {rowLabel}
-                  </text>
-                  <text
-                    x={rx}
-                    y={ry}
-                    textAnchor="start"
-                    dominantBaseline="middle"
-                    fontSize={8}
-                    fontWeight={600}
-                    fill="hsl(var(--muted-foreground))"
-                    className="select-none pointer-events-none"
-                  >
-                    {rowLabel}
-                  </text>
-                </React.Fragment>
-              );
-            })}
+          {rowLayouts.map(({ rowLabel, radius, startDeg, endDeg }) => {
+            const leftAngle = toRad(startDeg - 4);
+            const rightAngle = toRad(endDeg + 4);
+            const leftX = HC.x + radius * Math.cos(leftAngle);
+            const leftY = HC.y + radius * Math.sin(leftAngle);
+            const rightX = HC.x + radius * Math.cos(rightAngle);
+            const rightY = HC.y + radius * Math.sin(rightAngle);
 
-            {/* Seats */}
-            {rowGroups.map(([rowLabel, rowSeats]) =>
-              rowSeats.map((seat) => {
-                const pos = seatPositions.get(seat.id);
-                if (!pos) return null;
-
-                const isSold = soldSeatIds.has(seat.id);
-                const isSelected = selectedIds.has(seat.id);
-                const atMax = selectedSeats.length >= maxSeats && !isSelected;
-                const isHovered = hoveredSeat === seat.id;
-
-                let fill = 'transparent';
-                let stroke = zoneColor;
-                let strokeWidth = 1.2;
-                let textColor = zoneColor;
-                let opacity = 1;
-                let cursor = 'pointer';
-
-                if (isSold) {
-                  fill = 'hsl(var(--muted-foreground) / 0.15)';
-                  stroke = 'hsl(var(--muted-foreground) / 0.2)';
-                  textColor = 'hsl(var(--muted-foreground) / 0.3)';
-                  cursor = 'not-allowed';
-                } else if (isSelected) {
-                  fill = 'hsl(var(--primary))';
-                  stroke = 'hsl(var(--primary))';
-                  textColor = 'hsl(var(--primary-foreground))';
-                  strokeWidth = 1.5;
-                } else if (atMax) {
-                  opacity = 0.35;
-                  cursor = 'not-allowed';
-                } else if (isHovered) {
-                  fill = zoneColor;
-                  textColor = '#fff';
-                  strokeWidth = 2;
-                }
-
-                return (
-                  <g
-                    key={seat.id}
-                    className="transition-all duration-100"
-                    style={{ cursor, opacity }}
-                    onClick={() => handleSeatClick(seat)}
-                    onMouseEnter={() => setHoveredSeat(seat.id)}
-                    onMouseLeave={() => setHoveredSeat(null)}
-                  >
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r={SEAT_RADIUS}
-                      fill={fill}
-                      stroke={stroke}
-                      strokeWidth={strokeWidth}
-                    />
-                    <text
-                      x={pos.x}
-                      y={pos.y + 0.5}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={6}
-                      fontWeight={500}
-                      fill={textColor}
-                      className="select-none pointer-events-none"
-                    >
-                      {seat.seat_number}
-                    </text>
-                  </g>
-                );
-              })
-            )}
-
-            {/* Stage indicator at the center bottom */}
-            {(() => {
-              const midAngle = (startDeg + endDeg) / 2;
-              const stageR = BASE_RADIUS - 30;
-              const rad = toRad(midAngle);
-              const sx = HC.x + stageR * Math.cos(rad);
-              const sy = HC.y + stageR * Math.sin(rad);
-              return (
+            return (
+              <React.Fragment key={`label-${rowLabel}`}>
                 <text
-                  x={sx}
-                  y={sy}
-                  textAnchor="middle"
+                  x={leftX}
+                  y={leftY}
+                  textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize={10}
+                  fontSize={12}
                   fontWeight={700}
-                  fill="hsl(var(--primary) / 0.5)"
-                  letterSpacing="0.1em"
-                  className="select-none pointer-events-none"
+                  fill="hsl(var(--muted-foreground))"
+                  className="pointer-events-none select-none"
                 >
-                  ↓ {t.stage}
+                  {rowLabel}
                 </text>
-              );
-            })()}
-          </svg>
-        </div>
-      )}
+                <text
+                  x={rightX}
+                  y={rightY}
+                  textAnchor="start"
+                  dominantBaseline="middle"
+                  fontSize={12}
+                  fontWeight={700}
+                  fill="hsl(var(--muted-foreground))"
+                  className="pointer-events-none select-none"
+                >
+                  {rowLabel}
+                </text>
+              </React.Fragment>
+            );
+          })}
 
-      {/* Selected seats chips */}
-      {selectedSeats.filter(s => s.zoneId === zoneId).length > 0 && (
-        <div className="flex flex-wrap gap-1 px-1 pt-1 border-t">
+          {rowLayouts.flatMap(({ rowSeats }) =>
+            rowSeats.map((seat) => {
+              const position = seatPositions.get(seat.id);
+              if (!position) return null;
+
+              const isSold = soldSeatIds.has(seat.id);
+              const isSelected = selectedIds.has(seat.id);
+              const atMax = selectedSeats.length >= maxSeats && !isSelected;
+              const isHovered = hoveredSeat === seat.id;
+
+              let fill = 'transparent';
+              let stroke = zoneColor;
+              let textColor = zoneColor;
+              let strokeWidth = 1.6;
+              let opacity = 1;
+              let cursor: React.CSSProperties['cursor'] = 'pointer';
+
+              if (isSold) {
+                fill = 'hsl(var(--muted) / 0.75)';
+                stroke = 'hsl(var(--border))';
+                textColor = 'hsl(var(--muted-foreground) / 0.45)';
+                cursor = 'not-allowed';
+              } else if (isSelected) {
+                fill = 'hsl(var(--primary))';
+                stroke = 'hsl(var(--primary))';
+                textColor = 'hsl(var(--primary-foreground))';
+                strokeWidth = 2;
+              } else if (atMax) {
+                opacity = 0.35;
+                cursor = 'not-allowed';
+              } else if (isHovered) {
+                fill = zoneColor;
+                textColor = 'hsl(var(--background))';
+                strokeWidth = 2.2;
+              }
+
+              return (
+                <g
+                  key={seat.id}
+                  style={{ cursor, opacity }}
+                  onClick={() => handleSeatClick(seat)}
+                  onMouseEnter={() => setHoveredSeat(seat.id)}
+                  onMouseLeave={() => setHoveredSeat(null)}
+                >
+                  <circle
+                    cx={position.x}
+                    cy={position.y}
+                    r={SEAT_RADIUS}
+                    fill={fill}
+                    stroke={stroke}
+                    strokeWidth={strokeWidth}
+                  />
+                  <text
+                    x={position.x}
+                    y={position.y + 0.5}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={8}
+                    fontWeight={700}
+                    fill={textColor}
+                    className="pointer-events-none select-none"
+                  >
+                    {seat.seat_number}
+                  </text>
+                </g>
+              );
+            })
+          )}
+
+          <text
+            x={HC.x + stageRadius * Math.cos(toRad(zoneMidDeg))}
+            y={HC.y + stageRadius * Math.sin(toRad(zoneMidDeg))}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={14}
+            fontWeight={800}
+            fill="hsl(var(--primary) / 0.55)"
+            letterSpacing="0.08em"
+            className="pointer-events-none select-none"
+          >
+            ↓ {t.stage}
+          </text>
+        </svg>
+      </div>
+
+      {selectedSeats.filter((seat) => seat.zoneId === zoneId).length > 0 && (
+        <div className="flex flex-wrap gap-1 border-t px-1 pt-1">
           {selectedSeats
-            .filter(s => s.zoneId === zoneId)
-            .map(s => (
+            .filter((seat) => seat.zoneId === zoneId)
+            .map((seat) => (
               <button
-                key={s.seatId}
-                onClick={() => onSeatToggle(s)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
+                key={seat.seatId}
+                onClick={() => onSeatToggle(seat)}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/80"
               >
-                {s.label}
+                {seat.label}
                 <span className="text-[10px] opacity-70">✕</span>
               </button>
             ))}
