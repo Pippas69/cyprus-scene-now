@@ -119,7 +119,25 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   const t = text[language];
   const loading = rsvpLoading || ticketsLoading;
-...
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-72 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const formatPrice = (priceCents: number | undefined) => {
+    if (priceCents === undefined || priceCents === 0) return t.free;
+    return `€${(priceCents / 100).toFixed(2)}`;
+  };
+
   const renderTickets = (ticketsList: any[], emptyMessage: string, isPast = false) => {
     if (ticketsList.length === 0) {
       return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
