@@ -40,7 +40,7 @@ const OffersList = ({ businessId }: OffersListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { language } = useLanguage();
-  const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string } | null>(null);
+  const [boostingOffer, setBoostingOffer] = useState<{ id: string; title: string; end_at: string } | null>(null);
   const [editingOffer, setEditingOffer] = useState<any>(null);
   const [showExpired, setShowExpired] = useState(false);
   
