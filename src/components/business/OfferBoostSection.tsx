@@ -38,6 +38,7 @@ const OfferBoostSection = ({
   onBoostChange,
   hasActiveSubscription = false,
   remainingBudgetCents = 0,
+  offerEndAt,
 }: OfferBoostSectionProps) => {
   const { language } = useLanguage();
   const [boostEnabled, setBoostEnabled] = useState(false);
