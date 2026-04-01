@@ -306,8 +306,8 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     return `${minX - padX} ${minY - padTop} ${width} ${height}`;
   }, [seatPositions, detailStartDeg, zoneMidDeg, detailEndDeg, outermostRadius, titleRadius, stageRadius]);
 
-  const lowerSection = rowLayouts.slice(0, lowerSectionRowCount);
-  const upperSection = rowLayouts.slice(lowerSectionRowCount);
+  const outerSection = rowLayouts.slice(0, outerSectionRowCount);
+  const innerSection = rowLayouts.slice(outerSectionRowCount);
 
   const handleSeatClick = useCallback(
     (seat: VenueSeat) => {
