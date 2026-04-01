@@ -24,6 +24,8 @@ interface OfferBoostDialogProps {
   offerTitle: string;
   hasActiveSubscription: boolean;
   remainingBudgetCents: number;
+  /** The FOMO visibility end time (end_at) – caps max boost duration */
+  offerEndAt?: string | null;
 }
 
 const OfferBoostDialog = ({
