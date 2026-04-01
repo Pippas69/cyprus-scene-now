@@ -35,6 +35,7 @@ const OfferBoostDialog = ({
   offerTitle,
   hasActiveSubscription,
   remainingBudgetCents,
+  offerEndAt,
 }: OfferBoostDialogProps) => {
   const { language } = useLanguage();
   const [tier, setTier] = useState<BoostTier>("standard");
