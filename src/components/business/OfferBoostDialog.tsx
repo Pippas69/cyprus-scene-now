@@ -407,13 +407,13 @@ const OfferBoostDialog = ({
                             if (raw === '' || /^\d+$/.test(raw)) {
                               setDurationHoursInput(raw);
                               const v = parseInt(raw);
-                              if (!isNaN(v) && v >= 1 && v <= 24) setDurationHours(v);
+                              if (!isNaN(v) && v >= 1 && v <= effectiveMaxHours) setDurationHours(v);
                             }
                           }}
                           onBlur={() => {
                             const v = parseInt(durationHoursInput);
                             if (isNaN(v) || v < 1) { setDurationHours(1); setDurationHoursInput("1"); }
-                            else if (v > 24) { setDurationHours(24); setDurationHoursInput("24"); }
+                            else if (v > effectiveMaxHours) { setDurationHours(effectiveMaxHours); setDurationHoursInput(String(effectiveMaxHours)); }
                             else { setDurationHours(v); setDurationHoursInput(String(v)); }
                           }}
                           className="w-16 text-center"
