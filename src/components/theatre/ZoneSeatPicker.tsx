@@ -291,6 +291,53 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             className="w-full"
             preserveAspectRatio="xMidYMid meet"
           >
+            {/* Large zone title centered at the top */}
+            {(() => {
+              const midAngle = (startDeg + endDeg) / 2;
+              const titleR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 35;
+              const rad = toRad(midAngle);
+              const tx = HC.x + titleR * Math.cos(rad);
+              const ty = HC.y + titleR * Math.sin(rad);
+              // Extract the Greek letter from zone name (e.g. "Τμήμα Δ" -> "Δ")
+              const zoneLetter = zoneName.split(' ').pop() || zoneName;
+              return (
+                <text
+                  x={tx}
+                  y={ty}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={28}
+                  fontWeight={800}
+                  fill={zoneColor}
+                  opacity={0.85}
+                  className="select-none pointer-events-none"
+                >
+                  {zoneLetter}
+                </text>
+              );
+            })()}
+
+            {/* Red/coral theatre boundary arc at outer edge */}
+            {rowGroups.length > 0 && (
+              <path
+                d={(() => {
+                  const boundaryR = BASE_RADIUS + rowGroups.length * ROW_SPACING + 12;
+                  const s = toRad(startDeg);
+                  const e = toRad(endDeg);
+                  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+                  const x1 = HC.x + boundaryR * Math.cos(s);
+                  const y1 = HC.y + boundaryR * Math.sin(s);
+                  const x2 = HC.x + boundaryR * Math.cos(e);
+                  const y2 = HC.y + boundaryR * Math.sin(e);
+                  return `M ${x1} ${y1} A ${boundaryR} ${boundaryR} 0 ${largeArc} 1 ${x2} ${y2}`;
+                })()}
+                fill="none"
+                stroke="#E85D5D"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+              />
+            )}
+
             {/* Zone arc background */}
             {rowGroups.length > 0 && (
               <path
@@ -318,27 +365,42 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
               />
             )}
 
-            {/* Row labels along the outer edge */}
+            {/* Row labels on BOTH sides */}
             {rowGroups.map(([rowLabel], rowIdx) => {
               const r = BASE_RADIUS + rowIdx * ROW_SPACING;
-              // Place label just outside the start of the arc
-              const labelAngle = toRad(startDeg - 2);
-              const lx = HC.x + r * Math.cos(labelAngle);
-              const ly = HC.y + r * Math.sin(labelAngle);
+              const leftAngle = toRad(startDeg - 3);
+              const rightAngle = toRad(endDeg + 3);
+              const lx = HC.x + r * Math.cos(leftAngle);
+              const ly = HC.y + r * Math.sin(leftAngle);
+              const rx = HC.x + r * Math.cos(rightAngle);
+              const ry = HC.y + r * Math.sin(rightAngle);
               return (
-                <text
-                  key={`label-${rowLabel}`}
-                  x={lx}
-                  y={ly}
-                  textAnchor="end"
-                  dominantBaseline="middle"
-                  fontSize={8}
-                  fontWeight={600}
-                  fill="hsl(var(--muted-foreground))"
-                  className="select-none pointer-events-none"
-                >
-                  {rowLabel}
-                </text>
+                <React.Fragment key={`label-${rowLabel}`}>
+                  <text
+                    x={lx}
+                    y={ly}
+                    textAnchor="end"
+                    dominantBaseline="middle"
+                    fontSize={8}
+                    fontWeight={600}
+                    fill="hsl(var(--muted-foreground))"
+                    className="select-none pointer-events-none"
+                  >
+                    {rowLabel}
+                  </text>
+                  <text
+                    x={rx}
+                    y={ry}
+                    textAnchor="start"
+                    dominantBaseline="middle"
+                    fontSize={8}
+                    fontWeight={600}
+                    fill="hsl(var(--muted-foreground))"
+                    className="select-none pointer-events-none"
+                  >
+                    {rowLabel}
+                  </text>
+                </React.Fragment>
               );
             })}
 
