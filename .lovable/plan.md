@@ -1,27 +1,34 @@
 
 
-# Add Center Gap Between Zones Δ and Ε
+# Fix Zone Proportions to Match PDF
 
-The PDF shows a clear horizontal aisle/gap running through the middle of the horseshoe (at the top center, 270°). Currently Δ ends at 282° and Ε starts at 284° — only a 2° gap, barely visible.
+## Problem
+The angular sizes of zones don't match their actual seat counts. For example, Δ (327 seats) and Ε (327 seats) should be equal in size but currently Δ is 18° and Ε is 24°. Similarly Β and Ζ (both 204 seats) differ in width.
 
-## Change
+## Solution
+Recalculate all zone arcs proportionally based on seat counts, with 2° gaps between adjacent zones and the existing 8° center gap between Δ and Ε.
 
-**File: `src/components/theatre/ZoneOverviewMap.tsx`** — Widen the gap between Δ and Ε to ~6-8° centered on 270°:
+**File: `src/components/theatre/ZoneOverviewMap.tsx`** — Update `ZONE_ARCS` (lines 78-87):
 
-- Δ: `260°–266°` (was 260–282, shift end back)
-- Ε: `274°–306°` (was 284–306, shift start back)
+**Left side** (190°→276°, 86° total, minus 6° for 3 inter-zone gaps = 80° usable):
+| Zone | Seats | Arc° | Range |
+|------|-------|------|-------|
+| Α | 171 | 17° | 190–207 |
+| Β | 204 | 20° | 209–229 |
+| Γ | 109 | 11° | 231–242 |
+| Δ | 327 | 32° | 244–276 |
 
-Wait — that shrinks them too much. Better approach: keep zone sizes but shift them apart symmetrically around 270°:
+**8° center gap (276°→284°)**
 
-- Δ: `256°–266°` (ends 4° before center)
-- Ε: `274°–296°` (starts 4° after center)
+**Right side** (284°→358°, 74° total, minus 6° for 3 gaps = 68° usable):
+| Zone | Seats | Arc° | Range |
+|------|-------|------|-------|
+| Ε | 327 | 26° | 284–310 |
+| Ζ | 204 | 16° | 312–328 |
+| Η | 216 | 17° | 330–347 |
+| Θ | 113 | 9° | 349–358 |
 
-Actually, simplest fix: just increase the gap from 2° to ~8° while keeping the overall layout balanced:
+Now Δ and Ε are visually the largest (matching their 327 seats), Α/Θ and Γ are the smallest, and Β/Ζ/Η are mid-sized — matching the PDF proportions.
 
-- **Line 82**: Change Δ from `{ startDeg: 260, endDeg: 282 }` → `{ startDeg: 258, endDeg: 276 }`
-- **Line 83**: Change Ε from `{ startDeg: 284, endDeg: 306 }` → `{ startDeg: 284, endDeg: 308 }`
-
-This creates an 8° gap (276°→284°) centered around 280° — close to the vertical center line. The zones keep their angular width (~18° and ~24°).
-
-No other files affected.
+No other files changed.
 
