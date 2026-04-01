@@ -1237,6 +1237,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         onBoostChange={setBoostData}
         hasActiveSubscription={subscriptionData?.subscribed || false}
         remainingBudgetCents={subscriptionData?.monthly_budget_remaining_cents || 0}
+        offerEndAt={getAppearanceDates().end.toISOString()}
       />
 
       {/* Submit Button */}
