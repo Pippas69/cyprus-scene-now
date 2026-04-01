@@ -49,6 +49,18 @@ const EventBoostDialog = ({
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
+  // Calculate remaining hours until event FOMO end
+  const maxRemainingHours = (() => {
+    if (!eventEndAt) return null; // no cap
+    const diff = new Date(eventEndAt).getTime() - Date.now();
+    if (diff <= 0) return 0;
+    return Math.floor(diff / (1000 * 60 * 60));
+  })();
+
+  const maxEndDate = eventEndAt ? new Date(eventEndAt) : null;
+  const isExpired = maxRemainingHours !== null && maxRemainingHours <= 0;
+  const effectiveMaxHours = maxRemainingHours !== null ? Math.min(24, maxRemainingHours) : 24;
+
   useEffect(() => {
     if (!open) {
       setCheckoutUrl(null);
@@ -56,6 +68,15 @@ const EventBoostDialog = ({
       setIsSubmitting(false);
     }
   }, [open]);
+
+  // Cap duration when maxRemainingHours changes
+  useEffect(() => {
+    if (effectiveMaxHours < durationHours) {
+      const capped = Math.max(1, effectiveMaxHours);
+      setDurationHours(capped);
+      setDurationHoursInput(String(capped));
+    }
+  }, [effectiveMaxHours]);
 
   // 2-tier boost system with hourly and daily rates
   const tiers = {
