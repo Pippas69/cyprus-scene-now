@@ -8,7 +8,8 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { NumberInput } from "@/components/ui/number-input";
 import { Plus, Trash2, Calendar, Clock, Euro, Armchair, ChevronDown, ChevronUp } from "lucide-react";
 import { VenueSelector } from "./VenueSelector";
-import { SeatMapViewer, SelectedSeat } from "@/components/theatre/SeatMapViewer";
+import { type SelectedSeat } from "@/components/theatre/SeatMapViewer";
+import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
 
 export interface ZonePrice {
   zone_id: string;
