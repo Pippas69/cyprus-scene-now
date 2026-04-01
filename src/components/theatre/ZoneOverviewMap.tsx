@@ -76,14 +76,14 @@ function midPoint(cx: number, cy: number, r: number, startDeg: number, endDeg: n
 // Zone angle mapping for the Pattihio horseshoe
 // Stage at bottom (270°), seats curve upward from ~190° to ~350°
 const ZONE_ARCS: Record<string, { startDeg: number; endDeg: number; inner?: number; outer?: number }> = {
-  'Τμήμα Α': { startDeg: 190, endDeg: 210 },
-  'Τμήμα Β': { startDeg: 212, endDeg: 238 },
-  'Τμήμα Γ': { startDeg: 240, endDeg: 258 },
-  'Τμήμα Δ': { startDeg: 258, endDeg: 276 },
-  'Τμήμα Ε': { startDeg: 284, endDeg: 308 },
-  'Τμήμα Ζ': { startDeg: 308, endDeg: 324 },
-  'Τμήμα Η': { startDeg: 326, endDeg: 342 },
-  'Τμήμα Θ': { startDeg: 344, endDeg: 358 },
+  'Τμήμα Α': { startDeg: 190, endDeg: 207 },
+  'Τμήμα Β': { startDeg: 209, endDeg: 229 },
+  'Τμήμα Γ': { startDeg: 231, endDeg: 242 },
+  'Τμήμα Δ': { startDeg: 244, endDeg: 276 },
+  'Τμήμα Ε': { startDeg: 284, endDeg: 310 },
+  'Τμήμα Ζ': { startDeg: 312, endDeg: 328 },
+  'Τμήμα Η': { startDeg: 330, endDeg: 347 },
+  'Τμήμα Θ': { startDeg: 349, endDeg: 358 },
 };
 
 const CX = 300;
