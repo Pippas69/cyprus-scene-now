@@ -181,16 +181,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   const SPLIT_ROW = 'Κ'; // first row of the outer section
   const splitRowOrderIdx = ROW_ORDER.indexOf(SPLIT_ROW);
 
-  const lowerSectionRowCount = useMemo(() => {
-    // "lower section" = inner/near-stage rows (Α through Ι)
-    // Count how many rows in this zone fall before the split point
+  // With descending sort, outer rows (Σ→Κ) come first, inner rows (Ι→Α) come after.
+  // "outerSectionRowCount" = count of outer rows (index >= splitRowOrderIdx i.e. Κ onward)
+  const outerSectionRowCount = useMemo(() => {
     let count = 0;
     for (const [rowLabel] of rowGroups) {
       const idx = ROW_ORDER.indexOf(rowLabel);
-      if (idx !== -1 && idx < splitRowOrderIdx) {
-        count++;
-      } else if (idx === -1) {
-        // Non-standard row labels go to inner section
+      if (idx !== -1 && idx >= splitRowOrderIdx) {
         count++;
       }
     }
