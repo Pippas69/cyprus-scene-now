@@ -71,14 +71,16 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
     },
   });
 
-  // Categorize tickets - use end_at so events that started but haven't ended yet still show as upcoming
+  // Ticket remains active for 10 hours after event start_at
+  const TEN_HOURS_MS = 10 * 60 * 60 * 1000;
   const now = new Date();
-  const upcomingTickets = tickets?.filter(t => 
-    t.events && new Date(t.events.end_at) >= now && t.status === 'valid'
-  ) || [];
-  const pastTickets = tickets?.filter(t => 
-    !t.events || new Date(t.events.end_at) < now || t.status !== 'valid'
-  ) || [];
+  const isTicketStillActive = (ticket: any) => {
+    if (!ticket.events?.start_at) return false;
+    const deadline = new Date(ticket.events.start_at).getTime() + TEN_HOURS_MS;
+    return deadline >= now.getTime() && ticket.status === 'valid';
+  };
+  const upcomingTickets = tickets?.filter(t => isTicketStillActive(t)) || [];
+  const pastTickets = tickets?.filter(t => !isTicketStillActive(t)) || [];
 
   const text = {
     el: {
