@@ -96,6 +96,12 @@ const translations = {
       offer: "Show this code at the venue",
       event_reservation: "Scan at the venue",
     },
+    saveHint: {
+      ticket: "Save this QR (or screenshot). Show at entry.",
+      reservation: "Save this QR (or screenshot). Show at the venue.",
+      offer: "Save this QR (or screenshot). Show at the venue.",
+      event_reservation: "Save this QR (or screenshot). Show at the venue.",
+    },
     downloadQR: "QR Image",
     copyLink: "Copy",
     copied: "Copied!",
