@@ -308,13 +308,13 @@ const OfferBoostSection = ({
                         if (raw === '' || /^\d+$/.test(raw)) {
                           setDurationHoursInput(raw);
                           const v = parseInt(raw);
-                          if (!isNaN(v) && v >= 1 && v <= 24) handleDurationHoursChange(v);
+                          if (!isNaN(v) && v >= 1 && v <= effectiveMaxHours) handleDurationHoursChange(v);
                         }
                       }}
                       onBlur={() => {
                         const v = parseInt(durationHoursInput);
                         if (isNaN(v) || v < 1) { handleDurationHoursChange(1); setDurationHoursInput("1"); }
-                        else if (v > 24) { handleDurationHoursChange(24); setDurationHoursInput("24"); }
+                        else if (v > effectiveMaxHours) { handleDurationHoursChange(effectiveMaxHours); setDurationHoursInput(String(effectiveMaxHours)); }
                         else { setDurationHoursInput(String(v)); }
                       }}
                       className="w-16 text-center"
