@@ -398,6 +398,9 @@ export const SuccessQRCard = ({
             <p className="text-[10px] text-[#64748b] mt-2 text-center">
               {text.scanAt[type]}
             </p>
+            <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">
+              {text.saveHint[type]}
+            </p>
           </div>
         )}
 

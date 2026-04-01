@@ -236,6 +236,9 @@ export const TicketQRDialog = ({ ticket, onClose }: TicketQRDialogProps) => {
                 <p className="text-[10px] text-[#64748b] mt-2 text-center">
                   {text.scanAtEntry}
                 </p>
+                <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">
+                  {text.saveHint}
+                </p>
               </div>
             }
 

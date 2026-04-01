@@ -130,6 +130,7 @@ const TicketView = () => {
                 <img src={qrDataUrl} alt="Ticket QR Code" className="w-44 h-44" />
               </div>
               <p className="text-[10px] text-[#64748b] mt-2">{text.scanAtEntry}</p>
+              <p className="text-[8px] text-[#94a3b8] mt-1 text-center italic">{text.saveHint}</p>
             </div>
           )}
 
