@@ -39,6 +39,7 @@ interface TicketQRDialogProps {
 const t = {
   el: {
     scanAtEntry: "Σαρώστε στην είσοδο",
+    saveHint: "Αποθήκευσε το QR (ή κάνε screenshot). Δείξε το στην είσοδο.",
     downloadQR: "QR Εικόνα",
     downloadPdf: "PDF Εισιτήριο",
     name: "ΟΝΟΜΑ",
