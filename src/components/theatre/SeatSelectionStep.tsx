@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { type SelectedSeat } from './SeatMapViewer';
+import { SeatMapViewer } from './SeatMapViewer';
 import { ZoneOverviewMap } from './ZoneOverviewMap';
 import { ZoneSeatPicker } from './ZoneSeatPicker';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
+import { supabase } from '@/integrations/supabase/client';
+import { ZONE_ARCS } from './theatreConstants';
 
 interface SeatSelectionStepProps {
   venueId: string;
@@ -46,6 +49,39 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   const { language } = useLanguage();
   const t = translations[language];
   const [activeZone, setActiveZone] = useState<ActiveZone | null>(null);
+  const [useHorseshoe, setUseHorseshoe] = useState<boolean | null>(null);
+
+  // Detect venue type: if zones match ZONE_ARCS keys, use horseshoe; otherwise use flat SeatMapViewer
+  useEffect(() => {
+    const detect = async () => {
+      const { data: zones } = await supabase
+        .from('venue_zones')
+        .select('name')
+        .eq('venue_id', venueId);
+
+      if (!zones || zones.length === 0) {
+        setUseHorseshoe(false);
+        return;
+      }
+
+      // Check if any zone name matches the horseshoe arc definitions
+      const hasArcZones = zones.some((z) => ZONE_ARCS[z.name] !== undefined);
+      setUseHorseshoe(hasArcZones);
+    };
+
+    setUseHorseshoe(null);
+    setActiveZone(null);
+    detect();
+  }, [venueId]);
+
+  // Still loading venue type detection
+  if (useHorseshoe === null) {
+    return (
+      <div className="flex items-center justify-center h-48 text-muted-foreground">
+        <div className="animate-pulse text-sm">...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -80,34 +116,46 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         </div>
       </div>
 
-      {/* 2-step flow: zone overview OR zone detail */}
-      {activeZone ? (
-        <ZoneSeatPicker
+      {/* Venue-appropriate seat map */}
+      {useHorseshoe ? (
+        // Horseshoe amphitheatre flow (zone overview → zone detail)
+        activeZone ? (
+          <ZoneSeatPicker
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            zoneId={activeZone.id}
+            zoneName={activeZone.name}
+            zoneColor={activeZone.color}
+            maxSeats={maxSeats}
+            selectedSeats={selectedSeats}
+            onSeatToggle={onSeatToggle}
+            onBack={() => setActiveZone(null)}
+          />
+        ) : (
+          <ZoneOverviewMap
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            selectedSeats={selectedSeats}
+            onZoneClick={(zone) =>
+              setActiveZone({ id: zone.id, name: zone.name, color: zone.color })
+            }
+          />
+        )
+      ) : (
+        // Flat coordinate-based seat map (original viewer)
+        <SeatMapViewer
           venueId={venueId}
           showInstanceId={showInstanceId}
-          zoneId={activeZone.id}
-          zoneName={activeZone.name}
-          zoneColor={activeZone.color}
           maxSeats={maxSeats}
           selectedSeats={selectedSeats}
           onSeatToggle={onSeatToggle}
-          onBack={() => setActiveZone(null)}
-        />
-      ) : (
-        <ZoneOverviewMap
-          venueId={venueId}
-          showInstanceId={showInstanceId}
-          selectedSeats={selectedSeats}
-          onZoneClick={(zone) =>
-            setActiveZone({ id: zone.id, name: zone.name, color: zone.color })
-          }
         />
       )}
 
-      {/* All selected seats summary (shown in overview mode) */}
-      {!activeZone && selectedSeats.length > 0 && (
+      {/* All selected seats summary (shown in overview mode for horseshoe, always for flat) */}
+      {(useHorseshoe ? !activeZone : true) && selectedSeats.length > 0 && (
         <div className="flex flex-wrap gap-1 px-1 pt-1 border-t">
-          {selectedSeats.map(s => (
+          {selectedSeats.map((s) => (
             <button
               key={s.seatId}
               onClick={() => onSeatToggle(s)}
