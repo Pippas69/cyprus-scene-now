@@ -148,8 +148,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {ticketsList.map(ticket => {
           const businessName = (ticket.events as any)?.businesses?.name;
-          const eventEndOrStart = ticket.events?.end_at || ticket.events?.start_at;
-          const isTimeExpired = !eventEndOrStart || new Date(eventEndOrStart) < now;
+          const startAt = ticket.events?.start_at;
+          const isTimeExpired = !startAt || (new Date(startAt).getTime() + TEN_HOURS_MS) < now.getTime();
           const isExpiredTicket = ticket.status === 'valid' && isTimeExpired;
           const statusText = ticket.status === 'used' ? t.used : isExpiredTicket ? t.expired : t.valid;
           const statusVariant = isExpiredTicket ? 'secondary' : ticket.status === 'valid' ? 'default' : 'secondary';
