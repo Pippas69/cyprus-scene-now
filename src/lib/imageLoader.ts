@@ -87,7 +87,7 @@ export const getOptimizedImageUrl = (url: string, width?: number): string => {
       '/storage/v1/object/public/',
       '/storage/v1/render/image/public/'
     );
-    return `${transformUrl}?width=${width}&resize=contain`;
+    return `${transformUrl}?width=${width}&resize=contain&quality=90`;
   }
   
   return url;
