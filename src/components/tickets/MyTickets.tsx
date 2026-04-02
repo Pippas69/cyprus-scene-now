@@ -282,7 +282,6 @@ export const MyTickets = () => {
               </div>
             </div>
           </CardContent>
-        </div>
       </Card>
     );
   };
