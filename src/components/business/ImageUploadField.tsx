@@ -51,7 +51,7 @@ export const ImageUploadField = ({
   label,
   currentImageUrl,
   onFileSelect,
-  aspectRatio = "1/1",
+  aspectRatio = "4/5",
   maxSizeMB = 2,
   accept = "image/jpeg,image/png,image/webp",
   language,
