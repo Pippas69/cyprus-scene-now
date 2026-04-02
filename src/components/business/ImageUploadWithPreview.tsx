@@ -52,7 +52,7 @@ export const ImageUploadWithPreview = ({
   label,
   currentImageUrl,
   onImageReady,
-  cropAspectRatio = '4:5',
+  cropAspectRatio = '3:2',
   maxSizeMB = 2,
   accept = "image/jpeg,image/png,image/webp",
   language,
