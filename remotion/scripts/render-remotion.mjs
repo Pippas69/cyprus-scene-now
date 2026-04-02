@@ -28,12 +28,13 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/fomo-event-promo.mp4",
+  outputLocation: "/mnt/documents/fomo-easter-promo.mp4",
   puppeteerInstance: browser,
   muted: true,
   concurrency: 1,
+  crf: 18,
 });
 
 await browser.close({ silent: false });
 
-console.log("✅ Video rendered to /mnt/documents/fomo-event-promo.mp4");
+console.log("✅ Video rendered to /mnt/documents/fomo-easter-promo.mp4");
