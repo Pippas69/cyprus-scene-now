@@ -358,7 +358,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
       if (customImage) {
         // Upload new custom image
         const compressedFile = await compressImage(customImage, 1920, 1080, 0.85);
-        const fileName = `${offer.business_id}-${Date.now()}.jpg`;
+        const fileName = `${offer.business_id}/${Date.now()}.jpg`;
         
         const { error: uploadError } = await supabase.storage
           .from('offer-images')

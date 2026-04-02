@@ -570,7 +570,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
         // Upload custom image
         const file = new File([formData.customImageBlob], `offer-${Date.now()}.jpg`, { type: 'image/jpeg' });
         const compressedFile = await compressImage(file, 1920, 1080, 0.85);
-        const fileName = `${businessId}-${Date.now()}.jpg`;
+        const fileName = `${businessId}/${Date.now()}.jpg`;
         
         const { error: uploadError } = await supabase.storage
           .from('offer-images')
