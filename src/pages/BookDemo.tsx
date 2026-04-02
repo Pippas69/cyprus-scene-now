@@ -199,7 +199,6 @@ const BookDemo = () => {
                     id="message"
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    placeholder={c.messagePlaceholder}
                     className="text-base min-h-[100px] resize-none"
                     maxLength={1000}
                   />
