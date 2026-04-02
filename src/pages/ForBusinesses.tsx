@@ -24,7 +24,15 @@ import {
   Building2,
   Sparkles,
   Percent,
-  Lightbulb
+  Lightbulb,
+  QrCode,
+  CreditCard,
+  MessageCircle,
+  LayoutGrid,
+  GraduationCap,
+  FileText,
+  PieChart,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -82,33 +90,63 @@ const ForBusinesses = () => {
         items: [
           {
             icon: Calendar,
-            title: "Δημιουργία Events",
-            description: "Δημιούργησε και προώθησε events με λίγα κλικ. Εισιτήρια, κρατήσεις, δωρεάν είσοδος.",
+            title: "Σύστημα Κρατήσεων",
+            description: "Ημερολόγιο, time slots, έγκριση κρατήσεων, party size, seating options. Πλήρης διαχείριση.",
+          },
+          {
+            icon: LayoutGrid,
+            title: "Floor Plan Management",
+            description: "Διαχείριση κάτοψης χώρου, τραπεζιών και θέσεων. Οπτική αναπαράσταση του χώρου σου.",
+          },
+          {
+            icon: UserCheck,
+            title: "CRM & Guest Profiles",
+            description: "Προφίλ επισκεπτών, VIP levels, σημειώσεις, tags, ιστορικό κρατήσεων, προτιμήσεις φαγητού & ποτών.",
           },
           {
             icon: Gift,
-            title: "Προσφορές & Εκπτώσεις",
-            description: "Δημιούργησε αποκλειστικές προσφορές που εξαργυρώνονται με QR code.",
+            title: "Προσφορές & Offers",
+            description: "Εκπτώσεις, credits, bundles, free entry. Δημιούργησε deals που εξαργυρώνονται με QR code.",
+          },
+          {
+            icon: Ticket,
+            title: "Ticketing & Check-in",
+            description: "Πώληση εισιτηρίων online, QR code check-in, διαχείριση εισόδου και παρακολούθηση πωλήσεων.",
+          },
+          {
+            icon: BarChart3,
+            title: "Analytics Dashboard",
+            description: "Views, followers, RSVPs, redemptions, conversions. Πλήρη στατιστικά σε πραγματικό χρόνο.",
+          },
+          {
+            icon: Rocket,
+            title: "Event Boosting",
+            description: "Προώθησε events στην κορυφή του feed. Basic, Pro και Elite tiers για μέγιστη ορατότητα.",
+          },
+          {
+            icon: FileText,
+            title: "Business Posts & Polls",
+            description: "Δημοσίευσε ανακοινώσεις, φωτογραφίες και δημοσκοπήσεις. Κράτα το κοινό σου ενημερωμένο.",
+          },
+          {
+            icon: CreditCard,
+            title: "Stripe Payments",
+            description: "Ενσωματωμένες πληρωμές για εισιτήρια και offers. Ασφαλείς συναλλαγές με Stripe Connect.",
+          },
+          {
+            icon: QrCode,
+            title: "QR Code System",
+            description: "Σκανάρισμα για check-in, εξαργύρωση προσφορών και επαλήθευση εισιτηρίων.",
           },
           {
             icon: MapPin,
             title: "Προβολή στον Χάρτη",
-            description: "Εμφανίσου στον διαδραστικό χάρτη και γίνε ορατός σε χρήστες κοντά σου.",
+            description: "Εμφανίσου στον διαδραστικό χάρτη. Βασική ή κυρίαρχη παρουσία ανάλογα με το πλάνο σου.",
           },
           {
-            icon: Ticket,
-            title: "Πωλήσεις Εισιτηρίων",
-            description: "Πούλα εισιτήρια online με ασφάλεια. Stripe integration για άμεσες πληρωμές.",
-          },
-          {
-            icon: BarChart3,
-            title: "Analytics & Insights",
-            description: "Δες ποιος βλέπει την επιχείρησή σου, πότε και πώς αλληλεπιδρά.",
-          },
-          {
-            icon: Rocket,
-            title: "Boosts & Προώθηση",
-            description: "Προώθησε events και προσφορές για μέγιστη ορατότητα στο feed.",
+            icon: GraduationCap,
+            title: "Φοιτητικές Εκπτώσεις",
+            description: "Ενεργοποίησε ειδικές εκπτώσεις για φοιτητές. Επίλεξε ποσοστό και τρόπο εφαρμογής.",
           },
         ],
       },
@@ -225,33 +263,63 @@ const ForBusinesses = () => {
         items: [
           {
             icon: Calendar,
-            title: "Create Events",
-            description: "Create and promote events with just a few clicks. Tickets, reservations, free entry.",
+            title: "Booking System",
+            description: "Calendar, time slots, reservation approval, party size, seating options. Full management.",
+          },
+          {
+            icon: LayoutGrid,
+            title: "Floor Plan Management",
+            description: "Manage your venue layout, tables and seating. Visual representation of your space.",
+          },
+          {
+            icon: UserCheck,
+            title: "CRM & Guest Profiles",
+            description: "Guest profiles, VIP levels, notes, tags, reservation history, food & drink preferences.",
           },
           {
             icon: Gift,
-            title: "Offers & Discounts",
-            description: "Create exclusive offers that are redeemed with QR code.",
+            title: "Offers & Deals",
+            description: "Discounts, credits, bundles, free entry. Create deals redeemed via QR code.",
+          },
+          {
+            icon: Ticket,
+            title: "Ticketing & Check-in",
+            description: "Sell tickets online, QR code check-in, entry management and sales tracking.",
+          },
+          {
+            icon: BarChart3,
+            title: "Analytics Dashboard",
+            description: "Views, followers, RSVPs, redemptions, conversions. Full real-time statistics.",
+          },
+          {
+            icon: Rocket,
+            title: "Event Boosting",
+            description: "Promote events to the top of the feed. Basic, Pro and Elite tiers for maximum visibility.",
+          },
+          {
+            icon: FileText,
+            title: "Business Posts & Polls",
+            description: "Publish announcements, photos and polls. Keep your audience informed and engaged.",
+          },
+          {
+            icon: CreditCard,
+            title: "Stripe Payments",
+            description: "Integrated payments for tickets and offers. Secure transactions with Stripe Connect.",
+          },
+          {
+            icon: QrCode,
+            title: "QR Code System",
+            description: "Scanning for check-in, offer redemption and ticket verification.",
           },
           {
             icon: MapPin,
             title: "Map Visibility",
-            description: "Appear on the interactive map and be visible to users near you.",
+            description: "Appear on the interactive map. Basic or dominant presence depending on your plan.",
           },
           {
-            icon: Ticket,
-            title: "Ticket Sales",
-            description: "Sell tickets online securely. Stripe integration for instant payments.",
-          },
-          {
-            icon: BarChart3,
-            title: "Analytics & Insights",
-            description: "See who views your business, when and how they interact.",
-          },
-          {
-            icon: Rocket,
-            title: "Boosts & Promotion",
-            description: "Promote events and offers for maximum visibility in the feed.",
+            icon: GraduationCap,
+            title: "Student Discounts",
+            description: "Enable special discounts for students. Choose percentage and application mode.",
           },
         ],
       },
