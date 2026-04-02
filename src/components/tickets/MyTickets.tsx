@@ -182,8 +182,7 @@ export const MyTickets = () => {
             />
           </div>
         )}
-        <div>
-          <CardContent className="flex-1 p-4">
+          <CardContent className="p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold truncate">{ticket.events?.title}</h3>
