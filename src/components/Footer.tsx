@@ -21,7 +21,7 @@ const SocialIcons = () => (
         href={s.href}
         target={s.href.startsWith("http") ? "_blank" : undefined}
         rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
-        className="w-8 h-8 bg-seafoam rounded-full flex items-center justify-center hover:bg-seafoam/80 transition-all duration-300 hover:scale-105"
+        className="w-7 h-7 sm:w-8 sm:h-8 bg-seafoam rounded-full flex items-center justify-center hover:bg-seafoam/80 transition-all duration-300 hover:scale-105"
         aria-label={s.label}
       >
         {s.icon}
@@ -36,32 +36,32 @@ const Footer = () => {
   const text = {
     el: {
       explore: "Εξερεύνηση",
-      forVisitors: "Για Επισκέπτες",
-      forBusiness: "Για Επιχειρήσεις",
-      blog: "Blog",
-      termsTitle: "Νομικά",
+      visitors: "Επισκέπτες",
+      businesses: "Επιχειρήσεις",
+      legalTitle: "ΝΟΜΙΚΑ",
       termsOfUse: "Όροι Χρήσης",
       privacyPolicy: "Πολιτική Απορρήτου",
       licenseAgreement: "Άδεια Χρήσης",
       cookies: "Cookies",
-      contactTitle: "Επικοινωνία",
+      supportTitle: "ΥΠΟΣΤΗΡΙΞΗ",
       contact: "Επικοινωνία",
+      bookDemo: "Book a Demo",
       madeWith: "Φτιαγμένο με",
       inCyprus: "στην Κύπρο",
       rights: "© 2026 ΦΟΜΟ. Όλα τα δικαιώματα διατηρούνται.",
     },
     en: {
       explore: "Explore",
-      forVisitors: "For Visitors",
-      forBusiness: "For Businesses",
-      blog: "Blog",
-      termsTitle: "Legal",
+      visitors: "Visitors",
+      businesses: "Businesses",
+      legalTitle: "LEGAL",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
       licenseAgreement: "License Agreement",
       cookies: "Cookies",
-      contactTitle: "Contact",
+      supportTitle: "SUPPORT",
       contact: "Contact",
+      bookDemo: "Book a Demo",
       madeWith: "Made with",
       inCyprus: "in Cyprus",
       rights: "© 2026 ΦΟΜΟ. All rights reserved.",
@@ -70,78 +70,87 @@ const Footer = () => {
 
   const t = text[language];
 
-  const fomoLinks = [
-    { to: "/feed", label: t.explore },
-    { to: "/for-visitors", label: t.forVisitors },
-    { to: "/for-businesses", label: t.forBusiness },
-    { to: "/blog", label: t.blog },
-  ];
-
-  const termsLinks = [
-    { to: "/terms", label: t.termsOfUse },
-    { to: "/privacy", label: t.privacyPolicy },
-    { to: "/license", label: t.licenseAgreement },
-    { to: "/cookies", label: t.cookies },
-  ];
-
   return (
     <footer className="bg-background border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-10 md:py-12">
-        {/* Mobile: 2 columns | Desktop: 3 columns */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-16">
-          {/* Column 1 - ΦΟΜΟ + Links */}
-          <div className="space-y-3">
-            <h4 className="font-cinzel font-bold text-lg sm:text-xl text-white tracking-wider">ΦΟΜΟ</h4>
-            <ul className="space-y-1.5">
-              {fomoLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="text-white/40 hover:text-seafoam transition-colors text-xs sm:text-sm">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+        {/* 3 Columns — always */}
+        <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-16">
+          {/* Column 1 — ΦΟΜΟ */}
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="font-cinzel font-bold text-base sm:text-lg lg:text-xl text-white tracking-wider">ΦΟΜΟ</h4>
+            <ul className="space-y-1 sm:space-y-1.5">
+              <li>
+                <Link to="/feed" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.explore}
+                </Link>
+              </li>
+              <li>
+                <Link to="/for-visitors" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.visitors}
+                </Link>
+              </li>
+              <li>
+                <Link to="/for-businesses" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.businesses}
+                </Link>
+              </li>
             </ul>
-            {/* Social icons under ΦΟΜΟ on mobile only */}
-            <div className="lg:hidden pt-2">
+            <div className="pt-1 sm:pt-2">
               <SocialIcons />
             </div>
           </div>
 
-          {/* Column 2 - Terms + Contact (stacked on mobile) */}
-          <div className="space-y-5">
-            {/* Terms */}
-            <div className="space-y-2">
-              <h4 className="font-poppins font-semibold text-sm sm:text-base lg:text-lg text-white">{t.termsTitle}</h4>
-              <ul className="space-y-1.5">
-                {termsLinks.map((link) => (
-                  <li key={link.to}>
-                    <Link to={link.to} className="text-white/40 hover:text-seafoam transition-colors text-xs sm:text-sm">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* Contact on mobile only (under terms) */}
-            <div className="lg:hidden space-y-2">
-              <h4 className="font-poppins font-semibold text-sm sm:text-base text-white">{t.contactTitle}</h4>
-              <ul className="space-y-1.5">
-                <li><Link to="/contact" className="text-white/40 hover:text-seafoam transition-colors text-xs sm:text-sm">{t.contact}</Link></li>
-                <li><a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-xs sm:text-sm">support@fomocy.com</a></li>
-              </ul>
-            </div>
+          {/* Column 2 — ΝΟΜΙΚΑ */}
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="font-poppins font-bold text-[11px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">
+              {t.legalTitle}
+            </h4>
+            <ul className="space-y-1 sm:space-y-1.5">
+              <li>
+                <Link to="/terms" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.termsOfUse}
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.privacyPolicy}
+                </Link>
+              </li>
+              <li>
+                <Link to="/license" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.licenseAgreement}
+                </Link>
+              </li>
+              <li>
+                <Link to="/cookies" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.cookies}
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* Column 3 - Contact (desktop only) */}
-          <div className="hidden lg:block space-y-3">
-            <h4 className="font-poppins font-semibold text-lg text-white">{t.contactTitle}</h4>
-            <ul className="space-y-1.5">
-              <li><Link to="/contact" className="text-white/40 hover:text-seafoam transition-colors text-sm">{t.contact}</Link></li>
-              <li><a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-sm">support@fomocy.com</a></li>
+          {/* Column 3 — ΥΠΟΣΤΗΡΙΞΗ */}
+          <div className="space-y-2 sm:space-y-3">
+            <h4 className="font-poppins font-bold text-[11px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">
+              {t.supportTitle}
+            </h4>
+            <ul className="space-y-1 sm:space-y-1.5">
+              <li>
+                <Link to="/contact" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.contact}
+                </Link>
+              </li>
+              <li>
+                <Link to="/book-demo" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  {t.bookDemo}
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm break-all">
+                  support@fomocy.com
+                </a>
+              </li>
             </ul>
-            <div className="pt-1">
-              <SocialIcons />
-            </div>
           </div>
         </div>
 
