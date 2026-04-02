@@ -90,33 +90,63 @@ const ForBusinesses = () => {
         items: [
           {
             icon: Calendar,
-            title: "Δημιουργία Events",
-            description: "Δημιούργησε και προώθησε events με λίγα κλικ. Εισιτήρια, κρατήσεις, δωρεάν είσοδος.",
+            title: "Σύστημα Κρατήσεων",
+            description: "Ημερολόγιο, time slots, έγκριση κρατήσεων, party size, seating options. Πλήρης διαχείριση.",
+          },
+          {
+            icon: LayoutGrid,
+            title: "Floor Plan Management",
+            description: "Διαχείριση κάτοψης χώρου, τραπεζιών και θέσεων. Οπτική αναπαράσταση του χώρου σου.",
+          },
+          {
+            icon: UserCheck,
+            title: "CRM & Guest Profiles",
+            description: "Προφίλ επισκεπτών, VIP levels, σημειώσεις, tags, ιστορικό κρατήσεων, προτιμήσεις φαγητού & ποτών.",
           },
           {
             icon: Gift,
-            title: "Προσφορές & Εκπτώσεις",
-            description: "Δημιούργησε αποκλειστικές προσφορές που εξαργυρώνονται με QR code.",
+            title: "Προσφορές & Offers",
+            description: "Εκπτώσεις, credits, bundles, free entry. Δημιούργησε deals που εξαργυρώνονται με QR code.",
+          },
+          {
+            icon: Ticket,
+            title: "Ticketing & Check-in",
+            description: "Πώληση εισιτηρίων online, QR code check-in, διαχείριση εισόδου και παρακολούθηση πωλήσεων.",
+          },
+          {
+            icon: BarChart3,
+            title: "Analytics Dashboard",
+            description: "Views, followers, RSVPs, redemptions, conversions. Πλήρη στατιστικά σε πραγματικό χρόνο.",
+          },
+          {
+            icon: Rocket,
+            title: "Event Boosting",
+            description: "Προώθησε events στην κορυφή του feed. Basic, Pro και Elite tiers για μέγιστη ορατότητα.",
+          },
+          {
+            icon: FileText,
+            title: "Business Posts & Polls",
+            description: "Δημοσίευσε ανακοινώσεις, φωτογραφίες και δημοσκοπήσεις. Κράτα το κοινό σου ενημερωμένο.",
+          },
+          {
+            icon: CreditCard,
+            title: "Stripe Payments",
+            description: "Ενσωματωμένες πληρωμές για εισιτήρια και offers. Ασφαλείς συναλλαγές με Stripe Connect.",
+          },
+          {
+            icon: QrCode,
+            title: "QR Code System",
+            description: "Σκανάρισμα για check-in, εξαργύρωση προσφορών και επαλήθευση εισιτηρίων.",
           },
           {
             icon: MapPin,
             title: "Προβολή στον Χάρτη",
-            description: "Εμφανίσου στον διαδραστικό χάρτη και γίνε ορατός σε χρήστες κοντά σου.",
+            description: "Εμφανίσου στον διαδραστικό χάρτη. Βασική ή κυρίαρχη παρουσία ανάλογα με το πλάνο σου.",
           },
           {
-            icon: Ticket,
-            title: "Πωλήσεις Εισιτηρίων",
-            description: "Πούλα εισιτήρια online με ασφάλεια. Stripe integration για άμεσες πληρωμές.",
-          },
-          {
-            icon: BarChart3,
-            title: "Analytics & Insights",
-            description: "Δες ποιος βλέπει την επιχείρησή σου, πότε και πώς αλληλεπιδρά.",
-          },
-          {
-            icon: Rocket,
-            title: "Boosts & Προώθηση",
-            description: "Προώθησε events και προσφορές για μέγιστη ορατότητα στο feed.",
+            icon: GraduationCap,
+            title: "Φοιτητικές Εκπτώσεις",
+            description: "Ενεργοποίησε ειδικές εκπτώσεις για φοιτητές. Επίλεξε ποσοστό και τρόπο εφαρμογής.",
           },
         ],
       },
