@@ -109,8 +109,8 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
               .in("business_id", businessIds)
               .eq("active", true),
             supabase
-              .from("business_subscriptions")
-              .select("business_id, subscription_plans(slug)")
+              .from("public_business_subscriptions" as any)
+              .select("business_id, plan_slug")
               .in("business_id", businessIds)
               .eq("status", "active"),
           ]);
@@ -120,7 +120,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
 
           const subscriptionMap = new Map<string, string>();
           subscriptionsRes.data?.forEach((sub: any) => {
-            if (sub.subscription_plans?.slug) subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
+            if (sub.plan_slug) subscriptionMap.set(sub.business_id, sub.plan_slug);
           });
 
           // Build businesses with plan tier index
