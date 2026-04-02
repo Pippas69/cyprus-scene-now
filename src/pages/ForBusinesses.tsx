@@ -263,33 +263,63 @@ const ForBusinesses = () => {
         items: [
           {
             icon: Calendar,
-            title: "Create Events",
-            description: "Create and promote events with just a few clicks. Tickets, reservations, free entry.",
+            title: "Booking System",
+            description: "Calendar, time slots, reservation approval, party size, seating options. Full management.",
+          },
+          {
+            icon: LayoutGrid,
+            title: "Floor Plan Management",
+            description: "Manage your venue layout, tables and seating. Visual representation of your space.",
+          },
+          {
+            icon: UserCheck,
+            title: "CRM & Guest Profiles",
+            description: "Guest profiles, VIP levels, notes, tags, reservation history, food & drink preferences.",
           },
           {
             icon: Gift,
-            title: "Offers & Discounts",
-            description: "Create exclusive offers that are redeemed with QR code.",
+            title: "Offers & Deals",
+            description: "Discounts, credits, bundles, free entry. Create deals redeemed via QR code.",
+          },
+          {
+            icon: Ticket,
+            title: "Ticketing & Check-in",
+            description: "Sell tickets online, QR code check-in, entry management and sales tracking.",
+          },
+          {
+            icon: BarChart3,
+            title: "Analytics Dashboard",
+            description: "Views, followers, RSVPs, redemptions, conversions. Full real-time statistics.",
+          },
+          {
+            icon: Rocket,
+            title: "Event Boosting",
+            description: "Promote events to the top of the feed. Basic, Pro and Elite tiers for maximum visibility.",
+          },
+          {
+            icon: FileText,
+            title: "Business Posts & Polls",
+            description: "Publish announcements, photos and polls. Keep your audience informed and engaged.",
+          },
+          {
+            icon: CreditCard,
+            title: "Stripe Payments",
+            description: "Integrated payments for tickets and offers. Secure transactions with Stripe Connect.",
+          },
+          {
+            icon: QrCode,
+            title: "QR Code System",
+            description: "Scanning for check-in, offer redemption and ticket verification.",
           },
           {
             icon: MapPin,
             title: "Map Visibility",
-            description: "Appear on the interactive map and be visible to users near you.",
+            description: "Appear on the interactive map. Basic or dominant presence depending on your plan.",
           },
           {
-            icon: Ticket,
-            title: "Ticket Sales",
-            description: "Sell tickets online securely. Stripe integration for instant payments.",
-          },
-          {
-            icon: BarChart3,
-            title: "Analytics & Insights",
-            description: "See who views your business, when and how they interact.",
-          },
-          {
-            icon: Rocket,
-            title: "Boosts & Promotion",
-            description: "Promote events and offers for maximum visibility in the feed.",
+            icon: GraduationCap,
+            title: "Student Discounts",
+            description: "Enable special discounts for students. Choose percentage and application mode.",
           },
         ],
       },
