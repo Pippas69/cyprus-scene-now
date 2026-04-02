@@ -80,7 +80,7 @@ export const BusinessDirectorySection = ({
       const businessIds = businessList.map(b => b.id);
 
       // Fetch active boosts and subscription plans in parallel
-      const [eventBoostsRes, offerBoostsRes, profileBoostsRes, subscriptionsRes] = await Promise.all([supabase.from('event_boosts').select('business_id').in('business_id', businessIds).eq('status', 'active').lte('start_date', today).gte('end_date', today), supabase.from('offer_boosts').select('business_id').in('business_id', businessIds).eq('active', true), supabase.from('profile_boosts').select('business_id').in('business_id', businessIds).eq('status', 'active').lte('start_date', today).gte('end_date', today), supabase.from('business_subscriptions').select('business_id, subscription_plans(slug)').in('business_id', businessIds).eq('status', 'active')]);
+      const [eventBoostsRes, offerBoostsRes, profileBoostsRes, subscriptionsRes] = await Promise.all([supabase.from('event_boosts').select('business_id').in('business_id', businessIds).eq('status', 'active').lte('start_date', today).gte('end_date', today), supabase.from('offer_boosts').select('business_id').in('business_id', businessIds).eq('active', true), supabase.from('profile_boosts').select('business_id').in('business_id', businessIds).eq('status', 'active').lte('start_date', today).gte('end_date', today), supabase.from('public_business_subscriptions' as any).select('business_id, plan_slug').in('business_id', businessIds).eq('status', 'active')]);
       const hasEventBoost = new Set(eventBoostsRes.data?.map(b => b.business_id) || []);
       const hasOfferBoost = new Set(offerBoostsRes.data?.map(b => b.business_id) || []);
       const hasProfileBoost = new Set(profileBoostsRes.data?.map(b => b.business_id) || []);
@@ -88,8 +88,8 @@ export const BusinessDirectorySection = ({
       // Map subscription plans to businesses
       const subscriptionMap = new Map<string, string>();
       subscriptionsRes.data?.forEach((sub: any) => {
-        if (sub.subscription_plans?.slug) {
-          subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
+        if (sub.plan_slug) {
+          subscriptionMap.set(sub.business_id, sub.plan_slug);
         }
       });
 

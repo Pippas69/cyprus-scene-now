@@ -111,8 +111,8 @@ export const AllBusinessesDialog = ({
           .lte('start_date', today)
           .gte('end_date', today),
         supabase
-          .from('business_subscriptions')
-          .select('business_id, subscription_plans(slug)')
+          .from('public_business_subscriptions' as any)
+          .select('business_id, plan_slug')
           .in('business_id', businessIds)
           .eq('status', 'active'),
       ]);
@@ -124,8 +124,8 @@ export const AllBusinessesDialog = ({
       // Map subscription plans to businesses
       const subscriptionMap = new Map<string, string>();
       subscriptionsRes.data?.forEach((sub: any) => {
-        if (sub.subscription_plans?.slug) {
-          subscriptionMap.set(sub.business_id, sub.subscription_plans.slug);
+        if (sub.plan_slug) {
+          subscriptionMap.set(sub.business_id, sub.plan_slug);
         }
       });
 

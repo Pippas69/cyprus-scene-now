@@ -50,14 +50,7 @@ export const useMapBusinesses = (
             category,
             logo_url,
             cover_url,
-            verified,
-            business_subscriptions (
-              plan_id,
-              status,
-              subscription_plans (
-                slug
-              )
-            )
+            verified
           `);
 
         // Filter by city if selected
@@ -90,32 +83,42 @@ export const useMapBusinesses = (
         if (data && data.length > 0) {
           // Get coordinates for all businesses
           const businessIds = data.map(b => b.id);
-          const { data: coordsData, error: coordsError } = await supabase
-            .rpc('get_business_coordinates', { business_ids: businessIds });
+          
+          // Fetch coordinates and subscription plans in parallel
+          const [coordsResult, subscriptionsResult] = await Promise.all([
+            supabase.rpc('get_business_coordinates', { business_ids: businessIds }),
+            supabase
+              .from("public_business_subscriptions" as any)
+              .select("business_id, plan_slug, status")
+              .in("business_id", businessIds)
+              .eq("status", "active"),
+          ]);
 
-          if (coordsError) {
-            console.error('Error fetching coordinates:', coordsError);
+          if (coordsResult.error) {
+            console.error('Error fetching coordinates:', coordsResult.error);
           }
 
           const coordsMap = new Map(
-            coordsData?.map((item: any) => [
+            coordsResult.data?.map((item: any) => [
               item.business_id,
               { lng: item.longitude, lat: item.latitude }
             ]) || []
           );
 
+          // Build subscription map from safe view
+          const subscriptionMap = new Map<string, string>();
+          subscriptionsResult.data?.forEach((sub: any) => {
+            if (sub.plan_slug) subscriptionMap.set(sub.business_id, sub.plan_slug);
+          });
+
           let mappedBusinesses: BusinessLocation[] = data
             .filter(business => coordsMap.has(business.id))
             .map(business => {
               const coords = coordsMap.get(business.id)!;
-              
-              // Get subscription plan
-              const subscriptionRaw: any = (business as any).business_subscriptions;
-              const subscription = Array.isArray(subscriptionRaw) ? subscriptionRaw[0] : subscriptionRaw;
-              const isActive = subscription?.status === 'active';
-              const planSlug = isActive 
-                ? mapToPlanSlug(subscription?.plan_id, subscription?.subscription_plans?.slug ?? null)
-                : 'free';
+              const planSlug = mapToPlanSlug(
+                'has-plan', // non-null to indicate active
+                subscriptionMap.get(business.id) ?? null
+              );
               
               return {
                 id: business.id,
@@ -129,7 +132,7 @@ export const useMapBusinesses = (
                 verified: business.verified || false,
                 coordinates: [coords.lng, coords.lat] as [number, number],
                 planSlug,
-                planTierIndex: getPlanTierIndex(planSlug), // 0=Elite, 1=Pro, 2=Basic, 3=Free
+                planTierIndex: getPlanTierIndex(planSlug),
               };
             });
 
