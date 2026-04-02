@@ -92,7 +92,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                 <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
                 <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
               </div>
-              <span className="text-[10px] sm:text-xs text-white/30 tracking-[0.3em] uppercase font-medium">live preview</span>
+              <span className="text-[10px] sm:text-xs text-white/30 tracking-[0.3em] uppercase font-medium">ΦEAR OF MISSING OUT</span>
               <div className="flex gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
                 <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
