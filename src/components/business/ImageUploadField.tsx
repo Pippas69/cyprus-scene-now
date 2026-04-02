@@ -68,7 +68,7 @@ export const ImageUploadField = ({
 
   const displayImage = preview || currentImageUrl;
   const isSquare = aspectRatio === "1/1";
-  const isCover = aspectRatio === "16/9";
+  const isCover = aspectRatio === "4/5";
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
