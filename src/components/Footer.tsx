@@ -120,7 +120,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/license" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/license" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.licenseAgreement}
                 </Link>
               </li>
