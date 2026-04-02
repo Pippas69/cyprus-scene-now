@@ -41,6 +41,7 @@ const Footer = () => {
       legalTitle: "ΝΟΜΙΚΑ",
       termsOfUse: "Όροι Χρήσης",
       privacyPolicy: "Πολιτική Απορρήτου",
+      privacyPolicyMobile: "Πολιτική Απορ.",
       licenseAgreement: "Άδεια Χρήσης",
       cookies: "Cookies",
       supportTitle: "ΥΠΟΣΤΗΡΙΞΗ",
@@ -57,6 +58,7 @@ const Footer = () => {
       legalTitle: "LEGAL",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
+      privacyPolicyMobile: "Privacy Policy",
       licenseAgreement: "License Agreement",
       cookies: "Cookies",
       supportTitle: "SUPPORT",
@@ -77,7 +79,7 @@ const Footer = () => {
         <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-16">
           {/* Column 1 — ΦΟΜΟ */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="font-cinzel font-bold text-base sm:text-lg lg:text-xl text-white tracking-wider">ΦΟΜΟ</h4>
+            <h4 className="font-cinzel font-bold text-[11px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">ΦΟΜΟ</h4>
             <ul className="space-y-1 sm:space-y-1.5">
               <li>
                 <Link to="/feed" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
@@ -113,7 +115,8 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/privacy" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
-                  {t.privacyPolicy}
+                  <span className="sm:hidden">{t.privacyPolicyMobile}</span>
+                  <span className="hidden sm:inline">{t.privacyPolicy}</span>
                 </Link>
               </li>
               <li>

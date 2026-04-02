@@ -340,7 +340,7 @@ const Contact = () => {
                   </button>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MapPin className="w-5 h-5" />
-                    Limassol, Cyprus
+                    Nicosia, Cyprus
                   </div>
                 </div>
               </div>
