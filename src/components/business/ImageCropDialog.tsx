@@ -25,6 +25,7 @@ interface ImageCropDialogProps {
 
 const aspectRatioValues: Record<AspectRatioType, number> = {
   '16:9': 16 / 9,
+  '4:5': 4 / 5,
   '1:1': 1,
   '4:3': 4 / 3,
 };
