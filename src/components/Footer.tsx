@@ -41,6 +41,7 @@ const Footer = () => {
       legalTitle: "ΝΟΜΙΚΑ",
       termsOfUse: "Όροι Χρήσης",
       privacyPolicy: "Πολιτική Απορρήτου",
+      privacyPolicyMobile: "Πολιτική Απορ.",
       licenseAgreement: "Άδεια Χρήσης",
       cookies: "Cookies",
       supportTitle: "ΥΠΟΣΤΗΡΙΞΗ",
