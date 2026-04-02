@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
-export type AspectRatioType = '16:9' | '4:5' | '1:1' | '4:3';
+export type AspectRatioType = '16:9' | '4:5' | '1:1' | '4:3' | '3:2';
 
 interface ImageCropDialogProps {
   open: boolean;
