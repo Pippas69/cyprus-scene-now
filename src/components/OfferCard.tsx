@@ -203,7 +203,7 @@ const OfferCard = ({ offer, discount, language, style, className }: OfferCardPro
             trackOfferRedeemClick(offerData.business_id, offerData.id, 'offer_card');
             setIsPurchaseOpen(true);
           }}
-          className="block relative h-[45vw] md:aspect-auto md:h-44 overflow-hidden rounded-t-xl w-full"
+          className="block relative aspect-[4/5] overflow-hidden rounded-t-xl w-full"
           aria-label={offerData.title}
         >
           {imageUrl ? (

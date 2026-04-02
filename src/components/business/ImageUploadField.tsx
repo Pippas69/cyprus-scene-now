@@ -51,12 +51,12 @@ export const ImageUploadField = ({
   label,
   currentImageUrl,
   onFileSelect,
-  aspectRatio = "1/1",
+  aspectRatio = "4/5",
   maxSizeMB = 2,
   accept = "image/jpeg,image/png,image/webp",
   language,
   enableCrop = false,
-  cropAspectRatio = '16:9',
+  cropAspectRatio = '4:5',
   onCroppedImage,
   showContextPreviews = false,
 }: ImageUploadFieldProps) => {
@@ -68,7 +68,7 @@ export const ImageUploadField = ({
 
   const displayImage = preview || currentImageUrl;
   const isSquare = aspectRatio === "1/1";
-  const isCover = aspectRatio === "16/9";
+  const isCover = aspectRatio === "4/5";
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -164,8 +164,8 @@ export const ImageUploadField = ({
     if (isSquare) {
       return "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28";
     }
-    // Cover images - adjusted to leave room for Feed preview
-    return "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]";
+    // Cover images - 4:5 aspect ratio
+    return "w-[80px] h-[100px] sm:w-[100px] sm:h-[125px] lg:w-[140px] lg:h-[175px]";
   };
 
   return (
@@ -215,7 +215,7 @@ export const ImageUploadField = ({
             <div 
               className={cn(
                 "border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors flex-shrink-0",
-                isSquare ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]"
+                isSquare ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "w-[80px] h-[100px] sm:w-[100px] sm:h-[125px] lg:w-[140px] lg:h-[175px]"
               )}
               onClick={() => inputRef.current?.click()}
             >

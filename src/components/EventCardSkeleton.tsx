@@ -13,7 +13,7 @@ const EventCardSkeleton = ({ className }: EventCardSkeletonProps = {}) => {
       className
     )}>
       {/* Image skeleton with shimmer */}
-      <div className="relative h-48 overflow-hidden bg-muted">
+      <div className="relative aspect-[4/5] overflow-hidden bg-muted">
         <div className="absolute inset-0 shimmer-skeleton" />
         {/* Badge placeholders */}
         <Skeleton className="absolute bottom-3 left-3 h-5 w-20 rounded-full" />

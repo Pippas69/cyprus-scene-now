@@ -342,7 +342,7 @@ const ImageSourceCustomUpload = ({
     <div className="space-y-3">
       {preview ? (
         <div className="relative inline-block">
-          <img src={preview} alt="Custom" className="w-full max-w-[200px] h-auto rounded-lg border object-cover" style={{ aspectRatio: '16/9' }} />
+          <img src={preview} alt="Custom" className="w-full max-w-[200px] h-auto rounded-lg border object-cover" style={{ aspectRatio: '4/5' }} />
           <button type="button" onClick={() => onImageReady(null)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs">✕</button>
         </div>
       ) : (
@@ -358,7 +358,7 @@ const ImageSourceCustomUpload = ({
           onClose={() => { setShowCrop(false); setRawSrc(null); }}
           imageSrc={rawSrc}
           onCropComplete={(blob) => { onImageReady(blob); setShowCrop(false); setRawSrc(null); }}
-          aspectRatio="16:9"
+          aspectRatio="4:5"
           language={language}
         />
       )}
@@ -814,7 +814,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   src={(businessData.cover_url || businessData.logo_url) as string}
                   alt="Profile"
                   className="w-full max-w-[200px] h-auto rounded-lg border object-cover"
-                  style={{ aspectRatio: '16/9' }}
+                  style={{ aspectRatio: '4/5' }}
                 />
               </div>
             )}

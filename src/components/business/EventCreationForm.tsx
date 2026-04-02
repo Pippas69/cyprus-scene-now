@@ -895,7 +895,7 @@ const EventCreationForm = ({
 
         {/* Step 6: Cover Image */}
         <SectionCard title={t.step6} required requiredLabel={t.required}>
-          <ImageUploadField label={t.coverImage} language={language} onFileSelect={handleFileSelect} aspectRatio="16/9" maxSizeMB={5} />
+          <ImageUploadField label={t.coverImage} language={language} onFileSelect={handleFileSelect} aspectRatio="4/5" maxSizeMB={5} />
         </SectionCard>
 
         {/* Step 7: Event Type */}

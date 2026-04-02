@@ -215,7 +215,7 @@ export const UnifiedEventCard = ({
         )}
       >
         {/* Image section - larger on mobile for boosted */}
-        <div className={cn("relative overflow-visible", size === "boosted" ? "h-28 sm:h-36 lg:h-40" : "h-32 lg:h-40")}>
+        <div className={cn("relative overflow-visible", size === "boosted" ? "h-28 sm:h-36 lg:h-40" : "aspect-[4/5]")}>
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
@@ -330,7 +330,7 @@ export const UnifiedEventCard = ({
         <Link
           to={`/event/${event.id}${linkSearch || ""}`}
           onClick={handleCardClick}
-          className="block relative h-[45vw] md:aspect-auto md:h-44 overflow-visible rounded-t-xl flex-shrink-0"
+          className="block relative aspect-[4/5] overflow-visible rounded-t-xl flex-shrink-0"
         >
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (

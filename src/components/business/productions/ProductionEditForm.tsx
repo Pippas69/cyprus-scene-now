@@ -499,7 +499,7 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
                 label={existingCoverUrl ? t.changeCover : t.coverImage}
                 language={language}
                 onFileSelect={handleFileSelect}
-                aspectRatio="16/9"
+                aspectRatio="4/5"
                 maxSizeMB={5}
               />
             </SectionCard>
