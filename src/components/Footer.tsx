@@ -82,17 +82,17 @@ const Footer = () => {
             <h4 className="font-cinzel font-bold text-[9px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">ΦΟΜΟ</h4>
             <ul className="space-y-1 sm:space-y-1.5">
               <li>
-                <Link to="/feed" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/feed" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.explore}
                 </Link>
               </li>
               <li>
-                <Link to="/for-visitors" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/for-visitors" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.visitors}
                 </Link>
               </li>
               <li>
-                <Link to="/for-businesses" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/for-businesses" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.businesses}
                 </Link>
               </li>
