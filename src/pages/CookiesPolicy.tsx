@@ -10,8 +10,8 @@ const CookiesPolicy = () => {
   const t = {
     el: {
       title: "Πολιτική Cookies",
-      lastUpdated: "Τελευταία ενημέρωση: Ιανουάριος 2026",
-      intro: "Αυτή η πολιτική εξηγεί πώς το ΦΟΜΟ χρησιμοποιεί cookies και παρόμοιες τεχνολογίες αποθήκευσης για να βελτιώσει την εμπειρία σας, σύμφωνα με τον Κανονισμό ePrivacy της ΕΕ και τον GDPR.",
+      lastUpdated: "Τελευταία ενημέρωση: Απρίλιος 2025",
+      intro: "Η παρούσα Πολιτική Cookies εξηγεί πώς το ΦOMO χρησιμοποιεί cookies και παρόμοιες τεχνολογίες παρακολούθησης για τη βελτίωση λειτουργικότητας, την ανάλυση απόδοσης και την παροχή εξατομικευμένων εμπειριών τόσο για Χρήστες Εφαρμογής όσο και για Επιχειρήσεις/Διοργανωτές. Αποτελεί μέρος της Πολιτικής Απορρήτου μας, όπου οι βασικοί όροι και ορισμοί περιγράφονται πλήρως.\n\nΤα cookies είναι μικρά αρχεία κειμένου που αποθηκεύονται στη συσκευή σας όταν αλληλεπιδράτε με την πλατφόρμα μας. Μας επιτρέπουν να αναγνωρίζουμε τις προτιμήσεις σας, να βελτιώνουμε την εμπειρία σας και να παρέχουμε εξατομικευμένες υπηρεσίες. Χρησιμοποιώντας την πλατφόρμα μας, συναινείτε στη χρήση cookies όπως περιγράφεται εδώ. Μπορείτε να διαχειριστείτε τις προτιμήσεις cookies σας ανά πάσα στιγμή μέσω των ρυθμίσεων του browser σας.",
       sections: [
         {
           icon: Cookie,
@@ -136,8 +136,8 @@ const CookiesPolicy = () => {
     },
     en: {
       title: "Cookie Policy",
-      lastUpdated: "Last updated: January 2026",
-      intro: "This policy explains how ΦΟΜΟ uses cookies and similar storage technologies to improve your experience, in accordance with the EU ePrivacy Regulation and GDPR.",
+      lastUpdated: "Last updated: April 2025",
+      intro: "This Cookie Policy explains how ΦOMO uses cookies and similar tracking technologies to enhance functionality, analyse performance, and deliver tailored experiences for both Application Users and Businesses/Organisers. It forms part of our Privacy Policy, where key terms and definitions are fully outlined.\n\nCookies are small text files stored on your device when you interact with our platform. They enable us to recognise your preferences, improve your user experience, and provide personalised services. By using our platform, you consent to the use of cookies as described here. You can manage your cookie preferences at any time by adjusting your browser settings.",
       sections: [
         {
           icon: Cookie,
