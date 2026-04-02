@@ -479,7 +479,7 @@ const ForVisitors = () => {
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8">
               {content.cta.subtitle}
             </p>
-            <Button asChild size="lg" className="text-sm sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-6 sm:px-8 rounded-xl">
+            <Button asChild size="lg" className="text-xs sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-5 sm:px-8 h-9 sm:h-11 rounded-xl w-full sm:w-auto">
               <Link to="/signup">{content.cta.button}</Link>
             </Button>
           </motion.div>
