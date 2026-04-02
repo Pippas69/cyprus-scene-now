@@ -50,14 +50,7 @@ export const useMapBusinesses = (
             category,
             logo_url,
             cover_url,
-            verified,
-            business_subscriptions (
-              plan_id,
-              status,
-              subscription_plans (
-                slug
-              )
-            )
+            verified
           `);
 
         // Filter by city if selected
