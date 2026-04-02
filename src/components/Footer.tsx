@@ -58,6 +58,7 @@ const Footer = () => {
       legalTitle: "LEGAL",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
+      privacyPolicyMobile: "Privacy Policy",
       licenseAgreement: "License Agreement",
       cookies: "Cookies",
       supportTitle: "SUPPORT",
