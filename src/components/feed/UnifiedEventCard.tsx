@@ -335,7 +335,7 @@ export const UnifiedEventCard = ({
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
-                src={getOptimizedImageUrl(event.cover_image_url, 400)}
+                src={getOptimizedImageUrl(event.cover_image_url, 800)}
                 alt={event.title}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"

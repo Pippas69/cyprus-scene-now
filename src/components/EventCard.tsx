@@ -387,7 +387,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-hover:brightness-105"
               />
               {/* Enhanced gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
             </>
           ) : (
             <div className="absolute inset-0 bg-gradient-ocean flex items-center justify-center">
