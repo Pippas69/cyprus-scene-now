@@ -115,7 +115,8 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/privacy" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
-                  {t.privacyPolicy}
+                  <span className="sm:hidden">{t.privacyPolicyMobile}</span>
+                  <span className="hidden sm:inline">{t.privacyPolicy}</span>
                 </Link>
               </li>
               <li>
