@@ -173,16 +173,16 @@ export const MyTickets = () => {
     
     return (
       <Card className="overflow-hidden hover:shadow-md transition-shadow">
-        <div className="flex">
-          {ticket.events?.cover_image_url && (
-            <div className="w-24 h-full flex-shrink-0">
-              <img
-                src={ticket.events.cover_image_url}
-                alt={ticket.events.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+        {ticket.events?.cover_image_url && (
+          <div className="relative w-full aspect-[3/2] overflow-hidden">
+            <img
+              src={ticket.events.cover_image_url}
+              alt={ticket.events.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        <div>
           <CardContent className="flex-1 p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
