@@ -52,7 +52,7 @@ export const ImageCropDialog = ({
   onClose,
   imageSrc,
   onCropComplete,
-  aspectRatio = '16:9',
+  aspectRatio = '4:5',
   language = 'el',
 }: ImageCropDialogProps) => {
   const t = translations[language];
