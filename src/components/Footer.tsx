@@ -144,7 +144,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/book-demo" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/book-demo" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.bookDemo}
                 </Link>
               </li>
