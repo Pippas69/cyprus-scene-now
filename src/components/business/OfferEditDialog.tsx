@@ -504,7 +504,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
                 label={t.offerImage}
                 language={language}
                 onFileSelect={handleFileSelect}
-                aspectRatio="16/9"
+                aspectRatio="4/5"
                 maxSizeMB={5}
               />
             </div>
