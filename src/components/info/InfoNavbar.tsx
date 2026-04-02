@@ -16,7 +16,6 @@ const InfoNavbar = () => {
     el: {
       home: "Αρχική",
       explore: "Εξερεύνηση",
-      blog: "Blog",
       contact: "Επικοινωνία",
       login: "Σύνδεση",
       getStarted: "Ξεκίνα Τώρα",
