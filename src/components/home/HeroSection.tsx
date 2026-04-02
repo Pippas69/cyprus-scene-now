@@ -84,21 +84,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.25 }}
-              className="flex items-center gap-2 sm:gap-3"
             >
-              <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-seafoam/40" />
-              <div className="flex gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
-              </div>
-              <span className="text-[10px] sm:text-xs text-white/30 tracking-[0.3em] uppercase font-medium">ΦEAR OF MISSING OUT</span>
-              <div className="flex gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/30" />
-                <span className="w-1.5 h-1.5 rounded-full bg-seafoam/50" />
-              </div>
-              <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-seafoam/40" />
+              <span className="text-[10px] sm:text-xs text-seafoam/40 tracking-[0.35em] uppercase font-medium">ΦEAR OF MISSING OUT</span>
             </motion.div>
           </div>
         </div>
