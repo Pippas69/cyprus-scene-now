@@ -164,8 +164,8 @@ export const ImageUploadField = ({
     if (isSquare) {
       return "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28";
     }
-    // Cover images - adjusted to leave room for Feed preview
-    return "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]";
+    // Cover images - 4:5 aspect ratio
+    return "w-[80px] h-[100px] sm:w-[100px] sm:h-[125px] lg:w-[140px] lg:h-[175px]";
   };
 
   return (
