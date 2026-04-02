@@ -338,17 +338,6 @@ const Contact = () => {
                     <Mail className="w-5 h-5 flex-shrink-0" />
                     <span>support@fomocy.com</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = "tel:+35799123456";
-                    }}
-                    className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer w-full text-left"
-                    style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-
-                    <Phone className="w-5 h-5 flex-shrink-0" />
-                    <span>+357 99 123 456</span>
-                  </button>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MapPin className="w-5 h-5" />
                     Limassol, Cyprus
