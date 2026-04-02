@@ -814,7 +814,7 @@ const OfferCreationForm = ({ businessId }: OfferCreationFormProps) => {
                   src={(businessData.cover_url || businessData.logo_url) as string}
                   alt="Profile"
                   className="w-full max-w-[200px] h-auto rounded-lg border object-cover"
-                  style={{ aspectRatio: '16/9' }}
+                  style={{ aspectRatio: '4/5' }}
                 />
               </div>
             )}

@@ -790,7 +790,7 @@ const OfferEditDialog = ({ offer, open, onOpenChange, onSuccess }: OfferEditDial
       onClose={() => setCropDialogOpen(false)}
       imageSrc={tempImageSrc}
       onCropComplete={handleCropComplete}
-      aspectRatio="16:9"
+      aspectRatio="4:5"
     />
     </>
   );
