@@ -56,7 +56,7 @@ export const ImageUploadField = ({
   accept = "image/jpeg,image/png,image/webp",
   language,
   enableCrop = false,
-  cropAspectRatio = '16:9',
+  cropAspectRatio = '4:5',
   onCroppedImage,
   showContextPreviews = false,
 }: ImageUploadFieldProps) => {
