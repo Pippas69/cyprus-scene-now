@@ -28,6 +28,7 @@ const aspectRatioValues: Record<AspectRatioType, number> = {
   '4:5': 4 / 5,
   '1:1': 1,
   '4:3': 4 / 3,
+  '3:2': 3 / 2,
 };
 
 const translations = {
