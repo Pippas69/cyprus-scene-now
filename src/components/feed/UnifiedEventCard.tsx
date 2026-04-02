@@ -219,7 +219,7 @@ export const UnifiedEventCard = ({
           <div className="absolute inset-0 overflow-hidden rounded-t-xl">
             {event.cover_image_url ? (
               <img
-                src={getOptimizedImageUrl(event.cover_image_url, 400)}
+                src={getOptimizedImageUrl(event.cover_image_url, 800)}
                 alt={event.title}
                 className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
               />
