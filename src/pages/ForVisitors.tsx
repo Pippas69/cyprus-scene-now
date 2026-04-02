@@ -457,7 +457,7 @@ const ForVisitors = () => {
             <p className="text-muted-foreground text-sm sm:text-base mb-6">
               {content.guestMode.description}
             </p>
-            <Button asChild variant="outline" className="border-seafoam/40 text-seafoam hover:bg-seafoam/10 rounded-xl">
+            <Button asChild variant="outline" className="border-seafoam/40 text-seafoam hover:bg-seafoam/10 rounded-xl text-xs sm:text-sm px-4 sm:px-6 h-9 sm:h-10 w-full sm:w-auto">
               <Link to="/feed">{content.guestMode.cta}</Link>
             </Button>
           </motion.div>
