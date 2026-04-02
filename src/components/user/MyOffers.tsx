@@ -465,8 +465,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         ref={(el) => {if (el) cardRefs.current.set(purchase.id, el);}}
         className="overflow-hidden relative transition-all duration-300">
         
-        {/* Image section - increased height */}
-        <div className="h-[45vw] md:aspect-auto md:h-44 relative overflow-hidden rounded-t-xl">
+        {/* Image section - 3:2 aspect ratio */}
+        <div className="aspect-[3/2] relative overflow-hidden rounded-t-xl">
           {imageUrl ?
           <img
             src={imageUrl}
