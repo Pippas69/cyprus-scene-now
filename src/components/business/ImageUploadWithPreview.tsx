@@ -124,7 +124,7 @@ export const ImageUploadWithPreview = ({
                 alt={label}
                 className="w-full max-w-[280px] h-auto rounded-lg border object-cover"
                 style={{ 
-                  aspectRatio: cropAspectRatio === '4:5' ? '4/5' : cropAspectRatio === '16:9' ? '16/9' : cropAspectRatio === '1:1' ? '1/1' : '4/3'
+                  aspectRatio: cropAspectRatio === '3:2' ? '3/2' : cropAspectRatio === '4:5' ? '4/5' : cropAspectRatio === '16:9' ? '16/9' : cropAspectRatio === '1:1' ? '1/1' : '4/3'
                 }}
               />
               <div className="absolute top-2 right-2 flex gap-1">
