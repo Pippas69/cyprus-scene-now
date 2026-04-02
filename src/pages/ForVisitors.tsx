@@ -457,7 +457,7 @@ const ForVisitors = () => {
             <p className="text-muted-foreground text-sm sm:text-base mb-6">
               {content.guestMode.description}
             </p>
-            <Button asChild variant="outline" className="border-seafoam/40 text-seafoam hover:bg-seafoam/10 rounded-xl">
+            <Button asChild variant="outline" className="border-seafoam/40 text-seafoam hover:bg-seafoam/10 rounded-xl text-xs sm:text-sm px-4 sm:px-6 h-9 sm:h-10 w-full sm:w-auto">
               <Link to="/feed">{content.guestMode.cta}</Link>
             </Button>
           </motion.div>
@@ -479,7 +479,7 @@ const ForVisitors = () => {
             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8">
               {content.cta.subtitle}
             </p>
-            <Button asChild size="lg" className="text-sm sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-6 sm:px-8 rounded-xl">
+            <Button asChild size="lg" className="text-xs sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-5 sm:px-8 h-9 sm:h-11 rounded-xl w-full sm:w-auto">
               <Link to="/signup">{content.cta.button}</Link>
             </Button>
           </motion.div>
