@@ -119,6 +119,7 @@ function AppContent() {
           <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
           <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
+          <Route path="/license" element={<PageTransition><LicenseAgreement /></PageTransition>} />
           <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
           <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
           <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
