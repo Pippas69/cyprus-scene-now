@@ -42,7 +42,7 @@ const InfoNavbar = () => {
   const desktopNavLinks = [
     { href: "/", label: t.home },
     { href: "/feed", label: t.explore },
-    { href: "/blog", label: t.blog },
+    
     { href: "/contact", label: t.contact },
   ];
 
