@@ -134,7 +134,7 @@ const Footer = () => {
 
           {/* Column 3 — ΥΠΟΣΤΗΡΙΞΗ */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="font-poppins font-bold text-[11px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">
+            <h4 className="font-poppins font-bold text-[9px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">
               {t.supportTitle}
             </h4>
             <ul className="space-y-1 sm:space-y-1.5">
