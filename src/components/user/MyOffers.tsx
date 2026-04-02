@@ -466,7 +466,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         className="overflow-hidden relative transition-all duration-300">
         
         {/* Image section - 3:2 aspect ratio */}
-        <div className="aspect-[3/2] relative overflow-hidden rounded-t-xl">
+        <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-xl">
           {imageUrl ?
           <img
             src={imageUrl}

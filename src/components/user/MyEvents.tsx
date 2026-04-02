@@ -158,7 +158,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
             <Card key={ticket.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
               {/* Image section - same as event/offer cards */}
               {ticket.events?.cover_image_url && (
-                <div className="relative h-[45vw] md:aspect-auto md:h-44 overflow-hidden rounded-t-xl">
+                <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-xl">
                   <img
                     src={ticket.events.cover_image_url}
                     alt={ticket.events.title}
