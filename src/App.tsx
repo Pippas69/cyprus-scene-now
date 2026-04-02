@@ -55,8 +55,7 @@ const SubscriptionPlans = lazy(() => import("./pages/SubscriptionPlans"));
 const Features = lazy(() => import("./pages/Features"));
 const PricingPublic = lazy(() => import("./pages/PricingPublic"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
+const BookDemo = lazy(() => import("./pages/BookDemo"));
 const Messages = lazy(() => import("./pages/Messages"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TicketSuccess = lazy(() => import("./pages/TicketSuccess"));
@@ -114,8 +113,7 @@ function AppContent() {
           <Route path="/features" element={<PageTransition><Features /></PageTransition>} />
           <Route path="/pricing" element={<PageTransition><PricingPublic /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-          <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
-          <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
+          <Route path="/book-demo" element={<PageTransition><BookDemo /></PageTransition>} />
           <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
           <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />

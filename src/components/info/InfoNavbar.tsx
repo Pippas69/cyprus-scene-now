@@ -16,7 +16,6 @@ const InfoNavbar = () => {
     el: {
       home: "Αρχική",
       explore: "Εξερεύνηση",
-      blog: "Blog",
       contact: "Επικοινωνία",
       login: "Σύνδεση",
       getStarted: "Ξεκίνα Τώρα",
@@ -27,7 +26,7 @@ const InfoNavbar = () => {
     en: {
       home: "Home",
       explore: "Explore",
-      blog: "Blog",
+      
       contact: "Contact",
       login: "Login",
       getStarted: "Get Started",
@@ -43,7 +42,7 @@ const InfoNavbar = () => {
   const desktopNavLinks = [
     { href: "/", label: t.home },
     { href: "/feed", label: t.explore },
-    { href: "/blog", label: t.blog },
+    
     { href: "/contact", label: t.contact },
   ];
 
