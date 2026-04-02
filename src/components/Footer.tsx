@@ -80,6 +80,7 @@ const Footer = () => {
   const termsLinks = [
     { to: "/terms", label: t.termsOfUse },
     { to: "/privacy", label: t.privacyPolicy },
+    { to: "/license", label: t.licenseAgreement },
     { to: "/cookies", label: t.cookies },
   ];
 
