@@ -139,7 +139,7 @@ const Footer = () => {
             </h4>
             <ul className="space-y-1 sm:space-y-1.5">
               <li>
-                <Link to="/contact" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                <Link to="/contact" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   {t.contact}
                 </Link>
               </li>
