@@ -149,7 +149,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm break-all">
+                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm break-all">
                   support@fomocy.com
                 </a>
               </li>
