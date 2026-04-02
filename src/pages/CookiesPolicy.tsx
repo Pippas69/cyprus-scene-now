@@ -136,8 +136,8 @@ const CookiesPolicy = () => {
     },
     en: {
       title: "Cookie Policy",
-      lastUpdated: "Last updated: January 2026",
-      intro: "This policy explains how ΦΟΜΟ uses cookies and similar storage technologies to improve your experience, in accordance with the EU ePrivacy Regulation and GDPR.",
+      lastUpdated: "Last updated: April 2025",
+      intro: "This Cookie Policy explains how ΦOMO uses cookies and similar tracking technologies to enhance functionality, analyse performance, and deliver tailored experiences for both Application Users and Businesses/Organisers. It forms part of our Privacy Policy, where key terms and definitions are fully outlined.\n\nCookies are small text files stored on your device when you interact with our platform. They enable us to recognise your preferences, improve your user experience, and provide personalised services. By using our platform, you consent to the use of cookies as described here. You can manage your cookie preferences at any time by adjusting your browser settings.",
       sections: [
         {
           icon: Cookie,
