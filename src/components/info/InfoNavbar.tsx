@@ -26,7 +26,7 @@ const InfoNavbar = () => {
     en: {
       home: "Home",
       explore: "Explore",
-      blog: "Blog",
+      
       contact: "Contact",
       login: "Login",
       getStarted: "Get Started",
