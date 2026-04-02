@@ -215,7 +215,7 @@ export const ImageUploadField = ({
             <div 
               className={cn(
                 "border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors flex-shrink-0",
-                isSquare ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "w-[100px] h-[80px] sm:w-[140px] sm:h-[90px] lg:w-[200px] lg:h-[110px]"
+                isSquare ? "w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28" : "w-[80px] h-[100px] sm:w-[100px] sm:h-[125px] lg:w-[140px] lg:h-[175px]"
               )}
               onClick={() => inputRef.current?.click()}
             >
