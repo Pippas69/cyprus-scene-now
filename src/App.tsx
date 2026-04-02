@@ -68,6 +68,7 @@ const OfferPurchaseSuccess = lazy(() => import("./pages/OfferPurchaseSuccess"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
+const LicenseAgreement = lazy(() => import("./pages/LicenseAgreement"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
