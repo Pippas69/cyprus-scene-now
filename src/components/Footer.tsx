@@ -39,9 +39,10 @@ const Footer = () => {
       forVisitors: "Για Επισκέπτες",
       forBusiness: "Για Επιχειρήσεις",
       blog: "Blog",
-      termsTitle: "Όροι & Πολιτικές",
+      termsTitle: "Νομικά",
       termsOfUse: "Όροι Χρήσης",
       privacyPolicy: "Πολιτική Απορρήτου",
+      licenseAgreement: "Άδεια Χρήσης",
       cookies: "Cookies",
       contactTitle: "Επικοινωνία",
       contact: "Επικοινωνία",
@@ -54,9 +55,10 @@ const Footer = () => {
       forVisitors: "For Visitors",
       forBusiness: "For Businesses",
       blog: "Blog",
-      termsTitle: "Terms & Policies",
+      termsTitle: "Legal",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
+      licenseAgreement: "License Agreement",
       cookies: "Cookies",
       contactTitle: "Contact",
       contact: "Contact",
@@ -78,6 +80,7 @@ const Footer = () => {
   const termsLinks = [
     { to: "/terms", label: t.termsOfUse },
     { to: "/privacy", label: t.privacyPolicy },
+    { to: "/license", label: t.licenseAgreement },
     { to: "/cookies", label: t.cookies },
   ];
 

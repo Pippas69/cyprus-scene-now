@@ -68,6 +68,7 @@ const OfferPurchaseSuccess = lazy(() => import("./pages/OfferPurchaseSuccess"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookiesPolicy = lazy(() => import("./pages/CookiesPolicy"));
+const LicenseAgreement = lazy(() => import("./pages/LicenseAgreement"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
@@ -118,6 +119,7 @@ function AppContent() {
           <Route path="/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
           <Route path="/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
           <Route path="/cookies" element={<PageTransition><CookiesPolicy /></PageTransition>} />
+          <Route path="/license" element={<PageTransition><LicenseAgreement /></PageTransition>} />
           <Route path="/unsubscribe" element={<PageTransition><Unsubscribe /></PageTransition>} />
           <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
           <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
