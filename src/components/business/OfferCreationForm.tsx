@@ -358,7 +358,7 @@ const ImageSourceCustomUpload = ({
           onClose={() => { setShowCrop(false); setRawSrc(null); }}
           imageSrc={rawSrc}
           onCropComplete={(blob) => { onImageReady(blob); setShowCrop(false); setRawSrc(null); }}
-          aspectRatio="4:5"
+          aspectRatio="3:2"
           language={language}
         />
       )}

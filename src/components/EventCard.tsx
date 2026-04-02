@@ -378,7 +378,7 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
         
         
         {/* Image with enhanced gradient - reduced height */}
-        <div className="relative aspect-[4/5] overflow-hidden">
+        <div className="relative aspect-[3/2] overflow-hidden">
           {event.cover_image_url ? (
             <>
               <img 

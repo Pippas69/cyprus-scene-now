@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
-export type AspectRatioType = '16:9' | '4:5' | '1:1' | '4:3';
+export type AspectRatioType = '16:9' | '4:5' | '1:1' | '4:3' | '3:2';
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -28,6 +28,7 @@ const aspectRatioValues: Record<AspectRatioType, number> = {
   '4:5': 4 / 5,
   '1:1': 1,
   '4:3': 4 / 3,
+  '3:2': 3 / 2,
 };
 
 const translations = {
@@ -52,7 +53,7 @@ export const ImageCropDialog = ({
   onClose,
   imageSrc,
   onCropComplete,
-  aspectRatio = '4:5',
+  aspectRatio = '3:2',
   language = 'el',
 }: ImageCropDialogProps) => {
   const t = translations[language];

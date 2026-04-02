@@ -4,7 +4,7 @@ const OfferCardSkeleton = () => {
   return (
     <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
       {/* Image skeleton */}
-      <div className="relative aspect-[4/5] bg-gradient-to-br from-muted via-muted/50 to-muted overflow-hidden">
+      <div className="relative aspect-[3/2] bg-gradient-to-br from-muted via-muted/50 to-muted overflow-hidden">
         <div className="absolute inset-0 shimmer" />
       </div>
 
