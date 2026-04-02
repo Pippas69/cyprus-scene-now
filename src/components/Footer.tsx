@@ -79,7 +79,7 @@ const Footer = () => {
         <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-16">
           {/* Column 1 — ΦΟΜΟ */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="font-cinzel font-bold text-[11px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">ΦΟΜΟ</h4>
+            <h4 className="font-cinzel font-bold text-[9px] sm:text-xs lg:text-sm text-white uppercase tracking-wider">ΦΟΜΟ</h4>
             <ul className="space-y-1 sm:space-y-1.5">
               <li>
                 <Link to="/feed" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
