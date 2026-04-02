@@ -149,8 +149,9 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm break-all">
-                  support@fomocy.com
+                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[11px] sm:text-xs lg:text-sm">
+                  <span className="sm:hidden">support@fomocy</span>
+                  <span className="hidden sm:inline">support@fomocy.com</span>
                 </a>
               </li>
             </ul>
