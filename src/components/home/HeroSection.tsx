@@ -42,7 +42,7 @@ const featureItems = [
 const PhoneMockup = () => (
   <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
     <div
-      className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-primary-foreground/10 shadow-2xl shadow-black/30"
+      className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-foreground/10 shadow-2xl shadow-black/30"
       style={{ aspectRatio: "9/17" }}
     >
       <div className="absolute -left-[2px] top-[18%] h-[8%] w-[3px] rounded-l-sm bg-foreground/20" />
@@ -50,7 +50,7 @@ const PhoneMockup = () => (
       <div className="absolute -left-[2px] top-[44%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
       <div className="absolute -right-[2px] top-[32%] h-[14%] w-[3px] rounded-r-sm bg-foreground/20" />
 
-      <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-primary/90">
+      <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-black">
         <video
           className="h-full w-full object-cover"
           autoPlay
@@ -62,9 +62,9 @@ const PhoneMockup = () => (
           <source src={heroPhoneLoop} type="video/mp4" />
         </video>
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/55" />
-        <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-accent/15 blur-2xl" />
-        <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-primary-foreground/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
+        <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-seafoam/10 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-foreground/25" />
       </div>
     </div>
   </div>
@@ -124,18 +124,18 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   const navLinkClass =
-    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-primary-foreground transition-colors hover:text-accent";
+    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-foreground transition-colors hover:text-seafoam";
 
   return (
-    <section className="relative overflow-hidden bg-primary pb-10 sm:pb-14">
-      <div className="absolute inset-0 bg-primary" />
-      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-accent/10 blur-3xl sm:h-56 sm:w-56" />
-      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-primary-foreground/10 blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-accent/10 blur-3xl sm:h-72 sm:w-72" />
+    <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
+      {/* Subtle ambient glows — same bg color base */}
+      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-seafoam/[0.06] blur-3xl sm:h-56 sm:w-56" />
+      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-foreground/[0.04] blur-3xl sm:h-64 sm:w-64" />
+      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
 
       <div className="relative z-10">
         <div className="container mx-auto px-3 sm:px-4 py-4">
-          <div className="flex flex-nowrap items-center justify-start gap-4 overflow-x-auto sm:justify-center sm:gap-6 lg:gap-10">
+          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-6 lg:gap-10">
             <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-base sm:text-lg`}>
               ΦΟΜΟ
             </button>
@@ -168,10 +168,15 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
                       {t.forBusinesses}
                     </DropdownMenuItem>
+                    {/* Login inside dropdown on mobile only */}
+                    <DropdownMenuItem className="cursor-pointer font-medium sm:hidden" onClick={() => navigate("/login")}>
+                      {t.login}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <button onClick={() => navigate("/login")} className={navLinkClass}>
+                {/* Login as separate link — desktop only */}
+                <button onClick={() => navigate("/login")} className={`${navLinkClass} hidden sm:block`}>
                   {t.login}
                 </button>
               </>
@@ -185,8 +190,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
         <div className="container mx-auto px-4 pt-4 sm:pt-6 lg:pt-8">
           <div className="relative mx-auto max-w-5xl">
-            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-accent/15 blur-[80px] sm:h-64 sm:w-64" />
-            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-primary-foreground/10 blur-[70px] sm:h-52 sm:w-52" />
+            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
+            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
 
             <div className="flex items-center justify-center gap-6 sm:gap-10 lg:gap-16">
               <motion.div
@@ -214,7 +219,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   >
                     <div className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16">
                       <svg
-                        className="absolute inset-0 h-full w-full -rotate-45 text-accent/50 transition-transform duration-500 group-hover:rotate-0"
+                        className="absolute inset-0 h-full w-full -rotate-45 text-seafoam/50 transition-transform duration-500 group-hover:rotate-0"
                         viewBox="0 0 80 80"
                       >
                         <circle
@@ -229,12 +234,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                         />
                       </svg>
 
-                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-primary-foreground/10 bg-primary-foreground/5 transition-all duration-300 group-hover:border-accent/30 group-hover:bg-accent/10">
-                        <item.icon className="h-4 w-4 text-accent sm:h-5 sm:w-5" strokeWidth={1.5} />
+                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/5 transition-all duration-300 group-hover:border-seafoam/30 group-hover:bg-seafoam/10">
+                        <item.icon className="h-4 w-4 text-seafoam sm:h-5 sm:w-5" strokeWidth={1.5} />
                       </div>
                     </div>
 
-                    <span className="font-inter text-[11px] sm:text-sm font-medium text-primary-foreground/75 transition-colors group-hover:text-primary-foreground">
+                    <span className="font-inter text-[11px] sm:text-sm font-medium text-foreground/70 transition-colors group-hover:text-foreground">
                       {language === "el" ? item.labelEl : item.labelEn}
                     </span>
                   </motion.button>
