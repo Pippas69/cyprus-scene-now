@@ -41,12 +41,12 @@ const PhoneMockup = () => (
 
       <div className="relative w-full h-full rounded-[2.2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
         {/* Video placeholder - will be replaced with actual video */}
-        <div className="w-full h-full bg-gradient-to-b from-aegean/80 via-aegean to-aegean/90 flex items-center justify-center">
+        <div className="w-full h-full bg-gradient-to-b from-[hsl(0_0%_5%)] via-[hsl(0_0%_3%)] to-black flex items-center justify-center">
           <div className="text-center space-y-3 px-6">
-            <div className="w-12 h-12 rounded-full bg-seafoam/20 flex items-center justify-center mx-auto">
-              <div className="w-5 h-5 border-2 border-seafoam rounded-sm" />
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/10">
+              <div className="w-0 h-0 border-l-[10px] border-l-white/40 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ml-1" />
             </div>
-            <p className="text-white/40 text-xs font-inter">Video placeholder</p>
+            <p className="text-white/30 text-xs font-inter">Video</p>
           </div>
         </div>
 
