@@ -157,59 +157,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
 
       <div className="relative z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-4">
-          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-6 lg:gap-10">
-            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-[1.02rem] sm:text-[1.12rem]`}>
-              ΦΟΜΟ
-            </button>
-
-            <button onClick={() => navigate("/feed")} className={navLinkClass}>
-              {t.explore}
-            </button>
-
-            {user ? (
-              <div className="shrink-0">
-                <UserAccountDropdown
-                  userId={user.id}
-                  userName={userName}
-                  avatarUrl={userAvatarUrl}
-                  variant="button"
-                />
-              </div>
-            ) : (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className={navLinkClass}>
-                      {t.signup}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 bg-popover text-popover-foreground">
-                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup")}>
-                      {t.joinFomo}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
-                      {t.forBusinesses}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer font-medium sm:hidden" onClick={() => navigate("/login")}>
-                      {t.login}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <button onClick={() => navigate("/login")} className={`${navLinkClass} hidden sm:block`}>
-                  {t.login}
-                </button>
-              </>
-            )}
-
-            <div className="shrink-0 origin-center scale-[0.88] sm:scale-100">
-              <LanguageToggle />
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 pt-4 sm:pt-6 lg:pt-8">
+        <div className="container mx-auto px-4 pt-20 sm:pt-24 lg:pt-28">
           <div className="relative mx-auto max-w-5xl">
             <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
             <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
