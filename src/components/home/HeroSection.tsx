@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin } from "lucide-react";
 import heroPhoneLoop1 from "@/assets/hero-phone-loop.mp4";
-import heroPhoneLoop2 from "@/assets/hero-phone-loop-2.mp4";
-import heroPhoneLoop3 from "@/assets/hero-phone-loop-3.mp4";
+import heroPhoneLoop2Asset from "@/assets/hero-phone-loop-2.mp4.asset.json";
+import heroPhoneLoop3Asset from "@/assets/hero-phone-loop-3.mp4.asset.json";
 
-const heroVideos = [heroPhoneLoop1, heroPhoneLoop2, heroPhoneLoop3];
+const heroVideos = [heroPhoneLoop1, heroPhoneLoop2Asset.url, heroPhoneLoop3Asset.url];
 
 interface HeroSectionProps {
   language: "el" | "en";
