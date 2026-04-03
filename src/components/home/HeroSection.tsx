@@ -77,7 +77,7 @@ const PhoneMockup = () => {
           <video
             ref={videoRef}
             className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroPhoneLoop}
+            src={heroPhoneLoopAsset.url}
             autoPlay
             loop
             muted
