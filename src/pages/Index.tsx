@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
-import ScrollProgress from "@/components/ui/scroll-progress";
 import FAQSection from "@/components/home/FAQSection";
 import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +60,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <ScrollProgress />
       <HeroSection language={language} />
       <PartnerLogoMarquee />
       <FeaturesSection language={language} />

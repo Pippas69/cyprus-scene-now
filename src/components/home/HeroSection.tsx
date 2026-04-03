@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin, ChevronDown } from "lucide-react";
@@ -39,36 +39,60 @@ const featureItems = [
   },
 ];
 
-const PhoneMockup = () => (
-  <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
-    <div
-      className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-foreground/10 shadow-2xl shadow-black/30"
-      style={{ aspectRatio: "9/17" }}
-    >
-      <div className="absolute -left-[2px] top-[18%] h-[8%] w-[3px] rounded-l-sm bg-foreground/20" />
-      <div className="absolute -left-[2px] top-[30%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
-      <div className="absolute -left-[2px] top-[44%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
-      <div className="absolute -right-[2px] top-[32%] h-[14%] w-[3px] rounded-r-sm bg-foreground/20" />
+const PhoneMockup = () => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
-      <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-black">
-        <video
-          className="h-full w-full object-cover"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-        >
-          <source src={heroPhoneLoop} type="video/mp4" />
-        </video>
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
-        <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-seafoam/10 blur-2xl" />
-        <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-foreground/25" />
+    const playVideo = () => {
+      video.muted = true;
+      const playPromise = video.play();
+      if (playPromise) {
+        void playPromise.catch(() => undefined);
+      }
+    };
+
+    if (video.readyState >= 2) {
+      playVideo();
+    }
+
+    video.addEventListener("loadeddata", playVideo);
+    return () => video.removeEventListener("loadeddata", playVideo);
+  }, []);
+
+  return (
+    <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
+      <div
+        className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-foreground/10 shadow-2xl shadow-black/30"
+        style={{ aspectRatio: "9/17" }}
+      >
+        <div className="absolute -left-[2px] top-[18%] h-[8%] w-[3px] rounded-l-sm bg-foreground/20" />
+        <div className="absolute -left-[2px] top-[30%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
+        <div className="absolute -left-[2px] top-[44%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
+        <div className="absolute -right-[2px] top-[32%] h-[14%] w-[3px] rounded-r-sm bg-foreground/20" />
+
+        <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-background">
+          <video
+            ref={videoRef}
+            className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
+            src={heroPhoneLoop}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-transparent to-background/10" />
+          <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-seafoam/10 blur-2xl" />
+          <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-foreground/25" />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
@@ -128,7 +152,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   return (
     <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
-      {/* Subtle ambient glows — same bg color base */}
       <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-seafoam/[0.06] blur-3xl sm:h-56 sm:w-56" />
       <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-foreground/[0.04] blur-3xl sm:h-64 sm:w-64" />
       <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
@@ -136,7 +159,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="relative z-10">
         <div className="container mx-auto px-3 sm:px-4 py-4">
           <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-6 lg:gap-10">
-            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-base sm:text-lg`}>
+            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-[1.02rem] sm:text-[1.12rem]`}>
               ΦΟΜΟ
             </button>
 
@@ -168,14 +191,12 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
                       {t.forBusinesses}
                     </DropdownMenuItem>
-                    {/* Login inside dropdown on mobile only */}
                     <DropdownMenuItem className="cursor-pointer font-medium sm:hidden" onClick={() => navigate("/login")}>
                       {t.login}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Login as separate link — desktop only */}
                 <button onClick={() => navigate("/login")} className={`${navLinkClass} hidden sm:block`}>
                   {t.login}
                 </button>
@@ -254,4 +275,3 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 };
 
 export default HeroSection;
-
