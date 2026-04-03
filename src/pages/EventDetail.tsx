@@ -70,6 +70,28 @@ export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Smart back: if user came from within the app, go back; otherwise go to /ekdiloseis
+  const goBack = () => {
+    if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      navigate(-1);
+    } else {
+      navigate('/ekdiloseis');
+    }
+  };
+
+  // Open maps URL safely — uses <a> link approach to avoid in-app browser blank page issues
+  const openMapsLink = (locationText: string) => {
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`;
+    // Use a temporary <a> element with rel="noopener" for better in-app browser compatibility
+    const a = document.createElement('a');
+    a.href = mapsUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   const { language } = useLanguage();
   const [event, setEvent] = useState<any>(null);
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
@@ -542,7 +564,7 @@ export default function EventDetail() {
         <div className="container mx-auto px-4 py-8 pt-4 lg:pt-24">
           <RippleButton
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="mb-4 gap-2">
             
             <ArrowLeft className="h-4 w-4" />
@@ -570,13 +592,13 @@ export default function EventDetail() {
       <div className="container mx-auto px-4 py-4 lg:py-8 pt-2 lg:pt-24">
         {/* Back button — above image on mobile, inline on desktop */}
         <button
-          onClick={() => navigate(-1)}
-          className="lg:hidden mb-3 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/50 hover:bg-card transition-colors">
+          onClick={goBack}
+          className="lg:hidden mb-3 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/50 hover:bg-card transition-colors relative z-10">
           <ArrowLeft className="h-4 w-4 text-foreground" />
         </button>
         <RippleButton
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="mb-4 gap-2 relative z-20 hidden lg:inline-flex">
           <ArrowLeft className="h-4 w-4" />
           {text.backToEvents}
@@ -674,10 +696,7 @@ export default function EventDetail() {
                 <Separator className="opacity-30" />
 
                 <button
-                  onClick={() => {
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                    window.open(mapsUrl, '_blank');
-                  }}
+                  onClick={() => openMapsLink(event.location)}
                   className="flex items-center gap-3 w-full text-left group">
                   <MapPin className="h-4 w-4 text-foreground shrink-0 group-hover:text-foreground/80 transition-colors" />
                   <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">{event.location}</span>
@@ -880,10 +899,7 @@ export default function EventDetail() {
                 <Separator className="opacity-30" />
 
                 <button
-                  onClick={() => {
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                    window.open(mapsUrl, '_blank');
-                  }}
+                  onClick={() => openMapsLink(event.location)}
                   className="flex items-center gap-3 w-full text-left group">
                   <MapPin className="h-4 w-4 text-foreground shrink-0 group-hover:text-foreground/80 transition-colors" />
                   <p className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">{event.location}</p>
