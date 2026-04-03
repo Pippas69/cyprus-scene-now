@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
+import heroPhoneLoopAsset from "@/assets/hero-phone-loop.mp4.asset.json";
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
