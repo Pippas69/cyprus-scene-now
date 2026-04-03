@@ -63,10 +63,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <ScrollProgress />
       <Navbar />
-      <div className="relative bg-background">
-        <HeroSection language={language} />
-        <PartnerLogoMarquee />
-      </div>
+      <HeroSection language={language} />
+      <PartnerLogoMarquee />
       <FeaturesSection language={language} />
       <UpcomingEventsPreview language={language} />
       <FAQSection language={language} />
