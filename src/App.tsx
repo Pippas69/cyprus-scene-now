@@ -123,7 +123,9 @@ function AppContent() {
           <Route path="/for-visitors" element={<PageTransition><ForVisitors /></PageTransition>} />
           <Route path="/for-businesses" element={<PageTransition><ForBusinesses /></PageTransition>} />
           <Route path="/feed" element={<PageTransition><UserLayout><Feed showNavbar={false} /></UserLayout></PageTransition>} />
+          <Route path="/events" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
           <Route path="/ekdiloseis" element={<PageTransition><UserLayout><Ekdiloseis /></UserLayout></PageTransition>} />
+          <Route path="/map" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
           <Route path="/xartis" element={<PageTransition><UserLayout><Xartis /></UserLayout></PageTransition>} />
           <Route path="/offers" element={<PageTransition><UserLayout><Offers /></UserLayout></PageTransition>} />
           <Route path="/signup" element={<Signup />} />
