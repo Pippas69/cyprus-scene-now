@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-import fomoLogo from "@/assets/fomo-logo-white.png";
+
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
@@ -18,7 +18,7 @@ const featureItems = [
     icon: Calendar,
     labelEl: "Events",
     labelEn: "Events",
-    path: "/feed",
+    path: "/events",
   },
   {
     icon: Newspaper,
@@ -100,24 +100,18 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const text = {
     el: {
-      home: "Αρχική",
       explore: "Εξερεύνηση",
       signup: "Εγγραφή",
       login: "Σύνδεση",
       joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
-      headline: "Αν συμβαίνει,",
-      headlineBold: "είναι στο ΦΟΜΟ.",
     },
     en: {
-      home: "Home",
       explore: "Explore",
       signup: "Sign Up",
       login: "Login",
       joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
-      headline: "If it's happening,",
-      headlineBold: "it's on ΦΟΜΟ.",
     },
   };
 
@@ -133,16 +127,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         {/* Inline navigation - replaces navbar on landing page */}
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-8 sm:gap-10">
-            <button onClick={() => navigate("/")} className={navLinkClass}>
-              {t.home}
+            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel`}>
+              ΦΟΜΟ
             </button>
             <button onClick={() => navigate("/feed")} className={navLinkClass}>
               {t.explore}
-            </button>
-
-            {/* Center logo */}
-            <button onClick={() => navigate("/")} className="hover:opacity-80 transition-opacity flex-shrink-0">
-              <img src={fomoLogo} alt="ΦΟΜΟ" className="h-10 w-10 object-contain" />
             </button>
 
             {user ? (
@@ -180,25 +169,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Headline + tagline */}
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-6 sm:mb-8 mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-2"
-            >
-              <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight">
-                {t.headline}{" "}
-                <span className="text-seafoam font-black">{t.headlineBold}</span>
-              </h1>
-              <span className="block text-[10px] sm:text-xs text-seafoam/40 tracking-[0.35em] uppercase font-medium">
-                ΦEAR OF MISSING OUT
-              </span>
-            </motion.div>
-          </div>
-
+        <div className="container mx-auto px-4 mt-8">
           {/* Phone (left) + Features (right) */}
           <div className="flex items-center justify-center gap-10 sm:gap-14 lg:gap-20">
             <motion.div
