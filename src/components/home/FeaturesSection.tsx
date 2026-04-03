@@ -40,7 +40,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               <h3 className="text-white font-semibold text-sm sm:text-[15px]">
                 {feature.title}
               </h3>
-              <p className="text-white/40 text-xs sm:text-[13px] leading-relaxed max-w-[260px]">
+              <p className="text-white/40 text-xs sm:text-[13px] leading-relaxed max-w-[260px] text-left">
                 {feature.subtitle}
               </p>
             </motion.div>
