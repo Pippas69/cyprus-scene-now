@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Newspaper, MapPin, ChevronDown } from "lucide-react";
+import { Calendar, Newspaper, MapPin } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
+import heroPhoneLoopAsset from "@/assets/hero-phone-loop.mp4.asset.json";
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
@@ -77,7 +77,7 @@ const PhoneMockup = () => {
           <video
             ref={videoRef}
             className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroPhoneLoop}
+            src={heroPhoneLoopAsset.url}
             autoPlay
             loop
             muted
