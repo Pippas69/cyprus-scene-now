@@ -78,8 +78,48 @@ const PhoneMockup = () => {
           />
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-transparent to-background/10" />
-          <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-seafoam/10 blur-2xl" />
-          <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-foreground/25" />
+
+          {/* iOS Status Bar */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-[10%] pt-[6%] text-foreground">
+            <span className="text-[7px] sm:text-[8px] font-semibold leading-none">9:41</span>
+            {/* Dynamic Island */}
+            <div className="h-[8px] sm:h-[10px] w-[22%] rounded-full bg-black" />
+            {/* Signal + WiFi + Battery */}
+            <div className="flex items-center gap-[3px]">
+              <svg className="h-[7px] w-[10px] sm:h-[8px] sm:w-[12px]" viewBox="0 0 17 11" fill="currentColor">
+                <rect x="0" y="7" width="3" height="4" rx="0.5" opacity="0.3"/>
+                <rect x="4.5" y="5" width="3" height="6" rx="0.5" opacity="0.5"/>
+                <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" opacity="0.7"/>
+                <rect x="13.5" y="0" width="3" height="11" rx="0.5"/>
+              </svg>
+              <svg className="h-[7px] w-[10px] sm:h-[8px] sm:w-[11px]" viewBox="0 0 16 12" fill="currentColor">
+                <path d="M8 3.6c1.8 0 3.4.7 4.6 1.9l1.2-1.2C12.2 2.7 10.2 1.8 8 1.8S3.8 2.7 2.2 4.3l1.2 1.2C4.6 4.3 6.2 3.6 8 3.6z" opacity="0.5"/>
+                <path d="M8 6.6c1.1 0 2.1.4 2.9 1.2l1.2-1.2C10.7 5.2 9.4 4.6 8 4.6s-2.7.6-4.1 1.9l1.2 1.2C5.9 7 6.9 6.6 8 6.6z" opacity="0.7"/>
+                <circle cx="8" cy="10" r="1.5"/>
+              </svg>
+              <svg className="h-[7px] w-[14px] sm:h-[8px] sm:w-[16px]" viewBox="0 0 27 13" fill="currentColor">
+                <rect x="0" y="0.5" width="22" height="12" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.2"/>
+                <rect x="23" y="4" width="2.5" height="5" rx="1" opacity="0.4"/>
+                <rect x="1.5" y="2" width="19" height="9" rx="1.5"/>
+              </svg>
+            </div>
+          </div>
+
+          {/* ΦΟΜΟ branding at bottom */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center pb-[8%]">
+            <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-black/60 to-transparent" />
+            <span
+              className="relative font-cinzel text-[9px] sm:text-[11px] font-bold tracking-[0.2em] text-foreground/70"
+            >
+              ΦΟΜΟ
+            </span>
+            <span className="relative font-inter text-[5px] sm:text-[6px] font-light tracking-[0.15em] text-seafoam/50 mt-[1px]">
+              CYPRUS
+            </span>
+          </div>
+
+          {/* Home indicator bar */}
+          <div className="pointer-events-none absolute bottom-[3%] left-1/2 h-[3px] w-[28%] -translate-x-1/2 rounded-full bg-foreground/30 z-20" />
         </div>
       </div>
     </div>
