@@ -691,43 +691,55 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             </Label>
             
             <div className="space-y-1.5 max-h-52 overflow-y-auto">
-              {guestNames.map((name, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
-                  <Input
-                    placeholder={`${t.guestN} ${idx + 1}`}
-                    value={name}
-                    readOnly={idx === 0 && lockFirstGuestName}
-                    onChange={(e) => {
-                      if (idx === 0 && lockFirstGuestName) return;
-                      setGuestNames(prev => {
-                        const updated = [...prev];
-                        updated[idx] = e.target.value;
-                        return updated;
-                      });
-                    }}
-                    className={cn("h-8 sm:h-9 text-xs sm:text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
-                  />
-                  <Input
-                    placeholder={t.age}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={guestAges[idx] || ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || /^\d{0,3}$/.test(val)) {
-                        setGuestAges(prev => {
-                          const updated = [...prev];
-                          updated[idx] = val;
-                          return updated;
-                        });
-                      }
-                    }}
-                    className="h-8 sm:h-9 text-xs sm:text-sm w-16 sm:w-20"
-                  />
-                </div>
-              ))}
+              {guestNames.map((name, idx) => {
+                const ageVal = guestAges[idx] || '';
+                const ageNum = Number(ageVal);
+                const showAgeError = ageVal.length > 0 && !isNaN(ageNum) && ageNum < minAge;
+                return (
+                  <div key={idx} className="space-y-0.5">
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                      <Input
+                        placeholder={`${t.guestN} ${idx + 1}`}
+                        value={name}
+                        readOnly={idx === 0 && lockFirstGuestName}
+                        onChange={(e) => {
+                          if (idx === 0 && lockFirstGuestName) return;
+                          setGuestNames(prev => {
+                            const updated = [...prev];
+                            updated[idx] = e.target.value;
+                            return updated;
+                          });
+                        }}
+                        className={cn("h-8 sm:h-9 text-xs sm:text-sm flex-1", idx === 0 && lockFirstGuestName && "bg-muted cursor-not-allowed")}
+                      />
+                      <Input
+                        placeholder={t.age}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={ageVal}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || /^\d{0,3}$/.test(val)) {
+                            setGuestAges(prev => {
+                              const updated = [...prev];
+                              updated[idx] = val;
+                              return updated;
+                            });
+                          }
+                        }}
+                        className={cn("h-8 sm:h-9 text-xs sm:text-sm w-16 sm:w-20", showAgeError && "border-destructive focus-visible:ring-destructive")}
+                      />
+                    </div>
+                    {showAgeError && (
+                      <p className="text-[10px] text-destructive text-right pr-1">
+                        {language === 'el' ? `Ελάχιστο όριο: ${minAge} ετών` : `Minimum age: ${minAge}`}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
