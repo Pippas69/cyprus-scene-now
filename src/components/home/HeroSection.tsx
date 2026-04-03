@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-import fomoLogo from "@/assets/fomo-logo-white.png";
+
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
