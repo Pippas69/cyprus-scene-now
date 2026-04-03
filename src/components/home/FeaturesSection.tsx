@@ -32,7 +32,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-center text-center gap-3"
+              className="flex flex-col items-center text-center gap-3 h-full"
             >
               <div className="w-10 h-10 rounded-full bg-seafoam/10 flex items-center justify-center mb-1">
                 <feature.icon className="w-[18px] h-[18px] text-seafoam" />
@@ -40,7 +40,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               <h3 className="text-white font-semibold text-sm sm:text-[15px]">
                 {feature.title}
               </h3>
-              <p className="text-white/40 text-xs sm:text-[13px] leading-relaxed max-w-[260px]">
+              <p className="text-white/40 text-xs sm:text-[13px] leading-relaxed max-w-[260px] text-left">
                 {feature.subtitle}
               </p>
             </motion.div>
