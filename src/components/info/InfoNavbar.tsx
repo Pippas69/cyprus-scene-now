@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { useLanguage } from "@/hooks/useLanguage";
 import LanguageToggle from "@/components/LanguageToggle";
-import { ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -10,7 +9,6 @@ const InfoNavbar = () => {
   const { language } = useLanguage();
   const location = useLocation();
   const [signupDropdownOpen, setSignupDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const text = {
@@ -19,7 +17,7 @@ const InfoNavbar = () => {
       visitors: "Επισκέπτες",
       businesses: "Επιχειρήσεις",
       signup: "Εγγραφή",
-      signupFomo: "Εγγραφή στο FOMO",
+      signupFomo: "Εγγραφή στο ΦΟΜΟ",
       signupBusiness: "Εγγραφή ως Επιχείρηση",
       login: "Σύνδεση",
     },
@@ -55,8 +53,11 @@ const InfoNavbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const linkClass = (active: boolean) =>
+    `relative px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a2e52]/95 backdrop-blur-lg border-b border-white/[0.06]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0c3460] backdrop-blur-lg border-b border-white/[0.06]">
       <div className="w-full px-4 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo Badge */}
@@ -64,50 +65,39 @@ const InfoNavbar = () => {
             <Logo size="sm" />
           </Link>
 
-          {/* Desktop/Tablet Nav Links (md+) */}
-          <div className="hidden md:flex items-center gap-1 lg:gap-2">
-            {navLinks.map((link) => (
+          {/* Nav Links (all sizes) */}
+          <div className="flex items-center gap-0.5 sm:gap-1 lg:gap-2">
+            {/* Explore - always visible */}
+            <Link to="/feed" className={`${linkClass(isActive("/feed"))} text-xs sm:text-sm`}>
+              {t.explore}
+              {isActive("/feed") && (
+                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+              )}
+            </Link>
+
+            {/* Visitors & Businesses - hidden on mobile */}
+            {navLinks.slice(1).map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className="relative px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white group"
+                className={`hidden md:block ${linkClass(isActive(link.href))}`}
               >
-                <span className={isActive(link.href) ? "text-white" : "text-white/60"}>
-                  {link.label}
-                </span>
-                {/* Active underline */}
+                {link.label}
                 {isActive(link.href) && (
-                  <motion.div
-                    layoutId="navbar-active"
-                    className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
+                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
                 )}
               </Link>
             ))}
 
-            {/* Εγγραφή with dropdown */}
+            {/* Εγγραφή dropdown - all sizes */}
             <div ref={dropdownRef} className="relative">
               <button
                 onClick={() => setSignupDropdownOpen(!signupDropdownOpen)}
-                className="relative flex items-center gap-1 px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white group"
+                className={`${linkClass(isActive("/signup") || isActive("/signup-business"))} text-xs sm:text-sm`}
               >
-                <span className={
-                  isActive("/signup") || isActive("/signup-business")
-                    ? "text-white"
-                    : "text-white/60"
-                }>
-                  {t.signup}
-                </span>
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${signupDropdownOpen ? "rotate-180" : ""} ${
-                  isActive("/signup") || isActive("/signup-business") ? "text-white" : "text-white/60"
-                }`} />
+                {t.signup}
                 {(isActive("/signup") || isActive("/signup-business")) && (
-                  <motion.div
-                    layoutId="navbar-active"
-                    className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
+                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
                 )}
               </button>
               <AnimatePresence>
@@ -117,7 +107,7 @@ const InfoNavbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1 min-w-[220px] bg-[#0a2e52] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0c3460] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
                   >
                     <Link
                       to="/signup"
@@ -139,85 +129,18 @@ const InfoNavbar = () => {
             </div>
 
             {/* Σύνδεση */}
-            <Link
-              to="/login"
-              className="relative px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white group"
-            >
-              <span className={isActive("/login") ? "text-white" : "text-white/60"}>
-                {t.login}
-              </span>
+            <Link to="/login" className={`${linkClass(isActive("/login"))} text-xs sm:text-sm`}>
+              {t.login}
               {isActive("/login") && (
-                <motion.div
-                  layoutId="navbar-active"
-                  className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
+                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
               )}
             </Link>
           </div>
 
-          {/* Desktop/Tablet Right Side: Language Toggle */}
-          <div className="hidden md:flex items-center">
-            <LanguageToggle />
-          </div>
-
-          {/* Mobile Layout (< md) */}
-          <div className="flex md:hidden items-center gap-2">
-            <Link
-              to="/feed"
-              className="text-xs font-medium text-white/60 hover:text-white transition-colors"
-            >
-              {t.explore}
-            </Link>
-
-            {/* Mobile Εγγραφή badge that opens dropdown */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="px-3 py-1.5 rounded-full bg-gradient-ocean text-white text-xs font-semibold whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity"
-            >
-              {t.signup}
-            </button>
-
-            <LanguageToggle />
-          </div>
+          {/* Language Toggle */}
+          <LanguageToggle />
         </div>
       </div>
-
-      {/* Mobile Dropdown Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#0a2e52] border-t border-white/[0.06]"
-          >
-            <div className="px-4 py-3 space-y-1">
-              <Link
-                to="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block py-2.5 px-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
-              >
-                {t.signupFomo}
-              </Link>
-              <Link
-                to="/signup-business"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block py-2.5 px-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
-              >
-                {t.signupBusiness}
-              </Link>
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block py-2.5 px-3 text-sm text-white/80 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
-              >
-                {t.login}
-              </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
 };
