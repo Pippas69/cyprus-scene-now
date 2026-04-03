@@ -61,6 +61,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <InfoNavbar />
       <HeroSection language={language} />
       <PartnerLogoMarquee />
       <FeaturesSection language={language} />
