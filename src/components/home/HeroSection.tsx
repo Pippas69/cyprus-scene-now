@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin } from "lucide-react";
-import heroPhoneLoop1 from "@/assets/hero-phone-loop.mp4";
-import heroPhoneLoop2Asset from "@/assets/hero-phone-loop-2.mp4.asset.json";
-import heroPhoneLoop3Asset from "@/assets/hero-phone-loop-3.mp4.asset.json";
-
-const heroVideos = [heroPhoneLoop1, heroPhoneLoop2Asset.url, heroPhoneLoop3Asset.url];
+import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -35,7 +31,6 @@ const featureItems = [
 
 const PhoneMockup = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -49,21 +44,15 @@ const PhoneMockup = () => {
       }
     };
 
-    const handleEnded = () => {
-      setCurrentIndex((prev) => (prev + 1) % heroVideos.length);
-    };
-
     if (video.readyState >= 2) {
       playVideo();
     }
 
     video.addEventListener("loadeddata", playVideo);
-    video.addEventListener("ended", handleEnded);
     return () => {
       video.removeEventListener("loadeddata", playVideo);
-      video.removeEventListener("ended", handleEnded);
     };
-  }, [currentIndex]);
+  }, []);
 
   return (
     <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
@@ -79,11 +68,11 @@ const PhoneMockup = () => {
         <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-background">
           <video
             ref={videoRef}
-            key={currentIndex}
             className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroVideos[currentIndex]}
+            src={heroPhoneLoop}
             autoPlay
             muted
+            loop
             playsInline
             preload="auto"
           />
