@@ -70,6 +70,28 @@ export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Smart back: if user came from within the app, go back; otherwise go to /ekdiloseis
+  const goBack = () => {
+    if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      navigate(-1);
+    } else {
+      navigate('/ekdiloseis');
+    }
+  };
+
+  // Open maps URL safely — uses <a> link approach to avoid in-app browser blank page issues
+  const openMapsLink = (locationText: string) => {
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`;
+    // Use a temporary <a> element with rel="noopener" for better in-app browser compatibility
+    const a = document.createElement('a');
+    a.href = mapsUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   const { language } = useLanguage();
   const [event, setEvent] = useState<any>(null);
   const [similarEvents, setSimilarEvents] = useState<any[]>([]);
