@@ -68,11 +68,11 @@ const PhoneMockup = () => {
         <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-background">
           <video
             ref={videoRef}
-            key={currentIndex}
             className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroVideos[currentIndex]}
+            src={heroPhoneLoop}
             autoPlay
             muted
+            loop
             playsInline
             preload="auto"
           />
