@@ -190,8 +190,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
         <div className="container mx-auto px-4 pt-4 sm:pt-6 lg:pt-8">
           <div className="relative mx-auto max-w-5xl">
-            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-accent/15 blur-[80px] sm:h-64 sm:w-64" />
-            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-primary-foreground/10 blur-[70px] sm:h-52 sm:w-52" />
+            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
+            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
 
             <div className="flex items-center justify-center gap-6 sm:gap-10 lg:gap-16">
               <motion.div
