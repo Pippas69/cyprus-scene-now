@@ -86,59 +86,6 @@ const PhoneMockup = () => {
 
 const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [userName, setUserName] = useState("");
-  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-
-        if (user) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("name, avatar_url")
-            .eq("id", user.id)
-            .single();
-
-          setUserName(data?.name || user.email?.split("@")[0] || "User");
-          setUserAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url || null);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    checkUser();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => checkUser());
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const text = {
-    el: {
-      explore: "Εξερεύνηση",
-      signup: "Εγγραφή",
-      login: "Σύνδεση",
-      joinFomo: "Εγγραφή στο ΦΟΜΟ",
-      forBusinesses: "Για Επιχειρήσεις",
-    },
-    en: {
-      explore: "Explore",
-      signup: "Sign Up",
-      login: "Login",
-      joinFomo: "Join ΦΟΜΟ",
-      forBusinesses: "For Businesses",
-    },
-  };
-
-  const t = text[language];
-
-  const navLinkClass =
-    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-foreground transition-colors hover:text-seafoam";
 
   return (
     <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
