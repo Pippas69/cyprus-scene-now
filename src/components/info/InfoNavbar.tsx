@@ -54,24 +54,24 @@ const InfoNavbar = () => {
   }, []);
 
   const linkClass = (active: boolean) =>
-    `relative px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
+    `relative shrink-0 px-1.5 sm:px-3 lg:px-4 py-2 text-[13px] sm:text-sm font-medium tracking-tight transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0D3B66] backdrop-blur-lg border-b border-white/[0.06]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-white/[0.06]">
       <div className="w-full px-2 sm:px-6 lg:px-10">
-        <div className="flex items-center justify-between h-12 sm:h-16">
+        <div className="flex items-center justify-between h-12 sm:h-16 gap-1">
           {/* Logo Badge */}
           <Link to="/" className="flex-shrink-0">
-            <Logo size="sm" className="h-6 px-2 text-sm sm:h-7 sm:px-2.5 sm:text-base" />
+            <Logo size="sm" className="h-6 px-1.5 text-[0.95rem] sm:h-7 sm:px-2.5 sm:text-base" />
           </Link>
 
           {/* Nav Links (all sizes) */}
-          <div className="flex items-center gap-0.5 sm:gap-1 lg:gap-2">
+          <div className="flex min-w-0 items-center gap-0 sm:gap-1 lg:gap-2 overflow-hidden">
             {/* Explore - always visible */}
-            <Link to="/feed" className={`${linkClass(isActive("/feed"))} text-xs sm:text-sm`}>
+            <Link to="/feed" className={linkClass(isActive("/feed"))}>
               {t.explore}
               {isActive("/feed") && (
-                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-1.5 right-1.5 sm:left-3 sm:right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
               )}
             </Link>
 
@@ -84,20 +84,20 @@ const InfoNavbar = () => {
               >
                 {link.label}
                 {isActive(link.href) && (
-                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-1.5 right-1.5 sm:left-3 sm:right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
                 )}
               </Link>
             ))}
 
             {/* Εγγραφή dropdown - all sizes */}
-            <div ref={dropdownRef} className="relative">
+            <div ref={dropdownRef} className="relative shrink-0">
               <button
                 onClick={() => setSignupDropdownOpen(!signupDropdownOpen)}
-                className={`${linkClass(isActive("/signup") || isActive("/signup-business"))} text-xs sm:text-sm`}
+                className={linkClass(isActive("/signup") || isActive("/signup-business"))}
               >
                 {t.signup}
                 {(isActive("/signup") || isActive("/signup-business")) && (
-                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+                  <motion.div layoutId="navbar-active" className="absolute bottom-0 left-1.5 right-1.5 sm:left-3 sm:right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
                 )}
               </button>
               <AnimatePresence>
@@ -107,7 +107,7 @@ const InfoNavbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0D3B66] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-background border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
                   >
                     <Link
                       to="/signup"
@@ -129,16 +129,16 @@ const InfoNavbar = () => {
             </div>
 
             {/* Σύνδεση */}
-            <Link to="/login" className={`${linkClass(isActive("/login"))} text-xs sm:text-sm`}>
+            <Link to="/login" className={linkClass(isActive("/login"))}>
               {t.login}
               {isActive("/login") && (
-                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-3 right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
+                <motion.div layoutId="navbar-active" className="absolute bottom-0 left-1.5 right-1.5 sm:left-3 sm:right-3 lg:left-4 lg:right-4 h-[2px] bg-[#4ECDC4] rounded-full" transition={{ type: "spring", stiffness: 350, damping: 30 }} />
               )}
             </Link>
           </div>
 
           {/* Language Toggle */}
-          <div className="flex-shrink-0 scale-[0.82] sm:scale-100 origin-right">
+          <div className="-translate-x-1 sm:translate-x-0 flex-shrink-0 scale-[0.72] sm:scale-100 origin-right">
             <LanguageToggle />
           </div>
         </div>
