@@ -18,7 +18,7 @@ const featureItems = [
     icon: Calendar,
     labelEl: "Events",
     labelEn: "Events",
-    path: "/feed",
+    path: "/events",
   },
   {
     icon: Newspaper,
