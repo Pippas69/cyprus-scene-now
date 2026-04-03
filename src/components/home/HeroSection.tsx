@@ -127,16 +127,11 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         {/* Inline navigation - replaces navbar on landing page */}
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-8 sm:gap-10">
-            <button onClick={() => navigate("/")} className={navLinkClass}>
-              {t.home}
+            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel`}>
+              ΦΟΜΟ
             </button>
             <button onClick={() => navigate("/feed")} className={navLinkClass}>
               {t.explore}
-            </button>
-
-            {/* Center logo */}
-            <button onClick={() => navigate("/")} className="hover:opacity-80 transition-opacity flex-shrink-0">
-              <img src={fomoLogo} alt="ΦΟΜΟ" className="h-10 w-10 object-contain" />
             </button>
 
             {user ? (
