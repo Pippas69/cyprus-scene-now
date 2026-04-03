@@ -170,6 +170,7 @@ function AppContent() {
         </Suspense>
       </div>
       {!hideBottomNav && <BottomNav />}
+      <CookieConsentBanner />
     </>
   );
 }
