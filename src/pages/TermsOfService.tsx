@@ -180,6 +180,7 @@ const TermsOfService = () => {
               title: "6.2. Ηλικιακοί Περιορισμοί",
               content: "Για τη χρήση της πλατφόρμας ΦΟΜΟ:",
               items: [
+                "Πρέπει να είστε τουλάχιστον 16 ετών για να χρησιμοποιήσετε την πλατφόρμα",
                 "Πρέπει να πληροίτε το νόμιμο ηλικιακό όριο εισόδου της χώρας ή της περιοχής",
                 "Ορισμένες εκδηλώσεις ενδέχεται να έχουν ηλικιακούς περιορισμούς (π.χ. 18+, 21+)",
                 "Η επιχείρηση δύναται να ζητήσει ταυτότητα για επαλήθευση ηλικίας",
@@ -674,6 +675,7 @@ const TermsOfService = () => {
               title: "6.2. Age Restrictions",
               content: "To use the ΦΟΜΟ platform:",
               items: [
+                "You must be at least 16 years of age to use the platform",
                 "You must meet the legal age of entry for the country or region",
                 "Some events may have age restrictions (e.g., 18+, 21+)",
                 "Businesses may request ID for age verification",
