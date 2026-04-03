@@ -675,6 +675,7 @@ const TermsOfService = () => {
               title: "6.2. Age Restrictions",
               content: "To use the ΦΟΜΟ platform:",
               items: [
+                "You must be at least 16 years of age to use the platform",
                 "You must meet the legal age of entry for the country or region",
                 "Some events may have age restrictions (e.g., 18+, 21+)",
                 "Businesses may request ID for age verification",
