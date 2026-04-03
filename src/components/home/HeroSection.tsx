@@ -234,8 +234,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                         />
                       </svg>
 
-                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-primary-foreground/10 bg-primary-foreground/5 transition-all duration-300 group-hover:border-accent/30 group-hover:bg-accent/10">
-                        <item.icon className="h-4 w-4 text-accent sm:h-5 sm:w-5" strokeWidth={1.5} />
+                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/5 transition-all duration-300 group-hover:border-seafoam/30 group-hover:bg-seafoam/10">
+                        <item.icon className="h-4 w-4 text-seafoam sm:h-5 sm:w-5" strokeWidth={1.5} />
                       </div>
                     </div>
 
