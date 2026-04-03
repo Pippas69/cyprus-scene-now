@@ -169,7 +169,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           </div>
         </div>
 
-
+        <div className="container mx-auto px-4 mt-8">
           {/* Phone (left) + Features (right) */}
           <div className="flex items-center justify-center gap-10 sm:gap-14 lg:gap-20">
             <motion.div
