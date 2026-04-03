@@ -54,15 +54,15 @@ const InfoNavbar = () => {
   }, []);
 
   const linkClass = (active: boolean) =>
-    `relative shrink-0 px-1.5 sm:px-3 lg:px-4 py-2 text-[13px] sm:text-sm font-medium tracking-tight transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
+    `relative shrink-0 px-1.5 sm:px-3 lg:px-4 py-2 text-[11px] sm:text-sm font-medium tracking-tight transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-white/[0.06]">
       <div className="w-full px-2 sm:px-6 lg:px-10">
-        <div className="flex items-center justify-between h-12 sm:h-16 gap-1">
+        <div className="flex items-center justify-between h-12 sm:h-16 gap-2 sm:gap-1">
           {/* Logo Badge */}
           <Link to="/" className="flex-shrink-0">
-            <Logo size="sm" className="h-6 px-1.5 text-[0.95rem] sm:h-7 sm:px-2.5 sm:text-base" />
+            <Logo size="sm" className="h-6 px-2 text-[0.8rem] sm:h-7 sm:px-2.5 sm:text-base" />
           </Link>
 
           {/* Nav Links (all sizes) */}
@@ -138,7 +138,7 @@ const InfoNavbar = () => {
           </div>
 
           {/* Language Toggle */}
-          <div className="-translate-x-1 sm:translate-x-0 flex-shrink-0 scale-[0.72] sm:scale-100 origin-right">
+          <div className="flex-shrink-0">
             <LanguageToggle />
           </div>
         </div>
