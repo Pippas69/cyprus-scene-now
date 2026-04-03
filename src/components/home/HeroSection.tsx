@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin, ChevronDown } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-
+import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
@@ -35,41 +40,31 @@ const featureItems = [
 ];
 
 const PhoneMockup = () => (
-  <div className="w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]">
+  <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
     <div
-      className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-[hsl(0_0%_18%)] via-[hsl(0_0%_9%)] to-[hsl(0_0%_4%)] p-[4px] ring-1 ring-white/10 shadow-2xl shadow-black/40"
+      className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-primary-foreground/10 shadow-2xl shadow-black/30"
       style={{ aspectRatio: "9/17" }}
     >
-      {/* Hardware buttons */}
-      <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
-      <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[hsl(0_0%_10%)] rounded-r-sm" />
+      <div className="absolute -left-[2px] top-[18%] h-[8%] w-[3px] rounded-l-sm bg-foreground/20" />
+      <div className="absolute -left-[2px] top-[30%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
+      <div className="absolute -left-[2px] top-[44%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
+      <div className="absolute -right-[2px] top-[32%] h-[14%] w-[3px] rounded-r-sm bg-foreground/20" />
 
-      <div className="relative w-full h-full rounded-[1.8rem] sm:rounded-[2rem] overflow-hidden bg-black">
-        {/* Video - placeholder until real video is provided */}
+      <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-primary/90">
         <video
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
           autoPlay
           loop
           muted
           playsInline
-          poster=""
+          preload="auto"
         >
-          {/* Video source will be added when user provides the video file */}
+          <source src={heroPhoneLoop} type="video/mp4" />
         </video>
-        {/* Fallback overlay when no video */}
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[hsl(0_0%_5%)] via-[hsl(0_0%_3%)] to-black flex items-center justify-center">
-          <div className="text-center space-y-2 px-4">
-            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/10">
-              <div className="w-0 h-0 border-l-[8px] border-l-white/40 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent ml-0.5" />
-            </div>
-            <p className="text-white/25 text-[10px] font-inter">Video</p>
-          </div>
-        </div>
 
-        {/* Bottom home indicator */}
-        <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-white/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/55" />
+        <div className="pointer-events-none absolute inset-x-[18%] top-[9%] h-[22%] rounded-full bg-accent/15 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-2 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-primary-foreground/25" />
       </div>
     </div>
   </div>
@@ -84,15 +79,26 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
+
         if (user) {
-          const { data } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
-          setUserName(data?.name || user.email?.split('@')[0] || 'User');
-          setUserAvatarUrl(data?.avatar_url || user?.user_metadata?.avatar_url || null);
+          const { data } = await supabase
+            .from("profiles")
+            .select("name, avatar_url")
+            .eq("id", user.id)
+            .single();
+
+          setUserName(data?.name || user.email?.split("@")[0] || "User");
+          setUserAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url || null);
         }
-      } catch { /* ignore */ }
+      } catch {
+        // ignore
+      }
     };
+
     checkUser();
     const { data: listener } = supabase.auth.onAuthStateChange(() => checkUser());
     return () => listener.subscription.unsubscribe();
@@ -117,43 +123,49 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const t = text[language];
 
-  const navLinkClass = "text-foreground font-inter text-sm font-bold tracking-wide hover:text-seafoam transition-colors whitespace-nowrap cursor-pointer";
+  const navLinkClass =
+    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-primary-foreground transition-colors hover:text-accent";
 
   return (
-    <section className="relative overflow-hidden pb-10 sm:pb-14">
-      <div className="absolute inset-0 bg-background" />
+    <section className="relative overflow-hidden bg-primary pb-10 sm:pb-14">
+      <div className="absolute inset-0 bg-primary" />
+      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-accent/10 blur-3xl sm:h-56 sm:w-56" />
+      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-primary-foreground/10 blur-3xl sm:h-64 sm:w-64" />
+      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-accent/10 blur-3xl sm:h-72 sm:w-72" />
 
       <div className="relative z-10">
-        {/* Inline navigation - replaces navbar on landing page */}
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-8 sm:gap-10">
-            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel`}>
+        <div className="container mx-auto px-3 sm:px-4 py-4">
+          <div className="flex flex-nowrap items-center justify-start gap-4 overflow-x-auto sm:justify-center sm:gap-6 lg:gap-10">
+            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-base sm:text-lg`}>
               ΦΟΜΟ
             </button>
+
             <button onClick={() => navigate("/feed")} className={navLinkClass}>
               {t.explore}
             </button>
 
             {user ? (
-              <UserAccountDropdown
-                userId={user.id}
-                userName={userName}
-                avatarUrl={userAvatarUrl}
-                variant="button"
-              />
+              <div className="shrink-0">
+                <UserAccountDropdown
+                  userId={user.id}
+                  userName={userName}
+                  avatarUrl={userAvatarUrl}
+                  variant="button"
+                />
+              </div>
             ) : (
               <>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className={`${navLinkClass} flex items-center gap-1`}>
-                      {t.signup} <ChevronDown className="w-3.5 h-3.5" />
+                      {t.signup} <ChevronDown className="h-3.5 w-3.5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 bg-background">
-                    <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/signup")}>
+                  <DropdownMenuContent align="center" className="w-48 bg-popover text-popover-foreground">
+                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup")}>
                       {t.joinFomo}
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => navigate("/signup-business")}>
+                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
                       {t.forBusinesses}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -165,57 +177,70 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               </>
             )}
 
-            <LanguageToggle />
+            <div className="shrink-0 origin-center scale-[0.88] sm:scale-100">
+              <LanguageToggle />
+            </div>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 mt-8">
-          {/* Phone (left) + Features (right) */}
-          <div className="flex items-center justify-center gap-10 sm:gap-14 lg:gap-20">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              <PhoneMockup />
-            </motion.div>
+        <div className="container mx-auto px-4 pt-4 sm:pt-6 lg:pt-8">
+          <div className="relative mx-auto max-w-5xl">
+            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-accent/15 blur-[80px] sm:h-64 sm:w-64" />
+            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-primary-foreground/10 blur-[70px] sm:h-52 sm:w-52" />
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col items-center gap-8 sm:gap-10"
-            >
-              {featureItems.map((item, index) => (
-                <motion.button
-                  key={item.labelEn}
-                  onClick={() => navigate(item.path)}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                  className="group flex flex-col items-center gap-2.5 cursor-pointer"
-                >
-                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18">
-                    <svg
-                      className="absolute inset-0 w-full h-full -rotate-45 group-hover:rotate-0 transition-transform duration-500"
-                      viewBox="0 0 80 80"
-                    >
-                      <circle
-                        cx="40" cy="40" r="37" fill="none"
-                        stroke="hsl(174 62% 56% / 0.5)" strokeWidth="2.5"
-                        strokeDasharray="58 175" strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-1.5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-seafoam/10 group-hover:border-seafoam/30 transition-all duration-300">
-                      <item.icon className="w-5 h-5 sm:w-6 sm:h-6 text-seafoam" strokeWidth={1.5} />
+            <div className="flex items-center justify-center gap-6 sm:gap-10 lg:gap-16">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.15 }}
+              >
+                <PhoneMockup />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+                className="flex flex-col items-center gap-6 sm:gap-8"
+              >
+                {featureItems.map((item, index) => (
+                  <motion.button
+                    key={item.labelEn}
+                    onClick={() => navigate(item.path)}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.35 + index * 0.08 }}
+                    className="group flex cursor-pointer flex-col items-center gap-2"
+                  >
+                    <div className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16">
+                      <svg
+                        className="absolute inset-0 h-full w-full -rotate-45 text-accent/50 transition-transform duration-500 group-hover:rotate-0"
+                        viewBox="0 0 80 80"
+                      >
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="37"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeDasharray="58 175"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+
+                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-primary-foreground/10 bg-primary-foreground/5 transition-all duration-300 group-hover:border-accent/30 group-hover:bg-accent/10">
+                        <item.icon className="h-4 w-4 text-accent sm:h-5 sm:w-5" strokeWidth={1.5} />
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-white/70 text-xs sm:text-sm font-inter font-medium group-hover:text-white transition-colors">
-                    {language === "el" ? item.labelEl : item.labelEn}
-                  </span>
-                </motion.button>
-              ))}
-            </motion.div>
+
+                    <span className="font-inter text-[11px] sm:text-sm font-medium text-primary-foreground/75 transition-colors group-hover:text-primary-foreground">
+                      {language === "el" ? item.labelEl : item.labelEn}
+                    </span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -224,3 +249,4 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 };
 
 export default HeroSection;
+
