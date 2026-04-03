@@ -899,10 +899,7 @@ export default function EventDetail() {
                 <Separator className="opacity-30" />
 
                 <button
-                  onClick={() => {
-                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-                    window.open(mapsUrl, '_blank');
-                  }}
+                  onClick={() => openMapsLink(event.location)}
                   className="flex items-center gap-3 w-full text-left group">
                   <MapPin className="h-4 w-4 text-foreground shrink-0 group-hover:text-foreground/80 transition-colors" />
                   <p className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">{event.location}</p>
