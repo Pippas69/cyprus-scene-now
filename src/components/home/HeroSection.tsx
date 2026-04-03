@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import LanguageToggle from "@/components/LanguageToggle";
-import heroPhoneLoopAsset from "@/assets/hero-phone-loop.mp4.asset.json";
+import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
 import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
@@ -77,7 +77,7 @@ const PhoneMockup = () => {
           <video
             ref={videoRef}
             className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroPhoneLoopAsset.url}
+            src={heroPhoneLoop}
             autoPlay
             loop
             muted
