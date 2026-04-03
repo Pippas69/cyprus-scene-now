@@ -107,7 +107,7 @@ const InfoNavbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0c3460] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0D3B66] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
                   >
                     <Link
                       to="/signup"
