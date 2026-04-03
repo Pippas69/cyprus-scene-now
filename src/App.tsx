@@ -16,6 +16,7 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 // Core user navigation pages loaded eagerly to avoid sidebar/layout remount flicker
 import Index from "./pages/Index";
