@@ -100,24 +100,18 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   const text = {
     el: {
-      home: "Αρχική",
       explore: "Εξερεύνηση",
       signup: "Εγγραφή",
       login: "Σύνδεση",
       joinFomo: "Εγγραφή στο ΦΟΜΟ",
       forBusinesses: "Για Επιχειρήσεις",
-      headline: "Αν συμβαίνει,",
-      headlineBold: "είναι στο ΦΟΜΟ.",
     },
     en: {
-      home: "Home",
       explore: "Explore",
       signup: "Sign Up",
       login: "Login",
       joinFomo: "Join ΦΟΜΟ",
       forBusinesses: "For Businesses",
-      headline: "If it's happening,",
-      headlineBold: "it's on ΦΟΜΟ.",
     },
   };
 
