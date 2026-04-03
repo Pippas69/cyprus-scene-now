@@ -57,12 +57,12 @@ const InfoNavbar = () => {
     `relative px-3 lg:px-4 py-2 text-sm font-medium transition-colors hover:text-white ${active ? "text-white" : "text-white/60"}`;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0c3460] backdrop-blur-lg border-b border-white/[0.06]">
-      <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="flex items-center justify-between h-14 sm:h-16">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0D3B66] backdrop-blur-lg border-b border-white/[0.06]">
+      <div className="w-full px-2 sm:px-6 lg:px-10">
+        <div className="flex items-center justify-between h-12 sm:h-16">
           {/* Logo Badge */}
           <Link to="/" className="flex-shrink-0">
-            <Logo size="sm" />
+            <Logo size="sm" className="h-6 px-2 text-sm sm:h-7 sm:px-2.5 sm:text-base" />
           </Link>
 
           {/* Nav Links (all sizes) */}
@@ -107,7 +107,7 @@ const InfoNavbar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0c3460] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+                    className="absolute top-full right-0 sm:left-0 sm:right-auto mt-1 min-w-[200px] bg-[#0D3B66] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
                   >
                     <Link
                       to="/signup"
@@ -138,7 +138,9 @@ const InfoNavbar = () => {
           </div>
 
           {/* Language Toggle */}
-          <LanguageToggle />
+          <div className="flex-shrink-0 scale-[0.82] sm:scale-100 origin-right">
+            <LanguageToggle />
+          </div>
         </div>
       </div>
     </nav>
