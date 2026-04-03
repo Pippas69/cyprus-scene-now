@@ -101,15 +101,23 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
             {/* ΦEAR OF MISSING OUT! heading with glow */}
             <div className="relative mb-8 sm:mb-10 flex items-center justify-center">
-              {/* Seafoam radial glow behind text */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-80 sm:h-44 sm:w-[28rem] lg:h-52 lg:w-[34rem] rounded-full bg-seafoam/[0.08] blur-[60px] sm:blur-[80px]" />
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1 }}
-                className="relative font-cinzel text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider text-center text-foreground"
+              {/* Circular seafoam radial glow behind text */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 1.5, delay: 0.2 }}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square h-40 sm:h-56 lg:h-64 rounded-full"
                 style={{
-                  textShadow: "0 0 40px hsl(var(--seafoam) / 0.3), 0 0 80px hsl(var(--seafoam) / 0.15)",
+                  background: "radial-gradient(circle, hsl(var(--seafoam) / 0.15) 0%, hsl(var(--seafoam) / 0.06) 40%, transparent 70%)",
+                }}
+              />
+              <motion.h1
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 2, delay: 0.5 }}
+                className="relative font-inter text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wide text-center text-foreground"
+                style={{
+                  textShadow: "0 0 30px hsl(var(--seafoam) / 0.25), 0 0 60px hsl(var(--seafoam) / 0.1)",
                 }}
               >
                 ΦEAR OF MISSING OUT!
