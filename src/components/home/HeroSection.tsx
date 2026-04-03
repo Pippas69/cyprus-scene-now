@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Newspaper, MapPin, ChevronDown } from "lucide-react";
+import { Calendar, Newspaper, MapPin } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
