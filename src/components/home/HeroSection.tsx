@@ -1,18 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import { UserAccountDropdown } from "@/components/UserAccountDropdown";
-import LanguageToggle from "@/components/LanguageToggle";
 import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
-import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
   language: "el" | "en";
