@@ -239,7 +239,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                       </div>
                     </div>
 
-                    <span className="font-inter text-[11px] sm:text-sm font-medium text-primary-foreground/75 transition-colors group-hover:text-primary-foreground">
+                    <span className="font-inter text-[11px] sm:text-sm font-medium text-foreground/70 transition-colors group-hover:text-foreground">
                       {language === "el" ? item.labelEl : item.labelEn}
                     </span>
                   </motion.button>
