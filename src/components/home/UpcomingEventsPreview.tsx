@@ -117,7 +117,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
         >
           <Button
             asChild
-            className="bg-background border border-foreground/10 hover:border-foreground/20 hover:bg-background/80 text-seafoam rounded-full px-6 sm:px-8 text-sm sm:text-base"
+            className="bg-background border border-foreground/10 hover:border-foreground/20 hover:bg-background/80 text-foreground rounded-full px-6 sm:px-8 text-sm sm:text-base"
           >
             <Link to="/feed">
               {content[language].viewAll}
