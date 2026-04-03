@@ -66,7 +66,7 @@ const InfoNavbar = () => {
           </Link>
 
           {/* Nav Links (all sizes) */}
-          <div className="flex min-w-0 items-center gap-0 sm:gap-1 lg:gap-2 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-0 sm:gap-1 lg:gap-2 overflow-visible">
             {/* Explore - always visible */}
             <Link to="/feed" className={linkClass(isActive("/feed"))}>
               {t.explore}
