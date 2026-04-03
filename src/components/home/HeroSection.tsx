@@ -1,151 +1,176 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
-import PhoneScreenDining from "./hero-phones/PhoneScreenDining";
-import PhoneScreenEvent from "./hero-phones/PhoneScreenEvent";
-import PhoneScreenMap from "./hero-phones/PhoneScreenMap";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Newspaper, MapPin } from "lucide-react";
 
 interface HeroSectionProps {
   language: "el" | "en";
 }
 
-const PhoneMockup = ({ children }: { children: ReactNode }) => (
-  <div className="w-[240px] sm:w-[280px] md:w-[330px] lg:w-[370px] flex-shrink-0 px-1 sm:px-2 py-2 sm:py-3">
+const featureItems = [
+  {
+    icon: Calendar,
+    labelEl: "Events",
+    labelEn: "Events",
+    path: "/feed",
+  },
+  {
+    icon: Newspaper,
+    labelEl: "Feed",
+    labelEn: "Feed",
+    path: "/feed",
+  },
+  {
+    icon: MapPin,
+    labelEl: "Map",
+    labelEn: "Map",
+    path: "/map",
+  },
+];
+
+const PhoneMockup = () => (
+  <div className="w-[260px] sm:w-[290px] md:w-[320px] lg:w-[340px]">
     <div
-      className="relative rounded-[2.2rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[hsl(0_0%_14%)] via-[hsl(0_0%_7%)] to-[hsl(0_0%_3%)] p-[4px] sm:p-[5px] ring-1 ring-white/8"
+      className="relative rounded-[2.5rem] sm:rounded-[2.8rem] bg-gradient-to-b from-[hsl(0_0%_18%)] via-[hsl(0_0%_9%)] to-[hsl(0_0%_4%)] p-[5px] ring-1 ring-white/10 shadow-2xl shadow-black/40"
       style={{ aspectRatio: "9/19.5" }}
     >
       {/* Hardware buttons */}
-      <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[hsl(0_0%_8%)] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[hsl(0_0%_8%)] rounded-l-sm" />
-      <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[hsl(0_0%_8%)] rounded-l-sm" />
-      <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[hsl(0_0%_8%)] rounded-r-sm" />
+      <div className="absolute -left-[2px] top-[18%] w-[3px] h-[8%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
+      <div className="absolute -left-[2px] top-[30%] w-[3px] h-[12%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
+      <div className="absolute -left-[2px] top-[44%] w-[3px] h-[12%] bg-[hsl(0_0%_10%)] rounded-l-sm" />
+      <div className="absolute -right-[2px] top-[32%] w-[3px] h-[14%] bg-[hsl(0_0%_10%)] rounded-r-sm" />
 
-      <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-[hsl(0_0%_0%)]">
-        {children}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[hsl(0_0%_0%/0.55)] to-transparent" />
-        <div className="pointer-events-none absolute bottom-2.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-[hsl(0_0%_100%/0.35)]" />
+      <div className="relative w-full h-full rounded-[2.2rem] sm:rounded-[2.5rem] overflow-hidden bg-black">
+        {/* Video placeholder - will be replaced with actual video */}
+        <div className="w-full h-full bg-gradient-to-b from-aegean/80 via-aegean to-aegean/90 flex items-center justify-center">
+          <div className="text-center space-y-3 px-6">
+            <div className="w-12 h-12 rounded-full bg-seafoam/20 flex items-center justify-center mx-auto">
+              <div className="w-5 h-5 border-2 border-seafoam rounded-sm" />
+            </div>
+            <p className="text-white/40 text-xs font-inter">Video placeholder</p>
+          </div>
+        </div>
+
+        {/* Bottom fade + home indicator */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="pointer-events-none absolute bottom-2.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-white/30" />
       </div>
     </div>
   </div>
 );
 
 const HeroSection = ({ language }: HeroSectionProps) => {
+  const navigate = useNavigate();
+
   const text = {
     el: {
       headline: "Αν συμβαίνει,",
       headlineBold: "είναι στο ΦΟΜΟ.",
-      subText: "Η #1 εφαρμογή εξόδου στην Κύπρο."
+      subText: "Η #1 εφαρμογή εξόδου στην Κύπρο.",
     },
     en: {
       headline: "If it's happening,",
       headlineBold: "it's on ΦΟΜΟ.",
-      subText: "Cyprus's #1 event discovery platform."
-    }
+      subText: "Cyprus's #1 event discovery platform.",
+    },
   };
 
   const t = text[language];
 
-  // 3 unique screens, duplicated for seamless loop
-  const screens = [
-    <PhoneScreenDining language={language} />,
-    <PhoneScreenEvent language={language} />,
-    <PhoneScreenMap language={language} />,
-  ];
-  const marqueeScreens = [...screens, ...screens, ...screens, ...screens];
-
   return (
-    <section className="relative flex items-start justify-center pt-[5.5rem] sm:pt-[6.5rem]">
+    <section className="relative overflow-hidden pt-[5.5rem] sm:pt-[6.5rem] pb-12 sm:pb-16 lg:pb-20">
+      {/* Subtle gradient background overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-aegean via-aegean to-[hsl(200_60%_18%)] opacity-100" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_80%,hsl(174_62%_56%/0.06),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_80%_20%,hsl(207_72%_35%/0.12),transparent)]" />
 
-      <div className="relative z-10 w-full">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex flex-col items-center space-y-4 sm:space-y-5 max-w-4xl mx-auto">
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            />
-
-            {/* Headline */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="space-y-2"
-            >
-              <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight whitespace-nowrap">
-                {t.headline}{" "}
-                <span className="text-seafoam font-black">{t.headlineBold}</span>
-              </h1>
-            </motion.div>
-
-            {/* Decorative dots */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.25 }}
-            >
-              <span className="text-[10px] sm:text-xs text-seafoam/40 tracking-[0.35em] uppercase font-medium">ΦEAR OF MISSING OUT</span>
-            </motion.div>
-          </div>
+      <div className="relative z-10 container mx-auto px-4">
+        {/* Headline + tagline - centered on all screens */}
+        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="space-y-3"
+          >
+            <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight">
+              {t.headline}{" "}
+              <span className="text-seafoam font-black">{t.headlineBold}</span>
+            </h1>
+            <span className="block text-[10px] sm:text-xs text-seafoam/40 tracking-[0.35em] uppercase font-medium">
+              ΦEAR OF MISSING OUT
+            </span>
+          </motion.div>
         </div>
 
-        {/* Phone marquee - full width, edge to edge fade */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="relative mt-4 sm:mt-6"
-        >
+        {/* Phone + Features layout */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
+          {/* Phone mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          >
+            <PhoneMockup />
+          </motion.div>
 
-          <div className="flex overflow-x-hidden overflow-y-visible py-2">
-            <div
-              className="flex items-end gap-4 sm:gap-6 md:gap-8 will-change-transform [transform:translate3d(0,0,0)]"
-              style={{
-                animation: "hero-marquee 40s linear infinite",
-                backfaceVisibility: "hidden",
-              }}
-            >
-              {marqueeScreens.map((screen, index) => (
-                <PhoneMockup key={`phone-${index}`}>{screen}</PhoneMockup>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+          {/* Feature icons - stacked vertically */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex lg:flex-col items-center gap-8 lg:gap-10"
+          >
+            {featureItems.map((item, index) => (
+              <motion.button
+                key={item.labelEn}
+                onClick={() => navigate(item.path)}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                className="group flex flex-col items-center gap-3 cursor-pointer"
+              >
+                {/* Circle with icon */}
+                <div className="relative w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20">
+                  {/* Outer arc accent */}
+                  <svg
+                    className="absolute inset-0 w-full h-full -rotate-45 group-hover:rotate-0 transition-transform duration-500"
+                    viewBox="0 0 80 80"
+                  >
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="37"
+                      fill="none"
+                      stroke="hsl(174 62% 56% / 0.5)"
+                      strokeWidth="2.5"
+                      strokeDasharray="58 175"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {/* Circle bg */}
+                  <div className="absolute inset-1.5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-seafoam/10 group-hover:border-seafoam/30 transition-all duration-300">
+                    <item.icon className="w-6 h-6 sm:w-7 sm:h-7 text-seafoam" strokeWidth={1.5} />
+                  </div>
+                </div>
+                {/* Label */}
+                <span className="text-white/70 text-sm font-inter font-medium group-hover:text-white transition-colors">
+                  {language === "el" ? item.labelEl : item.labelEn}
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+        </div>
 
         {/* Subtext */}
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex flex-col items-center space-y-4 sm:space-y-5 mt-4 sm:mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex flex-col items-center gap-1.5"
-            />
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="text-white/50 text-sm sm:text-base md:text-lg max-w-lg"
-            >
-              {t.subText}
-            </motion.p>
-          </div>
-        </div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="text-center text-white/50 text-sm sm:text-base mt-8 sm:mt-10"
+        >
+          {t.subText}
+        </motion.p>
       </div>
-
-      
-      <style>{`
-        @keyframes hero-marquee {
-          from {
-            transform: translate3d(0, 0, 0);
-          }
-          to {
-            transform: translate3d(-50%, 0, 0);
-          }
-        }
-      `}</style>
     </section>
   );
 };
