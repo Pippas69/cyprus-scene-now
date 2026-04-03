@@ -124,18 +124,18 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const t = text[language];
 
   const navLinkClass =
-    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-primary-foreground transition-colors hover:text-accent";
+    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-foreground transition-colors hover:text-seafoam";
 
   return (
-    <section className="relative overflow-hidden bg-primary pb-10 sm:pb-14">
-      <div className="absolute inset-0 bg-primary" />
-      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-accent/10 blur-3xl sm:h-56 sm:w-56" />
-      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-primary-foreground/10 blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-accent/10 blur-3xl sm:h-72 sm:w-72" />
+    <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
+      {/* Subtle ambient glows — same bg color base */}
+      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-seafoam/[0.06] blur-3xl sm:h-56 sm:w-56" />
+      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-foreground/[0.04] blur-3xl sm:h-64 sm:w-64" />
+      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
 
       <div className="relative z-10">
         <div className="container mx-auto px-3 sm:px-4 py-4">
-          <div className="flex flex-nowrap items-center justify-start gap-4 overflow-x-auto sm:justify-center sm:gap-6 lg:gap-10">
+          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-6 lg:gap-10">
             <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-base sm:text-lg`}>
               ΦΟΜΟ
             </button>
@@ -168,10 +168,15 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                     <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
                       {t.forBusinesses}
                     </DropdownMenuItem>
+                    {/* Login inside dropdown on mobile only */}
+                    <DropdownMenuItem className="cursor-pointer font-medium sm:hidden" onClick={() => navigate("/login")}>
+                      {t.login}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <button onClick={() => navigate("/login")} className={navLinkClass}>
+                {/* Login as separate link — desktop only */}
+                <button onClick={() => navigate("/login")} className={`${navLinkClass} hidden sm:block`}>
                   {t.login}
                 </button>
               </>
