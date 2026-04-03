@@ -219,7 +219,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
                   >
                     <div className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16">
                       <svg
-                        className="absolute inset-0 h-full w-full -rotate-45 text-accent/50 transition-transform duration-500 group-hover:rotate-0"
+                        className="absolute inset-0 h-full w-full -rotate-45 text-seafoam/50 transition-transform duration-500 group-hover:rotate-0"
                         viewBox="0 0 80 80"
                       >
                         <circle
