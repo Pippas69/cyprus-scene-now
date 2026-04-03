@@ -138,7 +138,9 @@ const InfoNavbar = () => {
           </div>
 
           {/* Language Toggle */}
-          <LanguageToggle />
+          <div className="flex-shrink-0 scale-[0.82] sm:scale-100 origin-right">
+            <LanguageToggle />
+          </div>
         </div>
       </div>
     </nav>
