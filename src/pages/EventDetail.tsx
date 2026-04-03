@@ -564,7 +564,7 @@ export default function EventDetail() {
         <div className="container mx-auto px-4 py-8 pt-4 lg:pt-24">
           <RippleButton
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="mb-4 gap-2">
             
             <ArrowLeft className="h-4 w-4" />
