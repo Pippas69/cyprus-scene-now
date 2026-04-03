@@ -4,69 +4,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
-
-const PARTNER_SEARCH = [
-  { display: "Kaliva on the Beach", search: "%kaliva%", gradient: "from-cyan-500 to-blue-600" },
-  { display: "Blue Martini", search: "%blue martini%", gradient: "from-blue-400 to-indigo-600" },
-  { display: "Amnesia", search: "%amnesia%", gradient: "from-purple-500 to-pink-600" },
-  { display: "SugarwaveCy", search: "%sugarwave%", gradient: "from-pink-400 to-rose-600" },
-  { display: "Mr. Mellow", search: "%mellow%", gradient: "from-amber-400 to-orange-600" },
-  { display: "Legacy", search: "%legacy%", gradient: "from-emerald-400 to-teal-600" },
-  { display: "Eterna", search: "%eterna%", gradient: "from-violet-400 to-purple-600" },
-  { display: "Baristro", search: "%baristro%", gradient: "from-orange-400 to-red-600" },
-  { display: "Crosta Nostra", search: "%crosta%", gradient: "from-teal-400 to-cyan-600" },
-];
-
 interface PartnerData {
   name: string;
   initials: string;
-  gradient: string;
   logo_url: string | null;
 }
 
-const HEADING = "Trusted By";
-
 const PartnerLogoMarquee = () => {
-
-  const [partners, setPartners] = useState<PartnerData[]>(
-    PARTNER_SEARCH.map((p) => ({
-      name: p.display,
-      initials: p.display.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
-      gradient: p.gradient,
-      logo_url: null,
-    }))
-  );
+  const [partners, setPartners] = useState<PartnerData[]>([]);
 
   useEffect(() => {
-    const fetchLogos = async () => {
-      const promises = PARTNER_SEARCH.map(p =>
-        supabase
-          .from("businesses")
-          .select("name, logo_url")
-          .ilike("name", p.search)
-          .not("logo_url", "is", null)
-          .limit(1)
-          .maybeSingle()
-      );
-      const results = await Promise.all(promises);
+    const fetchBusinesses = async () => {
+      const { data } = await supabase
+        .from("businesses")
+        .select("name, logo_url")
+        .not("logo_url", "is", null)
+        .order("created_at", { ascending: true })
+        .limit(18);
 
-      setPartners(prev =>
-        prev.map((partner, i) => ({
-          ...partner,
-          logo_url: results[i].data?.logo_url ?? partner.logo_url,
-        }))
-      );
+      if (data) {
+        setPartners(
+          data.map((b) => ({
+            name: b.name.trim(),
+            initials: b.name.trim().split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
+            logo_url: b.logo_url,
+          }))
+        );
+      }
     };
-    fetchLogos();
+    fetchBusinesses();
   }, []);
 
   const marqueeItems = [...partners, ...partners];
 
+  if (partners.length === 0) return null;
+
   return (
     <section className="relative py-8 sm:py-12 overflow-visible bg-transparent">
       <div className="relative z-10">
-        <p className="text-center text-white/50 font-playfair text-xs sm:text-sm tracking-[0.25em] uppercase mb-6 sm:mb-8">
-          Trusted By
+        <p className="text-center text-white font-bold text-base sm:text-lg md:text-xl tracking-wider uppercase mb-6 sm:mb-8">
+          TRUSTED BY TOP
         </p>
 
         <div className="relative">
@@ -76,17 +53,17 @@ const PartnerLogoMarquee = () => {
           <div className="flex overflow-hidden py-2">
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
-              transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-              className="flex items-center gap-8 sm:gap-12 whitespace-nowrap"
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+              className="flex items-center gap-6 sm:gap-10 md:gap-12 whitespace-nowrap"
             >
               {marqueeItems.map((partner, index) => (
                 <div
                   key={`${partner.name}-${index}`}
                   className="flex flex-col items-center gap-2 flex-shrink-0 group"
                 >
-                  <Avatar className="w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20">
-                    <AvatarImage src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 112) : undefined} alt={partner.name} />
-                    <AvatarFallback className={`bg-gradient-to-br ${partner.gradient} text-white font-semibold text-xs sm:text-sm tracking-wide`}>
+                  <Avatar className="w-14 h-14 sm:w-16 sm:h-16 md:w-[72px] md:h-[72px] ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20">
+                    <AvatarImage src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 144) : undefined} alt={partner.name} />
+                    <AvatarFallback className="bg-muted text-white font-semibold text-xs sm:text-sm tracking-wide">
                       {partner.initials}
                     </AvatarFallback>
                   </Avatar>

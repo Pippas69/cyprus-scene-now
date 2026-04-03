@@ -32,7 +32,7 @@ const FeaturesSection = ({ language }: FeaturesSectionProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-center text-center gap-3"
+              className="flex flex-col items-center text-center gap-3 h-full"
             >
               <div className="w-10 h-10 rounded-full bg-seafoam/10 flex items-center justify-center mb-1">
                 <feature.icon className="w-[18px] h-[18px] text-seafoam" />
