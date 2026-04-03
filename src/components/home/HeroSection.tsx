@@ -1,18 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import { UserAccountDropdown } from "@/components/UserAccountDropdown";
-import LanguageToggle from "@/components/LanguageToggle";
 import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
-import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -96,59 +86,6 @@ const PhoneMockup = () => {
 
 const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [userName, setUserName] = useState("");
-  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-
-        if (user) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("name, avatar_url")
-            .eq("id", user.id)
-            .single();
-
-          setUserName(data?.name || user.email?.split("@")[0] || "User");
-          setUserAvatarUrl(data?.avatar_url || user.user_metadata?.avatar_url || null);
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    checkUser();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => checkUser());
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const text = {
-    el: {
-      explore: "Εξερεύνηση",
-      signup: "Εγγραφή",
-      login: "Σύνδεση",
-      joinFomo: "Εγγραφή στο ΦΟΜΟ",
-      forBusinesses: "Για Επιχειρήσεις",
-    },
-    en: {
-      explore: "Explore",
-      signup: "Sign Up",
-      login: "Login",
-      joinFomo: "Join ΦΟΜΟ",
-      forBusinesses: "For Businesses",
-    },
-  };
-
-  const t = text[language];
-
-  const navLinkClass =
-    "shrink-0 whitespace-nowrap cursor-pointer font-inter text-[0.82rem] sm:text-sm font-bold tracking-wide text-foreground transition-colors hover:text-seafoam";
 
   return (
     <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
@@ -157,59 +94,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
 
       <div className="relative z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-4">
-          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-6 lg:gap-10">
-            <button onClick={() => navigate("/")} className={`${navLinkClass} font-cinzel text-[1.02rem] sm:text-[1.12rem]`}>
-              ΦΟΜΟ
-            </button>
-
-            <button onClick={() => navigate("/feed")} className={navLinkClass}>
-              {t.explore}
-            </button>
-
-            {user ? (
-              <div className="shrink-0">
-                <UserAccountDropdown
-                  userId={user.id}
-                  userName={userName}
-                  avatarUrl={userAvatarUrl}
-                  variant="button"
-                />
-              </div>
-            ) : (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className={navLinkClass}>
-                      {t.signup}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-48 bg-popover text-popover-foreground">
-                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup")}>
-                      {t.joinFomo}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer font-medium" onClick={() => navigate("/signup-business")}>
-                      {t.forBusinesses}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer font-medium sm:hidden" onClick={() => navigate("/login")}>
-                      {t.login}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <button onClick={() => navigate("/login")} className={`${navLinkClass} hidden sm:block`}>
-                  {t.login}
-                </button>
-              </>
-            )}
-
-            <div className="shrink-0 origin-center scale-[0.88] sm:scale-100">
-              <LanguageToggle />
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 pt-4 sm:pt-6 lg:pt-8">
+        <div className="container mx-auto px-4 pt-20 sm:pt-24 lg:pt-28">
           <div className="relative mx-auto max-w-5xl">
             <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
             <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
