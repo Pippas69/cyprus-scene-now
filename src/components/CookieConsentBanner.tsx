@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Cookie, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,12 +26,8 @@ export const CookieConsentBanner = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Small delay so it doesn't flash on load
     const timer = setTimeout(() => {
-      const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-      if (!consent) {
-        setVisible(true);
-      }
+      if (!localStorage.getItem(COOKIE_CONSENT_KEY)) setVisible(true);
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
@@ -45,44 +41,34 @@ export const CookieConsentBanner = () => {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[100]"
+          exit={{ y: 60, opacity: 0 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          className="fixed bottom-[4.5rem] md:bottom-4 left-3 right-3 md:left-auto md:right-4 md:max-w-sm z-[100]"
         >
-          <div className="bg-card border border-border/60 rounded-2xl shadow-premium p-4 backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                <Cookie className="h-4.5 w-4.5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground leading-relaxed">
-                  {t.message}{' '}
-                  <Link
-                    to="/cookies"
-                    className="text-primary hover:underline font-medium"
-                  >
-                    {t.learnMore}
-                  </Link>
-                </p>
-                <div className="flex items-center gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    onClick={handleAccept}
-                    className="h-8 px-5 text-xs font-semibold rounded-full"
-                  >
-                    {t.accept}
-                  </Button>
-                  <button
-                    onClick={handleAccept}
-                    className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
+          <div className="bg-card/95 border border-border/40 rounded-xl shadow-lg px-3.5 py-2.5 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <p className="flex-1 text-[11px] leading-[1.4] text-muted-foreground">
+                {t.message}{' '}
+                <Link to="/cookies" className="text-primary hover:underline font-medium">
+                  {t.learnMore}
+                </Link>
+              </p>
+              <Button
+                size="sm"
+                onClick={handleAccept}
+                className="h-6 px-3 text-[10px] font-semibold rounded-full shrink-0"
+              >
+                {t.accept}
+              </Button>
+              <button
+                onClick={handleAccept}
+                className="p-1 rounded-full text-muted-foreground/60 hover:text-foreground transition-colors shrink-0"
+                aria-label="Close"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
           </div>
         </motion.div>
