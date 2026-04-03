@@ -31,7 +31,6 @@ const featureItems = [
 
 const PhoneMockup = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -45,21 +44,15 @@ const PhoneMockup = () => {
       }
     };
 
-    const handleEnded = () => {
-      setCurrentIndex((prev) => (prev + 1) % heroVideos.length);
-    };
-
     if (video.readyState >= 2) {
       playVideo();
     }
 
     video.addEventListener("loadeddata", playVideo);
-    video.addEventListener("ended", handleEnded);
     return () => {
       video.removeEventListener("loadeddata", playVideo);
-      video.removeEventListener("ended", handleEnded);
     };
-  }, [currentIndex]);
+  }, []);
 
   return (
     <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
