@@ -169,24 +169,6 @@ const HeroSection = ({ language }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Headline + tagline */}
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-6 sm:mb-8 mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-2"
-            >
-              <h1 className="text-[clamp(1.15rem,4.5vw,2.8rem)] font-bold text-white/90 leading-tight">
-                {t.headline}{" "}
-                <span className="text-seafoam font-black">{t.headlineBold}</span>
-              </h1>
-              <span className="block text-[10px] sm:text-xs text-seafoam/40 tracking-[0.35em] uppercase font-medium">
-                ΦEAR OF MISSING OUT
-              </span>
-            </motion.div>
-          </div>
 
           {/* Phone (left) + Features (right) */}
           <div className="flex items-center justify-center gap-10 sm:gap-14 lg:gap-20">
