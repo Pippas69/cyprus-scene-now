@@ -99,6 +99,23 @@ const HeroSection = ({ language }: HeroSectionProps) => {
             <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
             <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
 
+            {/* ΦEAR OF MISSING OUT! heading with glow */}
+            <div className="relative mb-8 sm:mb-10 flex items-center justify-center">
+              {/* Seafoam radial glow behind text */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-80 sm:h-44 sm:w-[28rem] lg:h-52 lg:w-[34rem] rounded-full bg-seafoam/[0.08] blur-[60px] sm:blur-[80px]" />
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+                className="relative font-cinzel text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider text-center text-foreground"
+                style={{
+                  textShadow: "0 0 40px hsl(var(--seafoam) / 0.3), 0 0 80px hsl(var(--seafoam) / 0.15)",
+                }}
+              >
+                ΦEAR OF MISSING OUT!
+              </motion.h1>
+            </div>
+
             <div className="flex items-center justify-center gap-6 sm:gap-10 lg:gap-16">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
