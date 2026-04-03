@@ -78,10 +78,10 @@ const HeroSection = ({ language }: HeroSectionProps) => {
 
   return (
     <section className="relative overflow-hidden pt-[5.5rem] sm:pt-[6.5rem] pb-12 sm:pb-16 lg:pb-20">
-      {/* Subtle gradient background overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-aegean via-aegean to-[hsl(200_60%_18%)] opacity-100" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_80%,hsl(174_62%_56%/0.06),transparent)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_80%_20%,hsl(207_72%_35%/0.12),transparent)]" />
+      {/* Subtle gradient background - dark navy base with very subtle shifts */}
+      <div className="absolute inset-0 bg-[hsl(207_72%_12%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_90%,hsl(200_50%_16%),transparent)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_85%_15%,hsl(207_60%_18%),transparent)]" />
 
       <div className="relative z-10 container mx-auto px-4">
         {/* Headline + tagline - centered on all screens */}
