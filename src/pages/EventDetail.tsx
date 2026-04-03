@@ -592,8 +592,8 @@ export default function EventDetail() {
       <div className="container mx-auto px-4 py-4 lg:py-8 pt-2 lg:pt-24">
         {/* Back button — above image on mobile, inline on desktop */}
         <button
-          onClick={() => navigate(-1)}
-          className="lg:hidden mb-3 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/50 hover:bg-card transition-colors">
+          onClick={goBack}
+          className="lg:hidden mb-3 w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center border border-border/50 hover:bg-card transition-colors relative z-10">
           <ArrowLeft className="h-4 w-4 text-foreground" />
         </button>
         <RippleButton
