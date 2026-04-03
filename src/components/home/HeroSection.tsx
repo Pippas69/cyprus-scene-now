@@ -180,8 +180,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
               <>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className={`${navLinkClass} flex items-center gap-1`}>
-                      {t.signup} <ChevronDown className="h-3.5 w-3.5" />
+                    <button className={navLinkClass}>
+                      {t.signup}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center" className="w-48 bg-popover text-popover-foreground">
