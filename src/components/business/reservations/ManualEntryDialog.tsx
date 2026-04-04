@@ -447,7 +447,7 @@ export const ManualEntryDialog = ({
               <Label className={labelClass}>{txt.sourceType}</Label>
               <Select value={sourceType} onValueChange={(v) => setSourceType(v as any)}>
                 <SelectTrigger className={inputClass}>
-                  <SelectValue />
+                  <SelectValue placeholder={txt.selectOption} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="profile">{txt.sourceProfile}</SelectItem>
