@@ -101,6 +101,7 @@ interface ClaimSuccessData {
 
 export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, language }: OfferClaimDialogProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
