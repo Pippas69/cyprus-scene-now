@@ -91,6 +91,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     open: false,
     reservationId: null
   });
+  const [cancellationReason, setCancellationReason] = useState('');
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [selectedReservationForQR, setSelectedReservationForQR] = useState<ReservationData | null>(null);
   // Guest tickets per reservation (for reservation-only events with individual QR codes)
