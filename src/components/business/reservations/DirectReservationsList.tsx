@@ -839,34 +839,51 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return <Badge variant="outline">{reservation.status}</Badge>;
   };
 
-  const getTypeBadge = (reservation: DirectReservation) => {
-    if (reservation.auto_created_from_tickets) {
-      return (
-        <div className="flex flex-col gap-1">
-          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
-            <Ticket className="h-3 w-3 mr-1" />
-            {t.fromTickets}
-          </Badge>
-          {reservation.ticket_credit_cents && reservation.ticket_credit_cents > 0 &&
-          <span className="text-[10px] text-muted-foreground">
-              {language === 'el' ? 'Πίστωση' : 'Credit'}: €{(reservation.ticket_credit_cents / 100).toFixed(2)}
-            </span>
-          }
-        </div>);
+  const getSourceLabel = (reservation: DirectReservation): string => {
+    const src = reservation.source || 'profile';
+    switch (src) {
+      case 'walk_in': return t.walkIn;
+      case 'walk_in_offer': return t.walkInOffer;
+      case 'offer': return t.fromOffer;
+      case 'ticket_auto': return t.fromTickets;
+      case 'manual': return t.walkIn;
+      default: {
+        // Fallback: check offer_purchase for legacy data
+        if (reservation.offer_purchase) return t.fromOffer;
+        return t.fromProfile;
+      }
+    }
+  };
 
+  const getSourceBadgeStyle = (reservation: DirectReservation) => {
+    const src = reservation.source || 'profile';
+    if (src === 'walk_in' || src === 'manual') {
+      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800';
     }
-    if (reservation.offer_purchase) {
-      return (
-        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800">
-          <Tag className="h-3 w-3 mr-1" />
-          {t.fromOffer}
-        </Badge>);
+    if (src === 'walk_in_offer') {
+      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
     }
-    return (
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-        <Building2 className="h-3 w-3 mr-1" />
-        {t.fromProfile}
-      </Badge>);
+    if (src === 'offer' || reservation.offer_purchase) {
+      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
+    }
+    if (src === 'ticket_auto') {
+      return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800';
+    }
+    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
+  };
+
+  const getSourceIcon = (reservation: DirectReservation) => {
+    const src = reservation.source || 'profile';
+    if (src === 'walk_in' || src === 'walk_in_offer' || src === 'manual') {
+      return <Footprints className="h-3 w-3 mr-1" />;
+    }
+    if (src === 'offer' || reservation.offer_purchase) {
+      return <Tag className="h-3 w-3 mr-1" />;
+    }
+    if (src === 'ticket_auto') {
+      return <Ticket className="h-3 w-3 mr-1" />;
+    }
+    return <Building2 className="h-3 w-3 mr-1" />;
   };
 
   // Editable cell component
