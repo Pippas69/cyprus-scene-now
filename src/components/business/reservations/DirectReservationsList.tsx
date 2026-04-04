@@ -781,8 +781,51 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       if (error) throw error;
 
+      // Sync relevant changes to CRM guest profile
+      const reservation = reservations.find(r => r.id === id);
+      if (reservation) {
+        const crmUpdate: Record<string, any> = {};
+        if (field === 'reservation_name') {
+          crmUpdate.guest_name = updateData.reservation_name;
+        }
+
+        if (Object.keys(crmUpdate).length > 0) {
+          // For manual entries / ghosts: match by old guest_name
+          // For registered users: match by user_id
+          if (reservation.is_manual_entry || !reservation.user_id) {
+            const oldName = reservation.reservation_name?.trim();
+            if (oldName) {
+              // Find the first matching ghost CRM guest by name
+              const { data: crmGuest } = await supabase
+                .from('crm_guests')
+                .select('id')
+                .eq('business_id', businessId)
+                .eq('guest_name', oldName)
+                .is('user_id', null)
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+              if (crmGuest) {
+                await supabase
+                  .from('crm_guests')
+                  .update({ ...crmUpdate, updated_at: new Date().toISOString() })
+                  .eq('id', crmGuest.id);
+              }
+            }
+          } else if (reservation.user_id) {
+            await supabase
+              .from('crm_guests')
+              .update({ ...crmUpdate, updated_at: new Date().toISOString() })
+              .eq('business_id', businessId)
+              .eq('user_id', reservation.user_id);
+          }
+        }
+      }
+
       // Update local state
       setReservations((prev) => sortReservationsByName(prev.map((r) => r.id === id ? { ...r, ...updateData } : r)));
+      // Invalidate CRM cache so changes appear immediately
+      queryClient.invalidateQueries({ queryKey: ['crm-guests', businessId] });
       toast.success(t.saved);
     } catch (err) {
       console.error('Error saving:', err);
