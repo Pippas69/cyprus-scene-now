@@ -397,14 +397,27 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Date & Time === */}
+          {/* === DIRECT: Date === */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.dateTime}</Label>
+              <Label className={labelClass}>{txt.date}</Label>
               <Input
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
-                type="datetime-local"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                type="date"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* === DIRECT: Time === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.time}</Label>
+              <Input
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                type="time"
                 className={inputClass}
               />
             </div>
@@ -423,6 +436,24 @@ export const ManualEntryDialog = ({
                 max="50"
                 className={inputClass}
               />
+            </div>
+          )}
+
+          {/* === DIRECT: Source type selector === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.sourceType}</Label>
+              <Select value={sourceType} onValueChange={(v) => setSourceType(v as any)}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="profile">{txt.sourceProfile}</SelectItem>
+                  <SelectItem value="offer">{txt.sourceOffer}</SelectItem>
+                  <SelectItem value="walk_in">{txt.sourceWalkIn}</SelectItem>
+                  <SelectItem value="walk_in_offer">{txt.sourceWalkInOffer}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
