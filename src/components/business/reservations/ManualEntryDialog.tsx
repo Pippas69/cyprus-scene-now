@@ -53,6 +53,7 @@ export const ManualEntryDialog = ({
 }: ManualEntryDialogProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [partySize, setPartySize] = useState('1');
   const [date, setDate] = useState('');
@@ -78,6 +79,7 @@ export const ManualEntryDialog = ({
       titleHybrid: 'Προσθήκη',
       name: 'Όνομα',
       phone: 'Τηλέφωνο',
+      email: 'Email',
       partySize: 'Αριθμός ατόμων',
       date: 'Ημερομηνία',
       time: 'Ώρα',
@@ -112,6 +114,7 @@ export const ManualEntryDialog = ({
       titleHybrid: 'Add entry',
       name: 'Name',
       phone: 'Phone',
+      email: 'Email',
       partySize: 'Party size',
       date: 'Date',
       time: 'Time',
@@ -180,8 +183,6 @@ export const ManualEntryDialog = ({
       .then(({ data }) => setTicketTiers(data || []));
   }, [eventId, entryType]);
 
-  // No auto-select — tier is optional for manual entries
-
   // Fetch floor plan tables for business
   useEffect(() => {
     if (entryType === 'ticket' || entryType === 'direct') {
@@ -199,6 +200,7 @@ export const ManualEntryDialog = ({
   const resetForm = () => {
     setName('');
     setPhone('');
+    setEmail('');
     setCity('');
     setPartySize('1');
     setDate('');
@@ -241,7 +243,7 @@ export const ManualEntryDialog = ({
 
         const selectedTier = resolvedTierId ? ticketTiers.find(t => t.id === resolvedTierId) : null;
         const priceCents = selectedTier?.price_cents ?? 0;
-        const customerEmail = user.email || `manual+${orderId}@noemail.local`;
+        const customerEmail = email.trim() || user.email || `manual+${orderId}@noemail.local`;
 
         const { error: orderError } = await supabase.from('ticket_orders').insert({
           id: orderId,
@@ -355,7 +357,7 @@ export const ManualEntryDialog = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 -mr-1">
-          {/* Name */}
+          {/* 1. Name (required) */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.name} *</Label>
             <Input
@@ -368,7 +370,7 @@ export const ManualEntryDialog = ({
             />
           </div>
 
-          {/* Phone */}
+          {/* 2. Phone (required) */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.phone} *</Label>
             <Input
@@ -397,7 +399,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Date === */}
+          {/* 3. Date (direct mode) */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.date}</Label>
@@ -410,7 +412,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Time === */}
+          {/* 4. Time (direct mode) */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.time}</Label>
@@ -423,7 +425,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === Party size: direct, reservation, hybrid === */}
+          {/* 5. Party size (not ticket) */}
           {entryType !== 'ticket' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.partySize}</Label>
@@ -439,7 +441,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Source type selector === */}
+          {/* 6. Source type (direct mode) */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.sourceType}</Label>
@@ -454,6 +456,20 @@ export const ManualEntryDialog = ({
                   <SelectItem value="walk_in_offer">{txt.sourceWalkInOffer}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* 7. Email (direct mode) */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.email}</Label>
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={txt.email}
+                type="email"
+                className={inputClass}
+              />
             </div>
           )}
 
@@ -492,7 +508,7 @@ export const ManualEntryDialog = ({
               </Select>
             </div>
           )}
-...
+
           {/* === RESERVATION/HYBRID: Min charge === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
@@ -529,7 +545,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Seating preference === */}
+          {/* 8. Seating preference (direct mode) */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.seating}</Label>
@@ -577,7 +593,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* Notes - all types */}
+          {/* 9. Notes - all types */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.notes}</Label>
             <Textarea
