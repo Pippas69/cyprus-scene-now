@@ -895,8 +895,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
     }
   };
-  // Cancellation reason popup state
-  const [cancellationReasonPopover, setCancellationReasonPopover] = useState<string | null>(null);
 
   // Editable cell component
   const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;}) => {
