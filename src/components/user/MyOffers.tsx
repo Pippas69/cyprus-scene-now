@@ -301,7 +301,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   });
 
   const handleCancelOfferReservation = async (purchase: OfferPurchase) => {
+    const reason = cancellationReason;
     setCancelDialog({ open: false, purchase: null });
+    setCancellationReason('');
     try {
       if (purchase.reservation_id) {
         // Cancel the reservation (frees slots via existing DB logic)
