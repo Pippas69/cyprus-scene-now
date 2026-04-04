@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Users, Phone, Calendar,
-  Clock, Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
+  Calendar,
+  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
 'lucide-react';
 import { ManualEntryDialog } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
