@@ -737,9 +737,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (field === 'reservation_name') {
         updateData.reservation_name = editValue.trim();
       } else if (field === 'party_size') {
-        const newSize = parseInt(editValue);
-        if (isNaN(newSize) || newSize < 1) return;
-        updateData.party_size = newSize;
+        const val = editValue.trim();
+        if (!val) {
+          updateData.party_size = null;
+        } else {
+          const newSize = parseInt(val);
+          if (isNaN(newSize) || newSize < 1) return;
+          updateData.party_size = newSize;
+        }
+      } else if (field === 'source') {
+        updateData.source = editValue || null;
+      } else if (field === 'seating_preference') {
+        updateData.seating_preference = editValue || null;
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
