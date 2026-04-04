@@ -1685,8 +1685,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             <EditableCell
                             reservationId={reservation.id}
                             field="party_size"
-                            displayValue={`${reservation.party_size} ${t.people}`}
-                            rawValue={String(reservation.party_size)} />
+                            displayValue={reservation.party_size ? `${reservation.party_size} ${t.people}` : '—'}
+                            rawValue={reservation.party_size ? String(reservation.party_size) : ''} />
                           </span>
                           <span className="text-sm ml-2 font-thin text-muted-foreground mx-[18px]">{minAge}</span>
                           {cityByReservation[reservation.id] && (
