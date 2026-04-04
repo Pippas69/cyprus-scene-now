@@ -6581,6 +6581,13 @@ export type Database = {
         Args: { business_id_param: string }
         Returns: number
       }
+      get_business_reservation_emails: {
+        Args: { p_business_id: string; p_reservation_ids: string[] }
+        Returns: {
+          email: string
+          reservation_id: string
+        }[]
+      }
       get_crm_guest_stats: {
         Args: { p_business_id: string }
         Returns: {
