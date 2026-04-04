@@ -195,8 +195,10 @@ Deno.serve(async (req) => {
           special_requests: `Offer claim: ${discount.title}`,
           confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
           source: "offer",
-          phone: reservationData.phone_number?.trim() || null,
-          seating_preference: reservationData.seating_preference || null,
+          phone_number: reservationData.phone_number?.trim() || null,
+          seating_preference: reservationData.seating_preference && reservationData.seating_preference !== 'none'
+            ? reservationData.seating_preference
+            : null,
         })
         .select()
         .single();
