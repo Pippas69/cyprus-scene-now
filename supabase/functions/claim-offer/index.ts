@@ -15,6 +15,9 @@ interface ReservationData {
   preferred_date: string;
   preferred_time: string;
   party_size: number;
+  reservation_name?: string;
+  phone_number?: string;
+  seating_preference?: string | null;
 }
 
 interface ClaimOfferRequest {
@@ -172,6 +175,7 @@ Deno.serve(async (req) => {
       );
 
       const reservationName =
+        reservationData.reservation_name?.trim() ||
         (user.user_metadata?.first_name && user.user_metadata?.last_name
           ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
           : null) ||
@@ -191,6 +195,8 @@ Deno.serve(async (req) => {
           special_requests: `Offer claim: ${discount.title}`,
           confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
           source: "offer",
+          phone: reservationData.phone_number?.trim() || null,
+          seating_preference: reservationData.seating_preference || null,
         })
         .select()
         .single();
