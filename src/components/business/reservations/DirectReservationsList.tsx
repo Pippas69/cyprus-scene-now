@@ -191,6 +191,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       fromProfile: 'From Profile',
       fromOffer: 'From Offer',
       fromTickets: 'Via Tickets',
+      walkIn: 'Walk-in',
+      walkInOffer: 'Walk-in Offer',
       confirmationCode: 'Code',
       addNotes: 'Notes',
       indoor: 'Indoor',
