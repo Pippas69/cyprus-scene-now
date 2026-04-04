@@ -737,9 +737,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (field === 'reservation_name') {
         updateData.reservation_name = editValue.trim();
       } else if (field === 'party_size') {
-        const newSize = parseInt(editValue);
-        if (isNaN(newSize) || newSize < 1) return;
-        updateData.party_size = newSize;
+        const val = editValue.trim();
+        if (!val) {
+          updateData.party_size = null;
+        } else {
+          const newSize = parseInt(val);
+          if (isNaN(newSize) || newSize < 1) return;
+          updateData.party_size = newSize;
+        }
+      } else if (field === 'source') {
+        updateData.source = editValue || null;
+      } else if (field === 'seating_preference') {
+        updateData.seating_preference = editValue || null;
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
@@ -917,16 +926,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return <Badge variant="outline">{reservation.status}</Badge>;
   };
 
-  const getSourceLabel = (reservation: DirectReservation): string => {
-    const src = reservation.source || 'profile';
+  const getSourceLabel = (reservation: DirectReservation): string | null => {
+    const src = reservation.source;
+    if (!src) return null;
     switch (src) {
       case 'walk_in': return t.walkIn;
       case 'walk_in_offer': return t.walkInOffer;
       case 'offer': return t.fromOffer;
       case 'ticket_auto': return t.fromTickets;
       case 'manual': return t.walkIn;
+      case 'profile': {
+        if (reservation.offer_purchase) return t.fromOffer;
+        return t.fromProfile;
+      }
       default: {
-        // Fallback: check offer_purchase for legacy data
         if (reservation.offer_purchase) return t.fromOffer;
         return t.fromProfile;
       }
@@ -969,6 +982,150 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
       </span>);
 
+  };
+
+  // Dropdown editable cell for source type
+  const SourceEditCell = ({ reservationId, currentValue }: { reservationId: string; currentValue: string | null }) => {
+    const sourceOptions: { value: string; label: string }[] = [
+      { value: 'profile', label: t.fromProfile },
+      { value: 'offer', label: t.fromOffer },
+      { value: 'walk_in', label: t.walkIn },
+      { value: 'walk_in_offer', label: t.walkInOffer },
+    ];
+
+    const handleChange = async (newValue: string) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ source: newValue } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, source: newValue } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving source:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    const currentLabel = currentValue
+      ? (sourceOptions.find(o => o.value === currentValue)?.label || currentValue)
+      : '—';
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground opacity-75">
+            {currentLabel}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-40 p-1" align="start">
+          <div className="flex flex-col">
+            {sourceOptions.map(opt => (
+              <button
+                key={opt.value}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentValue === opt.value ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Dropdown editable cell for seating preference
+  const SeatingEditCell = ({ reservationId, currentValue }: { reservationId: string; currentValue: string | null }) => {
+    const seatingOpts: { value: string; label: string }[] = [
+      { value: 'indoor', label: t.indoor },
+      { value: 'outdoor', label: t.outdoor },
+    ];
+
+    const handleChange = async (newValue: string | null) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ seating_preference: newValue } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, seating_preference: newValue } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving seating:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    const currentLabel = currentValue
+      ? (currentValue === 'indoor' ? t.indoor : currentValue === 'outdoor' ? t.outdoor : currentValue)
+      : '—';
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground">
+            {currentLabel}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-36 p-1" align="start">
+          <div className="flex flex-col">
+            <button
+              className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${!currentValue ? 'font-semibold text-primary' : ''}`}
+              onClick={() => handleChange(null)}
+            >
+              —
+            </button>
+            {seatingOpts.map(opt => (
+              <button
+                key={opt.value}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentValue === opt.value ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Editable cell for table assignment
+  const TableAssignmentEditCell = ({ reservationId, currentLabel }: { reservationId: string; currentLabel: string | null }) => {
+    const handleClear = async () => {
+      try {
+        const { error } = await supabase
+          .from('reservation_table_assignments')
+          .delete()
+          .eq('reservation_id', reservationId);
+        if (error) throw error;
+        setTableAssignmentLabels(prev => {
+          const next = { ...prev };
+          delete next[reservationId];
+          return next;
+        });
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error clearing table:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    if (!currentLabel) return null;
+
+    return (
+      <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-xs text-muted-foreground">
+        {currentLabel}
+        <X
+          className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0 hover:text-red-500"
+          onClick={handleClear}
+        />
+      </span>
+    );
   };
 
   const handleSaveMemo = async (reservationId: string) => {
@@ -1605,13 +1762,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) => {
-                const typeLabel = getSourceLabel(reservation);
-                const seatingLabel = reservation.seating_preference
-                  ? (reservation.seating_preference === 'indoor' ? t.indoor :
-                     reservation.seating_preference === 'outdoor' ? t.outdoor :
-                     reservation.seating_preference)
-                  : null;
-
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
                   {/* 1. Name + Phone (no icons) */}
@@ -1651,27 +1801,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   {/* 3. Details: People + Source (white text) */}
                   <TableCell className="align-top">
                     <div className="flex flex-col gap-0.5">
-                      <EditableCell
-                        reservationId={reservation.id}
-                        field="party_size"
-                        displayValue={`${reservation.party_size} ${t.people}`}
-                        rawValue={String(reservation.party_size)}
-                      />
-                      <span className="text-sm text-foreground whitespace-nowrap opacity-75">{typeLabel}</span>
+                      {reservation.party_size ? (
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="party_size"
+                          displayValue={`${reservation.party_size} ${t.people}`}
+                          rawValue={String(reservation.party_size)}
+                        />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                      <SourceEditCell reservationId={reservation.id} currentValue={reservation.source} />
                     </div>
                   </TableCell>
 
                   {/* 4. Θέση (Seating) + Table assignment */}
                   <TableCell className="align-top">
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-sm text-foreground whitespace-nowrap">
-                        {seatingLabel || '—'}
-                      </span>
-                      {tableAssignmentLabels[reservation.id] && (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {tableAssignmentLabels[reservation.id]}
-                        </span>
-                      )}
+                      <SeatingEditCell reservationId={reservation.id} currentValue={reservation.seating_preference} />
+                      <TableAssignmentEditCell reservationId={reservation.id} currentLabel={tableAssignmentLabels[reservation.id] || null} />
                     </div>
                   </TableCell>
 

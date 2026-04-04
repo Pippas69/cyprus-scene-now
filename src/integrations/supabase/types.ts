@@ -4413,7 +4413,7 @@ export type Database = {
           is_manual_entry: boolean
           manual_status: string | null
           min_age: number | null
-          party_size: number
+          party_size: number | null
           phone_number: string | null
           preferred_time: string | null
           prepaid_charge_status: string | null
@@ -4422,7 +4422,7 @@ export type Database = {
           reservation_name: string
           seating_preference: string | null
           seating_type_id: string | null
-          source: string
+          source: string | null
           special_requests: string | null
           staff_memo: string | null
           status: string
@@ -4452,7 +4452,7 @@ export type Database = {
           is_manual_entry?: boolean
           manual_status?: string | null
           min_age?: number | null
-          party_size: number
+          party_size?: number | null
           phone_number?: string | null
           preferred_time?: string | null
           prepaid_charge_status?: string | null
@@ -4461,7 +4461,7 @@ export type Database = {
           reservation_name: string
           seating_preference?: string | null
           seating_type_id?: string | null
-          source?: string
+          source?: string | null
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
@@ -4491,7 +4491,7 @@ export type Database = {
           is_manual_entry?: boolean
           manual_status?: string | null
           min_age?: number | null
-          party_size?: number
+          party_size?: number | null
           phone_number?: string | null
           preferred_time?: string | null
           prepaid_charge_status?: string | null
@@ -4500,7 +4500,7 @@ export type Database = {
           reservation_name?: string
           seating_preference?: string | null
           seating_type_id?: string | null
-          source?: string
+          source?: string | null
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
