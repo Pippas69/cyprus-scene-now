@@ -1829,15 +1829,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               {filteredReservations.map((reservation) => {
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
-                  {/* 1. Name + Phone (no icons) */}
+                  {/* 1. Name + Phone + Customer Note (no icons) */}
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
-                      <EditableCell
-                        reservationId={reservation.id}
-                        field="reservation_name"
-                        displayValue={reservation.reservation_name}
-                        rawValue={reservation.reservation_name}
-                      />
+                      <div className="flex items-center gap-1">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="reservation_name"
+                          displayValue={reservation.reservation_name}
+                          rawValue={reservation.reservation_name}
+                        />
+                        {renderCustomerNoteBubble(reservation)}
+                      </div>
                       {reservation.phone_number &&
                         <div className="text-sm text-muted-foreground mt-0.5 min-w-0">
                           <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
