@@ -552,13 +552,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const handleCancelReservation = async (reservationId: string) => {
     setCancelDialog({ open: false, reservationId: null });
+    setCancellationReason('');
     setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
     toast.success(tt.reservationCancelled);
 
     try {
       const cancelReservation = supabase.
       from('reservations').
-      update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+      update({ status: 'cancelled', cancellation_reason: reason || null, updated_at: new Date().toISOString() } as any).
       eq('id', reservationId).
       eq('user_id', userId);
 
