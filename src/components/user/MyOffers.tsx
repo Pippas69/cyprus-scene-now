@@ -309,7 +309,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         // Cancel the reservation (frees slots via existing DB logic)
         const { error: resError } = await supabase.
         from('reservations').
-        update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+        update({ status: 'cancelled', cancellation_reason: reason || null, updated_at: new Date().toISOString() } as any).
         eq('id', purchase.reservation_id).
         eq('user_id', userId);
         if (resError) throw resError;
