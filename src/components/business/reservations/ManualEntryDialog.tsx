@@ -277,7 +277,7 @@ export const ManualEntryDialog = ({
         const insertData: Record<string, any> = {
           user_id: user.id,
           reservation_name: trimmedName,
-          party_size: parseInt(partySize) || 1,
+          party_size: partySize ? parseInt(partySize) : 1,
           status: 'accepted',
           is_manual_entry: true,
           manual_status: null,
