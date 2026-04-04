@@ -55,8 +55,10 @@ export const ManualEntryDialog = ({
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [partySize, setPartySize] = useState('1');
-  const [dateTime, setDateTime] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
+  const [sourceType, setSourceType] = useState<'profile' | 'offer' | 'walk_in' | 'walk_in_offer'>('walk_in');
   const [notes, setNotes] = useState('');
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
@@ -77,9 +79,15 @@ export const ManualEntryDialog = ({
       name: 'Όνομα',
       phone: 'Τηλέφωνο',
       partySize: 'Αριθμός ατόμων',
-      dateTime: 'Ημερομηνία & ώρα',
+      date: 'Ημερομηνία',
+      time: 'Ώρα',
       seating: 'Θέση',
       notes: 'Σημειώσεις',
+      sourceType: 'Τύπος',
+      sourceProfile: 'Προφίλ',
+      sourceOffer: 'Προσφορά',
+      sourceWalkIn: 'Walk-in',
+      sourceWalkInOffer: 'Walk-in Προσφοράς',
       save: 'Αποθήκευση',
       cancel: 'Ακύρωση',
       nameRequired: 'Το όνομα είναι υποχρεωτικό',
@@ -105,9 +113,15 @@ export const ManualEntryDialog = ({
       name: 'Name',
       phone: 'Phone',
       partySize: 'Party size',
-      dateTime: 'Date & time',
+      date: 'Date',
+      time: 'Time',
       seating: 'Seating',
       notes: 'Notes',
+      sourceType: 'Type',
+      sourceProfile: 'Profile',
+      sourceOffer: 'Offer',
+      sourceWalkIn: 'Walk-in',
+      sourceWalkInOffer: 'Walk-in Offer',
       save: 'Save',
       cancel: 'Cancel',
       nameRequired: 'Name is required',
@@ -187,8 +201,10 @@ export const ManualEntryDialog = ({
     setPhone('');
     setCity('');
     setPartySize('1');
-    setDateTime('');
+    setDate('');
+    setTime('');
     setSeatingPreference('');
+    setSourceType('walk_in');
     setNotes('');
     setMinAge('');
     setMinCharge('');
@@ -265,7 +281,7 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: entryType === 'direct' ? 'walk_in' : 'manual',
+          source: sourceType,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
@@ -274,8 +290,11 @@ export const ManualEntryDialog = ({
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
-          if (dateTime && dateTime.trim()) {
-            const parsed = new Date(dateTime);
+          // Combine date + time into preferred_time
+          if (date.trim()) {
+            const dateStr = date.trim();
+            const timeStr = time.trim() || '00:00';
+            const parsed = new Date(`${dateStr}T${timeStr}`);
             if (!isNaN(parsed.getTime())) {
               insertData.preferred_time = parsed.toISOString();
             }
@@ -378,14 +397,27 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === DIRECT: Date & Time === */}
+          {/* === DIRECT: Date === */}
           {entryType === 'direct' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.dateTime}</Label>
+              <Label className={labelClass}>{txt.date}</Label>
               <Input
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
-                type="datetime-local"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                type="date"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* === DIRECT: Time === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.time}</Label>
+              <Input
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                type="time"
                 className={inputClass}
               />
             </div>
@@ -404,6 +436,24 @@ export const ManualEntryDialog = ({
                 max="50"
                 className={inputClass}
               />
+            </div>
+          )}
+
+          {/* === DIRECT: Source type selector === */}
+          {entryType === 'direct' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.sourceType}</Label>
+              <Select value={sourceType} onValueChange={(v) => setSourceType(v as any)}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="profile">{txt.sourceProfile}</SelectItem>
+                  <SelectItem value="offer">{txt.sourceOffer}</SelectItem>
+                  <SelectItem value="walk_in">{txt.sourceWalkIn}</SelectItem>
+                  <SelectItem value="walk_in_offer">{txt.sourceWalkInOffer}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
