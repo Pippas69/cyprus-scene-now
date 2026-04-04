@@ -833,13 +833,45 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
     }
     if (reservation.status === 'cancelled') {
-      return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="cursor-pointer">
+              <Badge variant="outline" className="text-muted-foreground hover:bg-muted/50 transition-colors">{t.cancelled}</Badge>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" side="right">
+            <div className="p-2.5 border-b border-border/50 bg-muted/30">
+              <div className="text-xs font-medium text-muted-foreground">{t.cancellationReason}</div>
+            </div>
+            <div className="p-2.5">
+              <p className="text-sm leading-relaxed">{reservation.cancellation_reason || t.noCancellationReason}</p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
     }
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
       const graceEnd = addMinutes(slotTime, 15);
       if (isAfter(now, graceEnd)) {
-        return <Badge variant="destructive">{t.noShow}</Badge>;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge variant="destructive" className="hover:opacity-80 transition-opacity">{t.noShow}</Badge>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" side="right">
+              <div className="p-2.5 border-b border-border/50 bg-muted/30">
+                <div className="text-xs font-medium text-muted-foreground">{t.cancellationReason}</div>
+              </div>
+              <div className="p-2.5">
+                <p className="text-sm leading-relaxed">{reservation.cancellation_reason || t.noCancellationReason}</p>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
       }
     }
     if (reservation.status === 'accepted') {
