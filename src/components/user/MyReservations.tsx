@@ -662,6 +662,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       cancelReservation: 'Cancel',
       confirmCancel: 'Confirm Cancellation',
       confirmCancelDescription: 'Are you sure you want to cancel this reservation?',
+      cancellationReasonLabel: 'Reason for cancellation (optional)',
+      cancellationReasonPlaceholder: 'Enter your reason for cancelling...',
       cancel: 'No',
       confirm: 'Yes, Cancel',
       history: 'Reservation History',
