@@ -114,6 +114,7 @@ serve(async (req) => {
         status: "accepted",
         confirmation_code: confirmationCode,
         qr_code_token: qrCodeToken,
+        source: "profile",
       })
       .select("id, confirmation_code, qr_code_token")
       .single();

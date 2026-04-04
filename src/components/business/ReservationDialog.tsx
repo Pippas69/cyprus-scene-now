@@ -186,7 +186,8 @@ export const ReservationDialog = ({
         preferred_time: formData.preferred_time.toISOString(),
         phone_number: formData.phone_number || null,
         special_requests: formData.special_requests || null,
-      }).select().single();
+        source: 'profile',
+      } as any).select().single();
 
       if (error) throw error;
 

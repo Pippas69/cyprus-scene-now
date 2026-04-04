@@ -276,6 +276,7 @@ Deno.serve(async (req) => {
               specialRequestsFromMeta ||
               `Created from ticket+reservation purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
             seating_type_id: seatingTypeId,
+            source: "ticket_auto",
           };
 
           const { data: newReservation, error: reservationError } = await supabaseClient

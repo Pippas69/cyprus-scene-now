@@ -4421,6 +4421,7 @@ export type Database = {
           reservation_name: string
           seating_preference: string | null
           seating_type_id: string | null
+          source: string
           special_requests: string | null
           staff_memo: string | null
           status: string
@@ -4458,6 +4459,7 @@ export type Database = {
           reservation_name: string
           seating_preference?: string | null
           seating_type_id?: string | null
+          source?: string
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
@@ -4495,6 +4497,7 @@ export type Database = {
           reservation_name?: string
           seating_preference?: string | null
           seating_type_id?: string | null
+          source?: string
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
@@ -6339,20 +6342,36 @@ export type Database = {
         Args: { p_business_id?: string }
         Returns: undefined
       }
-      book_slot_atomically: {
-        Args: {
-          p_business_id: string
-          p_date: string
-          p_is_offer_based?: boolean
-          p_party_size: number
-          p_phone_number?: string
-          p_reservation_name: string
-          p_seating_preference?: string
-          p_slot_time: string
-          p_special_requests?: string
-        }
-        Returns: Json
-      }
+      book_slot_atomically:
+        | {
+            Args: {
+              p_business_id: string
+              p_date: string
+              p_is_offer_based?: boolean
+              p_party_size: number
+              p_phone_number?: string
+              p_reservation_name: string
+              p_seating_preference?: string
+              p_slot_time: string
+              p_special_requests?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_business_id: string
+              p_date: string
+              p_is_offer_based?: boolean
+              p_party_size: number
+              p_phone_number?: string
+              p_reservation_name: string
+              p_seating_preference?: string
+              p_slot_time: string
+              p_source?: string
+              p_special_requests?: string
+            }
+            Returns: Json
+          }
       calculate_user_similarity: {
         Args: { user1_id: string; user2_id: string }
         Returns: number
