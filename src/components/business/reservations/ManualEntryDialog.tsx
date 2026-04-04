@@ -277,13 +277,13 @@ export const ManualEntryDialog = ({
         const insertData: Record<string, any> = {
           user_id: user.id,
           reservation_name: trimmedName,
-          party_size: partySize ? parseInt(partySize) : 1,
+          party_size: partySize ? parseInt(partySize) : null,
           status: 'accepted',
           is_manual_entry: true,
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: sourceType || 'walk_in',
+          source: sourceType || null,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
