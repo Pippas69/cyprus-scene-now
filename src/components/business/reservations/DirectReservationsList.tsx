@@ -1818,9 +1818,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>
                       )}
-                      {typeLabel ? (
-                        <span className="text-sm text-foreground whitespace-nowrap opacity-75">{typeLabel}</span>
-                      ) : null}
+                      <SourceEditCell reservationId={reservation.id} currentValue={reservation.source} />
                     </div>
                   </TableCell>
 
