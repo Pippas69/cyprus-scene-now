@@ -1762,13 +1762,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) => {
-                const typeLabel = getSourceLabel(reservation);
-                const seatingLabel = reservation.seating_preference
-                  ? (reservation.seating_preference === 'indoor' ? t.indoor :
-                     reservation.seating_preference === 'outdoor' ? t.outdoor :
-                     reservation.seating_preference)
-                  : null;
-
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
                   {/* 1. Name + Phone (no icons) */}
