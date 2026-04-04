@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
           status: "accepted",
           special_requests: `Offer claim: ${discount.title}`,
           confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
+          source: "offer",
         })
         .select()
         .single();
