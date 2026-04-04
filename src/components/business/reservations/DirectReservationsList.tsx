@@ -176,6 +176,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       customerNote: 'Σχόλιο πελάτη',
       email: 'Email',
       createdAt: 'Ημ. Δημιουργίας',
+      seating: 'Θέση',
       cancellationReason: 'Λόγος Ακύρωσης',
       noCancellationReason: 'Δεν δόθηκε λόγος ακύρωσης',
     },
