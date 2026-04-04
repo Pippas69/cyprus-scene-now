@@ -15,6 +15,9 @@ interface ReservationData {
   preferred_date: string;
   preferred_time: string;
   party_size: number;
+  reservation_name?: string;
+  phone_number?: string;
+  seating_preference?: string | null;
 }
 
 interface ClaimOfferRequest {
