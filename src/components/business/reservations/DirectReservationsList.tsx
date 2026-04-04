@@ -1553,14 +1553,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
 
       <div className="rounded-md border w-full overflow-x-auto">
-          <Table className="w-full min-w-[700px] table-fixed text-sm">
+          <Table className="w-full min-w-[900px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[20%]">{t.name}</TableHead>
-                <TableHead className="w-[20%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[20%]">{t.details}</TableHead>
-                <TableHead className="w-[18%]">{t.status}</TableHead>
-                <TableHead className="w-[22%]">{t.staffMemo}</TableHead>
+                <TableHead className="w-[18%]">{t.name}</TableHead>
+                <TableHead className="w-[14%]">{t.email}</TableHead>
+                <TableHead className="w-[14%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[16%]">{t.details}</TableHead>
+                <TableHead className="w-[12%]">{t.status}</TableHead>
+                <TableHead className="w-[10%]">{t.createdAt}</TableHead>
+                <TableHead className="w-[16%]">{t.staffMemo}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1584,6 +1586,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       }
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    <span className="text-sm text-muted-foreground truncate block">
+                      {reservation.profiles?.email || '—'}
+                    </span>
                   </TableCell>
 
                   <TableCell className="align-top pl-2">
@@ -1623,6 +1631,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {format(new Date(reservation.created_at), 'dd MMM yyyy', { locale: language === 'el' ? el : enUS })}
+                    </span>
                   </TableCell>
 
                   <TableCell className="align-top">
