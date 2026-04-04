@@ -559,7 +559,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     try {
       const cancelReservation = supabase.
       from('reservations').
-      update({ status: 'cancelled', cancellation_reason: reason || null, updated_at: new Date().toISOString() } as any).
+      update({ status: 'cancelled', cancellation_reason: cancellationReason || null, updated_at: new Date().toISOString() } as any).
       eq('id', reservationId).
       eq('user_id', userId);
 
