@@ -855,37 +855,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
     }
   };
-
-  const getSourceBadgeStyle = (reservation: DirectReservation) => {
-    const src = reservation.source || 'profile';
-    if (src === 'walk_in' || src === 'manual') {
-      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800';
-    }
-    if (src === 'walk_in_offer') {
-      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
-    }
-    if (src === 'offer' || reservation.offer_purchase) {
-      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
-    }
-    if (src === 'ticket_auto') {
-      return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800';
-    }
-    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
-  };
-
-  const getSourceIcon = (reservation: DirectReservation) => {
-    const src = reservation.source || 'profile';
-    if (src === 'walk_in' || src === 'walk_in_offer' || src === 'manual') {
-      return <Footprints className="h-3 w-3 mr-1" />;
-    }
-    if (src === 'offer' || reservation.offer_purchase) {
-      return <Tag className="h-3 w-3 mr-1" />;
-    }
-    if (src === 'ticket_auto') {
-      return <Ticket className="h-3 w-3 mr-1" />;
-    }
-    return <Building2 className="h-3 w-3 mr-1" />;
-  };
+  // Cancellation reason popup state
+  const [cancellationReasonPopover, setCancellationReasonPopover] = useState<string | null>(null);
 
   // Editable cell component
   const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;}) => {
