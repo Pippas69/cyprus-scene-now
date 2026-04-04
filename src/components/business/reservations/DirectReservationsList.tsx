@@ -317,7 +317,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           created_at, phone_number, preferred_time, seating_preference, special_requests,
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
-          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age,
+          prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
           profiles(name, email)
         `);
 
