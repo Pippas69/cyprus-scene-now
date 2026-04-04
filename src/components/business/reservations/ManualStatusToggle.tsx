@@ -92,7 +92,7 @@ export const ManualStatusToggle = ({
       return <Badge className="bg-green-600 text-white whitespace-nowrap cursor-pointer">{txt.arrived}</Badge>;
     }
     if (currentStatus === 'no_show') {
-      return <Badge variant="destructive" className="cursor-pointer whitespace-nowrap">{txt.noShow}</Badge>;
+      return <Badge variant="destructive" className="cursor-pointer whitespace-nowrap min-w-max">{txt.noShow}</Badge>;
     }
     return (
       <span className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors px-1">
