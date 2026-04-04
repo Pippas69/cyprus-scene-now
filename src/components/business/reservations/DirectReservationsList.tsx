@@ -1912,8 +1912,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <EditableCell
                       reservationId={reservation.id}
                       field="email"
-                      displayValue={reservation.profiles?.email || '—'}
-                      rawValue={reservation.profiles?.email || ''}
+                      displayValue={reservation.email || reservation.profiles?.email || '—'}
+                      rawValue={reservation.email || reservation.profiles?.email || ''}
                     />
                   </TableCell>
                 </TableRow>
