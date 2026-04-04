@@ -201,8 +201,10 @@ export const ManualEntryDialog = ({
     setPhone('');
     setCity('');
     setPartySize('1');
-    setDateTime('');
+    setDate('');
+    setTime('');
     setSeatingPreference('');
+    setSourceType('walk_in');
     setNotes('');
     setMinAge('');
     setMinCharge('');
