@@ -1043,12 +1043,22 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
         </Collapsible>
       }
 
-      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => { setCancelDialog({ ...cancelDialog, open }); if (!open) setCancellationReason(''); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-1">
+            <label className="text-sm text-muted-foreground">{t.cancellationReasonLabel}</label>
+            <textarea
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[80px] resize-none"
+              placeholder={t.cancellationReasonPlaceholder}
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              maxLength={500}
+            />
+          </div>
           <AlertDialogFooter className="flex-row gap-2">
             <AlertDialogAction
               className="flex-1 h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
