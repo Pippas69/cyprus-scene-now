@@ -290,14 +290,18 @@ export const ManualEntryDialog = ({
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
-          if (dateTime && dateTime.trim()) {
-            const parsed = new Date(dateTime);
+          // Combine date + time into preferred_time
+          if (date.trim()) {
+            const dateStr = date.trim();
+            const timeStr = time.trim() || '00:00';
+            const parsed = new Date(`${dateStr}T${timeStr}`);
             if (!isNaN(parsed.getTime())) {
               insertData.preferred_time = parsed.toISOString();
             }
           }
           if (seatingPreference) {
             insertData.seating_preference = seatingPreference;
+          }
           }
         } else {
           insertData.event_id = eventId;
