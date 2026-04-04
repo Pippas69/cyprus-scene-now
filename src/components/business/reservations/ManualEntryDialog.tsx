@@ -302,7 +302,6 @@ export const ManualEntryDialog = ({
           if (seatingPreference) {
             insertData.seating_preference = seatingPreference;
           }
-          }
         } else {
           insertData.event_id = eventId;
         }
