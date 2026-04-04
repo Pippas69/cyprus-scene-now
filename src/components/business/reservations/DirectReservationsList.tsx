@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, QrCode, Ticket, Edit2, Check, X, CreditCard, MapPin, MessageSquare, StickyNote, Pencil, Save, Plus } from
+  Tag, Clock, Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Footprints } from
 'lucide-react';
 import { ManualEntryDialog } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
