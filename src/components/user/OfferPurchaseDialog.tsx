@@ -549,6 +549,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       }
 
       if (data?.success) {
+        if (userId) {
+          await queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+          await queryClient.refetchQueries({ queryKey: ["user-offer-purchases", userId], type: "active" });
+        }
+
         setClaimSuccess({
           purchaseId: data.purchaseId,
           qrCodeToken: data.qrCodeToken,
