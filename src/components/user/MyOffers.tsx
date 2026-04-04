@@ -197,6 +197,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     cancelReservation: text.cancelReservation.en,
     confirmCancel: text.confirmCancel.en,
     confirmCancelDescription: text.confirmCancelDescription.en,
+    cancellationReasonLabel: text.cancellationReasonLabel.en,
+    cancellationReasonPlaceholder: text.cancellationReasonPlaceholder.en,
     cancelConfirm: text.cancelConfirm.en,
     cancelBack: text.cancelBack.en,
     reservationCancelled: text.reservationCancelled.en,
