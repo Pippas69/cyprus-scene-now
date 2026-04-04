@@ -1,0 +1,2 @@
+ALTER TABLE public.reservations DROP CONSTRAINT IF EXISTS reservations_party_size_check;
+ALTER TABLE public.reservations ADD CONSTRAINT reservations_party_size_check CHECK (party_size > 0 AND party_size <= 500);
