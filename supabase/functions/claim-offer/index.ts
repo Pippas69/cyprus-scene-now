@@ -11,6 +11,28 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CLAIM-OFFER] ${step}`, details ? JSON.stringify(details) : '');
 };
 
+const normalizeSeatingPreference = (value?: string | null): "indoor" | "outdoor" | "no_preference" | null => {
+  const normalized = value?.trim().toLowerCase();
+
+  if (!normalized || normalized === 'none') {
+    return null;
+  }
+
+  if (["indoor", "εσωτερικός χώρος"].includes(normalized)) {
+    return "indoor";
+  }
+
+  if (["outdoor", "εξωτερικός χώρος"].includes(normalized)) {
+    return "outdoor";
+  }
+
+  if (["no_preference", "no preference", "χωρίς προτίμηση"].includes(normalized)) {
+    return "no_preference";
+  }
+
+  return null;
+};
+
 interface ReservationData {
   preferred_date: string;
   preferred_time: string;
@@ -144,6 +166,7 @@ Deno.serve(async (req) => {
     
     if (withReservation && reservationData) {
       logStep("Creating reservation with offer claim", reservationData);
+      const seatingPreference = normalizeSeatingPreference(reservationData.seating_preference);
       
       // Check capacity
       const { data: capacityData, error: capacityError } = await supabaseAdmin.rpc(
@@ -196,9 +219,7 @@ Deno.serve(async (req) => {
           confirmation_code: crypto.randomUUID().substring(0, 6).toUpperCase(),
           source: "offer",
           phone_number: reservationData.phone_number?.trim() || null,
-          seating_preference: reservationData.seating_preference && reservationData.seating_preference !== 'none'
-            ? reservationData.seating_preference
-            : null,
+          seating_preference: seatingPreference,
         })
         .select()
         .single();
