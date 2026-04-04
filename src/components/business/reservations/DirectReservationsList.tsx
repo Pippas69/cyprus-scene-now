@@ -148,6 +148,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       contact: 'Επικοινωνία',
       details: 'Λεπτομέρειες',
       dateTime: 'Ημ/νία & Ώρα',
+      creation: 'Δημιουργία',
       type: 'Τύπος',
       status: 'Κατάσταση',
       actions: 'Ενέργειες',
