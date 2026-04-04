@@ -91,6 +91,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     open: false,
     reservationId: null
   });
+  const [cancellationReason, setCancellationReason] = useState('');
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [selectedReservationForQR, setSelectedReservationForQR] = useState<ReservationData | null>(null);
   // Guest tickets per reservation (for reservation-only events with individual QR codes)
@@ -551,13 +552,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const handleCancelReservation = async (reservationId: string) => {
     setCancelDialog({ open: false, reservationId: null });
+    setCancellationReason('');
     setUpcomingReservations((prev) => prev.filter((r) => r.id !== reservationId));
     toast.success(tt.reservationCancelled);
 
     try {
       const cancelReservation = supabase.
       from('reservations').
-      update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+      update({ status: 'cancelled', cancellation_reason: cancellationReason || null, updated_at: new Date().toISOString() } as any).
       eq('id', reservationId).
       eq('user_id', userId);
 
@@ -634,6 +636,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       cancelReservation: 'Ακύρωση',
       confirmCancel: 'Επιβεβαίωση Ακύρωσης',
       confirmCancelDescription: 'Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;',
+      cancellationReasonLabel: 'Λόγος ακύρωσης (προαιρετικό)',
+      cancellationReasonPlaceholder: 'Γράψτε τον λόγο ακύρωσης...',
       cancel: 'Όχι',
       confirm: 'Ναι, Ακύρωση',
       history: 'Ιστορικό Κρατήσεων',
@@ -658,6 +662,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       cancelReservation: 'Cancel',
       confirmCancel: 'Confirm Cancellation',
       confirmCancelDescription: 'Are you sure you want to cancel this reservation?',
+      cancellationReasonLabel: 'Reason for cancellation (optional)',
+      cancellationReasonPlaceholder: 'Enter your reason for cancelling...',
       cancel: 'No',
       confirm: 'Yes, Cancel',
       history: 'Reservation History',
@@ -1037,12 +1043,22 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
         </Collapsible>
       }
 
-      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => { setCancelDialog({ ...cancelDialog, open }); if (!open) setCancellationReason(''); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-1">
+            <label className="text-sm text-muted-foreground">{t.cancellationReasonLabel}</label>
+            <textarea
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[80px] resize-none"
+              placeholder={t.cancellationReasonPlaceholder}
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              maxLength={500}
+            />
+          </div>
           <AlertDialogFooter className="flex-row gap-2">
             <AlertDialogAction
               className="flex-1 h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"

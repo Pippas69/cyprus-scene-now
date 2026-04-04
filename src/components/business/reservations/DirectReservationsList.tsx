@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Users, Phone, Calendar, Building2,
-  Tag, Clock, Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Footprints } from
+  Users, Phone, Calendar,
+  Clock, Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
 'lucide-react';
 import { ManualEntryDialog } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
+
 
 interface DirectReservation {
   id: string;
@@ -38,6 +38,7 @@ interface DirectReservation {
   confirmation_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
+  cancellation_reason: string | null;
   profiles?: {name: string;email: string;};
   offer_purchase?: {id: string;discount: {title: string;};} | null;
   auto_created_from_tickets?: boolean;
@@ -172,6 +173,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       staffMemo: 'Σημειώσεις',
       staffMemoPlaceholder: 'Σημείωση για το team...',
       customerNote: 'Σχόλιο πελάτη',
+      email: 'Email',
+      createdAt: 'Ημ. Δημιουργίας',
+      cancellationReason: 'Λόγος Ακύρωσης',
+      noCancellationReason: 'Δεν δόθηκε λόγος ακύρωσης',
     },
     en: {
       title: 'Profile & Offer Reservations',
@@ -208,6 +213,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       staffMemo: 'Notes',
       staffMemoPlaceholder: 'Note for the team...',
       customerNote: 'Customer note',
+      email: 'Email',
+      createdAt: 'Created',
+      cancellationReason: 'Cancellation Reason',
+      noCancellationReason: 'No cancellation reason provided',
     }
   };
 
@@ -318,7 +327,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
-          profiles(name, email)
+          cancellation_reason, profiles(name, email)
         `);
 
       if (linked) {
@@ -824,13 +833,45 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       }
     }
     if (reservation.status === 'cancelled') {
-      return <Badge variant="outline" className="text-muted-foreground">{t.cancelled}</Badge>;
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="cursor-pointer">
+              <Badge variant="outline" className="text-muted-foreground hover:bg-muted/50 transition-colors">{t.cancelled}</Badge>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" side="right">
+            <div className="p-2.5 border-b border-border/50 bg-muted/30">
+              <div className="text-xs font-medium text-muted-foreground">{t.cancellationReason}</div>
+            </div>
+            <div className="p-2.5">
+              <p className="text-sm leading-relaxed">{reservation.cancellation_reason || t.noCancellationReason}</p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
     }
     if (reservation.status === 'accepted' && reservation.preferred_time) {
       const slotTime = new Date(reservation.preferred_time);
       const graceEnd = addMinutes(slotTime, 15);
       if (isAfter(now, graceEnd)) {
-        return <Badge variant="destructive">{t.noShow}</Badge>;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge variant="destructive" className="hover:opacity-80 transition-opacity">{t.noShow}</Badge>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" side="right">
+              <div className="p-2.5 border-b border-border/50 bg-muted/30">
+                <div className="text-xs font-medium text-muted-foreground">{t.cancellationReason}</div>
+              </div>
+              <div className="p-2.5">
+                <p className="text-sm leading-relaxed">{reservation.cancellation_reason || t.noCancellationReason}</p>
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
       }
     }
     if (reservation.status === 'accepted') {
@@ -853,37 +894,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         return t.fromProfile;
       }
     }
-  };
-
-  const getSourceBadgeStyle = (reservation: DirectReservation) => {
-    const src = reservation.source || 'profile';
-    if (src === 'walk_in' || src === 'manual') {
-      return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800';
-    }
-    if (src === 'walk_in_offer') {
-      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
-    }
-    if (src === 'offer' || reservation.offer_purchase) {
-      return 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800';
-    }
-    if (src === 'ticket_auto') {
-      return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800';
-    }
-    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800';
-  };
-
-  const getSourceIcon = (reservation: DirectReservation) => {
-    const src = reservation.source || 'profile';
-    if (src === 'walk_in' || src === 'walk_in_offer' || src === 'manual') {
-      return <Footprints className="h-3 w-3 mr-1" />;
-    }
-    if (src === 'offer' || reservation.offer_purchase) {
-      return <Tag className="h-3 w-3 mr-1" />;
-    }
-    if (src === 'ticket_auto') {
-      return <Ticket className="h-3 w-3 mr-1" />;
-    }
-    return <Building2 className="h-3 w-3 mr-1" />;
   };
 
   // Editable cell component
@@ -1543,14 +1553,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
 
       <div className="rounded-md border w-full overflow-x-auto">
-          <Table className="w-full min-w-[700px] table-fixed text-sm">
+          <Table className="w-full min-w-[900px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[20%]">{t.name}</TableHead>
-                <TableHead className="w-[20%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[20%]">{t.details}</TableHead>
-                <TableHead className="w-[18%]">{t.status}</TableHead>
-                <TableHead className="w-[22%]">{t.staffMemo}</TableHead>
+                <TableHead className="w-[18%]">{t.name}</TableHead>
+                <TableHead className="w-[14%]">{t.email}</TableHead>
+                <TableHead className="w-[14%]">{t.dateTime}</TableHead>
+                <TableHead className="w-[16%]">{t.details}</TableHead>
+                <TableHead className="w-[12%]">{t.status}</TableHead>
+                <TableHead className="w-[10%]">{t.createdAt}</TableHead>
+                <TableHead className="w-[16%]">{t.staffMemo}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1574,6 +1586,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       }
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    <span className="text-sm text-muted-foreground truncate block">
+                      {reservation.profiles?.email || '—'}
+                    </span>
                   </TableCell>
 
                   <TableCell className="align-top pl-2">
@@ -1613,6 +1631,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
                     </div>
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {format(new Date(reservation.created_at), 'dd MMM yyyy', { locale: language === 'el' ? el : enUS })}
+                    </span>
                   </TableCell>
 
                   <TableCell className="align-top">
