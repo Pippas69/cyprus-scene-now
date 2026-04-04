@@ -824,6 +824,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       // Update local state
       setReservations((prev) => sortReservationsByName(prev.map((r) => r.id === id ? { ...r, ...updateData } : r)));
+      // Invalidate CRM cache so changes appear immediately
+      queryClient.invalidateQueries({ queryKey: ['crm-guests', businessId] });
       toast.success(t.saved);
     } catch (err) {
       console.error('Error saving:', err);
