@@ -201,6 +201,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   // Fetch purchased offers with expanded data
   const { data: purchases, isLoading } = useQuery({
     queryKey: ["user-offer-purchases", userId],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase.
       from("offer_purchases").
