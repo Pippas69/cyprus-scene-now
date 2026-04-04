@@ -877,7 +877,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           <Popover>
             <PopoverTrigger asChild>
               <button className="cursor-pointer">
-                <Badge variant="destructive" className="hover:opacity-80 transition-opacity">{t.noShow}</Badge>
+                <Badge variant="destructive" className="hover:opacity-80 transition-opacity whitespace-nowrap">{t.noShow}</Badge>
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0" side="right">
