@@ -4421,6 +4421,7 @@ export type Database = {
           reservation_name: string
           seating_preference: string | null
           seating_type_id: string | null
+          source: string
           special_requests: string | null
           staff_memo: string | null
           status: string
@@ -4458,6 +4459,7 @@ export type Database = {
           reservation_name: string
           seating_preference?: string | null
           seating_type_id?: string | null
+          source?: string
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
@@ -4495,6 +4497,7 @@ export type Database = {
           reservation_name?: string
           seating_preference?: string | null
           seating_type_id?: string | null
+          source?: string
           special_requests?: string | null
           staff_memo?: string | null
           status?: string
