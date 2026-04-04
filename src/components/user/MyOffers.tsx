@@ -64,6 +64,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;purchase: OfferPurchase | null;}>({ open: false, purchase: null });
+  const [cancellationReason, setCancellationReason] = useState('');
   const queryClient = useQueryClient();
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const highlightedPurchaseId = searchParams.get('purchaseId');
@@ -106,6 +107,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     cancelReservation: { el: "Ακύρωση", en: "Cancel" },
     confirmCancel: { el: "Επιβεβαίωση Ακύρωσης", en: "Confirm Cancellation" },
     confirmCancelDescription: { el: "Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;", en: "Are you sure you want to cancel this reservation?" },
+    cancellationReasonLabel: { el: "Λόγος ακύρωσης (προαιρετικό)", en: "Reason for cancellation (optional)" },
+    cancellationReasonPlaceholder: { el: "Γράψτε τον λόγο ακύρωσης...", en: "Enter your reason for cancelling..." },
     cancelConfirm: { el: "Ακύρωση Κράτησης", en: "Cancel Reservation" },
     cancelBack: { el: "Πίσω", en: "Back" },
     reservationCancelled: { el: "Η κράτηση ακυρώθηκε", en: "Reservation cancelled" },
@@ -150,6 +153,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     cancelReservation: text.cancelReservation.el,
     confirmCancel: text.confirmCancel.el,
     confirmCancelDescription: text.confirmCancelDescription.el,
+    cancellationReasonLabel: text.cancellationReasonLabel.el,
+    cancellationReasonPlaceholder: text.cancellationReasonPlaceholder.el,
     cancelConfirm: text.cancelConfirm.el,
     cancelBack: text.cancelBack.el,
     reservationCancelled: text.reservationCancelled.el,
@@ -192,6 +197,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     cancelReservation: text.cancelReservation.en,
     confirmCancel: text.confirmCancel.en,
     confirmCancelDescription: text.confirmCancelDescription.en,
+    cancellationReasonLabel: text.cancellationReasonLabel.en,
+    cancellationReasonPlaceholder: text.cancellationReasonPlaceholder.en,
     cancelConfirm: text.cancelConfirm.en,
     cancelBack: text.cancelBack.en,
     reservationCancelled: text.reservationCancelled.en,
@@ -294,13 +301,15 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   });
 
   const handleCancelOfferReservation = async (purchase: OfferPurchase) => {
+    const reason = cancellationReason;
     setCancelDialog({ open: false, purchase: null });
+    setCancellationReason('');
     try {
       if (purchase.reservation_id) {
         // Cancel the reservation (frees slots via existing DB logic)
         const { error: resError } = await supabase.
         from('reservations').
-        update({ status: 'cancelled', updated_at: new Date().toISOString() }).
+        update({ status: 'cancelled', cancellation_reason: reason || null, updated_at: new Date().toISOString() } as any).
         eq('id', purchase.reservation_id).
         eq('user_id', userId);
         if (resError) throw resError;
@@ -717,12 +726,22 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         language={language}
         onClose={() => setSelectedPurchase(null)} />
       
-      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => { setCancelDialog({ ...cancelDialog, open }); if (!open) setCancellationReason(''); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.confirmCancel}</AlertDialogTitle>
             <AlertDialogDescription>{t.confirmCancelDescription}</AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-1">
+            <label className="text-sm text-muted-foreground">{t.cancellationReasonLabel}</label>
+            <textarea
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[80px] resize-none"
+              placeholder={t.cancellationReasonPlaceholder}
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              maxLength={500}
+            />
+          </div>
           <AlertDialogFooter className="flex-row gap-2">
             <AlertDialogAction
               className="flex-1 h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -731,7 +750,6 @@ export function MyOffers({ userId, language }: MyOffersProps) {
                 if (!cancelDialog.purchase) return;
                 await handleCancelOfferReservation(cancelDialog.purchase);
               }}>
-              
               {t.cancelConfirm}
             </AlertDialogAction>
             <AlertDialogCancel className="flex-1 h-9 text-xs mt-0">{t.cancelBack}</AlertDialogCancel>
