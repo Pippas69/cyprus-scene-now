@@ -795,14 +795,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           if (reservation.is_manual_entry || !reservation.user_id) {
             const oldName = reservation.reservation_name?.trim();
             if (oldName) {
-              await supabase
+              // Find the first matching ghost CRM guest by name
+              const { data: crmGuest } = await supabase
                 .from('crm_guests')
-                .update({ ...crmUpdate, updated_at: new Date().toISOString() })
+                .select('id')
                 .eq('business_id', businessId)
                 .eq('guest_name', oldName)
                 .is('user_id', null)
                 .order('created_at', { ascending: true })
-                .limit(1);
+                .limit(1)
+                .maybeSingle();
+              if (crmGuest) {
+                await supabase
+                  .from('crm_guests')
+                  .update({ ...crmUpdate, updated_at: new Date().toISOString() })
+                  .eq('id', crmGuest.id);
+              }
             }
           } else if (reservation.user_id) {
             await supabase
