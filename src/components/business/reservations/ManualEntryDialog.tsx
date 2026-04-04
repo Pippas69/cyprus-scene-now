@@ -281,7 +281,7 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: entryType === 'direct' ? 'walk_in' : 'manual',
+          source: sourceType,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
