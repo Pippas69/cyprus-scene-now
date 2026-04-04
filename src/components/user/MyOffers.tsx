@@ -64,6 +64,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;purchase: OfferPurchase | null;}>({ open: false, purchase: null });
+  const [cancellationReason, setCancellationReason] = useState('');
   const queryClient = useQueryClient();
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const highlightedPurchaseId = searchParams.get('purchaseId');
