@@ -202,11 +202,11 @@ export const ManualEntryDialog = ({
     setPhone('');
     setEmail('');
     setCity('');
-    setPartySize('1');
+    setPartySize('');
     setDate('');
     setTime('');
     setSeatingPreference('');
-    setSourceType('walk_in');
+    setSourceType('');
     setNotes('');
     setMinAge('');
     setMinCharge('');
