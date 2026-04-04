@@ -14,7 +14,7 @@ const SocialIcons = () => (
     {[
       { href: "https://instagram.com/fomo.cy", icon: <Instagram className="w-3.5 h-3.5 text-aegean" />, label: "Instagram" },
       { href: "https://tiktok.com/@fomo.cy", icon: <TikTokIcon className="w-3.5 h-3.5 text-aegean" />, label: "TikTok" },
-      { href: "mailto:support@fomocy.com", icon: <Mail className="w-3.5 h-3.5 text-aegean" />, label: "Email" },
+      { href: "mailto:support@fomo.com.cy", icon: <Mail className="w-3.5 h-3.5 text-aegean" />, label: "Email" },
     ].map((s) => (
       <a
         key={s.label}
@@ -149,9 +149,9 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@fomocy.com" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
+                <a href="mailto:support@fomo.com.cy" className="text-white/40 hover:text-seafoam transition-colors text-[9px] sm:text-xs lg:text-sm">
                   <span className="sm:hidden">support@fomocy</span>
-                  <span className="hidden sm:inline">support@fomocy.com</span>
+                  <span className="hidden sm:inline">support@fomo.com.cy</span>
                 </a>
               </li>
             </ul>

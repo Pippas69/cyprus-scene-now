@@ -531,7 +531,7 @@ const TermsOfService = () => {
       contact: {
         title: "Επικοινωνία",
         content: "Για ερωτήσεις σχετικά με τους Όρους Χρήσης, επικοινωνήστε μαζί μας:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ Cyprus, Λευκωσία, Κύπρος",
       },
     },
@@ -1026,7 +1026,7 @@ const TermsOfService = () => {
       contact: {
         title: "Contact",
         content: "For questions about the Terms of Use, contact us:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ Cyprus, Nicosia, Cyprus",
       },
     },

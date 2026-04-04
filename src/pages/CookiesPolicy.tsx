@@ -130,7 +130,7 @@ const CookiesPolicy = () => {
       contact: {
         title: "11. Επικοινωνία",
         content: "Για ερωτήσεις σχετικά με τη χρήση cookies ή για να ασκήσετε τα δικαιώματά σας:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ, Λευκωσία, Κύπρος",
       },
     },
@@ -256,7 +256,7 @@ const CookiesPolicy = () => {
       contact: {
         title: "11. Contact",
         content: "For questions about cookie usage or to exercise your rights:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ, Nicosia, Cyprus",
       },
     },
