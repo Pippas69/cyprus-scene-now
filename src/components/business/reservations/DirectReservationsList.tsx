@@ -63,6 +63,7 @@ interface DirectReservationsListProps {
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   searchQuery?: string;
+  selectedDate?: Date | null;
 }
 
 // Cache for seating tiers
