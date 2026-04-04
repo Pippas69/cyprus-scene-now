@@ -917,16 +917,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return <Badge variant="outline">{reservation.status}</Badge>;
   };
 
-  const getSourceLabel = (reservation: DirectReservation): string => {
-    const src = reservation.source || 'profile';
+  const getSourceLabel = (reservation: DirectReservation): string | null => {
+    const src = reservation.source;
+    if (!src) return null;
     switch (src) {
       case 'walk_in': return t.walkIn;
       case 'walk_in_offer': return t.walkInOffer;
       case 'offer': return t.fromOffer;
       case 'ticket_auto': return t.fromTickets;
       case 'manual': return t.walkIn;
+      case 'profile': {
+        if (reservation.offer_purchase) return t.fromOffer;
+        return t.fromProfile;
+      }
       default: {
-        // Fallback: check offer_purchase for legacy data
         if (reservation.offer_purchase) return t.fromOffer;
         return t.fromProfile;
       }
