@@ -24,6 +24,7 @@ import Feed from "./pages/Feed";
 import Ekdiloseis from "./pages/Ekdiloseis";
 import Xartis from "./pages/Xartis";
 import Offers from "./pages/Offers";
+import DashboardBusiness from "./pages/DashboardBusiness";
 
 // Auth pages loaded eagerly to avoid layout flicker from landing page
 import Signup from "./pages/Signup";
@@ -33,7 +34,6 @@ import ResetPassword from "./pages/ResetPassword";
 import SignupBusiness from "./pages/SignupBusiness";
 
 // Secondary pages lazy-loaded for reduced initial bundle
-const DashboardBusiness = lazy(() => import("./pages/DashboardBusiness"));
 const DashboardUser = lazy(() => import("./pages/DashboardUser"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminVerification = lazy(() => import("./pages/AdminVerification"));
