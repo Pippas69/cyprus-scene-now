@@ -55,11 +55,11 @@ export const ManualEntryDialog = ({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
-  const [partySize, setPartySize] = useState('1');
+  const [partySize, setPartySize] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [seatingPreference, setSeatingPreference] = useState('');
-  const [sourceType, setSourceType] = useState<'profile' | 'offer' | 'walk_in' | 'walk_in_offer'>('walk_in');
+  const [sourceType, setSourceType] = useState<'profile' | 'offer' | 'walk_in' | 'walk_in_offer' | ''>('');
   const [notes, setNotes] = useState('');
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
@@ -202,11 +202,11 @@ export const ManualEntryDialog = ({
     setPhone('');
     setEmail('');
     setCity('');
-    setPartySize('1');
+    setPartySize('');
     setDate('');
     setTime('');
     setSeatingPreference('');
-    setSourceType('walk_in');
+    setSourceType('');
     setNotes('');
     setMinAge('');
     setMinCharge('');
@@ -277,13 +277,13 @@ export const ManualEntryDialog = ({
         const insertData: Record<string, any> = {
           user_id: user.id,
           reservation_name: trimmedName,
-          party_size: parseInt(partySize) || 1,
+          party_size: partySize ? parseInt(partySize) : 1,
           status: 'accepted',
           is_manual_entry: true,
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: sourceType,
+          source: sourceType || 'walk_in',
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
@@ -447,7 +447,7 @@ export const ManualEntryDialog = ({
               <Label className={labelClass}>{txt.sourceType}</Label>
               <Select value={sourceType} onValueChange={(v) => setSourceType(v as any)}>
                 <SelectTrigger className={inputClass}>
-                  <SelectValue />
+                  <SelectValue placeholder={txt.selectOption} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="profile">{txt.sourceProfile}</SelectItem>

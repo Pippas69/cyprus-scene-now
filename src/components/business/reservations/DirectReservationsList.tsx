@@ -134,6 +134,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     eventId?: string | null;
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
+  const [tableAssignmentLabels, setTableAssignmentLabels] = useState<Record<string, string>>({});
   const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
   const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
   const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
@@ -401,6 +402,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         }
       } else {
         setReservations(sortedByName);
+        // Fetch table assignments for direct reservations
+        fetchTableAssignments(reservationIds);
       }
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -408,6 +411,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (requestId === fetchReservationsRequestRef.current) {
         setLoading(false);
       }
+    }
+  };
+
+  const fetchTableAssignments = async (reservationIds: string[]) => {
+    if (reservationIds.length === 0) return;
+    const { data } = await supabase
+      .from('reservation_table_assignments')
+      .select('reservation_id, floor_plan_tables(label)')
+      .in('reservation_id', reservationIds);
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach((a: any) => {
+        const label = a.floor_plan_tables?.label;
+        if (label) map[a.reservation_id] = label;
+      });
+      setTableAssignmentLabels(map);
     }
   };
 
@@ -1642,11 +1661,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </div>
                   </TableCell>
 
-                  {/* 4. Θέση (Seating) */}
+                  {/* 4. Θέση (Seating) + Table assignment */}
                   <TableCell className="align-top">
-                    <span className="text-sm text-foreground whitespace-nowrap">
-                      {seatingLabel || '—'}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm text-foreground whitespace-nowrap">
+                        {seatingLabel || '—'}
+                      </span>
+                      {tableAssignmentLabels[reservation.id] && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {tableAssignmentLabels[reservation.id]}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
 
                   {/* 5. Status */}
