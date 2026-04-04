@@ -1,30 +1,24 @@
 
 
-## Fix Stripe Connect Webhook - Ενημέρωση Signing Secret
+## Αλλαγή email σε `support@fomo.com.cy` — Όλα τα 9 αρχεία
 
-### Τι θα κάνουμε
-Ενημέρωση της τιμής του `STRIPE_CONNECT_WEBHOOK_SECRET` με το σωστό signing secret από το Stripe Dashboard.
+Αντικατάσταση του `support@fomocy.com` με `support@fomo.com.cy` παντού, ώστε να ταιριάζει με το verified domain στο Resend.
 
-### Βήματα
+### Αλλαγές
 
-**Βήμα 1: Πάρε το Signing Secret από το Stripe Dashboard**
-1. Πήγαινε στο **Stripe Dashboard → Developers → Webhooks**
-2. Κάνε κλικ στο **"ΦΟΜΟ Stripe Connect live version"**
-3. Βρες το **"Signing secret"** (κουμπί "Reveal")
-4. Αντέγραψέ το (ξεκινάει με `whsec_...`)
+Σε κάθε αρχείο: `mailto:support@fomocy.com` → `mailto:support@fomo.com.cy` και displayed text αντίστοιχα.
 
-**Βήμα 2: Ενημέρωση του secret στο project**
-Θα χρησιμοποιήσω το εργαλείο `add_secret` για να ενημερώσω το `STRIPE_CONNECT_WEBHOOK_SECRET` με τη νέα τιμή.
+1. **`src/components/Footer.tsx`** — social icon mailto + support email link/text
+2. **`src/pages/Contact.tsx`** — contact info
+3. **`src/pages/ForBusinesses.tsx`** — enterprise contact
+4. **`src/pages/PricingPublic.tsx`** — enterprise contact
+5. **`src/pages/CookiesPolicy.tsx`** — contact section
+6. **`src/pages/LicenseAgreement.tsx`** — contact section
+7. **`src/pages/TermsOfService.tsx`** — contact section
+8. **`src/pages/PrivacyPolicy.tsx`** — contact section
+9. **`.memory/technical/email/resend-integration.md`** — documentation
 
-**Βήμα 3: Re-deploy του Edge Function**
-Θα κάνω deploy ξανά το `stripe-connect-webhook` function για να πάρει τη νέα τιμή.
-
-### Τι επηρεάζεται
-- **Μόνο** το `stripe-connect-webhook` edge function
-- Κανένα άλλο webhook, κανένα frontend component, κανένα database table
-- Μετά τη διόρθωση, τα events `account.updated` θα επεξεργάζονται κανονικά και τα πεδία `stripe_onboarding_completed` / `stripe_payouts_enabled` θα ενημερώνονται αυτόματα
-
-### Τεχνικές λεπτομέρειες
-- Το secret χρησιμοποιείται στη γραμμή 41 του `stripe-connect-webhook/index.ts` για signature verification μέσω `stripe.webhooks.constructEventAsync()`
-- Χωρίς σωστό secret, το function πέφτει στο fallback `JSON.parse(body)` που αποτυγχάνει με `Unexpected end of JSON input`
+### Σημείωση
+- Στο footer mobile, θα εμφανίζεται `support@fomo.com` (κρύβοντας το `.cy`) για να χωράει
+- Τώρα UI και backend χρησιμοποιούν το ίδιο email: `support@fomo.com.cy`
 
