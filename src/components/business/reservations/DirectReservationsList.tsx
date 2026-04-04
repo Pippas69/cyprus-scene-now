@@ -1555,9 +1555,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) => {
-                const typeLabel = reservation.offer_purchase
-                  ? (language === 'el' ? 'Προσφορά' : 'Offer')
-                  : (language === 'el' ? 'Προφίλ' : 'Profile');
+                const typeLabel = getSourceLabel(reservation);
 
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
