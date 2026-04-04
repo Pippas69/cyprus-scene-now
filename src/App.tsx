@@ -186,10 +186,15 @@ const App = () => {
     if (!splash) return;
 
     const MIN_SPLASH_MS = 2800;
+    const MAX_SPLASH_MS = 4500;
     const splashStart = (window as { __fomoSplashStart?: number }).__fomoSplashStart ?? performance.now();
     let timer: number | undefined;
+    let failsafeTimer: number | undefined;
+    let removed = false;
 
     const removeSplash = () => {
+      if (removed || !splash.isConnected) return;
+      removed = true;
       splash.classList.add('fade-out');
       window.setTimeout(() => splash.remove(), 400);
     };
@@ -197,18 +202,22 @@ const App = () => {
     const scheduleRemoval = () => {
       const elapsed = performance.now() - splashStart;
       const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
-      timer = window.setTimeout(removeSplash, remaining);
+      timer = window.setTimeout(() => {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(removeSplash);
+        });
+      }, remaining);
     };
 
-    if (document.readyState === 'complete') {
-      scheduleRemoval();
-    } else {
-      window.addEventListener('load', scheduleRemoval, { once: true });
-    }
+    scheduleRemoval();
+
+    const maxElapsed = performance.now() - splashStart;
+    const maxRemaining = Math.max(0, MAX_SPLASH_MS - maxElapsed);
+    failsafeTimer = window.setTimeout(removeSplash, maxRemaining);
 
     return () => {
       if (timer) window.clearTimeout(timer);
-      window.removeEventListener('load', scheduleRemoval);
+      if (failsafeTimer) window.clearTimeout(failsafeTimer);
     };
   }, []);
 
