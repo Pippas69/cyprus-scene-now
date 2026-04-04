@@ -148,6 +148,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       contact: 'Επικοινωνία',
       details: 'Λεπτομέρειες',
       dateTime: 'Ημ/νία & Ώρα',
+      creation: 'Δημιουργία',
       type: 'Τύπος',
       status: 'Κατάσταση',
       actions: 'Ενέργειες',
@@ -215,6 +216,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       customerNote: 'Customer note',
       email: 'Email',
       createdAt: 'Created',
+      creation: 'Created',
       cancellationReason: 'Cancellation Reason',
       noCancellationReason: 'No cancellation reason provided',
     }
@@ -1556,21 +1558,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           <Table className="w-full min-w-[900px] table-fixed text-sm">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[18%]">{t.name}</TableHead>
-                <TableHead className="w-[14%]">{t.email}</TableHead>
+                <TableHead className="w-[17%]">{t.name}</TableHead>
                 <TableHead className="w-[14%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[16%]">{t.details}</TableHead>
+                <TableHead className="w-[15%]">{t.details}</TableHead>
                 <TableHead className="w-[12%]">{t.status}</TableHead>
-                <TableHead className="w-[10%]">{t.createdAt}</TableHead>
-                <TableHead className="w-[16%]">{t.staffMemo}</TableHead>
+                <TableHead className="w-[14%]">{t.staffMemo}</TableHead>
+                <TableHead className="w-[14%]">{t.creation}</TableHead>
+                <TableHead className="w-[14%]">{t.email}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredReservations.map((reservation) => {
                 const typeLabel = getSourceLabel(reservation);
+                const seatingLabel = reservation.seating_preference
+                  ? (reservation.seating_preference === 'indoor' ? t.indoor :
+                     reservation.seating_preference === 'outdoor' ? t.outdoor :
+                     reservation.seating_preference)
+                  : null;
 
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
+                  {/* 1. Name + Phone */}
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
                       <EditableCell
@@ -1588,31 +1596,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </div>
                   </TableCell>
 
-                  <TableCell className="align-top">
-                    <span className="text-sm text-muted-foreground truncate block">
-                      {reservation.profiles?.email || '—'}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="align-top pl-2">
-                    {reservation.preferred_time &&
-                      <div className="flex items-center gap-2 min-w-0 -ml-2">
-                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="preferred_time"
-                          displayValue={format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
-                          rawValue={format(new Date(reservation.preferred_time), "yyyy-MM-dd'T'HH:mm")}
-                          inputType="datetime-local"
-                        />
-                      </div>
-                    }
-                  </TableCell>
-
+                  {/* 2. Date & Time + People below */}
                   <TableCell className="align-top">
                     <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      {reservation.preferred_time ? (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <EditableCell
+                            reservationId={reservation.id}
+                            field="preferred_time"
+                            displayValue={format(new Date(reservation.preferred_time), 'dd MMM, HH:mm', { locale: language === 'el' ? el : enUS })}
+                            rawValue={format(new Date(reservation.preferred_time), "yyyy-MM-dd'T'HH:mm")}
+                            inputType="datetime-local"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                      <div className="flex items-center gap-1.5 min-w-0 mt-0.5">
+                        <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         <EditableCell
                           reservationId={reservation.id}
                           field="party_size"
@@ -1620,27 +1622,43 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={String(reservation.party_size)}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground ml-4">{typeLabel}</span>
-                      {cityByReservation[reservation.id] && (
-                        <span className="text-sm text-foreground ml-4">{cityByReservation[reservation.id]}</span>
+                    </div>
+                  </TableCell>
+
+                  {/* 3. Details: Source + Seating (white text) */}
+                  <TableCell className="align-top">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm text-foreground whitespace-nowrap">{typeLabel}</span>
+                      {seatingLabel && (
+                        <span className="text-sm text-foreground whitespace-nowrap">{seatingLabel}</span>
                       )}
                     </div>
                   </TableCell>
 
+                  {/* 4. Status */}
                   <TableCell className="align-top">
                     <div className="flex items-center gap-1.5">
                       {getStatusBadge(reservation)}
                     </div>
                   </TableCell>
 
+                  {/* 5. Notes */}
+                  <TableCell className="align-top">
+                    {renderStaffMemoCell(reservation)}
+                  </TableCell>
+
+                  {/* 6. Δημιουργία (date + time) */}
                   <TableCell className="align-top">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {format(new Date(reservation.created_at), 'dd MMM yyyy', { locale: language === 'el' ? el : enUS })}
+                      {format(new Date(reservation.created_at), 'dd MMM yyyy, HH:mm', { locale: language === 'el' ? el : enUS })}
                     </span>
                   </TableCell>
 
+                  {/* 7. Email */}
                   <TableCell className="align-top">
-                    {renderStaffMemoCell(reservation)}
+                    <span className="text-sm text-muted-foreground truncate block">
+                      {reservation.profiles?.email || '—'}
+                    </span>
                   </TableCell>
                 </TableRow>
                 );
