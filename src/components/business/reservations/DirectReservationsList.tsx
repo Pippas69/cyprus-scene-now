@@ -216,7 +216,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       customerNote: 'Customer note',
       email: 'Email',
       createdAt: 'Created',
-      cancellationReason: 'Cancellation Reason',
+      creation: 'Created',
       noCancellationReason: 'No cancellation reason provided',
     }
   };
