@@ -636,6 +636,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       cancelReservation: 'Ακύρωση',
       confirmCancel: 'Επιβεβαίωση Ακύρωσης',
       confirmCancelDescription: 'Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;',
+      cancellationReasonLabel: 'Λόγος ακύρωσης (προαιρετικό)',
+      cancellationReasonPlaceholder: 'Γράψτε τον λόγο ακύρωσης...',
       cancel: 'Όχι',
       confirm: 'Ναι, Ακύρωση',
       history: 'Ιστορικό Κρατήσεων',
