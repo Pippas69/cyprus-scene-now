@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { InlineAuthGate } from "@/components/tickets/InlineAuthGate";
 import { ProfileCompletionGate } from "@/components/tickets/ProfileCompletionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -100,6 +101,7 @@ interface ClaimSuccessData {
 
 export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, language }: OfferClaimDialogProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -547,6 +549,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
       }
 
       if (data?.success) {
+        if (userId) {
+          await queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+          await queryClient.refetchQueries({ queryKey: ["user-offer-purchases", userId], type: "active" });
+        }
+
         setClaimSuccess({
           purchaseId: data.purchaseId,
           qrCodeToken: data.qrCodeToken,
@@ -574,6 +581,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleViewMyOffers = () => {
+    if (userId) {
+      void queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+      void queryClient.refetchQueries({ queryKey: ["user-offer-purchases", userId], type: "active" });
+    }
     onClose();
     navigate("/dashboard-user?tab=offers");
   };
