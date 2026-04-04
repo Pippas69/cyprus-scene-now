@@ -402,6 +402,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         }
       } else {
         setReservations(sortedByName);
+        // Fetch table assignments for direct reservations
+        fetchTableAssignments(reservationIds);
       }
     } catch (error) {
       console.error('Error fetching reservations:', error);
