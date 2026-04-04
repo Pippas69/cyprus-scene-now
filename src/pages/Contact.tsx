@@ -330,13 +330,13 @@ const Contact = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = "mailto:support@fomocy.com";
+                      window.location.href = "mailto:support@fomo.com.cy";
                     }}
                     className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors cursor-pointer w-full text-left"
                     style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
 
                     <Mail className="w-5 h-5 flex-shrink-0" />
-                    <span>support@fomocy.com</span>
+                    <span>support@fomo.com.cy</span>
                   </button>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <MapPin className="w-5 h-5" />
@@ -375,7 +375,7 @@ const Contact = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      window.location.href = "mailto:support@fomocy.com";
+                      window.location.href = "mailto:support@fomo.com.cy";
                     }}
                     className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
                     style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}

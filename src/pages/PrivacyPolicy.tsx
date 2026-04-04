@@ -243,7 +243,7 @@ const PrivacyPolicy = () => {
           "Δικαιώματα σχετικά με αυτοματοποιημένη λήψη αποφάσεων και profiling.",
           "Δικαίωμα ανάκλησης συγκατάθεσης: Ανά πάσα στιγμή, χωρίς επηρεασμό της νομιμότητας προηγούμενης επεξεργασίας.",
         ],
-        note: "Για να ασκήσετε τα δικαιώματά σας, επικοινωνήστε στο support@fomocy.com. Έχετε επίσης δικαίωμα καταγγελίας στην Επίτροπο Προστασίας Δεδομένων Κύπρου:\n\nΕπίτροπος Προστασίας Δεδομένων\nΚυπρανόρος 15, 1061 Λευκωσία\nΤ.Θ. 23378, 1682 Λευκωσία\nΤηλ: +35722818456\nFax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
+        note: "Για να ασκήσετε τα δικαιώματά σας, επικοινωνήστε στο support@fomo.com.cy. Έχετε επίσης δικαίωμα καταγγελίας στην Επίτροπο Προστασίας Δεδομένων Κύπρου:\n\nΕπίτροπος Προστασίας Δεδομένων\nΚυπρανόρος 15, 1061 Λευκωσία\nΤ.Θ. 23378, 1682 Λευκωσία\nΤηλ: +35722818456\nFax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
       },
 
       // ── 2.9 Ασφάλεια ────────────────────────────────
@@ -386,7 +386,7 @@ const PrivacyPolicy = () => {
           "Αλλαγές Πολιτικής (§3.11): Δικαίωμα τροποποίησης ανά πάσα στιγμή με ειδοποίηση.",
           "Συμμόρφωση (§3.12): Επιβολή πολιτικής σε όλα τα τμήματα, πειθαρχικές ενέργειες για παραβάσεις.",
         ],
-        note: "Για άσκηση δικαιωμάτων επικοινωνήστε στο support@fomocy.com.\n\nΕπίτροπος Προστασίας Δεδομένων Κύπρου:\nΚυπρανόρος 15, 1061 Λευκωσία\nΤ.Θ. 23378, 1682 Λευκωσία\nΤηλ: +35722818456 | Fax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
+        note: "Για άσκηση δικαιωμάτων επικοινωνήστε στο support@fomo.com.cy.\n\nΕπίτροπος Προστασίας Δεδομένων Κύπρου:\nΚυπρανόρος 15, 1061 Λευκωσία\nΤ.Θ. 23378, 1682 Λευκωσία\nΤηλ: +35722818456 | Fax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
       },
     ] as Section[],
   };
@@ -609,7 +609,7 @@ const PrivacyPolicy = () => {
           "Rights in relation to automated decision-making and profiling.",
           "Right to withdraw consent: At any time, without affecting the lawfulness of prior processing.",
         ],
-        note: "To exercise your rights, contact support@fomocy.com. You also have the right to complain to the Cyprus Data Protection Commissioner:\n\nData Protection Commissioner\nKypranoros 15, 1061 Nicosia\nP.O. Box 23378, 1682 Nicosia\nTel: +35722818456\nFax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
+        note: "To exercise your rights, contact support@fomo.com.cy. You also have the right to complain to the Cyprus Data Protection Commissioner:\n\nData Protection Commissioner\nKypranoros 15, 1061 Nicosia\nP.O. Box 23378, 1682 Nicosia\nTel: +35722818456\nFax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
       },
 
       // ── 2.9 Data Security ──────────────────────────
@@ -752,7 +752,7 @@ const PrivacyPolicy = () => {
           "Policy Changes (§3.11): Right to modify at any time with notification.",
           "Compliance (§3.12): Policy enforced across all divisions, disciplinary actions for breaches.",
         ],
-        note: "To exercise your rights, contact support@fomocy.com.\n\nCyprus Data Protection Commissioner:\nKypranoros 15, 1061 Nicosia\nP.O. Box 23378, 1682 Nicosia\nTel: +35722818456 | Fax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
+        note: "To exercise your rights, contact support@fomo.com.cy.\n\nCyprus Data Protection Commissioner:\nKypranoros 15, 1061 Nicosia\nP.O. Box 23378, 1682 Nicosia\nTel: +35722818456 | Fax: +35722304565\nEmail: commissioner@dataprotection.gov.cy",
       },
     ] as Section[],
   };

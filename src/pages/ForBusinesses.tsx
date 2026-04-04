@@ -822,11 +822,11 @@ const ForBusinesses = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs sm:text-sm text-muted-foreground">{content.enterprise.contactUs}</span>
                   <a 
-                    href="mailto:support@fomocy.com"
+                    href="mailto:support@fomo.com.cy"
                     className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-foreground text-background font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity"
                   >
                     <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    support@fomocy.com
+                    support@fomo.com.cy
                   </a>
                 </div>
               </div>

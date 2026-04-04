@@ -276,7 +276,7 @@ const LicenseAgreement = () => {
             },
             {
               title: "9.3. Τεχνική Υποστήριξη",
-              content: "Για προβλήματα ή ερωτήσεις, επικοινωνήστε μέσω support@fomocy.com ή μέσω του ιστοτόπου μας.",
+              content: "Για προβλήματα ή ερωτήσεις, επικοινωνήστε μέσω support@fomo.com.cy ή μέσω του ιστοτόπου μας.",
               items: [],
             },
             {
@@ -361,7 +361,7 @@ const LicenseAgreement = () => {
       contact: {
         title: "Επικοινωνία",
         content: "Για ερωτήσεις σχετικά με αυτήν την Άδεια Χρήσης:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ Cyprus, Λευκωσία, Κύπρος",
       },
     },
@@ -604,7 +604,7 @@ const LicenseAgreement = () => {
             },
             {
               title: "9.3. Technical Support",
-              content: "For issues or questions, please contact us at support@fomocy.com or via our website.",
+              content: "For issues or questions, please contact us at support@fomo.com.cy or via our website.",
               items: [],
             },
             {
@@ -689,7 +689,7 @@ const LicenseAgreement = () => {
       contact: {
         title: "Contact",
         content: "For questions about this License Agreement:",
-        email: "support@fomocy.com",
+        email: "support@fomo.com.cy",
         address: "ΦΟΜΟ Cyprus, Nicosia, Cyprus",
       },
     },
