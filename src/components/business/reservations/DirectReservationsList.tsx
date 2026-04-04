@@ -1661,11 +1661,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </div>
                   </TableCell>
 
-                  {/* 4. Θέση (Seating) */}
+                  {/* 4. Θέση (Seating) + Table assignment */}
                   <TableCell className="align-top">
-                    <span className="text-sm text-foreground whitespace-nowrap">
-                      {seatingLabel || '—'}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm text-foreground whitespace-nowrap">
+                        {seatingLabel || '—'}
+                      </span>
+                      {tableAssignmentLabels[reservation.id] && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {tableAssignmentLabels[reservation.id]}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
 
                   {/* 5. Status */}
