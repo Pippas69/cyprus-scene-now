@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { InlineAuthGate } from "@/components/tickets/InlineAuthGate";
 import { ProfileCompletionGate } from "@/components/tickets/ProfileCompletionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
