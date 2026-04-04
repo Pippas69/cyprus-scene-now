@@ -361,11 +361,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       let offerLinkedIds = new Set<string>();
       if (!linked && reservationIds.length > 0) {
-        const { data: offerPurchases } = await supabase.
-        from('offer_purchases').
-        select('reservation_id, discounts(title)').
-        in('reservation_id', reservationIds).
-        not('reservation_id', 'is', null);
+        const { data: offerPurchases } = await supabase
+          .from('offer_purchases')
+          .select('reservation_id, discounts(title)')
+          .in('reservation_id', reservationIds)
+          .not('reservation_id', 'is', null);
 
         if (offerPurchases) {
           offerPurchases.forEach((p) => {
@@ -374,8 +374,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         }
       }
 
+      const emailMap = new Map<string, string | null>();
+      if (reservationIds.length > 0) {
+        const { data: reservationEmails } = await supabase.rpc('get_business_reservation_emails', {
+          p_business_id: businessId,
+          p_reservation_ids: reservationIds,
+        });
+
+        (reservationEmails || []).forEach((row: any) => {
+          emailMap.set(row.reservation_id, row.email || null);
+        });
+      }
+
       const enrichedData = (data || []).map((r) => ({
         ...r,
+        email: emailMap.get(r.id) ?? r.email ?? null,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
       const sortedByName = sortReservationsByName(enrichedData);
