@@ -63,6 +63,7 @@ interface DirectReservationsListProps {
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
   searchQuery?: string;
+  selectedDate?: Date | null;
 }
 
 // Cache for seating tiers
@@ -93,7 +94,7 @@ interface TicketOnlyOrder {
   ticket_code: string | null;
   staff_memo: string | null;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
@@ -836,10 +837,31 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const filteredReservations = useMemo(() => {
-    if (!searchQuery?.trim()) return reservations;
-    const q = searchQuery.trim().toLowerCase();
-    return reservations.filter(r => r.reservation_name?.toLowerCase().includes(q));
-  }, [reservations, searchQuery]);
+    let result = reservations;
+    // Filter by date if selectedDate is provided (Normal mode only)
+    if (selectedDate && !isTicketLinked) {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      result = result.filter(r => {
+        if (!r.preferred_time) return false;
+        return format(new Date(r.preferred_time), 'yyyy-MM-dd') === dateStr;
+      });
+    }
+    // Filter by search query
+    if (searchQuery?.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(r => r.reservation_name?.toLowerCase().includes(q));
+    }
+    // Sort by preferred_time ascending (earliest first) for Normal mode
+    if (!isTicketLinked) {
+      result = [...result].sort((a, b) => {
+        if (!a.preferred_time && !b.preferred_time) return 0;
+        if (!a.preferred_time) return 1;
+        if (!b.preferred_time) return -1;
+        return new Date(a.preferred_time).getTime() - new Date(b.preferred_time).getTime();
+      });
+    }
+    return result;
+  }, [reservations, searchQuery, selectedDate, isTicketLinked]);
 
   const now = new Date();
   const todayStr = format(now, 'yyyy-MM-dd');
@@ -1807,15 +1829,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               {filteredReservations.map((reservation) => {
                 return (
                 <TableRow key={reservation.id} className="hover:bg-transparent">
-                  {/* 1. Name + Phone (no icons) */}
+                  {/* 1. Name + Phone + Customer Note (no icons) */}
                   <TableCell className="min-w-0 align-top">
                     <div className="min-w-0">
-                      <EditableCell
-                        reservationId={reservation.id}
-                        field="reservation_name"
-                        displayValue={reservation.reservation_name}
-                        rawValue={reservation.reservation_name}
-                      />
+                      <div className="flex items-center gap-1">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="reservation_name"
+                          displayValue={reservation.reservation_name}
+                          rawValue={reservation.reservation_name}
+                        />
+                        {renderCustomerNoteBubble(reservation)}
+                      </div>
                       {reservation.phone_number &&
                         <div className="text-sm text-muted-foreground mt-0.5 min-w-0">
                           <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
