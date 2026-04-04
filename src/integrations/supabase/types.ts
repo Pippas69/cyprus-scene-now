@@ -4399,6 +4399,7 @@ export type Database = {
           auto_created_from_tickets: boolean | null
           business_id: string | null
           business_notes: string | null
+          cancellation_reason: string | null
           checked_in_at: string | null
           checked_in_by: string | null
           confirmation_code: string | null
@@ -4437,6 +4438,7 @@ export type Database = {
           auto_created_from_tickets?: boolean | null
           business_id?: string | null
           business_notes?: string | null
+          cancellation_reason?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           confirmation_code?: string | null
@@ -4475,6 +4477,7 @@ export type Database = {
           auto_created_from_tickets?: boolean | null
           business_id?: string | null
           business_notes?: string | null
+          cancellation_reason?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           confirmation_code?: string | null
