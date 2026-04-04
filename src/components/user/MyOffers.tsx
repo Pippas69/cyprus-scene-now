@@ -107,6 +107,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     cancelReservation: { el: "Ακύρωση", en: "Cancel" },
     confirmCancel: { el: "Επιβεβαίωση Ακύρωσης", en: "Confirm Cancellation" },
     confirmCancelDescription: { el: "Είστε σίγουροι ότι θέλετε να ακυρώσετε αυτήν την κράτηση;", en: "Are you sure you want to cancel this reservation?" },
+    cancellationReasonLabel: { el: "Λόγος ακύρωσης (προαιρετικό)", en: "Reason for cancellation (optional)" },
+    cancellationReasonPlaceholder: { el: "Γράψτε τον λόγο ακύρωσης...", en: "Enter your reason for cancelling..." },
     cancelConfirm: { el: "Ακύρωση Κράτησης", en: "Cancel Reservation" },
     cancelBack: { el: "Πίσω", en: "Back" },
     reservationCancelled: { el: "Η κράτηση ακυρώθηκε", en: "Reservation cancelled" },
