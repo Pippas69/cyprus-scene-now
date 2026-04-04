@@ -155,6 +155,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       fromProfile: 'Από Προφίλ',
       fromOffer: 'Από Προσφορά',
       fromTickets: 'Μέσω Εισιτηρίων',
+      walkIn: 'Walk-in',
+      walkInOffer: 'Walk-in Προσφοράς',
       confirmationCode: 'Κωδικός',
       addNotes: 'Σημειώσεις',
       indoor: 'Εσωτερικά',
