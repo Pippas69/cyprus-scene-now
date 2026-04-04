@@ -350,8 +350,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       query = query.order('reservation_name', { ascending: true });
 
-      const { data, error } = await query;
+      const { data: rawData, error } = await query;
       if (error) throw error;
+      // Cast to preserve columns not yet in generated types (e.g. email)
+      const data = rawData as any[] | null;
 
       if (requestId !== fetchReservationsRequestRef.current) return;
 
