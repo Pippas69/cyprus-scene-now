@@ -6,11 +6,15 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Archive, ArchiveRestore, Search, X } from 'lucide-react';
+import { Loader2, Plus, Archive, ArchiveRestore, Search, X, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { format, addDays, subDays } from 'date-fns';
+import { el, enUS } from 'date-fns/locale';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 interface ReservationDashboardProps {
   businessId: string;
