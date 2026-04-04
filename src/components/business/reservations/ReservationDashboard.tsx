@@ -735,6 +735,56 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               >
                 <Plus className="h-4 w-4" />
               </Button>
+              {/* Date picker for filtering reservations */}
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-6 sm:h-9 sm:w-7 p-0"
+                  onClick={() => setSelectedDate(prev => prev ? subDays(prev, 1) : subDays(new Date(), 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm rounded-full border-border/50 whitespace-nowrap"
+                    >
+                      {selectedDate
+                        ? format(selectedDate, 'dd MMM', { locale: language === 'el' ? el : enUS })
+                        : (language === 'el' ? 'Όλες' : 'All')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <div className="p-2 border-b border-border/50">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => { setSelectedDate(null); setDatePickerOpen(false); }}
+                      >
+                        {language === 'el' ? 'Εμφάνιση Όλων' : 'Show All'}
+                      </Button>
+                    </div>
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate || undefined}
+                      onSelect={(date) => { setSelectedDate(date || null); setDatePickerOpen(false); }}
+                      locale={language === 'el' ? el : enUS}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-6 sm:h-9 sm:w-7 p-0"
+                  onClick={() => setSelectedDate(prev => prev ? addDays(prev, 1) : addDays(new Date(), 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             {searchOpen && (
               <div className="flex items-center gap-2">
