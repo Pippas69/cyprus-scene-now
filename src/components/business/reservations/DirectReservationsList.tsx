@@ -213,6 +213,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       staffMemo: 'Notes',
       staffMemoPlaceholder: 'Note for the team...',
       customerNote: 'Customer note',
+      email: 'Email',
+      createdAt: 'Created',
+      cancellationReason: 'Cancellation Reason',
+      noCancellationReason: 'No cancellation reason provided',
     }
   };
 
