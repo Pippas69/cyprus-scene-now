@@ -984,7 +984,150 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   };
 
-  const handleSaveMemo = async (reservationId: string) => {
+  // Dropdown editable cell for source type
+  const SourceEditCell = ({ reservationId, currentValue }: { reservationId: string; currentValue: string | null }) => {
+    const sourceOptions: { value: string; label: string }[] = [
+      { value: 'profile', label: t.fromProfile },
+      { value: 'offer', label: t.fromOffer },
+      { value: 'walk_in', label: t.walkIn },
+      { value: 'walk_in_offer', label: t.walkInOffer },
+    ];
+
+    const handleChange = async (newValue: string) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ source: newValue } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, source: newValue } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving source:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    const currentLabel = currentValue
+      ? (sourceOptions.find(o => o.value === currentValue)?.label || currentValue)
+      : '—';
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground opacity-75">
+            {currentLabel}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-40 p-1" align="start">
+          <div className="flex flex-col">
+            {sourceOptions.map(opt => (
+              <button
+                key={opt.value}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentValue === opt.value ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Dropdown editable cell for seating preference
+  const SeatingEditCell = ({ reservationId, currentValue }: { reservationId: string; currentValue: string | null }) => {
+    const seatingOpts: { value: string; label: string }[] = [
+      { value: 'indoor', label: t.indoor },
+      { value: 'outdoor', label: t.outdoor },
+    ];
+
+    const handleChange = async (newValue: string | null) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ seating_preference: newValue } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, seating_preference: newValue } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving seating:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    const currentLabel = currentValue
+      ? (currentValue === 'indoor' ? t.indoor : currentValue === 'outdoor' ? t.outdoor : currentValue)
+      : '—';
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground">
+            {currentLabel}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-36 p-1" align="start">
+          <div className="flex flex-col">
+            <button
+              className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${!currentValue ? 'font-semibold text-primary' : ''}`}
+              onClick={() => handleChange(null)}
+            >
+              —
+            </button>
+            {seatingOpts.map(opt => (
+              <button
+                key={opt.value}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentValue === opt.value ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Editable cell for table assignment
+  const TableAssignmentEditCell = ({ reservationId, currentLabel }: { reservationId: string; currentLabel: string | null }) => {
+    const handleClear = async () => {
+      try {
+        const { error } = await supabase
+          .from('reservation_table_assignments')
+          .delete()
+          .eq('reservation_id', reservationId);
+        if (error) throw error;
+        setTableAssignmentLabels(prev => {
+          const next = { ...prev };
+          delete next[reservationId];
+          return next;
+        });
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error clearing table:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    if (!currentLabel) return null;
+
+    return (
+      <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-xs text-muted-foreground">
+        {currentLabel}
+        <X
+          className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0 hover:text-red-500"
+          onClick={handleClear}
+        />
+      </span>
+    );
+  };
+
     try {
       const { error } = await supabase
         .from('reservations')
