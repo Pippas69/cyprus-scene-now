@@ -283,7 +283,7 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: sourceType,
+          source: sourceType || 'walk_in',
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
