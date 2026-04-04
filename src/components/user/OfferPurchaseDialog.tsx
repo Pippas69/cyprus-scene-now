@@ -581,6 +581,10 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   };
 
   const handleViewMyOffers = () => {
+    if (userId) {
+      void queryClient.invalidateQueries({ queryKey: ["user-offer-purchases", userId] });
+      void queryClient.refetchQueries({ queryKey: ["user-offer-purchases", userId], type: "active" });
+    }
     onClose();
     navigate("/dashboard-user?tab=offers");
   };
