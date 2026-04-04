@@ -761,9 +761,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!editValue) return;
         updateData.preferred_time = new Date(editValue).toISOString();
       } else if (field === 'email') {
-        // Email is on the profiles table, handle separately
         const reservation = reservations.find(r => r.id === id);
-        if (reservation?.user_id) {
+        if (reservation?.is_manual_entry) {
+          // For manual entries, save email directly on the reservation row
+          const { error } = await supabase
+            .from('reservations')
+            .update({ email: editValue.trim() || null } as any)
+            .eq('id', id);
+          if (error) throw error;
+          setReservations((prev) => prev.map((r) => r.id === id ? { ...r, email: editValue.trim() || null } : r));
+          toast.success(t.saved);
+        } else if (reservation?.user_id) {
+          // For registered users, update on profiles table
           const { error } = await supabase
             .from('profiles')
             .update({ email: editValue.trim() || null })
