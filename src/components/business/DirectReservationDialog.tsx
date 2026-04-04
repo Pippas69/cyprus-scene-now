@@ -459,7 +459,8 @@ export const DirectReservationDialog = ({
         p_seating_preference:
         formData.seating_preference && formData.seating_preference !== 'none' ? formData.seating_preference : null,
         p_special_requests: formData.special_requests || null,
-        p_is_offer_based: false
+        p_is_offer_based: false,
+        p_source: 'profile'
       });
 
       if (error) throw error;
