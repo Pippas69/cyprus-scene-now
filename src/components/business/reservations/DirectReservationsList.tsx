@@ -1844,16 +1844,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   {/* 3. Details: People + Source (white text) */}
                   <TableCell className="align-top">
                     <div className="flex flex-col gap-0.5">
-                      {reservation.party_size ? (
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="party_size"
-                          displayValue={`${reservation.party_size} ${t.people}`}
-                          rawValue={String(reservation.party_size)}
-                        />
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
+                      <EditableCell
+                        reservationId={reservation.id}
+                        field="party_size"
+                        displayValue={reservation.party_size ? `${reservation.party_size} ${t.people}` : '—'}
+                        rawValue={reservation.party_size ? String(reservation.party_size) : ''}
+                      />
                       <SourceEditCell reservationId={reservation.id} currentValue={reservation.source} />
                     </div>
                   </TableCell>
