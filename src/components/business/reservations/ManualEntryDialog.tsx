@@ -284,6 +284,7 @@ export const ManualEntryDialog = ({
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
           source: sourceType || null,
+          email: email.trim() || null,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);

@@ -50,6 +50,7 @@ interface DirectReservation {
   manual_status?: string | null;
   min_age?: number | null;
   source?: string;
+  email?: string | null;
 }
 
 interface DirectReservationsListProps {
@@ -333,7 +334,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
-          cancellation_reason, profiles(name, email)
+          cancellation_reason, email, profiles(name, email)
         `);
 
       if (linked) {
@@ -760,9 +761,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!editValue) return;
         updateData.preferred_time = new Date(editValue).toISOString();
       } else if (field === 'email') {
-        // Email is on the profiles table, handle separately
         const reservation = reservations.find(r => r.id === id);
-        if (reservation?.user_id) {
+        if (reservation?.is_manual_entry) {
+          // For manual entries, save email directly on the reservation row
+          const { error } = await supabase
+            .from('reservations')
+            .update({ email: editValue.trim() || null } as any)
+            .eq('id', id);
+          if (error) throw error;
+          setReservations((prev) => prev.map((r) => r.id === id ? { ...r, email: editValue.trim() || null } : r));
+          toast.success(t.saved);
+        } else if (reservation?.user_id) {
+          // For registered users, update on profiles table
           const { error } = await supabase
             .from('profiles')
             .update({ email: editValue.trim() || null })
@@ -1911,8 +1921,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <EditableCell
                       reservationId={reservation.id}
                       field="email"
-                      displayValue={reservation.profiles?.email || '—'}
-                      rawValue={reservation.profiles?.email || ''}
+                      displayValue={reservation.email || reservation.profiles?.email || '—'}
+                      rawValue={reservation.email || reservation.profiles?.email || ''}
                     />
                   </TableCell>
                 </TableRow>
