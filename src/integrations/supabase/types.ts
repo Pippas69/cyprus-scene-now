@@ -4408,6 +4408,7 @@ export type Database = {
           deferred_payment_mode: string | null
           deferred_retry_count: number | null
           deferred_status: string | null
+          email: string | null
           event_id: string | null
           id: string
           is_manual_entry: boolean
@@ -4447,6 +4448,7 @@ export type Database = {
           deferred_payment_mode?: string | null
           deferred_retry_count?: number | null
           deferred_status?: string | null
+          email?: string | null
           event_id?: string | null
           id?: string
           is_manual_entry?: boolean
@@ -4486,6 +4488,7 @@ export type Database = {
           deferred_payment_mode?: string | null
           deferred_retry_count?: number | null
           deferred_status?: string | null
+          email?: string | null
           event_id?: string | null
           id?: string
           is_manual_entry?: boolean
