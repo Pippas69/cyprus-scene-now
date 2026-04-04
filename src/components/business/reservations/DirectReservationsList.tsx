@@ -50,6 +50,7 @@ interface DirectReservation {
   manual_status?: string | null;
   min_age?: number | null;
   source?: string;
+  email?: string | null;
 }
 
 interface DirectReservationsListProps {
