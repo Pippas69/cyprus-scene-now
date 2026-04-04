@@ -1638,7 +1638,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         displayValue={`${reservation.party_size} ${t.people}`}
                         rawValue={String(reservation.party_size)}
                       />
-                      <span className="text-sm text-foreground whitespace-nowrap">{typeLabel}</span>
+                      <span className="text-sm text-foreground whitespace-nowrap opacity-75">{typeLabel}</span>
                     </div>
                   </TableCell>
 
