@@ -51,6 +51,8 @@ interface DirectReservation {
   min_age?: number | null;
   source?: string;
   email?: string | null;
+  guest_ages?: string | null;
+  guest_city?: string | null;
 }
 
 interface DirectReservationsListProps {
@@ -334,7 +336,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
-          cancellation_reason, email, profiles(name, email)
+          cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
         `);
 
       if (linked) {
@@ -775,8 +777,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
-        // Business can set real spend manually; CRM splits this per person.
         updateData.actual_spend_cents = cents;
+      } else if (field === 'guest_ages') {
+        updateData.guest_ages = editValue.trim() || null;
+      } else if (field === 'guest_city') {
+        updateData.guest_city = editValue.trim() || null;
+      } else if (field === 'prepaid_min_charge_cents') {
+        const cents = Math.round(parseFloat(editValue) * 100);
+        if (isNaN(cents) || cents < 0) return;
+        updateData.prepaid_min_charge_cents = cents;
+      } else if (field === 'ticket_credit_cents_override') {
+        const cents = Math.round(parseFloat(editValue) * 100);
+        if (isNaN(cents) || cents < 0) return;
+        updateData.ticket_credit_cents = cents;
       } else if (field === 'preferred_time') {
         // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
         if (!editValue) return;
@@ -1757,7 +1770,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
-                const minAge = getMinAge(reservation);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = reservation.is_manual_entry && reservation.prepaid_min_charge_cents != null
                   ? reservation.prepaid_min_charge_cents
@@ -1765,12 +1777,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const remainderCents = Math.max(0, minChargeCents - ticketPaidCents);
-                const minChargeDisplay = minChargeCents > 0 ?
-                (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
-                ticketPaidCents > 0 ?
-                `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
-                `€${(minChargeCents / 100).toFixed(2)}`) :
-                '-';
                 // Reservation-only: show "Πραγματικά" inside the min charge column
                 const actualSpendDisplay = actualSpendCents > 0
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
@@ -1813,25 +1819,66 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {renderCustomerNoteBubble(reservation)}
                         </div>
                       </TableCell>
-                      {/* 2. Λεπτομέρειες: Party size (age+) + City */}
+                      {/* 2. Λεπτομέρειες: Party size + Ages + City */}
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm whitespace-nowrap -ml-0.5">
+                          <div className="flex items-center gap-1">
                             <EditableCell
+                              reservationId={reservation.id}
+                              field="party_size"
+                              displayValue={reservation.party_size ? `${reservation.party_size} ${t.people}` : '—'}
+                              rawValue={reservation.party_size ? String(reservation.party_size) : ''} />
+                            {/* Ages: from tickets or guest_ages field */}
+                            {(() => {
+                              const ticketAges = agesByReservation[reservation.id];
+                              const agesStr = ticketAges && ticketAges.length > 0
+                                ? `(${ticketAges.join(', ')})`
+                                : (reservation as any).guest_ages
+                                  ? `(${(reservation as any).guest_ages})`
+                                  : null;
+                              return (
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="guest_ages"
+                                  displayValue={agesStr || '—'}
+                                  rawValue={(reservation as any).guest_ages || (ticketAges ? ticketAges.join(', ') : '')} />
+                              );
+                            })()}
+                          </div>
+                          {/* City: editable */}
+                          <EditableCell
                             reservationId={reservation.id}
-                            field="party_size"
-                            displayValue={reservation.party_size ? `${reservation.party_size} ${t.people}${minAge ? ` (${minAge})` : ''}` : '—'}
-                            rawValue={reservation.party_size ? String(reservation.party_size) : ''} />
-                          </span>
-                          {cityByReservation[reservation.id] && (
-                            <span className="text-sm text-foreground ml-2">{cityByReservation[reservation.id]}</span>
-                          )}
+                            field="guest_city"
+                            displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
+                            rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
                         </div>
                       </TableCell>
-                      {/* 3. Ελάχιστη Χρέωση */}
+                      {/* 3. Ελάχιστη Χρέωση - editable */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
-                          <span className="whitespace-nowrap">{minChargeDisplay}</span>
+                          <div className="flex items-center gap-0.5 whitespace-nowrap">
+                            <EditableCell
+                              reservationId={reservation.id}
+                              field="prepaid_min_charge_cents"
+                              displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
+                              rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                            {!isReservationOnly && ticketPaidCents > 0 && (
+                              <span className="text-sm">(
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="ticket_credit_cents_override"
+                                  displayValue={`€${(ticketPaidCents / 100).toFixed(2)}`}
+                                  rawValue={(ticketPaidCents / 100).toFixed(2)} />
+                              )</span>
+                            )}
+                            {!isReservationOnly && ticketPaidCents === 0 && (
+                              <EditableCell
+                                reservationId={reservation.id}
+                                field="ticket_credit_cents_override"
+                                displayValue="(—)"
+                                rawValue="0" />
+                            )}
+                          </div>
                           {isReservationOnly ? (
                             <EditableCell
                               reservationId={reservation.id}
@@ -1843,7 +1890,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
-                      {/* 4. Θέση: Seating type + Table assignment */}
+                      {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
                           <EventSeatingTypeEditCell
@@ -1851,7 +1898,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             currentSeatingTypeId={reservation.seating_type_id || null}
                             seatingTypeName={seatingTypeName}
                           />
-                          <TableAssignmentEditCell reservationId={reservation.id} currentLabel={tableAssignmentLabels[reservation.id] || null} />
+                          {tableAssignmentLabels[reservation.id] ? (
+                            <TableAssignmentEditCell reservationId={reservation.id} currentLabel={tableAssignmentLabels[reservation.id]} />
+                          ) : hasFloorPlan ? (
+                            <button
+                              className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group/assign"
+                              onClick={() => setFloorPlanAssignment({
+                                reservationId: reservation.id,
+                                reservationName: reservation.reservation_name,
+                                partySize: reservation.party_size,
+                                eventId: reservation.event_id,
+                              })}
+                            >
+                              —
+                              <Edit2 className="h-3 w-3 opacity-0 group-hover/assign:opacity-100 transition-opacity" />
+                            </button>
+                          ) : null}
                         </div>
                       </TableCell>
                       {/* 5. Κατάσταση */}
