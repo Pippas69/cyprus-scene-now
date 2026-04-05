@@ -1282,7 +1282,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
 
-    try {
+  const handleSaveMemo = async (reservationId: string) => {
       const { error } = await supabase
         .from('reservations')
         .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
