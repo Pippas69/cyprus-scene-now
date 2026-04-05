@@ -49,38 +49,69 @@ interface ClaimOfferRequest {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return corsResponse();
   }
 
   try {
     logStep("Function started");
+
+    // Rate limiting: max 10 claims per user per 5 minutes
+    const clientIP = getClientIP(req);
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return errorResponse("No authorization header", 401);
+    }
+
+    const rateLimitId = authHeader.replace("Bearer ", "").substring(0, 20) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "claim_offer", 10, 5);
+    if (!rateCheck.allowed) {
+      logStep("Rate limited", { identifier: clientIP, retryAfter: rateCheck.retryAfterSeconds });
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...jsonHeaders(), "Retry-After": String(rateCheck.retryAfterSeconds) },
+      });
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Authenticate user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
-
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      throw new Error("Unauthorized");
+      return errorResponse("Unauthorized", 401);
     }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Parse request
-    const { discountId, partySize, guestNames, withReservation, reservationData }: ClaimOfferRequest = await req.json();
+    // Parse and validate request
+    const body: ClaimOfferRequest = await req.json();
+    const { discountId, partySize, guestNames, withReservation, reservationData } = body;
     logStep("Request data", { discountId, partySize, guestNames, withReservation, reservationData });
 
-    if (!discountId || !partySize || partySize < 1) {
-      throw new Error("Invalid request: discountId and partySize are required");
+    // Input validation
+    if (!discountId || typeof discountId !== 'string' || discountId.length < 10) {
+      return errorResponse("Invalid discountId", 400);
+    }
+    if (!partySize || typeof partySize !== 'number' || partySize < 1 || partySize > 20) {
+      return errorResponse("Invalid partySize: must be between 1 and 20", 400);
+    }
+    if (guestNames && (!Array.isArray(guestNames) || guestNames.some(n => typeof n !== 'string' || n.length > 100))) {
+      return errorResponse("Invalid guestNames", 400);
+    }
+    if (withReservation && reservationData) {
+      if (!reservationData.preferred_date || !reservationData.preferred_time) {
+        return errorResponse("Reservation requires preferred_date and preferred_time", 400);
+      }
+      if (reservationData.party_size && (reservationData.party_size < 1 || reservationData.party_size > 50)) {
+        return errorResponse("Invalid reservation party_size", 400);
+      }
+      if (reservationData.phone_number && reservationData.phone_number.length > 20) {
+        return errorResponse("Phone number too long", 400);
+      }
     }
 
     // Use service role for database operations
