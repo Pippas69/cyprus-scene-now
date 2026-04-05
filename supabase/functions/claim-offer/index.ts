@@ -530,6 +530,9 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error?.message });
 
     return new Response(

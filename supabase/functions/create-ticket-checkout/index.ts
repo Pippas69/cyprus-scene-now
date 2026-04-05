@@ -3,6 +3,25 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const TicketItemSchema = z.object({
+  tierId: flexId,
+  quantity: positiveInt.max(50),
+});
+
+const CheckoutBodySchema = z.object({
+  eventId: flexId,
+  items: z.array(TicketItemSchema).min(1).max(20),
+  customerName: safeString(200),
+  customerEmail: email,
+  customerPhone: optionalString(20),
+  specialRequests: optionalString(1000),
+  seatingTypeId: flexId.optional(),
+  guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
+  seatIds: z.array(flexId).optional(),
+  showInstanceId: flexId.optional(),
+});
 
 interface TicketItem {
   tierId: string;
