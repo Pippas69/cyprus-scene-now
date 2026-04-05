@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,6 +67,7 @@ export const ManualEntryDialog = ({
   const [seatingTypeId, setSeatingTypeId] = useState('');
   const [ticketTierId, setTicketTierId] = useState('');
   const [tableId, setTableId] = useState('');
+  const [isWalkIn, setIsWalkIn] = useState(false);
   const [saving, setSaving] = useState(false);
   const [eventSeatingTypes, setEventSeatingTypes] = useState<SeatingTypeOption[]>([]);
   const [ticketTiers, setTicketTiers] = useState<TicketTierOption[]>([]);
@@ -105,6 +107,7 @@ export const ManualEntryDialog = ({
       ticketPrice: 'Τιμή εισιτηρίου (€)',
       ticketType: 'Τύπος εισιτηρίου',
       table: 'Τραπέζι',
+      walkInToggle: 'Walk-in',
       selectOption: 'Επιλέξτε...',
     },
     en: {
@@ -140,6 +143,7 @@ export const ManualEntryDialog = ({
       ticketPrice: 'Ticket price (€)',
       ticketType: 'Ticket type',
       table: 'Table',
+      walkInToggle: 'Walk-in',
       selectOption: 'Select...',
     },
   };
@@ -213,6 +217,7 @@ export const ManualEntryDialog = ({
     setSeatingTypeId('');
     setTicketTierId('');
     setTableId('');
+    setIsWalkIn(false);
   };
 
   const handleSave = async () => {
@@ -283,13 +288,13 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: sourceType || null,
+          source: isWalkIn ? 'walk_in' : (sourceType || null),
           email: email.trim() || null,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        if (minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
-        if (seatingTypeId) insertData.seating_type_id = seatingTypeId;
+        if (!isWalkIn && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
@@ -508,8 +513,16 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET: Ticket tier selector === */}
-          {entryType === 'ticket' && ticketTiers.length > 0 && (
+          {/* === RESERVATION/HYBRID: Walk-in toggle === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className="flex items-center justify-between py-1">
+              <Label className={labelClass}>{txt.walkInToggle}</Label>
+              <Switch checked={isWalkIn} onCheckedChange={setIsWalkIn} />
+            </div>
+          )}
+
+          {/* === TICKET / Walk-in hybrid: Ticket tier selector === */}
+          {((entryType === 'ticket') || (isWalkIn && (entryType === 'hybrid' || entryType === 'reservation') && ticketTiers.length > 0)) && ticketTiers.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.ticketType}</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
@@ -527,8 +540,8 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === RESERVATION/HYBRID: Min charge === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && (
+          {/* === RESERVATION/HYBRID: Min charge (hidden for walk-ins) === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.minCharge}</Label>
               <Input
@@ -545,7 +558,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === RESERVATION/HYBRID: Seating type === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && eventSeatingTypes.length > 0 && (
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && eventSeatingTypes.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.seatingType}</Label>
               <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
@@ -593,7 +606,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === RESERVATION/HYBRID: Table === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && tables.length > 0 && (
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && tables.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.table}</Label>
               <Select value={tableId} onValueChange={setTableId}>

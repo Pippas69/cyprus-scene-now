@@ -139,6 +139,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [tableAssignmentLabels, setTableAssignmentLabels] = useState<Record<string, string>>({});
+  const [walkInTicketPriceCents, setWalkInTicketPriceCents] = useState<number | null>(null);
   const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
   const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
   const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
@@ -419,6 +420,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
             fetchSeatingTypeNames(seatingTypeIds);
+          }
+          // Fetch walk-in ticket price for the event
+          if (selectedEventId) {
+            supabase
+              .from('ticket_tiers')
+              .select('price_cents')
+              .eq('event_id', selectedEventId)
+              .ilike('name', '%walk%')
+              .limit(1)
+              .then(({ data: walkTiers }) => {
+                setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
+              });
           }
         }
       } else {
@@ -1895,6 +1908,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
+                            const isWalkInSource = reservation.source === 'walk_in' && !reservation.seating_type_id;
+                            if (isWalkInSource) {
+                              // Walk-in: show "Walk-in" label + ticket price from walk-in tier
+                              const displayPrice = ticketPaidCents > 0
+                                ? ticketPaidCents
+                                : walkInTicketPriceCents;
+                              return (
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-medium text-primary whitespace-nowrap">Walk-in</span>
+                                  {displayPrice != null && displayPrice > 0 && (
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
+                                  )}
+                                </div>
+                              );
+                            }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
                               // Hybrid: show "€100.00 (€20.00)" as one editable field
@@ -1921,15 +1949,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               );
                             }
                           })()}
-                          {isReservationOnly ? (
-                            <EditableCell
-                              reservationId={reservation.id}
-                              field="ticket_credit_cents"
-                              displayValue={actualSpendDisplay}
-                              rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                          ) : (
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
-                          )}
+                          {reservation.source !== 'walk_in' || reservation.seating_type_id ? (
+                            isReservationOnly ? (
+                              <EditableCell
+                                reservationId={reservation.id}
+                                field="ticket_credit_cents"
+                                displayValue={actualSpendDisplay}
+                                rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                            ) : (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
+                            )
+                          ) : null}
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
