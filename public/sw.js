@@ -1,6 +1,8 @@
-// Service Worker for Push Notifications - v2.0.0
-// Force update: 2026-02-06T18:00
-const SW_VERSION = '2.0.0';
+// Service Worker for Push Notifications + Offline Fallback - v3.0.0
+// Force update: 2026-04-05T12:00
+const SW_VERSION = '3.0.0';
+const OFFLINE_CACHE = 'fomo-offline-v1';
+const OFFLINE_PAGE = '/offline.html';
 
 self.addEventListener('push', (event) => {
   console.log('[SW v' + SW_VERSION + '] Push received');
@@ -89,14 +91,30 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification dismissed');
 });
 
-// Handle service worker installation
+// Handle service worker installation - cache offline page
 self.addEventListener('install', (event) => {
-  console.log('[SW] Service Worker installed');
+  console.log('[SW v' + SW_VERSION + '] Installing');
+  event.waitUntil(
+    caches.open(OFFLINE_CACHE).then((cache) => cache.add(OFFLINE_PAGE))
+  );
   self.skipWaiting();
 });
 
-// Handle service worker activation
+// Handle service worker activation - clean old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Service Worker activated');
-  event.waitUntil(clients.claim());
+  console.log('[SW v' + SW_VERSION + '] Activating');
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== OFFLINE_CACHE).map((k) => caches.delete(k)))
+    ).then(() => clients.claim())
+  );
+});
+
+// Serve offline page when navigation fails
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(OFFLINE_PAGE))
+    );
+  }
 });

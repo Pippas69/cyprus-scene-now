@@ -126,13 +126,26 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered'))
-            .catch(err => console.log('Service Worker registration failed:', err));
-        });
-      }
+      (function() {
+        var isInIframe = false;
+        try { isInIframe = window.self !== window.top; } catch(e) { isInIframe = true; }
+        var isPreview = window.location.hostname.indexOf('id-preview--') !== -1
+          || window.location.hostname.indexOf('lovableproject.com') !== -1;
+
+        if (isPreview || isInIframe) {
+          if (navigator.serviceWorker) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            });
+          }
+        } else if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js')
+              .then(function(reg) { console.log('SW registered'); })
+              .catch(function(err) { console.log('SW registration failed:', err); });
+          });
+        }
+      })();
     </script>
   </body>
 </html>
