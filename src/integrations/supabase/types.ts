@@ -6332,6 +6332,36 @@ export type Database = {
         }
         Relationships: []
       }
+      public_business_subscriptions: {
+        Row: {
+          business_id: string | null
+          plan_slug: string | null
+          status: Database["public"]["Enums"]["subscription_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_businesses: {
         Row: {
           address: string | null
