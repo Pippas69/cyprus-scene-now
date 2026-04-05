@@ -288,13 +288,13 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
-          source: sourceType || null,
+          source: isWalkIn ? 'walk_in' : (sourceType || null),
           email: email.trim() || null,
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        if (minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
-        if (seatingTypeId) insertData.seating_type_id = seatingTypeId;
+        if (!isWalkIn && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
