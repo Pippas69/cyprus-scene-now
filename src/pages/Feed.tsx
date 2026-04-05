@@ -139,7 +139,6 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
         .from("events")
         .select("*, businesses!inner(name, logo_url, verified, city)")
         .in("id", boostedEventIds)
-        .eq("businesses.verified", true)
         .gte("end_at", new Date().toISOString())
         .order("start_at", { ascending: true }); // Chronological order
 
