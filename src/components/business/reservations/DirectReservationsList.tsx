@@ -421,6 +421,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             fetchSeatingTiers(seatingTypeIds);
             fetchSeatingTypeNames(seatingTypeIds);
           }
+          // Fetch walk-in ticket price for the event
+          if (selectedEventId) {
+            supabase
+              .from('ticket_tiers')
+              .select('price_cents')
+              .eq('event_id', selectedEventId)
+              .ilike('name', '%walk%')
+              .limit(1)
+              .then(({ data: walkTiers }) => {
+                setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
+              });
+          }
         }
       } else {
         setReservations(sortedByName);
