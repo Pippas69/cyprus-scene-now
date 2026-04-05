@@ -666,7 +666,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
         const fileName = `${event.business_id}-${Date.now()}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('event-covers')
-          .upload(fileName, compressed);
+          .upload(fileName, compressed, { contentType: 'image/jpeg' });
 
         if (uploadError) throw uploadError;
 

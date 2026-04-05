@@ -19,6 +19,7 @@ import { useBetaMode, validateInviteCode } from "@/hooks/useBetaMode";
 import { useLanguage } from "@/hooks/useLanguage";
 import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
 import { getCityOptions, cyprusCities } from "@/lib/cityTranslations";
+import { compressImage } from "@/lib/imageCompression";
 
 const SignupBusiness = () => {
   const navigate = useNavigate();
@@ -189,12 +190,12 @@ const SignupBusiness = () => {
       // Upload logo if provided
       let logoUrl = null;
       if (logoFile) {
-        const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${authData.user.id}/${authData.user.id}-${Date.now()}.${fileExt}`;
+        const compressed = await compressImage(logoFile, 800, 800, 0.9);
+        const fileName = `${authData.user.id}/${authData.user.id}-${Date.now()}.jpg`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('business-logos')
-          .upload(fileName, logoFile);
+          .upload(fileName, compressed, { contentType: 'image/jpeg' });
         
         if (uploadError) {
           console.error('Logo upload error:', uploadError);
