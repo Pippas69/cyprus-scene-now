@@ -1094,7 +1094,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   // Editable cell component
-  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;}) => {
+  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType, inputClassName }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;inputClassName?: string;}) => {
     const isEditing = editingField?.id === reservationId && editingField?.field === field;
 
     if (isEditing) {
@@ -1104,7 +1104,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             type={inputType || 'text'}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            className={`h-7 text-sm ${inputType === 'datetime-local' ? 'w-44' : 'w-20'}`}
+            className={inputClassName || `h-7 text-sm ${inputType === 'datetime-local' ? 'w-44' : 'w-20'}`}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter') saveEdit();
