@@ -1910,13 +1910,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {(() => {
                             const isWalkInSource = reservation.source === 'walk_in' && !reservation.seating_type_id;
                             if (isWalkInSource) {
-                              // Walk-in: show "Walk-in" label + ticket price if available
-                              const ticketPrice = ticketPaidCents > 0 ? `€${(ticketPaidCents / 100).toFixed(2)}` : null;
+                              // Walk-in: show "Walk-in" label + ticket price from walk-in tier
+                              const displayPrice = ticketPaidCents > 0
+                                ? ticketPaidCents
+                                : walkInTicketPriceCents;
                               return (
                                 <div className="flex flex-col">
                                   <span className="text-xs font-medium text-primary whitespace-nowrap">Walk-in</span>
-                                  {ticketPrice && (
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap">{ticketPrice}</span>
+                                  {displayPrice != null && displayPrice > 0 && (
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
                                   )}
                                 </div>
                               );
