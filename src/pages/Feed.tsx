@@ -137,12 +137,12 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       let query = supabase
         .from("events")
-        .select("*, public_businesses_safe!inner(name, logo_url, verified, city)")
+        .select("*, businesses!inner(name, logo_url, verified, city)")
         .in("id", boostedEventIds)
         .gte("end_at", new Date().toISOString())
         .order("start_at", { ascending: true }); // Chronological order
 
-      if (selectedCity) query = query.eq("public_businesses_safe.city", selectedCity);
+      if (selectedCity) query = query.eq("businesses.city", selectedCity);
       if (selectedCategories.length > 0) query = query.overlaps("category", mapFilterIdsToDbCategories(selectedCategories));
 
       const { data, error } = await query;
@@ -248,7 +248,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           total_people, people_remaining, max_people_per_redemption, one_per_user, show_reservation_cta, requires_reservation,
           offer_type, bonus_percent, credit_amount_cents, pricing_type, bundle_price_cents,
           valid_days, valid_start_time, valid_end_time,
-          public_businesses_safe!inner (id, name, logo_url, cover_url, city, verified, accepts_direct_reservations, reservation_time_slots, reservation_days)
+          businesses!inner (id, name, logo_url, cover_url, city, verified, accepts_direct_reservations, reservation_time_slots, reservation_days)
         `
         )
         .in("id", boostedOfferIds)
