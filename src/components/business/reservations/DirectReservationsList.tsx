@@ -412,62 +412,106 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           // Fetch orphan walk-in ticket orders (no linked reservation) and merge into list
           let walkInSynthetic: DirectReservation[] = [];
           if (selectedEventId) {
-            const { data: orphanOrders } = await supabase
+            // Also detect legacy walk-ins: orders linked to auto_created reservations with no seating
+            const { data: allCompletedOrders } = await supabase
               .from('ticket_orders')
-              .select('id, customer_name, customer_phone, customer_email, total_cents, created_at')
+              .select('id, customer_name, customer_phone, customer_email, total_cents, created_at, linked_reservation_id')
               .eq('event_id', selectedEventId)
-              .eq('status', 'completed')
-              .is('linked_reservation_id', null);
+              .eq('status', 'completed');
 
-            if (orphanOrders && orphanOrders.length > 0) {
-              // Fetch individual tickets for these orders to get count & walk-in tier price
-              const orderIds = orphanOrders.map(o => o.id);
-              const { data: orphanTickets } = await supabase
+            if (allCompletedOrders && allCompletedOrders.length > 0) {
+              // Identify orphan orders (no linked reservation)
+              const orphanOrderIds = new Set(
+                allCompletedOrders.filter(o => !o.linked_reservation_id).map(o => o.id)
+              );
+
+              // Identify legacy walk-in orders (linked to auto_created reservation with no seating)
+              const linkedResIds = allCompletedOrders
+                .map(o => o.linked_reservation_id)
+                .filter((id): id is string => !!id);
+
+              let legacyWalkInOrderIds = new Set<string>();
+              if (linkedResIds.length > 0) {
+                const { data: linkedRes } = await supabase
+                  .from('reservations')
+                  .select('id, auto_created_from_tickets, seating_type_id')
+                  .in('id', linkedResIds);
+
+                const legacyWalkInResIds = new Set(
+                  (linkedRes || [])
+                    .filter(r => r.auto_created_from_tickets === true && !r.seating_type_id)
+                    .map(r => r.id)
+                );
+
+                allCompletedOrders.forEach(o => {
+                  if (o.linked_reservation_id && legacyWalkInResIds.has(o.linked_reservation_id)) {
+                    legacyWalkInOrderIds.add(o.id);
+                  }
+                });
+              }
+
+              const walkInOrderIds = new Set([...orphanOrderIds, ...legacyWalkInOrderIds]);
+              const walkInOrders = allCompletedOrders.filter(o => walkInOrderIds.has(o.id));
+
+              if (walkInOrders.length > 0) {
+              const orderIds = walkInOrders.map(o => o.id);
+              // Fetch individual tickets with guest details
+              const { data: walkInTickets } = await supabase
                 .from('tickets')
-                .select('order_id, tier_id, status, checked_in_at')
+                .select('id, order_id, tier_id, status, checked_in_at, guest_name, guest_age, guest_city')
                 .in('order_id', orderIds);
 
-              const ticketsByOrder: Record<string, any[]> = {};
-              (orphanTickets || []).forEach(t => {
-                if (!ticketsByOrder[t.order_id]) ticketsByOrder[t.order_id] = [];
-                ticketsByOrder[t.order_id].push(t);
-              });
+              // Fetch tier prices
+              const tierIds = [...new Set((walkInTickets || []).map(t => t.tier_id).filter(Boolean))];
+              let tierPriceMap: Record<string, number> = {};
+              if (tierIds.length > 0) {
+                const { data: tiers } = await supabase
+                  .from('ticket_tiers')
+                  .select('id, price_cents')
+                  .in('id', tierIds);
+                (tiers || []).forEach(t => { tierPriceMap[t.id] = t.price_cents; });
+              }
 
-              walkInSynthetic = orphanOrders.map(order => {
-                const tickets = ticketsByOrder[order.id] || [];
-                const checkedIn = tickets.filter(t => t.checked_in_at).length;
-                return {
-                  id: `walkin-${order.id}`,
-                  business_id: businessId,
-                  user_id: null as any,
-                  reservation_name: (order as any).customer_name || 'Walk-in',
-                  party_size: tickets.length || 1,
-                  status: checkedIn > 0 ? 'checked_in' : 'accepted',
-                  created_at: order.created_at,
-                  phone_number: (order as any).customer_phone || null,
-                  preferred_time: null,
-                  seating_preference: null,
-                  special_requests: null,
-                  business_notes: null,
-                  staff_memo: null,
-                  confirmation_code: null,
-                  qr_code_token: null,
-                  checked_in_at: null,
-                  cancellation_reason: null,
-                  auto_created_from_tickets: false,
-                  ticket_credit_cents: order.total_cents || 0,
-                  seating_type_id: null,
-                  prepaid_min_charge_cents: null,
-                  event_id: selectedEventId,
-                  is_manual_entry: false,
-                  manual_status: null,
-                  min_age: null,
-                  source: 'walk_in',
-                  email: (order as any).customer_email || null,
-                  guest_ages: null,
-                  guest_city: null,
-                } as DirectReservation;
-              });
+              const orderMap: Record<string, typeof walkInOrders[0]> = {};
+              walkInOrders.forEach(o => { orderMap[o.id] = o; });
+
+              // Create one synthetic reservation PER TICKET (not per order)
+              walkInSynthetic = (walkInTickets || []).map(ticket => {
+                  const order = orderMap[ticket.order_id];
+                  const ticketPriceCents = ticket.tier_id ? (tierPriceMap[ticket.tier_id] || 0) : 0;
+                  return {
+                    id: `walkin-${ticket.id}`,
+                    business_id: businessId,
+                    user_id: null as any,
+                    reservation_name: ticket.guest_name || order?.customer_name || 'Walk-in',
+                    party_size: 1,
+                    status: ticket.checked_in_at ? 'checked_in' : 'accepted',
+                    created_at: order?.created_at || ticket.checked_in_at || '',
+                    phone_number: order?.customer_phone || null,
+                    preferred_time: null,
+                    seating_preference: null,
+                    special_requests: null,
+                    business_notes: null,
+                    staff_memo: null,
+                    confirmation_code: null,
+                    qr_code_token: null,
+                    checked_in_at: ticket.checked_in_at || null,
+                    cancellation_reason: null,
+                    auto_created_from_tickets: false,
+                    ticket_credit_cents: ticketPriceCents,
+                    seating_type_id: null,
+                    prepaid_min_charge_cents: null,
+                    event_id: selectedEventId,
+                    is_manual_entry: false,
+                    manual_status: null,
+                    min_age: ticket.guest_age || null,
+                    source: 'walk_in',
+                    email: order?.customer_email || null,
+                    guest_ages: ticket.guest_age ? String(ticket.guest_age) : null,
+                    guest_city: (ticket as any).guest_city || null,
+                  } as DirectReservation;
+                });
+              }
             }
           }
 
@@ -1937,19 +1981,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
                           {(() => {
-                            const ticketAges = agesByReservation[reservation.id];
-                            const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
-                              ? `${Math.min(...ticketAges)}+`
-                              : '';
-                            const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
-                            const hasPeople = !!reservation.party_size;
-                            const hasAges = !!agesStr;
-                            const displayText = hasPeople
-                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                              : hasAges ? `(${agesStr})` : '—';
-                            const rawText = hasPeople
-                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                              : hasAges ? agesStr : '';
+                            const isWalkIn = reservation.source === 'walk_in' && !reservation.seating_type_id;
+                            let displayText: string;
+                            let rawText: string;
+
+                            if (isWalkIn) {
+                              // Walk-in: always "1 άτομο (age)" with exact age, no "+"
+                              const age = (reservation as any).guest_ages || '';
+                              displayText = age ? `1 ${language === 'el' ? 'άτομο' : 'person'} (${age})` : `1 ${language === 'el' ? 'άτομο' : 'person'}`;
+                              rawText = displayText;
+                            } else {
+                              const ticketAges = agesByReservation[reservation.id];
+                              const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
+                                ? `${Math.min(...ticketAges)}+`
+                                : '';
+                              const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
+                              const hasPeople = !!reservation.party_size;
+                              const hasAges = !!agesStr;
+                              displayText = hasPeople
+                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                                : hasAges ? `(${agesStr})` : '—';
+                              rawText = hasPeople
+                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                                : hasAges ? agesStr : '';
+                            }
                             return (
                               <EditableCell
                                 reservationId={reservation.id}
@@ -1979,9 +2034,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 : walkInTicketPriceCents;
                               return (
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-medium text-primary whitespace-nowrap">Walk-in</span>
+                                  <span className="text-sm text-foreground whitespace-nowrap">Walk-in</span>
                                   {displayPrice != null && displayPrice > 0 && (
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
+                                    <span className="text-sm text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
                                   )}
                                 </div>
                               );
