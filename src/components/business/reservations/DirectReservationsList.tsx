@@ -1873,6 +1873,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={reservation.email || reservation.profiles?.email || ''}
                         />
                       </TableCell>
+                      {/* 8. Πραγματικά (hybrid only) */}
+                      {!isReservationOnly && (
+                        <TableCell className="align-top">
+                          <EditableCell
+                            reservationId={reservation.id}
+                            field="ticket_credit_cents"
+                            displayValue={actualSpendCents > 0 ? `€${(actualSpendCents / 100).toFixed(2)}` : '—'}
+                            rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'}
+                          />
+                        </TableCell>
+                      )}
                     </TableRow>);
               })}
               </TableBody>
