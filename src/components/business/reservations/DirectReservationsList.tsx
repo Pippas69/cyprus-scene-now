@@ -1751,8 +1751,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
                   <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
                   <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
                   {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
+                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
