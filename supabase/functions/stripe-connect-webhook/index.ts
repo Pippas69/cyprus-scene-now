@@ -1,10 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[STRIPE-CONNECT-WEBHOOK] ${step}`, details ? JSON.stringify(details) : '');
@@ -12,7 +8,7 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -47,7 +43,7 @@ Deno.serve(async (req) => {
         logStep("Webhook signature verification failed", { error: errorMessage });
         return new Response(JSON.stringify({ error: "Invalid signature" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
       }
     } else {
@@ -76,7 +72,7 @@ Deno.serve(async (req) => {
       if (!accountId) {
         logStep("No account ID in v2 event data", { eventData });
         return new Response(JSON.stringify({ received: true, warning: "No account ID" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -97,7 +93,7 @@ Deno.serve(async (req) => {
         const errorMessage = err instanceof Error ? err.message : String(err);
         logStep("Failed to fetch account from Stripe", { error: errorMessage, accountId });
         return new Response(JSON.stringify({ received: true, warning: "Failed to fetch account" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -121,7 +117,7 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -136,7 +132,7 @@ Deno.serve(async (req) => {
       if (businessError || !business) {
         logStep("Business not found for account", { accountId });
         return new Response(JSON.stringify({ received: true, warning: "Business not found" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -160,7 +156,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ received: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -185,7 +181,7 @@ Deno.serve(async (req) => {
       if (businessError || !business) {
         logStep("Business not found for account", { accountId: account.id });
         return new Response(JSON.stringify({ received: true, warning: "Business not found" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -211,7 +207,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -219,7 +215,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

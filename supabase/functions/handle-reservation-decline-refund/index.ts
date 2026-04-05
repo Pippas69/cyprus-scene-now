@@ -3,16 +3,13 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 // Force cache refresh - v1
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -21,7 +18,7 @@ serve(async (req) => {
     if (!reservationId) {
       return new Response(
         JSON.stringify({ error: "Reservation ID is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -58,7 +55,7 @@ serve(async (req) => {
       console.error("Error fetching offer purchase:", purchaseError);
       return new Response(
         JSON.stringify({ error: "Failed to fetch offer purchase", details: purchaseError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -67,7 +64,7 @@ serve(async (req) => {
       console.log("No paid offer purchase linked to this reservation");
       return new Response(
         JSON.stringify({ success: true, message: "No linked offer purchase to refund" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -85,7 +82,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Purchase cancelled (no payment to refund)" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -94,7 +91,7 @@ serve(async (req) => {
       console.error("STRIPE_SECRET_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Stripe not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -210,14 +207,14 @@ serve(async (req) => {
         purchaseId: purchase.id,
         message: "Refund processed successfully",
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Error in handle-reservation-decline-refund:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   }
 });

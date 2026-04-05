@@ -1,9 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[VERIFY-STUDENT-TOKEN] ${step}`, details ? JSON.stringify(details) : '');
@@ -11,10 +8,21 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "verify_student_token", 10, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Function started");
 
     const supabaseClient = createClient(
@@ -41,7 +49,7 @@ Deno.serve(async (req) => {
       logStep("Token not found", fetchError);
       return new Response(
         JSON.stringify({ error: "invalid_token", message: "Μη έγκυρος σύνδεσμος επαλήθευσης" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -50,7 +58,7 @@ Deno.serve(async (req) => {
       logStep("Already verified");
       return new Response(
         JSON.stringify({ success: true, already_verified: true, message: "Η φοιτητική σου ιδιότητα έχει ήδη επαληθευτεί!", university_name: verification.university_name }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -59,7 +67,7 @@ Deno.serve(async (req) => {
       logStep("Token expired");
       return new Response(
         JSON.stringify({ error: "token_expired", message: "Ο σύνδεσμος έχει λήξει. Παρακαλώ ζήτησε νέο." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -83,7 +91,7 @@ Deno.serve(async (req) => {
           error: "email_already_used", 
           message: "Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό. Κάθε φοιτητικό email μπορεί να χρησιμοποιηθεί μόνο μία φορά." 
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -118,7 +126,7 @@ Deno.serve(async (req) => {
             error: "email_already_used", 
             message: "Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό. Κάθε φοιτητικό email μπορεί να χρησιμοποιηθεί μόνο μία φορά." 
           }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
         );
       }
       
@@ -147,13 +155,13 @@ Deno.serve(async (req) => {
         message: "Η φοιτητική σου ιδιότητα επαληθεύτηκε επιτυχώς! 🎉",
         university_name: verification.university_name
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     logStep("Error", error);
     return new Response(
       JSON.stringify({ error: "server_error", message: "Κάτι πήγε στραβά. Παρακαλώ δοκίμασε ξανά." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   }
 });

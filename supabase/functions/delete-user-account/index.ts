@@ -1,9 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 async function d(supabase: any, table: string, col: string, val: string | string[]) {
   try {
@@ -24,14 +21,25 @@ async function delStorage(supabase: any, bucket: string, path: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: securityHeaders })
   }
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "delete_user_account", 3, 60);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const authHeader = req.headers.get("authorization")
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        status: 401, headers: { ...securityHeaders, "Content-Type": "application/json" }
       })
     }
 
@@ -44,7 +52,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        status: 401, headers: { ...securityHeaders, "Content-Type": "application/json" }
       })
     }
 
@@ -69,12 +77,12 @@ Deno.serve(async (req) => {
 
     console.log(`✅ User ${userId} fully wiped`)
     return new Response(JSON.stringify({ success: true }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" }
     })
   } catch (error) {
     console.error("Error:", error)
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" }
     })
   }
 })

@@ -1,13 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: securityHeaders });
   }
 
   try {
@@ -18,14 +14,14 @@ Deno.serve(async (req) => {
     // Verify user is admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      return new Response('Unauthorized', { status: 401, headers: securityHeaders });
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      return new Response('Unauthorized', { status: 401, headers: securityHeaders });
     }
 
     const { data: profile } = await supabase
@@ -35,7 +31,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!profile?.is_admin) {
-      return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      return new Response('Forbidden', { status: 403, headers: securityHeaders });
     }
 
     console.log('Fetching database metrics for admin:', user.id);
@@ -73,7 +69,7 @@ Deno.serve(async (req) => {
         recentAlerts: recentAlerts || [],
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
@@ -84,7 +80,7 @@ Deno.serve(async (req) => {
         error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
     );

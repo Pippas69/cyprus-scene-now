@@ -1,9 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 // ONLY these emails can be deleted for testing purposes
 const ALLOWED_TEST_EMAILS = new Set([
@@ -16,10 +13,21 @@ const ALLOWED_TEST_EMAILS = new Set([
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: securityHeaders })
   }
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "delete_test_user", 5, 10);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { email } = await req.json()
 
     const normalizedEmail = email?.toLowerCase()
@@ -27,7 +35,7 @@ Deno.serve(async (req) => {
     if (!normalizedEmail || !ALLOWED_TEST_EMAILS.has(normalizedEmail)) {
       return new Response(
         JSON.stringify({ error: "Not allowed" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       )
     }
 
@@ -53,13 +61,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, deleted: !!existingUser }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     )
   } catch (error) {
     console.error("Error:", error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     )
   }
 })

@@ -2,13 +2,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendEncryptedPush } from "../_shared/web-push-crypto.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[RESERVATION-REMINDERS] ${step}`, details ? JSON.stringify(details) : '');
@@ -65,7 +61,7 @@ interface ReservationReminder {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -146,7 +142,7 @@ Deno.serve(async (req) => {
     if (allUserIds.size === 0) {
       logStep("No reservations to remind");
       return new Response(JSON.stringify({ success: true, sent: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -332,13 +328,13 @@ Deno.serve(async (req) => {
     logStep(`Sent ${sentCount} reservation reminders`);
 
     return new Response(JSON.stringify({ success: true, sent: sentCount, checked: remindersToSend.length }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
     logStep('ERROR', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });

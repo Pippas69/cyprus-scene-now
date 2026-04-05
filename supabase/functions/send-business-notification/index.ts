@@ -2,14 +2,9 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { BusinessApprovalEmail } from '../_shared/email-templates/business-approval.tsx'
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 // Legacy HTML templates for registration and rejection (kept as-is)
 const emailHeader = `
@@ -57,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
   console.log("send-business-notification invoked with method:", req.method);
   
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -134,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...securityHeaders,
       },
     });
   } catch (error: any) {
@@ -143,7 +138,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       }
     );
   }

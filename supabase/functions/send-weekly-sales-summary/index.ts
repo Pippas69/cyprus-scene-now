@@ -1,15 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const NO_OFFERS_CATEGORIES = ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'];
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -88,7 +84,7 @@ interface DaySummary {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -126,7 +122,7 @@ Deno.serve(async (req) => {
 
     if (!preferences || preferences.length === 0) {
       return new Response(JSON.stringify({ success: true, emailsSent: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -364,13 +360,13 @@ Deno.serve(async (req) => {
     logStep("Weekly summary job completed", { emailsSent });
 
     return new Response(JSON.stringify({ success: true, emailsSent }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
     logStep("Error in weekly summary", { error: error.message });
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });

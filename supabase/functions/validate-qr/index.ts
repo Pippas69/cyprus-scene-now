@@ -4,6 +4,8 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import { 
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
   wrapPremiumEmail, 
   wrapBusinessEmail, 
   emailTitle, 
@@ -15,11 +17,6 @@ import {
 } from "../_shared/email-templates.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 type Language = "el" | "en";
 
@@ -124,12 +121,23 @@ const maskEmail = (email: string | null | undefined): string | null => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const startedAt = Date.now();
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "validate_qr", 60, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -138,7 +146,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -151,7 +159,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -162,7 +170,7 @@ Deno.serve(async (req) => {
     if (!body.qrData || !body.businessId) {
       return new Response(JSON.stringify({ success: false, message: m.invalidRequest }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -179,7 +187,7 @@ Deno.serve(async (req) => {
       logStep("Business not found", { businessError });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -187,7 +195,7 @@ Deno.serve(async (req) => {
       logStep("Wrong business owner", { expected: business.user_id, actual: user.id });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -248,14 +256,14 @@ Deno.serve(async (req) => {
     logStep("QR not found in any table", { token });
     return new Response(JSON.stringify({ success: false, message: m.notFound, qrType: "unknown" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error) {
     console.error("[VALIDATE-QR] Unhandled error", error);
     return new Response(JSON.stringify({ success: false, message: msg("en").internalError }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });
@@ -275,7 +283,7 @@ async function handleTicketQR(
   if (ticket.events?.business_id !== businessId) {
     return new Response(JSON.stringify({ success: false, message: m.wrongBusiness, qrType: "ticket" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -294,7 +302,7 @@ async function handleTicketQR(
       }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -306,7 +314,7 @@ async function handleTicketQR(
       details: { status: ticket.status }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -321,7 +329,7 @@ async function handleTicketQR(
     logStep("Atomic ticket checkin RPC failed", { checkinError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "ticket" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -340,7 +348,7 @@ async function handleTicketQR(
       }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -527,7 +535,7 @@ async function handleTicketQR(
     }
   }), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -546,7 +554,7 @@ async function handleOfferQR(
   if (!discount || discount.business_id !== businessId) {
     return new Response(JSON.stringify({ success: false, message: m.wrongBusiness, qrType: "offer" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -562,21 +570,21 @@ async function handleOfferQR(
       }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (purchase.status !== "paid") {
     return new Response(JSON.stringify({ success: false, message: m.offerNotPaid, qrType: "offer" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (purchase.expires_at && new Date(purchase.expires_at) < new Date()) {
     return new Response(JSON.stringify({ success: false, message: m.offerExpired, qrType: "offer" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -587,7 +595,6 @@ async function handleOfferQR(
   // - not expired
   // - single-use (not already redeemed)
   // This prevents false negatives like “Η προσφορά δεν ισχύει αυτή την ώρα” for legitimate redemptions.
-
 
   // Redeem
   const nowIso = new Date().toISOString();
@@ -604,7 +611,7 @@ async function handleOfferQR(
   if (updateError) {
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "offer" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -759,7 +766,7 @@ async function handleOfferQR(
     }
   }), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -780,28 +787,28 @@ async function handleReservationQR(
   if (reservationBusinessId !== businessId) {
     return new Response(JSON.stringify({ success: false, message: m.wrongBusiness, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "cancelled") {
     return new Response(JSON.stringify({ success: false, message: m.reservationCancelled, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "declined") {
     return new Response(JSON.stringify({ success: false, message: m.reservationDeclined, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "pending") {
     return new Response(JSON.stringify({ success: false, message: m.reservationPending, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -821,7 +828,7 @@ async function handleReservationQR(
       }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -837,7 +844,7 @@ async function handleReservationQR(
     logStep("Atomic reservation checkin RPC failed", { checkinError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -949,7 +956,7 @@ async function handleReservationQR(
     }
   }), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -966,7 +973,7 @@ async function handleReservationGuestQR(
   if (!reservation) {
     return new Response(JSON.stringify({ success: false, message: m.notFound, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -978,28 +985,28 @@ async function handleReservationGuestQR(
   if (reservationBusinessId !== businessId) {
     return new Response(JSON.stringify({ success: false, message: m.wrongBusiness, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "cancelled") {
     return new Response(JSON.stringify({ success: false, message: m.reservationCancelled, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "declined") {
     return new Response(JSON.stringify({ success: false, message: m.reservationDeclined, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (reservation.status === "pending") {
     return new Response(JSON.stringify({ success: false, message: m.reservationPending, qrType: "reservation" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1022,7 +1029,7 @@ async function handleReservationGuestQR(
       }
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1038,7 +1045,7 @@ async function handleReservationGuestQR(
     logStep("Guest check-in failed", { checkinError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "reservation_guest" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1118,7 +1125,7 @@ async function handleReservationGuestQR(
     }
   }), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -1146,7 +1153,7 @@ async function handleStudentQR(
       qrType: "student"
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1160,7 +1167,7 @@ async function handleStudentQR(
       qrType: "student"
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1171,7 +1178,7 @@ async function handleStudentQR(
       qrType: "student"
     }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1185,21 +1192,21 @@ async function handleStudentQR(
   if (verificationError || !verification) {
     return new Response(JSON.stringify({ success: false, message: m.studentNotFound, qrType: "student" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (verification.status !== 'approved') {
     return new Response(JSON.stringify({ success: false, message: m.studentNotFound, qrType: "student" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
   if (verification.expires_at && new Date(verification.expires_at) < new Date()) {
     return new Response(JSON.stringify({ success: false, message: m.studentExpired, qrType: "student" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1215,7 +1222,7 @@ async function handleStudentQR(
     if (existingRedemptions && existingRedemptions.length > 0) {
       return new Response(JSON.stringify({ success: false, message: m.studentAlreadyRedeemed, qrType: "student" }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
   }
@@ -1248,7 +1255,7 @@ async function handleStudentQR(
     logStep("Student redemption insert failed", { redemptionError });
     return new Response(JSON.stringify({ success: false, message: m.internalError, qrType: "student" }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -1414,6 +1421,6 @@ async function handleStudentQR(
     }
   }), {
     status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 }

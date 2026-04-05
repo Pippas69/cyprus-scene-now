@@ -2,6 +2,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import {
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
   wrapBusinessEmail,
   infoCard,
   detailRow,
@@ -11,11 +12,6 @@ import {
 } from "../_shared/email-templates.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[OFFER-CLAIM-BUSINESS-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -44,7 +40,7 @@ const formatPartySizeText = (partySize: number) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -186,7 +182,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...securityHeaders },
     });
   } catch (error: any) {
     logStep("ERROR", { message: error.message });
@@ -194,7 +190,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       }
     );
   }

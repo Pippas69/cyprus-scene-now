@@ -1,6 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import {
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
   wrapPremiumEmail,
   emailGreeting,
   emailTitle,
@@ -12,19 +13,13 @@ import {
   noteBox,
 } from "../_shared/email-templates.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-TICKET-EMAIL] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: securityHeaders });
   }
 
   try {
@@ -165,7 +160,7 @@ Deno.serve(async (req) => {
     logStep("Email sent successfully", emailResponse);
 
     return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -173,7 +168,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

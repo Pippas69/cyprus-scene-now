@@ -1,9 +1,5 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -12,7 +8,7 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -39,7 +35,7 @@ Deno.serve(async (req) => {
       logStep("ERROR: STRIPE_SECRET_KEY not set");
       return new Response(
         JSON.stringify({ ok: false, error: "STRIPE_SECRET_KEY is not configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
@@ -51,7 +47,7 @@ Deno.serve(async (req) => {
           ok: false,
           error: `Invalid key format. Expected sk_live_ or sk_test_, got prefix: ${stripeKey.substring(0, 7)}`,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
@@ -74,7 +70,7 @@ Deno.serve(async (req) => {
         keySuffix: stripeKey.slice(-4),
         keyLength: stripeKey.length,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -82,7 +78,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ ok: false, error: errorMessage }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

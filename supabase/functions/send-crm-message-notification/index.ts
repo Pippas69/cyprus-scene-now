@@ -1,10 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled, type PushPayload } from "../_shared/web-push-crypto.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 interface SendCrmMessageRequest {
   guestId: string;
@@ -16,12 +12,12 @@ interface SendCrmMessageRequest {
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {

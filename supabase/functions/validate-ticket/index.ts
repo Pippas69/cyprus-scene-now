@@ -1,9 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[VALIDATE-TICKET] ${step}`, details ? JSON.stringify(details) : '');
@@ -21,10 +18,21 @@ const maskEmail = (email: string | null | undefined): string | null => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "validate_ticket", 60, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Function started");
 
     const supabaseClient = createClient(
@@ -69,7 +77,7 @@ Deno.serve(async (req) => {
         valid: false, 
         error: "Ticket not found" 
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -81,7 +89,7 @@ Deno.serve(async (req) => {
         valid: false, 
         error: "You don't have permission to validate tickets for this event" 
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -92,7 +100,7 @@ Deno.serve(async (req) => {
         valid: false,
         error: "Ticket already used",
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -102,7 +110,7 @@ Deno.serve(async (req) => {
         valid: false,
         error: `Ticket has been ${ticket.status}`,
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -122,7 +130,7 @@ Deno.serve(async (req) => {
           status: ticket.status,
         }
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -144,7 +152,7 @@ Deno.serve(async (req) => {
           valid: false,
           error: checkinResult?.error === 'ALREADY_USED' ? "Ticket already used" : "Ticket cannot be checked in",
         }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -244,7 +252,7 @@ Deno.serve(async (req) => {
         },
         linkedReservation,
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -255,7 +263,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage, valid: false }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

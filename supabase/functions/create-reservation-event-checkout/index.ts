@@ -1,17 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 // Commission rate is now dynamically determined based on the business's subscription plan
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -51,7 +48,6 @@ serve(async (req) => {
     if (userError || !user) {
       throw new Error("User not authenticated");
     }
-
 
     const {
       event_id,
@@ -145,7 +141,6 @@ serve(async (req) => {
     // NOTE: We allow checkout even if the business hasn't completed payment setup.
     // In that case we run a platform checkout (no destination transfer / application fee).
     // This matches the ticket checkout behavior and avoids blocking users mid-flow.
-
 
     // Get seating type and validate availability
     const { data: seatingType, error: seatingError } = await supabaseClient
@@ -377,7 +372,7 @@ serve(async (req) => {
         platform_fee_cents: platformFeeCents,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
@@ -387,7 +382,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: message }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 400,
       }
     );
