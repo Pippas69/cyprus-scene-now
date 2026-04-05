@@ -1223,8 +1223,65 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       </span>
     );
   };
+  // Editable cell for event seating type (Bar/Table/VIP/Sofa)
+  const EventSeatingTypeEditCell = ({ reservationId, currentSeatingTypeId, seatingTypeName }: { reservationId: string; currentSeatingTypeId: string | null; seatingTypeName: string | null }) => {
+    const allTypes = Object.entries(seatingTypeNames).map(([id, name]) => {
+      const lower = name.toLowerCase();
+      const label = lower === 'table' ? 'Τραπέζι' : lower === 'sofa' ? 'Καναπές' : lower === 'vip' ? 'VIP' : lower === 'bar' ? 'Bar' : name;
+      return { id, label };
+    });
 
-  const handleSaveMemo = async (reservationId: string) => {
+    const handleChange = async (newId: string | null) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ seating_type_id: newId } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, seating_type_id: newId } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving seating type:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    if (allTypes.length === 0) {
+      return <span className="text-sm text-muted-foreground">—</span>;
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground">
+            {seatingTypeName || '—'}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-36 p-1" align="start">
+          <div className="flex flex-col">
+            <button
+              className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${!currentSeatingTypeId ? 'font-semibold text-primary' : ''}`}
+              onClick={() => handleChange(null)}
+            >
+              —
+            </button>
+            {allTypes.map(opt => (
+              <button
+                key={opt.id}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentSeatingTypeId === opt.id ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+
     try {
       const { error } = await supabase
         .from('reservations')
