@@ -611,7 +611,21 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* 9. Notes - all types */}
+          {/* === RESERVATION/HYBRID: Email === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.email}</Label>
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={txt.email}
+                type="email"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* Notes - all types */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.notes}</Label>
             <Textarea
