@@ -48,6 +48,17 @@ serve(async (req) => {
   );
 
   try {
+
+    // Auth guard: only service_role or internal calls allowed
+    const authHeader = req.headers.get("Authorization");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!authHeader || !serviceKey || authHeader !== `Bearer ${serviceKey}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const now = new Date();
     logStep("Starting boost expiration check", { now: now.toISOString() });
 

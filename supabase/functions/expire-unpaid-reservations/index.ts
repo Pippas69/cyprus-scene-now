@@ -14,6 +14,17 @@ Deno.serve(async (req) => {
   }
 
   try {
+
+    // Auth guard: only service_role or internal calls allowed
+    const authHeader = req.headers.get("Authorization");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!authHeader || !serviceKey || authHeader !== `Bearer ${serviceKey}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Function started - checking for expired unpaid reservations");
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");

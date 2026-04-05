@@ -20,6 +20,28 @@ Deno.serve(async (req) => {
   }
 
   try {
+
+    // Auth guard: require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const _token = authHeader.replace("Bearer ", "");
+    const _authClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    );
+    const { error: _authError } = await _authClient.auth.getUser(_token);
+    if (_authError) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
