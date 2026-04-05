@@ -1764,15 +1764,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   : (tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0);
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
+                const remainderCents = Math.max(0, minChargeCents - ticketPaidCents);
                 const minChargeDisplay = minChargeCents > 0 ?
                 (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
                 ticketPaidCents > 0 ?
                 `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
                 `€${(minChargeCents / 100).toFixed(2)}`) :
                 '-';
+                // Reservation-only: show "Πραγματικά" inside the min charge column
                 const actualSpendDisplay = actualSpendCents > 0
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
-                  : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
+                  : (language === 'el' ? 'Πραγματικά: —' : 'Actual: —');
+                // Hybrid: show "Υπόλοιπο" inside the min charge column
+                const remainderDisplay = remainderCents > 0
+                  ? `${language === 'el' ? 'Υπόλοιπο' : 'Remaining'}: €${(remainderCents / 100).toFixed(2)}`
+                  : (language === 'el' ? 'Υπόλοιπο: €0' : 'Remaining: €0');
 
                 // Seating type name for this reservation
                 const seatingTypeName = reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id]
