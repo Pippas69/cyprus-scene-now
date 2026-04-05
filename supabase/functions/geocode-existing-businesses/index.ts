@@ -1,9 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const MAPBOX_TOKEN = Deno.env.get('MAPBOX_API_TOKEN') || '';
 
@@ -49,7 +45,7 @@ async function geocodeAddress(address: string, city: string): Promise<{ lng: num
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -78,7 +74,7 @@ Deno.serve(async (req) => {
           message: 'No businesses found that need geocoding',
           updated: 0 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -152,7 +148,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -162,7 +158,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

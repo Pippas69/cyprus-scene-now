@@ -1,22 +1,18 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-}
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 function jsonResponse(data: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...securityHeaders, 'Content-Type': 'application/json' },
   })
 }
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: securityHeaders })
   }
 
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -53,6 +49,17 @@ Deno.serve(async (req) => {
     } else {
       // JSON body (from the app's unsubscribe page)
       try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "handle_email_unsubscribe", 10, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
         const body = await req.json()
         if (body.token) {
           token = body.token

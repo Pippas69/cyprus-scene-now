@@ -3,14 +3,10 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
-
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 type Language = "el" | "en";
 
@@ -85,12 +81,23 @@ const logScan = async (
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const startedAt = Date.now();
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "validate_offer", 60, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -99,7 +106,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -112,7 +119,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -123,7 +130,7 @@ Deno.serve(async (req) => {
     if (!body.qrToken || !body.businessId) {
       return new Response(JSON.stringify({ success: false, message: m.invalidRequest }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -140,7 +147,7 @@ Deno.serve(async (req) => {
       logStep("Business not found", { businessError });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -148,7 +155,7 @@ Deno.serve(async (req) => {
       logStep("Wrong business owner", { expected: business.user_id, actual: user.id });
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -247,7 +254,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: false, message: m.notFound }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -261,7 +268,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: false, message: m.wrongBusiness }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -275,7 +282,7 @@ Deno.serve(async (req) => {
           message: language === "el" ? `Ο/Η ${guestRecord.guest_name} έχει ήδη γίνει check-in` : `${guestRecord.guest_name} has already been checked in`
         }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
       }
     }
@@ -287,7 +294,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: false, message: m.alreadyRedeemed }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -297,7 +304,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: false, message: m.notPaid }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -308,7 +315,7 @@ Deno.serve(async (req) => {
 
       return new Response(JSON.stringify({ success: false, message: m.expired }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -319,7 +326,6 @@ Deno.serve(async (req) => {
     // - not expired
     // - single-use (not already redeemed)
     // This prevents false negatives like “Η προσφορά δεν ισχύει αυτή την ώρα” for legitimate redemptions.
-
 
     // Redeem (atomic-ish)
     const nowIso = new Date().toISOString();
@@ -340,7 +346,7 @@ Deno.serve(async (req) => {
         logStep("Guest check-in failed", { guestUpdateError });
         return new Response(JSON.stringify({ success: false, message: m.internalError }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -380,7 +386,7 @@ Deno.serve(async (req) => {
 
         return new Response(JSON.stringify({ success: false, message: m.internalError }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
       }
     }
@@ -559,14 +565,14 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (error) {
     console.error("[VALIDATE-OFFER] Unhandled error", error);
     return new Response(JSON.stringify({ success: false, message: msg("en").internalError }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });

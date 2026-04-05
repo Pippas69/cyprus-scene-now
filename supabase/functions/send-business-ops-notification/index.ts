@@ -8,11 +8,7 @@ import {
   type BusinessNotificationType 
 } from "../_shared/business-notification-helper.ts";
 import { infoCard, detailRow, ctaButton } from "../_shared/email-templates.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[BUSINESS-OPS-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -49,7 +45,7 @@ interface BusinessOpsNotificationRequest {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -142,7 +138,7 @@ Deno.serve(async (req) => {
         logStep("Unknown notification type", { type: data.type });
         return new Response(JSON.stringify({ error: "Unknown notification type" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
     }
 
@@ -164,7 +160,7 @@ Deno.serve(async (req) => {
     logStep("Notification result", result);
 
     return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
     logStep("ERROR", { message: error.message });
@@ -172,7 +168,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       }
     );
   }

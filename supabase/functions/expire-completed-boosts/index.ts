@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -42,7 +38,7 @@ function getExpirationTimestamp(boost: {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const supabaseClient = createClient(
@@ -198,14 +194,14 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, totalExpired }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[EXPIRE-BOOSTS] Error:", message);
     return new Response(
       JSON.stringify({ error: message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

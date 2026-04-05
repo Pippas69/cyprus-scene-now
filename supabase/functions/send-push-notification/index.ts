@@ -1,12 +1,7 @@
 // Send Push Notification - Uses shared Web Push encryption for iOS/Safari compatibility
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-PUSH-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -22,7 +17,7 @@ interface PushNotificationRequest {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: securityHeaders });
   }
 
   try {
@@ -63,7 +58,7 @@ Deno.serve(async (req) => {
       sent: result.sent,
       failed: result.failed,
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -71,7 +66,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

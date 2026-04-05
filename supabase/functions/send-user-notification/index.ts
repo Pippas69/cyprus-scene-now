@@ -5,14 +5,9 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
-
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-USER-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -62,7 +57,7 @@ interface NotificationRequest {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -98,7 +93,7 @@ Deno.serve(async (req) => {
     if (already) {
       logStep("Skipping duplicate unified notification", { unifiedKey });
       return new Response(JSON.stringify({ success: true, skippedDuplicate: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -193,14 +188,14 @@ Deno.serve(async (req) => {
     logStep("Notification sent", results);
 
     return new Response(JSON.stringify({ success: true, results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR', errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });

@@ -3,13 +3,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { getEmailForUserId } from "../_shared/user-email.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[WEEKLY-SUMMARY-CRON] ${step}`, details ? JSON.stringify(details) : '');
@@ -117,7 +113,7 @@ const buildWeeklySummaryEmail = (
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -297,14 +293,14 @@ Deno.serve(async (req) => {
       sent: sentCount, 
       skipped: skippedCount 
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR', errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });

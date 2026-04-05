@@ -1,10 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[CHECK-EXPIRING-OFFERS] ${step}`, details ? JSON.stringify(details) : '');
@@ -12,7 +8,7 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -51,7 +47,7 @@ Deno.serve(async (req) => {
     if (!expiringOffers || expiringOffers.length === 0) {
       return new Response(
         JSON.stringify({ message: 'No expiring offers found', count: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -150,7 +146,7 @@ Deno.serve(async (req) => {
         notificationsCreated: notificationCount,
         pushNotificationsSent: pushCount,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -159,7 +155,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

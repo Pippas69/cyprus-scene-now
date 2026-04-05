@@ -3,13 +3,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[PERSONALIZED-NOTIFS] ${step}`, details ? JSON.stringify(details) : '');
@@ -61,7 +57,7 @@ interface NewContent {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -156,7 +152,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       logStep("No new content to notify about");
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: 'No new content' }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { "Content-Type": "application/json", ...securityHeaders } }
       );
     }
 
@@ -173,7 +169,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       logStep("No users with enabled preferences");
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: 'No users with enabled preferences' }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { "Content-Type": "application/json", ...securityHeaders } }
       );
     }
 
@@ -369,7 +365,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }),
       { 
         status: 200, 
-        headers: { "Content-Type": "application/json", ...corsHeaders } 
+        headers: { "Content-Type": "application/json", ...securityHeaders } 
       }
     );
   } catch (error: any) {
@@ -378,7 +374,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       { 
         status: 500, 
-        headers: { "Content-Type": "application/json", ...corsHeaders } 
+        headers: { "Content-Type": "application/json", ...securityHeaders } 
       }
     );
   }

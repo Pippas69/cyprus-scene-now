@@ -1,10 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -50,7 +46,7 @@ const PRODUCT_TO_PLAN: Record<string, string> = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const supabaseClient = createClient(
@@ -58,7 +54,6 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { persistSession: false } }
   );
-
 
   try {
     logStep('Function started');
@@ -77,7 +72,7 @@ Deno.serve(async (req) => {
     if (userError || !userData?.user?.id || !userData?.user?.email) {
       logStep('Auth failed, returning unsubscribed', { error: userError?.message });
       return new Response(JSON.stringify({ subscribed: false, plan_slug: 'free' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
@@ -96,7 +91,7 @@ Deno.serve(async (req) => {
     if (businessError || !business) {
       logStep('No business found for user');
       return new Response(JSON.stringify({ subscribed: false }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
@@ -136,13 +131,13 @@ Deno.serve(async (req) => {
           downgrade_requested_at: existingDbSub.downgraded_to_free_at || null,
           downgrade_target_plan: existingDbSub.downgrade_target_plan || 'free',
         }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' },
           status: 200,
         });
       }
       logStep('No Stripe customer found');
       return new Response(JSON.stringify({ subscribed: false }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
@@ -220,13 +215,13 @@ Deno.serve(async (req) => {
           downgrade_requested_at: existingDbSub.downgraded_to_free_at || null,
           downgrade_target_plan: existingDbSub.downgrade_target_plan || 'free',
         }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...securityHeaders, 'Content-Type': 'application/json' },
           status: 200,
         });
       }
       logStep('No active subscription found');
       return new Response(JSON.stringify({ subscribed: false }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...securityHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
@@ -371,14 +366,14 @@ Deno.serve(async (req) => {
       downgrade_requested_at: existingSub?.downgraded_to_free_at || null,
       downgrade_target_plan: existingSub?.downgrade_target_plan || 'free',
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...securityHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR in check-subscription', { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...securityHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }

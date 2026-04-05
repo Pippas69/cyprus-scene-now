@@ -1,16 +1,13 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const ALLOWED_ADMIN_EMAILS = ["ramikakati@gmail.com"]; // admin-only test utility
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const supabaseClient = createClient(
@@ -20,6 +17,17 @@ Deno.serve(async (req) => {
   );
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "admin_force_free", 5, 10);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
@@ -34,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (!ALLOWED_ADMIN_EMAILS.includes(user.email)) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 403,
       });
     }
@@ -102,13 +110,13 @@ Deno.serve(async (req) => {
     if (updateError) throw updateError;
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

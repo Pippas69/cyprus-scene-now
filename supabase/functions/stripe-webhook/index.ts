@@ -1,10 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -25,7 +21,7 @@ const safeTimestampToISO = (timestamp: number | null | undefined): string => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -54,7 +50,7 @@ Deno.serve(async (req) => {
       console.error("[STRIPE-WEBHOOK] Received signature:", signature?.substring(0, 20) + "...");
       console.error("[STRIPE-WEBHOOK] Webhook secret configured:", webhookSecret ? "Yes (starts with " + webhookSecret.substring(0, 10) + "...)" : "No");
       return new Response(JSON.stringify({ error: "Invalid signature", details: errorMsg }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
@@ -77,7 +73,7 @@ Deno.serve(async (req) => {
       if (idempotencyError.code === '23505') {
         logStep("Event already processed (conflict), skipping", { eventId: event.id });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -87,7 +83,7 @@ Deno.serve(async (req) => {
     if (!insertedEvent) {
       logStep("Event already processed, skipping", { eventId: event.id });
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -718,7 +714,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -726,7 +722,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in stripe-webhook", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

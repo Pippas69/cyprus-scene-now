@@ -1,9 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -12,7 +8,7 @@ const logStep = (step: string, details?: any) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -47,7 +43,7 @@ Deno.serve(async (req) => {
     if (!commissions || commissions.length === 0) {
       logStep("No pending commissions found");
       return new Response(JSON.stringify({ message: "No commissions to process" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -129,7 +125,7 @@ Deno.serve(async (req) => {
       processed: commissions.length,
       invoicesCreated: Array.from(businessTotals.values()).filter(v => v >= MIN_INVOICE_AMOUNT_CENTS).length
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -137,7 +133,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in calculate-monthly-commission", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

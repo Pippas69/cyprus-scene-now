@@ -16,11 +16,8 @@ import {
   noteBox,
 } from "../_shared/email-templates.ts";
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[PROCESS-RESERVATION-EVENT-PAYMENT] ${step}`, details ? JSON.stringify(details) : '');
@@ -28,7 +25,7 @@ const logStep = (step: string, details?: unknown) => {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -71,7 +68,7 @@ serve(async (req) => {
     if (metadata?.type !== "reservation_event") {
       logStep("Not a reservation event payment, skipping");
       return new Response(JSON.stringify({ received: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -442,7 +439,7 @@ serve(async (req) => {
       const message = error instanceof Error ? error.message : "Unknown error";
       logStep("ERROR: Processing reservation payment", { error: message });
       return new Response(JSON.stringify({ error: message }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
         status: 500,
       });
     }
@@ -467,6 +464,6 @@ serve(async (req) => {
   }
 
   return new Response(JSON.stringify({ received: true }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
 });

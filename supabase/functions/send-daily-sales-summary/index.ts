@@ -1,13 +1,9 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[DAILY-SALES-SUMMARY] ${step}`, details ? JSON.stringify(details) : '');
@@ -50,7 +46,7 @@ const wrapEmailContent = (content: string) => `
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -92,7 +88,7 @@ Deno.serve(async (req) => {
     if (!businessesWithNotifs || businessesWithNotifs.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "No users with daily summary enabled" }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       });
     }
 
@@ -293,7 +289,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, emailsSent }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...securityHeaders },
     });
 
   } catch (error: any) {
@@ -302,7 +298,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       }
     );
   }

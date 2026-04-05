@@ -6,16 +6,12 @@ import {
   successBadge,
 } from "../_shared/email-templates.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 const logStep = (step: string, details?: unknown) => {
   console.log(`[TICKET-SALE-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 interface TicketSaleNotificationRequest {
   orderId: string;
@@ -32,7 +28,7 @@ interface TicketSaleNotificationRequest {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -100,7 +96,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...securityHeaders },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -109,7 +105,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...securityHeaders },
       }
     );
   }

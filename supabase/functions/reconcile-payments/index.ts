@@ -1,11 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[RECONCILE-PAYMENTS] ${step}`, details ? JSON.stringify(details) : '');
@@ -13,7 +9,7 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -346,7 +342,7 @@ Deno.serve(async (req) => {
       success: true,
       ...results,
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
@@ -354,7 +350,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("FATAL ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }

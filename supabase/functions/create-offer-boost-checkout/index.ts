@@ -1,10 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -20,7 +17,7 @@ const BOOST_TIERS = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const supabaseClient = createClient(
@@ -30,6 +27,17 @@ Deno.serve(async (req) => {
   );
 
   try {
+    // Rate limiting
+    const clientIP = getClientIP(req);
+    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "create_offer_boost_checkout", 10, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Function started");
 
     const authHeader = req.headers.get("Authorization");
@@ -191,7 +199,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ url: session.url, boostId, stripeChargeCents }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
     let errorMessage = "Unknown error";
@@ -211,7 +219,7 @@ Deno.serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

@@ -3,15 +3,12 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { sendPushIfEnabled, type PushPayload } from "../_shared/web-push-crypto.ts";
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   try {
@@ -111,7 +108,7 @@ serve(async (req) => {
           error: "card_declined", 
           message: captureErr.message || "Payment capture failed. Please try again."
         }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 402,
         });
       }
@@ -215,7 +212,7 @@ serve(async (req) => {
           error: "card_declined", 
           message: chargeErr.message || "Your card was declined. Please try again or use a different card."
         }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
           status: 402,
         });
       }
@@ -311,14 +308,14 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error: unknown) {
     console.error("Error confirming deferred reservation:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 400,
     });
   }

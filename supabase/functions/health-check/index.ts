@@ -1,13 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: securityHeaders });
   }
 
   const checks: Record<string, { status: string; latency_ms?: number; error?: string }> = {};
@@ -68,7 +64,7 @@ Deno.serve(async (req) => {
     total_latency_ms: Date.now() - startTotal,
     checks,
   }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...securityHeaders, "Content-Type": "application/json" },
     status: overallStatus === "down" ? 503 : 200,
   });
 });
