@@ -1862,9 +1862,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <div className="flex flex-col gap-0.5">
                           {(() => {
                             const ticketAges = agesByReservation[reservation.id];
-                            const agesStr = ticketAges && ticketAges.length > 0
-                              ? ticketAges.join(', ')
-                              : (reservation as any).guest_ages || '';
+                            const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
+                              ? `${Math.min(...ticketAges)}+`
+                              : '';
+                            const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
                             const hasPeople = !!reservation.party_size;
                             const hasAges = !!agesStr;
                             const displayText = hasPeople
