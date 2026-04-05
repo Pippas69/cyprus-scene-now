@@ -139,6 +139,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   } | null>(null);
   const [hasFloorPlan, setHasFloorPlan] = useState(false);
   const [tableAssignmentLabels, setTableAssignmentLabels] = useState<Record<string, string>>({});
+  const [walkInTicketPriceCents, setWalkInTicketPriceCents] = useState<number | null>(null);
   const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
   const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
   const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
