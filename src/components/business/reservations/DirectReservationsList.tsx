@@ -411,6 +411,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           fetchCheckInCounts(reservationIds);
           // Fetch cities from user profiles for reservations
           fetchCitiesForReservations(sortedByName);
+          // Fetch table assignments for event reservations too
+          fetchTableAssignments(reservationIds, selectedEventId);
           const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
