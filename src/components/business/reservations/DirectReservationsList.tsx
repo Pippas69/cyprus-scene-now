@@ -1751,8 +1751,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
                   <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
                   <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
                   {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
+                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1831,7 +1831,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       {/* 3. Ελάχιστη Χρέωση */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
-                          <span>{minChargeDisplay}</span>
+                          <span className="whitespace-nowrap">{minChargeDisplay}</span>
                           {isReservationOnly ? (
                             <EditableCell
                               reservationId={reservation.id}
@@ -1864,16 +1864,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         {renderStaffMemoCell(reservation)}
                       </TableCell>
-                      {/* 7. Email */}
-                      <TableCell className="align-top">
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="email"
-                          displayValue={reservation.email || reservation.profiles?.email || '—'}
-                          rawValue={reservation.email || reservation.profiles?.email || ''}
-                        />
-                      </TableCell>
-                      {/* 8. Πραγματικά (hybrid only) */}
+                      {/* 7. Πραγματικά (hybrid only) */}
                       {!isReservationOnly && (
                         <TableCell className="align-top">
                           <EditableCell
@@ -1884,6 +1875,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           />
                         </TableCell>
                       )}
+                      {/* 8. Email */}
+                      <TableCell className="align-top">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="email"
+                          displayValue={reservation.email || reservation.profiles?.email || '—'}
+                          rawValue={reservation.email || reservation.profiles?.email || ''}
+                        />
+                      </TableCell>
                     </TableRow>);
               })}
               </TableBody>
