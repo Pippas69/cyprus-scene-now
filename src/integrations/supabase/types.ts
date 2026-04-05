@@ -177,6 +177,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "beta_invite_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       blog_posts: {
@@ -343,6 +350,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_followers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -585,6 +599,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "business_posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "business_posts_linked_event_id_fkey"
             columns: ["linked_event_id"]
             isOneToOne: false
@@ -700,6 +721,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: true
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -932,6 +960,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "commission_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "commission_ledger_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -1131,6 +1166,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "credit_transactions_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
@@ -1203,6 +1245,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_communication_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1281,6 +1330,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1389,6 +1445,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1511,6 +1574,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_guests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "crm_guests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1594,6 +1664,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_analytics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1985,6 +2062,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       email_send_log: {
@@ -2124,6 +2208,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "engagement_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "engagement_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2219,6 +2310,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2482,6 +2580,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       favorite_discounts: {
@@ -2687,6 +2792,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "floor_plan_rooms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       floor_plan_tables: {
@@ -2775,6 +2887,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "floor_plan_tables_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "floor_plan_tables_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -2855,6 +2974,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_zones_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -3183,6 +3309,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offer_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -3350,6 +3483,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offer_purchases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "offer_purchases_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -3488,6 +3628,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payment_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_reactions: {
@@ -3571,6 +3718,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -3704,6 +3858,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "productions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profile_boosts: {
@@ -3777,6 +3938,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4150,6 +4318,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reservation_no_shows_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reservation_no_shows_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
@@ -4301,6 +4476,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_slot_closures_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4527,6 +4709,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -4914,6 +5103,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_discount_partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       student_discount_redemptions: {
@@ -4963,6 +5159,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -5029,6 +5232,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -5111,6 +5321,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subsidy_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -5377,6 +5594,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
           {
@@ -5964,6 +6188,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_rsvp_counts: {
@@ -6048,6 +6279,13 @@ export type Database = {
             referencedRelation: "public_businesses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       public_businesses: {
@@ -6094,6 +6332,135 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      public_businesses_safe: {
+        Row: {
+          accepts_direct_reservations: boolean | null
+          address: string | null
+          category: string[] | null
+          city: string | null
+          closes_at: string | null
+          cover_url: string | null
+          created_at: string | null
+          daily_reservation_limit: number | null
+          description: string | null
+          floor_plan_enabled: boolean | null
+          floor_plan_image_url: string | null
+          geo: unknown
+          id: string | null
+          logo_url: string | null
+          name: string | null
+          onboarding_completed: boolean | null
+          opens_at: string | null
+          phone: string | null
+          reservation_capacity_type: string | null
+          reservation_closes_at: string | null
+          reservation_days: string[] | null
+          reservation_opens_at: string | null
+          reservation_requires_approval: boolean | null
+          reservation_seating_options: string[] | null
+          reservation_time_slots: Json | null
+          reservations_globally_paused: boolean | null
+          student_discount_enabled: boolean | null
+          student_discount_mode: string | null
+          student_discount_percent: number | null
+          ticket_reservation_linked: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          verified: boolean | null
+          verified_at: string | null
+          website: string | null
+        }
+        Insert: {
+          accepts_direct_reservations?: boolean | null
+          address?: string | null
+          category?: string[] | null
+          city?: string | null
+          closes_at?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          daily_reservation_limit?: number | null
+          description?: string | null
+          floor_plan_enabled?: boolean | null
+          floor_plan_image_url?: string | null
+          geo?: unknown
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          onboarding_completed?: boolean | null
+          opens_at?: string | null
+          phone?: string | null
+          reservation_capacity_type?: string | null
+          reservation_closes_at?: string | null
+          reservation_days?: string[] | null
+          reservation_opens_at?: string | null
+          reservation_requires_approval?: boolean | null
+          reservation_seating_options?: string[] | null
+          reservation_time_slots?: Json | null
+          reservations_globally_paused?: boolean | null
+          student_discount_enabled?: boolean | null
+          student_discount_mode?: string | null
+          student_discount_percent?: number | null
+          ticket_reservation_linked?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          accepts_direct_reservations?: boolean | null
+          address?: string | null
+          category?: string[] | null
+          city?: string | null
+          closes_at?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          daily_reservation_limit?: number | null
+          description?: string | null
+          floor_plan_enabled?: boolean | null
+          floor_plan_image_url?: string | null
+          geo?: unknown
+          id?: string | null
+          logo_url?: string | null
+          name?: string | null
+          onboarding_completed?: boolean | null
+          opens_at?: string | null
+          phone?: string | null
+          reservation_capacity_type?: string | null
+          reservation_closes_at?: string | null
+          reservation_days?: string[] | null
+          reservation_opens_at?: string | null
+          reservation_requires_approval?: boolean | null
+          reservation_seating_options?: string[] | null
+          reservation_time_slots?: Json | null
+          reservations_globally_paused?: boolean | null
+          student_discount_enabled?: boolean | null
+          student_discount_mode?: string | null
+          student_discount_percent?: number | null
+          ticket_reservation_linked?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "businesses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "businesses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       public_discounts: {
         Row: {
@@ -6145,6 +6512,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]
