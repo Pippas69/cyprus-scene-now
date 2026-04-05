@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     const { email: emailInput } = await parseBody(req, BodySchema)
 
-    const normalizedEmail = email?.toLowerCase()
+    const normalizedEmail = emailInput?.toLowerCase()
 
     if (!normalizedEmail || !ALLOWED_TEST_EMAILS.has(normalizedEmail)) {
       return new Response(
