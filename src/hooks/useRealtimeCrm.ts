@@ -24,11 +24,19 @@ export function useRealtimeCrm(businessId: string | null) {
       timer = setTimeout(invalidate, 300);
     };
 
-    // Poll crm_guests every 10s since it's no longer on Realtime (PII protection)
-    const pollTimer = setInterval(invalidate, 10000);
-
     const channel = supabase
       .channel(`crm-realtime-${businessId}`)
+      // crm_guests changes (new guest created, profile updated, merged)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crm_guests',
+          filter: `business_id=eq.${businessId}`,
+        },
+        debouncedInvalidate
+      )
       // Reservation changes (check-in, status change, spend update)
       .on(
         'postgres_changes',
@@ -77,7 +85,6 @@ export function useRealtimeCrm(businessId: string | null) {
       .subscribe();
 
     return () => {
-      clearInterval(pollTimer);
       if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
