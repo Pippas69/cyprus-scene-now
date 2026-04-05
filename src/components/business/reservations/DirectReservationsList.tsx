@@ -1831,7 +1831,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       {/* 3. Ελάχιστη Χρέωση */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
-                          <span>{minChargeDisplay}</span>
+                          <span className="whitespace-nowrap">{minChargeDisplay}</span>
                           {isReservationOnly ? (
                             <EditableCell
                               reservationId={reservation.id}
