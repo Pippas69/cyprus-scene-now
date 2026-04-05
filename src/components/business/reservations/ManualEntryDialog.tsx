@@ -606,7 +606,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === RESERVATION/HYBRID: Table === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && tables.length > 0 && (
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && tables.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.table}</Label>
               <Select value={tableId} onValueChange={setTableId}>
