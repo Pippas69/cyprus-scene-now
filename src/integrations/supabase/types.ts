@@ -4075,6 +4075,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_entries: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          identifier: string
+          key: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          identifier: string
+          key: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          key?: string
+        }
+        Relationships: []
+      }
       realtime_stats: {
         Row: {
           age_bucket_15_17: number | null
@@ -6760,6 +6784,7 @@ export type Database = {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: Json
       }
+      cleanup_rate_limit_entries: { Args: never; Returns: undefined }
       create_business_with_geo: {
         Args: {
           p_address: string

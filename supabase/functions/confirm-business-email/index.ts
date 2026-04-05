@@ -1,23 +1,30 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { corsResponse, errorResponse, jsonResponse, jsonHeaders } from "../_shared/security-headers.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return corsResponse();
   }
 
   try {
+    // Rate limit: max 5 confirm attempts per IP per 10 minutes
+    const clientIP = getClientIP(req);
+    const rateCheck = await checkRateLimit(clientIP, "confirm_business_email", 5, 10);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: { ...jsonHeaders(), "Retry-After": String(rateCheck.retryAfterSeconds) },
+      });
+    }
+
     const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
     const token = authHeader?.replace("Bearer ", "").trim();
 
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -25,7 +32,7 @@ Deno.serve(async (req) => {
     if (!user_id) {
       return new Response(JSON.stringify({ error: "user_id is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -40,7 +47,7 @@ Deno.serve(async (req) => {
     if (actorError || !actorData.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -53,7 +60,7 @@ Deno.serve(async (req) => {
     if (!actorProfile?.is_admin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -69,14 +76,14 @@ Deno.serve(async (req) => {
     if (!business) {
       return new Response(JSON.stringify({ error: "Not a business account" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
     if (!business.verified) {
       return new Response(JSON.stringify({ error: "Business is not admin-approved yet" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -96,13 +103,13 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
     });
   }
 });

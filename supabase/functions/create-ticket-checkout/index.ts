@@ -1,11 +1,8 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
 
 interface TicketItem {
   tierId: string;
@@ -36,11 +33,25 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return corsResponse();
   }
 
   try {
     logStep("Function started");
+
+    // Rate limiting: max 15 checkout attempts per user per 5 minutes
+    const clientIP = getClientIP(req);
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return errorResponse("No authorization header", 401);
+
+    const rateLimitId = authHeader.replace("Bearer ", "").substring(0, 20) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "ticket_checkout", 15, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...jsonHeaders(), "Retry-After": String(rateCheck.retryAfterSeconds) },
+      });
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -49,8 +60,6 @@ Deno.serve(async (req) => {
     );
 
     // Get authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
@@ -59,11 +68,32 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId }: CheckoutRequest = await req.json();
+    const body: CheckoutRequest = await req.json();
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = body;
     logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
-    if (!eventId || !items || items.length === 0) {
-      throw new Error("Missing required fields");
+    // Input validation
+    if (!eventId || typeof eventId !== 'string' || eventId.length < 10) {
+      return errorResponse("Invalid eventId", 400);
+    }
+    if (!items || !Array.isArray(items) || items.length === 0 || items.length > 20) {
+      return errorResponse("Invalid items", 400);
+    }
+    for (const item of items) {
+      if (!item.tierId || typeof item.tierId !== 'string') return errorResponse("Invalid tier ID", 400);
+      if (!item.quantity || typeof item.quantity !== 'number' || item.quantity < 1 || item.quantity > 50) return errorResponse("Invalid quantity", 400);
+    }
+    if (!customerName || typeof customerName !== 'string' || customerName.length > 200) {
+      return errorResponse("Invalid customerName", 400);
+    }
+    if (!customerEmail || typeof customerEmail !== 'string' || !customerEmail.includes('@') || customerEmail.length > 255) {
+      return errorResponse("Invalid customerEmail", 400);
+    }
+    if (customerPhone && (typeof customerPhone !== 'string' || customerPhone.length > 20)) {
+      return errorResponse("Invalid phone number", 400);
+    }
+    if (specialRequests && (typeof specialRequests !== 'string' || specialRequests.length > 1000)) {
+      return errorResponse("Special requests too long", 400);
     }
 
     // Fetch event and business info (including Stripe Connect status)
@@ -427,7 +457,7 @@ Deno.serve(async (req) => {
         orderId: order.id,
         isFree: true 
       }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
         status: 200,
       });
     }
@@ -582,7 +612,7 @@ Deno.serve(async (req) => {
       orderId: order.id,
       isFree: false 
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
       status: 200,
     });
 
@@ -590,7 +620,7 @@ Deno.serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
       status: 500,
     });
   }
