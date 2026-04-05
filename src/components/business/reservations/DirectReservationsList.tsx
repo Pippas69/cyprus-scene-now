@@ -433,12 +433,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const fetchTableAssignments = async (reservationIds: string[]) => {
+  const fetchTableAssignments = async (reservationIds: string[], eventId?: string | null) => {
     if (reservationIds.length === 0) return;
-    const { data } = await supabase
+    let query = supabase
       .from('reservation_table_assignments')
       .select('reservation_id, floor_plan_tables(label)')
       .in('reservation_id', reservationIds);
+    if (eventId) {
+      query = query.eq('event_id', eventId);
+    }
+    const { data } = await query;
     if (data) {
       const map: Record<string, string> = {};
       data.forEach((a: any) => {
