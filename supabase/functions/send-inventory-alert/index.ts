@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { 
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   sendBusinessNotification, 
   wrapBusinessEmailContent,
   type BusinessNotificationType 
@@ -25,6 +26,16 @@ interface InventoryAlertRequest {
   total?: number;
 }
 
+const BodySchema = z.object({
+  businessId: flexId,
+  businessEmail: email.optional(),
+  entityType: safeString(50),
+  entityTitle: safeString(500),
+  remaining: nonNegativeInt,
+  total: nonNegativeInt.optional(),
+  businessName: safeString(200).optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -33,7 +44,7 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
     
-    const data: InventoryAlertRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", data);
 
     // Determine alert type based on remaining count
@@ -136,6 +147,9 @@ Deno.serve(async (req) => {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),

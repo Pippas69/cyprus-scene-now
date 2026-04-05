@@ -5,6 +5,7 @@ import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/not
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -79,6 +80,12 @@ const logScan = async (
   }
 };
 
+const BodySchema = z.object({
+  qrToken: safeString(500),
+  businessId: flexId,
+  language: language,
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -123,7 +130,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as ValidateOfferRequest;
+    const body = await parseBody(req, BodySchema);
     const language: Language = body.language === "el" ? "el" : "en";
     const m = msg(language);
 
@@ -569,6 +576,9 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("[VALIDATE-OFFER] Unhandled error", error);
     return new Response(JSON.stringify({ success: false, message: msg("en").internalError }), {
       status: 200,

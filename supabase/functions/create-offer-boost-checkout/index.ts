@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -14,6 +15,16 @@ const BOOST_TIERS = {
   standard: { dailyRateCents: 2500, hourlyRateCents: 300, quality: 4 },  // €25/day, €3/hour
   premium: { dailyRateCents: 4000, hourlyRateCents: 600, quality: 5 },   // €40/day, €6/hour
 };
+
+const BodySchema = z.object({
+  discountId: flexId,
+  tier: boostTier,
+  durationMode: durationMode,
+  startDate: dateString,
+  endDate: dateString.optional(),
+  durationHours: positiveInt.optional(),
+  partialBudgetCents: nonNegativeInt.default(0),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -51,7 +62,7 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, partialBudgetCents = 0 } = await req.json();
+    const { discountId, tier, durationMode, startDate, endDate, durationHours, partialBudgetCents } = await parseBody(req, BodySchema);
     logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, partialBudgetCents });
 
     // Get discount and verify ownership
@@ -202,6 +213,9 @@ Deno.serve(async (req) => {
       { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;

@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import {
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   wrapBusinessEmail,
   infoCard,
   detailRow,
@@ -38,6 +39,20 @@ const formatPartySizeText = (partySize: number) => {
   return `${partySize} άτομα`;
 };
 
+const BodySchema = z.object({
+  businessEmail: email,
+  businessName: safeString(200),
+  offerTitle: safeString(500),
+  customerName: safeString(200).optional(),
+  claimedCount: positiveInt.optional(),
+  remainingCount: nonNegativeInt.optional(),
+  businessId: flexId.optional(),
+  hasReservation: z.boolean().optional(),
+  reservationDate: dateString.optional(),
+  reservationTime: safeString(20).optional(),
+  partySize: positiveInt.optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -46,7 +61,7 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
 
-    const data: OfferClaimBusinessNotificationRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", { 
       businessEmail: data.businessEmail, 
       offerTitle: data.offerTitle,
@@ -185,6 +200,9 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", ...securityHeaders },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),

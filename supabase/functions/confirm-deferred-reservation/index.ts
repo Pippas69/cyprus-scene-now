@@ -5,6 +5,11 @@ import { sendPushIfEnabled, type PushPayload } from "../_shared/web-push-crypto.
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const BodySchema = z.object({
+  reservation_id: flexId,
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,7 +36,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !user) throw new Error("User not authenticated");
 
-    const { reservation_id } = await req.json();
+    const { reservation_id } = await parseBody(req, BodySchema);
     if (!reservation_id) throw new Error("Missing reservation_id");
 
     // Get reservation
@@ -312,6 +317,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error confirming deferred reservation:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

@@ -1,10 +1,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[VERIFY-STUDENT-TOKEN] ${step}`, details ? JSON.stringify(details) : '');
 };
+
+const BodySchema = z.object({
+  token: safeString(500),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,7 +36,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { token } = await req.json();
+    const { token } = await parseBody(req, BodySchema);
     logStep("Verifying token", { token: token?.slice(0, 8) + '...' });
 
     if (!token) {
@@ -158,6 +163,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("Error", error);
     return new Response(
       JSON.stringify({ error: "server_error", message: "Κάτι πήγε στραβά. Παρακαλώ δοκίμασε ξανά." }),

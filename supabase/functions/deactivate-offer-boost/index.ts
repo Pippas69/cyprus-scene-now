@@ -2,6 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const BodySchema = z.object({
+  boostId: flexId,
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,7 +28,7 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { boostId } = await req.json();
+    const { boostId } = await parseBody(req, BodySchema);
     if (!boostId) throw new Error("boostId required");
 
     console.log("[DEACTIVATE-OFFER-BOOST] Starting", { boostId, userId: user.id });
@@ -165,6 +170,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const message = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error));
     console.error("deactivate-offer-boost error:", message);
     return new Response(JSON.stringify({ error: message }), {

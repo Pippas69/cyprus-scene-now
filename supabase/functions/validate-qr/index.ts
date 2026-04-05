@@ -15,6 +15,7 @@ import {
 } from "../_shared/email-templates.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -119,6 +120,12 @@ const maskEmail = (email: string | null | undefined): string | null => {
   return `${masked}@${domain}`;
 };
 
+const BodySchema = z.object({
+  qrData: safeString(2000),
+  businessId: flexId,
+  language: language,
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -163,7 +170,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = (await req.json()) as ValidateQRRequest;
+    const body = await parseBody(req, BodySchema);
     const language: Language = body.language === "el" ? "el" : "en";
     const m = msg(language);
 
@@ -1400,6 +1407,9 @@ async function handleStudentQR(
 
     logStep('Student discount emails sent', { student: !!studentEmail, business: !!businessEmail });
   } catch (emailErr) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep('Student discount email error (non-fatal)', { error: emailErr instanceof Error ? emailErr.message : String(emailErr) });
   }
 

@@ -4,6 +4,7 @@
 
 import { 
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   sendBusinessNotification, 
   wrapBusinessEmailContent 
 } from "../_shared/business-notification-helper.ts";
@@ -37,6 +38,19 @@ interface BusinessSaleNotificationRequest {
   totalRedemptions?: number;
 }
 
+const BodySchema = z.object({
+  businessId: flexId,
+  businessEmail: email.optional(),
+  type: safeString(100),
+  customerName: safeString(200).optional(),
+  totalAmount: nonNegativeInt.optional(),
+  eventTitle: safeString(500).optional(),
+  offerTitle: safeString(500).optional(),
+  ticketCount: positiveInt.optional(),
+  orderId: flexId.optional(),
+  businessName: safeString(200).optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -45,7 +59,7 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
     
-    const data: BusinessSaleNotificationRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", data);
 
     let title = "";
@@ -178,6 +192,9 @@ Deno.serve(async (req) => {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),

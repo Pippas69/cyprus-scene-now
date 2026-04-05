@@ -2,11 +2,22 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-BOOST-CHECKOUT] ${step}${detailsStr}`);
 };
+
+const BodySchema = z.object({
+  eventId: flexId,
+  tier: boostTier,
+  durationMode: durationMode,
+  startDate: dateString,
+  endDate: dateString.optional(),
+  durationHours: positiveInt.optional(),
+  partialBudgetCents: nonNegativeInt.default(0),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -44,7 +55,7 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, tier, durationMode = "daily", startDate, endDate, durationHours, partialBudgetCents = 0 } = await req.json();
+    const { eventId, tier, durationMode, startDate, endDate, durationHours, partialBudgetCents } = await parseBody(req, BodySchema);
     logStep("Request data", { eventId, tier, durationMode, startDate, endDate, durationHours, partialBudgetCents });
 
     // Get business ID for this event
@@ -200,6 +211,9 @@ Deno.serve(async (req) => {
       { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     // Handle different error types properly
     let errorMessage = "Unknown error";
     if (error instanceof Error) {

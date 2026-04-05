@@ -9,6 +9,7 @@ import {
 } from "../_shared/business-notification-helper.ts";
 import { infoCard, detailRow, ctaButton } from "../_shared/email-templates.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[BUSINESS-OPS-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -43,6 +44,18 @@ interface BusinessOpsNotificationRequest {
   eventTitle?: string;
 }
 
+const BodySchema = z.object({
+  businessId: flexId,
+  type: safeString(100),
+  businessName: safeString(200).optional(),
+  eventTitle: safeString(500).optional(),
+  offerTitle: safeString(500).optional(),
+  reservationName: safeString(200).optional(),
+  reservationDate: dateString.optional(),
+  reservationTime: safeString(20).optional(),
+  partySize: positiveInt.optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -51,7 +64,7 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
     
-    const data: BusinessOpsNotificationRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", data);
 
     let title = "";
@@ -163,6 +176,9 @@ Deno.serve(async (req) => {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),

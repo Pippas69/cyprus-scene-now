@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import {
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   wrapPremiumEmail,
   emailGreeting,
   emailTitle,
@@ -13,6 +14,13 @@ import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-STUDENT-VERIFICATION-EMAIL] ${step}`, details ? JSON.stringify(details) : '');
 };
+
+const BodySchema = z.object({
+  verificationId: flexId,
+  universityEmail: email,
+  universityName: safeString(200).optional(),
+  userName: safeString(200).optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,7 +43,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { verificationId, universityEmail, universityName, userName } = await req.json();
+    const { verificationId, universityEmail, universityName, userName } = await parseBody(req, BodySchema);
     logStep("Request data", { verificationId, universityEmail, universityName });
 
     if (!verificationId || !universityEmail) {
@@ -129,6 +137,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("Error", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

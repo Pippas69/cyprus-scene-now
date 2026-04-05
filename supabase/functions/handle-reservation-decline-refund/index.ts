@@ -5,15 +5,20 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // Force cache refresh - v1
+const BodySchema = z.object({
+  reservationId: flexId,
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
   }
 
   try {
-    const { reservationId } = await req.json();
+    const { reservationId } = await parseBody(req, BodySchema);
 
     if (!reservationId) {
       return new Response(
@@ -210,6 +215,9 @@ serve(async (req) => {
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error in handle-reservation-decline-refund:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     return new Response(

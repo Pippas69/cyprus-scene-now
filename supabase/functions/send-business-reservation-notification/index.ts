@@ -10,6 +10,7 @@ import {
 } from "../_shared/business-notification-helper.ts";
 import { infoCard, detailRow, ctaButton, successBadge } from "../_shared/email-templates.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[BUSINESS-RESERVATION-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -37,6 +38,18 @@ interface BusinessReservationNotificationRequest {
   notes?: string;
 }
 
+const BodySchema = z.object({
+  businessId: flexId,
+  businessEmail: email.optional(),
+  type: safeString(100),
+  reservationName: safeString(200).optional(),
+  reservationDate: dateString.optional(),
+  reservationTime: safeString(20).optional(),
+  partySize: positiveInt.optional(),
+  reservationId: flexId.optional(),
+  businessName: safeString(200).optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -45,7 +58,7 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
     
-    const data: BusinessReservationNotificationRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", data);
 
     let title = "";
@@ -149,6 +162,9 @@ Deno.serve(async (req) => {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),

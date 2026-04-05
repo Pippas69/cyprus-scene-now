@@ -3,6 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { BusinessApprovalEmail } from '../_shared/email-templates/business-approval.tsx'
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -56,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { businessEmail, businessName, type, notes }: NotificationRequest = await req.json();
+    const { businessEmail, businessName, type, notes } = await parseBody(req, BodySchema);
     console.log("Processing business notification:", type, "for:", businessEmail);
 
     let subject = "";
@@ -133,6 +134,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error in send-business-notification function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
