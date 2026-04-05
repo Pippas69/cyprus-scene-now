@@ -1981,19 +1981,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
                           {(() => {
-                            const ticketAges = agesByReservation[reservation.id];
-                            const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
-                              ? `${Math.min(...ticketAges)}+`
-                              : '';
-                            const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
-                            const hasPeople = !!reservation.party_size;
-                            const hasAges = !!agesStr;
-                            const displayText = hasPeople
-                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                              : hasAges ? `(${agesStr})` : '—';
-                            const rawText = hasPeople
-                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                              : hasAges ? agesStr : '';
+                            const isWalkIn = reservation.source === 'walk_in' && !reservation.seating_type_id;
+                            let displayText: string;
+                            let rawText: string;
+
+                            if (isWalkIn) {
+                              // Walk-in: always "1 άτομο (age)" with exact age, no "+"
+                              const age = (reservation as any).guest_ages || '';
+                              displayText = age ? `1 ${language === 'el' ? 'άτομο' : 'person'} (${age})` : `1 ${language === 'el' ? 'άτομο' : 'person'}`;
+                              rawText = displayText;
+                            } else {
+                              const ticketAges = agesByReservation[reservation.id];
+                              const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
+                                ? `${Math.min(...ticketAges)}+`
+                                : '';
+                              const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
+                              const hasPeople = !!reservation.party_size;
+                              const hasAges = !!agesStr;
+                              displayText = hasPeople
+                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                                : hasAges ? `(${agesStr})` : '—';
+                              rawText = hasPeople
+                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                                : hasAges ? agesStr : '';
+                            }
                             return (
                               <EditableCell
                                 reservationId={reservation.id}
@@ -2023,9 +2034,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 : walkInTicketPriceCents;
                               return (
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-medium text-primary whitespace-nowrap">Walk-in</span>
+                                  <span className="text-sm text-foreground whitespace-nowrap">Walk-in</span>
                                   {displayPrice != null && displayPrice > 0 && (
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
+                                    <span className="text-sm text-muted-foreground whitespace-nowrap">€{(displayPrice / 100).toFixed(2)}</span>
                                   )}
                                 </div>
                               );
