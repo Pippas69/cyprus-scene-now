@@ -305,7 +305,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
     const { error: uploadError } = await supabase.storage
       .from('business-logos')
-      .upload(fileName, compressedFile);
+      .upload(fileName, compressedFile, { contentType: 'image/jpeg' });
 
     if (uploadError) throw uploadError;
 
@@ -331,7 +331,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
     const { error: uploadError } = await supabase.storage
       .from('business-covers')
-      .upload(fileName, compressedFile);
+      .upload(fileName, compressedFile, { contentType: 'image/jpeg' });
 
     if (uploadError) throw uploadError;
 
