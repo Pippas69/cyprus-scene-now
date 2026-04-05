@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { MapPin, Check, X, Users, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { VenueSVGCanvas, type TableAssignment } from './VenueSVGCanvas';
+import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 
 interface FloorPlanItem {
   id: string;
@@ -80,7 +80,7 @@ export function FloorPlanAssignmentDialog({
 
   const [items, setItems] = useState<FloorPlanItem[]>([]);
   const [zones, setZones] = useState<FloorPlanZone[]>([]);
-  const [assignments, setAssignments] = useState<TableAssignment[]>([]);
+  const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -119,14 +119,14 @@ export function FloorPlanAssignmentDialog({
         .in('table_id', tableIds)
         .eq('event_id', eventId);
 
-      setAssignments((assignmentData || []).map((a: any) => ({
-        zone_id: a.table_id,
+      setTableAssignments((assignmentData || []).map((a: any) => ({
+        table_id: a.table_id,
         reservation_id: a.reservation_id,
         reservation_name: a.reservations?.reservation_name || '',
         party_size: a.reservations?.party_size || 0,
       })));
     } else {
-      setAssignments([]);
+      setTableAssignments([]);
     }
     setLoading(false);
   };
@@ -134,8 +134,8 @@ export function FloorPlanAssignmentDialog({
   const handleTableClick = (tableId: string) => {
     const item = items.find(i => i.id === tableId);
     if (!item || item.fixture_type) return;
-    // Check if occupied by another reservation (using table_id mapped to zone_id in assignments)
-    const isOccupied = assignments.some(a => a.zone_id === tableId && a.reservation_id !== reservationId);
+    // Check if occupied by another reservation
+    const isOccupied = tableAssignments.some(a => a.table_id === tableId && a.reservation_id !== reservationId);
     if (isOccupied) return;
     setSelectedTableId(tableId);
     setConfirming(true);
@@ -251,7 +251,7 @@ export function FloorPlanAssignmentDialog({
                   tableBboxes={tableBboxes}
                   selectedItemId={selectedTableId}
                   showLabels={true}
-                  assignments={assignments}
+                  tableAssignments={tableAssignments}
                   currentReservationId={reservationId}
                   onTableClick={handleTableClick}
                   interactive={true}
