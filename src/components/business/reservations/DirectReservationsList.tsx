@@ -777,8 +777,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       } else if (field === 'ticket_credit_cents') {
         const cents = Math.round(parseFloat(editValue) * 100);
         if (isNaN(cents) || cents < 0) return;
-        // Business can set real spend manually; CRM splits this per person.
         updateData.actual_spend_cents = cents;
+      } else if (field === 'guest_ages') {
+        updateData.guest_ages = editValue.trim() || null;
+      } else if (field === 'guest_city') {
+        updateData.guest_city = editValue.trim() || null;
+      } else if (field === 'prepaid_min_charge_cents') {
+        const cents = Math.round(parseFloat(editValue) * 100);
+        if (isNaN(cents) || cents < 0) return;
+        updateData.prepaid_min_charge_cents = cents;
+      } else if (field === 'ticket_credit_cents_override') {
+        const cents = Math.round(parseFloat(editValue) * 100);
+        if (isNaN(cents) || cents < 0) return;
+        updateData.ticket_credit_cents = cents;
       } else if (field === 'preferred_time') {
         // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
         if (!editValue) return;
