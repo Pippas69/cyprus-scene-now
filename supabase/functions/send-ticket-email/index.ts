@@ -11,6 +11,7 @@ import {
   ctaButton,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
