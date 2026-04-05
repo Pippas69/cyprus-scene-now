@@ -107,11 +107,7 @@ Deno.serve(async (req) => {
 
     // Parse and validate request
     const { discountId, partySize, guestNames, withReservation, reservationData } = await parseBody(req, ClaimBodySchema);
-      }
-      if (reservationData.phone_number && reservationData.phone_number.length > 20) {
-        return errorResponse("Phone number too long", 400);
-      }
-    }
+    logStep("Request data", { discountId, partySize, guestNames, withReservation, reservationData });
 
     // Use service role for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
