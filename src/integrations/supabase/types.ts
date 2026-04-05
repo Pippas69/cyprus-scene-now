@@ -614,6 +614,58 @@ export type Database = {
           },
         ]
       }
+      business_stripe_details: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          stripe_account_id: string | null
+          stripe_onboarding_completed: boolean | null
+          stripe_payouts_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          stripe_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_stripe_details_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_stripe_details_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_stripe_details_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_subscription_plan_history: {
         Row: {
           business_id: string
@@ -771,9 +823,6 @@ export type Database = {
           reservation_seating_options: string[] | null
           reservation_time_slots: Json | null
           reservations_globally_paused: boolean | null
-          stripe_account_id: string | null
-          stripe_onboarding_completed: boolean | null
-          stripe_payouts_enabled: boolean | null
           student_discount_enabled: boolean | null
           student_discount_mode: string | null
           student_discount_percent: number | null
@@ -816,9 +865,6 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
-          stripe_account_id?: string | null
-          stripe_onboarding_completed?: boolean | null
-          stripe_payouts_enabled?: boolean | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
@@ -861,9 +907,6 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
-          stripe_account_id?: string | null
-          stripe_onboarding_completed?: boolean | null
-          stripe_payouts_enabled?: boolean | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
@@ -6280,38 +6323,6 @@ export type Database = {
         }
         Relationships: []
       }
-      public_business_subscriptions: {
-        Row: {
-          beta_tester: boolean | null
-          business_id: string | null
-          plan_name: string | null
-          plan_slug: string | null
-          status: Database["public"]["Enums"]["subscription_status"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "business_subscriptions_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: true
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "business_subscriptions_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: true
-            referencedRelation: "public_businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "business_subscriptions_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: true
-            referencedRelation: "public_businesses_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       public_businesses: {
         Row: {
           address: string | null
@@ -6385,8 +6396,6 @@ export type Database = {
           reservation_seating_options: string[] | null
           reservation_time_slots: Json | null
           reservations_globally_paused: boolean | null
-          stripe_onboarding_completed: boolean | null
-          stripe_payouts_enabled: boolean | null
           student_discount_enabled: boolean | null
           student_discount_mode: string | null
           student_discount_percent: number | null
@@ -6424,8 +6433,6 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
-          stripe_onboarding_completed?: boolean | null
-          stripe_payouts_enabled?: boolean | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
@@ -6463,8 +6470,6 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
-          stripe_onboarding_completed?: boolean | null
-          stripe_payouts_enabled?: boolean | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
