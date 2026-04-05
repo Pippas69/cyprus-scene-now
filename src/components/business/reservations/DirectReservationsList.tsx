@@ -1828,15 +1828,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
-                      {/* 3. Ελάχιστη Χρέωση: Min charge (ticket credit) + Actual spend */}
+                      {/* 3. Ελάχιστη Χρέωση */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           <span>{minChargeDisplay}</span>
-                          <EditableCell
-                          reservationId={reservation.id}
-                          field="ticket_credit_cents"
-                          displayValue={actualSpendDisplay}
-                          rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                          {isReservationOnly ? (
+                            <EditableCell
+                              reservationId={reservation.id}
+                              field="ticket_credit_cents"
+                              displayValue={actualSpendDisplay}
+                              rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">{remainderDisplay}</span>
+                          )}
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment */}
