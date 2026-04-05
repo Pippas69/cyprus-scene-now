@@ -348,7 +348,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         query = query.eq('business_id', businessId).is('event_id', null);
       }
 
-      query = query.order('reservation_name', { ascending: true });
+      query = query.order('reservation_name', { ascending: true }).limit(500);
 
       const { data: rawData, error } = await query;
       if (error) throw error;

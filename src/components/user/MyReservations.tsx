@@ -194,7 +194,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         `)
         .eq('user_id', userId)
         .not('event_id', 'is', null)
-        .lt('events.end_at', nowIso),
+        .lt('events.end_at', nowIso)
+        .limit(100),
       supabase
         .from('reservations')
         .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
@@ -209,7 +210,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
-        .lt('preferred_time', nowIso),
+        .lt('preferred_time', nowIso)
+        .limit(100),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
       supabase
