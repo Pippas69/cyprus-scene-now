@@ -67,6 +67,7 @@ export const ManualEntryDialog = ({
   const [seatingTypeId, setSeatingTypeId] = useState('');
   const [ticketTierId, setTicketTierId] = useState('');
   const [tableId, setTableId] = useState('');
+  const [isWalkIn, setIsWalkIn] = useState(false);
   const [saving, setSaving] = useState(false);
   const [eventSeatingTypes, setEventSeatingTypes] = useState<SeatingTypeOption[]>([]);
   const [ticketTiers, setTicketTiers] = useState<TicketTierOption[]>([]);
