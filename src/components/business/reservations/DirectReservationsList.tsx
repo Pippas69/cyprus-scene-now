@@ -1747,11 +1747,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 <TableRow>
                   <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
                   <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[16%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{priceColumnLabel}</TableHead>
                   <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
                   <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.staffMemo}</TableHead>
-                  <TableHead className="text-xs w-[18%]">{t.email}</TableHead>
+                  <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
+                  {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1763,15 +1764,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   : (tierMinCharge ?? reservation.prepaid_min_charge_cents ?? reservation.ticket_credit_cents ?? 0);
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
+                const remainderCents = Math.max(0, minChargeCents - ticketPaidCents);
                 const minChargeDisplay = minChargeCents > 0 ?
                 (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
                 ticketPaidCents > 0 ?
                 `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
                 `€${(minChargeCents / 100).toFixed(2)}`) :
                 '-';
+                // Reservation-only: show "Πραγματικά" inside the min charge column
                 const actualSpendDisplay = actualSpendCents > 0
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
-                  : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
+                  : (language === 'el' ? 'Πραγματικά: —' : 'Actual: —');
+                // Hybrid: show "Υπόλοιπο" inside the min charge column
+                const remainderDisplay = remainderCents > 0
+                  ? `${language === 'el' ? 'Υπόλοιπο' : 'Remaining'}: €${(remainderCents / 100).toFixed(2)}`
+                  : (language === 'el' ? 'Υπόλοιπο: €0' : 'Remaining: €0');
 
                 // Seating type name for this reservation
                 const seatingTypeName = reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id]
@@ -1821,15 +1828,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
-                      {/* 3. Ελάχιστη Χρέωση: Min charge (ticket credit) + Actual spend */}
+                      {/* 3. Ελάχιστη Χρέωση */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           <span>{minChargeDisplay}</span>
-                          <EditableCell
-                          reservationId={reservation.id}
-                          field="ticket_credit_cents"
-                          displayValue={actualSpendDisplay}
-                          rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                          {isReservationOnly ? (
+                            <EditableCell
+                              reservationId={reservation.id}
+                              field="ticket_credit_cents"
+                              displayValue={actualSpendDisplay}
+                              rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">{remainderDisplay}</span>
+                          )}
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment */}
@@ -1862,6 +1873,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           rawValue={reservation.email || reservation.profiles?.email || ''}
                         />
                       </TableCell>
+                      {/* 8. Πραγματικά (hybrid only) */}
+                      {!isReservationOnly && (
+                        <TableCell className="align-top">
+                          <EditableCell
+                            reservationId={reservation.id}
+                            field="ticket_credit_cents"
+                            displayValue={actualSpendCents > 0 ? `€${(actualSpendCents / 100).toFixed(2)}` : '—'}
+                            rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'}
+                          />
+                        </TableCell>
+                      )}
                     </TableRow>);
               })}
               </TableBody>
