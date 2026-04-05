@@ -87,33 +87,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const body: CheckoutRequest = await req.json();
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = body;
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
     logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
-
-    // Input validation
-    if (!eventId || typeof eventId !== 'string' || eventId.length < 10) {
-      return errorResponse("Invalid eventId", 400);
-    }
-    if (!items || !Array.isArray(items) || items.length === 0 || items.length > 20) {
-      return errorResponse("Invalid items", 400);
-    }
-    for (const item of items) {
-      if (!item.tierId || typeof item.tierId !== 'string') return errorResponse("Invalid tier ID", 400);
-      if (!item.quantity || typeof item.quantity !== 'number' || item.quantity < 1 || item.quantity > 50) return errorResponse("Invalid quantity", 400);
-    }
-    if (!customerName || typeof customerName !== 'string' || customerName.length > 200) {
-      return errorResponse("Invalid customerName", 400);
-    }
-    if (!customerEmail || typeof customerEmail !== 'string' || !customerEmail.includes('@') || customerEmail.length > 255) {
-      return errorResponse("Invalid customerEmail", 400);
-    }
-    if (customerPhone && (typeof customerPhone !== 'string' || customerPhone.length > 20)) {
-      return errorResponse("Invalid phone number", 400);
-    }
-    if (specialRequests && (typeof specialRequests !== 'string' || specialRequests.length > 1000)) {
-      return errorResponse("Special requests too long", 400);
-    }
 
     // Fetch event and business info (including Stripe Connect status)
     const { data: event, error: eventError } = await supabaseClient
