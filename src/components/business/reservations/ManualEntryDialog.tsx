@@ -107,6 +107,7 @@ export const ManualEntryDialog = ({
       ticketPrice: 'Τιμή εισιτηρίου (€)',
       ticketType: 'Τύπος εισιτηρίου',
       table: 'Τραπέζι',
+      walkInToggle: 'Walk-in',
       selectOption: 'Επιλέξτε...',
     },
     en: {
