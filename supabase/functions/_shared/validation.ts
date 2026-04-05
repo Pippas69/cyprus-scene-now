@@ -26,7 +26,7 @@ export const safeString = (max = 500) =>
 
 /** Optional safe string (can be empty/missing) */
 export const optionalString = (max = 500) =>
-  z.string().trim().max(max).refine((s) => !s.includes("\0"), "Invalid characters").optional().or(z.literal(""));
+  z.string().trim().max(max).refine((s) => !s.includes("\0"), "Invalid characters").nullable().optional().or(z.literal(""));
 
 /** Email field */
 export const email = z.string().trim().email().max(320).toLowerCase();
@@ -38,7 +38,7 @@ export const optionalEmail = z.string().trim().email().max(320).toLowerCase().op
 export const phone = z.string().trim().max(25).regex(/^[0-9+\-() ]+$/);
 
 /** Optional phone */
-export const optionalPhone = phone.optional().or(z.literal(""));
+export const optionalPhone = phone.nullable().optional().or(z.literal(""));
 
 /** Positive integer */
 export const positiveInt = z.number().int().positive();
