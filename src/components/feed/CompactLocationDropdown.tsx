@@ -20,7 +20,7 @@ const CompactLocationDropdown = ({ language, selectedCity, onCityChange }: Compa
   const fetchAvailableCities = async () => {
     try {
       const { data, error } = await supabase
-        .from("businesses")
+        .from("public_businesses_safe")
         .select("city")
         .eq("verified", true);
 

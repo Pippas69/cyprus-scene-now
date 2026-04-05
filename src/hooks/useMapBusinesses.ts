@@ -40,7 +40,7 @@ export const useMapBusinesses = (
       try {
         // Fetch businesses with their subscription info
         let query = supabase
-          .from("businesses")
+          .from("public_businesses_safe")
           .select(`
             id,
             name,

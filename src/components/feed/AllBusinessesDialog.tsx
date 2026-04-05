@@ -75,7 +75,7 @@ export const AllBusinessesDialog = ({
       const today = new Date().toISOString().split('T')[0];
       
       let query = supabase
-        .from('businesses')
+        .from('public_businesses_safe')
         .select('id, name, logo_url, category, city, verified, description, student_discount_percent, student_discount_mode')
         .eq('verified', true);
       

@@ -16,7 +16,7 @@ const PartnerLogoMarquee = () => {
   useEffect(() => {
     const fetchBusinesses = async () => {
       const { data } = await supabase
-        .from("businesses")
+        .from("public_businesses_safe")
         .select("name, logo_url")
         .not("logo_url", "is", null)
         .order("created_at", { ascending: true })

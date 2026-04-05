@@ -45,7 +45,7 @@ export const MapSearch = ({ onResultClick, language }: MapSearchProps) => {
       try {
         // Search businesses by name
         const { data: businessData, error } = await supabase
-          .from("businesses")
+          .from("public_businesses_safe")
           .select("id, name, city, category, logo_url")
           .ilike("name", `%${query}%`)
           .limit(8);

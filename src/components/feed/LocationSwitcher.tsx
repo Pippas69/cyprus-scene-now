@@ -22,7 +22,7 @@ const LocationSwitcher = ({ language, selectedCity, onCityChange, compact = fals
   const fetchAvailableCities = async () => {
     try {
       const { data, error } = await supabase
-        .from("businesses")
+        .from("public_businesses_safe")
         .select("city")
         .eq("verified", true);
 
