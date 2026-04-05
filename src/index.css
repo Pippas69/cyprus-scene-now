@@ -108,9 +108,9 @@ All colors MUST be HSL.
     --ocean: 207 72% 35%; /* Interactive ocean blue */
 
     /* Map Plan Pins (HSL) */
-    --plan-basic: 188 95% 44%; /* cyan */
-    --plan-pro: 24 95% 58%; /* orange/coral */
-    --plan-elite: 262 72% 62%; /* premium purple */
+    --plan-basic: 200 90% 48%; /* vivid blue-cyan */
+    --plan-pro: 280 70% 58%; /* purple/violet - matches Elite subscription badge */
+    --plan-elite: 45 95% 55%; /* premium gold */
 
     /* Floor plan premium studio system */
     --floorplan-neon: 0 0% 95%;

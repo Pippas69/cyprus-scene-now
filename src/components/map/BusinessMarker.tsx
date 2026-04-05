@@ -2,10 +2,10 @@
  * BUSINESS PIN - FOMO MAP
  *
  * Visual hierarchy by plan:
- * - Free: 16px teardrop, ocean blue
- * - Basic: 24px teardrop, cyan
- * - Pro: 32px premium shield, orange glow
- * - Elite: 38px premium shield, purple glow + pulse
+ * - Free: small teardrop (muted ocean)
+ * - Basic: larger teardrop (blue)
+ * - Pro: larger teardrop (purple) with star icon
+ * - Elite: largest teardrop (gold) with crown icon
  */
 
 import type { PlanSlug } from "@/lib/businessRanking";
@@ -21,8 +21,12 @@ interface BusinessMarkerProps {
 }
 
 /**
- * Pin configuration based on subscription plan - strict visual hierarchy.
+ * Pin configuration based on subscription plan - strict visual hierarchy
+ * Free/Basic/Pro/Elite all use the SAME teardrop silhouette as in the reference.
+ * Pro/Elite are distinguished by color + icon.
  */
+// Responsive sizes: desktop / tablet / mobile (progressively smaller at initial zoom)
+// When user clicks a pin and zooms in, sizes feel good - these are for initial overview
 const PIN_CONFIG: Record<PlanSlug, {
   desktopSize: number;  // lg+
   tabletSize: number;   // md-lg
@@ -34,11 +38,12 @@ const PIN_CONFIG: Record<PlanSlug, {
   isPremiumShape: boolean;
   hasPulseAnimation: boolean;
 }> = {
+  // Free - smallest pins (slightly larger for visibility)
   free: {
-    desktopSize: 16,
-    tabletSize: 16,
-    mobileSize: 16,
-    opacity: 0.82,
+    desktopSize: 10,
+    tabletSize: 10,
+    mobileSize: 10,
+    opacity: 0.7,
     shadowBlur: 2,
     strokeWidth: 1,
     glowRadius: 0,
@@ -46,42 +51,46 @@ const PIN_CONFIG: Record<PlanSlug, {
     hasPulseAnimation: false,
   },
   basic: {
-    desktopSize: 24,
-    tabletSize: 24,
-    mobileSize: 24,
+    desktopSize: 11,
+    tabletSize: 11,
+    mobileSize: 11,
     opacity: 1,
     shadowBlur: 3,
-    strokeWidth: 1.6,
+    strokeWidth: 1.5,
     glowRadius: 0,
     isPremiumShape: false,
     hasPulseAnimation: false,
   },
   pro: {
-    desktopSize: 32,
-    tabletSize: 32,
-    mobileSize: 32,
+    desktopSize: 14,
+    tabletSize: 13,
+    mobileSize: 11,
     opacity: 1,
-    shadowBlur: 6,
+    shadowBlur: 4,
     strokeWidth: 2,
-    glowRadius: 3,
-    isPremiumShape: true,
+    glowRadius: 0,
+    isPremiumShape: false,
     hasPulseAnimation: false,
   },
   elite: {
-    desktopSize: 38,
-    tabletSize: 38,
-    mobileSize: 38,
+    desktopSize: 16,
+    tabletSize: 15,
+    mobileSize: 13,
     opacity: 1,
-    shadowBlur: 8,
+    shadowBlur: 4,
     strokeWidth: 2,
-    glowRadius: 5,
-    isPremiumShape: true,
-    hasPulseAnimation: true,
+    glowRadius: 0,
+    isPremiumShape: false,
+    hasPulseAnimation: false,
   },
 };
 
 /**
  * Plan colors (HSL tokens)
+ * - Free: keep the existing ocean color behavior
+ * - Basic: blue/cyan
+ * - Pro: purple
+ * - Elite: gold
  */
 const PIN_COLORS: Record<PlanSlug, {
   primary: string;
@@ -102,26 +111,42 @@ const PIN_COLORS: Record<PlanSlug, {
     glow: 'transparent',
   },
   pro: {
+    // Purple/violet color matching Elite subscription badge style
     primary: 'hsl(var(--plan-pro))',
     secondary: 'hsl(var(--plan-pro) / 0.9)',
     accent: 'hsl(var(--plan-pro) / 0.75)',
-    glow: 'hsl(var(--plan-pro) / 0.55)',
+    glow: 'transparent',
   },
   elite: {
     primary: 'hsl(var(--plan-elite))',
     secondary: 'hsl(var(--plan-elite) / 0.92)',
     accent: 'hsl(var(--plan-elite) / 0.78)',
-    glow: 'hsl(var(--plan-elite) / 0.6)',
+    glow: 'transparent',
   },
 };
 
 const toSvgSafeId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+// Standard teardrop pin path for Free and Basic
+const StandardPinPath = () => (
+  <path
+    d="M20 2 C10 2, 2 10, 2 18 C2 28, 20 46, 20 46 C20 46, 38 28, 38 18 C38 10, 30 2, 20 2 Z"
+  />
+);
+
+// Premium diamond/shield shape for Pro and Elite
+const PremiumPinPath = () => (
+  <path
+    d="M20 1 L35 12 L32 32 L20 47 L8 32 L5 12 Z"
+  />
+);
 
 export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }: BusinessMarkerProps) => {
   const config = PIN_CONFIG[planSlug];
   const colors = PIN_COLORS[planSlug];
   const { opacity, shadowBlur, strokeWidth, glowRadius, isPremiumShape, hasPulseAnimation, desktopSize, tabletSize, mobileSize } = config;
   
+  // Responsive size: mobile < 768, tablet 768-1024, desktop 1024+
   const getResponsiveSize = () => {
     if (typeof window === 'undefined') return desktopSize;
     const width = window.innerWidth;
@@ -130,14 +155,16 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
     return desktopSize;
   };
   const baseSize = getResponsiveSize();
-
-  const zoomScale = 1 + Math.max(0, Math.min(zoom - 7, 9)) * 0.035;
+  
+  // Scale pins up slightly as user zooms in (1.0x at zoom 7, up to ~1.5x at zoom 16+)
+  const zoomScale = 1 + Math.max(0, Math.min(zoom - 7, 9)) * 0.055;
   const size = Math.round(baseSize * zoomScale);
 
   const safeId = toSvgSafeId(`${planSlug}-${markerId}`);
 
   // Calculate z-index based on plan tier
   const zIndex = planSlug === 'elite' ? 40 : planSlug === 'pro' ? 30 : planSlug === 'basic' ? 20 : 10;
+
 
   return (
     <div
@@ -152,6 +179,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
       aria-label={name}
       role="button"
     >
+      {/* Outer glow for Pro */}
       {glowRadius > 0 && (
         <div
           className="absolute rounded-full pointer-events-none"
@@ -183,6 +211,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
+          {/* Drop shadow filter for premium pins */}
           {isPremiumShape && (
             <filter id={`pin-shadow-${safeId}`} x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={colors.primary} floodOpacity="0.4" />
@@ -190,6 +219,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
           )}
         </defs>
 
+        {/* Ground shadow */}
         <ellipse
           cx="20"
           cy="48"
@@ -199,6 +229,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
           fillOpacity={isPremiumShape ? 0.2 : 0.12}
         />
 
+        {/* Pin shape - standard teardrop for Free/Basic, premium for Pro */}
         <g filter={isPremiumShape ? `url(#pin-shadow-${safeId})` : undefined}>
           {isPremiumShape ? (
             <path
@@ -217,6 +248,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
           )}
         </g>
 
+        {/* Inner highlight overlay */}
         {isPremiumShape ? (
           <path
             d="M20 3 L33 13 L30 31 L20 45 L10 31 L7 13 Z"
@@ -229,6 +261,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
           />
         )}
 
+        {/* Center icon */}
         {planSlug === 'pro' || planSlug === 'elite' ? (
           <g fill="white" fillOpacity="0.96">
             {planSlug === 'pro' ? (
@@ -249,6 +282,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
           />
         )}
 
+        {/* Elite subtle golden glow pulse */}
         {planSlug === 'elite' && (
           <>
             <circle
@@ -271,6 +305,7 @@ export const BusinessMarker = ({ planSlug, markerId, name, onClick, zoom = 10 }:
         )}
       </svg>
 
+      {/* (Kept for API compatibility; currently only Elite animates) */}
       {hasPulseAnimation && null}
     </div>
   );

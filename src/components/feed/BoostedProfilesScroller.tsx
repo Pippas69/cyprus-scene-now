@@ -74,7 +74,6 @@ export const BoostedProfilesScroller = ({
                   <BusinessBoostBadges
                     hasEventBoost={eventBoostBusinessIds?.has(profile.business_id)}
                     hasOfferBoost={offerBoostBusinessIds?.has(profile.business_id)}
-                     planSlug={profile.planSlug}
                     showStudentDiscount={false}
                     language={language}
                   />

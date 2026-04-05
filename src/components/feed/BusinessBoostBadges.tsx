@@ -19,8 +19,6 @@ interface BusinessBoostBadgesProps {
   language?: "el" | "en";
 }
 
-type NormalizedPlan = "free" | "basic" | "pro" | "elite";
-
 const tooltips = {
   el: {
     student: (percent?: number | null, mode?: string | null) =>
@@ -40,65 +38,39 @@ export const BusinessBoostBadges = ({
   language = "en"
 }: BusinessBoostBadgesProps) => {
   const t = tooltips[language];
+  // Only show student badge when filter is active AND business has discount
   const hasStudentDiscount = showStudentDiscount && (studentDiscountPercent ?? 0) > 0;
-  const normalizedPlan = ((): NormalizedPlan => {
-    const value = planSlug?.toLowerCase().trim();
-    if (value === "elite" || value === "professional" || value === "premium") return "elite";
-    if (value === "pro" || value === "growth") return "pro";
-    if (value === "basic" || value === "starter") return "basic";
-    return "free";
-  })();
 
-  const planConfig = {
-    free: {
-      short: "F",
-      colorVar: "--ocean",
-      label: { el: "Free Plan", en: "Free Plan" },
-    },
-    basic: {
-      short: "B",
-      colorVar: "--plan-basic",
-      label: { el: "Basic Plan", en: "Basic Plan" },
-    },
-    pro: {
-      short: "P",
-      colorVar: "--plan-pro",
-      label: { el: "Pro Plan", en: "Pro Plan" },
-    },
-    elite: {
-      short: "E",
-      colorVar: "--plan-elite",
-      label: { el: "Elite Plan", en: "Elite Plan" },
-    },
-  }[normalizedPlan];
+  // Normalize plan slug
+  const normalizedPlan = planSlug?.toLowerCase() || 'free';
+  const isPro = normalizedPlan === 'pro' || normalizedPlan === 'growth';
+  const isElite = normalizedPlan === 'elite' || normalizedPlan === 'professional';
+
+  // Don't show any badge for Free or Basic plans
+  const showPlanBadge = isPro || isElite;
 
   return (
     <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className="absolute -top-1 -right-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background px-1 shadow-sm"
-            style={{
-              backgroundColor: `hsl(var(${planConfig.colorVar}))`,
-              color: "hsl(var(--primary-foreground))",
-              boxShadow: `0 4px 12px hsl(var(${planConfig.colorVar}) / 0.35)`,
-            }}
-            aria-label={planConfig.label[language]}
-          >
-            {normalizedPlan === "elite" ? (
-              <Crown className="h-3 w-3" />
-            ) : normalizedPlan === "pro" ? (
-              <Star className="h-3 w-3" />
-            ) : (
-              <span className="text-[9px] font-bold leading-none">{planConfig.short}</span>
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="text-xs">
-          {planConfig.label[language]}
-        </TooltipContent>
-      </Tooltip>
+      {/* Plan badge - top right (only Pro and Elite) */}
+      {showPlanBadge
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      }
+
+      {/* Student discount - bottom left - ONLY when filter is active */}
       {hasStudentDiscount &&
       <Tooltip>
           <TooltipTrigger asChild>

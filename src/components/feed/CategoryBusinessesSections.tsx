@@ -231,7 +231,6 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
                       <BusinessBoostBadges
                         hasEventBoost={business.hasEventBoost}
                         hasOfferBoost={business.hasOfferBoost}
-                        planSlug={business.planSlug}
                         studentDiscountPercent={business.student_discount_percent}
                         studentDiscountMode={business.student_discount_mode}
                         language={language}
