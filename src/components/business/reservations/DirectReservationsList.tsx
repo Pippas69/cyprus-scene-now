@@ -1684,14 +1684,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[750px] table-fixed">
+            <Table className="w-full min-w-[1050px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[18%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[16%]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.staffMemo}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.email}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1713,9 +1715,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
                   : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
 
+                // Seating type name for this reservation
+                const seatingTypeName = reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id]
+                  ? (() => {
+                      const raw = seatingTypeNames[reservation.seating_type_id!];
+                      const lower = raw.toLowerCase();
+                      if (lower === 'table') return 'Τραπέζι';
+                      if (lower === 'sofa') return 'Καναπές';
+                      if (lower === 'vip') return 'VIP';
+                      if (lower === 'bar') return 'Bar';
+                      return raw;
+                    })()
+                  : null;
+
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
-                      <TableCell className="font-medium">
+                      {/* 1. Στοιχεία: Name + Phone + Customer Note */}
+                      <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-1">
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <EditableCell
@@ -1732,7 +1748,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {renderCustomerNoteBubble(reservation)}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 2. Λεπτομέρειες: Party size (age+) + City */}
+                      <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm whitespace-nowrap -ml-0.5">
                             <EditableCell
@@ -1747,7 +1764,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 3. Ελάχιστη Χρέωση: Min charge (ticket credit) + Actual spend */}
+                      <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           <span>{minChargeDisplay}</span>
                           <EditableCell
@@ -1755,29 +1773,37 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           field="ticket_credit_cents"
                           displayValue={actualSpendDisplay}
                           rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                        
-                          {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
-                        <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
-                              {(() => {
-                            const raw = seatingTypeNames[reservation.seating_type_id!];
-                            const lower = raw.toLowerCase();
-                            if (lower === 'table') return 'Τραπέζι';
-                            if (lower === 'sofa') return 'Καναπές';
-                            if (lower === 'vip') return 'VIP';
-                            if (lower === 'bar') return 'Bar';
-                            return raw;
-                          })()}
-                            </span>
-                        }
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 4. Θέση: Seating type + Table assignment */}
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-0.5">
+                          <EventSeatingTypeEditCell
+                            reservationId={reservation.id}
+                            currentSeatingTypeId={reservation.seating_type_id || null}
+                            seatingTypeName={seatingTypeName}
+                          />
+                          <TableAssignmentEditCell reservationId={reservation.id} currentLabel={tableAssignmentLabels[reservation.id] || null} />
+                        </div>
+                      </TableCell>
+                      {/* 5. Κατάσταση */}
+                      <TableCell className="align-top">
                         <div className="flex items-center gap-1.5">
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 6. Σημειώσεις */}
+                      <TableCell className="align-top">
                         {renderStaffMemoCell(reservation)}
+                      </TableCell>
+                      {/* 7. Email */}
+                      <TableCell className="align-top">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="email"
+                          displayValue={reservation.email || reservation.profiles?.email || '—'}
+                          rawValue={reservation.email || reservation.profiles?.email || ''}
+                        />
                       </TableCell>
                     </TableRow>);
               })}
