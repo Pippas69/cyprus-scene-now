@@ -170,20 +170,20 @@ export const PLAN_COLORS = {
   },
   basic: {
     // Cyan/Blue - matches subscription UI
-    bg: 'hsl(195, 100%, 50%)', // Cyan
+    bg: 'hsl(200, 90%, 48%)',
     text: 'hsl(0, 0%, 100%)',
-    border: 'hsl(195, 100%, 40%)',
+    border: 'hsl(200, 90%, 38%)',
   },
   pro: {
-    // Coral/Orange - matches subscription UI  
-    bg: 'hsl(0, 100%, 70%)', // Sunset Coral
+    // Purple/Violet - matches subscription UI  
+    bg: 'hsl(280, 70%, 58%)',
     text: 'hsl(0, 0%, 100%)',
-    border: 'hsl(0, 100%, 60%)',
+    border: 'hsl(280, 70%, 48%)',
   },
   elite: {
-    // Purple/Gold - premium tier
-    bg: 'hsl(270, 60%, 55%)', // Royal Purple
+    // Gold - premium tier
+    bg: 'hsl(45, 95%, 55%)',
     text: 'hsl(0, 0%, 100%)',
-    border: 'hsl(270, 60%, 45%)',
+    border: 'hsl(45, 95%, 45%)',
   },
 };
