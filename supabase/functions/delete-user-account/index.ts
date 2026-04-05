@@ -1,4 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 async function d(supabase: any, table: string, col: string, val: string | string[]) {
   try {

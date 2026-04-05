@@ -1,4 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 async function del(supabase: any, table: string, column: string, value: string | string[], errors: string[]) {
   try {
