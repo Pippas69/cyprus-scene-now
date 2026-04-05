@@ -4668,6 +4668,8 @@ export type Database = {
           deferred_status: string | null
           email: string | null
           event_id: string | null
+          guest_ages: string | null
+          guest_city: string | null
           id: string
           is_manual_entry: boolean
           manual_status: string | null
@@ -4708,6 +4710,8 @@ export type Database = {
           deferred_status?: string | null
           email?: string | null
           event_id?: string | null
+          guest_ages?: string | null
+          guest_city?: string | null
           id?: string
           is_manual_entry?: boolean
           manual_status?: string | null
@@ -4748,6 +4752,8 @@ export type Database = {
           deferred_status?: string | null
           email?: string | null
           event_id?: string | null
+          guest_ages?: string | null
+          guest_city?: string | null
           id?: string
           is_manual_entry?: boolean
           manual_status?: string | null
