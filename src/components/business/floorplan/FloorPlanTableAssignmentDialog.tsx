@@ -93,9 +93,9 @@ export function FloorPlanTableAssignmentDialog({
     const { data, error } = await supabase
       .from('reservations')
       .select('id, reservation_name, party_size, phone_number, status, preferred_time, seating_preference, special_requests, event_id, created_at')
-      .eq('business_id', businessId)
       .eq('event_id', eventId)
       .in('status', ['pending', 'accepted', 'confirmed'])
+      .or(`auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null`)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
