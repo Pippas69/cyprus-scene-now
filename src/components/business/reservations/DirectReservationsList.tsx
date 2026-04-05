@@ -1857,32 +1857,31 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {renderCustomerNoteBubble(reservation)}
                         </div>
                       </TableCell>
-                      {/* 2. Λεπτομέρειες: Party size + Ages + City */}
+                      {/* 2. Λεπτομέρειες: Combined "X άτομα (age)" + City */}
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-1">
-                            <EditableCell
-                              reservationId={reservation.id}
-                              field="party_size"
-                              displayValue={reservation.party_size ? `${reservation.party_size} ${t.people}` : '—'}
-                              rawValue={reservation.party_size ? String(reservation.party_size) : ''} />
-                            {/* Ages: from tickets or guest_ages field */}
-                            {(() => {
-                              const ticketAges = agesByReservation[reservation.id];
-                              const agesStr = ticketAges && ticketAges.length > 0
-                                ? `(${ticketAges.join(', ')})`
-                                : (reservation as any).guest_ages
-                                  ? `(${(reservation as any).guest_ages})`
-                                  : null;
-                              return (
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="guest_ages"
-                                  displayValue={agesStr || '—'}
-                                  rawValue={(reservation as any).guest_ages || (ticketAges ? ticketAges.join(', ') : '')} />
-                              );
-                            })()}
-                          </div>
+                          {(() => {
+                            const ticketAges = agesByReservation[reservation.id];
+                            const agesStr = ticketAges && ticketAges.length > 0
+                              ? ticketAges.join(', ')
+                              : (reservation as any).guest_ages || '';
+                            const hasPeople = !!reservation.party_size;
+                            const hasAges = !!agesStr;
+                            const displayText = hasPeople
+                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                              : hasAges ? `(${agesStr})` : '—';
+                            const rawText = hasPeople
+                              ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
+                              : hasAges ? agesStr : '';
+                            return (
+                              <EditableCell
+                                reservationId={reservation.id}
+                                field="details_combined"
+                                displayValue={displayText}
+                                rawValue={rawText}
+                                inputClassName="h-7 text-sm w-36" />
+                            );
+                          })()}
                           {/* City: editable */}
                           <EditableCell
                             reservationId={reservation.id}
@@ -1891,32 +1890,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
                         </div>
                       </TableCell>
-                      {/* 3. Ελάχιστη Χρέωση - editable */}
+                      {/* 3. Ελάχιστη Χρέωση - single combined editable */}
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
-                          <div className="flex items-center gap-0.5 whitespace-nowrap">
-                            <EditableCell
-                              reservationId={reservation.id}
-                              field="prepaid_min_charge_cents"
-                              displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
-                              rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
-                            {!isReservationOnly && ticketPaidCents > 0 && (
-                              <span className="text-sm">(
+                          {(() => {
+                            const hasTicketCredit = !isReservationOnly;
+                            if (hasTicketCredit) {
+                              // Hybrid: show "€100.00 (€20.00)" as one editable field
+                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
+                              const ticketDisplay = ticketPaidCents > 0 ? `(€${(ticketPaidCents / 100).toFixed(2)})` : '(—)';
+                              const combinedDisplay = `${mainDisplay} ${ticketDisplay}`;
+                              const rawVal = `${(minChargeCents / 100).toFixed(2)} (${(ticketPaidCents / 100).toFixed(2)})`;
+                              return (
                                 <EditableCell
                                   reservationId={reservation.id}
-                                  field="ticket_credit_cents_override"
-                                  displayValue={`€${(ticketPaidCents / 100).toFixed(2)}`}
-                                  rawValue={(ticketPaidCents / 100).toFixed(2)} />
-                              )</span>
-                            )}
-                            {!isReservationOnly && ticketPaidCents === 0 && (
-                              <EditableCell
-                                reservationId={reservation.id}
-                                field="ticket_credit_cents_override"
-                                displayValue="(—)"
-                                rawValue="0" />
-                            )}
-                          </div>
+                                  field="min_charge_combined"
+                                  displayValue={combinedDisplay}
+                                  rawValue={rawVal}
+                                  inputClassName="h-7 text-sm w-36" />
+                              );
+                            } else {
+                              // Reservation-only: just min charge
+                              return (
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="prepaid_min_charge_cents"
+                                  displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
+                                  rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                              );
+                            }
+                          })()}
                           {isReservationOnly ? (
                             <EditableCell
                               reservationId={reservation.id}
@@ -1924,7 +1927,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               displayValue={actualSpendDisplay}
                               rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
                           ) : (
-                            <span className="text-xs text-muted-foreground">{remainderDisplay}</span>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
                           )}
                         </div>
                       </TableCell>
