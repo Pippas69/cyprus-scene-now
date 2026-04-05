@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // Force cache refresh - v1
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -16,6 +17,21 @@ interface ReservationData {
   seating_preference?: string;
   special_requests?: string;
 }
+
+const ReservationDataSchema = z.object({
+  reservation_name: safeString(200),
+  party_size: positiveInt,
+  preferred_date: dateString,
+  preferred_time: safeString(20),
+  phone_number: optionalString(25),
+  special_requests: optionalString(1000),
+  seating_type_id: flexId.optional(),
+  guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
+});
+const BodySchema = z.object({
+  discountId: flexId,
+  reservationData: ReservationDataSchema,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -56,10 +72,7 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse request body
-    const { discountId, reservationData } = await req.json() as { 
-      discountId: string; 
-      reservationData: ReservationData;
-    };
+    const { discountId, reservationData } = await parseBody(req, BodySchema);
     
     if (!discountId) throw new Error("Discount ID is required");
     if (!reservationData) throw new Error("Reservation data is required");
@@ -277,6 +290,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

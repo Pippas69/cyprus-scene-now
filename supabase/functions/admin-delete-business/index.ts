@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 async function del(supabase: any, table: string, column: string, value: string | string[], errors: string[]) {
   try {
@@ -52,6 +53,11 @@ async function cleanConversations(supabase: any, userId: string, errors: string[
   } catch (_) {}
 }
 
+const BodySchema = z.object({
+  business_id: flexId,
+  delete_owner_account: z.boolean().default(false),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders })
@@ -97,7 +103,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { business_id, delete_owner_account } = await req.json()
+    const { business_id, delete_owner_account } = await parseBody(req, BodySchema)
     if (!business_id) {
       return new Response(JSON.stringify({ error: "business_id required" }), {
         status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" }
@@ -377,6 +383,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     )
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error:", error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" }

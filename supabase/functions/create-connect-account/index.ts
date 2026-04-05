@@ -2,10 +2,15 @@ import Stripe from "npm:stripe@14.21.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[CREATE-CONNECT-ACCOUNT] ${step}`, details ? JSON.stringify(details) : '');
 };
+
+const BodySchema = z.object({
+  business_type: z.enum(["individual", "company"]).default("individual"),
+}).optional().default({});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +34,7 @@ Deno.serve(async (req) => {
     // Parse request body for business_type
     let businessType: "individual" | "company" = "individual";
     try {
-      const body = await req.json();
+      const body = await parseBody(req, BodySchema);
       if (body?.business_type === "company") {
         businessType = "company";
       }

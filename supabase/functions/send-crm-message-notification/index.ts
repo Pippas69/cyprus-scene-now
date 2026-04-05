@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled, type PushPayload } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 interface SendCrmMessageRequest {
   guestId: string;
@@ -14,6 +15,13 @@ const jsonResponse = (body: unknown, status = 200) =>
     status,
     headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
+
+const BodySchema = z.object({
+  guestId: flexId,
+  businessId: flexId,
+  subject: safeString(500),
+  message: safeString(5000),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -42,7 +50,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const { guestId, businessId, subject, message } = (await req.json()) as SendCrmMessageRequest;
+    const { guestId, businessId, subject, message } = await parseBody(req, BodySchema);
 
     const trimmedSubject = subject?.trim();
     const trimmedMessage = message?.trim();
@@ -118,6 +126,9 @@ Deno.serve(async (req) => {
       push: pushResult,
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const message = error instanceof Error ? error.message : "Unexpected error";
     return jsonResponse({ error: message }, 500);
   }

@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // COMMISSION DISABLED: All offers are commission-free
 // Default platform commission percentage - set to 0 for all offers
@@ -10,6 +11,10 @@ const DEFAULT_COMMISSION_PERCENT = 0;
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-OFFER-CHECKOUT] ${step}`, details ? JSON.stringify(details) : "");
 };
+
+const BodySchema = z.object({
+  discountId: flexId,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -55,7 +60,7 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse request body
-    const { discountId } = await req.json();
+    const { discountId } = await parseBody(req, BodySchema);
     if (!discountId) throw new Error("Discount ID is required");
 
     // Fetch the discount/offer details WITH business Stripe account info
@@ -291,6 +296,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

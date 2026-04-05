@@ -1,6 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { corsResponse, errorResponse, jsonResponse, jsonHeaders } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const BodySchema = z.object({
+  user_id: flexId,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { user_id } = await req.json();
+    const { user_id } = await parseBody(req, BodySchema);
     if (!user_id) {
       return new Response(JSON.stringify({ error: "user_id is required" }), {
         status: 400,
@@ -106,6 +111,9 @@ Deno.serve(async (req) => {
       headers: jsonHeaders(),
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const msg = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,

@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[VALIDATE-TICKET] ${step}`, details ? JSON.stringify(details) : '');
@@ -15,6 +16,11 @@ const maskEmail = (email: string | null | undefined): string | null => {
   const masked = localPart.substring(0, visibleChars) + '***';
   return `${masked}@${domain}`;
 };
+
+const BodySchema = z.object({
+  qrToken: safeString(500),
+  action: z.enum(["check", "checkin"]).default("check"),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,7 +58,7 @@ Deno.serve(async (req) => {
     const staffUserId = userData.user.id;
     logStep("Staff authenticated", { userId: staffUserId });
 
-    const { qrToken, action = "check" } = await req.json();
+    const { qrToken, action } = await parseBody(req, BodySchema);
     logStep("Request", { qrToken, action });
 
     if (!qrToken) {
@@ -260,6 +266,9 @@ Deno.serve(async (req) => {
     throw new Error("Invalid action");
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage, valid: false }), {

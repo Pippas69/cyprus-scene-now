@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[PROCESS-OFFER-PAYMENT] ${step}`, details ? JSON.stringify(details) : "");
@@ -13,6 +14,10 @@ const generateQRToken = (): string => {
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 };
+
+const BodySchema = z.object({
+  purchaseId: flexId,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,7 +63,7 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id });
 
     // Parse request body
-    const { purchaseId } = await req.json();
+    const { purchaseId } = await parseBody(req, BodySchema);
     if (!purchaseId) throw new Error("Purchase ID is required");
 
     // Fetch the purchase record with discount and business info
@@ -249,6 +254,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

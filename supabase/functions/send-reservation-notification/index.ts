@@ -4,7 +4,6 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import {
-import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
   wrapPremiumEmail,
   wrapBusinessEmail,
   emailGreeting,
@@ -15,6 +14,7 @@ import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_
   successBadge,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -39,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const resend = new Resend(resendApiKey);
     
-    const { reservationId, type }: NotificationRequest = await req.json();
+    const { reservationId, type } = await parseBody(req, BodySchema);
     console.log(`Processing ${type} notification for reservation ${reservationId}`);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -476,6 +476,9 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 200, headers: { "Content-Type": "application/json", ...securityHeaders } }
     );
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error in send-reservation-notification:", errorMessage);
     return new Response(

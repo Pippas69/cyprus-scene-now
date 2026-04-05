@@ -3,11 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // Force cache refresh - v1
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SEND-OFFER-PAYMENT-LINK] ${step}`, details ? JSON.stringify(details) : "");
 };
+
+const BodySchema = z.object({
+  reservationId: flexId,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,7 +33,7 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse request body
-    const { reservationId } = await req.json() as { reservationId: string };
+    const { reservationId } = await parseBody(req, BodySchema);
     
     if (!reservationId) throw new Error("Reservation ID is required");
 
@@ -248,6 +253,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

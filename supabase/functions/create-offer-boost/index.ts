@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -12,6 +13,16 @@ const BOOST_TIERS = {
   standard: { dailyRateCents: 2500, hourlyRateCents: 300, quality: 4 },
   premium: { dailyRateCents: 4000, hourlyRateCents: 600, quality: 5 },
 };
+
+const BodySchema = z.object({
+  discountId: flexId,
+  tier: boostTier,
+  durationMode: durationMode,
+  startDate: dateString,
+  endDate: dateString.optional(),
+  durationHours: positiveInt.optional(),
+  useSubscriptionBudget: z.boolean().optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,7 +60,7 @@ Deno.serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { discountId, tier, durationMode = "daily", startDate, endDate, durationHours, useSubscriptionBudget } = await req.json();
+    const { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget } = await parseBody(req, BodySchema);
     logStep("Request data", { discountId, tier, durationMode, startDate, endDate, durationHours, useSubscriptionBudget });
 
     // Validate tier
@@ -255,6 +266,9 @@ Deno.serve(async (req) => {
       { headers: { ...securityHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;

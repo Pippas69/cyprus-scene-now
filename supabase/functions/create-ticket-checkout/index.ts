@@ -3,6 +3,25 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const TicketItemSchema = z.object({
+  tierId: flexId,
+  quantity: positiveInt.max(50),
+});
+
+const CheckoutBodySchema = z.object({
+  eventId: flexId,
+  items: z.array(TicketItemSchema).min(1).max(20),
+  customerName: safeString(200),
+  customerEmail: email,
+  customerPhone: optionalString(20),
+  specialRequests: optionalString(1000),
+  seatingTypeId: flexId.optional(),
+  guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
+  seatIds: z.array(flexId).optional(),
+  showInstanceId: flexId.optional(),
+});
 
 interface TicketItem {
   tierId: string;
@@ -68,33 +87,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const body: CheckoutRequest = await req.json();
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = body;
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
     logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
-
-    // Input validation
-    if (!eventId || typeof eventId !== 'string' || eventId.length < 10) {
-      return errorResponse("Invalid eventId", 400);
-    }
-    if (!items || !Array.isArray(items) || items.length === 0 || items.length > 20) {
-      return errorResponse("Invalid items", 400);
-    }
-    for (const item of items) {
-      if (!item.tierId || typeof item.tierId !== 'string') return errorResponse("Invalid tier ID", 400);
-      if (!item.quantity || typeof item.quantity !== 'number' || item.quantity < 1 || item.quantity > 50) return errorResponse("Invalid quantity", 400);
-    }
-    if (!customerName || typeof customerName !== 'string' || customerName.length > 200) {
-      return errorResponse("Invalid customerName", 400);
-    }
-    if (!customerEmail || typeof customerEmail !== 'string' || !customerEmail.includes('@') || customerEmail.length > 255) {
-      return errorResponse("Invalid customerEmail", 400);
-    }
-    if (customerPhone && (typeof customerPhone !== 'string' || customerPhone.length > 20)) {
-      return errorResponse("Invalid phone number", 400);
-    }
-    if (specialRequests && (typeof specialRequests !== 'string' || specialRequests.length > 1000)) {
-      return errorResponse("Special requests too long", 400);
-    }
 
     // Fetch event and business info (including Stripe Connect status)
     const { data: event, error: eventError } = await supabaseClient
@@ -617,6 +611,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

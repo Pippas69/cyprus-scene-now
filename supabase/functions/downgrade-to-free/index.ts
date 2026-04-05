@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -39,6 +40,10 @@ const ANNUAL_PRICE_IDS: Record<string, string> = {
   elite: 'price_1Spwp6HTQ1AOHDjn7yqgzaPN',
 };
 
+const BodySchema = z.object({
+  target_plan: safeString(50).optional(),
+}).optional().default({});
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: securityHeaders });
@@ -70,7 +75,7 @@ Deno.serve(async (req) => {
     // Parse target plan from body (defaults to 'free')
     let targetPlan = 'free';
     try {
-      const body = await req.json();
+      const body = await parseBody(req, BodySchema);
       if (body?.target_plan && typeof body.target_plan === 'string') {
         targetPlan = body.target_plan.toLowerCase();
       }
@@ -312,6 +317,9 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR', { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

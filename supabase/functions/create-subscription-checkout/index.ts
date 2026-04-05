@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -84,6 +85,11 @@ const PRODUCT_TO_PLAN: Record<string, string> = {
   'prod_TjOwpvKhaDl3xS': 'elite',
 };
 
+const BodySchema = z.object({
+  plan_slug: safeString(50),
+  billing_cycle: safeString(20),
+});
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: securityHeaders });
@@ -122,7 +128,7 @@ Deno.serve(async (req) => {
     if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep('User authenticated', { userId: user.id, email: user.email });
 
-    const rawBody = await req.json().catch(() => ({}));
+    const rawBody = await parseBody(req, BodySchema);
     let { plan_slug, billing_cycle } = rawBody as { plan_slug?: unknown; billing_cycle?: unknown };
 
     const normalizedPlan = String(plan_slug ?? '').trim().toLowerCase();
@@ -205,6 +211,9 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR in create-subscription-checkout', { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

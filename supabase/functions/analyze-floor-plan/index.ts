@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 type RawFixture = {
   label?: string;
@@ -142,11 +143,15 @@ const normalizeResult = (fixtures: RawFixture[], tables: RawTable[]) => {
   return { fixtures: normFixtures, tables: dedupedTables };
 };
 
+const BodySchema = z.object({
+  imageBase64: z.string().min(100).max(10_000_000),
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: securityHeaders });
 
   try {
-    const { imageBase64 } = await req.json();
+    const { imageBase64 } = await parseBody(req, BodySchema);
     if (!imageBase64) throw new Error("No image provided");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -308,6 +313,9 @@ SPACING ACCURACY:
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("analyze-floor-plan error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" },

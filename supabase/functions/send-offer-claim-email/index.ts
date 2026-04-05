@@ -1,7 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import {
-import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
   wrapPremiumEmail,
   emailGreeting,
   eventHeader,
@@ -13,6 +12,7 @@ import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_
   discountBadge,
   successBadge,
 } from "../_shared/email-templates.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-OFFER-CLAIM-EMAIL] ${step}`, details ? JSON.stringify(details) : '');
@@ -75,6 +75,26 @@ const getCategoryLabel = (category: string | null): string => {
   return labels[category || ''] || '';
 };
 
+const BodySchema = z.object({
+  purchaseId: flexId,
+  userEmail: email,
+  offerTitle: safeString(500),
+  businessName: safeString(200),
+  expiresAt: dateString.optional(),
+  qrCodeToken: safeString(500),
+  description: optionalString(2000),
+  discountPercent: nonNegativeInt.optional(),
+  specialDealText: optionalString(500),
+  offerType: optionalString(50),
+  offerImageUrl: optionalString(2048),
+  hasReservation: z.boolean().optional(),
+  reservationDate: dateString.optional(),
+  reservationTime: safeString(20).optional(),
+  partySize: positiveInt.optional(),
+  seatingType: optionalString(50),
+  userId: flexId.optional(),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: securityHeaders });
@@ -96,7 +116,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const data: OfferClaimEmailRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", { 
       purchaseId: data.purchaseId, 
       userEmail: data.userEmail, 
@@ -231,6 +251,9 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", ...securityHeaders },
     });
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 function jsonResponse(data: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -8,6 +9,10 @@ function jsonResponse(data: Record<string, unknown>, status = 200): Response {
     headers: { ...securityHeaders, 'Content-Type': 'application/json' },
   })
 }
+
+const TokenBodySchema = z.object({
+  token: safeString(500),
+}).optional();
 
 Deno.serve(async (req) => {
   // Handle CORS preflight

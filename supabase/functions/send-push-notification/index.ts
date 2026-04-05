@@ -2,6 +2,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-PUSH-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -14,6 +15,14 @@ interface PushNotificationRequest {
   icon?: string;
   data?: Record<string, unknown>;
 }
+
+const BodySchema = z.object({
+  userId: flexId,
+  title: safeString(200),
+  body: safeString(1000),
+  icon: optionalString(500),
+  data: z.record(z.unknown()).optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +38,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { userId, title, body, icon, data }: PushNotificationRequest = await req.json();
+    const { userId, title, body, icon, data } = await parseBody(req, BodySchema);
     logStep("Request data", { userId, title });
 
     if (!userId || !title || !body) {
@@ -63,6 +72,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

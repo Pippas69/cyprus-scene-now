@@ -6,6 +6,7 @@ import { sendEncryptedPush, PushPayload } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -55,6 +56,17 @@ interface NotificationRequest {
   skipInApp?: boolean;
 }
 
+const BodySchema = z.object({
+  userId: flexId,
+  title: safeString(200),
+  message: safeString(2000),
+  eventType: notificationEventType,
+  eventId: flexId.optional(),
+  businessId: flexId.optional(),
+  actionUrl: optionalString(2048),
+  iconType: optionalString(50),
+});
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: securityHeaders });
@@ -68,7 +80,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const data: NotificationRequest = await req.json();
+    const data = await parseBody(req, BodySchema);
     logStep("Request data", { userId: data.userId, eventType: data.eventType });
 
     if (!data.userId || !data.title || !data.message || !data.eventType) {
@@ -191,6 +203,9 @@ Deno.serve(async (req) => {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep('ERROR', errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {

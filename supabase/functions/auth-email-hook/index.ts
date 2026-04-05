@@ -9,6 +9,7 @@ import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Κωδικός επαλήθευσης ΦΟΜΟ',
@@ -97,7 +98,7 @@ async function handlePreview(req: Request): Promise<Response> {
 
   let type: string
   try {
-    const body = await req.json()
+    const body = await parseBody(req, HookBodySchema)
     type = body.type
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
@@ -272,6 +273,13 @@ async function handleWebhook(req: Request): Promise<Response> {
     { status: 200, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
   )
 }
+
+const HookBodySchema = z.object({
+  type: safeString(100),
+  user: z.object({
+    email: email.optional(),
+  }).passthrough().optional(),
+}).passthrough();
 
 Deno.serve(async (req) => {
   const url = new URL(req.url)

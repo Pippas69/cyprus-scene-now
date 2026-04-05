@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2"
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // ONLY these emails can be deleted for testing purposes
 const ALLOWED_TEST_EMAILS = new Set([
@@ -10,6 +11,10 @@ const ALLOWED_TEST_EMAILS = new Set([
   "christoskoumi80@mail.com",
   "mklifts04@gmail.com",
 ])
+
+const BodySchema = z.object({
+  email: email,
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email } = await req.json()
+    const { email: emailInput } = await parseBody(req, BodySchema)
 
     const normalizedEmail = email?.toLowerCase()
 
@@ -64,6 +69,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }
     )
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error:", error)
     return new Response(
       JSON.stringify({ error: error.message }),
