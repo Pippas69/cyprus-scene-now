@@ -1895,6 +1895,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
+                            const isWalkInSource = reservation.source === 'walk_in' && !reservation.seating_type_id;
+                            if (isWalkInSource) {
+                              // Walk-in: show "Walk-in" label + ticket price if available
+                              const ticketPrice = ticketPaidCents > 0 ? `€${(ticketPaidCents / 100).toFixed(2)}` : null;
+                              return (
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-medium text-primary whitespace-nowrap">Walk-in</span>
+                                  {ticketPrice && (
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">{ticketPrice}</span>
+                                  )}
+                                </div>
+                              );
+                            }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
                               // Hybrid: show "€100.00 (€20.00)" as one editable field
@@ -1921,15 +1934,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               );
                             }
                           })()}
-                          {isReservationOnly ? (
-                            <EditableCell
-                              reservationId={reservation.id}
-                              field="ticket_credit_cents"
-                              displayValue={actualSpendDisplay}
-                              rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                          ) : (
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
-                          )}
+                          {reservation.source !== 'walk_in' || reservation.seating_type_id ? (
+                            isReservationOnly ? (
+                              <EditableCell
+                                reservationId={reservation.id}
+                                field="ticket_credit_cents"
+                                displayValue={actualSpendDisplay}
+                                rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
+                            ) : (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
+                            )
+                          ) : null}
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
