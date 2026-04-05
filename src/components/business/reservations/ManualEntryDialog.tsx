@@ -217,6 +217,7 @@ export const ManualEntryDialog = ({
     setSeatingTypeId('');
     setTicketTierId('');
     setTableId('');
+    setIsWalkIn(false);
   };
 
   const handleSave = async () => {
