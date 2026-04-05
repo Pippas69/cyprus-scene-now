@@ -232,16 +232,16 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
           // Fetch all data once per event using the overall range, then filter in JS
           const [viewsRes, rsvpsRes, ticketsRes, ordersRes, reservationsRes] = await Promise.all([
           supabase.from("event_views").select("viewed_at").eq("event_id", eventId).
-          gte("viewed_at", overallStart).lte("viewed_at", overallEnd),
+          gte("viewed_at", overallStart).lte("viewed_at", overallEnd).limit(5000),
           supabase.from("rsvps").select("created_at").eq("event_id", eventId).
-          gte("created_at", overallStart).lte("created_at", overallEnd),
+          gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000),
           supabase.from("tickets").select("id, user_id, created_at, checked_in_at, status").eq("event_id", eventId).
-          gte("created_at", overallStart).lte("created_at", overallEnd),
+          gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000),
           supabase.from("ticket_orders").select("created_at, subtotal_cents, status").eq("event_id", eventId).
-          eq("status", "completed").gte("created_at", overallStart).lte("created_at", overallEnd),
+          eq("status", "completed").gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000),
           supabase.from("reservations").select("id, user_id, created_at, checked_in_at, status, party_size, prepaid_min_charge_cents, auto_created_from_tickets").
           eq("event_id", eventId).eq("status", "accepted").
-          gte("created_at", overallStart).lte("created_at", overallEnd)]
+          gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000)]
           );
 
           // Filter each record against ALL boost windows (no double-counting)
@@ -379,13 +379,13 @@ const BoostManagement = ({ businessId }: BoostManagementProps) => {
 
           const [viewsRes, clicksRes, purchasesRes] = await Promise.all([
           supabase.from("discount_views").select("viewed_at").eq("discount_id", discountId).
-          gte("viewed_at", overallStart).lte("viewed_at", overallEnd),
+          gte("viewed_at", overallStart).lte("viewed_at", overallEnd).limit(5000),
           supabase.from("engagement_events").select("created_at").
           eq("event_type", "offer_redeem_click").eq("entity_id", discountId).
-          gte("created_at", overallStart).lte("created_at", overallEnd),
+          gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000),
           supabase.from("offer_purchases").select("created_at, redeemed_at").eq("discount_id", discountId).
           not("redeemed_at", "is", null).
-          gte("created_at", overallStart).lte("created_at", overallEnd)]
+          gte("created_at", overallStart).lte("created_at", overallEnd).limit(5000)]
           );
 
           const impressions = (viewsRes.data || []).filter((v) => isInAnyWindow(v.viewed_at, windows)).length;
