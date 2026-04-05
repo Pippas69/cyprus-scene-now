@@ -19,6 +19,7 @@ import { useBetaMode, validateInviteCode } from "@/hooks/useBetaMode";
 import { useLanguage } from "@/hooks/useLanguage";
 import { BusinessCategorySelector } from "@/components/business/BusinessCategorySelector";
 import { getCityOptions, cyprusCities } from "@/lib/cityTranslations";
+import { compressImage } from "@/lib/imageCompression";
 
 const SignupBusiness = () => {
   const navigate = useNavigate();
