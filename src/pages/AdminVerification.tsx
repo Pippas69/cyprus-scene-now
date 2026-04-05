@@ -81,7 +81,7 @@ const AdminVerification = () => {
           profiles:user_id (
             email
           )
-        `).order("created_at", { ascending: false });
+        `).order("created_at", { ascending: false }).limit(500);
       if (error) throw error;
       setBusinesses(data || []);
     } catch (error) {
