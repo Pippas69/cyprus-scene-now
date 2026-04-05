@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     if (!token) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     if (!user_id) {
       return new Response(JSON.stringify({ error: "user_id is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     if (actorError || !actorData.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     if (!actorProfile?.is_admin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -76,14 +76,14 @@ Deno.serve(async (req) => {
     if (!business) {
       return new Response(JSON.stringify({ error: "Not a business account" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
     if (!business.verified) {
       return new Response(JSON.stringify({ error: "Business is not admin-approved yet" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders(),
       });
     }
 
@@ -103,13 +103,13 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders(),
     });
   }
 });
