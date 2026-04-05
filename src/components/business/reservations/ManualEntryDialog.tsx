@@ -558,7 +558,7 @@ export const ManualEntryDialog = ({
           )}
 
           {/* === RESERVATION/HYBRID: Seating type === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && eventSeatingTypes.length > 0 && (
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && eventSeatingTypes.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.seatingType}</Label>
               <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
