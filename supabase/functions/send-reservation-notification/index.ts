@@ -5,7 +5,6 @@ import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/not
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import {
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
-import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   wrapPremiumEmail,
   wrapBusinessEmail,
   emailGreeting,
@@ -16,6 +15,7 @@ import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail,
   successBadge,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
