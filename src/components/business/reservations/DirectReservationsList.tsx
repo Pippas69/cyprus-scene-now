@@ -51,6 +51,8 @@ interface DirectReservation {
   min_age?: number | null;
   source?: string;
   email?: string | null;
+  guest_ages?: string | null;
+  guest_city?: string | null;
 }
 
 interface DirectReservationsListProps {
