@@ -288,7 +288,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     queryKey: ["student-discount-businesses", selectedCity],
     queryFn: async () => {
       let query = supabase
-        .from("businesses")
+        .from("public_businesses_safe")
         .select("id, name, logo_url, city, category, student_discount_percent, student_discount_mode")
         .eq("verified", true)
         .eq("student_discount_enabled", true)

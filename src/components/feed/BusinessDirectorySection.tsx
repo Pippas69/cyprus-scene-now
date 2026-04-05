@@ -56,7 +56,7 @@ export const BusinessDirectorySection = ({
     queryKey: ['all-businesses-directory', selectedCity, selectedCategories.join(','), userCity],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      let query = supabase.from('businesses').select('id, name, logo_url, cover_url, category, city, verified, student_discount_percent, student_discount_mode').eq('verified', true).order('created_at', {
+      let query = supabase.from('public_businesses_safe').select('id, name, logo_url, cover_url, category, city, verified, student_discount_percent, student_discount_mode').eq('verified', true).order('created_at', {
         ascending: false
       });
       if (selectedCity) {

@@ -79,7 +79,7 @@ export const CategoryBusinessesSections = ({ language, selectedCity, userCity = 
           const def = CATEGORY_DEFS[key];
 
           let query = supabase
-            .from("businesses")
+            .from("public_businesses_safe")
             .select("id, name, logo_url, category, city, verified, student_discount_percent, student_discount_mode")
             .eq("verified", true)
             .overlaps("category", [def.categoryValue])
