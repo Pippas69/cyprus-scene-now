@@ -1,7 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import {
-import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
   wrapPremiumEmail,
   emailGreeting,
   emailTitle,

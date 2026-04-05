@@ -4,12 +4,11 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { 
-import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
-import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
   sendBusinessNotification, 
   wrapBusinessEmailContent,
   type BusinessNotificationType 
 } from "../_shared/business-notification-helper.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[INVENTORY-ALERT] ${step}`, details ? JSON.stringify(details) : '');
