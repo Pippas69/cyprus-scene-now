@@ -39,9 +39,10 @@ Deno.serve(async (req) => {
     try {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
 
+      // Use 'cancelled' since the ticket_order_status enum doesn't have 'expired'
       const { data: abandoned, error: abandonedError } = await supabase
         .from("ticket_orders")
-        .update({ status: "expired" })
+        .update({ status: "cancelled" })
         .eq("status", "pending")
         .is("stripe_checkout_session_id", null)
         .lt("created_at", twoHoursAgo)
