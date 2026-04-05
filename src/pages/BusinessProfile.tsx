@@ -234,10 +234,9 @@ const BusinessProfile = () => {
     try {
       // Fetch business details including direct reservation settings and student discount
       const { data: businessData, error: businessError } = await supabase.
-      from("businesses").
-      select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode").
+      from("public_businesses_safe").
+      select("*").
       eq("id", businessId).
-      eq("verified", true).
       maybeSingle();
 
       if (businessError) throw businessError;
@@ -256,7 +255,7 @@ const BusinessProfile = () => {
       select(
         `
           *,
-          businesses!inner(name, logo_url, city)
+          public_businesses_safe!inner(name, logo_url, city)
         `
       ).
       eq("business_id", businessId).
@@ -272,7 +271,7 @@ const BusinessProfile = () => {
       from("discounts").
       select(`
           *,
-          businesses!inner(name, logo_url, city, cover_url, accepts_direct_reservations, reservation_time_slots, reservation_days)
+          public_businesses_safe!inner(name, logo_url, city, cover_url, accepts_direct_reservations, reservation_time_slots, reservation_days)
         `).
       eq("business_id", businessId).
       eq("active", true).
