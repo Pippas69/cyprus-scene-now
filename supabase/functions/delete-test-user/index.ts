@@ -9,7 +9,6 @@ const ALLOWED_TEST_EMAILS = new Set([
   "marinoskumi04@gmail.com",
   "myriapanayi80@gmail.com",
   "christoskoumi80@mail.com",
-  "mklifts04@gmail.com",
 ])
 
 const BodySchema = z.object({
