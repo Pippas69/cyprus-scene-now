@@ -3,6 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -28,6 +29,16 @@ function generateToken(): string {
 // Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
 // gateway validates the caller's JWT (anon or service_role) before the request
 // reaches this code. No in-function auth check is needed.
+
+const BodySchema = z.object({
+  templateName: safeString(100).optional(),
+  template_name: safeString(100).optional(),
+  recipientEmail: email.optional(),
+  recipient_email: email.optional(),
+  idempotencyKey: safeString(200).optional(),
+  idempotency_key: safeString(200).optional(),
+  templateData: z.record(z.unknown()).optional(),
+}).passthrough();
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -56,7 +67,7 @@ Deno.serve(async (req) => {
   let messageId: string
   let templateData: Record<string, any> = {}
   try {
-    const body = await req.json()
+    const body = await parseBody(req, BodySchema)
     templateName = body.templateName || body.template_name
     recipientEmail = body.recipientEmail || body.recipient_email
     messageId = crypto.randomUUID()

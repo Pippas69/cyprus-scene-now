@@ -3,6 +3,21 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const GuestSchema = z.object({ name: safeString(200) }).passthrough();
+const BodySchema = z.object({
+  event_id: flexId,
+  seating_type_id: flexId,
+  party_size: positiveInt,
+  reservation_name: safeString(200),
+  phone_number: optionalString(25),
+  special_requests: optionalString(1000),
+  success_url: optionalUrl,
+  cancel_url: optionalUrl,
+  customer_email: email.optional(),
+  guests: z.array(GuestSchema).optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -27,7 +42,7 @@ serve(async (req) => {
       event_id, seating_type_id, party_size, reservation_name,
       phone_number, special_requests, success_url, cancel_url,
       customer_email, guests,
-    } = await req.json();
+    } = await parseBody(req, BodySchema);
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
       throw new Error("Missing required fields");
@@ -303,6 +318,9 @@ serve(async (req) => {
     }
 
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("Error creating deferred checkout:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {

@@ -4,12 +4,24 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
+
+const GuestSchema = z.object({ name: safeString(200) }).passthrough();
+const BodySchema = z.object({
+  event_id: flexId.optional(),
+  seating_type_id: flexId.optional(),
+  party_size: positiveInt.optional(),
+  reservation_name: safeString(200).optional(),
+  phone_number: optionalString(25),
+  special_requests: optionalString(1000),
+  guests: z.array(GuestSchema).optional(),
+}).default({});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: securityHeaders });
@@ -34,7 +46,7 @@ serve(async (req) => {
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
     const { event_id, seating_type_id, party_size, reservation_name, phone_number, special_requests, guests } =
-      (await req.json().catch(() => ({}))) as Record<string, unknown>;
+      await parseBody(req, BodySchema);
 
     // Service client for privileged DB writes (required for demo/preview flows)
     const supabaseService = createClient(
@@ -199,6 +211,9 @@ serve(async (req) => {
       prepaid_amount_cents: 0,
     });
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     console.error("[create-free-reservation-event] ERROR", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return json({ error: message }, 500);

@@ -2,6 +2,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-OFFER-EMAIL] ${step}`, details ? JSON.stringify(details) : '');
@@ -22,6 +23,20 @@ interface OfferEmailRequest {
   expiresAt: string;
   qrCodeToken: string;
 }
+
+const BodySchema = z.object({
+  purchaseId: flexId,
+  userEmail: email,
+  userName: safeString(200).optional(),
+  offerTitle: safeString(500),
+  offerTerms: optionalString(2000),
+  businessName: safeString(200),
+  originalPriceCents: nonNegativeInt.optional(),
+  finalPriceCents: nonNegativeInt.optional(),
+  discountPercent: nonNegativeInt.optional(),
+  expiresAt: dateString.optional(),
+  qrCodeToken: safeString(500),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,7 +72,7 @@ Deno.serve(async (req) => {
       discountPercent,
       expiresAt,
       qrCodeToken,
-    }: OfferEmailRequest = await req.json();
+    } = await parseBody(req, BodySchema);
 
     logStep("Request data", { purchaseId, userEmail, offerTitle, businessName });
 
@@ -218,6 +233,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {

@@ -12,6 +12,7 @@ const logStep = (step: string, details?: unknown) => {
 
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 interface TicketSaleNotificationRequest {
   orderId: string;
@@ -25,6 +26,19 @@ interface TicketSaleNotificationRequest {
   businessName: string;
   businessUserId?: string;
 }
+
+const BodySchema = z.object({
+  orderId: flexId,
+  eventId: flexId.optional(),
+  eventTitle: safeString(500),
+  customerName: safeString(200).optional(),
+  ticketCount: positiveInt,
+  totalAmount: nonNegativeInt,
+  tierName: safeString(200).optional(),
+  businessEmail: email.optional(),
+  businessName: safeString(200).optional(),
+  businessUserId: flexId.optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,7 +66,7 @@ Deno.serve(async (req) => {
       businessEmail,
       businessName,
       businessUserId,
-    }: TicketSaleNotificationRequest = await req.json();
+    } = await parseBody(req, BodySchema);
 
     logStep("Request data", { orderId, eventTitle, ticketCount, businessEmail });
 
@@ -99,6 +113,9 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", ...securityHeaders },
     });
   } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(
