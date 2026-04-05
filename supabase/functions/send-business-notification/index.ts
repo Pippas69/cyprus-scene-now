@@ -1,8 +1,8 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
-import { BusinessApprovalEmail } from '../_shared/email-templates/business-approval.tsx'
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { BusinessApprovalEmail } from '../_shared/email-templates/business-approval.tsx'
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 

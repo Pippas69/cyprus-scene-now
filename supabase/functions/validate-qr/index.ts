@@ -4,8 +4,6 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { buildNotificationKey, markAsSent, wasAlreadySent } from "../_shared/notification-idempotency.ts";
 import { getEmailForUserId } from "../_shared/user-email.ts";
 import { 
-import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
-import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
   wrapPremiumEmail, 
   wrapBusinessEmail, 
   emailTitle, 
@@ -15,6 +13,8 @@ import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
   successBadge,
   discountBadge,
 } from "../_shared/email-templates.ts";
+import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
