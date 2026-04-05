@@ -411,6 +411,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           fetchCheckInCounts(reservationIds);
           // Fetch cities from user profiles for reservations
           fetchCitiesForReservations(sortedByName);
+          // Fetch table assignments for event reservations too
+          fetchTableAssignments(reservationIds, selectedEventId);
           const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
@@ -431,12 +433,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const fetchTableAssignments = async (reservationIds: string[]) => {
+  const fetchTableAssignments = async (reservationIds: string[], eventId?: string | null) => {
     if (reservationIds.length === 0) return;
-    const { data } = await supabase
+    let query = supabase
       .from('reservation_table_assignments')
       .select('reservation_id, floor_plan_tables(label)')
       .in('reservation_id', reservationIds);
+    if (eventId) {
+      query = query.eq('event_id', eventId);
+    }
+    const { data } = await query;
     if (data) {
       const map: Record<string, string> = {};
       data.forEach((a: any) => {
@@ -1217,6 +1223,64 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       </span>
     );
   };
+  // Editable cell for event seating type (Bar/Table/VIP/Sofa)
+  const EventSeatingTypeEditCell = ({ reservationId, currentSeatingTypeId, seatingTypeName }: { reservationId: string; currentSeatingTypeId: string | null; seatingTypeName: string | null }) => {
+    const allTypes = Object.entries(seatingTypeNames).map(([id, name]) => {
+      const lower = name.toLowerCase();
+      const label = lower === 'table' ? 'Τραπέζι' : lower === 'sofa' ? 'Καναπές' : lower === 'vip' ? 'VIP' : lower === 'bar' ? 'Bar' : name;
+      return { id, label };
+    });
+
+    const handleChange = async (newId: string | null) => {
+      try {
+        const { error } = await supabase
+          .from('reservations')
+          .update({ seating_type_id: newId } as any)
+          .eq('id', reservationId);
+        if (error) throw error;
+        setReservations(prev => sortReservationsByName(prev.map(r => r.id === reservationId ? { ...r, seating_type_id: newId } : r)));
+        toast.success(t.saved);
+      } catch (err) {
+        console.error('Error saving seating type:', err);
+        toast.error(t.errorSaving);
+      }
+    };
+
+    if (allTypes.length === 0) {
+      return <span className="text-sm text-muted-foreground">—</span>;
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground">
+            {seatingTypeName || '—'}
+            <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-36 p-1" align="start">
+          <div className="flex flex-col">
+            <button
+              className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${!currentSeatingTypeId ? 'font-semibold text-primary' : ''}`}
+              onClick={() => handleChange(null)}
+            >
+              —
+            </button>
+            {allTypes.map(opt => (
+              <button
+                key={opt.id}
+                className={`text-left text-sm px-3 py-1.5 rounded hover:bg-muted transition-colors ${currentSeatingTypeId === opt.id ? 'font-semibold text-primary' : ''}`}
+                onClick={() => handleChange(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
 
   const handleSaveMemo = async (reservationId: string) => {
     try {
@@ -1678,14 +1742,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[750px] table-fixed">
+            <Table className="w-full min-w-[1050px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[18%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[16%]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[16%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.staffMemo}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.email}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1707,9 +1773,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
                   : (language === 'el' ? 'Πραγματικά: -' : 'Actual: -');
 
+                // Seating type name for this reservation
+                const seatingTypeName = reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id]
+                  ? (() => {
+                      const raw = seatingTypeNames[reservation.seating_type_id!];
+                      const lower = raw.toLowerCase();
+                      if (lower === 'table') return 'Τραπέζι';
+                      if (lower === 'sofa') return 'Καναπές';
+                      if (lower === 'vip') return 'VIP';
+                      if (lower === 'bar') return 'Bar';
+                      return raw;
+                    })()
+                  : null;
+
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
-                      <TableCell className="font-medium">
+                      {/* 1. Στοιχεία: Name + Phone + Customer Note */}
+                      <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-1">
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <EditableCell
@@ -1726,7 +1806,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {renderCustomerNoteBubble(reservation)}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 2. Λεπτομέρειες: Party size (age+) + City */}
+                      <TableCell className="align-top">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm whitespace-nowrap -ml-0.5">
                             <EditableCell
@@ -1741,7 +1822,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 3. Ελάχιστη Χρέωση: Min charge (ticket credit) + Actual spend */}
+                      <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           <span>{minChargeDisplay}</span>
                           <EditableCell
@@ -1749,29 +1831,37 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           field="ticket_credit_cents"
                           displayValue={actualSpendDisplay}
                           rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                        
-                          {reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id] &&
-                        <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
-                              {(() => {
-                            const raw = seatingTypeNames[reservation.seating_type_id!];
-                            const lower = raw.toLowerCase();
-                            if (lower === 'table') return 'Τραπέζι';
-                            if (lower === 'sofa') return 'Καναπές';
-                            if (lower === 'vip') return 'VIP';
-                            if (lower === 'bar') return 'Bar';
-                            return raw;
-                          })()}
-                            </span>
-                        }
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 4. Θέση: Seating type + Table assignment */}
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-0.5">
+                          <EventSeatingTypeEditCell
+                            reservationId={reservation.id}
+                            currentSeatingTypeId={reservation.seating_type_id || null}
+                            seatingTypeName={seatingTypeName}
+                          />
+                          <TableAssignmentEditCell reservationId={reservation.id} currentLabel={tableAssignmentLabels[reservation.id] || null} />
+                        </div>
+                      </TableCell>
+                      {/* 5. Κατάσταση */}
+                      <TableCell className="align-top">
                         <div className="flex items-center gap-1.5">
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* 6. Σημειώσεις */}
+                      <TableCell className="align-top">
                         {renderStaffMemoCell(reservation)}
+                      </TableCell>
+                      {/* 7. Email */}
+                      <TableCell className="align-top">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="email"
+                          displayValue={reservation.email || reservation.profiles?.email || '—'}
+                          rawValue={reservation.email || reservation.profiles?.email || ''}
+                        />
                       </TableCell>
                     </TableRow>);
               })}

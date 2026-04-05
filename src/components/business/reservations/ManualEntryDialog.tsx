@@ -491,6 +491,23 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
+          {/* === RESERVATION/HYBRID: City === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Select value={city} onValueChange={setCity}>
+                <SelectTrigger className={inputClass}>
+                  <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {CYPRUS_CITIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* === TICKET: Ticket tier selector === */}
           {entryType === 'ticket' && ticketTiers.length > 0 && (
             <div className={fieldClass}>
@@ -594,7 +611,21 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* 9. Notes - all types */}
+          {/* === RESERVATION/HYBRID: Email === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.email}</Label>
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={txt.email}
+                type="email"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* Notes - all types */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.notes}</Label>
             <Textarea
