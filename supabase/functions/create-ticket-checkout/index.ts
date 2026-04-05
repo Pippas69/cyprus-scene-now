@@ -611,6 +611,9 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    if (error instanceof ValidationError) {
+      return validationErrorResponse(error, securityHeaders);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
