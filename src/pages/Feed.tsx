@@ -517,6 +517,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 language={language} 
                 selectedCity={selectedCity} 
                 selectedCategories={selectedCategories}
+                userCity={selectedCity || personalizedData?.profile?.city || null}
                 showStudentDiscountBadges={false}
               />
             )}
