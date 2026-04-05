@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
+  DISPLAY_CAPS,
   getPersonalizedProfileBoosts, 
   getRotationSeed,
   type ProfileBoostData 
 } from "@/lib/personalization";
+import { ELITE_MANUAL_ORDER, getCityDistance, getPlanTierIndex, type PlanSlug } from "@/lib/businessRanking";
 
 export interface ActiveProfileBoost extends ProfileBoostData {
   boostScore?: number;
+  planSlug?: PlanSlug;
+  planTierIndex?: number;
 }
 
 interface UserProfile {
@@ -81,18 +85,61 @@ export const useActiveProfileBoosts = (
         return [];
       }
 
-      // Cast to ProfileBoostData
       const profiles = data as unknown as ProfileBoostData[];
+      if (!profiles.length) return [];
 
-      // Apply personalization, rotation, and display cap
+      const businessIds = profiles.map((item) => item.business_id);
+      const { data: subscriptionsData } = await supabase
+        .from('public_business_subscriptions' as any)
+        .select('business_id, plan_slug')
+        .in('business_id', businessIds)
+        .eq('status', 'active');
+
+      const subscriptionMap = new Map<string, string>();
+      subscriptionsData?.forEach((sub: any) => {
+        if (sub.plan_slug) subscriptionMap.set(sub.business_id, sub.plan_slug);
+      });
+
+      const enrichedProfiles: ActiveProfileBoost[] = profiles.map((item) => {
+        const planSlug = (subscriptionMap.get(item.business_id) || 'free') as PlanSlug;
+
+        return {
+          ...item,
+          planSlug,
+          planTierIndex: getPlanTierIndex(planSlug),
+        };
+      });
+
       const rotationSeed = getRotationSeed(uid);
       const personalizedProfiles = getPersonalizedProfileBoosts(
-        profiles,
+        enrichedProfiles,
         profile || null,
-        rotationSeed
+        rotationSeed,
+        enrichedProfiles.length
       );
 
-      return personalizedProfiles as ActiveProfileBoost[];
+      const priorityCity = selectedCity || profile?.city || null;
+
+      return [...personalizedProfiles]
+        .sort((a, b) => {
+          const tierA = a.planTierIndex ?? 3;
+          const tierB = b.planTierIndex ?? 3;
+
+          if (tierA !== tierB) return tierA - tierB;
+
+          if (tierA === 0) {
+            const orderA = ELITE_MANUAL_ORDER[a.business_id] ?? 999;
+            const orderB = ELITE_MANUAL_ORDER[b.business_id] ?? 999;
+            if (orderA !== orderB) return orderA - orderB;
+          }
+
+          const distanceA = getCityDistance(priorityCity, a.businesses.city);
+          const distanceB = getCityDistance(priorityCity, b.businesses.city);
+          if (distanceA !== distanceB) return distanceA - distanceB;
+
+          return (b.boostScore ?? 0) - (a.boostScore ?? 0);
+        })
+        .slice(0, DISPLAY_CAPS.PROFILES);
     },
     staleTime: 60000, // Cache for 1 minute
   });
