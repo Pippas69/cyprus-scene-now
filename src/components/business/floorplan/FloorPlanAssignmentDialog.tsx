@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { MapPin, Check, X, Users, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { VenueSVGCanvas, type TableAssignment } from './VenueSVGCanvas';
+import { VenueSVGCanvas, type TableLevelAssignment } from './VenueSVGCanvas';
 
 interface FloorPlanItem {
   id: string;
@@ -73,21 +73,21 @@ const translations = {
 };
 
 export function FloorPlanAssignmentDialog({
-  open, onOpenChange, businessId, reservationId, reservationName, partySize, onAssigned,
+  open, onOpenChange, businessId, reservationId, reservationName, partySize, eventId, onAssigned,
 }: FloorPlanAssignmentDialogProps) {
   const { language } = useLanguage();
   const t = translations[language];
 
   const [items, setItems] = useState<FloorPlanItem[]>([]);
   const [zones, setZones] = useState<FloorPlanZone[]>([]);
-  const [assignments, setAssignments] = useState<TableAssignment[]>([]);
+  const [tableAssignments, setTableAssignments] = useState<TableLevelAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [canvasAspect, setCanvasAspect] = useState(DEFAULT_CANVAS_ASPECT);
 
-  useEffect(() => { if (open) loadData(); }, [open, businessId]);
+  useEffect(() => { if (open) loadData(); }, [open, businessId, eventId]);
 
   const loadData = async () => {
     setLoading(true);
@@ -110,19 +110,23 @@ export function FloorPlanAssignmentDialog({
       setCanvasAspect(Number.isFinite(ratio) && ratio > 0 ? ratio : DEFAULT_CANVAS_ASPECT);
     }
 
-    if (loadedZones.length > 0) {
-      const zoneIds = loadedZones.map(z => z.id);
+    // Load table-level assignments for this event
+    if (loadedItems.length > 0 && eventId) {
+      const tableIds = loadedItems.map(i => i.id);
       const { data: assignmentData } = await supabase
-        .from('reservation_zone_assignments')
-        .select('zone_id, reservation_id, reservations(reservation_name, party_size)')
-        .in('zone_id', zoneIds);
+        .from('reservation_table_assignments')
+        .select('table_id, reservation_id, reservations(reservation_name, party_size)')
+        .in('table_id', tableIds)
+        .eq('event_id', eventId);
 
-      setAssignments((assignmentData || []).map((a: any) => ({
-        zone_id: a.zone_id,
+      setTableAssignments((assignmentData || []).map((a: any) => ({
+        table_id: a.table_id,
         reservation_id: a.reservation_id,
         reservation_name: a.reservations?.reservation_name || '',
         party_size: a.reservations?.party_size || 0,
       })));
+    } else {
+      setTableAssignments([]);
     }
     setLoading(false);
   };
@@ -130,27 +134,34 @@ export function FloorPlanAssignmentDialog({
   const handleTableClick = (tableId: string) => {
     const item = items.find(i => i.id === tableId);
     if (!item || item.fixture_type) return;
-    const isOccupied = item.zone_id ? assignments.some(a => a.zone_id === item.zone_id && a.reservation_id !== reservationId) : false;
+    // Check if occupied by another reservation
+    const isOccupied = tableAssignments.some(a => a.table_id === tableId && a.reservation_id !== reservationId);
     if (isOccupied) return;
     setSelectedTableId(tableId);
     setConfirming(true);
   };
 
   const handleConfirm = async () => {
-    const selectedItem = items.find(i => i.id === selectedTableId);
-    if (!selectedItem) return;
-    const zoneId = selectedItem.zone_id || zones[0]?.id;
-    if (!zoneId) return;
+    if (!selectedTableId || !eventId) return;
 
     setSaving(true);
     try {
-      await supabase.from('reservation_zone_assignments').delete().eq('reservation_id', reservationId);
+      // Remove existing assignment for this reservation in this event
+      await supabase.from('reservation_table_assignments').delete()
+        .eq('reservation_id', reservationId)
+        .eq('event_id', eventId);
+      // Remove existing assignment for this table in this event
+      await supabase.from('reservation_table_assignments').delete()
+        .eq('table_id', selectedTableId)
+        .eq('event_id', eventId);
+
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from('reservation_zone_assignments').insert({
+      const { error } = await supabase.from('reservation_table_assignments').insert({
+        table_id: selectedTableId,
         reservation_id: reservationId,
-        zone_id: zoneId,
         assigned_by: user?.id || null,
-      });
+        event_id: eventId,
+      } as any);
       if (error) throw error;
       toast.success(t.assigned);
       onAssigned?.();
@@ -240,7 +251,7 @@ export function FloorPlanAssignmentDialog({
                   tableBboxes={tableBboxes}
                   selectedItemId={selectedTableId}
                   showLabels={true}
-                  assignments={assignments}
+                  tableAssignments={tableAssignments}
                   currentReservationId={reservationId}
                   onTableClick={handleTableClick}
                   interactive={true}
