@@ -1770,7 +1770,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
-                const minAge = getMinAge(reservation);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = reservation.is_manual_entry && reservation.prepaid_min_charge_cents != null
                   ? reservation.prepaid_min_charge_cents
@@ -1778,12 +1777,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 const actualSpendCents = (reservation as any).actual_spend_cents ?? 0;
                 const ticketPaidCents = reservation.ticket_credit_cents ?? 0;
                 const remainderCents = Math.max(0, minChargeCents - ticketPaidCents);
-                const minChargeDisplay = minChargeCents > 0 ?
-                (isReservationOnly ? `€${(minChargeCents / 100).toFixed(2)}` :
-                ticketPaidCents > 0 ?
-                `€${(minChargeCents / 100).toFixed(2)} (€${(ticketPaidCents / 100).toFixed(2)})` :
-                `€${(minChargeCents / 100).toFixed(2)}`) :
-                '-';
                 // Reservation-only: show "Πραγματικά" inside the min charge column
                 const actualSpendDisplay = actualSpendCents > 0
                   ? `${language === 'el' ? 'Πραγματικά' : 'Actual'}: €${(actualSpendCents / 100).toFixed(2)}`
