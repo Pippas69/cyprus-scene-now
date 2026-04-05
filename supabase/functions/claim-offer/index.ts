@@ -5,7 +5,7 @@ import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 
 const logStep = (step: string, details?: unknown) => {
-  console.log(`[CLAIM-OFFER] ${step}`, details ? JSON.stringify(details) : '';
+  console.log(`[CLAIM-OFFER] ${step}`, details ? JSON.stringify(details) : '');
 };
 
 const normalizeSeatingPreference = (value?: string | null): "indoor" | "outdoor" | "no_preference" | null => {
