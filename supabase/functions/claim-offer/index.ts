@@ -3,6 +3,24 @@ import { localToUtcISOString } from "../_shared/timezone.ts";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { z, parseBody, flexId, safeString, optionalString, positiveInt, dateString, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+
+const ClaimReservationSchema = z.object({
+  preferred_date: dateString,
+  preferred_time: safeString(20),
+  party_size: positiveInt.max(50).optional(),
+  phone_number: optionalString(25),
+  special_requests: optionalString(1000),
+  seating_type_id: flexId.optional(),
+});
+
+const ClaimBodySchema = z.object({
+  discountId: flexId,
+  partySize: positiveInt.max(20),
+  guestNames: z.array(safeString(100)).max(20).optional(),
+  withReservation: z.boolean().optional(),
+  reservationData: ClaimReservationSchema.optional(),
+});
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[CLAIM-OFFER] ${step}`, details ? JSON.stringify(details) : '');
@@ -88,26 +106,7 @@ Deno.serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Parse and validate request
-    const body: ClaimOfferRequest = await req.json();
-    const { discountId, partySize, guestNames, withReservation, reservationData } = body;
-    logStep("Request data", { discountId, partySize, guestNames, withReservation, reservationData });
-
-    // Input validation
-    if (!discountId || typeof discountId !== 'string' || discountId.length < 10) {
-      return errorResponse("Invalid discountId", 400);
-    }
-    if (!partySize || typeof partySize !== 'number' || partySize < 1 || partySize > 20) {
-      return errorResponse("Invalid partySize: must be between 1 and 20", 400);
-    }
-    if (guestNames && (!Array.isArray(guestNames) || guestNames.some(n => typeof n !== 'string' || n.length > 100))) {
-      return errorResponse("Invalid guestNames", 400);
-    }
-    if (withReservation && reservationData) {
-      if (!reservationData.preferred_date || !reservationData.preferred_time) {
-        return errorResponse("Reservation requires preferred_date and preferred_time", 400);
-      }
-      if (reservationData.party_size && (reservationData.party_size < 1 || reservationData.party_size > 50)) {
-        return errorResponse("Invalid reservation party_size", 400);
+    const { discountId, partySize, guestNames, withReservation, reservationData } = await parseBody(req, ClaimBodySchema);
       }
       if (reservationData.phone_number && reservationData.phone_number.length > 20) {
         return errorResponse("Phone number too long", 400);
