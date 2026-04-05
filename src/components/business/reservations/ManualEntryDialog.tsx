@@ -143,6 +143,7 @@ export const ManualEntryDialog = ({
       ticketPrice: 'Ticket price (€)',
       ticketType: 'Ticket type',
       table: 'Table',
+      walkInToggle: 'Walk-in',
       selectOption: 'Select...',
     },
   };
