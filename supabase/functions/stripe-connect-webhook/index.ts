@@ -25,31 +25,34 @@ Deno.serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    if (!stripeConnectWebhookSecret) {
+      throw new Error("STRIPE_CONNECT_WEBHOOK_SECRET is not set");
+    }
+
     const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      return new Response(JSON.stringify({ error: "No stripe-signature header" }), {
+        status: 400,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.text();
 
     let event: Stripe.Event;
-
-    // Verify webhook signature if secret is configured
-    if (stripeConnectWebhookSecret && signature) {
-      try {
-        event = await stripe.webhooks.constructEventAsync(
-          body,
-          signature,
-          stripeConnectWebhookSecret
-        );
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        logStep("Webhook signature verification failed", { error: errorMessage });
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 400,
-          headers: { ...securityHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      // If no webhook secret configured, parse without verification (for development)
-      logStep("No webhook secret configured, parsing without verification");
-      event = JSON.parse(body) as Stripe.Event;
+    try {
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        stripeConnectWebhookSecret
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logStep("Webhook signature verification failed", { error: errorMessage });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 400,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Event received", { type: event.type, id: event.id });
