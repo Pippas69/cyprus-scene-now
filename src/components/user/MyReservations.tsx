@@ -210,7 +210,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
-        .lt('preferred_time', nowIso),
+        .lt('preferred_time', nowIso)
+        .limit(100),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
       supabase
