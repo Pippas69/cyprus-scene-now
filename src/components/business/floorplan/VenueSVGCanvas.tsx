@@ -279,7 +279,10 @@ export function VenueSVGCanvas({
   const isOccupied = useCallback(
     (item: VenueItem) => {
       // Check table-level assignments first
-      if (tableAssignmentMap.has(item.id)) return true;
+      const tableAssign = tableAssignmentMap.get(item.id);
+      if (tableAssign) {
+        return tableAssign.reservation_id !== currentReservationId;
+      }
       if (!item.zone_id || assignments.length === 0) return false;
       return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id !== currentReservationId);
     },
@@ -288,10 +291,15 @@ export function VenueSVGCanvas({
 
   const isSelf = useCallback(
     (item: VenueItem) => {
+      // Check table-level assignments first
+      const tableAssign = tableAssignmentMap.get(item.id);
+      if (tableAssign) {
+        return tableAssign.reservation_id === currentReservationId;
+      }
       if (!item.zone_id || !currentReservationId || assignments.length === 0) return false;
       return assignments.some((a) => a.zone_id === item.zone_id && a.reservation_id === currentReservationId);
     },
-    [assignments, currentReservationId],
+    [assignments, currentReservationId, tableAssignmentMap],
   );
 
   const resolveGeometry = (item: VenueItem, isFixture: boolean): Geometry => {
