@@ -116,7 +116,7 @@ export const useActiveProfileBoosts = (
         profile || null,
         rotationSeed,
         enrichedProfiles.length
-      );
+      ) as ActiveProfileBoost[];
 
       const priorityCity = selectedCity || profile?.city || null;
 
