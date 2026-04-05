@@ -513,8 +513,16 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET: Ticket tier selector === */}
-          {entryType === 'ticket' && ticketTiers.length > 0 && (
+          {/* === RESERVATION/HYBRID: Walk-in toggle === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && (
+            <div className="flex items-center justify-between py-1">
+              <Label className={labelClass}>{txt.walkInToggle}</Label>
+              <Switch checked={isWalkIn} onCheckedChange={setIsWalkIn} />
+            </div>
+          )}
+
+          {/* === TICKET / Walk-in hybrid: Ticket tier selector === */}
+          {((entryType === 'ticket') || (isWalkIn && (entryType === 'hybrid' || entryType === 'reservation') && ticketTiers.length > 0)) && ticketTiers.length > 0 && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.ticketType}</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
@@ -532,8 +540,8 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === RESERVATION/HYBRID: Min charge === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && (
+          {/* === RESERVATION/HYBRID: Min charge (hidden for walk-ins) === */}
+          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.minCharge}</Label>
               <Input
