@@ -399,24 +399,87 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (requestId !== fetchReservationsRequestRef.current) return;
 
       if (linked) {
-        setReservations(sortedByName);
-
         const isTicketOnlyMode = selectedEventType === 'ticket' && !!selectedEventId;
 
         // For ticket-only events, fetch ticket orders and wait before removing loader
         if (isTicketOnlyMode && selectedEventId) {
           await fetchTicketOnlyOrders(selectedEventId, requestId);
+          setReservations(sortedByName);
         }
 
         // Fetch enrichment data only for reservation/hybrid flows
         if (!isTicketOnlyMode) {
-          fetchAgesForReservations(reservationIds);
-          fetchCheckInCounts(reservationIds);
-          // Fetch cities from user profiles for reservations
-          fetchCitiesForReservations(sortedByName);
-          // Fetch table assignments for event reservations too
-          fetchTableAssignments(reservationIds, selectedEventId);
-          const seatingTypeIds = [...new Set(sortedByName.map((r) => r.seating_type_id).filter(Boolean))] as string[];
+          // Fetch orphan walk-in ticket orders (no linked reservation) and merge into list
+          let walkInSynthetic: DirectReservation[] = [];
+          if (selectedEventId) {
+            const { data: orphanOrders } = await supabase
+              .from('ticket_orders')
+              .select('id, customer_name, customer_phone, customer_email, total_cents, created_at')
+              .eq('event_id', selectedEventId)
+              .eq('status', 'completed')
+              .is('linked_reservation_id', null);
+
+            if (orphanOrders && orphanOrders.length > 0) {
+              // Fetch individual tickets for these orders to get count & walk-in tier price
+              const orderIds = orphanOrders.map(o => o.id);
+              const { data: orphanTickets } = await supabase
+                .from('tickets')
+                .select('order_id, tier_id, status, checked_in_at')
+                .in('order_id', orderIds);
+
+              const ticketsByOrder: Record<string, any[]> = {};
+              (orphanTickets || []).forEach(t => {
+                if (!ticketsByOrder[t.order_id]) ticketsByOrder[t.order_id] = [];
+                ticketsByOrder[t.order_id].push(t);
+              });
+
+              walkInSynthetic = orphanOrders.map(order => {
+                const tickets = ticketsByOrder[order.id] || [];
+                const checkedIn = tickets.filter(t => t.checked_in_at).length;
+                return {
+                  id: `walkin-${order.id}`,
+                  business_id: businessId,
+                  user_id: null as any,
+                  reservation_name: (order as any).customer_name || 'Walk-in',
+                  party_size: tickets.length || 1,
+                  status: checkedIn > 0 ? 'checked_in' : 'accepted',
+                  created_at: order.created_at,
+                  phone_number: (order as any).customer_phone || null,
+                  preferred_time: null,
+                  seating_preference: null,
+                  special_requests: null,
+                  business_notes: null,
+                  staff_memo: null,
+                  confirmation_code: null,
+                  qr_code_token: null,
+                  checked_in_at: null,
+                  cancellation_reason: null,
+                  auto_created_from_tickets: false,
+                  ticket_credit_cents: order.total_cents || 0,
+                  seating_type_id: null,
+                  prepaid_min_charge_cents: null,
+                  event_id: selectedEventId,
+                  is_manual_entry: false,
+                  manual_status: null,
+                  min_age: null,
+                  source: 'walk_in',
+                  email: (order as any).customer_email || null,
+                  guest_ages: null,
+                  guest_city: null,
+                } as DirectReservation;
+              });
+            }
+          }
+
+          const allReservations = sortReservationsByName([...sortedByName, ...walkInSynthetic]);
+          setReservations(allReservations);
+
+          const allIds = allReservations.filter(r => !r.id.startsWith('walkin-')).map(r => r.id);
+          fetchAgesForReservations(allIds);
+          fetchCheckInCounts(allIds);
+          fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-')));
+          fetchTableAssignments(allIds, selectedEventId);
+          const seatingTypeIds = [...new Set(allReservations.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           if (seatingTypeIds.length > 0) {
             fetchSeatingTiers(seatingTypeIds);
             fetchSeatingTypeNames(seatingTypeIds);
