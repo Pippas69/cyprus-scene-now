@@ -1,3 +1,4 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
@@ -57,6 +58,28 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+
+    // Auth guard: require authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const _token = authHeader.replace("Bearer ", "");
+    const _authClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    );
+    const { error: _authError } = await _authClient.auth.getUser(_token);
+    if (_authError) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { businessEmail, businessName, type, notes } = await parseBody(req, BodySchema);
     console.log("Processing business notification:", type, "for:", businessEmail);
 
