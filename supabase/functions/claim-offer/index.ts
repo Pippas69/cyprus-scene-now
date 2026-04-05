@@ -527,7 +527,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: jsonHeaders(),
       }
     );
   } catch (error: any) {
@@ -537,7 +537,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: false, error: error?.message || "Unknown error" }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: jsonHeaders(),
       }
     );
   }
