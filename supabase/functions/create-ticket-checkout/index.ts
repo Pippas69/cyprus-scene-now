@@ -33,11 +33,25 @@ const logStep = (step: string, details?: unknown) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return corsResponse();
   }
 
   try {
     logStep("Function started");
+
+    // Rate limiting: max 15 checkout attempts per user per 5 minutes
+    const clientIP = getClientIP(req);
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return errorResponse("No authorization header", 401);
+
+    const rateLimitId = authHeader.replace("Bearer ", "").substring(0, 20) + ":" + clientIP;
+    const rateCheck = await checkRateLimit(rateLimitId, "ticket_checkout", 15, 5);
+    if (!rateCheck.allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+        status: 429,
+        headers: { ...jsonHeaders(), "Retry-After": String(rateCheck.retryAfterSeconds) },
+      });
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -46,8 +60,6 @@ Deno.serve(async (req) => {
     );
 
     // Get authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
