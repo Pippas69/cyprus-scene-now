@@ -420,7 +420,7 @@ const EventCreationForm = ({
     termsAndConditions: ''
   });
 
-  // Walk-in tickets toggle (only relevant for ticket_and_reservation)
+  // Walk-in tickets toggle (for ticket_and_reservation and reservation events)
   const [walkInEnabled, setWalkInEnabled] = useState(false);
 
   // Ticket tier validation errors
@@ -595,7 +595,7 @@ const EventCreationForm = ({
         if (config.tiers.length === 0) return t.addAtLeastOneRange;
       }
 
-      if (isHybrid && walkInEnabled) {
+      if ((isHybrid || formData.eventType === 'reservation') && walkInEnabled) {
         const walkInErrors = validateTicketTiers(walkInTicketTiers, language);
         if (walkInErrors.length > 0) {
           setWalkInTicketValidationErrors(walkInErrors);
@@ -692,7 +692,9 @@ const EventCreationForm = ({
       const submitIsHybrid = formData.eventType === 'ticket_and_reservation';
       const submitHasReservation = formData.eventType === 'reservation' || submitIsHybrid;
 
-      if (submitIsTicketOnly || submitIsHybrid) {
+      const submitIsReservationOnly = formData.eventType === 'reservation';
+
+      if (submitIsTicketOnly || submitIsHybrid || (submitIsReservationOnly && walkInEnabled)) {
         const ticketOnlyTiers = submitIsTicketOnly
           ? formData.ticketTiers.map((tier, index) => ({
               event_id: createdEvent.id,
@@ -726,7 +728,7 @@ const EventCreationForm = ({
             })
           : [];
 
-        const walkInTiersToInsert = submitIsHybrid && walkInEnabled
+        const walkInTiersToInsert = (submitIsHybrid || submitIsReservationOnly) && walkInEnabled
           ? walkInTicketTiers.map((tier, index) => ({
               event_id: createdEvent.id,
               name: tier.name,
@@ -1159,8 +1161,8 @@ const EventCreationForm = ({
         })()}
         </SectionCard>
 
-        {/* Walk-in toggle for hybrid events - placed above Terms */}
-        {formData.eventType === 'ticket_and_reservation' && (
+        {/* Walk-in toggle for hybrid and reservation-only events */}
+        {(formData.eventType === 'ticket_and_reservation' || formData.eventType === 'reservation') && (
           <>
             <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
               <div className="space-y-0.5">
