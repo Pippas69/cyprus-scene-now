@@ -51,6 +51,34 @@ const Login = () => {
     }
   });
 
+  const performRedirect = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    let redirectPath = "/feed";
+    let successMessage = t.loginSuccess;
+
+    if (profile?.role === 'admin') {
+      redirectPath = "/admin/verification";
+      successMessage = t.adminWelcome;
+    } else if (business) {
+      redirectPath = "/dashboard-business";
+      successMessage = t.businessWelcome;
+    }
+
+    setPendingRedirect({ path: redirectPath, message: successMessage });
+    return { path: redirectPath, message: successMessage };
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
@@ -71,40 +99,44 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Check user role
-        const { data: profile } = await supabase.
-        from("profiles").
-        select("role").
-        eq("id", data.user.id).
-        single();
+        // Check if user has 2FA enabled
+        const { data: twoFaSettings } = await supabase
+          .from("user_2fa_settings")
+          .select("is_enabled")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
 
-        // Check if user owns a business
-        const { data: business } = await supabase.
-        from("businesses").
-        select("id").
-        eq("user_id", data.user.id).
-        maybeSingle();
-
-        // Determine redirect based on role and business ownership
-        let redirectPath = "/feed";
-        let successMessage = t.loginSuccess;
-
-        if (profile?.role === 'admin') {
-          redirectPath = "/admin/verification";
-          successMessage = t.adminWelcome;
-        } else if (business) {
-          redirectPath = "/dashboard-business";
-          successMessage = t.businessWelcome;
+        if (twoFaSettings?.is_enabled) {
+          // Send 2FA code and show modal
+          await supabase.functions.invoke("send-2fa-code");
+          await performRedirect(data.user.id);
+          setShow2FA(true);
+        } else {
+          // Normal flow — no 2FA
+          const redirect = await performRedirect(data.user.id);
+          toast.success(redirect.message);
+          navigate(redirect.path);
         }
-
-        toast.success(successMessage);
-        navigate(redirectPath);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(tt.failed);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handle2FASuccess = () => {
+    setShow2FA(false);
+    if (pendingRedirect) {
+      toast.success(pendingRedirect.message);
+      navigate(pendingRedirect.path);
+    }
+  };
+
+  const handle2FACancel = async () => {
+    setShow2FA(false);
+    setPendingRedirect(null);
+    await supabase.auth.signOut();
   };
 
   return (
