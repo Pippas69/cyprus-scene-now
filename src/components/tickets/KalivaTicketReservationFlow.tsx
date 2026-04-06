@@ -819,11 +819,30 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
 
         {minChargeCents != null && minChargeCents > 0 && (
-          <div className="rounded-lg border border-border bg-card/40 p-2.5 space-y-1">
-            <p className="text-xs text-muted-foreground">
-              {t.minimumCharge}: <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
-            </p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">{t.paidAtVenue}</p>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                💡 {t.howPaymentWorks}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                {t.minimumCharge} ({partySize} {t.people}):
+              </span>
+              <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
+            </div>
+            {ticketTotal > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{t.prepaidOnline}:</span>
+                <span className="font-semibold text-green-700 dark:text-green-400">-{formatPrice(ticketTotal)}</span>
+              </div>
+            )}
+            <div className="border-t border-amber-200 dark:border-amber-700 my-1" />
+            <div className="flex justify-between text-xs">
+              <span className="font-semibold text-amber-800 dark:text-amber-200">{t.balanceAtVenue}:</span>
+              <span className="font-bold text-amber-800 dark:text-amber-200">{formatPrice(Math.max(0, minChargeCents - ticketTotal))}</span>
+            </div>
+            <p className="text-[9px] text-muted-foreground mt-1">{t.prepaidDeductedNote}</p>
           </div>
         )}
 
