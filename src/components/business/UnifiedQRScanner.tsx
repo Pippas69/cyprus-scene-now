@@ -62,6 +62,7 @@ interface ScanResult {
     guestName?: string;
     reservationId?: string;
     checkedInCount?: number;
+    ticketCreditCents?: number;
     // Student
     verificationId?: string;
     redemptionId?: string;
