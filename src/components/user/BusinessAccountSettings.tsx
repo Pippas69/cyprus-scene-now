@@ -16,7 +16,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles } from 'lucide-react';
+import { Lock, Bell, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -83,6 +83,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
 
   // Business profile form state
   const [profileLoading, setProfileLoading] = useState(false);
