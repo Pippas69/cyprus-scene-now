@@ -46,7 +46,6 @@ serve(async (req) => {
   const body = await req.text();
 
   try {
-    // IMPORTANT: In Deno, signature verification must be async (SubtleCrypto)
     event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     logStep("Webhook event verified", { type: event.type });
   } catch (err: unknown) {
@@ -64,7 +63,6 @@ serve(async (req) => {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata;
 
-    // Only process reservation_event type payments
     if (metadata?.type !== "reservation_event") {
       logStep("Not a reservation event payment, skipping");
       return new Response(JSON.stringify({ received: true }), {
@@ -72,64 +70,120 @@ serve(async (req) => {
       });
     }
 
-    const reservationId = metadata.reservation_id;
     const seatingTypeId = metadata.seating_type_id;
+    const eventId = metadata.event_id;
+    const userId = metadata.user_id;
+    const reservationName = metadata.reservation_name || "Guest";
+    const partySize = parseInt(metadata.party_size || "1", 10);
+    const phoneNumber = metadata.phone_number || null;
+    const preferredTime = metadata.preferred_time || null;
+    const specialRequests = metadata.special_requests || null;
+    const paidAmountCents = session.amount_total || 0;
 
-    if (!reservationId) {
-      logStep("ERROR: No reservation_id in metadata");
-      return new Response("Missing reservation_id", { status: 400 });
+    // Check if this session was already processed (idempotency via reservation_id in old flow
+    // or via stripe_payment_intent_id in new flow)
+    const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null;
+
+    if (paymentIntentId) {
+      const { data: existingRes } = await supabaseClient
+        .from("reservations")
+        .select("id")
+        .eq("stripe_payment_intent_id", paymentIntentId)
+        .maybeSingle();
+
+      if (existingRes) {
+        logStep("Already processed this payment intent, skipping", { paymentIntentId });
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    logStep("Processing reservation payment", { reservationId, seatingTypeId });
+    // BACKWARD COMPAT: If reservation_id exists in metadata, this was created by the OLD flow
+    // that pre-created the reservation. Update it instead of creating a new one.
+    const legacyReservationId = metadata.reservation_id;
+
+    logStep("Processing reservation payment", { eventId, seatingTypeId, legacyReservationId: legacyReservationId || "none" });
 
     try {
-      // Get the actual paid amount from Stripe session
-      const paidAmountCents = session.amount_total || 0;
-      logStep("Payment amount from Stripe", { paidAmountCents });
+      let reservationId: string;
+      let reservation: any;
 
-      // Update reservation to paid and accepted WITH the paid amount
-      const { data: reservation, error: updateError } = await supabaseClient
-        .from("reservations")
-        .update({
-          prepaid_charge_status: "paid",
-          status: "accepted",
-          prepaid_min_charge_cents: paidAmountCents,
-          stripe_payment_intent_id: session.payment_intent as string,
-        })
-        .eq("id", reservationId)
-        .select(`
-          *,
-          events (
-            id,
-            title,
-            start_at,
-            location,
-            venue_name,
-            business_id,
-            businesses (
-              id,
-              name,
-              phone,
-              user_id
+      if (legacyReservationId) {
+        // OLD FLOW: reservation was pre-created, just update it
+        const { data: updatedRes, error: updateError } = await supabaseClient
+          .from("reservations")
+          .update({
+            prepaid_charge_status: "paid",
+            status: "accepted",
+            prepaid_min_charge_cents: paidAmountCents,
+            stripe_payment_intent_id: paymentIntentId,
+          })
+          .eq("id", legacyReservationId)
+          .select(`
+            *,
+            events (
+              id, title, start_at, location, venue_name, business_id,
+              businesses ( id, name, phone, user_id )
             )
-          )
-        `)
-        .single();
+          `)
+          .single();
 
-      if (updateError) {
-        logStep("ERROR: Updating reservation", { error: updateError });
-        throw updateError;
+        if (updateError) {
+          logStep("ERROR: Updating legacy reservation", { error: updateError });
+          throw updateError;
+        }
+
+        reservationId = legacyReservationId;
+        reservation = updatedRes;
+      } else {
+        // NEW FLOW: Create the reservation now that payment succeeded
+        const confirmationCode = `RES-${Date.now().toString(36).toUpperCase()}`;
+        const qrCodeToken = crypto.randomUUID();
+
+        const { data: newRes, error: insertError } = await supabaseClient
+          .from("reservations")
+          .insert({
+            event_id: eventId,
+            user_id: userId,
+            reservation_name: reservationName,
+            party_size: partySize,
+            phone_number: phoneNumber,
+            preferred_time: preferredTime,
+            special_requests: specialRequests,
+            seating_type_id: seatingTypeId,
+            prepaid_min_charge_cents: paidAmountCents,
+            prepaid_charge_status: "paid",
+            status: "accepted",
+            confirmation_code: confirmationCode,
+            qr_code_token: qrCodeToken,
+            stripe_payment_intent_id: paymentIntentId,
+          })
+          .select(`
+            *,
+            events (
+              id, title, start_at, location, venue_name, business_id,
+              businesses ( id, name, phone, user_id )
+            )
+          `)
+          .single();
+
+        if (insertError || !newRes) {
+          logStep("ERROR: Creating reservation after payment", { error: insertError });
+          throw insertError || new Error("Failed to create reservation");
+        }
+
+        reservationId = newRes.id;
+        reservation = newRes;
       }
 
-      logStep("Reservation updated to paid/accepted", { reservationId });
+      logStep("Reservation confirmed", { reservationId });
 
-      // Record commission in commission_ledger
+      // Record commission
       if (paidAmountCents > 0 && reservation.events?.businesses?.id) {
         try {
           const resBusinessId = reservation.events.businesses.id;
-          
-          // Get commission rate from business subscription plan
-          let commissionPercent = 12; // default Free plan rate
+          let commissionPercent = 12;
           const { data: subscription } = await supabaseClient
             .from("business_subscriptions")
             .select("plan_id, subscription_plans(slug)")
@@ -144,7 +198,6 @@ serve(async (req) => {
           }
 
           const commissionAmountCents = Math.round(paidAmountCents * commissionPercent / 100);
-
           const { error: ledgerError } = await supabaseClient
             .from("commission_ledger")
             .insert({
@@ -160,12 +213,6 @@ serve(async (req) => {
 
           if (ledgerError) {
             logStep("Commission ledger insert error", { error: ledgerError.message });
-          } else {
-            logStep("Commission recorded in ledger", { 
-              amount: commissionAmountCents, 
-              percent: commissionPercent, 
-              businessId: resBusinessId 
-            });
           }
         } catch (commErr) {
           logStep("Commission ledger error", { error: commErr instanceof Error ? commErr.message : String(commErr) });
@@ -184,25 +231,24 @@ serve(async (req) => {
         }
       }
 
-      // Create individual guest tickets for QR check-in
+      // Create guest tickets for QR check-in
       try {
         const createdTickets = await ensureReservationEventGuestTickets({
           supabaseClient,
           reservationId,
-          paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          paymentIntentId,
           session: {
             id: session.id,
             metadata: metadata as Record<string, string | undefined> | null | undefined,
             customer_details: { email: session.customer_details?.email ?? null },
           },
         });
-
         logStep("Reservation guest tickets ensured", { reservationId, createdTickets });
       } catch (guestErr) {
         logStep("ERROR: Guest tickets creation", { error: guestErr instanceof Error ? guestErr.message : String(guestErr) });
       }
 
-      // Get seating type info
+      // Get seating type info for notifications
       let seatingTypeName = "";
       let dressCode = "";
       if (seatingTypeId) {
@@ -235,7 +281,6 @@ serve(async (req) => {
       const businessUserId = reservation.events?.businesses?.user_id;
       const businessName = reservation.events?.businesses?.name || '';
 
-      // Format date for notifications - ALWAYS use Cyprus timezone
       const formattedDate = new Date(reservation.events?.start_at).toLocaleDateString('el-GR', {
         weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Nicosia'
       });
@@ -243,10 +288,9 @@ serve(async (req) => {
         hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Nicosia'
       });
 
-      // ========== USER NOTIFICATIONS (in-app + push + email) ==========
+      // ========== USER NOTIFICATIONS ==========
       logStep("Sending user notifications", { userId: reservation.user_id });
 
-      // 1. User in-app notification
       try {
         await supabaseClient.from('notifications').insert({
           user_id: reservation.user_id,
@@ -259,12 +303,10 @@ serve(async (req) => {
           deep_link: '/dashboard-user/reservations',
           delivered_at: new Date().toISOString(),
         });
-        logStep("User in-app notification created");
       } catch (inAppError) {
         logStep("ERROR: User in-app notification", { error: String(inAppError) });
       }
 
-      // 2. User push notification
       try {
         const userPushPayload: PushPayload = {
           title: '✅ Κράτηση επιβεβαιώθηκε!',
@@ -285,13 +327,12 @@ serve(async (req) => {
         logStep("ERROR: User push notification", { error: String(pushError) });
       }
 
-      // 3. User email - PREMIUM DESIGN
-      // Use customer_email from checkout metadata first, then profile email
+      // User email
       const customerEmailFromMeta = metadata?.customer_email;
       const userEmail = customerEmailFromMeta || profile?.email;
       if (userEmail) {
         try {
-          const qrCodeUrl = reservation.qr_code_token 
+          const qrCodeUrl = reservation.qr_code_token
             ? `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=000000`
             : null;
 
@@ -310,7 +351,7 @@ serve(async (req) => {
 
             ${eventHeader(eventTitle, businessName)}
 
-            ${infoCard('Κράτηση Εκδήλωσης', 
+            ${infoCard('Κράτηση Εκδήλωσης',
               detailRow('Ημερομηνία', formattedDate) +
               detailRow('Ώρα', formattedTime) +
               (eventLocation ? detailRow('Τοποθεσία', eventLocation) : '') +
@@ -340,11 +381,10 @@ serve(async (req) => {
         }
       }
 
-      // ========== BUSINESS NOTIFICATIONS (in-app + push + email) ==========
+      // ========== BUSINESS NOTIFICATIONS ==========
       if (businessId && businessUserId) {
         logStep("Sending business notifications", { businessUserId });
 
-        // 1. Business in-app notification
         try {
           await supabaseClient.from('notifications').insert({
             user_id: businessUserId,
@@ -357,12 +397,10 @@ serve(async (req) => {
             deep_link: '/dashboard-business/reservations',
             delivered_at: new Date().toISOString(),
           });
-          logStep("Business in-app notification created");
         } catch (bizInAppError) {
           logStep("ERROR: Business in-app notification", { error: String(bizInAppError) });
         }
 
-        // 2. Business push notification
         try {
           const bizPushPayload: PushPayload = {
             title: '🎉 Νέα πληρωμένη κράτηση!',
@@ -383,7 +421,6 @@ serve(async (req) => {
           logStep("ERROR: Business push notification", { error: String(bizPushError) });
         }
 
-        // 3. Business email - PREMIUM DESIGN
         try {
           const { data: bizProfile } = await supabaseClient
             .from("profiles")
@@ -402,7 +439,7 @@ serve(async (req) => {
                 Νέα πληρωμένη κράτηση για την εκδήλωση <strong>${eventTitle}</strong>.
               </p>
 
-              ${infoCard('Λεπτομέρειες Κράτησης', 
+              ${infoCard('Λεπτομέρειες Κράτησης',
                 detailRow('Πελάτης', reservation.reservation_name) +
                 detailRow('Ημερομηνία', formattedDate) +
                 detailRow('Ώρα', formattedTime) +
@@ -445,21 +482,19 @@ serve(async (req) => {
     }
   }
 
+  // payment_intent.payment_failed — nothing to clean up in new flow since no reservation exists yet
   if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     const metadata = paymentIntent.metadata;
 
     if (metadata?.type === "reservation_event" && metadata?.reservation_id) {
-      // Update reservation status to indicate payment failed
+      // Legacy: old flow had a pre-created reservation
       await supabaseClient
         .from("reservations")
-        .update({
-          prepaid_charge_status: "pending",
-          status: "pending",
-        })
+        .update({ status: "cancelled", prepaid_charge_status: "failed" })
         .eq("id", metadata.reservation_id);
 
-      logStep("Reservation payment failed", { reservationId: metadata.reservation_id });
+      logStep("Legacy reservation cancelled on payment failure", { reservationId: metadata.reservation_id });
     }
   }
 
