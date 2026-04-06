@@ -683,35 +683,37 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         </Label>
         <div className="space-y-1.5 max-h-52 overflow-y-auto">
           {guests.map((guest, idx) => (
-            <div key={idx} className="flex gap-2 items-center">
-              <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
-              <Input
-                placeholder={t.name}
-                value={guest.name}
-                readOnly={idx === 0 && !!profileName}
-                onChange={(e) => {
-                  if (idx === 0 && profileName) return;
-                  updateGuest(idx, 'name', e.target.value);
-                }}
-                className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
-              />
-              <Input
-                placeholder={t.age}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={guest.age}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '').slice(0, 3);
-                  updateGuest(idx, 'age', val);
-                }}
-                className={cn("h-9 text-sm w-20", guest.age && Number(guest.age) < minAge && "border-destructive")}
-              />
-            </div>
-            {guest.age && Number(guest.age) < minAge && (
-              <p className="text-[10px] text-destructive text-right pr-1">
-                {language === 'el' ? `Ελάχιστο όριο: ${minAge} ετών` : `Minimum age: ${minAge}`}
-              </p>
-            )}
+            <React.Fragment key={idx}>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                <Input
+                  placeholder={t.name}
+                  value={guest.name}
+                  readOnly={idx === 0 && !!profileName}
+                  onChange={(e) => {
+                    if (idx === 0 && profileName) return;
+                    updateGuest(idx, 'name', e.target.value);
+                  }}
+                  className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
+                />
+                <Input
+                  placeholder={t.age}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={guest.age}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                    updateGuest(idx, 'age', val);
+                  }}
+                  className={cn("h-9 text-sm w-20", guest.age && Number(guest.age) < minAge && "border-destructive")}
+                />
+              </div>
+              {guest.age && Number(guest.age) < minAge && (
+                <p className="text-[10px] text-destructive text-right pr-1">
+                  {language === 'el' ? `Ελάχιστο όριο: ${minAge} ετών` : `Minimum age: ${minAge}`}
+                </p>
+              )}
+            </React.Fragment>
           ))}
         </div>
       </div>
