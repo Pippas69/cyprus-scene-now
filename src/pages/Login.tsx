@@ -252,7 +252,14 @@ const Login = () => {
           </Form>
         </div>
       </div>
-    </div>);
+    </div>
+    {show2FA && (
+      <TwoFactorVerification
+        onSuccess={handle2FASuccess}
+        onCancel={handle2FACancel}
+      />
+    )}
+    </>);
 
 };
 
