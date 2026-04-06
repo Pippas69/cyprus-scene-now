@@ -27,8 +27,9 @@ interface SuccessQRCardProps {
   discountPercent?: number;
   purchaseDate?: string;
   expiryDate?: string;
-  // For event reservations
+  // For event reservations (hybrid)
   prepaidAmountCents?: number;
+  minChargeCents?: number;
   // Guest info (for individual tickets in group bookings)
   guestName?: string;
   guestAge?: number;
@@ -352,24 +353,51 @@ export const SuccessQRCard = ({
                 </p>
               </div>
             </div>
-            {/* Prepaid credit indicator for hybrid events */}
-            {prepaidAmountCents && prepaidAmountCents > 0 && (
+            {/* Financial breakdown for hybrid events */}
+            {prepaidAmountCents && prepaidAmountCents > 0 && minChargeCents && minChargeCents > 0 ? (
+              <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-3 mb-3 space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-[#92400e]">
+                    💡 {language === "el" ? "Πώς λειτουργεί η πληρωμή" : "How payment works"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#78716c]">
+                    {language === "el" ? `Minimum Charge (${partySize || '-'} άτομα):` : `Minimum Charge (${partySize || '-'} guests):`}
+                  </span>
+                  <span className="font-semibold text-[#1c1917]">{formatPrice(minChargeCents)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#78716c]">
+                    {language === "el" ? "Προπληρωμή (online):" : "Prepaid (online):"}
+                  </span>
+                  <span className="font-semibold text-green-700">-{formatPrice(prepaidAmountCents)}</span>
+                </div>
+                <div className="border-t border-[#e7e5e4] my-1" />
+                <div className="flex justify-between text-xs">
+                  <span className="font-semibold text-[#92400e]">
+                    {language === "el" ? "Υπόλοιπο στο venue:" : "Balance at venue:"}
+                  </span>
+                  <span className="font-bold text-[#92400e]">{formatPrice(Math.max(0, minChargeCents - prepaidAmountCents))}</span>
+                </div>
+                <p className="text-[9px] text-[#a8a29e] mt-1">
+                  {language === "el"
+                    ? "Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας."
+                    : "The prepayment is automatically deducted from your final bill."}
+                </p>
+              </div>
+            ) : prepaidAmountCents && prepaidAmountCents > 0 ? (
               <div className="bg-[#ecfdf5] border border-[#a7f3d0] rounded-lg p-2.5 mb-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-[#065f46] uppercase tracking-wide">
-                    {language === "el" ? "💳 Προπληρωμένο" : "💳 Prepaid Credit"}
+                    {language === "el" ? "✅ Προπληρωμένο" : "✅ Prepaid"}
                   </span>
                   <span className="text-sm font-bold text-[#065f46]">
                     {formatPrice(prepaidAmountCents)}
                   </span>
                 </div>
-                <p className="text-[9px] text-[#047857] mt-1">
-                  {language === "el"
-                    ? "Αυτό το ποσό θα αφαιρεθεί από τον λογαριασμό σας στο venue."
-                    : "This amount will be deducted from your bill at the venue."}
-                </p>
               </div>
-            )}
+            ) : null}
           </>
         );
       }
