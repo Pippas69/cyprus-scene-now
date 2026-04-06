@@ -20,6 +20,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+
+// Event-specific age restrictions (hardcoded per business request)
+const EVENT_MIN_AGE: Record<string, number> = {
+  'ae2f9eaa-574b-400e-be37-b2cef98d4907': 21,
+};
 import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
@@ -457,7 +462,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+  const minAge = EVENT_MIN_AGE[eventId] || 16;
+  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
   const hasReservationName = reservationName.trim().length >= 2;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
@@ -698,9 +704,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                   const val = e.target.value.replace(/\D/g, '').slice(0, 3);
                   updateGuest(idx, 'age', val);
                 }}
-                className="h-9 text-sm w-20"
+                className={cn("h-9 text-sm w-20", guest.age && Number(guest.age) < minAge && "border-destructive")}
               />
             </div>
+            {guest.age && Number(guest.age) < minAge && (
+              <p className="text-[10px] text-destructive text-right pr-1">
+                {language === 'el' ? `Ελάχιστο όριο: ${minAge} ετών` : `Minimum age: ${minAge}`}
+              </p>
+            )}
           ))}
         </div>
       </div>
