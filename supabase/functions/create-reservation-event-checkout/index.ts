@@ -5,8 +5,6 @@ import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
-// Commission rate is now dynamically determined based on the business's subscription plan
-
 const GuestSchema = z.object({ name: safeString(200) }).passthrough();
 const BodySchema = z.object({
   event_id: flexId,
@@ -28,31 +26,19 @@ serve(async (req) => {
   }
 
   try {
-    // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
-    // Create Supabase client using the anon key AND forward the caller's JWT so
-    // database Row Level Security (RLS) policies run in the user's context.
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
         global: {
-          headers: {
-            Authorization: authHeader,
-          },
+          headers: { Authorization: authHeader },
         },
       }
-    );
-
-    // Service client for privileged calls (notifications)
-    const supabaseService = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
     );
 
     const token = authHeader.replace("Bearer ", "");
@@ -79,12 +65,11 @@ serve(async (req) => {
       guests,
     } = await parseBody(req, BodySchema);
 
-    // Validate required fields
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
       throw new Error("Missing required fields: event_id, seating_type_id, party_size, reservation_name");
     }
 
-    // Get event and validate it's a reservation event
+    // Get event and validate
     const { data: event, error: eventError } = await supabaseClient
       .from("events")
       .select(`
@@ -110,33 +95,15 @@ serve(async (req) => {
 
     const business = event.businesses;
 
-    // Get business subscription to determine commission rate (same logic as create-ticket-checkout)
-    const { data: subscription } = await supabaseClient
-      .from("business_subscriptions")
-      .select("*, subscription_plans(*)")
-      .eq("business_id", event.business_id)
-      .eq("status", "active")
-      .maybeSingle();
-
-    let planSlug = "free";
-    if (subscription?.subscription_plans?.slug) {
-      planSlug = subscription.subscription_plans.slug;
-    }
-    console.log("[CHECKOUT] Subscription plan:", { planSlug });
-
-    // COMMISSION DISABLED: Platform is in early stage, no commission charged
+    // Commission (disabled for now)
     const commissionPercent = 0;
-    console.log("[CHECKOUT] Commission rate:", { commissionPercent, note: "Commission disabled - early stage" });
 
-    // Allow destination charges if business has completed Stripe Connect onboarding.
-    // In preview/dev environments, allow platform checkout for testing.
+    // Environment detection for Stripe Connect
     const origin = req.headers.get("origin") ?? "";
     const referer = req.headers.get("referer") ?? "";
-    
-    // Check multiple headers for preview detection
-    const isPreviewOrigin = 
-      origin.includes("lovable.app") || 
-      origin.includes("localhost") || 
+    const isPreviewOrigin =
+      origin.includes("lovable.app") ||
+      origin.includes("localhost") ||
       origin.includes("127.0.0.1") ||
       origin.includes("preview--") ||
       referer.includes("lovable.app") ||
@@ -145,20 +112,7 @@ serve(async (req) => {
 
     const hasConnectSetup = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
 
-    console.log("[CHECKOUT] Environment check:", { 
-      origin, 
-      referer,
-      isPreviewOrigin, 
-      hasConnectSetup,
-      businessId: business?.id,
-      stripeAccountId: business?.stripe_account_id ? "present" : "missing"
-    });
-
-    // NOTE: We allow checkout even if the business hasn't completed payment setup.
-    // In that case we run a platform checkout (no destination transfer / application fee).
-    // This matches the ticket checkout behavior and avoids blocking users mid-flow.
-
-    // Get seating type and validate availability
+    // Get seating type and validate availability using the RPC that only counts accepted reservations
     const { data: seatingType, error: seatingError } = await supabaseClient
       .from("reservation_seating_types")
       .select("*")
@@ -170,7 +124,17 @@ serve(async (req) => {
       throw new Error("Seating type not found");
     }
 
-    const remainingSlots = seatingType.available_slots - seatingType.slots_booked;
+    // Use the RPC to get actual booked count (only accepted reservations)
+    const { data: bookedCounts } = await supabaseClient.rpc(
+      'get_event_seating_booked_counts',
+      { p_event_id: event_id }
+    );
+    const bookedForType = (bookedCounts || []).find(
+      (r: { seating_type_id: string; slots_booked: number }) => r.seating_type_id === seating_type_id
+    );
+    const slotsBooked = Number(bookedForType?.slots_booked || 0);
+    const remainingSlots = seatingType.available_slots - slotsBooked;
+
     if (remainingSlots <= 0) {
       throw new Error("No available slots for this seating type");
     }
@@ -180,7 +144,7 @@ serve(async (req) => {
       throw new Error(`Party size must be between ${event.min_party_size || 1} and ${event.max_party_size || 10}`);
     }
 
-    // Get price tier for party size
+    // Get price tier
     const { data: priceTier, error: tierError } = await supabaseClient
       .from("seating_type_tiers")
       .select("*")
@@ -194,50 +158,19 @@ serve(async (req) => {
     }
 
     const prepaidAmountCents = priceTier.prepaid_min_charge_cents;
-    // Buyer pays processing fees on top
     const stripeFeesCents = prepaidAmountCents > 0 ? Math.ceil(prepaidAmountCents * 0.029 + 25) : 0;
     const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
 
-    // Create pending reservation
-    const confirmationCode = `RES-${Date.now().toString(36).toUpperCase()}`;
-    const qrCodeToken = crypto.randomUUID();
-
-    const { data: reservation, error: reservationError } = await supabaseClient
-      .from("reservations")
-      .insert({
-        event_id,
-        user_id: user.id,
-        reservation_name,
-        party_size,
-        phone_number: phone_number || null,
-        preferred_time: preferred_time || null,
-        special_requests: special_requests || null,
-        seating_type_id,
-        prepaid_min_charge_cents: prepaidAmountCents,
-        prepaid_charge_status: "pending",
-        status: "pending",
-        confirmation_code: confirmationCode,
-        qr_code_token: qrCodeToken,
-      })
-      .select()
-      .single();
-
-    if (reservationError || !reservation) {
-      console.error("Reservation creation error:", reservationError);
-      throw new Error("Failed to create reservation");
-    }
-
-    // NOTE: Notifications are NOT sent here. They are sent by the
-    // process-reservation-event-payment webhook AFTER the user completes payment.
-    // This ensures users and businesses only receive "confirmed" notifications
-    // once payment has actually succeeded.
+    // DO NOT create a reservation here. It will be created by the webhook
+    // after successful payment. This prevents ghost reservations when users
+    // abandon checkout.
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Get or create customer
+    // Get or create Stripe customer
     const { data: profile } = await supabaseClient
       .from("profiles")
       .select("email, name")
@@ -263,7 +196,6 @@ serve(async (req) => {
       customerId = newCustomer.id;
     }
 
-    // Get seating type name for display
     const seatingTypeLabels: Record<string, string> = {
       bar: "Bar",
       table: "Table",
@@ -272,9 +204,37 @@ serve(async (req) => {
     };
     const seatingTypeName = seatingTypeLabels[seatingType.seating_type] || seatingType.seating_type;
 
-    // Create Stripe checkout session.
-    // - If the business has Connect setup: destination charge + application fee.
-    // - If not (preview/dev only): platform checkout (no transfer/application fee).
+    // Store ALL reservation data in Stripe session metadata so the webhook
+    // can create the reservation after successful payment.
+    const sessionMetadata: Record<string, string> = {
+      type: "reservation_event",
+      event_id,
+      seating_type_id,
+      party_size: party_size.toString(),
+      prepaid_amount_cents: prepaidAmountCents.toString(),
+      business_id: business?.id ?? "",
+      used_platform_checkout: hasConnectSetup ? "false" : "true",
+      customer_email: customer_email || customerEmail || "",
+      user_id: user.id,
+      reservation_name,
+      phone_number: phone_number || "",
+      preferred_time: preferred_time || "",
+      special_requests: special_requests || "",
+    };
+
+    // Serialize guests into metadata (chunked if needed)
+    if (guests && Array.isArray(guests)) {
+      const guestsJson = JSON.stringify(guests);
+      if (guestsJson.length <= 500) {
+        sessionMetadata.guests = guestsJson;
+      } else {
+        const chunkSize = 490;
+        for (let i = 0; i * chunkSize < guestsJson.length; i++) {
+          sessionMetadata[`guests_${i}`] = guestsJson.slice(i * chunkSize, (i + 1) * chunkSize);
+        }
+      }
+    }
+
     const baseSessionParams = {
       customer: customerId,
       payment_method_types: ["card"],
@@ -295,55 +255,34 @@ serve(async (req) => {
           },
           quantity: 1,
         },
-        // Buyer pays processing fee as separate line item
-        ...(stripeFeesCents > 0 ? [{
-          price_data: {
-            currency: priceTier.currency || "eur",
-            product_data: {
-              name: "Processing Fee",
-              description: "Payment processing fee",
-            },
-            unit_amount: stripeFeesCents,
-          },
-          quantity: 1,
-        }] : []),
+        ...(stripeFeesCents > 0
+          ? [
+              {
+                price_data: {
+                  currency: priceTier.currency || "eur",
+                  product_data: {
+                    name: "Processing Fee",
+                    description: "Payment processing fee",
+                  },
+                  unit_amount: stripeFeesCents,
+                },
+                quantity: 1,
+              },
+            ]
+          : []),
       ],
       mode: "payment",
       success_url:
         success_url ||
-        `${req.headers.get("origin")}/reservation-success?session_id={CHECKOUT_SESSION_ID}&reservation_id=${reservation.id}`,
+        `${req.headers.get("origin")}/reservation-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:
         cancel_url || `${req.headers.get("origin")}/ekdiloseis/${event_id}?cancelled=true`,
-      metadata: {
-        type: "reservation_event",
-        event_id,
-        reservation_id: reservation.id,
-        seating_type_id,
-        party_size: party_size.toString(),
-        prepaid_amount_cents: prepaidAmountCents.toString(),
-        business_id: business?.id ?? "",
-        used_platform_checkout: hasConnectSetup ? "false" : "true",
-        customer_email: customer_email || customerEmail || "",
-        ...(guests && Array.isArray(guests) ? (() => {
-          const guestsJson = JSON.stringify(guests);
-          const meta: Record<string, string> = {};
-          if (guestsJson.length <= 500) {
-            meta.guests = guestsJson;
-          } else {
-            const chunkSize = 490;
-            for (let i = 0; i * chunkSize < guestsJson.length; i++) {
-              meta[`guests_${i}`] = guestsJson.slice(i * chunkSize, (i + 1) * chunkSize);
-            }
-          }
-          return meta;
-        })() : {}),
-      },
+      metadata: sessionMetadata,
     };
 
     let session;
     if (hasConnectSetup) {
       try {
-        // Verify the connected account exists before attempting destination charge
         await stripe.accounts.retrieve(business.stripe_account_id);
         session = await stripe.checkout.sessions.create({
           ...baseSessionParams,
@@ -352,15 +291,7 @@ serve(async (req) => {
             transfer_data: {
               destination: business.stripe_account_id,
             },
-            metadata: {
-              type: "reservation_event",
-              event_id,
-              reservation_id: reservation.id,
-              seating_type_id,
-              party_size: party_size.toString(),
-              prepaid_amount_cents: prepaidAmountCents.toString(),
-              business_id: business.id,
-            },
+            metadata: sessionMetadata,
           },
         });
       } catch (connectError) {
@@ -371,19 +302,9 @@ serve(async (req) => {
       session = await stripe.checkout.sessions.create(baseSessionParams);
     }
 
-    // Update reservation with payment intent ID
-    if (session.payment_intent) {
-      await supabaseClient
-        .from("reservations")
-        .update({ stripe_payment_intent_id: session.payment_intent as string })
-        .eq("id", reservation.id);
-    }
-
     return new Response(
       JSON.stringify({
         url: session.url,
-        reservation_id: reservation.id,
-        confirmation_code: confirmationCode,
         prepaid_amount_cents: prepaidAmountCents,
         platform_fee_cents: platformFeeCents,
       }),
