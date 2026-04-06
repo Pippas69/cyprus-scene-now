@@ -243,7 +243,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
   const [isFreshSignup, setIsFreshSignup] = useState(false);
-  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState<boolean | null>(null);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
@@ -912,13 +912,18 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
       return (
         <ProfileCompletionGate onComplete={async (profile) => {
           setProfileComplete(true);
-          // Keep contact fields manual in all event dialogs
           // Auto-fill first guest name from profile
           setGuests(prev => {
             const updated = [...prev];
             if (updated.length > 0) updated[0] = { ...updated[0], name: `${profile.firstName} ${profile.lastName}` };
             return updated;
           });
+          // Fresh sign-up: auto-fill phone and email from profile data
+          if (wasAuthenticatedOnMount === false) {
+            setIsFreshSignup(true);
+            setPhoneNumber(profile.phone || '');
+            setCustomerEmail(profile.email || '');
+          }
         }} />
       );
     }

@@ -59,6 +59,7 @@ export const ReservationDialog = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
   const [profileComplete, setProfileComplete] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState<boolean | null>(null);
   const profileName = useProfileName(currentUserId);
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export const ReservationDialog = ({
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
       if (data.user) { setCurrentUserId(data.user.id); checkProfile(data.user.id); }
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -246,6 +248,7 @@ export const ReservationDialog = ({
           reservation_name: `${profile.firstName} ${profile.lastName}`,
           phone_number: profile.phone,
         }));
+        // Fresh sign-up: phone is already auto-filled above for all cases
       }} />
     </div>
   ) : (

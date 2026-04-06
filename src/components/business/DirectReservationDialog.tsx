@@ -97,11 +97,13 @@ export const DirectReservationDialog = ({
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(userId);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user);
       if (data.user) setCurrentUserId(data.user.id);
+      setWasAuthenticatedOnMount(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -587,6 +589,13 @@ export const DirectReservationDialog = ({
           guest_names: [`${profile.firstName} ${profile.lastName}`, ...prev.guest_names.slice(1)],
           phone_number: profile.phone || prev.phone_number,
         }));
+        // Fresh sign-up: auto-fill phone from profile
+        if (wasAuthenticatedOnMount === false) {
+          setFormData(prev => ({
+            ...prev,
+            phone_number: profile.phone || prev.phone_number,
+          }));
+        }
       }} />
     </div>
   ) : (
