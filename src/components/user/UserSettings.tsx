@@ -723,6 +723,28 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         </CardContent>
       </Card>
 
+      {/* Two-Factor Authentication */}
+      <Card>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            {t.twoFactorAuth}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-xs sm:text-sm text-muted-foreground">{t.twoFactorDesc}</p>
+            </div>
+            <Switch
+              checked={is2FAEnabled}
+              onCheckedChange={toggle2FA}
+              disabled={is2FALoading}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Privacy & Data */}
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
