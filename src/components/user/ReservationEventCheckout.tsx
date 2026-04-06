@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
@@ -497,7 +498,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return updated;
     });
   };
-  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+  const minAge = getMinAge(eventId);
+  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
@@ -721,32 +723,44 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 {t.guestDetails} ({partySize} {t.people})
               </Label>
               <div className="space-y-1.5 max-h-52 overflow-y-auto">
-                {guests.map((guest, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
-                    <Input
-                      placeholder={t.guestName}
-                      value={guest.name}
-                      onChange={(e) => {
-                        if (idx === 0 && profileName) return;
-                        updateGuest(idx, 'name', e.target.value);
-                      }}
-                      className={`h-9 text-sm flex-1 ${idx === 0 && profileName ? 'bg-muted cursor-not-allowed' : ''}`}
-                      readOnly={idx === 0 && !!profileName}
-                    />
-                    <Input
-                      placeholder={t.guestAge}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={guest.age}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 3);
-                        updateGuest(idx, 'age', val);
-                      }}
-                      className="h-9 text-sm w-20"
-                    />
-                  </div>
-                ))}
+                {guests.map((guest, idx) => {
+                  const ageVal = guest.age;
+                  const ageNum = Number(ageVal);
+                  const showAgeError = ageVal.length > 0 && !isNaN(ageNum) && ageNum < minAge;
+                  return (
+                    <div key={idx} className="space-y-0.5">
+                      <div className="flex gap-2 items-center">
+                        <span className="text-xs text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                        <Input
+                          placeholder={t.guestName}
+                          value={guest.name}
+                          onChange={(e) => {
+                            if (idx === 0 && profileName) return;
+                            updateGuest(idx, 'name', e.target.value);
+                          }}
+                          className={`h-9 text-sm flex-1 ${idx === 0 && profileName ? 'bg-muted cursor-not-allowed' : ''}`}
+                          readOnly={idx === 0 && !!profileName}
+                        />
+                        <Input
+                          placeholder={t.guestAge}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={guest.age}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 3);
+                            updateGuest(idx, 'age', val);
+                          }}
+                          className={cn("h-9 text-sm w-20", showAgeError && "border-destructive")}
+                        />
+                      </div>
+                      {showAgeError && (
+                        <p className="text-[10px] text-destructive text-right pr-1">
+                          {language === 'el' ? `Ελάχιστο όριο: ${minAge} ετών` : `Minimum age: ${minAge}`}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             {price ? (

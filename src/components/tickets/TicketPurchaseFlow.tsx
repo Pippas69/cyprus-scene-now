@@ -25,10 +25,7 @@ import { ProfileCompletionGate } from "./ProfileCompletionGate";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { useProfileName } from "@/hooks/useProfileName";
 
-// Event-specific age restrictions (hardcoded per business request)
-const EVENT_MIN_AGE: Record<string, number> = {
-  'ae2f9eaa-574b-400e-be37-b2cef98d4907': 21,
-};
+import { getMinAge } from "@/lib/ageRestrictions";
 
 interface TicketTier {
   id: string;
@@ -415,7 +412,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = subtotal + stripeFeesCents;
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
-  const minAge = EVENT_MIN_AGE[eventId] || 16;
+  const minAge = getMinAge(eventId);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)) && Number(a) >= minAge);
   const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;

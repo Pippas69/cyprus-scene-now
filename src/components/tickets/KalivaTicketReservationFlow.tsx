@@ -21,10 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// Event-specific age restrictions (hardcoded per business request)
-const EVENT_MIN_AGE: Record<string, number> = {
-  'ae2f9eaa-574b-400e-be37-b2cef98d4907': 21,
-};
+import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
@@ -462,7 +459,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const minAge = EVENT_MIN_AGE[eventId] || 16;
+  const minAge = getMinAge(eventId);
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
   const hasReservationName = reservationName.trim().length >= 2;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
