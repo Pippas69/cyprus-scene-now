@@ -16,7 +16,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { toast } from '@/hooks/use-toast';
-import { Lock, Bell, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles } from 'lucide-react';
+import { Lock, Bell, Trash2, Settings as SettingsIcon, CheckCircle, XCircle, Loader2, BellRing, Mail, CalendarCheck, Ticket, Gift, BarChart3, Users, Sparkles, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -83,6 +83,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
 
   // Business profile form state
   const [profileLoading, setProfileLoading] = useState(false);
@@ -223,10 +225,53 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const businessT = businessTranslations[language];
   const toastT = toastTranslations[language];
 
-  // Fetch business data on mount
+  // Fetch business data and 2FA status on mount
   useEffect(() => {
     fetchBusinessData();
+    fetch2FAStatus();
   }, [businessId]);
+
+  const fetch2FAStatus = async () => {
+    const { data } = await supabase
+      .from('user_2fa_settings')
+      .select('is_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIs2FAEnabled(data?.is_enabled ?? false);
+  };
+
+  const toggle2FA = async (enabled: boolean) => {
+    setIs2FALoading(true);
+    try {
+      if (enabled) {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .upsert({ user_id: userId, is_enabled: true }, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .update({ is_enabled: false })
+          .eq('user_id', userId);
+        if (error) throw error;
+      }
+      setIs2FAEnabled(enabled);
+      toast({
+        title: toastT.success,
+        description: language === 'el'
+          ? (enabled ? 'Η επαλήθευση 2FA ενεργοποιήθηκε' : 'Η επαλήθευση 2FA απενεργοποιήθηκε')
+          : (enabled ? '2FA verification enabled' : '2FA verification disabled'),
+      });
+    } catch {
+      toast({
+        title: toastT.error,
+        description: language === 'el' ? 'Σφάλμα ενημέρωσης 2FA' : 'Error updating 2FA',
+        variant: 'destructive',
+      });
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
 
   // Auto-geocode when address or city changes
   useEffect(() => {
@@ -914,6 +959,30 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           >
             {t.changePassword}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Two-Factor Authentication */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
+            {language === 'el' ? 'Επαλήθευση σε 2 Βήματα (2FA)' : 'Two-Factor Authentication (2FA)'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {language === 'el' ? 'Λάβετε έναν 6ψήφιο κωδικό στο email σας κατά τη σύνδεση' : 'Receive a 6-digit code to your email when logging in'}
+              </p>
+            </div>
+            <Switch
+              checked={is2FAEnabled}
+              onCheckedChange={toggle2FA}
+              disabled={is2FALoading}
+            />
+          </div>
         </CardContent>
       </Card>
 
