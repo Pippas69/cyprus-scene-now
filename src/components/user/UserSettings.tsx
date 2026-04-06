@@ -83,6 +83,49 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
     if (data) setProfile(data);
   };
 
+  const fetch2FAStatus = async () => {
+    const { data } = await supabase
+      .from('user_2fa_settings')
+      .select('is_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIs2FAEnabled(data?.is_enabled ?? false);
+  };
+
+  const toggle2FA = async (enabled: boolean) => {
+    setIs2FALoading(true);
+    try {
+      if (enabled) {
+        // Upsert the setting
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .upsert({ user_id: userId, is_enabled: true }, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .update({ is_enabled: false })
+          .eq('user_id', userId);
+        if (error) throw error;
+      }
+      setIs2FAEnabled(enabled);
+      toast({
+        title: tt.success,
+        description: language === 'el'
+          ? (enabled ? 'Η επαλήθευση 2FA ενεργοποιήθηκε' : 'Η επαλήθευση 2FA απενεργοποιήθηκε')
+          : (enabled ? '2FA verification enabled' : '2FA verification disabled'),
+      });
+    } catch {
+      toast({
+        title: tt.error,
+        description: tt.loadFailed,
+        variant: 'destructive',
+      });
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
   const text = {
     el: {
       settingsTitle: 'Ρυθμίσεις',
