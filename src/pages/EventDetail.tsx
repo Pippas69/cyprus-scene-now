@@ -161,9 +161,9 @@ export default function EventDetail() {
     return () => window.clearInterval(refreshTimer);
   }, [eventId, event?.id, event?.event_type, isBusinessTicketLinked]);
 
-  // Fetch lowest min charge for hybrid events (for "Από €X" price badge)
+  // Fetch lowest min charge for hybrid & reservation-only events (for "Από €X" price badge)
   useEffect(() => {
-    if (!eventId || !event || event.event_type !== 'ticket_and_reservation') return;
+    if (!eventId || !event || (event.event_type !== 'ticket_and_reservation' && event.event_type !== 'reservation')) return;
     (async () => {
       const { data: seatingTypes } = await supabase
         .from('reservation_seating_types')
@@ -672,7 +672,7 @@ export default function EventDetail() {
               {/* Title + Price at bottom of image */}
               <div className="absolute bottom-0 left-0 right-0 p-4 pb-3 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-sm sm:text-lg lg:text-xl font-bold leading-tight line-clamp-2 flex-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{event.title}</h1>
-                {isLinkedHybridEvent && lowestMinChargeCents ? (
+                {(isLinkedHybridEvent || eventType === 'reservation') && lowestMinChargeCents ? (
                   <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {language === 'el' ? 'Από' : 'From'} {formatPrice(lowestMinChargeCents)}
                   </span>
