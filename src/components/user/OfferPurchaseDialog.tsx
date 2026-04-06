@@ -114,6 +114,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profileComplete, setProfileComplete] = useState(false);
+  const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState<boolean | null>(null);
   const profileName = useProfileName(userId);
 
   useEffect(() => {
@@ -124,6 +125,7 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setIsAuthenticated(!!data.user);
+      setWasAuthenticatedOnMount(!!data.user);
       if (data.user) checkProfile(data.user.id);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
@@ -854,7 +856,11 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
           updated[0] = fullName;
           return updated;
         });
-        // Phone field left empty for user to fill manually
+        // Fresh sign-up: auto-fill phone from profile
+        if (wasAuthenticatedOnMount === false) {
+          setReservationPhone(profile.phone || '');
+          setReservationName(fullName);
+        }
       }} />
     </div>
   ) :
