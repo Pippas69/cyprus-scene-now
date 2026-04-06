@@ -38,6 +38,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const { changePassword, isChanging } = usePasswordChange();
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, permissionState, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications(userId);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
   
   // Profile state
   const [profile, setProfile] = useState<any>(null);
@@ -54,6 +56,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
   useEffect(() => {
     fetchProfile();
+    fetch2FAStatus();
   }, [userId]);
 
   // Scroll to hash target (e.g., #student-verification)
@@ -80,6 +83,49 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
     if (data) setProfile(data);
   };
 
+  const fetch2FAStatus = async () => {
+    const { data } = await supabase
+      .from('user_2fa_settings')
+      .select('is_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIs2FAEnabled(data?.is_enabled ?? false);
+  };
+
+  const toggle2FA = async (enabled: boolean) => {
+    setIs2FALoading(true);
+    try {
+      if (enabled) {
+        // Upsert the setting
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .upsert({ user_id: userId, is_enabled: true }, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .update({ is_enabled: false })
+          .eq('user_id', userId);
+        if (error) throw error;
+      }
+      setIs2FAEnabled(enabled);
+      toast({
+        title: tt.success,
+        description: language === 'el'
+          ? (enabled ? 'Η επαλήθευση 2FA ενεργοποιήθηκε' : 'Η επαλήθευση 2FA απενεργοποιήθηκε')
+          : (enabled ? '2FA verification enabled' : '2FA verification disabled'),
+      });
+    } catch {
+      toast({
+        title: tt.error,
+        description: tt.loadFailed,
+        variant: 'destructive',
+      });
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
   const text = {
     el: {
       settingsTitle: 'Ρυθμίσεις',
@@ -104,6 +150,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       newPassword: 'Νέος Κωδικός',
       confirmPassword: 'Επιβεβαίωση Κωδικού',
       changePassword: 'Αλλαγή Κωδικού',
+      twoFactorAuth: 'Επαλήθευση σε 2 Βήματα (2FA)',
+      twoFactorDesc: 'Λάβετε έναν 6ψήφιο κωδικό στο email σας κατά τη σύνδεση',
       notifications: 'Ειδοποιήσεις',
       // Mandatory section
       emailConfirmationsTitle: 'Email για Επιβεβαιώσεις',
@@ -167,6 +215,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       newPassword: 'New Password',
       confirmPassword: 'Confirm Password',
       changePassword: 'Change Password',
+      twoFactorAuth: 'Two-Factor Authentication (2FA)',
+      twoFactorDesc: 'Receive a 6-digit code to your email when logging in',
       notifications: 'Notifications',
       // Mandatory section
       emailConfirmationsTitle: 'Email for Confirmations',
@@ -670,6 +720,28 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           >
             {t.changePassword}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Two-Factor Authentication */}
+      <Card>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            {t.twoFactorAuth}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-xs sm:text-sm text-muted-foreground">{t.twoFactorDesc}</p>
+            </div>
+            <Switch
+              checked={is2FAEnabled}
+              onCheckedChange={toggle2FA}
+              disabled={is2FALoading}
+            />
+          </div>
         </CardContent>
       </Card>
 

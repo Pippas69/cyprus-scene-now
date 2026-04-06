@@ -15,12 +15,14 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
+import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  const stateMessage = location.state?.message;
+  const [show2FA, setShow2FA] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<{ path: string; message: string } | null>(null);
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
@@ -34,12 +36,12 @@ const Login = () => {
   type LoginFormValues = z.infer<typeof loginSchema>;
 
   useEffect(() => {
-    if (stateMessage) {
-      toast.success(stateMessage, { duration: 5000 });
-      // Clear the state
+    const msg = location.state?.message;
+    if (msg) {
+      toast.success(msg, { duration: 5000 });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [stateMessage, navigate, location.pathname]);
+  }, [location.state?.message, navigate, location.pathname]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -48,6 +50,34 @@ const Login = () => {
       password: ""
     }
   });
+
+  const performRedirect = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    const { data: business } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    let redirectPath = "/feed";
+    let successMessage = t.loginSuccess;
+
+    if (profile?.role === 'admin') {
+      redirectPath = "/admin/verification";
+      successMessage = t.adminWelcome;
+    } else if (business) {
+      redirectPath = "/dashboard-business";
+      successMessage = t.businessWelcome;
+    }
+
+    setPendingRedirect({ path: redirectPath, message: successMessage });
+    return { path: redirectPath, message: successMessage };
+  };
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
@@ -69,43 +99,48 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Check user role
-        const { data: profile } = await supabase.
-        from("profiles").
-        select("role").
-        eq("id", data.user.id).
-        single();
+        // Check if user has 2FA enabled
+        const { data: twoFaSettings } = await supabase
+          .from("user_2fa_settings")
+          .select("is_enabled")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
 
-        // Check if user owns a business
-        const { data: business } = await supabase.
-        from("businesses").
-        select("id").
-        eq("user_id", data.user.id).
-        maybeSingle();
-
-        // Determine redirect based on role and business ownership
-        let redirectPath = "/feed";
-        let successMessage = t.loginSuccess;
-
-        if (profile?.role === 'admin') {
-          redirectPath = "/admin/verification";
-          successMessage = t.adminWelcome;
-        } else if (business) {
-          redirectPath = "/dashboard-business";
-          successMessage = t.businessWelcome;
+        if (twoFaSettings?.is_enabled) {
+          // Send 2FA code and show modal
+          await supabase.functions.invoke("send-2fa-code");
+          await performRedirect(data.user.id);
+          setShow2FA(true);
+        } else {
+          // Normal flow — no 2FA
+          const redirect = await performRedirect(data.user.id);
+          toast.success(redirect.message);
+          navigate(redirect.path);
         }
-
-        toast.success(successMessage);
-        navigate(redirectPath);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(tt.failed);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handle2FASuccess = () => {
+    setShow2FA(false);
+    if (pendingRedirect) {
+      toast.success(pendingRedirect.message);
+      navigate(pendingRedirect.path);
+    }
+  };
+
+  const handle2FACancel = async () => {
+    setShow2FA(false);
+    setPendingRedirect(null);
+    await supabase.auth.signOut();
+  };
+
   return (
+    <>
     <div className="min-h-screen gradient-hero flex items-center justify-center py-4 sm:py-12 px-3 sm:px-6 lg:px-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
@@ -218,7 +253,14 @@ const Login = () => {
           </Form>
         </div>
       </div>
-    </div>);
+    </div>
+    {show2FA && (
+      <TwoFactorVerification
+        onSuccess={handle2FASuccess}
+        onCancel={handle2FACancel}
+      />
+    )}
+    </>);
 
 };
 
