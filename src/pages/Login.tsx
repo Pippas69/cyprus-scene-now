@@ -15,6 +15,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
+import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 
 const Login = () => {
   const navigate = useNavigate();
