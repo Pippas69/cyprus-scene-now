@@ -150,6 +150,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       newPassword: 'Νέος Κωδικός',
       confirmPassword: 'Επιβεβαίωση Κωδικού',
       changePassword: 'Αλλαγή Κωδικού',
+      twoFactorAuth: 'Επαλήθευση σε 2 Βήματα (2FA)',
+      twoFactorDesc: 'Λάβετε έναν 6ψήφιο κωδικό στο email σας κατά τη σύνδεση',
       notifications: 'Ειδοποιήσεις',
       // Mandatory section
       emailConfirmationsTitle: 'Email για Επιβεβαιώσεις',
