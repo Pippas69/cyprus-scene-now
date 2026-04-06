@@ -25,10 +25,7 @@ import { ProfileCompletionGate } from "./ProfileCompletionGate";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { useProfileName } from "@/hooks/useProfileName";
 
-// Event-specific age restrictions (hardcoded per business request)
-const EVENT_MIN_AGE: Record<string, number> = {
-  'ae2f9eaa-574b-400e-be37-b2cef98d4907': 21,
-};
+import { getMinAge } from "@/lib/ageRestrictions";
 
 interface TicketTier {
   id: string;

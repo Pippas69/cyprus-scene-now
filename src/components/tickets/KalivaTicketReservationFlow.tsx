@@ -21,10 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// Event-specific age restrictions (hardcoded per business request)
-const EVENT_MIN_AGE: Record<string, number> = {
-  'ae2f9eaa-574b-400e-be37-b2cef98d4907': 21,
-};
+import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
