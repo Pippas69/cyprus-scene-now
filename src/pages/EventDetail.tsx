@@ -161,6 +161,26 @@ export default function EventDetail() {
     return () => window.clearInterval(refreshTimer);
   }, [eventId, event?.id, event?.event_type, isBusinessTicketLinked]);
 
+  // Fetch lowest min charge for hybrid events (for "Από €X" price badge)
+  useEffect(() => {
+    if (!eventId || !event || event.event_type !== 'ticket_and_reservation') return;
+    (async () => {
+      const { data: seatingTypes } = await supabase
+        .from('reservation_seating_types')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('paused', false);
+      if (!seatingTypes || seatingTypes.length === 0) return;
+      const { data: tiers } = await supabase
+        .from('seating_type_tiers')
+        .select('prepaid_min_charge_cents')
+        .in('seating_type_id', seatingTypes.map(s => s.id));
+      if (!tiers || tiers.length === 0) return;
+      const lowest = Math.min(...tiers.map(t => t.prepaid_min_charge_cents).filter(v => v > 0));
+      if (isFinite(lowest)) setLowestMinChargeCents(lowest);
+    })();
+  }, [eventId, event?.event_type]);
+
   const refreshCounts = async (targetEventId: string) => {
     const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
       p_event_id: targetEventId
