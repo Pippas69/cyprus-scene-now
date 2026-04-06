@@ -4317,6 +4317,7 @@ export type Database = {
           checked_in_at: string | null
           checked_in_by: string | null
           created_at: string
+          guest_age: number | null
           guest_name: string
           id: string
           qr_code_token: string
@@ -4327,6 +4328,7 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           created_at?: string
+          guest_age?: number | null
           guest_name: string
           id?: string
           qr_code_token?: string
@@ -4337,6 +4339,7 @@ export type Database = {
           checked_in_at?: string | null
           checked_in_by?: string | null
           created_at?: string
+          guest_age?: number | null
           guest_name?: string
           id?: string
           qr_code_token?: string

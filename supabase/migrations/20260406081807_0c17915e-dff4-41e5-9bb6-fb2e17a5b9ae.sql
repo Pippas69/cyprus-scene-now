@@ -1,0 +1,1 @@
+ALTER TABLE public.reservation_guests ADD COLUMN guest_age integer;
