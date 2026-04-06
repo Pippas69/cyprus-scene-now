@@ -459,7 +459,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const minAge = EVENT_MIN_AGE[eventId] || 16;
+  const minAge = getMinAge(eventId);
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
   const hasReservationName = reservationName.trim().length >= 2;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
