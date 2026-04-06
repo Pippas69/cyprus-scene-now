@@ -798,6 +798,37 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
       </div>
 
+      {minChargeCents != null && minChargeCents > 0 && (
+        <>
+          <Separator />
+          <div className="border border-border/40 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold text-foreground">
+                💡 {t.howPaymentWorks}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                {t.minimumCharge} ({partySize} {t.people}):
+              </span>
+              <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
+            </div>
+            {ticketTotal > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{t.prepaidOnline}:</span>
+                <span className="font-semibold text-foreground">-{formatPrice(ticketTotal)}</span>
+              </div>
+            )}
+            <div className="border-t border-border/30 my-1" />
+            <div className="flex justify-between text-xs">
+              <span className="font-semibold text-foreground">{t.balanceAtVenue}:</span>
+              <span className="font-bold text-foreground">{formatPrice(Math.max(0, minChargeCents - ticketTotal))}</span>
+            </div>
+            <p className="text-[9px] text-muted-foreground mt-1">{t.prepaidDeductedNote}</p>
+          </div>
+        </>
+      )}
+
       <Separator />
 
       {/* Costs */}
@@ -815,34 +846,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t.processingFee}</span>
             <span className="font-medium">{formatPrice(stripeFeesCents)}</span>
-          </div>
-        )}
-
-        {minChargeCents != null && minChargeCents > 0 && (
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">
-                💡 {t.howPaymentWorks}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">
-                {t.minimumCharge} ({partySize} {t.people}):
-              </span>
-              <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
-            </div>
-            {ticketTotal > 0 && (
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{t.prepaidOnline}:</span>
-                <span className="font-semibold text-green-700 dark:text-green-400">-{formatPrice(ticketTotal)}</span>
-              </div>
-            )}
-            <div className="border-t border-amber-200 dark:border-amber-700 my-1" />
-            <div className="flex justify-between text-xs">
-              <span className="font-semibold text-amber-800 dark:text-amber-200">{t.balanceAtVenue}:</span>
-              <span className="font-bold text-amber-800 dark:text-amber-200">{formatPrice(Math.max(0, minChargeCents - ticketTotal))}</span>
-            </div>
-            <p className="text-[9px] text-muted-foreground mt-1">{t.prepaidDeductedNote}</p>
           </div>
         )}
 
