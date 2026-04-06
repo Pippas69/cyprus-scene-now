@@ -36,12 +36,12 @@ const Login = () => {
   type LoginFormValues = z.infer<typeof loginSchema>;
 
   useEffect(() => {
-    if (stateMessage) {
-      toast.success(stateMessage, { duration: 5000 });
-      // Clear the state
+    const msg = location.state?.message;
+    if (msg) {
+      toast.success(msg, { duration: 5000 });
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [stateMessage, navigate, location.pathname]);
+  }, [location.state?.message, navigate, location.pathname]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
