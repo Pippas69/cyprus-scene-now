@@ -944,6 +944,41 @@ async function handleReservationQR(
     }
   }
 
+  // Fetch ticket credit for hybrid events
+  let ticketCreditCents = 0;
+  if (!isDirectReservation) {
+    try {
+      const { data: linkedOrders } = await supabaseAdmin
+        .from("ticket_orders")
+        .select("total_cents")
+        .eq("linked_reservation_id", reservation.id);
+      if (linkedOrders && linkedOrders.length > 0) {
+        ticketCreditCents = linkedOrders.reduce((sum: number, o: any) => sum + (o.total_cents || 0), 0);
+      }
+    } catch (e) {
+      logStep("Ticket credit lookup error (non-fatal)", { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  // Fetch seating tier min charge for accurate display
+  let seatingMinChargeCents = reservation.prepaid_min_charge_cents || 0;
+  if (!isDirectReservation && reservation.seating_type_id) {
+    try {
+      const { data: tiers } = await supabaseAdmin
+        .from("seating_type_tiers")
+        .select("min_people, max_people, prepaid_min_charge_cents")
+        .eq("seating_type_id", reservation.seating_type_id)
+        .order("min_people", { ascending: true });
+      if (tiers) {
+        const matched = tiers.find((t: any) => reservation.party_size >= t.min_people && reservation.party_size <= t.max_people);
+        const fallback = matched ?? [...tiers].reverse().find((t: any) => reservation.party_size >= t.min_people) ?? tiers[0];
+        if (fallback) seatingMinChargeCents = fallback.prepaid_min_charge_cents;
+      }
+    } catch (e) {
+      logStep("Seating tier lookup error (non-fatal)", { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   return new Response(JSON.stringify({
     success: true,
     message: m.checkedIn,
@@ -957,9 +992,10 @@ async function handleReservationQR(
       isDirectReservation,
       eventTitle: reservation.events?.title,
       businessName: reservation.businesses?.name,
-      prepaidMinChargeCents: reservation.prepaid_min_charge_cents,
+      prepaidMinChargeCents: seatingMinChargeCents,
       prepaidChargeStatus: reservation.prepaid_charge_status,
       seatingType: reservation.seating_type,
+      ticketCreditCents,
     }
   }), {
     status: 200,
