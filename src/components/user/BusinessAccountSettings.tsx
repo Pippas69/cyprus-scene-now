@@ -962,6 +962,30 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         </CardContent>
       </Card>
 
+      {/* Two-Factor Authentication */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
+            {language === 'el' ? 'Επαλήθευση σε 2 Βήματα (2FA)' : 'Two-Factor Authentication (2FA)'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {language === 'el' ? 'Λάβετε έναν 6ψήφιο κωδικό στο email σας κατά τη σύνδεση' : 'Receive a 6-digit code to your email when logging in'}
+              </p>
+            </div>
+            <Switch
+              checked={is2FAEnabled}
+              onCheckedChange={toggle2FA}
+              disabled={is2FALoading}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Preferences & Data - Combined Section */}
       <Card>
         <CardHeader className="p-4 sm:p-6">
