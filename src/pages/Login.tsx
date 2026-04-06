@@ -21,7 +21,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  const stateMessage = location.state?.message;
+  const [show2FA, setShow2FA] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<{ path: string; message: string } | null>(null);
   const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
