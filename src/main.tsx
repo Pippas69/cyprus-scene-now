@@ -1,6 +1,27 @@
 import { createRoot } from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import App from "./App.tsx";
 import "./index.css";
+
+// Initialize Sentry error monitoring (production only)
+if (!window.location.hostname.includes("localhost")) {
+  Sentry.init({
+    dsn: "https://37587bc14a1cd62502d394583ecca155@o4511171955982336.ingest.de.sentry.io/4511172429152336",
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    // Performance monitoring: capture 20% of transactions
+    tracesSampleRate: 0.2,
+    // Session replay: capture 5% normally, 100% on error
+    replaysSessionSampleRate: 0.05,
+    replaysOnErrorSampleRate: 1.0,
+    // Don't send PII by default
+    sendDefaultPii: false,
+    // Environment tag
+    environment: window.location.hostname.includes("preview--") ? "preview" : "production",
+  });
+}
 
 const PREVIEW_HOST_PATTERNS = ["lovableproject.com", "preview--"];
 const CHUNK_RECOVERY_KEY = "__fomo_chunk_recovery__";
