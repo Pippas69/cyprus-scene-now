@@ -225,10 +225,53 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const businessT = businessTranslations[language];
   const toastT = toastTranslations[language];
 
-  // Fetch business data on mount
+  // Fetch business data and 2FA status on mount
   useEffect(() => {
     fetchBusinessData();
+    fetch2FAStatus();
   }, [businessId]);
+
+  const fetch2FAStatus = async () => {
+    const { data } = await supabase
+      .from('user_2fa_settings')
+      .select('is_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIs2FAEnabled(data?.is_enabled ?? false);
+  };
+
+  const toggle2FA = async (enabled: boolean) => {
+    setIs2FALoading(true);
+    try {
+      if (enabled) {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .upsert({ user_id: userId, is_enabled: true }, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_2fa_settings')
+          .update({ is_enabled: false })
+          .eq('user_id', userId);
+        if (error) throw error;
+      }
+      setIs2FAEnabled(enabled);
+      toast({
+        title: toastT.success,
+        description: language === 'el'
+          ? (enabled ? 'Η επαλήθευση 2FA ενεργοποιήθηκε' : 'Η επαλήθευση 2FA απενεργοποιήθηκε')
+          : (enabled ? '2FA verification enabled' : '2FA verification disabled'),
+      });
+    } catch {
+      toast({
+        title: toastT.error,
+        description: language === 'el' ? 'Σφάλμα ενημέρωσης 2FA' : 'Error updating 2FA',
+        variant: 'destructive',
+      });
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
 
   // Auto-geocode when address or city changes
   useEffect(() => {
