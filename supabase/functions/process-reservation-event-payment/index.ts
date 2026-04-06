@@ -488,10 +488,10 @@ serve(async (req) => {
     const metadata = paymentIntent.metadata;
 
     if (metadata?.type === "reservation_event" && metadata?.reservation_id) {
-      // Legacy: old flow had a pre-created reservation
+      // Legacy: old flow had a pre-created reservation — cancel it
       await supabaseClient
         .from("reservations")
-        .update({ status: "cancelled", prepaid_charge_status: "failed" })
+        .update({ status: "cancelled" })
         .eq("id", metadata.reservation_id);
 
       logStep("Legacy reservation cancelled on payment failure", { reservationId: metadata.reservation_id });
