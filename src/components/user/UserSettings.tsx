@@ -38,6 +38,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const { changePassword, isChanging } = usePasswordChange();
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, permissionState, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications(userId);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [is2FALoading, setIs2FALoading] = useState(false);
   
   // Profile state
   const [profile, setProfile] = useState<any>(null);
