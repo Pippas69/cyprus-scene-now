@@ -760,7 +760,7 @@ export default function EventDetail() {
                 <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
-                        <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                        <span>{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                         <span className="text-[10px] font-medium text-destructive/80 ml-1">
                           {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                         </span>
@@ -780,7 +780,7 @@ export default function EventDetail() {
                       <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
                         <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                           <Ticket className="h-4 w-4 text-foreground shrink-0" />
-                          <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                          <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                         </CardContent>
                       </Card>
                       {!allTicketsSoldOut &&
@@ -961,7 +961,7 @@ export default function EventDetail() {
               <>
                     <div className="w-full h-10 rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
-                      <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                      <span>{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                       <span className="text-[10px] font-medium text-destructive/80 ml-1">
                         {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                       </span>
@@ -981,7 +981,7 @@ export default function EventDetail() {
                     <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
                       <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                         <Ticket className="h-4 w-4 text-foreground shrink-0" />
-                        <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                        <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                       </CardContent>
                     </Card>
                     {!allTicketsSoldOut &&

@@ -71,7 +71,7 @@ interface KalivaTicketReservationFlowProps {
 
 const translations = {
   el: {
-    title: "Εισιτήριο & Κράτηση",
+    title: "Κράτηση Θέσης",
     steps: {
       seating: "Τύπος Θέσης",
       details: "Στοιχεία Παρέας",
