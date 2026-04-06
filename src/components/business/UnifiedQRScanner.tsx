@@ -62,6 +62,7 @@ interface ScanResult {
     guestName?: string;
     reservationId?: string;
     checkedInCount?: number;
+    ticketCreditCents?: number;
     // Student
     verificationId?: string;
     redemptionId?: string;
@@ -748,12 +749,21 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
                                 <span className="font-semibold">{formatPrice(scanResult.details.prepaidMinChargeCents)}</span>
                               </div>
-                              {scanResult.details.prepaidChargeStatus === 'paid' && (
+                              {scanResult.details.ticketCreditCents && scanResult.details.ticketCreditCents > 0 && (
                                 <>
                                   <div className="flex justify-between text-xs">
-                                    <span className="text-green-600 dark:text-green-400">💳 {t.prepaidCredit}:</span>
-                                    <span className="font-medium text-green-600 dark:text-green-400">{formatPrice(scanResult.details.prepaidMinChargeCents)}</span>
+                                    <span className="text-green-600 dark:text-green-400">✅ {t.prepaidCredit}:</span>
+                                    <span className="font-medium text-green-600 dark:text-green-400">-{formatPrice(scanResult.details.ticketCreditCents)}</span>
                                   </div>
+                                  {(() => {
+                                    const balance = Math.max(0, scanResult.details.prepaidMinChargeCents! - scanResult.details.ticketCreditCents!);
+                                    return balance > 0 ? (
+                                      <div className="flex justify-between text-xs pt-1 border-t border-border">
+                                        <span className="font-semibold text-amber-600 dark:text-amber-400">🔥 {t.balanceAtVenue}:</span>
+                                        <span className="font-bold text-amber-600 dark:text-amber-400">{formatPrice(balance)}</span>
+                                      </div>
+                                    ) : null;
+                                  })()}
                                 </>
                               )}
                             </div>
