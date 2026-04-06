@@ -215,6 +215,8 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
       newPassword: 'New Password',
       confirmPassword: 'Confirm Password',
       changePassword: 'Change Password',
+      twoFactorAuth: 'Two-Factor Authentication (2FA)',
+      twoFactorDesc: 'Receive a 6-digit code to your email when logging in',
       notifications: 'Notifications',
       // Mandatory section
       emailConfirmationsTitle: 'Email for Confirmations',
