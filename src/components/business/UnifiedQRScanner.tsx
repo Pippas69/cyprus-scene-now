@@ -674,9 +674,9 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                       )}
 
                       {/* Reservation details */}
-                      {scanResult.qrType === 'reservation' && (
+                      {(scanResult.qrType === 'reservation' || scanResult.qrType === 'reservation_guest') && (
                         <>
-                          <div className="flex justify-center mb-2">
+                          <div className="flex justify-center mb-2 gap-2">
                             <Badge variant={scanResult.details.isDirectReservation ? 'secondary' : 'outline'}>
                               {scanResult.details.isDirectReservation ? t.directReservation : t.eventReservation}
                             </Badge>
@@ -684,6 +684,13 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                           {scanResult.details.eventTitle && (
                             <div className="bg-muted/50 p-2 rounded">
                               <p className="font-medium">{scanResult.details.eventTitle}</p>
+                            </div>
+                          )}
+                          {/* Guest name for per-guest QR */}
+                          {scanResult.qrType === 'reservation_guest' && scanResult.details.guestName && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'el' ? 'Καλεσμένος:' : 'Guest:'}</span>
+                              <span className="font-medium">{scanResult.details.guestName}</span>
                             </div>
                           )}
                           {scanResult.details.name && (
@@ -698,10 +705,34 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{scanResult.details.partySize}</span>
                             </div>
                           )}
+                          {/* Check-in counter */}
+                          {scanResult.details.checkedInCount !== undefined && scanResult.details.partySize && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t.checkins}:</span>
+                              <span className="font-medium text-green-600">{scanResult.details.checkedInCount}/{scanResult.details.partySize}</span>
+                            </div>
+                          )}
                           {scanResult.details.arrivalTime && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t.time}:</span>
                               <span className="font-medium">{scanResult.details.arrivalTime}</span>
+                            </div>
+                          )}
+                          {/* Financial data for event reservations (hybrid) */}
+                          {!scanResult.details.isDirectReservation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
+                                <span className="font-semibold">{formatPrice(scanResult.details.prepaidMinChargeCents)}</span>
+                              </div>
+                              {scanResult.details.prepaidChargeStatus === 'paid' && (
+                                <>
+                                  <div className="flex justify-between text-xs">
+                                    <span className="text-green-600 dark:text-green-400">💳 {t.prepaidCredit}:</span>
+                                    <span className="font-medium text-green-600 dark:text-green-400">{formatPrice(scanResult.details.prepaidMinChargeCents)}</span>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           )}
                         </>
