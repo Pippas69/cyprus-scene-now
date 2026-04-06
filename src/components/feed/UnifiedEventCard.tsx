@@ -171,7 +171,7 @@ export const UnifiedEventCard = ({
     if (entryType === 'free') return t.free;
     if (entryType === 'reservation') return t.reservation;
     if (entryType === 'ticket') return t.ticket;
-    if (entryType === 'ticket_and_reservation') return language === 'el' ? 'Εισιτήριο & Κράτηση' : 'Ticket & Reservation';
+    if (entryType === 'ticket_and_reservation') return language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat';
     return null;
   };
   

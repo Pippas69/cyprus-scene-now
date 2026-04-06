@@ -110,6 +110,7 @@ export default function EventDetail() {
   const [showKalivaFlow, setShowKalivaFlow] = useState(false);
   const [showTicketFlow, setShowTicketFlow] = useState(false);
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
+  const [lowestMinChargeCents, setLowestMinChargeCents] = useState<number | null>(null);
 
   // Show instances for performance/theatre events
   const [showInstances, setShowInstances] = useState<any[]>([]);
@@ -159,6 +160,26 @@ export default function EventDetail() {
 
     return () => window.clearInterval(refreshTimer);
   }, [eventId, event?.id, event?.event_type, isBusinessTicketLinked]);
+
+  // Fetch lowest min charge for hybrid events (for "Από €X" price badge)
+  useEffect(() => {
+    if (!eventId || !event || event.event_type !== 'ticket_and_reservation') return;
+    (async () => {
+      const { data: seatingTypes } = await supabase
+        .from('reservation_seating_types')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('paused', false);
+      if (!seatingTypes || seatingTypes.length === 0) return;
+      const { data: tiers } = await supabase
+        .from('seating_type_tiers')
+        .select('prepaid_min_charge_cents')
+        .in('seating_type_id', seatingTypes.map(s => s.id));
+      if (!tiers || tiers.length === 0) return;
+      const lowest = Math.min(...tiers.map(t => t.prepaid_min_charge_cents).filter(v => v > 0));
+      if (isFinite(lowest)) setLowestMinChargeCents(lowest);
+    })();
+  }, [eventId, event?.event_type]);
 
   const refreshCounts = async (targetEventId: string) => {
     const { data, error } = await supabase.rpc("get_event_rsvp_counts", {
@@ -651,11 +672,15 @@ export default function EventDetail() {
               {/* Title + Price at bottom of image */}
               <div className="absolute bottom-0 left-0 right-0 p-4 pb-3 sm:p-5 flex items-end justify-between gap-3">
                 <h1 className="text-white text-sm sm:text-lg lg:text-xl font-bold leading-tight line-clamp-2 flex-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{event.title}</h1>
-                {eventHasTickets && startingPriceCents !== null &&
-                <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                {isLinkedHybridEvent && lowestMinChargeCents ? (
+                  <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                    {language === 'el' ? 'Από' : 'From'} {formatPrice(lowestMinChargeCents)}
+                  </span>
+                ) : eventHasTickets && startingPriceCents !== null && !isLinkedHybridEvent ? (
+                  <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {formatPrice(startingPriceCents)}
                   </span>
-                }
+                ) : null}
               </div>
             </motion.div>
 
@@ -760,7 +785,7 @@ export default function EventDetail() {
                 <>
                       <div className="w-full h-9 text-sm rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                         <Ticket className="h-3.5 w-3.5" />
-                        <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                        <span>{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                         <span className="text-[10px] font-medium text-destructive/80 ml-1">
                           {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                         </span>
@@ -780,7 +805,7 @@ export default function EventDetail() {
                       <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
                         <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                           <Ticket className="h-4 w-4 text-foreground shrink-0" />
-                          <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                          <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                         </CardContent>
                       </Card>
                       {!allTicketsSoldOut &&
@@ -961,7 +986,7 @@ export default function EventDetail() {
               <>
                     <div className="w-full h-10 rounded-md flex items-center justify-start gap-2 bg-muted/60 border border-border text-muted-foreground cursor-default">
                       <Ticket className="h-4 w-4" />
-                      <span>{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                      <span>{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                       <span className="text-[10px] font-medium text-destructive/80 ml-1">
                         {language === 'el' ? 'Εξαντλήθηκε' : 'Sold out'}
                       </span>
@@ -981,7 +1006,7 @@ export default function EventDetail() {
                     <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowKalivaFlow(true)}>
                       <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                         <Ticket className="h-4 w-4 text-foreground shrink-0" />
-                        <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση & Εισιτήριο' : 'Book & Get Ticket'}</span>
+                        <span className="text-sm font-medium text-foreground">{language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat'}</span>
                       </CardContent>
                     </Card>
                     {!allTicketsSoldOut &&
