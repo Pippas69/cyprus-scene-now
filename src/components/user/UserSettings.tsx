@@ -56,6 +56,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
 
   useEffect(() => {
     fetchProfile();
+    fetch2FAStatus();
   }, [userId]);
 
   // Scroll to hash target (e.g., #student-verification)
