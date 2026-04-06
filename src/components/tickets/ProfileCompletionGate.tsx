@@ -50,7 +50,7 @@ const translations = {
 };
 
 interface ProfileCompletionGateProps {
-  onComplete: (profile: { firstName: string; lastName: string; phone: string; city: string }) => void;
+  onComplete: (profile: { firstName: string; lastName: string; phone: string; city: string; email: string }) => void;
 }
 
 export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ onComplete }) => {
@@ -127,11 +127,14 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
             ? `+357${parsedPhone.local}`
             : `+30${parsedPhone.local}`;
 
+          const authEmail = (await supabase.auth.getUser()).data.user?.email || '';
+
           onComplete({
             firstName: p.first_name,
             lastName: p.last_name,
             phone: normalizedPhone,
             city: profileCity,
+            email: authEmail,
           });
         } else {
           if (p.first_name) setFirstName(p.first_name);
@@ -206,11 +209,14 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
       if (error) throw error;
 
+      const authEmail = (await supabase.auth.getUser()).data.user?.email || '';
+
       onComplete({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         phone: fullPhone,
         city: selectedCity.trim(),
+        email: authEmail,
       });
     } catch (err: any) {
       if (err?.message === 'Not authenticated') {
