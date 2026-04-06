@@ -182,6 +182,7 @@ const getTypeIcon = (type: QRType) => {
     case 'offer':
       return <Percent className="h-5 w-5" />;
     case 'reservation':
+    case 'reservation_guest':
       return <Users className="h-5 w-5" />;
     case 'student':
       return <GraduationCap className="h-5 w-5" />;
