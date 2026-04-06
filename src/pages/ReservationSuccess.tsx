@@ -249,6 +249,7 @@ export const ReservationSuccess = () => {
             guestAge={hasGuestTickets ? currentTicket?.guest_age || undefined : undefined}
             confirmationCode={reservationData.confirmation_code}
             partySize={reservationData.party_size}
+            prepaidAmountCents={reservationData.prepaid_min_charge_cents}
             showSuccessMessage={!hasGuestTickets || currentGuestIndex === 0}
             onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
             viewDashboardLabel={text.viewReservations}

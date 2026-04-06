@@ -654,7 +654,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
       code: 'Κωδικός',
       viewQRCodes: 'Εμφάνιση QR Codes',
-      minPrepayment: 'Ελάχιστη προπληρωμή',
+      minCharge: 'Ελάχιστη χρέωση',
+      prepaidCredit: 'Προπληρωμένο',
+      balanceAtVenue: 'Υπόλοιπο στο venue',
       tickets: 'εισιτήρια'
     },
     en: {
@@ -680,7 +682,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noEventReservations: 'No reservations via events',
       code: 'Code',
       viewQRCodes: 'Show QR Codes',
-      minPrepayment: 'Min. prepayment',
+      minCharge: 'Min. charge',
+      prepaidCredit: 'Prepaid',
+      balanceAtVenue: 'Balance at venue',
       tickets: 'tickets'
     }
   };
@@ -767,17 +771,44 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           }
 
-          {/* Row 4: Payment info (event reservations only) */}
+          {/* Row 4: Payment info (event reservations only - hybrid) */}
           {isEvent && (() => {
             const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
             const ticketTotal = ticketOrderTotals[reservation.id] || 0;
+            const isHybrid = ticketTotal > 0;
             if (minCharge === 0 && ticketTotal === 0) return null;
+
+            if (isHybrid) {
+              const balance = Math.max(0, minCharge - ticketTotal);
+              return (
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-xs">
+                      {t.minCharge}: €{(minCharge / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-muted-foreground ml-5">
+                    <span className="text-xs text-green-600 dark:text-green-400">
+                      💳 {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  {balance > 0 && (
+                    <div className="flex items-center gap-1.5 ml-5">
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span className="text-xs">
-                  {t.minPrepayment}: €{(minCharge / 100).toFixed(2)}
-                  {ticketTotal > 0 && ` (${t.tickets}: €${(ticketTotal / 100).toFixed(2)})`}
+                  {t.minCharge}: €{(minCharge / 100).toFixed(2)}
                 </span>
               </div>
             );
