@@ -169,6 +169,9 @@ const translations = {
     pendingSync: 'Pending scans',
     syncNow: 'Sync Now',
     minimumCharge: 'Minimum Charge',
+    prepaidCredit: 'Prepaid',
+    balanceAtVenue: 'Balance',
+    checkins: 'Check-ins',
   },
 };
 
