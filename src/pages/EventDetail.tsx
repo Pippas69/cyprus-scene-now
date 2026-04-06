@@ -110,6 +110,7 @@ export default function EventDetail() {
   const [showKalivaFlow, setShowKalivaFlow] = useState(false);
   const [showTicketFlow, setShowTicketFlow] = useState(false);
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
+  const [lowestMinChargeCents, setLowestMinChargeCents] = useState<number | null>(null);
 
   // Show instances for performance/theatre events
   const [showInstances, setShowInstances] = useState<any[]>([]);
