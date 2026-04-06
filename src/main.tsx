@@ -121,4 +121,8 @@ cleanupRecoveryState();
 setupServiceWorkerHandling();
 setupChunkRecovery();
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <Sentry.ErrorBoundary fallback={<p>Something went wrong. Please refresh the page.</p>}>
+    <App />
+  </Sentry.ErrorBoundary>
+);
