@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
@@ -497,7 +498,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return updated;
     });
   };
-  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim());
+  const minAge = getMinAge(eventId);
+  const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
