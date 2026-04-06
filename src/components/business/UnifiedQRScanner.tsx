@@ -628,7 +628,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                           )}
                           {/* Linked Reservation Info */}
                           {scanResult.linkedReservation && (
-                            <div className="mt-2 p-2 rounded bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-1">
+                            <div className="mt-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-1.5">
                               <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-medium text-xs">
                                 <Users className="h-3.5 w-3.5" />
                                 {language === 'el' ? 'Κράτηση ενεργοποιήθηκε' : 'Reservation activated'}
@@ -637,12 +637,34 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
                                 <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
                               </div>
-                              {((scanResult.linkedReservation.minimumChargeCents ?? scanResult.linkedReservation.ticketCreditCents) || 0) > 0 && (
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground">{language === 'el' ? `${t.minimumCharge}:` : `${t.minimumCharge}:`}</span>
-                                  <span className="font-medium text-green-600">€{(((scanResult.linkedReservation.minimumChargeCents ?? scanResult.linkedReservation.ticketCreditCents) || 0) / 100).toFixed(2)}</span>
-                                </div>
-                              )}
+                              {(() => {
+                                const minCharge = scanResult.linkedReservation.minimumChargeCents || 0;
+                                const ticketCredit = scanResult.linkedReservation.ticketCreditCents || 0;
+                                const balance = Math.max(0, minCharge - ticketCredit);
+                                if (minCharge === 0 && ticketCredit === 0) return null;
+                                return (
+                                  <>
+                                    {minCharge > 0 && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-muted-foreground">{t.minimumCharge}:</span>
+                                        <span className="font-semibold">€{(minCharge / 100).toFixed(2)}</span>
+                                      </div>
+                                    )}
+                                    {ticketCredit > 0 && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-green-600 dark:text-green-400">💳 {t.prepaidCredit}:</span>
+                                        <span className="font-medium text-green-600 dark:text-green-400">-€{(ticketCredit / 100).toFixed(2)}</span>
+                                      </div>
+                                    )}
+                                    {balance > 0 && (
+                                      <div className="flex justify-between text-xs pt-1 border-t border-blue-200 dark:border-blue-700">
+                                        <span className="font-semibold text-amber-600 dark:text-amber-400">{t.balanceAtVenue}:</span>
+                                        <span className="font-bold text-amber-600 dark:text-amber-400">€{(balance / 100).toFixed(2)}</span>
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                           )}
                         </>
