@@ -42,18 +42,6 @@ const DashboardUser = () => {
       return;
     }
 
-    // Check if user is a business
-    const { data: profile } = await supabase.
-    from('profiles').
-    select('role').
-    eq('id', user.id).
-    single();
-
-    if (profile?.role === 'business') {
-      navigate('/dashboard-business');
-      return;
-    }
-
     setUser(user);
     setLoading(false);
   };
