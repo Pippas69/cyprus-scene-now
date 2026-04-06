@@ -22,7 +22,7 @@ interface UnifiedQRScannerProps {
   onScanComplete?: () => void;
 }
 
-type QRType = 'ticket' | 'offer' | 'reservation' | 'student' | 'unknown';
+type QRType = 'ticket' | 'offer' | 'reservation' | 'reservation_guest' | 'student' | 'unknown';
 
 interface ScanResult {
   success: boolean;
@@ -58,6 +58,10 @@ interface ScanResult {
     prepaidChargeStatus?: string;
     seatingType?: string;
     checkedInAt?: string;
+    // Guest-level check-in tracking
+    guestName?: string;
+    reservationId?: string;
+    checkedInCount?: number;
     // Student
     verificationId?: string;
     redemptionId?: string;
