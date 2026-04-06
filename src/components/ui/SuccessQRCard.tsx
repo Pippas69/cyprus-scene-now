@@ -330,27 +330,47 @@ export const SuccessQRCard = ({
       case "event_reservation": {
         const holderName = guestName || reservationName || (language === "el" ? "Εσύ" : "You");
         return (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{holderName}</p>
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{holderName}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">
+                  {reservationDate ? formatDate(reservationDate) : "-"}
+                </p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                <p className="text-xs font-semibold text-[#102b4a]">
+                  {reservationDate ? formatTime(reservationDate) : "-"}
+                </p>
+              </div>
             </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {reservationDate ? formatDate(reservationDate) : "-"}
-              </p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a]">
-                {reservationDate ? formatTime(reservationDate) : "-"}
-              </p>
-            </div>
-          </div>
+            {/* Prepaid credit indicator for hybrid events */}
+            {prepaidAmountCents && prepaidAmountCents > 0 && (
+              <div className="bg-[#ecfdf5] border border-[#a7f3d0] rounded-lg p-2.5 mb-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-[#065f46] uppercase tracking-wide">
+                    {language === "el" ? "💳 Προπληρωμένο" : "💳 Prepaid Credit"}
+                  </span>
+                  <span className="text-sm font-bold text-[#065f46]">
+                    {formatPrice(prepaidAmountCents)}
+                  </span>
+                </div>
+                <p className="text-[9px] text-[#047857] mt-1">
+                  {language === "el"
+                    ? "Αυτό το ποσό θα αφαιρεθεί από τον λογαριασμό σας στο venue."
+                    : "This amount will be deducted from your bill at the venue."}
+                </p>
+              </div>
+            )}
+          </>
         );
       }
     }

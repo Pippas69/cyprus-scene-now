@@ -654,7 +654,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noEventReservations: 'Δεν υπάρχουν κρατήσεις μέσω εκδηλώσεων',
       code: 'Κωδικός',
       viewQRCodes: 'Εμφάνιση QR Codes',
-      minPrepayment: 'Ελάχιστη προπληρωμή',
+      minCharge: 'Ελάχιστη χρέωση',
+      prepaidCredit: 'Προπληρωμένο',
+      balanceAtVenue: 'Υπόλοιπο στο venue',
       tickets: 'εισιτήρια'
     },
     en: {
@@ -680,7 +682,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       noEventReservations: 'No reservations via events',
       code: 'Code',
       viewQRCodes: 'Show QR Codes',
-      minPrepayment: 'Min. prepayment',
+      minCharge: 'Min. charge',
+      prepaidCredit: 'Prepaid',
+      balanceAtVenue: 'Balance at venue',
       tickets: 'tickets'
     }
   };
