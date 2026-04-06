@@ -1214,6 +1214,16 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
             guestName={hasTickets ? currentTicket?.guest_name : selectedEventGuestsReservation.reservation_name}
             guestAge={hasTickets ? (currentTicket?.guest_age || undefined) : undefined}
             reservationDate={selectedEventGuestsReservation.events?.start_at || undefined}
+            partySize={selectedEventGuestsReservation.party_size}
+            prepaidAmountCents={(() => {
+              const ticketTotal = ticketOrderTotals[selectedEventGuestsReservation.id] || 0;
+              return ticketTotal > 0 ? ticketTotal : undefined;
+            })()}
+            minChargeCents={(() => {
+              const ticketTotal = ticketOrderTotals[selectedEventGuestsReservation.id] || 0;
+              if (ticketTotal <= 0) return undefined;
+              return selectedEventGuestsReservation.prepaid_min_charge_cents || seatingMinCharge[selectedEventGuestsReservation.id] || undefined;
+            })()}
             showSuccessMessage={false}
             onClose={closeDialog} />
           

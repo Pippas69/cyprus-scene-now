@@ -283,7 +283,8 @@ export const ReservationSuccess = () => {
             guestAge={hasGuestTickets ? currentTicket?.guest_age || undefined : undefined}
             confirmationCode={reservationData.confirmation_code}
             partySize={reservationData.party_size}
-            prepaidAmountCents={reservationData.prepaid_min_charge_cents}
+            prepaidAmountCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.ticket_total_cents : reservationData.prepaid_min_charge_cents}
+            minChargeCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.seating_min_charge_cents : undefined}
             showSuccessMessage={!hasGuestTickets || currentGuestIndex === 0}
             onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
             viewDashboardLabel={text.viewReservations}
