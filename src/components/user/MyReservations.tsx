@@ -1102,7 +1102,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
           <div className="grid gap-3">
-              {eventReservations.map((r) => renderReservationCard(r, false))}
+              {eventReservations.map((r) => renderEventReservationCard(r, false))}
             </div>
           }
         </TabsContent>
@@ -1112,7 +1112,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
 
           <div className="grid gap-3">
-              {directReservations.map((r) => renderReservationCard(r, false))}
+              {directReservations.map((r) => renderDirectReservationCard(r, false))}
             </div>
           }
         </TabsContent>
@@ -1145,7 +1145,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
               <div className="grid gap-3">
-                    {pastEventReservations.map((r) => renderReservationCard(r, true))}
+                    {pastEventReservations.map((r) => renderEventReservationCard(r, true))}
                   </div>
               }
               </TabsContent>
@@ -1154,7 +1154,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
 
               <div className="grid gap-3">
-                    {pastDirectReservations.map((r) => renderReservationCard(r, true))}
+                    {pastDirectReservations.map((r) => renderDirectReservationCard(r, true))}
                   </div>
               }
               </TabsContent>
