@@ -121,6 +121,7 @@ const translations = {
     guestAge: "Ηλικία",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
     processingFee: "Έξοδα επεξεργασίας",
+    serviceFee: "Χρέωση υπηρεσίας",
     termsLabel: "Αποδέχομαι τους",
     termsLink: "Όρους Χρήσης",
     andThe: "και την",
