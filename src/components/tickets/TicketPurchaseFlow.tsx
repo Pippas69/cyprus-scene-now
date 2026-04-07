@@ -852,8 +852,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         ))}
       </div>
 
-      {/* Processing fee line */}
-      {!isFreeOrder && stripeFeesCents > 0 && (
+      {/* Fee breakdown */}
+      {!isFreeOrder && (stripeFeesCents > 0 || platformFeeCents > 0) && (
         <>
           <Separator />
           <div className="space-y-1 text-sm">
@@ -861,10 +861,18 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               <span className="text-muted-foreground">{t.ticketCost}</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.processingFee}</span>
-              <span>{formatPrice(stripeFeesCents)}</span>
-            </div>
+            {platformFeeCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t.serviceFee}</span>
+                <span>{formatPrice(platformFeeCents)}</span>
+              </div>
+            )}
+            {stripeFeesCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t.processingFee}</span>
+                <span>{formatPrice(stripeFeesCents)}</span>
+              </div>
+            )}
           </div>
         </>
       )}
