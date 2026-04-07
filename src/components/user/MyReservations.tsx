@@ -659,7 +659,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       minCharge: 'Ελάχιστη χρέωση',
       prepaidCredit: 'Προπληρωμένο',
       balanceAtVenue: 'Υπόλοιπο',
-      tickets: 'εισιτήρια'
+      tickets: 'εισιτήρια',
+      contactForCancel: 'Για ακύρωση, επικοινωνήστε με την επιχείρηση'
     },
     en: {
       title: 'My Reservations',
@@ -687,7 +688,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       minCharge: 'Min. charge',
       prepaidCredit: 'Prepaid',
       balanceAtVenue: 'Balance',
-      tickets: 'tickets'
+      tickets: 'tickets',
+      contactForCancel: 'For cancellation, please contact the venue'
     }
   };
 
