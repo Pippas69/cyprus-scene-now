@@ -184,9 +184,9 @@ Deno.serve(async (req) => {
         const metadata = session.metadata;
         logStep("Processing payment checkout", { metadata });
 
-        if (metadata?.type === "reservation_event" && metadata?.reservation_id) {
+        if (metadata?.type === "reservation_event") {
           logStep("Forwarding reservation event payment to dedicated processor", {
-            reservationId: metadata.reservation_id,
+            reservationId: metadata.reservation_id || "(new flow - created after payment)",
             sessionId: session.id,
           });
 
@@ -203,16 +203,13 @@ Deno.serve(async (req) => {
           if (!forwardResponse.ok) {
             const forwardText = await forwardResponse.text();
             logStep("Reservation event processor failed", {
-              reservationId: metadata.reservation_id,
               status: forwardResponse.status,
               body: forwardText,
             });
             throw new Error(`Reservation processor failed: ${forwardResponse.status}`);
           }
 
-          logStep("Reservation event payment processed successfully", {
-            reservationId: metadata.reservation_id,
-          });
+          logStep("Reservation event payment processed successfully");
         } else if (metadata?.type === "event_boost" && metadata?.boost_id) {
           const boostId = metadata.boost_id;
           const partialBudgetCents = parseInt(metadata?.partial_budget_cents || "0", 10);
