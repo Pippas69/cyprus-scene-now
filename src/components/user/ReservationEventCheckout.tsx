@@ -878,6 +878,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   {price ? formatPrice(subtotal) : '-'}
                 </span>
               </div>
+              {!isDeferredPayment && platformFeeCents > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t.serviceFee}</span>
+                  <span>{formatPrice(platformFeeCents)}</span>
+                </div>
+              )}
               {!isDeferredPayment && stripeFeesCents > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t.processingFee}</span>
