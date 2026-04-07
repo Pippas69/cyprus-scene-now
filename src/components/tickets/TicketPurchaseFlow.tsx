@@ -413,9 +413,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   };
 
   const subtotal = calculateTotal();
-  // Stripe fees: 2.9% + €0.25 (only for paid orders)
-  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
-  const total = subtotal + stripeFeesCents;
+  // Stripe fees: only shown/added to customer total if buyer pays
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  // Platform fixed fee: only shown/added if buyer pays fixed fee (ticket type)
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeTicketCents || 0) * totalTickets : 0;
+  const total = subtotal + stripeFeesCents + platformFeeCents;
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const minAge = getMinAge(eventId);
