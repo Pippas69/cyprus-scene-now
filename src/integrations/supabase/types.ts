@@ -614,6 +614,76 @@ export type Database = {
           },
         ]
       }
+      business_pricing_profiles: {
+        Row: {
+          business_id: string
+          commission_percent: number
+          created_at: string
+          fixed_fee_bearer: Database["public"]["Enums"]["fee_bearer"]
+          fixed_fee_hybrid_reservation_cents: number
+          fixed_fee_hybrid_ticket_cents: number
+          fixed_fee_reservation_cents: number
+          fixed_fee_ticket_cents: number
+          id: string
+          platform_revenue_enabled: boolean
+          revenue_model: Database["public"]["Enums"]["revenue_model"]
+          stripe_fee_bearer: Database["public"]["Enums"]["fee_bearer"]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          commission_percent?: number
+          created_at?: string
+          fixed_fee_bearer?: Database["public"]["Enums"]["fee_bearer"]
+          fixed_fee_hybrid_reservation_cents?: number
+          fixed_fee_hybrid_ticket_cents?: number
+          fixed_fee_reservation_cents?: number
+          fixed_fee_ticket_cents?: number
+          id?: string
+          platform_revenue_enabled?: boolean
+          revenue_model?: Database["public"]["Enums"]["revenue_model"]
+          stripe_fee_bearer?: Database["public"]["Enums"]["fee_bearer"]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          commission_percent?: number
+          created_at?: string
+          fixed_fee_bearer?: Database["public"]["Enums"]["fee_bearer"]
+          fixed_fee_hybrid_reservation_cents?: number
+          fixed_fee_hybrid_ticket_cents?: number
+          fixed_fee_reservation_cents?: number
+          fixed_fee_ticket_cents?: number
+          id?: string
+          platform_revenue_enabled?: boolean
+          revenue_model?: Database["public"]["Enums"]["revenue_model"]
+          stripe_fee_bearer?: Database["public"]["Enums"]["fee_bearer"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_pricing_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_pricing_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_pricing_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_stripe_details: {
         Row: {
           business_id: string
@@ -8217,9 +8287,11 @@ export type Database = {
         | "story"
       commission_status: "pending" | "invoiced" | "paid" | "disputed"
       entity_type: "event" | "business" | "discount"
+      fee_bearer: "buyer" | "business"
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
       post_visibility: "public" | "followers" | "private"
       price_tier: "free" | "low" | "medium" | "high"
+      revenue_model: "commission" | "fixed_fee"
       rsvp_status: "interested" | "going"
       subscription_status:
         | "active"
@@ -8387,9 +8459,11 @@ export const Constants = {
       ],
       commission_status: ["pending", "invoiced", "paid", "disputed"],
       entity_type: ["event", "business", "discount"],
+      fee_bearer: ["buyer", "business"],
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
       post_visibility: ["public", "followers", "private"],
       price_tier: ["free", "low", "medium", "high"],
+      revenue_model: ["commission", "fixed_fee"],
       rsvp_status: ["interested", "going"],
       subscription_status: [
         "active",
