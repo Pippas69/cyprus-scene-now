@@ -367,16 +367,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
+    setLoading(false);
 
+    // Load secondary data (QR codes, guests, charges) in background — no spinner
     const allRes = [...allUpcoming, ...allPast];
-    await Promise.all([
+    Promise.all([
       generateQRCodes(allRes),
       fetchGuestTickets(allRes, syntheticOrderToReservationId, syntheticReservationTotals),
       fetchDirectReservationGuests(allRes),
       fetchSeatingMinCharges(allRes),
-    ]);
-
-    setLoading(false);
+    ]).catch(console.error);
   };
 
   const fetchSeatingMinCharges = async (reservations: ReservationData[]) => {
