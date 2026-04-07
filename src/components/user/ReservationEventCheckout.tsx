@@ -26,6 +26,7 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface SeatingTypeOption {
   id: string;
@@ -56,6 +57,7 @@ interface ReservationEventCheckoutProps {
   userId?: string;
   language: 'el' | 'en';
   onSuccess?: () => void;
+  businessId?: string;
 }
 
 const translations = {
