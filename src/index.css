@@ -28,6 +28,17 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
+/* Mobile viewport fallback after external redirects (e.g. Stripe checkout) */
+@media screen and (max-width: 767px) {
+  .min-h-screen {
+    min-height: var(--app-dvh, 100dvh);
+  }
+
+  .h-screen {
+    height: var(--app-dvh, 100dvh);
+  }
+}
+
 /* Prevent iOS auto-zoom on input focus inside dialogs */
 @media screen and (max-width: 767px) {
   [role="dialog"] input,
