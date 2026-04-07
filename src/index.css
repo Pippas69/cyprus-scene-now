@@ -49,12 +49,16 @@ input[type="password"]::-ms-clear {
   }
 }
 
-/* Prevent iOS auto-zoom on input focus inside dialogs */
+/* Prevent iOS auto-zoom on focused fields inside mobile overlays */
 @media screen and (max-width: 767px) {
-  [role="dialog"] input,
-  [role="dialog"] textarea,
-  [role="dialog"] select {
+  [data-mobile-no-zoom="true"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  [data-mobile-no-zoom="true"] textarea,
+  [data-mobile-no-zoom="true"] select,
+  [data-mobile-no-zoom="true"] [contenteditable="true"],
+  [data-mobile-no-zoom="true"] [role="combobox"],
+  [data-mobile-no-zoom="true"] button[aria-haspopup="listbox"] {
     font-size: 16px !important;
+    line-height: 1.25rem;
   }
 }
 
@@ -63,18 +67,6 @@ input[type="password"]::-webkit-caps-lock-indicator {
   display: none !important;
   visibility: hidden;
   pointer-events: none;
-}
-
-/* Prevent iOS Safari auto-zoom on input focus — inputs must be ≥16px */
-@supports (-webkit-touch-callout: none) {
-  input, select, textarea, [contenteditable] {
-    font-size: 16px !important;
-  }
-}
-@media screen and (max-width: 768px) {
-  input, select, textarea, [contenteditable] {
-    font-size: 16px !important;
-  }
 }
 
 /* White autofill for light-themed sections (e.g. Waitlist) */
