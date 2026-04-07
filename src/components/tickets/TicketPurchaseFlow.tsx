@@ -26,6 +26,7 @@ import { isValidPhone } from "@/lib/phoneValidation";
 import { useProfileName } from "@/hooks/useProfileName";
 
 import { getMinAge } from "@/lib/ageRestrictions";
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface TicketTier {
   id: string;
