@@ -656,7 +656,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       viewQRCodes: 'Εμφάνιση QR Codes',
       minCharge: 'Ελάχιστη χρέωση',
       prepaidCredit: 'Προπληρωμένο',
-      balanceAtVenue: 'Υπόλοιπο στο venue',
+      balanceAtVenue: 'Υπόλοιπο',
       tickets: 'εισιτήρια'
     },
     en: {
@@ -684,7 +684,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       viewQRCodes: 'Show QR Codes',
       minCharge: 'Min. charge',
       prepaidCredit: 'Prepaid',
-      balanceAtVenue: 'Balance at venue',
+      balanceAtVenue: 'Balance',
       tickets: 'tickets'
     }
   };
@@ -788,18 +788,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                       {t.minCharge}: €{(minCharge / 100).toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground ml-5">
-                    <span className="text-xs text-green-600 dark:text-green-400">
-                      💳 {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-xs">
+                      {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                      {balance > 0 && (
+                        <span className="text-muted-foreground"> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
+                      )}
                     </span>
                   </div>
-                  {balance > 0 && (
-                    <div className="flex items-center gap-1.5 ml-5">
-                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                        → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
                 </div>
               );
             }
