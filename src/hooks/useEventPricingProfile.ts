@@ -70,6 +70,6 @@ export const useEventPricingProfile = (businessId: string | undefined) => {
       };
     },
     enabled: !!businessId,
-    staleTime: 30 * 1000, // 30s — react quickly to admin pricing changes
+    staleTime: 0, // Always fetch fresh — pricing changes must reflect instantly
   });
 };
