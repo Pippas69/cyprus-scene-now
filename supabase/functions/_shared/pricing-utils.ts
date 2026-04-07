@@ -166,31 +166,23 @@ export function calculatePricing(
   const customerPaysCents = subtotalCents + customerExtraCents;
 
   // 4. Calculate application_fee_amount (what Stripe keeps for the platform)
-  // This always includes:
-  // - ΦΟΜΟ revenue (if commission or if business pays fixed fee)
-  // - Stripe fees (if buyer pays, we collected them as line item, they go to platform)
-  let applicationFeeCents = 0;
-
-  if (profile.stripe_fee_bearer === 'buyer') {
-    // We collected Stripe fees from the buyer — they go into application_fee
-    applicationFeeCents += stripeFeeCents;
-  }
+  // With Stripe Connect destination charges, the Stripe processing fee is
+  // deducted from the platform's share. Therefore, application_fee_amount
+  // MUST always include the Stripe fee so the platform can cover it.
+  // 
+  // - Buyer pays Stripe fees: fee is collected as a line item AND included
+  //   in application_fee (platform breaks even on Stripe fees)
+  // - Business pays Stripe fees: fee is NOT a line item but IS included
+  //   in application_fee (deducted from business's share via application_fee)
+  let applicationFeeCents = stripeFeeCents; // Always include Stripe fee
 
   if (profile.platform_revenue_enabled) {
-    if (profile.revenue_model === 'commission') {
-      // Commission is always deducted from what business receives
-      applicationFeeCents += fomoRevenueCents;
-    } else if (profile.fixed_fee_bearer === 'buyer') {
-      // We collected the fixed fee from buyer as a line item — it goes to platform
-      applicationFeeCents += fomoRevenueCents;
-    } else {
-      // Business pays fixed fee — deducted from their share
-      applicationFeeCents += fomoRevenueCents;
-    }
+    // ΦΟΜΟ revenue is always part of application_fee regardless of model
+    applicationFeeCents += fomoRevenueCents;
   }
 
-  // Business receives = total charged - application_fee - Stripe's own cut
-  // (Stripe takes its cut from the connected account when business pays fees)
+  // Business receives = total charged - application_fee
+  // (Stripe deducts its processing fee from the platform's portion of application_fee)
   const businessReceivesCents = customerPaysCents - applicationFeeCents;
 
   console.log(`[PRICING] Calculation result`, JSON.stringify({
