@@ -459,8 +459,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const ticketTier = getTicketTier();
   const ticketPricePerPerson = ticketTier?.price_cents || 0;
   const ticketTotal = ticketPricePerPerson * partySize;
-  const stripeFeesCents = ticketTotal > 0 ? Math.ceil(ticketTotal * 0.029 + 25) : 0;
-  const total = ticketTotal + stripeFeesCents;
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = ticketTotal > 0 && buyerPaysStripe ? Math.ceil(ticketTotal * 0.029 + 25) : 0;
+  // Platform fixed fee for hybrid: per ticket + per reservation
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee
+    ? ((pricingDisplay?.fixedFeeHybridTicketCents || 0) * partySize) + (pricingDisplay?.fixedFeeHybridReservationCents || 0)
+    : 0;
+  const total = ticketTotal + stripeFeesCents + platformFeeCents;
   const isFreeOrder = ticketTotal === 0;
 
   // Validation
