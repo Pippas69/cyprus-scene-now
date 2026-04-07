@@ -63,6 +63,7 @@ interface ReservationData {
     end_at: string;
     location: string;
     event_type: string | null;
+    cover_image_url: string | null;
     businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
@@ -175,7 +176,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
@@ -188,7 +189,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
@@ -224,7 +225,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           total_cents,
           created_at,
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
@@ -311,6 +312,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 end_at: order.events.end_at,
                 location: order.events.location,
                 event_type: order.events.event_type,
+                cover_image_url: order.events.cover_image_url || null,
                 businesses: order.events.businesses,
               }
             : null,
@@ -657,7 +659,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       minCharge: 'Ελάχιστη χρέωση',
       prepaidCredit: 'Προπληρωμένο',
       balanceAtVenue: 'Υπόλοιπο',
-      tickets: 'εισιτήρια'
+      tickets: 'εισιτήρια',
+      contactForCancel: 'Για ακύρωση, επικοινωνήστε με την επιχείρηση'
     },
     en: {
       title: 'My Reservations',
@@ -685,7 +688,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       minCharge: 'Min. charge',
       prepaidCredit: 'Prepaid',
       balanceAtVenue: 'Balance',
-      tickets: 'tickets'
+      tickets: 'tickets',
+      contactForCancel: 'For cancellation, please contact the venue'
     }
   };
 
@@ -732,20 +736,186 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     return language === 'el' ? `${day} ${month}, ${time}` : `${month} ${day}, ${time}`;
   };
 
-  // ============= RESERVATION CARD (shared for direct & event) =============
-  const renderReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
-    const isEvent = !!reservation.events;
-    const businessInfo = isEvent ? reservation.events?.businesses : reservation.businesses;
-    const dateTime = reservation.preferred_time || reservation.events?.start_at;
-    const location = isEvent ? reservation.events?.location : reservation.businesses?.address;
-    const title = isEvent ? reservation.events?.title : t.tableReservation;
+  // ============= EVENT RESERVATION CARD (ticket-style design) =============
+  const renderEventReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
+    const businessInfo = reservation.events?.businesses;
+    const dateTime = reservation.events?.start_at;
+    const location = reservation.events?.location;
+    const title = reservation.events?.title;
+    const coverImage = reservation.events?.cover_image_url;
+
+    const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
+    const ticketTotal = ticketOrderTotals[reservation.id] || 0;
+    const isHybrid = ticketTotal > 0;
+
+    return (
+      <Card key={reservation.id} className={`overflow-hidden hover:shadow-md transition-shadow ${isPast ? 'opacity-60' : ''}`}>
+        {/* Cover image like MyTickets */}
+        {coverImage && (
+          <div className="relative w-full aspect-[3/2] overflow-hidden">
+            <img
+              src={coverImage}
+              alt={title || ''}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {/* Title */}
+              <h3 className="font-semibold truncate">{title}</h3>
+
+              {/* Business name */}
+              {businessInfo && (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {businessInfo.logo_url && (
+                    <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
+                  )}
+                  <p className="text-xs text-muted-foreground">{businessInfo.name}</p>
+                </div>
+              )}
+
+              {/* Date/Time + Party size */}
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                {dateTime && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {formatDateTime(dateTime)}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {reservation.party_size} {t.people}
+                </span>
+              </div>
+
+              {/* Location */}
+              {location && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 mt-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <MapPin className="h-3 w-3" />
+                  <span className="truncate">{location}</span>
+                </a>
+              )}
+
+              {/* Payment info */}
+              {(minCharge > 0 || ticketTotal > 0) && (
+                <div className="mt-2 space-y-0.5">
+                  {minCharge > 0 && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span className="text-xs">
+                        {t.minCharge}: €{(minCharge / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {isHybrid && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span className="text-xs">
+                        {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                        {(() => {
+                          const balance = Math.max(0, minCharge - ticketTotal);
+                          return balance > 0 ? (
+                            <span className="text-muted-foreground"> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
+                          ) : null;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Deferred Payment: Confirm Attendance */}
+              {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                      ⏰ {language === 'el' ? 'Επιβεβαίωση σε' : 'Confirm in'}: {formatDeadlineCountdown(reservation.deferred_confirmation_deadline)}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full h-8 text-xs"
+                    disabled={confirmingDeferredId === reservation.id}
+                    onClick={() => handleConfirmDeferred(reservation.id)}
+                  >
+                    {confirmingDeferredId === reservation.id
+                      ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                      : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
+                    }
+                  </Button>
+                </div>
+              )}
+
+              {/* Deferred Payment: Payment Failed */}
+              {!isPast && reservation.deferred_status === 'payment_failed' && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-2.5 space-y-2 mt-2">
+                  <span className="text-xs font-medium text-destructive">
+                    {language === 'el' ? '❌ Η κάρτα σας απορρίφθηκε. Δοκιμάστε ξανά.' : '❌ Your card was declined. Please retry.'}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="w-full h-8 text-xs"
+                    disabled={confirmingDeferredId === reservation.id}
+                    onClick={() => handleConfirmDeferred(reservation.id)}
+                  >
+                    {confirmingDeferredId === reservation.id
+                      ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                      : (language === 'el' ? '🔄 Δοκιμάστε Ξανά' : '🔄 Retry Payment')
+                    }
+                  </Button>
+                </div>
+              )}
+
+              {/* Reservation-only event: cancellation note */}
+              {!isHybrid && !isPast && (
+                <p className="text-[10px] text-muted-foreground mt-2 italic">
+                  {t.contactForCancel}
+                </p>
+              )}
+            </div>
+
+            {/* Right side: QR button only (no status badge, no cancel) */}
+            <div className="flex flex-col items-end gap-2">
+              {!isPast && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setCurrentEventGuestIndex(0);
+                    setSelectedEventGuestsReservation(reservation);
+                  }}
+                >
+                  <QrCode className="h-4 w-4 mr-1" />
+                  {t.viewQRCodes}
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // ============= DIRECT RESERVATION CARD (unchanged design) =============
+  const renderDirectReservationCard = (reservation: ReservationData, isPast: boolean = false) => {
+    const businessInfo = reservation.businesses;
+    const dateTime = reservation.preferred_time;
+    const location = reservation.businesses?.address;
 
     return (
       <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
         <CardContent className="p-4 space-y-0.5">
           {/* Row 1: Title + Status */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h4 className="font-semibold text-base line-clamp-1">{title}</h4>
+            <h4 className="font-semibold text-base line-clamp-1">{t.tableReservation}</h4>
             {getStatusBadge(reservation)}
           </div>
 
@@ -771,46 +941,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           }
 
-          {/* Row 4: Payment info (event reservations only - hybrid) */}
-          {isEvent && (() => {
-            const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
-            const ticketTotal = ticketOrderTotals[reservation.id] || 0;
-            const isHybrid = ticketTotal > 0;
-            if (minCharge === 0 && ticketTotal === 0) return null;
-
-            if (isHybrid) {
-              const balance = Math.max(0, minCharge - ticketTotal);
-              return (
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <span className="text-xs">
-                      {t.minCharge}: €{(minCharge / 100).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <span className="text-xs">
-                      {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
-                      {balance > 0 && (
-                        <span className="text-muted-foreground"> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="text-xs">
-                  {t.minCharge}: €{(minCharge / 100).toFixed(2)}
-                </span>
-              </div>
-            );
-          })()}
-
           {/* Deferred Payment: Confirm Attendance */}
           {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
             <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2 mt-1">
@@ -833,7 +963,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             </div>
           )}
 
-          {/* Deferred Payment: Payment Failed - Retry */}
+          {/* Deferred Payment: Payment Failed */}
           {!isPast && reservation.deferred_status === 'payment_failed' && (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-2.5 space-y-2 mt-1">
               <span className="text-xs font-medium text-destructive">
@@ -856,56 +986,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Row 5: Location */}
           {location && (
-          isEvent ?
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-            
-                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="text-xs truncate">{location}</span>
-              </a> :
-
           <button
             onClick={() => reservation.business_id && navigate(`/xartis?business=${reservation.business_id}&src=dashboard_user`)}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
-            
                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
                 <span className="text-xs truncate">{location}</span>
               </button>)
-
           }
 
-          {/* Event reservations: always show "Εμφάνιση QR Codes" button */}
-          {!isPast && !!reservation.events &&
-          <div className="flex items-center justify-between gap-1.5 mt-2">
-              <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs px-3"
-              onClick={() => {
-                setCurrentEventGuestIndex(0);
-                setSelectedEventGuestsReservation(reservation);
-              }}>
-                <QrCode className="h-3.5 w-3.5 mr-1.5" />
-                {t.viewQRCodes}
-              </Button>
-              {(reservation.status === 'pending' || reservation.status === 'accepted') &&
-            <Button
-              size="sm"
-              variant="outline"
-className="h-8 text-xs px-3 text-destructive shrink-0"
-              onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
-                  {t.cancelReservation}
-                </Button>
-            }
-            </div>
-          }
-
-          {/* Direct reservations with guest QR codes: single CTA */}
-          {!isPast && !reservation.events && directGuests[reservation.id]?.length > 0 &&
+          {/* Direct reservations with guest QR codes */}
+          {!isPast && directGuests[reservation.id]?.length > 0 &&
           <div className="flex items-center justify-between gap-1.5 mt-2">
               <Button
               type="button"
@@ -923,7 +1013,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
             <Button
               size="sm"
               variant="outline"
-className="h-8 text-xs px-3 text-destructive shrink-0"
+              className="h-8 text-xs px-3 text-destructive shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
                   {t.cancelReservation}
                 </Button>
@@ -932,7 +1022,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
           }
 
           {/* QR Code + Cancel (fallback for direct reservations without guests) */}
-          {!isPast && !reservation.events && !directGuests[reservation.id]?.length &&
+          {!isPast && !directGuests[reservation.id]?.length &&
           <div className="flex items-center gap-1.5 mt-2">
               {reservation.confirmation_code &&
             <button
@@ -953,7 +1043,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
             <Button
               size="sm"
               variant="outline"
-className="h-8 text-xs px-3 text-destructive shrink-0"
+              className="h-8 text-xs px-3 text-destructive shrink-0"
               onClick={() => setCancelDialog({ open: true, reservationId: reservation.id })}>
                   {t.cancelReservation}
                 </Button>
@@ -1012,7 +1102,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
           <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
           <div className="grid gap-3">
-              {eventReservations.map((r) => renderReservationCard(r, false))}
+              {eventReservations.map((r) => renderEventReservationCard(r, false))}
             </div>
           }
         </TabsContent>
@@ -1022,7 +1112,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
           <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
 
           <div className="grid gap-3">
-              {directReservations.map((r) => renderReservationCard(r, false))}
+              {directReservations.map((r) => renderDirectReservationCard(r, false))}
             </div>
           }
         </TabsContent>
@@ -1055,7 +1145,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
               <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
               <div className="grid gap-3">
-                    {pastEventReservations.map((r) => renderReservationCard(r, true))}
+                    {pastEventReservations.map((r) => renderEventReservationCard(r, true))}
                   </div>
               }
               </TabsContent>
@@ -1064,7 +1154,7 @@ className="h-8 text-xs px-3 text-destructive shrink-0"
               <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
 
               <div className="grid gap-3">
-                    {pastDirectReservations.map((r) => renderReservationCard(r, true))}
+                    {pastDirectReservations.map((r) => renderDirectReservationCard(r, true))}
                   </div>
               }
               </TabsContent>
