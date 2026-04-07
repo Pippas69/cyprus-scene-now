@@ -1037,7 +1037,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             <DialogTitle className="text-sm font-bold">{t.title}</DialogTitle>
             <DialogDescription className="text-xs">{eventTitle}</DialogDescription>
           </DialogHeader>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-xs [&_textarea]:!text-xs">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-[16px] [&_textarea]:!text-[16px] md:[&_input]:!text-xs md:[&_textarea]:!text-xs">
             {content}
           </div>
         </DialogContent>
