@@ -193,6 +193,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   showInstanceId: propShowInstanceId,
   eventDate,
   showInstances,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
