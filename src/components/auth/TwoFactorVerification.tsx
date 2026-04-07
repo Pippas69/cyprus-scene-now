@@ -44,25 +44,28 @@ export const TwoFactorVerification = ({ onSuccess, onCancel }: TwoFactorVerifica
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleVerify = async () => {
     if (code.length !== 6) return;
     setIsVerifying(true);
+    setErrorMessage("");
     try {
       const { data, error } = await supabase.functions.invoke("verify-2fa-code", {
         body: { code },
       });
 
-      if (error) throw error;
-
       if (data?.success) {
         onSuccess();
-      } else {
-        toast.error(t.invalidCode);
-        setCode("");
+        return;
       }
+
+      // Invalid code — show inline error, don't crash
+      setErrorMessage(t.invalidCode);
+      setCode("");
     } catch {
-      toast.error(t.error);
+      setErrorMessage(t.error);
+      setCode("");
     } finally {
       setIsVerifying(false);
     }
@@ -101,8 +104,8 @@ export const TwoFactorVerification = ({ onSuccess, onCancel }: TwoFactorVerifica
           <p className="text-sm text-muted-foreground">{t.subtitle}</p>
         </div>
 
-        <div className="flex justify-center">
-          <InputOTP maxLength={6} value={code} onChange={setCode}>
+        <div className="flex flex-col items-center gap-2">
+          <InputOTP maxLength={6} value={code} onChange={(val) => { setCode(val); setErrorMessage(""); }}>
             <InputOTPGroup>
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
@@ -112,6 +115,9 @@ export const TwoFactorVerification = ({ onSuccess, onCancel }: TwoFactorVerifica
               <InputOTPSlot index={5} />
             </InputOTPGroup>
           </InputOTP>
+          {errorMessage && (
+            <p className="text-sm text-destructive font-medium animate-in fade-in">{errorMessage}</p>
+          )}
         </div>
 
         <div className="space-y-3">
