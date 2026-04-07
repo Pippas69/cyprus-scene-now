@@ -1100,6 +1100,7 @@ export default function EventDetail() {
         reservationHoursTo={event.reservation_hours_to}
         userId={user?.id}
         language={language}
+        businessId={event.businesses?.id}
         onSuccess={() => {
           setShowReservationCheckout(false);
           toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
@@ -1114,6 +1115,7 @@ export default function EventDetail() {
         eventId={event.id}
         eventTitle={event.title}
         ticketTiers={reservationFlowTicketTiers}
+        businessId={event.businesses?.id}
         onSuccess={(orderId, isFree) => {
           setShowKalivaFlow(false);
           if (isFree) {
@@ -1131,6 +1133,7 @@ export default function EventDetail() {
         eventTitle={event.title}
         ticketTiers={walkInTicketTiers}
         showInstances={showInstances.length > 0 ? showInstances : undefined}
+        businessId={event.businesses?.id}
         onSuccess={(orderId, isFree) => {
           setShowTicketFlow(false);
           if (isFree) {
