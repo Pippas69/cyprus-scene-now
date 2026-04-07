@@ -73,6 +73,8 @@ export const useBusinessPricingProfile = (businessId: string | null) => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['business-pricing-profile', variables.business_id] });
+      queryClient.invalidateQueries({ queryKey: ['all-business-pricing-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['event-pricing-display'] });
       toast.success('Ρυθμίσεις τιμολόγησης αποθηκεύτηκαν');
     },
     onError: (error: Error) => {
