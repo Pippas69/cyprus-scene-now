@@ -25,6 +25,7 @@ import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface SeatingTypeOption {
   id: string;
@@ -64,6 +65,7 @@ interface KalivaTicketReservationFlowProps {
   eventTitle: string;
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
+  businessId?: string;
 }
 
 const translations = {
