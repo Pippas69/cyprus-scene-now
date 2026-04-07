@@ -63,6 +63,7 @@ interface ReservationData {
     end_at: string;
     location: string;
     event_type: string | null;
+    cover_image_url: string | null;
     businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
@@ -175,7 +176,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
@@ -188,7 +189,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
@@ -224,7 +225,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           total_cents,
           created_at,
           events!inner(
-            id, title, start_at, end_at, location, event_type,
+            id, title, start_at, end_at, location, event_type, cover_image_url,
             businesses(id, name, logo_url)
           )
         `)
