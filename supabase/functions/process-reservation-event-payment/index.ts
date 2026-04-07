@@ -179,40 +179,38 @@ serve(async (req) => {
 
       logStep("Reservation confirmed", { reservationId });
 
-      // Record commission
-      if (paidAmountCents > 0 && reservation.events?.businesses?.id) {
+      // Record platform revenue in commission_ledger using pricing profile data from checkout metadata
+      const fomoRevenueCents = parseInt(metadata?.fomo_revenue_cents || "0", 10);
+      if (fomoRevenueCents > 0 && reservation.events?.businesses?.id) {
         try {
           const resBusinessId = reservation.events.businesses.id;
-          let commissionPercent = 12;
-          const { data: subscription } = await supabaseClient
-            .from("business_subscriptions")
-            .select("plan_id, subscription_plans(slug)")
-            .eq("business_id", resBusinessId)
-            .eq("status", "active")
-            .single();
+          const revenueModel = metadata?.revenue_model || 'commission';
+          const commissionPercent = parseFloat(metadata?.commission_percent || "0");
+          
+          // For commission model, use the percentage; for fixed_fee, store 0% with the flat amount
+          const ledgerPercent = revenueModel === 'commission' ? commissionPercent : 0;
 
-          if (subscription?.subscription_plans) {
-            const planSlug = (subscription.subscription_plans as any).slug;
-            const rateMap: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
-            commissionPercent = rateMap[planSlug] ?? 12;
-          }
-
-          const commissionAmountCents = Math.round(paidAmountCents * commissionPercent / 100);
           const { error: ledgerError } = await supabaseClient
             .from("commission_ledger")
             .insert({
               source_type: 'reservation',
               business_id: resBusinessId,
               reservation_id: reservationId,
-              original_price_cents: paidAmountCents,
-              commission_percent: commissionPercent,
-              commission_amount_cents: commissionAmountCents,
+              original_price_cents: parseInt(metadata?.prepaid_amount_cents || String(paidAmountCents), 10),
+              commission_percent: ledgerPercent,
+              commission_amount_cents: fomoRevenueCents,
               status: 'pending',
               redeemed_at: new Date().toISOString(),
             });
 
           if (ledgerError) {
             logStep("Commission ledger insert error", { error: ledgerError.message });
+          } else {
+            logStep("Commission recorded in ledger", { 
+              amount: fomoRevenueCents, 
+              businessId: resBusinessId,
+              model: revenueModel,
+            });
           }
         } catch (commErr) {
           logStep("Commission ledger error", { error: commErr instanceof Error ? commErr.message : String(commErr) });

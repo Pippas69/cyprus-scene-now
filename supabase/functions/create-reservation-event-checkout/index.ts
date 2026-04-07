@@ -234,6 +234,12 @@ serve(async (req) => {
       phone_number: phone_number || "",
       preferred_time: preferred_time || "",
       special_requests: special_requests || "",
+      // Pricing profile data for commission ledger
+      fomo_revenue_cents: pricing.fomoRevenueCents.toString(),
+      stripe_fee_cents: pricing.stripeFeeCents.toString(),
+      application_fee_cents: pricing.applicationFeeCents.toString(),
+      revenue_model: pricingProfile.revenue_model,
+      commission_percent: pricingProfile.commission_percent.toString(),
     };
 
     // Serialize guests into metadata (chunked if needed)
