@@ -426,8 +426,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   const price = getPrice();
   const subtotal = price || 0;
-  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
-  const total = subtotal + stripeFeesCents;
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  // Platform fixed fee for reservation type
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeReservationCents || 0) : 0;
+  const total = subtotal + stripeFeesCents + platformFeeCents;
 
   // Handle checkout
   const handleCheckout = async () => {
