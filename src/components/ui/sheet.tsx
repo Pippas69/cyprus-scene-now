@@ -70,6 +70,7 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
         <SheetOverlay />
         <SheetPrimitive.Content 
           ref={ref} 
+          data-mobile-no-zoom="true"
           className={cn(sheetVariants({ side }), className)} 
           {...props}
         >

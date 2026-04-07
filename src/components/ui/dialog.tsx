@@ -38,6 +38,7 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      data-mobile-no-zoom="true"
       className={cn(
         "dialog-content fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-premium sm:rounded-xl",
         "[&_input]:!text-base [&_textarea]:!text-base [&_select]:!text-base md:[&_input]:!text-sm md:[&_textarea]:!text-sm md:[&_select]:!text-sm",
