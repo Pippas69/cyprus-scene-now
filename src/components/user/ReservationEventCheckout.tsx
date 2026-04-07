@@ -26,6 +26,7 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface SeatingTypeOption {
   id: string;
@@ -56,6 +57,7 @@ interface ReservationEventCheckoutProps {
   userId?: string;
   language: 'el' | 'en';
   onSuccess?: () => void;
+  businessId?: string;
 }
 
 const translations = {
@@ -119,6 +121,7 @@ const translations = {
     guestAge: "Ηλικία",
     fillAllGuests: "Συμπληρώστε όνομα και ηλικία για όλους τους καλεσμένους",
     processingFee: "Έξοδα επεξεργασίας",
+    serviceFee: "Χρέωση υπηρεσίας",
     termsLabel: "Αποδέχομαι τους",
     termsLink: "Όρους Χρήσης",
     andThe: "και την",
@@ -185,6 +188,7 @@ const translations = {
     guestAge: "Age",
     fillAllGuests: "Please fill in name and age for all guests",
     processingFee: "Processing fee",
+    serviceFee: "Service fee",
     termsLabel: "I accept the",
     termsLink: "Terms of Service",
     andThe: "and the",
@@ -221,10 +225,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   userId,
   language,
   onSuccess,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -420,8 +426,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   const price = getPrice();
   const subtotal = price || 0;
-  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
-  const total = subtotal + stripeFeesCents;
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  // Platform fixed fee for reservation type
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeReservationCents || 0) : 0;
+  const total = subtotal + stripeFeesCents + platformFeeCents;
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -868,6 +878,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   {price ? formatPrice(subtotal) : '-'}
                 </span>
               </div>
+              {!isDeferredPayment && platformFeeCents > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t.serviceFee}</span>
+                  <span>{formatPrice(platformFeeCents)}</span>
+                </div>
+              )}
               {!isDeferredPayment && stripeFeesCents > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t.processingFee}</span>

@@ -25,6 +25,7 @@ import { getMinAge } from "@/lib/ageRestrictions";
 import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface SeatingTypeOption {
   id: string;
@@ -64,6 +65,7 @@ interface KalivaTicketReservationFlowProps {
   eventTitle: string;
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
+  businessId?: string;
 }
 
 const translations = {
@@ -124,6 +126,7 @@ const translations = {
     specialRequests: "Ειδικά αιτήματα",
     reservationName: "Όνομα Κράτησης",
     processingFee: "Έξοδα επεξεργασίας",
+    serviceFee: "Χρέωση υπηρεσίας",
     termsLabel: "Αποδέχομαι τους",
     termsLink: "Όρους Χρήσης",
     andThe: "και την",
@@ -187,6 +190,7 @@ const translations = {
     specialRequests: "Special requests",
     reservationName: "Reservation Name",
     processingFee: "Processing fee",
+    serviceFee: "Service fee",
     termsLabel: "I accept the",
     termsLink: "Terms of Service",
     andThe: "and the",
@@ -216,10 +220,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   eventTitle,
   ticketTiers,
   onSuccess,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // State
@@ -453,8 +459,14 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const ticketTier = getTicketTier();
   const ticketPricePerPerson = ticketTier?.price_cents || 0;
   const ticketTotal = ticketPricePerPerson * partySize;
-  const stripeFeesCents = ticketTotal > 0 ? Math.ceil(ticketTotal * 0.029 + 25) : 0;
-  const total = ticketTotal + stripeFeesCents;
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = ticketTotal > 0 && buyerPaysStripe ? Math.ceil(ticketTotal * 0.029 + 25) : 0;
+  // Platform fixed fee for hybrid: per ticket + per reservation
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee
+    ? ((pricingDisplay?.fixedFeeHybridTicketCents || 0) * partySize) + (pricingDisplay?.fixedFeeHybridReservationCents || 0)
+    : 0;
+  const total = ticketTotal + stripeFeesCents + platformFeeCents;
   const isFreeOrder = ticketTotal === 0;
 
   // Validation
@@ -849,6 +861,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
               {t.ticketCost} ({partySize} × {formatPrice(ticketPricePerPerson)})
             </span>
             <span className="font-medium">{formatPrice(ticketTotal)}</span>
+          </div>
+        )}
+
+        {!isFreeOrder && platformFeeCents > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{t.serviceFee}</span>
+            <span className="font-medium">{formatPrice(platformFeeCents)}</span>
           </div>
         )}
 

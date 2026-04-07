@@ -26,6 +26,7 @@ import { isValidPhone } from "@/lib/phoneValidation";
 import { useProfileName } from "@/hooks/useProfileName";
 
 import { getMinAge } from "@/lib/ageRestrictions";
+import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 
 interface TicketTier {
   id: string;
@@ -66,6 +67,7 @@ interface TicketPurchaseFlowProps {
   showInstanceId?: string;
   eventDate?: string;
   showInstances?: ShowInstanceOption[];
+  businessId?: string;
 }
 
 const translations = {
@@ -109,6 +111,7 @@ const translations = {
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
     processingFee: "Έξοδα επεξεργασίας",
+    serviceFee: "Χρέωση υπηρεσίας",
     accountContact: "Στοιχεία λογαριασμού",
     autoFromAccount: "Αυτόματα από τον λογαριασμό σας",
     selectedSeats: "Επιλεγμένες θέσεις",
@@ -163,6 +166,7 @@ const translations = {
     summary: "Summary",
     ticketCost: "Ticket cost",
     processingFee: "Processing fee",
+    serviceFee: "Service fee",
     accountContact: "Account details",
     autoFromAccount: "Auto-filled from your account",
     selectedSeats: "Selected seats",
@@ -190,9 +194,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   showInstanceId: propShowInstanceId,
   eventDate,
   showInstances,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const t = translations[language];
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -407,9 +413,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   };
 
   const subtotal = calculateTotal();
-  // Stripe fees: 2.9% + €0.25 (only for paid orders)
-  const stripeFeesCents = subtotal > 0 ? Math.ceil(subtotal * 0.029 + 25) : 0;
-  const total = subtotal + stripeFeesCents;
+  // Stripe fees: only shown/added to customer total if buyer pays
+  const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
+  const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  // Platform fixed fee: only shown/added if buyer pays fixed fee (ticket type)
+  const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
+  const platformFeeCents = buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeTicketCents || 0) * totalTickets : 0;
+  const total = subtotal + stripeFeesCents + platformFeeCents;
   const isFreeOrder = subtotal === 0 && totalTickets > 0;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const minAge = getMinAge(eventId);
@@ -842,8 +852,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         ))}
       </div>
 
-      {/* Processing fee line */}
-      {!isFreeOrder && stripeFeesCents > 0 && (
+      {/* Fee breakdown */}
+      {!isFreeOrder && (stripeFeesCents > 0 || platformFeeCents > 0) && (
         <>
           <Separator />
           <div className="space-y-1 text-sm">
@@ -851,10 +861,18 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
               <span className="text-muted-foreground">{t.ticketCost}</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.processingFee}</span>
-              <span>{formatPrice(stripeFeesCents)}</span>
-            </div>
+            {platformFeeCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t.serviceFee}</span>
+                <span>{formatPrice(platformFeeCents)}</span>
+              </div>
+            )}
+            {stripeFeesCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t.processingFee}</span>
+                <span>{formatPrice(stripeFeesCents)}</span>
+              </div>
+            )}
           </div>
         </>
       )}
