@@ -1034,12 +1034,22 @@ export default function EventDetail() {
             }
 
             {eventHasReservation && event.event_type === 'reservation' &&
+            <>
             <Card variant="glass" className="backdrop-blur-md border-border/50 cursor-pointer transition-all" onClick={() => setShowReservationCheckout(true)}>
               <CardContent className="py-3 px-4 flex items-center justify-start gap-2">
                 <Calendar className="h-4 w-4 text-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground">{text.makeReservation}</span>
               </CardContent>
             </Card>
+            {hasNativeTickets && !allTicketsSoldOut &&
+              <button
+                type="button"
+                className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                onClick={() => setShowTicketFlow(true)}>
+                {language === 'el' ? 'Walk in με εισιτήριο' : 'Walk in with ticket'}
+              </button>
+            }
+            </>
             }
 
             {eventHasReservation && event.event_type === 'ticket_and_reservation' && !isBusinessTicketLinked &&
