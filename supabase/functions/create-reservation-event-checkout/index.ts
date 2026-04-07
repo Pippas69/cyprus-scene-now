@@ -96,8 +96,11 @@ serve(async (req) => {
 
     const business = event.businesses;
 
-    // Commission (disabled for now)
-    const commissionPercent = 0;
+    // Fetch per-business pricing profile
+    const pricingProfile = await fetchPricingProfile(business?.id ?? "");
+    
+    // Determine event type for pricing
+    const eventType: EventType = event.event_type === 'ticket_and_reservation' ? 'hybrid' : 'reservation';
 
     // Environment detection for Stripe Connect
     const origin = req.headers.get("origin") ?? "";
@@ -159,8 +162,18 @@ serve(async (req) => {
     }
 
     const prepaidAmountCents = priceTier.prepaid_min_charge_cents;
-    const stripeFeesCents = prepaidAmountCents > 0 ? Math.ceil(prepaidAmountCents * 0.029 + 25) : 0;
-    const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
+    
+    // Calculate pricing using the business pricing profile
+    const pricing = calculatePricing(
+      prepaidAmountCents,
+      pricingProfile,
+      eventType,
+      0, // no tickets for reservation-only
+      1, // 1 reservation
+    );
+    
+    const stripeFeesCents = pricing.stripeFeeCents;
+    const platformFeeCents = pricing.fomoRevenueCents;
 
     // DO NOT create a reservation here. It will be created by the webhook
     // after successful payment. This prevents ghost reservations when users
