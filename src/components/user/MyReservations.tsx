@@ -760,145 +760,137 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             />
           </div>
         )}
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              {/* Title */}
-              <h3 className="font-semibold truncate">{title}</h3>
+        <CardContent className="p-4 space-y-1.5">
+          {/* Title */}
+          <h3 className="font-semibold text-sm">{title}</h3>
 
-              {/* Business name */}
-              {businessInfo && (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {businessInfo.logo_url && (
-                    <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
-                  )}
-                  <p className="text-xs text-muted-foreground">{businessInfo.name}</p>
-                </div>
+          {/* Business name */}
+          {businessInfo && (
+            <div className="flex items-center gap-1.5">
+              {businessInfo.logo_url && (
+                <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover shrink-0" />
               )}
-
-              {/* Date/Time + Party size */}
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                {dateTime && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDateTime(dateTime)}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {reservation.party_size} {t.people}
-                </span>
-              </div>
-
-              {/* Location */}
-              {location && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 mt-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <MapPin className="h-3 w-3" />
-                  <span className="truncate">{location}</span>
-                </a>
-              )}
-
-              {/* Payment info */}
-              {(minCharge > 0 || ticketTotal > 0) && (
-                <div className="mt-2 space-y-0.5">
-                  {minCharge > 0 && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                      <span className="text-xs">
-                        {t.minCharge}: €{(minCharge / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  {isHybrid && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                      <span className="text-xs">
-                        {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
-                        {(() => {
-                          const balance = Math.max(0, minCharge - ticketTotal);
-                          return balance > 0 ? (
-                            <span className="text-muted-foreground"> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
-                          ) : null;
-                        })()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Deferred Payment: Confirm Attendance */}
-              {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
-                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                      ⏰ {language === 'el' ? 'Επιβεβαίωση σε' : 'Confirm in'}: {formatDeadlineCountdown(reservation.deferred_confirmation_deadline)}
-                    </span>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full h-8 text-xs"
-                    disabled={confirmingDeferredId === reservation.id}
-                    onClick={() => handleConfirmDeferred(reservation.id)}
-                  >
-                    {confirmingDeferredId === reservation.id
-                      ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
-                      : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
-                    }
-                  </Button>
-                </div>
-              )}
-
-              {/* Deferred Payment: Payment Failed */}
-              {!isPast && reservation.deferred_status === 'payment_failed' && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-2.5 space-y-2 mt-2">
-                  <span className="text-xs font-medium text-destructive">
-                    {language === 'el' ? '❌ Η κάρτα σας απορρίφθηκε. Δοκιμάστε ξανά.' : '❌ Your card was declined. Please retry.'}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="w-full h-8 text-xs"
-                    disabled={confirmingDeferredId === reservation.id}
-                    onClick={() => handleConfirmDeferred(reservation.id)}
-                  >
-                    {confirmingDeferredId === reservation.id
-                      ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
-                      : (language === 'el' ? '🔄 Δοκιμάστε Ξανά' : '🔄 Retry Payment')
-                    }
-                  </Button>
-                </div>
-              )}
-
-              {/* Reservation-only event: cancellation note */}
-              {!isHybrid && !isPast && (
-                <p className="text-[10px] text-muted-foreground mt-2 italic">
-                  {t.contactForCancel}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground truncate">{businessInfo.name}</p>
             </div>
+          )}
 
-            {/* Right side: QR button only (no status badge, no cancel) */}
-            <div className="flex flex-col items-end gap-2">
-              {!isPast && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setCurrentEventGuestIndex(0);
-                    setSelectedEventGuestsReservation(reservation);
-                  }}
-                >
-                  <QrCode className="h-4 w-4 mr-1" />
-                  {t.viewQRCodes}
-                </Button>
-              )}
-            </div>
+          {/* Date/Time + Party size — single line */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {dateTime && (
+              <span className="flex items-center gap-1 shrink-0">
+                <Calendar className="h-3 w-3 shrink-0" />
+                {formatDateTime(dateTime)}
+              </span>
+            )}
+            <span className="flex items-center gap-1 shrink-0">
+              <Users className="h-3 w-3 shrink-0" />
+              {reservation.party_size} {t.people}
+            </span>
           </div>
+
+          {/* Location — single line */}
+          {location && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{location}</span>
+            </a>
+          )}
+
+          {/* Payment info — each on single line */}
+          {(minCharge > 0 || ticketTotal > 0) && (
+            <div className="space-y-0.5">
+              {minCharge > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
+                </div>
+              )}
+              {isHybrid && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>
+                    {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                    {(() => {
+                      const balance = Math.max(0, minCharge - ticketTotal);
+                      return balance > 0 ? (
+                        <span> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
+                      ) : null;
+                    })()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Deferred Payment: Confirm Attendance */}
+          {!isPast && reservation.deferred_status === 'awaiting_confirmation' && reservation.deferred_confirmation_deadline && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-2.5 space-y-2">
+              <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                ⏰ {language === 'el' ? 'Επιβεβαίωση σε' : 'Confirm in'}: {formatDeadlineCountdown(reservation.deferred_confirmation_deadline)}
+              </span>
+              <Button
+                size="sm"
+                className="w-full h-8 text-xs"
+                disabled={confirmingDeferredId === reservation.id}
+                onClick={() => handleConfirmDeferred(reservation.id)}
+              >
+                {confirmingDeferredId === reservation.id
+                  ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                  : (language === 'el' ? '✅ Επιβεβαίωση Παρουσίας' : '✅ Confirm Attendance')
+                }
+              </Button>
+            </div>
+          )}
+
+          {/* Deferred Payment: Payment Failed */}
+          {!isPast && reservation.deferred_status === 'payment_failed' && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-2.5 space-y-2">
+              <span className="text-xs font-medium text-destructive">
+                {language === 'el' ? '❌ Η κάρτα σας απορρίφθηκε. Δοκιμάστε ξανά.' : '❌ Your card was declined. Please retry.'}
+              </span>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="w-full h-8 text-xs"
+                disabled={confirmingDeferredId === reservation.id}
+                onClick={() => handleConfirmDeferred(reservation.id)}
+              >
+                {confirmingDeferredId === reservation.id
+                  ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />{language === 'el' ? 'Επεξεργασία...' : 'Processing...'}</>
+                  : (language === 'el' ? '🔄 Δοκιμάστε Ξανά' : '🔄 Retry Payment')
+                }
+              </Button>
+            </div>
+          )}
+
+          {/* Reservation-only event: cancellation note */}
+          {!isHybrid && !isPast && (
+            <p className="text-[10px] text-muted-foreground italic">
+              {t.contactForCancel}
+            </p>
+          )}
+
+          {/* QR Codes button — full width at bottom */}
+          {!isPast && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full h-8 text-xs mt-2"
+              onClick={() => {
+                setCurrentEventGuestIndex(0);
+                setSelectedEventGuestsReservation(reservation);
+              }}
+            >
+              <QrCode className="h-3.5 w-3.5 mr-1.5" />
+              {t.viewQRCodes}
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
