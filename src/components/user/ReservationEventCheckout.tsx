@@ -223,10 +223,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   userId,
   language,
   onSuccess,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
