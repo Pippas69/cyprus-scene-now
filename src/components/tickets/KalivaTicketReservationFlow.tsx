@@ -220,10 +220,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   eventTitle,
   ticketTiers,
   onSuccess,
+  businessId,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // State
