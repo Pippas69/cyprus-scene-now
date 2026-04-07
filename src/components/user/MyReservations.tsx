@@ -1101,7 +1101,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {eventReservations.length === 0 ?
           <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {eventReservations.map((r) => renderEventReservationCard(r, false))}
             </div>
           }
@@ -1144,7 +1144,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 {pastEventReservations.length === 0 ?
               <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
 
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {pastEventReservations.map((r) => renderEventReservationCard(r, true))}
                   </div>
               }
