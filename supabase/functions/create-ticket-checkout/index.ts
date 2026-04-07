@@ -616,19 +616,19 @@ Deno.serve(async (req) => {
       },
     };
     
-    // If business has Stripe Connect, use payment splitting
+    // If business has Stripe Connect, use payment splitting with pricing profile
     if (hasStripeConnect) {
       logStep("Using Stripe Connect payment splitting", { 
         connectedAccountId: business.stripe_account_id,
-        applicationFee: commissionCents + stripeFeesCents
+        applicationFee: pricing.applicationFeeCents,
+        fomoRevenue: pricing.fomoRevenueCents,
+        stripeFees: pricing.stripeFeeCents,
       });
       
-      // application_fee_amount = commission + Stripe fees + processing fees
-      // This ensures the business receives the full subtotal (ticket price) as net payout
       sessionConfig.payment_intent_data = {
-        application_fee_amount: commissionCents + stripeFeesCents, // Platform keeps commission + fees
+        application_fee_amount: pricing.applicationFeeCents,
         transfer_data: {
-          destination: business.stripe_account_id!, // Business receives subtotal (full ticket price)
+          destination: business.stripe_account_id!,
         },
       };
     } else {
