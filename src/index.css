@@ -30,12 +30,22 @@ input[type="password"]::-ms-clear {
 
 /* Mobile viewport fallback after external redirects (e.g. Stripe checkout) */
 @media screen and (max-width: 767px) {
+  html,
+  body,
+  #root {
+    min-height: var(--app-dvh, 100dvh);
+  }
+
   .min-h-screen {
     min-height: var(--app-dvh, 100dvh);
   }
 
   .h-screen {
     height: var(--app-dvh, 100dvh);
+  }
+
+  .mobile-bottom-nav-offset {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -331,7 +341,7 @@ All colors MUST be HSL.
   }
 
   .safe-area-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .mapboxgl-popup-tip {
