@@ -47,6 +47,25 @@ input[type="password"]::-ms-clear {
   .mobile-bottom-nav-offset {
     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
   }
+
+  /* Prevent black gap: fixed overlays always use full viewport, not --app-dvh */
+  .dialog-content,
+  .drawer-content,
+  [data-radix-dialog-overlay],
+  [data-radix-alert-dialog-overlay] {
+    min-height: 0 !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+  }
+
+  /* Ensure overlay backdrops always cover the entire screen */
+  [data-radix-dialog-overlay],
+  [data-radix-alert-dialog-overlay] {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
 }
 
 /* Prevent iOS auto-zoom on focused fields inside mobile overlays */

@@ -13,8 +13,22 @@ const scrollEverythingToTop = () => {
   });
 };
 
+/**
+ * Detect if the software keyboard is likely open.
+ * On iOS/Android, when keyboard opens, visualViewport.height shrinks
+ * significantly compared to window.innerHeight.
+ */
+const isKeyboardOpen = (): boolean => {
+  if (!window.visualViewport) return false;
+  // If visual viewport is more than 150px smaller than the window, keyboard is open
+  const heightDiff = window.innerHeight - window.visualViewport.height;
+  return heightDiff > 150;
+};
+
 const applyViewportHeight = () => {
-  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  // Don't update --app-dvh when keyboard is open — this prevents the black gap
+  if (isKeyboardOpen()) return;
+  const viewportHeight = window.innerHeight;
   document.documentElement.style.setProperty("--app-dvh", `${viewportHeight}px`);
 };
 
@@ -77,12 +91,24 @@ const ScrollToTop = () => {
       applyViewportHeight();
     };
 
+    // When keyboard closes (focus leaves input), recalculate after a short delay
+    const handleFocusOut = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
+        // Delay to let keyboard fully close before recalculating
+        window.setTimeout(applyViewportHeight, 100);
+        window.setTimeout(applyViewportHeight, 300);
+        window.setTimeout(applyViewportHeight, 500);
+      }
+    };
+
     document.addEventListener("click", handleClickCapture, true);
     window.addEventListener("pageshow", handlePageResume);
     window.addEventListener("focus", handlePageResume);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("resize", handleViewportResize);
     window.visualViewport?.addEventListener("resize", handleViewportResize);
+    document.addEventListener("focusout", handleFocusOut);
 
     return () => {
       document.removeEventListener("click", handleClickCapture, true);
@@ -91,6 +117,7 @@ const ScrollToTop = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", handleViewportResize);
       window.visualViewport?.removeEventListener("resize", handleViewportResize);
+      document.removeEventListener("focusout", handleFocusOut);
     };
   }, [location.pathname, location.search, location.hash]);
 
@@ -98,4 +125,3 @@ const ScrollToTop = () => {
 };
 
 export default ScrollToTop;
-
