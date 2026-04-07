@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
 
 const GuestSchema = z.object({ name: safeString(200) }).passthrough();
 const BodySchema = z.object({
@@ -95,8 +96,11 @@ serve(async (req) => {
 
     const business = event.businesses;
 
-    // Commission (disabled for now)
-    const commissionPercent = 0;
+    // Fetch per-business pricing profile
+    const pricingProfile = await fetchPricingProfile(business?.id ?? "");
+    
+    // Determine event type for pricing
+    const eventType: EventType = event.event_type === 'ticket_and_reservation' ? 'hybrid' : 'reservation';
 
     // Environment detection for Stripe Connect
     const origin = req.headers.get("origin") ?? "";
@@ -158,8 +162,18 @@ serve(async (req) => {
     }
 
     const prepaidAmountCents = priceTier.prepaid_min_charge_cents;
-    const stripeFeesCents = prepaidAmountCents > 0 ? Math.ceil(prepaidAmountCents * 0.029 + 25) : 0;
-    const platformFeeCents = Math.round(prepaidAmountCents * (commissionPercent / 100));
+    
+    // Calculate pricing using the business pricing profile
+    const pricing = calculatePricing(
+      prepaidAmountCents,
+      pricingProfile,
+      eventType,
+      0, // no tickets for reservation-only
+      1, // 1 reservation
+    );
+    
+    const stripeFeesCents = pricing.stripeFeeCents;
+    const platformFeeCents = pricing.fomoRevenueCents;
 
     // DO NOT create a reservation here. It will be created by the webhook
     // after successful payment. This prevents ghost reservations when users
@@ -235,42 +249,59 @@ serve(async (req) => {
       }
     }
 
+    const reservationLineItems: any[] = [
+      {
+        price_data: {
+          currency: priceTier.currency || "eur",
+          product_data: {
+            name: `${event.title} - ${seatingTypeName} Reservation`,
+            description: `Prepaid minimum charge for ${party_size} ${party_size === 1 ? "person" : "people"}. This amount counts as credit at the venue.`,
+            metadata: {
+              event_id,
+              seating_type: seatingType.seating_type,
+              party_size: party_size.toString(),
+            },
+          },
+          unit_amount: prepaidAmountCents,
+        },
+        quantity: 1,
+      },
+    ];
+
+    // Add processing fee line item (when buyer pays Stripe fees)
+    if (pricing.addProcessingFeeLineItem && pricing.processingFeeLineItemCents > 0) {
+      reservationLineItems.push({
+        price_data: {
+          currency: priceTier.currency || "eur",
+          product_data: {
+            name: "Processing Fee",
+            description: "Payment processing fee",
+          },
+          unit_amount: pricing.processingFeeLineItemCents,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Add platform service fee line item (when buyer pays fixed fee)
+    if (pricing.addPlatformFeeLineItem && pricing.platformFeeLineItemCents > 0) {
+      reservationLineItems.push({
+        price_data: {
+          currency: priceTier.currency || "eur",
+          product_data: {
+            name: "Service Fee",
+            description: "Platform service fee",
+          },
+          unit_amount: pricing.platformFeeLineItemCents,
+        },
+        quantity: 1,
+      });
+    }
+
     const baseSessionParams = {
       customer: customerId,
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: priceTier.currency || "eur",
-            product_data: {
-              name: `${event.title} - ${seatingTypeName} Reservation`,
-              description: `Prepaid minimum charge for ${party_size} ${party_size === 1 ? "person" : "people"}. This amount counts as credit at the venue.`,
-              metadata: {
-                event_id,
-                seating_type: seatingType.seating_type,
-                party_size: party_size.toString(),
-              },
-            },
-            unit_amount: prepaidAmountCents,
-          },
-          quantity: 1,
-        },
-        ...(stripeFeesCents > 0
-          ? [
-              {
-                price_data: {
-                  currency: priceTier.currency || "eur",
-                  product_data: {
-                    name: "Processing Fee",
-                    description: "Payment processing fee",
-                  },
-                  unit_amount: stripeFeesCents,
-                },
-                quantity: 1,
-              },
-            ]
-          : []),
-      ],
+      line_items: reservationLineItems,
       mode: "payment",
       success_url:
         success_url ||
@@ -287,7 +318,7 @@ serve(async (req) => {
         session = await stripe.checkout.sessions.create({
           ...baseSessionParams,
           payment_intent_data: {
-            application_fee_amount: platformFeeCents + stripeFeesCents,
+            application_fee_amount: pricing.applicationFeeCents,
             transfer_data: {
               destination: business.stripe_account_id,
             },
