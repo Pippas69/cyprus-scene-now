@@ -66,6 +66,7 @@ interface TicketPurchaseFlowProps {
   showInstanceId?: string;
   eventDate?: string;
   showInstances?: ShowInstanceOption[];
+  businessId?: string;
 }
 
 const translations = {
@@ -109,6 +110,7 @@ const translations = {
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
     processingFee: "Έξοδα επεξεργασίας",
+    serviceFee: "Χρέωση υπηρεσίας",
     accountContact: "Στοιχεία λογαριασμού",
     autoFromAccount: "Αυτόματα από τον λογαριασμό σας",
     selectedSeats: "Επιλεγμένες θέσεις",
@@ -163,6 +165,7 @@ const translations = {
     summary: "Summary",
     ticketCost: "Ticket cost",
     processingFee: "Processing fee",
+    serviceFee: "Service fee",
     accountContact: "Account details",
     autoFromAccount: "Auto-filled from your account",
     selectedSeats: "Selected seats",
