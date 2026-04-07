@@ -28,6 +28,15 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
+/* Prevent iOS auto-zoom on input focus inside dialogs */
+@media screen and (max-width: 767px) {
+  [role="dialog"] input,
+  [role="dialog"] textarea,
+  [role="dialog"] select {
+    font-size: 16px !important;
+  }
+}
+
 input[type="password"]::-webkit-credentials-auto-fill-button,
 input[type="password"]::-webkit-caps-lock-indicator {
   display: none !important;
