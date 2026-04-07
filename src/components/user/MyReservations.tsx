@@ -312,6 +312,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 end_at: order.events.end_at,
                 location: order.events.location,
                 event_type: order.events.event_type,
+                cover_image_url: order.events.cover_image_url || null,
                 businesses: order.events.businesses,
               }
             : null,
