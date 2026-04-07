@@ -198,6 +198,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
+  const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const t = translations[language];
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
