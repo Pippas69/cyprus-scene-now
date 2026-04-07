@@ -864,6 +864,13 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           </div>
         )}
 
+        {!isFreeOrder && platformFeeCents > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{t.serviceFee}</span>
+            <span className="font-medium">{formatPrice(platformFeeCents)}</span>
+          </div>
+        )}
+
         {!isFreeOrder && stripeFeesCents > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t.processingFee}</span>
