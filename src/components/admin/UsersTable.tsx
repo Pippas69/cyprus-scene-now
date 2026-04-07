@@ -20,9 +20,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Eye, Ban, Building2 } from 'lucide-react';
+import { MoreHorizontal, Eye, Ban, Building2, Settings2 } from 'lucide-react';
 import { AdminUser } from '@/hooks/useAdminUsers';
 import { UserDetailDialog } from './UserDetailDialog';
+import { BusinessPricingDialog } from './BusinessPricingDialog';
+import { useAllBusinessPricingProfiles } from '@/hooks/useBusinessPricingProfile';
 
 interface UsersTableProps {
   users: AdminUser[];
@@ -34,6 +36,14 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
   const t = adminTranslations[language];
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [pricingUser, setPricingUser] = useState<AdminUser | null>(null);
+  const [pricingOpen, setPricingOpen] = useState(false);
+
+  // Get all business IDs for bulk pricing profile fetch
+  const businessIds = users
+    .filter((u) => u.has_business && u.business_id)
+    .map((u) => u.business_id as string);
+  const { data: pricingProfiles = {} } = useAllBusinessPricingProfiles(businessIds);
 
   const getRoleBadge = (role: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -47,6 +57,41 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
   const handleViewUser = (user: AdminUser) => {
     setSelectedUser(user);
     setDetailOpen(true);
+  };
+
+  const handleOpenPricing = (user: AdminUser) => {
+    setPricingUser(user);
+    setPricingOpen(true);
+  };
+
+  const getStripeFeeLabel = (businessId: string) => {
+    const profile = pricingProfiles[businessId];
+    if (!profile) return <span className="text-muted-foreground text-xs">—</span>;
+    return (
+      <Badge variant="outline" className="text-xs font-normal">
+        {profile.stripe_fee_bearer === 'buyer' ? 'Πελάτης' : 'Επιχείρηση'}
+      </Badge>
+    );
+  };
+
+  const getFomoRevenueLabel = (businessId: string) => {
+    const profile = pricingProfiles[businessId];
+    if (!profile || !profile.platform_revenue_enabled) {
+      return <span className="text-muted-foreground text-xs">OFF</span>;
+    }
+    if (profile.revenue_model === 'commission') {
+      return (
+        <Badge variant="outline" className="text-xs font-normal">
+          {profile.commission_percent}%
+        </Badge>
+      );
+    }
+    // Fixed fee - show a summary
+    return (
+      <Badge variant="outline" className="text-xs font-normal">
+        Fixed
+      </Badge>
+    );
   };
 
   if (isLoading) {
@@ -79,6 +124,8 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
               <TableHead>{t.users.table.role}</TableHead>
               <TableHead>{t.users.table.joined}</TableHead>
               <TableHead className="text-right">{t.users.table.actions}</TableHead>
+              <TableHead className="text-center min-w-[100px]">Stripe Fees</TableHead>
+              <TableHead className="text-center min-w-[110px]">Έσοδα ΦΟΜΟ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,6 +134,7 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
                 ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
                 : user.name || 'Unknown';
               const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+              const isBusiness = user.has_business && user.business_id;
 
               return (
                 <TableRow key={user.id} className={user.suspended ? 'opacity-60' : ''}>
@@ -133,8 +181,40 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
                           <Eye className="h-4 w-4 mr-2" />
                           {t.users.actions.viewProfile}
                         </DropdownMenuItem>
+                        {isBusiness && (
+                          <DropdownMenuItem onClick={() => handleOpenPricing(user)}>
+                            <Settings2 className="h-4 w-4 mr-2" />
+                            Ρυθμίσεις Τιμολόγησης
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </TableCell>
+                  {/* Stripe Fees column - only for business users */}
+                  <TableCell className="text-center">
+                    {isBusiness ? (
+                      <button
+                        onClick={() => handleOpenPricing(user)}
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        {getStripeFeeLabel(user.business_id!)}
+                      </button>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  {/* Έσοδα ΦΟΜΟ column - only for business users */}
+                  <TableCell className="text-center">
+                    {isBusiness ? (
+                      <button
+                        onClick={() => handleOpenPricing(user)}
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        {getFomoRevenueLabel(user.business_id!)}
+                      </button>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               );
@@ -148,6 +228,15 @@ export const UsersTable = ({ users, isLoading }: UsersTableProps) => {
         open={detailOpen}
         onOpenChange={setDetailOpen}
       />
+
+      {pricingUser?.business_id && (
+        <BusinessPricingDialog
+          open={pricingOpen}
+          onOpenChange={setPricingOpen}
+          businessId={pricingUser.business_id}
+          businessName={pricingUser.business_name || 'Unknown'}
+        />
+      )}
     </>
   );
 };
