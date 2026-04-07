@@ -130,9 +130,17 @@ Deno.serve(async (req) => {
       logStep("Seat details loaded", { count: seatDetailsMap.size });
     }
 
-    // COMMISSION DISABLED: Platform is in early stage, no commission charged
-    const commissionPercent = 0;
-    logStep("Commission rate", { commissionPercent, note: "Commission disabled - early stage" });
+    // Fetch per-business pricing profile
+    const pricingProfile = await fetchPricingProfile(event.business_id);
+    
+    // Determine event type for pricing
+    const eventType: EventType = event.event_type === 'ticket_and_reservation' ? 'hybrid' : 'ticket';
+    logStep("Pricing profile loaded", { 
+      stripeFeeBearer: pricingProfile.stripe_fee_bearer,
+      revenueEnabled: pricingProfile.platform_revenue_enabled,
+      revenueModel: pricingProfile.revenue_model,
+      eventType,
+    });
 
     // Fetch ticket tiers and validate availability
     const tierIds = items.map(item => item.tierId);
@@ -153,6 +161,7 @@ Deno.serve(async (req) => {
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     const ticketBreakdown: { tierId: string; tierName: string; quantity: number; priceEach: number }[] = [];
     let ticketCurrency = "eur";
+    let totalTicketCount = 0;
 
     for (const item of items) {
       const tier = tiers.find(t => t.id === item.tierId);
@@ -190,6 +199,7 @@ Deno.serve(async (req) => {
 
       subtotalCents += tier.price_cents * item.quantity;
       ticketCurrency = tier.currency || "eur";
+      totalTicketCount += item.quantity;
       ticketBreakdown.push({
         tierId: tier.id,
         tierName: tier.name,
@@ -213,14 +223,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Buyer pays Stripe processing fees: 2.9% + €0.25 (on subtotal)
-    const stripeFeesCents = subtotalCents > 0 ? Math.ceil(subtotalCents * 0.029 + 25) : 0;
-    const commissionCents = Math.round(subtotalCents * commissionPercent / 100);
-    const totalCents = subtotalCents + stripeFeesCents;
-    logStep("Price calculated", { subtotalCents, stripeFeesCents, commissionCents, totalCents });
+    // Calculate pricing using the business pricing profile
+    const pricing = calculatePricing(
+      subtotalCents, 
+      pricingProfile, 
+      eventType, 
+      totalTicketCount, 
+      eventType === 'hybrid' ? 1 : 0
+    );
+    
+    const commissionPercent = pricingProfile.platform_revenue_enabled && pricingProfile.revenue_model === 'commission' 
+      ? pricingProfile.commission_percent : 0;
+    const commissionCents = pricing.fomoRevenueCents;
+    const stripeFeesCents = pricing.stripeFeeCents;
+    const totalCents = pricing.customerPaysCents;
 
-    // Add processing fee as separate line item
-    if (stripeFeesCents > 0) {
+    logStep("Price calculated", { 
+      subtotalCents, 
+      stripeFeesCents, 
+      fomoRevenueCents: pricing.fomoRevenueCents,
+      applicationFeeCents: pricing.applicationFeeCents,
+      totalCents,
+      stripeFeeBearer: pricingProfile.stripe_fee_bearer,
+    });
+
+    // Add processing fee as separate line item (when buyer pays)
+    if (pricing.addProcessingFeeLineItem && pricing.processingFeeLineItemCents > 0) {
       lineItems.push({
         price_data: {
           currency: ticketCurrency,
@@ -228,7 +256,22 @@ Deno.serve(async (req) => {
             name: "Processing Fee",
             description: "Payment processing fee",
           },
-          unit_amount: stripeFeesCents,
+          unit_amount: pricing.processingFeeLineItemCents,
+        },
+        quantity: 1,
+      });
+    }
+
+    // Add platform fee line item (when buyer pays fixed fee)
+    if (pricing.addPlatformFeeLineItem && pricing.platformFeeLineItemCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: ticketCurrency,
+          product_data: {
+            name: "Service Fee",
+            description: "Platform service fee",
+          },
+          unit_amount: pricing.platformFeeLineItemCents,
         },
         quantity: 1,
       });
