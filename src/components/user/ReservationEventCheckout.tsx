@@ -188,6 +188,7 @@ const translations = {
     guestAge: "Age",
     fillAllGuests: "Please fill in name and age for all guests",
     processingFee: "Processing fee",
+    serviceFee: "Service fee",
     termsLabel: "I accept the",
     termsLink: "Terms of Service",
     andThe: "and the",
