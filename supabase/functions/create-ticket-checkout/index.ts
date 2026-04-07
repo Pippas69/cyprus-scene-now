@@ -4,6 +4,7 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
 
 const TicketItemSchema = z.object({
   tierId: flexId,
