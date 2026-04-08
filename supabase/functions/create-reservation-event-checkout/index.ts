@@ -312,7 +312,7 @@ serve(async (req) => {
       mode: "payment",
       success_url:
         success_url ||
-        `${req.headers.get("origin")}/reservation-success?session_id={CHECKOUT_SESSION_ID}`,
+        `${req.headers.get("origin")}/reservation-success?session_id={CHECKOUT_SESSION_ID}&event_id=${event_id}`,
       cancel_url:
         cancel_url || `${req.headers.get("origin")}/ekdiloseis/${event_id}?cancelled=true`,
       metadata: sessionMetadata,

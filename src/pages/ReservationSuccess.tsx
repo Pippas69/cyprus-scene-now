@@ -70,23 +70,59 @@ export const ReservationSuccess = () => {
     const processPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const reservationId = searchParams.get("reservation_id");
+      const eventId = searchParams.get("event_id");
 
-      if (!reservationId) {
+      if (!reservationId && !sessionId) {
         setStatus("error");
         setErrorMessage("Missing reservation information");
         return;
       }
 
-      const processKey = `reservation_success_processed:${reservationId}:${sessionId ?? "no_session"}`;
+      // If we have reservation_id, use it directly. Otherwise poll by user + event.
+      let targetReservationId = reservationId;
+
+      if (!targetReservationId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setStatus("error");
+          setErrorMessage("Not authenticated");
+          return;
+        }
+
+        // Poll for the reservation created by the webhook after payment
+        const maxPolls = 15;
+        for (let i = 0; i < maxPolls; i++) {
+          await new Promise((resolve) => setTimeout(resolve, i === 0 ? 2500 : 1500));
+
+          let query = supabase
+            .from("reservations")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("status", "accepted")
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (eventId) {
+            query = query.eq("event_id", eventId);
+          }
+
+          const { data } = await query.maybeSingle();
+          if (data) {
+            targetReservationId = data.id;
+            break;
+          }
+        }
+
+        if (!targetReservationId) {
+          // Last resort: still show a success state with navigation
+          setStatus("success");
+          return;
+        }
+      }
+
+      const processKey = `reservation_success_processed:${targetReservationId}:${sessionId ?? "no_session"}`;
 
       try {
-        // The Stripe webhook (checkout.session.completed) handles payment processing
-        // and reservation status updates automatically. We just need to wait briefly
-        // for the webhook to complete, then fetch the reservation data.
-
-        // Small delay to allow webhook processing
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
         // Fetch reservation details
         const { data: reservation, error: fetchError } = await supabase
           .from("reservations")
@@ -103,7 +139,7 @@ export const ReservationSuccess = () => {
               events!inner(title, start_at, businesses!inner(name, logo_url))
             `
           )
-          .eq("id", reservationId)
+          .eq("id", targetReservationId)
           .single();
 
         if (fetchError) {
@@ -120,7 +156,7 @@ export const ReservationSuccess = () => {
         const { data: linkedOrders } = await supabase
           .from("ticket_orders")
           .select("total_cents")
-          .eq("linked_reservation_id", reservationId);
+          .eq("linked_reservation_id", targetReservationId);
         if (linkedOrders && linkedOrders.length > 0) {
           ticketTotalCents = linkedOrders.reduce((sum, o) => sum + ((o as any).total_cents || 0), 0);
         }
@@ -171,7 +207,7 @@ export const ReservationSuccess = () => {
           const { data: orders, error: ordersError } = await supabase
             .from("ticket_orders")
             .select("id")
-            .eq("linked_reservation_id", reservationId);
+            .eq("linked_reservation_id", targetReservationId);
 
           if (ordersError) {
             console.warn("Ticket orders fetch error:", ordersError);
