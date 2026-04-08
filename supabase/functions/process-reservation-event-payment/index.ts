@@ -369,45 +369,55 @@ serve(async (req) => {
           const eventLocation = reservation.events?.location || reservation.events?.venue_name || '';
           const paidAmount = ((reservation.prepaid_min_charge_cents || 0) / 100).toFixed(2);
 
-          // Fetch all guest tickets for this reservation
-          const { data: guestTickets } = await supabaseClient
+          // Fetch guest QR tickets using the exact same linkage as the success screen
+          const { data: orders, error: ordersError } = await supabaseClient
             .from("ticket_orders")
             .select("id")
-            .eq("reservation_id", reservationId)
-            .limit(1)
-            .maybeSingle();
+            .eq("linked_reservation_id", reservationId);
 
-          let allGuestQrSections = '';
-
-          if (guestTickets?.id) {
-            const { data: tickets } = await supabaseClient
-              .from("tickets")
-              .select("guest_name, qr_code_token")
-              .eq("order_id", guestTickets.id)
-              .order("created_at", { ascending: true });
-
-            if (tickets && tickets.length > 0) {
-              allGuestQrSections = tickets.map((ticket) => {
-                const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(ticket.qr_code_token)}&bgcolor=ffffff&color=000000`;
-                return `
-                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 8px 0;">
-                    <tr>
-                      <td align="center" style="padding-bottom: 4px;">
-                        <span style="color: #334155; font-size: 13px; font-weight: 400;">${ticket.guest_name || 'Καλεσμένος'}</span>
-                      </td>
-                    </tr>
-                  </table>
-                  ${qrCodeSection(ticketQrUrl, reservation.confirmation_code, 'Δείξε στην είσοδο')}
-                `;
-              }).join('');
-            }
+          if (ordersError) {
+            throw ordersError;
           }
 
-          // Fallback: if no guest tickets found, use main reservation QR
-          if (!allGuestQrSections && reservation.qr_code_token) {
-            const fallbackQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reservation.qr_code_token)}&bgcolor=ffffff&color=000000`;
-            allGuestQrSections = qrCodeSection(fallbackQrUrl, reservation.confirmation_code, 'Δείξε στην είσοδο');
+          const orderIds = (orders || []).map((order) => order.id).filter(Boolean);
+          if (orderIds.length === 0) {
+            throw new Error("No linked ticket orders found for reservation confirmation email");
           }
+
+          const { data: tickets, error: ticketsError } = await supabaseClient
+            .from("tickets")
+            .select("guest_name, qr_code_token, created_at, order_id")
+            .in("order_id", orderIds)
+            .order("created_at", { ascending: true });
+
+          if (ticketsError) {
+            throw ticketsError;
+          }
+
+          const guestTickets = (tickets || []).filter((ticket) => !!ticket.qr_code_token);
+          const expectedGuestCount = Math.max(reservation.party_size || 0, 0);
+
+          if (guestTickets.length === 0) {
+            throw new Error("No guest tickets found for reservation confirmation email");
+          }
+
+          if (expectedGuestCount > 0 && guestTickets.length < expectedGuestCount) {
+            throw new Error(`Incomplete guest tickets for reservation email: expected ${expectedGuestCount}, found ${guestTickets.length}`);
+          }
+
+          const allGuestQrSections = guestTickets.map((ticket, index) => {
+            const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(ticket.qr_code_token)}&bgcolor=ffffff&color=000000`;
+            return `
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 8px 0;">
+                <tr>
+                  <td align="center" style="padding-bottom: 4px;">
+                    <span style="color: #334155; font-size: 13px; font-weight: 400;">${ticket.guest_name || `Καλεσμένος ${index + 1}`}</span>
+                  </td>
+                </tr>
+              </table>
+              ${qrCodeSection(ticketQrUrl, reservation.confirmation_code, 'Δείξε στην είσοδο')}
+            `;
+          }).join('');
 
           const userContent = `
             ${successBadge('Κράτηση Επιβεβαιώθηκε')}
@@ -432,7 +442,7 @@ serve(async (req) => {
 
             ${allGuestQrSections}
 
-            ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations&subtab=events')}
+            ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations&subtab=event')}
           `;
 
           const userEmailHtml = wrapPremiumEmail(userContent, '✓ Κράτηση Εκδήλωσης');
