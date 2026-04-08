@@ -176,6 +176,10 @@ Deno.serve(async (req) => {
       <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 20px;">
         Παραγγελία #${orderId.slice(0, 8).toUpperCase()}
       </p>
+
+      <p style="color: #94a3b8; font-size: 10px; text-align: center; margin-top: 12px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        Αυτό το email αποτελεί επιβεβαίωση πληρωμής και δεν είναι φορολογικό παραστατικό. Για την έκδοση απόδειξης ή τιμολογίου, παρακαλούμε επικοινωνήστε απευθείας με τον διοργανωτή της εκδήλωσης${businessName ? ` (${businessName})` : ''}.
+      </p>
     `;
 
     const emailHtml = wrapPremiumEmail(content, '🎟️ Εισιτήρια Έτοιμα');
