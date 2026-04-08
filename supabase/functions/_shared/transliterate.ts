@@ -3,6 +3,23 @@
  * Stripe only accepts: A-Z, a-z, 0-9, spaces, and some symbols.
  * Max suffix length: 22 characters.
  */
+
+// Common Greek digraphs that need special handling (order matters - check longer first)
+const GREEK_DIGRAPHS: [string, string][] = [
+  ['ΟΥ', 'OU'], ['Ου', 'Ou'], ['ου', 'ou'],
+  ['ΑΥ', 'AV'], ['Αυ', 'Av'], ['αυ', 'av'],
+  ['ΕΥ', 'EV'], ['Ευ', 'Ev'], ['ευ', 'ev'],
+  ['ΑΙ', 'AI'], ['Αι', 'Ai'], ['αι', 'ai'],
+  ['ΕΙ', 'EI'], ['Ει', 'Ei'], ['ει', 'ei'],
+  ['ΟΙ', 'OI'], ['Οι', 'Oi'], ['οι', 'oi'],
+  ['ΜΠ', 'B'], ['Μπ', 'B'], ['μπ', 'b'],
+  ['ΝΤ', 'D'], ['Ντ', 'D'], ['ντ', 'd'],
+  ['ΓΚ', 'G'], ['Γκ', 'G'], ['γκ', 'g'],
+  ['ΓΓ', 'NG'], ['γγ', 'ng'],
+  ['ΤΣ', 'TS'], ['Τσ', 'Ts'], ['τσ', 'ts'],
+  ['ΤΖ', 'TZ'], ['Τζ', 'Tz'], ['τζ', 'tz'],
+];
+
 const GREEK_TO_LATIN: Record<string, string> = {
   'Α': 'A', 'Β': 'V', 'Γ': 'G', 'Δ': 'D', 'Ε': 'E', 'Ζ': 'Z',
   'Η': 'I', 'Θ': 'TH', 'Ι': 'I', 'Κ': 'K', 'Λ': 'L', 'Μ': 'M',
@@ -20,18 +37,24 @@ const GREEK_TO_LATIN: Record<string, string> = {
 };
 
 export function toStatementDescriptorSuffix(name: string): string {
-  // Transliterate Greek to Latin
-  let result = '';
-  for (const char of name) {
-    result += GREEK_TO_LATIN[char] ?? char;
+  // First pass: replace digraphs
+  let result = name;
+  for (const [greek, latin] of GREEK_DIGRAPHS) {
+    result = result.split(greek).join(latin);
+  }
+
+  // Second pass: transliterate remaining single Greek characters
+  let final = '';
+  for (const char of result) {
+    final += GREEK_TO_LATIN[char] ?? char;
   }
 
   // Remove any non-allowed characters (keep A-Z, 0-9, spaces, hyphens, dots)
-  result = result.replace(/[^A-Za-z0-9 \-\.]/g, '').trim();
+  final = final.replace(/[^A-Za-z0-9 \-\.]/g, '').trim();
 
   // Uppercase for consistency
-  result = result.toUpperCase();
+  final = final.toUpperCase();
 
   // Truncate to 22 chars (Stripe limit for suffix)
-  return result.substring(0, 22);
+  return final.substring(0, 22);
 }
