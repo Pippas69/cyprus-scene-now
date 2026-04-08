@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 // Force cache refresh - v1
@@ -158,6 +159,7 @@ Deno.serve(async (req) => {
       transfer_data: {
         destination: stripeAccountId,
       },
+      statement_descriptor_suffix: toStatementDescriptorSuffix(purchase.discounts.businesses.name || ''),
     };
 
     const session = await stripe.checkout.sessions.create(checkoutConfig);

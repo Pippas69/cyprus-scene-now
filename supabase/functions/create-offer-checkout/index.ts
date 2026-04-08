@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
+import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
@@ -270,6 +271,7 @@ Deno.serve(async (req) => {
       transfer_data: {
         destination: discount.businesses.stripe_account_id, // Business receives the rest
       },
+      statement_descriptor_suffix: toStatementDescriptorSuffix(discount.businesses.name || ''),
     };
 
     logStep("Creating checkout with destination charge", {

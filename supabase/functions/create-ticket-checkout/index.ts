@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
+import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
 
@@ -630,6 +631,7 @@ Deno.serve(async (req) => {
         transfer_data: {
           destination: business.stripe_account_id!,
         },
+        statement_descriptor_suffix: toStatementDescriptorSuffix(business.name || ''),
       };
     } else {
       logStep("Business not connected to Stripe - using standard checkout (manual payout required)");
