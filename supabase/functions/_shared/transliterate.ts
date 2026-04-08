@@ -37,8 +37,21 @@ const GREEK_TO_LATIN: Record<string, string> = {
 };
 
 export function toStatementDescriptorSuffix(name: string): string {
+  // Strip accents for consistent digraph matching
+  // Map accented chars to their base form first
+  const ACCENT_MAP: Record<string, string> = {
+    'ά': 'α', 'έ': 'ε', 'ή': 'η', 'ί': 'ι', 'ό': 'ο', 'ύ': 'υ', 'ώ': 'ω',
+    'Ά': 'Α', 'Έ': 'Ε', 'Ή': 'Η', 'Ί': 'Ι', 'Ό': 'Ο', 'Ύ': 'Υ', 'Ώ': 'Ω',
+    'ΐ': 'ι', 'ΰ': 'υ', 'ϊ': 'ι', 'ϋ': 'υ',
+  };
+
+  let normalized = '';
+  for (const char of name) {
+    normalized += ACCENT_MAP[char] ?? char;
+  }
+
   // First pass: replace digraphs
-  let result = name;
+  let result = normalized;
   for (const [greek, latin] of GREEK_DIGRAPHS) {
     result = result.split(greek).join(latin);
   }
