@@ -156,7 +156,7 @@ export const ReservationSuccess = () => {
         const { data: linkedOrders } = await supabase
           .from("ticket_orders")
           .select("total_cents")
-          .eq("linked_reservation_id", reservationId);
+          .eq("linked_reservation_id", targetReservationId);
         if (linkedOrders && linkedOrders.length > 0) {
           ticketTotalCents = linkedOrders.reduce((sum, o) => sum + ((o as any).total_cents || 0), 0);
         }
@@ -207,7 +207,7 @@ export const ReservationSuccess = () => {
           const { data: orders, error: ordersError } = await supabase
             .from("ticket_orders")
             .select("id")
-            .eq("linked_reservation_id", reservationId);
+            .eq("linked_reservation_id", targetReservationId);
 
           if (ordersError) {
             console.warn("Ticket orders fetch error:", ordersError);
