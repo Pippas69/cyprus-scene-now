@@ -190,14 +190,20 @@ Deno.serve(async (req) => {
             sessionId: session.id,
           });
 
+          // Forward the already-verified session data via service role auth
+          // instead of re-sending the raw webhook body (which fails signature re-verification)
           const functionsBaseUrl = `${(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "")}/functions/v1`;
+          const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
           const forwardResponse = await fetch(`${functionsBaseUrl}/process-reservation-event-payment`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "stripe-signature": signature,
+              "Authorization": `Bearer ${serviceRoleKey}`,
             },
-            body,
+            body: JSON.stringify({
+              session_id: session.id,
+              source: "stripe-webhook-forward",
+            }),
           });
 
           if (!forwardResponse.ok) {

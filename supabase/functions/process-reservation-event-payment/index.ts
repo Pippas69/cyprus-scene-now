@@ -34,41 +34,75 @@ serve(async (req) => {
 
   const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-  const signature = req.headers.get("stripe-signature");
-  const webhookSecret = Deno.env.get("STRIPE_RESERVATION_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET");
-
-  if (!signature || !webhookSecret) {
-    logStep("ERROR: Missing signature or webhook secret");
-    return new Response("Missing signature", { status: 400 });
-  }
-
-  let event: Stripe.Event;
-  const body = await req.text();
-
-  try {
-    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    logStep("Webhook event verified", { type: event.type });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    logStep("ERROR: Webhook signature verification failed", { error: message });
-    return new Response(`Webhook Error: ${message}`, { status: 400 });
-  }
-
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata;
+  // Two modes of operation:
+  // 1. Internal forward from stripe-webhook (Authorization: Bearer service_role_key, JSON body with session_id)
+  // 2. Direct Stripe webhook (stripe-signature header, raw body) — backward compat
+  const authHeader = req.headers.get("Authorization");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const stripeSignature = req.headers.get("stripe-signature");
 
-    if (metadata?.type !== "reservation_event") {
-      logStep("Not a reservation event payment, skipping");
+  let session: Stripe.Checkout.Session;
+
+  if (authHeader === `Bearer ${serviceKey}` && !stripeSignature) {
+    // Internal forward mode — session already verified by stripe-webhook
+    const jsonBody = await req.json();
+    const sessionId = jsonBody.session_id;
+    if (!sessionId) {
+      logStep("ERROR: Missing session_id in internal forward");
+      return new Response(JSON.stringify({ error: "Missing session_id" }), {
+        status: 400,
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+      });
+    }
+    logStep("Internal forward received, retrieving session from Stripe", { sessionId });
+    session = await stripe.checkout.sessions.retrieve(sessionId);
+    logStep("Session retrieved from Stripe", { status: session.payment_status });
+  } else {
+    // Direct webhook mode with signature verification
+    const webhookSecret = Deno.env.get("STRIPE_RESERVATION_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+    if (!stripeSignature || !webhookSecret) {
+      logStep("ERROR: Missing signature or webhook secret");
+      return new Response("Missing signature", { status: 400 });
+    }
+
+    const body = await req.text();
+    let event: Stripe.Event;
+
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, stripeSignature, webhookSecret);
+      logStep("Webhook event verified", { type: event.type });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      logStep("ERROR: Webhook signature verification failed", { error: message });
+      return new Response(`Webhook Error: ${message}`, { status: 400 });
+    }
+
+    if (event.type !== "checkout.session.completed") {
+      logStep("Not a checkout.session.completed event, skipping");
       return new Response(JSON.stringify({ received: true }), {
         headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
+
+    session = event.data.object as Stripe.Checkout.Session;
+  }
+
+  const metadata = session.metadata;
+
+  if (metadata?.type !== "reservation_event") {
+    logStep("Not a reservation event payment, skipping");
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  {
 
     const seatingTypeId = metadata.seating_type_id;
     const eventId = metadata.event_id;
