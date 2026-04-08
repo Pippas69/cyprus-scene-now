@@ -804,7 +804,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           : isFirstTicket
             ? buyerUserId
             : null;
-        const accountCity = (!(t as any).is_manual_entry && accountUserId) ? (cityMap[accountUserId] || null) : null;
+        // All tickets in an order inherit the buyer's city (same friend group / area)
+        const inheritedCityUserId = ticketUserId && ticketUserId !== buyerUserId
+          ? ticketUserId
+          : buyerUserId;
+        const accountCity = (!(t as any).is_manual_entry && inheritedCityUserId) ? (cityMap[inheritedCityUserId] || null) : null;
         const isAccountUser = !(t as any).is_manual_entry && !!accountUserId;
 
         return {
