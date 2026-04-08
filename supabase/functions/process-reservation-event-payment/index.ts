@@ -514,22 +514,6 @@ serve(async (req) => {
     }
   }
 
-  // payment_intent.payment_failed — nothing to clean up in new flow since no reservation exists yet
-  if (event.type === "payment_intent.payment_failed") {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    const metadata = paymentIntent.metadata;
-
-    if (metadata?.type === "reservation_event" && metadata?.reservation_id) {
-      // Legacy: old flow had a pre-created reservation — cancel it
-      await supabaseClient
-        .from("reservations")
-        .update({ status: "cancelled" })
-        .eq("id", metadata.reservation_id);
-
-      logStep("Legacy reservation cancelled on payment failure", { reservationId: metadata.reservation_id });
-    }
-  }
-
   return new Response(JSON.stringify({ received: true }), {
     headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
