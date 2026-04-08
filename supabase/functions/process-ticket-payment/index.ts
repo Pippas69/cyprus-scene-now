@@ -580,7 +580,7 @@ Deno.serve(async (req) => {
               source_type: 'ticket',
               business_id: eventData.business_id,
               ticket_order_id: orderId,
-              original_price_cents: order.total_cents,
+              original_price_cents: order.subtotal_cents,
               commission_percent: order.commission_percent || 0,
               commission_amount_cents: order.commission_cents,
               status: 'pending',
