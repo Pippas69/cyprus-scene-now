@@ -270,6 +270,7 @@ Deno.serve(async (req) => {
       transfer_data: {
         destination: discount.businesses.stripe_account_id, // Business receives the rest
       },
+      statement_descriptor_suffix: toStatementDescriptorSuffix(discount.businesses.name || ''),
     };
 
     logStep("Creating checkout with destination charge", {

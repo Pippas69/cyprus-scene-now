@@ -630,6 +630,7 @@ Deno.serve(async (req) => {
         transfer_data: {
           destination: business.stripe_account_id!,
         },
+        statement_descriptor_suffix: toStatementDescriptorSuffix(business.name || ''),
       };
     } else {
       logStep("Business not connected to Stripe - using standard checkout (manual payout required)");

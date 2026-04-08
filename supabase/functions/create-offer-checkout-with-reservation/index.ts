@@ -344,6 +344,7 @@ Deno.serve(async (req) => {
       transfer_data: {
         destination: discount.businesses.stripe_account_id,
       },
+      statement_descriptor_suffix: toStatementDescriptorSuffix(discount.businesses.name || ''),
     };
 
     const session = await stripe.checkout.sessions.create(checkoutConfig);

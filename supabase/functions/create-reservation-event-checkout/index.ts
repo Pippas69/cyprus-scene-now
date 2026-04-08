@@ -329,6 +329,7 @@ serve(async (req) => {
               destination: business.stripe_account_id,
             },
             metadata: sessionMetadata,
+            statement_descriptor_suffix: toStatementDescriptorSuffix(business.name || ''),
           },
         });
       } catch (connectError) {
