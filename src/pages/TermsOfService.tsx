@@ -352,6 +352,10 @@ const TermsOfService = () => {
               title: "11.5. Χρέωση & Τιμολόγηση",
               content: "Κατά την αγορά υπηρεσίας, αποστέλλεται τιμολόγιο στο email σας. Οι πληρωμές γίνονται μέσω κρυπτογραφημένης SSL σύνδεσης. Για συνδρομές, η χρέωση γίνεται μηνιαία — μπορείτε να ακυρώσετε πριν την ημερομηνία χρέωσης.",
             },
+            {
+              title: "11.6. Φορολογικές Υποχρεώσεις Διοργανωτών",
+              content: "Ως διοργανωτής, είστε αποκλειστικά υπεύθυνοι για τη συμμόρφωσή σας με τις φορολογικές υποχρεώσεις της χώρας σας, συμπεριλαμβανομένης της εγγραφής στο ΦΠΑ, της έκδοσης αποδείξεων και της δήλωσης εσόδων. Το ΦΟΜΟ λειτουργεί αποκλειστικά ως διαμεσολαβητής (facilitator) και δεν φέρει ευθύνη για τις φορολογικές υποχρεώσεις των διοργανωτών ή των επιχειρήσεων. Τα emails επιβεβαίωσης πληρωμής που αποστέλλει το ΦΟΜΟ δεν αποτελούν φορολογικά παραστατικά.",
+            },
           ],
         },
         {
@@ -846,6 +850,10 @@ const TermsOfService = () => {
             {
               title: "11.5. Billing & Invoicing",
               content: "Upon purchasing a service, an invoice is sent to your email. Payments are processed via SSL-encrypted connections. For subscriptions, billing occurs monthly — you can cancel before your billing date.",
+            },
+            {
+              title: "11.6. Organizer Tax Obligations",
+              content: "As an organizer, you are solely responsible for compliance with the tax obligations of your country, including VAT registration, issuing receipts, and declaring income. ΦΟΜΟ operates exclusively as a facilitator and bears no responsibility for the tax obligations of organizers or businesses. Payment confirmation emails sent by ΦΟΜΟ do not constitute tax documents.",
             },
           ],
         },
