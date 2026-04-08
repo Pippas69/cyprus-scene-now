@@ -70,11 +70,54 @@ export const ReservationSuccess = () => {
     const processPayment = async () => {
       const sessionId = searchParams.get("session_id");
       const reservationId = searchParams.get("reservation_id");
+      const eventId = searchParams.get("event_id");
 
-      if (!reservationId) {
+      if (!reservationId && !sessionId) {
         setStatus("error");
         setErrorMessage("Missing reservation information");
         return;
+      }
+
+      // If we have reservation_id, use it directly. Otherwise poll by user + event.
+      let targetReservationId = reservationId;
+
+      if (!targetReservationId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setStatus("error");
+          setErrorMessage("Not authenticated");
+          return;
+        }
+
+        // Poll for the reservation created by the webhook after payment
+        const maxPolls = 15;
+        for (let i = 0; i < maxPolls; i++) {
+          await new Promise((resolve) => setTimeout(resolve, i === 0 ? 2500 : 1500));
+
+          let query = supabase
+            .from("reservations")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("status", "accepted")
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (eventId) {
+            query = query.eq("event_id", eventId);
+          }
+
+          const { data } = await query.maybeSingle();
+          if (data) {
+            targetReservationId = data.id;
+            break;
+          }
+        }
+
+        if (!targetReservationId) {
+          // Last resort: still show a success state with navigation
+          setStatus("success");
+          return;
+        }
       }
 
       const processKey = `reservation_success_processed:${reservationId}:${sessionId ?? "no_session"}`;
