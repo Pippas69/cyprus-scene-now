@@ -120,16 +120,9 @@ export const ReservationSuccess = () => {
         }
       }
 
-      const processKey = `reservation_success_processed:${reservationId}:${sessionId ?? "no_session"}`;
+      const processKey = `reservation_success_processed:${targetReservationId}:${sessionId ?? "no_session"}`;
 
       try {
-        // The Stripe webhook (checkout.session.completed) handles payment processing
-        // and reservation status updates automatically. We just need to wait briefly
-        // for the webhook to complete, then fetch the reservation data.
-
-        // Small delay to allow webhook processing
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
         // Fetch reservation details
         const { data: reservation, error: fetchError } = await supabase
           .from("reservations")
