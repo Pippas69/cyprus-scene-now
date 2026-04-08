@@ -139,7 +139,7 @@ export const ReservationSuccess = () => {
               events!inner(title, start_at, businesses!inner(name, logo_url))
             `
           )
-          .eq("id", reservationId)
+          .eq("id", targetReservationId)
           .single();
 
         if (fetchError) {
