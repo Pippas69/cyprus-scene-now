@@ -257,6 +257,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     return () => {
       window.removeEventListener('resize', applyZoomControlStyles);
       map.current?.remove();
+      map.current = null;
     };
   }, [MAPBOX_TOKEN]);
 
