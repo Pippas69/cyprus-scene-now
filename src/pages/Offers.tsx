@@ -75,8 +75,14 @@ const Offers = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <OfferCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -158,6 +164,7 @@ const Offers = () => {
 const LimitedOffersView = ({ language, t, onSignupClick }: any) => {
   const { data: offers, isLoading } = useQuery({
     queryKey: ['offers-preview'],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const now = new Date().toISOString();
         const { data, error } = await supabase
@@ -276,6 +283,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch active offer boosts (with hourly window support)
   const { data: activeBoosts } = useQuery({
     queryKey: ["active-offer-boosts-offers"],
+    staleTime: 60000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("offer_boosts")
@@ -300,6 +308,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch BOOSTED offers (shown at top, but STILL filtered by selected time window)
   const { data: boostedOffers, isLoading: loadingBoosted } = useQuery({
     queryKey: ["boosted-offers-page", dateRange, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
+    staleTime: 60000,
     queryFn: async () => {
       if (boostedOfferIds.size === 0) return [];
 
@@ -325,8 +334,6 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
       }
-
-      // Category filtering is done client-side after fetch (server-side .overlaps on embedded resources is unreliable)
 
       // Apply time filter if selected (Boosted must respect the same time window)
       if (timeBoundaries) {
@@ -360,6 +367,7 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch NON-BOOSTED offers (filtered by time and city)
   const { data: regularOffers, isLoading: loadingRegular } = useQuery({
     queryKey: ["regular-offers", dateRange, selectedCity, selectedCategories, Array.from(boostedOfferIds)],
+    staleTime: 60000,
     queryFn: async () => {
       const now = new Date().toISOString();
       
@@ -383,8 +391,6 @@ const FullOffersView = ({ language, user, selectedCity, selectedCategories }: {
       if (selectedCity) {
         query = query.eq('businesses.city', selectedCity);
       }
-
-      // Category filtering is done client-side after fetch
 
       // Apply time filter: show offers that END within the selected time window
       if (timeBoundaries) {
