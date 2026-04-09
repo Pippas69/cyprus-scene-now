@@ -102,7 +102,7 @@ const DashboardUser = () => {
         }}
         className="w-full">
 
-        <TabsContent value="events" className="animate-fade-in">
+        <TabsContent value="events" forceMount className={`animate-fade-in ${activeTab !== 'events' ? 'hidden' : ''}`}>
           <MyEvents userId={user.id} language={language} />
         </TabsContent>
 
