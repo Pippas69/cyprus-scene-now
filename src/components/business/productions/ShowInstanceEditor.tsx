@@ -376,7 +376,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
 
           {/* Interactive seat map */}
           {showSeatMap && (
-            <div className="border rounded-lg overflow-hidden bg-muted/10">
+            <div className="border rounded-lg overflow-hidden bg-muted/10 min-h-[500px] lg:min-h-[600px]">
               <SeatSelectionStep
                 venueId={instance.venue_id!}
                 showInstanceId="__new__"
