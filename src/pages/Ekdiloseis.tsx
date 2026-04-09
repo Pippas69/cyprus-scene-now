@@ -19,6 +19,40 @@ import { PremiumBadge } from "@/components/ui/premium-badge";
 import { isEventPaused } from "@/lib/eventVisibility";
 import { isBoostCurrentlyActive, type EventBoostRecord } from "@/lib/boostUtils";
 
+// Helper: bulk-fetch RSVP counts for a list of events using the existing RPC
+async function attachRsvpCounts(events: any[], userId?: string) {
+  if (events.length === 0) return events;
+  const eventIds = events.map(e => e.id);
+
+  // Fetch counts in bulk
+  const { data: counts } = await supabase.rpc("get_event_rsvp_counts_bulk", { p_event_ids: eventIds });
+  const countsMap = new Map<string, { interested: number; going: number }>();
+  (counts || []).forEach((row: any) => {
+    countsMap.set(row.event_id, {
+      interested: Number(row.interested_count || 0),
+      going: Number(row.going_count || 0),
+    });
+  });
+
+  // Fetch user's own RSVP statuses in one query if logged in
+  let userStatusMap = new Map<string, string>();
+  if (userId) {
+    const { data: userRsvps } = await supabase
+      .from('rsvps')
+      .select('event_id, status')
+      .eq('user_id', userId)
+      .in('event_id', eventIds);
+    (userRsvps || []).forEach((r: any) => userStatusMap.set(r.event_id, r.status));
+  }
+
+  return events.map(event => ({
+    ...event,
+    interested_count: countsMap.get(event.id)?.interested || 0,
+    going_count: countsMap.get(event.id)?.going || 0,
+    user_status: userStatusMap.get(event.id) || null,
+  }));
+}
+
 const Ekdiloseis = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -77,8 +111,14 @@ const Ekdiloseis = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <EventCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -164,61 +204,31 @@ const Ekdiloseis = () => {
 
 // Limited View for Visitors
 const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity, selectedCategories }: any) => {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: events, isLoading: loading } = useQuery({
+    queryKey: ['preview-events-limited'],
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
+      const { data: eventsData, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          businesses!inner (
+            name,
+            logo_url,
+            verified
+          )
+        `)
+        .eq('businesses.verified', true)
+        .gte('end_at', new Date().toISOString())
+        .order('start_at', { ascending: true })
+        .limit(12);
 
-  useEffect(() => {
-    const fetchPreviewEvents = async () => {
-      try {
-        const { data: eventsData, error } = await supabase
-          .from('events')
-          .select(`
-            *,
-            businesses!inner (
-              name,
-              logo_url,
-              verified
-            )
-          `)
-          .eq('businesses.verified', true)
-          .gte('end_at', new Date().toISOString())
-          .order('start_at', { ascending: true })
-          .limit(12);
+      if (error) throw error;
 
-        if (error) throw error;
-
-        if (eventsData) {
-          const visibleEvents = eventsData.filter((e: any) => !isEventPaused(e));
-          const eventsWithStats = await Promise.all(
-            visibleEvents.map(async (event) => {
-              const { data: rsvps } = await supabase
-                .from('rsvps')
-                .select('status')
-                .eq('event_id', event.id);
-
-              const interested_count = rsvps?.filter(r => r.status === 'interested').length || 0;
-              const going_count = rsvps?.filter(r => r.status === 'going').length || 0;
-
-              return {
-                ...event,
-                interested_count,
-                going_count,
-                user_status: null,
-              };
-            })
-          );
-
-          setEvents(eventsWithStats);
-        }
-      } catch (error) {
-        console.error('Error fetching preview events:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPreviewEvents();
-  }, []);
+      const visibleEvents = (eventsData || []).filter((e: any) => !isEventPaused(e));
+      return attachRsvpCounts(visibleEvents);
+    },
+  });
 
   return (
     <motion.div
@@ -232,8 +242,8 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
           [1, 2, 3, 4, 5, 6].map((i) => (
             <EventCardSkeleton key={i} />
           ))
-        ) : events.length > 0 ? (
-          events.map((event, index) => (
+        ) : events && events.length > 0 ? (
+          events.map((event: any, index: number) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 20 }}
@@ -251,7 +261,7 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
         ) : (
           <div className="col-span-full text-center py-12">
             <p className="text-muted-foreground text-lg">
-              {language === "el" ? "Δεν υπάρχουν διαθέσιμες εκδηλώσεις" : "No events available"}
+              {language === "el" ? "Δεν υπάρχουν εκδηλώσεις" : "No events found"}
             </p>
           </div>
         )}
@@ -299,6 +309,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch user's upcoming RSVPs for the filter
   const { data: userRsvps, refetch: refetchUserRsvps } = useQuery({
     queryKey: ["user-rsvps-ekdiloseis", user?.id],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!user?.id) return [];
       const now = new Date().toISOString();
@@ -356,6 +367,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch active event boosts (with hourly window support)
   const { data: activeBoosts } = useQuery({
     queryKey: ["active-event-boosts-ekdiloseis"],
+    staleTime: 60000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("event_boosts")
@@ -380,6 +392,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch BOOSTED events (shown at top, but STILL filtered by selected time window)
   const { data: boostedEvents, isLoading: loadingBoosted } = useQuery({
     queryKey: ["boosted-events-ekdiloseis", dateRange, selectedCity, selectedCategories, Array.from(boostedEventIds)],
+    staleTime: 60000,
     queryFn: async () => {
       if (boostedEventIds.size === 0) return [];
 
@@ -422,24 +435,8 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
          });
        }
 
-       // Fetch RSVP counts
-       const eventsWithStats = await Promise.all(
-         visible.map(async (event) => {
-          const { data: rsvps } = await supabase
-            .from('rsvps')
-            .select('status, user_id')
-            .eq('event_id', event.id);
-
-          return {
-            ...event,
-            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
-            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
-            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
-          };
-        })
-      );
-
-      return eventsWithStats;
+       // Bulk fetch RSVP counts (replaces N+1 queries)
+       return attachRsvpCounts(visible, user?.id);
     },
     enabled: boostedEventIds.size > 0,
   });
@@ -447,6 +444,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
   // Fetch NON-BOOSTED events (filtered by time and city)
   const { data: regularEvents, isLoading: loadingRegular } = useQuery({
     queryKey: ["regular-events", dateRange, selectedCity, selectedCategories, Array.from(boostedEventIds)],
+    staleTime: 60000,
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -492,24 +490,8 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
         });
       }
 
-      // Fetch RSVP counts
-      const eventsWithStats = await Promise.all(
-        visible.map(async (event) => {
-          const { data: rsvps } = await supabase
-            .from('rsvps')
-            .select('status, user_id')
-            .eq('event_id', event.id);
-
-          return {
-            ...event,
-            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
-            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
-            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
-          };
-        })
-      );
-
-      return eventsWithStats;
+      // Bulk fetch RSVP counts (replaces N+1 queries)
+      return attachRsvpCounts(visible, user?.id);
     },
   });
 
@@ -520,6 +502,7 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
 
   const { data: rsvpFilteredEvents, isLoading: loadingRsvpEvents } = useQuery({
     queryKey: ["rsvp-filtered-events", rsvpFilter, Array.from(rsvpFilterIds)],
+    staleTime: 60000,
     queryFn: async () => {
       if (rsvpFilterIds.size === 0) return [];
       const { data, error } = await supabase
@@ -531,22 +514,8 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
         .order('start_at', { ascending: true });
       if (error) throw error;
 
-      // Fetch RSVP counts
-      const eventsWithStats = await Promise.all(
-        (data || []).map(async (event) => {
-          const { data: rsvps } = await supabase
-            .from('rsvps')
-            .select('status, user_id')
-            .eq('event_id', event.id);
-          return {
-            ...event,
-            interested_count: rsvps?.filter(r => r.status === 'interested').length || 0,
-            going_count: rsvps?.filter(r => r.status === 'going').length || 0,
-            user_status: rsvps?.find(r => r.user_id === user?.id)?.status || null,
-          };
-        })
-      );
-      return eventsWithStats;
+      // Bulk fetch RSVP counts (replaces N+1 queries)
+      return attachRsvpCounts(data || [], user?.id);
     },
     enabled: !!rsvpFilter && rsvpFilterIds.size > 0,
   });
