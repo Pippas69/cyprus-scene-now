@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { CrmActivityTimeline } from "./CrmActivityTimeline";
 import { useQueryClient } from "@tanstack/react-query";
 import { type CrmGuest, type CrmGuestTag, useCrmGuestNotes } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -436,10 +437,10 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
           <QuickStat label={t.noShows} value={String(guest.total_no_shows)} warning={guest.total_no_shows >= 2} />
         </div>
 
-        {/* Extra stats row */}
+        {/* Extra stats row: only first visit + favorite table */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5 text-[10px] text-muted-foreground">
-          {guest.avg_party_size > 0 && (
-            <span>👥 {t.avgParty}: {guest.avg_party_size}</span>
+          {guest.first_visit && (
+            <span>📅 {t.firstVisit}: {format(new Date(guest.first_visit), "dd/MM/yyyy")}</span>
           )}
           {guest.total_visits > 0 && guest.favorite_table && (
             <EditableInlineField
@@ -469,24 +470,12 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
               }}
             />
           )}
-          {guest.first_visit && (
-            <span>📅 {t.firstVisit}: {format(new Date(guest.first_visit), "dd/MM/yy")}</span>
-          )}
-          {guest.last_visit && (
-            <span>🕐 {t.lastVisit}: {formatDistanceToNow(new Date(guest.last_visit), { addSuffix: true, locale })}</span>
-          )}
         </div>
 
-
-
-
-        {/* Email */}
-        {guest.email && (
-          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
-            <Mail className="h-3 w-3" />
-            <span>{guest.email}</span>
-          </div>
-        )}
+        {/* Activity Timeline */}
+        <div className="mt-3">
+          <CrmActivityTimeline guestId={guest.id} businessId={businessId} />
+        </div>
       </div>
 
       {/* Tabs */}
