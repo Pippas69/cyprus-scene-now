@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Clock, CalendarCheck, Star, Ticket, QrCode, MapPin, Calendar } from 'lucide-react';
+import { ChevronDown, Clock, QrCode, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { TicketQRDialog } from '@/components/tickets/TicketQRDialog';
@@ -17,10 +17,6 @@ interface MyEventsProps {
 }
 
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialSubtab = searchParams.get('subtab') || 'going';
-  const { interested, going, pastInterested, pastGoing, loading: rsvpLoading } = useUserRSVPs(userId);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const dateLocale = language === 'el' ? el : enUS;
