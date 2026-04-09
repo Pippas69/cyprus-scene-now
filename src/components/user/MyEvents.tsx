@@ -29,9 +29,11 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const dateLocale = language === 'el' ? el : enUS;
 
-  // Fetch user's tickets
+  // Fetch user's tickets - cached for 5 min so tab switches are instant
   const { data: tickets, isLoading: ticketsLoading } = useQuery({
     queryKey: ["my-tickets-events", userId, "reservation-separation-v3"],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tickets")
