@@ -7201,6 +7201,17 @@ export type Database = {
           total_visits: number
         }[]
       }
+      get_crm_guest_timeline: {
+        Args: { p_business_id: string; p_guest_id: string }
+        Returns: {
+          activity_date: string
+          activity_type: string
+          booked_at: string
+          checked_in_at: string
+          spend_cents: number
+          title: string
+        }[]
+      }
       get_discount_qr_token: { Args: { discount_id: string }; Returns: string }
       get_event_attendees_with_similarity: {
         Args: { current_user_id: string; event_id_param: string }
