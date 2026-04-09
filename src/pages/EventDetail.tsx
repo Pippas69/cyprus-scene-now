@@ -405,11 +405,12 @@ export default function EventDetail() {
 
       // Similar events
       secondaryPromises.push((async () => {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        // Use the user from checkUser() — avoid redundant auth.getUser() call
+        const currentUserId = user?.id || null;
 
         const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
           p_event_id: eventId,
-          p_user_id: currentUser?.id || null,
+          p_user_id: currentUserId,
           p_limit: 2
         });
 
