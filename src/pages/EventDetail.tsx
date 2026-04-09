@@ -129,19 +129,22 @@ export default function EventDetail() {
   const { data: ticketTiers = [], isLoading: ticketsLoading } = useTicketTiers(eventId || '');
 
   useEffect(() => {
-    checkUser();
-    if (eventId) {
-      fetchEventDetails();
-      const src = new URLSearchParams(location.search).get('src');
-      const analyticsTracked = location.state?.analyticsTracked === true;
-      console.debug('[EventDetail] view check', { eventId, src, analyticsTracked, pathname: location.pathname, search: location.search });
-      if (src !== 'dashboard_user' && !analyticsTracked) {
-        console.debug('[EventDetail] tracking view', { eventId });
-        trackEventView(eventId, 'direct');
+    // Run auth check and event fetch IN PARALLEL — they are independent
+    const init = async () => {
+      const authPromise = checkUser();
+      if (eventId) {
+        const eventPromise = fetchEventDetails();
+        const src = new URLSearchParams(location.search).get('src');
+        const analyticsTracked = location.state?.analyticsTracked === true;
+        if (src !== 'dashboard_user' && !analyticsTracked) {
+          trackEventView(eventId, 'direct');
+        }
+        await Promise.all([authPromise, eventPromise]);
       } else {
-        console.debug('[EventDetail] skipped view (dashboard_user or analyticsTracked)', { eventId, analyticsTracked });
+        await authPromise;
       }
-    }
+    };
+    init();
   }, [eventId, location.search, location.state?.analyticsTracked]);
 
   useEffect(() => {
@@ -402,11 +405,12 @@ export default function EventDetail() {
 
       // Similar events
       secondaryPromises.push((async () => {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        // Use the user from checkUser() — avoid redundant auth.getUser() call
+        const currentUserId = user?.id || null;
 
         const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
           p_event_id: eventId,
-          p_user_id: currentUser?.id || null,
+          p_user_id: currentUserId,
           p_limit: 2
         });
 
