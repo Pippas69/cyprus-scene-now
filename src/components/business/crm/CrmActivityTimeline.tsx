@@ -84,7 +84,7 @@ function getBookedLabel(type: string, t: typeof translations["el"]) {
   return t.booked;
 }
 
-function ActivityItem({ activity, locale, t }: { activity: TimelineActivity; locale: Locale; t: typeof translations["el"] }) {
+function ActivityItem({ activity, locale, t }: { activity: TimelineActivity; locale: any; t: typeof translations["el"] }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = getActivityIcon(activity.activity_type);
   const sourceLabel = getSourceLabel(activity.activity_type, t);
