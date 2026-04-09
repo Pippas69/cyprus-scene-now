@@ -106,15 +106,15 @@ const DashboardUser = () => {
           <MyEvents userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="reservations" className="mt-4 animate-fade-in">
+        <TabsContent value="reservations" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'reservations' ? 'hidden' : ''}`}>
           <MyReservations userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="offers" className="mt-4 animate-fade-in">
+        <TabsContent value="offers" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'offers' ? 'hidden' : ''}`}>
           <MyOffers userId={user.id} language={language} />
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-4 animate-fade-in">
+        <TabsContent value="settings" forceMount className={`mt-4 animate-fade-in ${activeTab !== 'settings' ? 'hidden' : ''}`}>
           <UserSettings userId={user.id} language={language} />
         </TabsContent>
       </Tabs>
