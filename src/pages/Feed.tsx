@@ -100,6 +100,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
       };
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch active event boosts (with hourly window support)
