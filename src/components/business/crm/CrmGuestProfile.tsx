@@ -354,7 +354,7 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
   const hasAnyDetails = hasContact || hasAllergy || hasPrefs || hasRelation || hasOrigin;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-border bg-card">
         <div className="flex items-start justify-between mb-3">
@@ -471,11 +471,11 @@ export function CrmGuestProfile({ guest, businessId, onClose, onUpdate, onUpdate
             />
           )}
         </div>
+      </div>
 
-        {/* Activity Timeline */}
-        <div className="mt-3">
-          <CrmActivityTimeline guestId={guest.id} businessId={businessId} />
-        </div>
+      {/* Activity Timeline — scrollable section between header and tabs */}
+      <div className="border-b border-border px-4 sm:px-5 py-2 max-h-[220px] overflow-y-auto flex-shrink-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <CrmActivityTimeline guestId={guest.id} businessId={businessId} />
       </div>
 
       {/* Tabs */}
