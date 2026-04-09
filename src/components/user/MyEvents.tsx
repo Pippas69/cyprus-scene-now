@@ -114,7 +114,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
   };
 
   const t = text[language];
-  const loading = rsvpLoading || ticketsLoading;
+  const loading = ticketsLoading;
 
   if (loading) {
     return (
