@@ -289,10 +289,11 @@ export default function EventDetail() {
     setError(null);
 
     try {
-      const { data: eventData, error: fetchError } = await supabase.
-      from("events").
-      select(
-        `
+      // STEP 1: Fetch the event — this is the ONLY blocking query
+      const { data: eventData, error: fetchError } = await supabase
+        .from("events")
+        .select(
+          `
           *,
             businesses!inner(
             id,
@@ -304,9 +305,9 @@ export default function EventDetail() {
             ticket_reservation_linked
           )
         `
-      ).
-      eq("id", eventId).
-      maybeSingle();
+        )
+        .eq("id", eventId)
+        .maybeSingle();
 
       if (fetchError) {
         console.error("Event fetch error:", fetchError);
@@ -330,24 +331,24 @@ export default function EventDetail() {
         }
 
         const [ticketOrderRes, reservationRes] = await Promise.all([
-        supabase.
-        from('ticket_orders').
-        select('id').
-        eq('event_id', eventId).
-        eq('user_id', currentUser.id).
-        eq('status', 'completed').
-        limit(1),
-        supabase.
-        from('reservations').
-        select('id').
-        eq('event_id', eventId).
-        eq('user_id', currentUser.id).
-        eq('status', 'accepted').
-        limit(1)]
-        );
+          supabase
+            .from('ticket_orders')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', currentUser.id)
+            .eq('status', 'completed')
+            .limit(1),
+          supabase
+            .from('reservations')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('user_id', currentUser.id)
+            .eq('status', 'accepted')
+            .limit(1)
+        ]);
 
         const hasAccess =
-        (ticketOrderRes.data?.length || 0) > 0 || (reservationRes.data?.length || 0) > 0;
+          (ticketOrderRes.data?.length || 0) > 0 || (reservationRes.data?.length || 0) > 0;
 
         if (!hasAccess) {
           setError(language === "el" ? "Η εκδήλωση δεν βρέθηκε" : "Event not found");
@@ -356,49 +357,65 @@ export default function EventDetail() {
         }
       }
 
+      // STEP 2: Show the event IMMEDIATELY — no more waiting
       setEvent(eventData);
+      setLoading(false);
+
+      // STEP 3: Load ALL secondary data in PARALLEL (non-blocking)
+      const eventDataLinked = !!(eventData as any).businesses?.ticket_reservation_linked || isClubOrEventBusiness((eventData as any).businesses?.category || []);
 
       const performanceCategories = ['theatre', 'music', 'dance', 'kids', 'θέατρο', 'μουσική', 'χορός', 'παιδικά'];
       const bizCategories = (eventData.businesses?.category || []).map((c: string) => c.toLowerCase());
       const isPerformance = bizCategories.some((c: string) => performanceCategories.includes(c));
 
-      if (isPerformance) {
-        const { data: shows } = await supabase.
-        from('show_instances').
-        select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id').
-        eq('event_id', eventId).
-        eq('status', 'scheduled').
-        order('start_at', { ascending: true });
-        setShowInstances(shows || []);
+      // Fire all secondary queries at once
+      const secondaryPromises: Promise<void>[] = [];
 
-        const productionId = shows?.[0]?.production_id;
-        if (productionId) {
-          const { data: cast } = await supabase.
-          from('production_cast').
-          select('id, person_name, role_type, role_name, bio, photo_url, sort_order').
-          eq('production_id', productionId).
-          order('sort_order', { ascending: true });
-          setCastMembers(cast || []);
-        }
+      // RSVP counts
+      secondaryPromises.push(refreshCounts(eventId));
+
+      // Reservation sold-out check
+      secondaryPromises.push(refreshReservationSoldOut(eventId, eventDataLinked, eventData.event_type));
+
+      // Show instances + cast (for performance events)
+      if (isPerformance) {
+        secondaryPromises.push((async () => {
+          const { data: shows } = await supabase
+            .from('show_instances')
+            .select('id, start_at, end_at, venue_id, doors_open_at, notes, status, production_id')
+            .eq('event_id', eventId)
+            .eq('status', 'scheduled')
+            .order('start_at', { ascending: true });
+          setShowInstances(shows || []);
+
+          const productionId = shows?.[0]?.production_id;
+          if (productionId) {
+            const { data: cast } = await supabase
+              .from('production_cast')
+              .select('id, person_name, role_type, role_name, bio, photo_url, sort_order')
+              .eq('production_id', productionId)
+              .order('sort_order', { ascending: true });
+            setCastMembers(cast || []);
+          }
+        })());
       }
 
-      const eventDataLinked = !!(eventData as any).businesses?.ticket_reservation_linked || isClubOrEventBusiness((eventData as any).businesses?.category || []);
-      await refreshReservationSoldOut(eventId, eventDataLinked, eventData.event_type);
+      // Similar events
+      secondaryPromises.push((async () => {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-      await refreshCounts(eventId);
+        const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
+          p_event_id: eventId,
+          p_user_id: currentUser?.id || null,
+          p_limit: 2
+        });
 
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (similarError) {
+          console.error('Error fetching similar events:', similarError);
+          setSimilarEvents([]);
+          return;
+        }
 
-      const { data: similar, error: similarError } = await supabase.rpc('get_similar_events', {
-        p_event_id: eventId,
-        p_user_id: currentUser?.id || null,
-        p_limit: 2
-      });
-
-      if (similarError) {
-        console.error('Error fetching similar events:', similarError);
-        setSimilarEvents([]);
-      } else {
         const transformedSimilar = (similar || []).map((item: any) => ({
           id: item.id,
           title: item.title,
@@ -423,21 +440,24 @@ export default function EventDetail() {
 
         const ids = transformedSimilar.map((e: any) => e.id);
         if (ids.length > 0) {
-          const { data: vis } = await supabase.
-          from('events').
-          select('id, appearance_start_at').
-          in('id', ids);
+          const { data: vis } = await supabase
+            .from('events')
+            .select('id, appearance_start_at')
+            .in('id', ids);
 
           const pausedIds = new Set((vis || []).filter((e: any) => isEventPaused(e)).map((e: any) => e.id));
           setSimilarEvents(transformedSimilar.filter((e: any) => !pausedIds.has(e.id)));
         } else {
           setSimilarEvents([]);
         }
-      }
+      })());
+
+      // Wait for all secondary data (UI already visible)
+      await Promise.allSettled(secondaryPromises);
+
     } catch (err: any) {
       console.error("Event details error:", err);
       setError(err.message || "Failed to load event details");
-    } finally {
       setLoading(false);
     }
   };
