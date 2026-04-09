@@ -1,37 +1,39 @@
 
 
-# Theatre Seating Plan — Corrections & Modal Size
+# Populate Correct Pattihio Seat Data (2,017 seats)
 
-## What You're Telling Me
+## What This Does
+Deletes all incorrect seat data for the Pattihio venue and inserts exactly 2,017 seats with the correct row-by-row seat number ranges you provided. No UI or layout changes — only database data.
 
-1. **The overall horseshoe design is good** — keep it as-is
-2. **Seat counts per section are wrong** — you'll send me detailed screenshots of each section individually so I can match the exact number of seats per row per zone
-3. **The seat selection window is too small** — needs to be bigger
+## Steps
 
-## What I'll Do Now (Before Your Screenshots)
+### 1. Delete all existing seats for Pattihio zones
+Remove all ~2,725 incorrect seats from `venue_seats` for all 9 zones (including Πλατεία).
 
-### 1. Make the Seat Selection Dialog Bigger
+### 2. Delete the Πλατεία zone
+Remove zone `88cfdd26-77b6-4edd-a0aa-cce66df2b5d1` — it's not part of the real layout.
 
-Currently the dialog uses `max-w-2xl` (672px) on desktop when showing seats. I'll increase this to `max-w-4xl` (896px) or even `max-w-5xl` (1024px) so the seat map has room to breathe. On mobile, I'll also increase from `85vh` to `90vh` height.
+### 3. Insert 2,017 correct seats
+Using a Python script to generate and execute INSERT statements with the exact data:
 
-**File:** `src/components/tickets/TicketPurchaseFlow.tsx` (lines 1128 and 1113)
+| Section | Zone ID | Total |
+|---------|---------|-------|
+| Α | `aa9b38d1...` | 206 |
+| Β | `64cbf972...` | 269 |
+| Γ | `b03afd3a...` | 267 |
+| Δ | `16551c22...` | 249 |
+| Ε | `2692ac39...` | 270 |
+| Ζ | `e3b5b0e6...` | 268 |
+| Η | `84b46333...` | 271 |
+| Θ | `6fe669bd...` | 217 |
 
-Also in the business dashboard's `ShowInstanceEditor.tsx`, the seat map container has no explicit size constraints — I'll ensure it also gets adequate space.
+Each seat: `row_label`, `seat_number`, `seat_label` (format "Τμ.Α Σειρά Σ Θέση 1"), `seat_type`="regular", `is_active`=true, `x`=0, `y`=0.
 
-### 2. Wait for Your Screenshots to Fix Seat Data
-
-Once you send me the screenshots of each section (Τμήμα Α through Θ), I'll:
-- Count the exact seats per row per zone from your screenshots
-- Update the `venue_seats` database entries to match the real Pattihio layout
-- Ensure row labels (Α-Σ) and seat numbers are correct for each zone
+### 4. Verify totals
+Query to confirm 2,017 seats with correct per-zone counts.
 
 ## What Won't Change
-- The horseshoe zone overview design
-- The curved arc seat rendering within each zone
-- The zone colors, legends, zoom/pan behavior
-- Row label positions and ordering
-
-## Next Step
-
-Send me the screenshots of each section whenever you're ready, and I'll update the seat data to match exactly.
+- Zone arc geometry, horseshoe shape, row letters, row placement
+- ZoneSeatPicker rendering logic
+- Any UI components
 
