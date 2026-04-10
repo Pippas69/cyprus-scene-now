@@ -184,18 +184,11 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const { seatRadius, rowSpacing } = useMemo(() => getDynamicSizes(maxSeatsInRow), [maxSeatsInRow]);
 
-  // Wider arc for dense zones — ensure minimum angular separation
-  const detailSpanDeg = useMemo(() => {
-    // Calculate minimum arc needed so innermost row seats don't overlap
-    const innerMostRadius = BASE_RADIUS;
-    const minAngularSep = (seatRadius * 2.6) / innerMostRadius;
-    const minSpanRad = minAngularSep * maxSeatsInRow;
-    const minSpanDeg = (minSpanRad * 180) / Math.PI;
-    return clamp(minSpanDeg + EDGE_PAD_DEG * 2 + 4, 50, 140);
-  }, [maxSeatsInRow, seatRadius]);
-
-  const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
-  const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
+  // Fixed angular seat spacing (radians) based on seat size
+  const seatAngularStep = useMemo(() => {
+    // Use the innermost row radius to calculate — ensures no overlap at tightest point
+    return (seatRadius * 2.5) / BASE_RADIUS;
+  }, [seatRadius]);
 
   const rowLayouts = useMemo(() => {
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
@@ -212,20 +205,23 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
-      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuter ? UPPER_SECTION_INSET_DEG : 0);
-      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isOuter ? UPPER_SECTION_INSET_DEG : 0);
+      // Each row gets its own arc span based on seat count and physical spacing at its radius
+      const seatAngleDeg = ((seatRadius * 2.5) / radius) * (180 / Math.PI);
+      const rowSpanDeg = rowSeats.length > 0 ? (rowSeats.length - 1) * seatAngleDeg : 0;
+      const rowStartDeg = zoneMidDeg - rowSpanDeg / 2;
+      const rowEndDeg = zoneMidDeg + rowSpanDeg / 2;
 
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
         isOuter,
-        startDeg,
-        endDeg,
+        startDeg: rowStartDeg,
+        endDeg: rowEndDeg,
         hasData: rowSeats.length > 0,
       };
     });
-  }, [seatsByRow, detailStartDeg, detailEndDeg, rowSpacing]);
+  }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
 
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
@@ -233,7 +229,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     rowLayouts.forEach(({ rowSeats, radius, startDeg, endDeg }) => {
       rowSeats.forEach((seat, seatIdx) => {
         const angle = rowSeats.length === 1
-          ? (startDeg + endDeg) / 2
+          ? zoneMidDeg
           : startDeg + (seatIdx / (rowSeats.length - 1)) * (endDeg - startDeg);
 
         const rad = toRad(angle);
