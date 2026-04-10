@@ -395,7 +395,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
               <SeatSelectionStep
                 venueId={instance.venue_id!}
                 showInstanceId="__new__"
-                maxSeats={999}
+                maxSeats={zones ? zones.reduce((sum, z) => sum + (z.actual_seat_count || 0), 0) : 0}
                 selectedSeats={instance.house_seats || []}
                 onSeatToggle={handleSeatToggle}
                 eventTitle={t.houseSeats}
