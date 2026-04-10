@@ -443,44 +443,60 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
           </text>
 
           {/* Inner section background */}
-          <path
-            d={annularSectorPath(
-              HC.x,
-              HC.y,
-              Math.max(48, innerSection[innerSection.length - 1].radius - 20),
-              innerSection[0].radius + 18,
-              detailStartDeg,
-              detailEndDeg
-            )}
-            fill={zoneColor}
-            fillOpacity={0.05}
-            stroke={zoneColor}
-            strokeOpacity={0.18}
-            strokeWidth={1}
-          />
+          {(() => {
+            const innerRows = innerSection.filter(r => r.hasData);
+            if (innerRows.length === 0) return null;
+            const bgStart = Math.min(...innerRows.map(r => r.startDeg)) - 4;
+            const bgEnd = Math.max(...innerRows.map(r => r.endDeg)) + 4;
+            return (
+              <path
+                d={annularSectorPath(
+                  HC.x, HC.y,
+                  Math.max(48, innerSection[innerSection.length - 1].radius - 20),
+                  innerSection[0].radius + 18,
+                  bgStart, bgEnd
+                )}
+                fill={zoneColor}
+                fillOpacity={0.05}
+                stroke={zoneColor}
+                strokeOpacity={0.18}
+                strokeWidth={1}
+              />
+            );
+          })()}
 
           {/* Outer section background */}
-          <path
-            d={annularSectorPath(
-              HC.x,
-              HC.y,
-              outerSection[outerSection.length - 1].radius - 20,
-              outerSection[0].radius + 18,
-              detailStartDeg + UPPER_SECTION_INSET_DEG,
-              detailEndDeg - UPPER_SECTION_INSET_DEG
-            )}
-            fill={zoneColor}
-            fillOpacity={0.05}
-            stroke={zoneColor}
-            strokeOpacity={0.18}
-            strokeWidth={1}
-          />
+          {(() => {
+            const outerRows = outerSection.filter(r => r.hasData);
+            if (outerRows.length === 0) return null;
+            const bgStart = Math.min(...outerRows.map(r => r.startDeg)) - 4;
+            const bgEnd = Math.max(...outerRows.map(r => r.endDeg)) + 4;
+            return (
+              <path
+                d={annularSectorPath(
+                  HC.x, HC.y,
+                  outerSection[outerSection.length - 1].radius - 20,
+                  outerSection[0].radius + 18,
+                  bgStart, bgEnd
+                )}
+                fill={zoneColor}
+                fillOpacity={0.05}
+                stroke={zoneColor}
+                strokeOpacity={0.18}
+                strokeWidth={1}
+              />
+            );
+          })()}
 
           {/* Simple section gap divider */}
           {(() => {
+            const allRows = rowLayouts.filter(r => r.hasData);
+            if (allRows.length === 0) return null;
+            const bgStart = Math.min(...allRows.map(r => r.startDeg)) - 2;
+            const bgEnd = Math.max(...allRows.map(r => r.endDeg)) + 2;
             const gapR = (innerSection[0].radius + outerSection[outerSection.length - 1].radius) / 2;
-            const s = toRad(detailStartDeg + EDGE_PAD_DEG);
-            const e = toRad(detailEndDeg - EDGE_PAD_DEG);
+            const s = toRad(bgStart);
+            const e = toRad(bgEnd);
             return (
               <path
                 d={`M ${HC.x + gapR * Math.cos(s)} ${HC.y + gapR * Math.sin(s)} A ${gapR} ${gapR} 0 0 1 ${HC.x + gapR * Math.cos(e)} ${HC.y + gapR * Math.sin(e)}`}
