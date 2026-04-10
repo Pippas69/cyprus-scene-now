@@ -234,8 +234,25 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       const maxNearby = getReferenceCount(sectionCounts, sectionIndex);
       const isShortRow = rowSeats.length > 0 && maxNearby > 0 && rowSeats.length < maxNearby * 0.6;
 
-      // For short rows, use the full envelope width of neighboring rows
-      const fullEnvelopeCount = isShortRow ? maxNearby : smoothedCount;
+      // For short rows, use the closest non-short neighbor's count (not max of ±2)
+      let fullEnvelopeCount = smoothedCount;
+      if (isShortRow) {
+        // Find nearest non-short row in the same section
+        let refCount = maxNearby;
+        for (let d = 1; d <= sectionCounts.length; d++) {
+          for (const dir of [sectionIndex + d, sectionIndex - d]) {
+            if (dir >= 0 && dir < sectionCounts.length) {
+              const nc = sectionCounts[dir];
+              if (nc >= rowSeats.length / 0.6) {
+                refCount = getSmoothedCount(sectionCounts, dir);
+                d = sectionCounts.length; // break outer
+                break;
+              }
+            }
+          }
+        }
+        fullEnvelopeCount = refCount;
+      }
       const fullEnvelopeSpanDeg = fullEnvelopeCount > 1
         ? (fullEnvelopeCount - 1) * seatAngleDeg + paddingDeg
         : rawSpanDeg + paddingDeg;
