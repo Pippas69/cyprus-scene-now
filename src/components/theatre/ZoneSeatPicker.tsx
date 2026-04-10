@@ -184,11 +184,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const { seatRadius, rowSpacing } = useMemo(() => getDynamicSizes(maxSeatsInRow), [maxSeatsInRow]);
 
-  // Fixed angular seat spacing (radians) based on seat size
-  const seatAngularStep = useMemo(() => {
-    // Use the innermost row radius to calculate — ensures no overlap at tightest point
-    return (seatRadius * 2.5) / BASE_RADIUS;
-  }, [seatRadius]);
+  // Fixed angular seat spacing based on seat size — no global arc span needed
 
   const rowLayouts = useMemo(() => {
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
