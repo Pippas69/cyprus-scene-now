@@ -1,25 +1,23 @@
 
 
-## Plan: Align rows Κ & Λ with Row M
+## Plan: Fix Row K referencing wrong neighbor
 
 ### Problem
-The short-row envelope width is based on `maxNearby` (max of ±2 rows), which picks up rows wider than the immediate neighbor M. This makes Κ/Λ slightly wider than M, pushing their seats left and their right-side letters outward.
+Row K (4 seats) finds Row Λ (8 seats) as its "nearest non-short neighbor" because the threshold check `nc >= rowSeats.length / 0.6` evaluates to `nc >= 6.67`. Λ passes this check (8 >= 6.67), but Λ is itself a short row. K should reference Row M (18 seats) instead.
 
 ### Fix (single file: `src/components/theatre/ZoneSeatPicker.tsx`)
 
-**Change `getReferenceCount` for short rows** to use the **closest non-short neighbor's count** instead of the max across ±2 rows. For Κ and Λ, this means using M's count (18) as the envelope reference, not Ν(19) or Ξ(20).
+**Change the neighbor qualification check on line 246** from:
+```
+nc >= rowSeats.length / 0.6
+```
+to:
+```
+nc >= maxNearby * 0.6
+```
 
-Specifically, modify the logic around line 234-238:
-- After detecting `isShortRow`, find the nearest row in the same section that is NOT a short row
-- Use that row's smoothed count as `fullEnvelopeCount` instead of `maxNearby`
-- This makes Κ/Λ's arc width match M's exactly, aligning seats on the left and row letters on the right
+This means a neighbor only qualifies as "non-short" if it has at least 60% of the section's max nearby count — the same threshold used for short-row detection. For Section Δ outer, `maxNearby` is ~20, so the threshold becomes ~12. Row Λ (8) fails, Row M (18) passes. Both K and Λ will reference M.
 
 ### What stays the same
-- Short row detection threshold (60%)
-- Seat placement logic (start from left, use `seatStepDeg`)
-- All other rows unaffected
-
-### Expected result
-- Κ and Λ seats align with M's left edge
-- Κ and Λ right-side letters align with M, Ν, Ξ, etc.
+- Everything else: short-row detection, seat placement, all other rows
 
