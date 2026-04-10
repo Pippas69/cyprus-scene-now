@@ -1,23 +1,33 @@
 
 
-## Plan: Fix Row K referencing wrong neighbor
+## Plan: Align Section A rows (same approach as Section Δ)
 
 ### Problem
-Row K (4 seats) finds Row Λ (8 seats) as its "nearest non-short neighbor" because the threshold check `nc >= rowSeats.length / 0.6` evaluates to `nc >= 6.67`. Λ passes this check (8 >= 6.67), but Λ is itself a short row. K should reference Row M (18 seats) instead.
+In Section A, each row computes its own arc width from its smoothed seat count. With counts ranging 10–15 (outer) and 9–12 (inner), rows end up with different widths, creating jagged left/right edges instead of clean aligned boundaries.
 
 ### Fix (single file: `src/components/theatre/ZoneSeatPicker.tsx`)
 
-**Change the neighbor qualification check on line 246** from:
-```
-nc >= rowSeats.length / 0.6
-```
-to:
-```
-nc >= maxNearby * 0.6
-```
+**Use a per-section maximum envelope width** so all rows in each section (inner/outer) share the same angular span:
 
-This means a neighbor only qualifies as "non-short" if it has at least 60% of the section's max nearby count — the same threshold used for short-row detection. For Section Δ outer, `maxNearby` is ~20, so the threshold becomes ~12. Row Λ (8) fails, Row M (18) passes. Both K and Λ will reference M.
+1. After computing all `smoothedCount` values for a section, find the **maximum smoothed count** across that section
+2. Use that maximum to compute a single `sectionEnvelopeSpanDeg` for the entire section
+3. All rows in that section use the same `fullStartDeg` / `fullEndDeg` (centered on `zoneMidDeg`)
+4. Seats within each row are still distributed according to their actual count within that shared envelope
+
+This is the same principle we applied to Section Δ's short rows — decoupling the visual envelope from the seat placement — but applied uniformly to all rows in a section.
+
+### What changes
+- In the `rowLayouts` useMemo (~line 212), after computing all smoothed counts, derive a single envelope per section
+- Each row's `fullStartDeg`/`fullEndDeg` comes from the section envelope, not from its individual smoothed count
+- Seat positions still use their row's actual count for spacing within the shared envelope
 
 ### What stays the same
-- Everything else: short-row detection, seat placement, all other rows
+- Short-row logic for Section Δ (Κ/Λ) — untouched
+- Smoothing function — untouched
+- Seat radius, row spacing, all other geometry — untouched
+
+### Expected result
+- All rows in Section A's outer block share the same left and right boundaries
+- All rows in Section A's inner block share the same left and right boundaries
+- Creates a clean trapezoid/sector shape matching the real theatre layout
 
