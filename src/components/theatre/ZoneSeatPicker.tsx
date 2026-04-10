@@ -297,8 +297,8 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       // Full row width — use FIXED section-wide boundaries (same for every row in the block)
       const fullSpanDeg = isOuter ? outerSectionSpanDeg : innerSectionSpanDeg;
 
-      const fullStartDeg = zoneMidDeg - fullSpanDeg / 2;
-      const fullEndDeg = zoneMidDeg + fullSpanDeg / 2;
+      const fullStartDeg = isOuter ? outerFixedStart : innerFixedStart;
+      const fullEndDeg = isOuter ? outerFixedEnd : innerFixedEnd;
 
       // Per-seat step for short rows: same density as a full row at this radius
       const seatStepDeg = isShortRow && fullEnvelopeCount > 1
