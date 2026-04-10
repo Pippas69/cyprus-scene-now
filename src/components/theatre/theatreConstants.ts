@@ -5,15 +5,16 @@ export const CY = 340;
 export const INNER_R = 100;
 export const OUTER_R = 260;
 
+// Arc spans proportional to actual seat counts (Α:206 Β:269 Γ:267 Δ:234 | Ε:270 Ζ:261 Η:278 Θ:217)
 export const ZONE_ARCS: Record<string, { startDeg: number; endDeg: number; inner?: number; outer?: number }> = {
-  'Τμήμα Α': { startDeg: 184, endDeg: 202 },
-  'Τμήμα Β': { startDeg: 204, endDeg: 222 },
-  'Τμήμα Γ': { startDeg: 224, endDeg: 234 },
-  'Τμήμα Δ': { startDeg: 236, endDeg: 266 },
-  'Τμήμα Ε': { startDeg: 274, endDeg: 302 },
-  'Τμήμα Ζ': { startDeg: 304, endDeg: 320 },
-  'Τμήμα Η': { startDeg: 322, endDeg: 340 },
-  'Τμήμα Θ': { startDeg: 342, endDeg: 354 },
+  'Τμήμα Α': { startDeg: 184, endDeg: 200 },
+  'Τμήμα Β': { startDeg: 202, endDeg: 222 },
+  'Τμήμα Γ': { startDeg: 224, endDeg: 244 },
+  'Τμήμα Δ': { startDeg: 246, endDeg: 264 },
+  'Τμήμα Ε': { startDeg: 270, endDeg: 291 },
+  'Τμήμα Ζ': { startDeg: 293, endDeg: 313 },
+  'Τμήμα Η': { startDeg: 315, endDeg: 336 },
+  'Τμήμα Θ': { startDeg: 338, endDeg: 354 },
 };
 
 // Greek row labels in order (innermost to outermost)
