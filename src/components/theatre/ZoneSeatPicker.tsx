@@ -215,6 +215,38 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     const maxOuterSmoothed = outerSmoothed.length > 0 ? Math.max(...outerSmoothed) : 0;
     const maxInnerSmoothed = innerSmoothed.length > 0 ? Math.max(...innerSmoothed) : 0;
 
+    // --- Compute a reference radius per section block for uniform angular span ---
+    const findRefRadius = (smoothedArr: number[], isOuter: boolean) => {
+      const maxVal = Math.max(...smoothedArr, 0);
+      const maxIdx = smoothedArr.indexOf(maxVal);
+      if (isOuter) {
+        const localIdx = OUTER_COUNT - 1 - maxIdx;
+        return BASE_RADIUS + INNER_COUNT * rowSpacing + SECTION_GAP + localIdx * rowSpacing;
+      } else {
+        const localIdx = INNER_COUNT - 1 - maxIdx;
+        return BASE_RADIUS + localIdx * rowSpacing;
+      }
+    };
+
+    const outerRefRadius = outerSmoothed.length > 0 ? findRefRadius(outerSmoothed, true) : BASE_RADIUS;
+    const innerRefRadius = innerSmoothed.length > 0 ? findRefRadius(innerSmoothed, false) : BASE_RADIUS;
+
+    // Compute section-wide angular span using the reference radius (same for all rows in block)
+    const outerPadDeg = 4;
+    const innerPadDeg = 3;
+    const outerRefSeatAngle = ((seatRadius * 2.4) / outerRefRadius) * (180 / Math.PI);
+    const innerRefSeatAngle = ((seatRadius * 2.4) / innerRefRadius) * (180 / Math.PI);
+    const outerSectionSpanDeg = maxOuterSmoothed > 1
+      ? (maxOuterSmoothed - 1) * outerRefSeatAngle + outerPadDeg : 0;
+    const innerSectionSpanDeg = maxInnerSmoothed > 1
+      ? (maxInnerSmoothed - 1) * innerRefSeatAngle + innerPadDeg : 0;
+
+    // Fixed angular boundaries per section block
+    const outerFixedStart = zoneMidDeg - outerSectionSpanDeg / 2;
+    const outerFixedEnd = zoneMidDeg + outerSectionSpanDeg / 2;
+    const innerFixedStart = zoneMidDeg - innerSectionSpanDeg / 2;
+    const innerFixedEnd = zoneMidDeg + innerSectionSpanDeg / 2;
+
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
       const isOuter = idx < OUTER_COUNT;
       const rowSeats = seatsByRow.get(rowLabel) || [];
@@ -231,7 +263,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
-      const paddingDeg = isOuter ? 4 : 3;
+      const paddingDeg = isOuter ? outerPadDeg : innerPadDeg;
       const seatAngleDeg = ((seatRadius * 2.4) / radius) * (180 / Math.PI);
       const rawSpanDeg = rowSeats.length > 1 ? (rowSeats.length - 1) * seatAngleDeg : 0;
       const smoothedCount = getSmoothedCount(sectionCounts, sectionIndex);
@@ -262,15 +294,11 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         fullEnvelopeCount = Math.max(refCount, sectionMaxSmoothed);
       }
 
-      // Full row width — use section-wide envelope for consistent alignment
-      const fullSpanDeg = rowSeats.length > 0
-        ? (sectionMaxSmoothed > 1
-          ? (sectionMaxSmoothed - 1) * seatAngleDeg + paddingDeg
-          : rawSpanDeg + paddingDeg)
-        : 0;
+      // Full row width — use FIXED section-wide boundaries (same for every row in the block)
+      const fullSpanDeg = isOuter ? outerSectionSpanDeg : innerSectionSpanDeg;
 
-      const fullStartDeg = zoneMidDeg - fullSpanDeg / 2;
-      const fullEndDeg = zoneMidDeg + fullSpanDeg / 2;
+      const fullStartDeg = isOuter ? outerFixedStart : innerFixedStart;
+      const fullEndDeg = isOuter ? outerFixedEnd : innerFixedEnd;
 
       // Per-seat step for short rows: same density as a full row at this radius
       const seatStepDeg = isShortRow && fullEnvelopeCount > 1
