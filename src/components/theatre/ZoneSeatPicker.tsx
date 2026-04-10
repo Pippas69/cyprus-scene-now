@@ -237,7 +237,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     });
 
     return positions;
-  }, [rowLayouts]);
+  }, [rowLayouts, zoneMidDeg]);
 
   // Simple bounding-box viewBox from actual seat positions + row endpoints
   const viewBox = useMemo(() => {
