@@ -246,11 +246,21 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
 
-    rowLayouts.forEach(({ rowSeats, radius, startDeg, endDeg }) => {
+    rowLayouts.forEach(({ rowSeats, radius, startDeg, endDeg, isShortRow, seatSpanDeg }) => {
       rowSeats.forEach((seat, seatIdx) => {
-        const angle = rowSeats.length === 1
-          ? zoneMidDeg
-          : startDeg + (seatIdx / (rowSeats.length - 1)) * (endDeg - startDeg);
+        let angle: number;
+        if (isShortRow) {
+          // Place seats starting from the left edge with their natural spacing
+          const seatStartDeg = startDeg;
+          const seatEndDeg = startDeg + seatSpanDeg;
+          angle = rowSeats.length === 1
+            ? seatStartDeg
+            : seatStartDeg + (seatIdx / (rowSeats.length - 1)) * (seatEndDeg - seatStartDeg);
+        } else {
+          angle = rowSeats.length === 1
+            ? zoneMidDeg
+            : startDeg + (seatIdx / (rowSeats.length - 1)) * (endDeg - startDeg);
+        }
 
         const rad = toRad(angle);
         positions.set(seat.id, {
