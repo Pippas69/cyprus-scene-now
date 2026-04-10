@@ -191,10 +191,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     const innerCounts = INNER_ROWS.map((label) => (seatsByRow.get(label) || []).length);
 
     const getSmoothedCount = (counts: number[], index: number) => {
-      const prev = counts[Math.max(0, index - 1)] ?? 0;
       const curr = counts[index] ?? 0;
-      const next = counts[Math.min(counts.length - 1, index + 1)] ?? 0;
       if (curr === 0) return 0;
+      const rawPrev = counts[Math.max(0, index - 1)] ?? 0;
+      const rawNext = counts[Math.min(counts.length - 1, index + 1)] ?? 0;
+      // Exclude short-row neighbors (< 60% of current) to prevent them from narrowing full rows
+      const prev = rawPrev < curr * 0.6 ? curr : rawPrev;
+      const next = rawNext < curr * 0.6 ? curr : rawNext;
       return (prev + curr * 2 + next) / 4;
     };
 
