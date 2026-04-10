@@ -232,7 +232,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       }
 
       const paddingDeg = isOuter ? 4 : 3;
-      const seatAngleDeg = ((seatRadius * 2.05) / radius) * (180 / Math.PI);
+      const seatAngleDeg = ((seatRadius * 2.4) / radius) * (180 / Math.PI);
       const rawSpanDeg = rowSeats.length > 1 ? (rowSeats.length - 1) * seatAngleDeg : 0;
       const smoothedCount = getSmoothedCount(sectionCounts, sectionIndex);
       
