@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { SelectedSeat } from './SeatMapViewer';
-import { ZONE_ARCS, ROW_ORDER, toRad, annularSectorPath } from './theatreConstants';
+import { ZONE_ARCS, toRad, annularSectorPath } from './theatreConstants';
 
 interface VenueSeat {
   id: string;
@@ -184,18 +184,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   const { seatRadius, rowSpacing } = useMemo(() => getDynamicSizes(maxSeatsInRow), [maxSeatsInRow]);
 
-  // Wider arc for dense zones — ensure minimum angular separation
-  const detailSpanDeg = useMemo(() => {
-    // Calculate minimum arc needed so innermost row seats don't overlap
-    const innerMostRadius = BASE_RADIUS;
-    const minAngularSep = (seatRadius * 2.6) / innerMostRadius;
-    const minSpanRad = minAngularSep * maxSeatsInRow;
-    const minSpanDeg = (minSpanRad * 180) / Math.PI;
-    return clamp(minSpanDeg + EDGE_PAD_DEG * 2 + 4, 50, 140);
-  }, [maxSeatsInRow, seatRadius]);
-
-  const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
-  const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
+  // Fixed angular seat spacing based on seat size — no global arc span needed
 
   const rowLayouts = useMemo(() => {
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
@@ -212,20 +201,23 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
-      const startDeg = detailStartDeg + EDGE_PAD_DEG + (isOuter ? UPPER_SECTION_INSET_DEG : 0);
-      const endDeg = detailEndDeg - EDGE_PAD_DEG - (isOuter ? UPPER_SECTION_INSET_DEG : 0);
+      // Each row gets its own arc span based on seat count and physical spacing at its radius
+      const seatAngleDeg = ((seatRadius * 2.5) / radius) * (180 / Math.PI);
+      const rowSpanDeg = rowSeats.length > 0 ? (rowSeats.length - 1) * seatAngleDeg : 0;
+      const rowStartDeg = zoneMidDeg - rowSpanDeg / 2;
+      const rowEndDeg = zoneMidDeg + rowSpanDeg / 2;
 
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
         isOuter,
-        startDeg,
-        endDeg,
+        startDeg: rowStartDeg,
+        endDeg: rowEndDeg,
         hasData: rowSeats.length > 0,
       };
     });
-  }, [seatsByRow, detailStartDeg, detailEndDeg, rowSpacing]);
+  }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
 
   const seatPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
@@ -233,7 +225,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     rowLayouts.forEach(({ rowSeats, radius, startDeg, endDeg }) => {
       rowSeats.forEach((seat, seatIdx) => {
         const angle = rowSeats.length === 1
-          ? (startDeg + endDeg) / 2
+          ? zoneMidDeg
           : startDeg + (seatIdx / (rowSeats.length - 1)) * (endDeg - startDeg);
 
         const rad = toRad(angle);
@@ -245,7 +237,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     });
 
     return positions;
-  }, [rowLayouts]);
+  }, [rowLayouts, zoneMidDeg]);
 
   // Simple bounding-box viewBox from actual seat positions + row endpoints
   const viewBox = useMemo(() => {
@@ -451,44 +443,60 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
           </text>
 
           {/* Inner section background */}
-          <path
-            d={annularSectorPath(
-              HC.x,
-              HC.y,
-              Math.max(48, innerSection[innerSection.length - 1].radius - 20),
-              innerSection[0].radius + 18,
-              detailStartDeg,
-              detailEndDeg
-            )}
-            fill={zoneColor}
-            fillOpacity={0.05}
-            stroke={zoneColor}
-            strokeOpacity={0.18}
-            strokeWidth={1}
-          />
+          {(() => {
+            const innerRows = innerSection.filter(r => r.hasData);
+            if (innerRows.length === 0) return null;
+            const bgStart = Math.min(...innerRows.map(r => r.startDeg)) - 4;
+            const bgEnd = Math.max(...innerRows.map(r => r.endDeg)) + 4;
+            return (
+              <path
+                d={annularSectorPath(
+                  HC.x, HC.y,
+                  Math.max(48, innerSection[innerSection.length - 1].radius - 20),
+                  innerSection[0].radius + 18,
+                  bgStart, bgEnd
+                )}
+                fill={zoneColor}
+                fillOpacity={0.05}
+                stroke={zoneColor}
+                strokeOpacity={0.18}
+                strokeWidth={1}
+              />
+            );
+          })()}
 
           {/* Outer section background */}
-          <path
-            d={annularSectorPath(
-              HC.x,
-              HC.y,
-              outerSection[outerSection.length - 1].radius - 20,
-              outerSection[0].radius + 18,
-              detailStartDeg + UPPER_SECTION_INSET_DEG,
-              detailEndDeg - UPPER_SECTION_INSET_DEG
-            )}
-            fill={zoneColor}
-            fillOpacity={0.05}
-            stroke={zoneColor}
-            strokeOpacity={0.18}
-            strokeWidth={1}
-          />
+          {(() => {
+            const outerRows = outerSection.filter(r => r.hasData);
+            if (outerRows.length === 0) return null;
+            const bgStart = Math.min(...outerRows.map(r => r.startDeg)) - 4;
+            const bgEnd = Math.max(...outerRows.map(r => r.endDeg)) + 4;
+            return (
+              <path
+                d={annularSectorPath(
+                  HC.x, HC.y,
+                  outerSection[outerSection.length - 1].radius - 20,
+                  outerSection[0].radius + 18,
+                  bgStart, bgEnd
+                )}
+                fill={zoneColor}
+                fillOpacity={0.05}
+                stroke={zoneColor}
+                strokeOpacity={0.18}
+                strokeWidth={1}
+              />
+            );
+          })()}
 
           {/* Simple section gap divider */}
           {(() => {
+            const allRows = rowLayouts.filter(r => r.hasData);
+            if (allRows.length === 0) return null;
+            const bgStart = Math.min(...allRows.map(r => r.startDeg)) - 2;
+            const bgEnd = Math.max(...allRows.map(r => r.endDeg)) + 2;
             const gapR = (innerSection[0].radius + outerSection[outerSection.length - 1].radius) / 2;
-            const s = toRad(detailStartDeg + EDGE_PAD_DEG);
-            const e = toRad(detailEndDeg - EDGE_PAD_DEG);
+            const s = toRad(bgStart);
+            const e = toRad(bgEnd);
             return (
               <path
                 d={`M ${HC.x + gapR * Math.cos(s)} ${HC.y + gapR * Math.sin(s)} A ${gapR} ${gapR} 0 0 1 ${HC.x + gapR * Math.cos(e)} ${HC.y + gapR * Math.sin(e)}`}
