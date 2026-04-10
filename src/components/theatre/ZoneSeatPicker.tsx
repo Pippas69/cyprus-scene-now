@@ -301,8 +301,8 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       const fullEndDeg = isOuter ? outerFixedEnd : innerFixedEnd;
 
       // Per-seat step for short rows: same density as a full row at this radius
-      const seatStepDeg = isShortRow && fullEnvelopeCount > 1
-        ? fullSpanDeg / (fullEnvelopeCount - 1)
+      const seatStepDeg = sectionMaxSmoothed > 1
+        ? fullSpanDeg / (sectionMaxSmoothed - 1)
         : seatAngleDeg;
 
       return {
@@ -328,14 +328,9 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
     rowLayouts.forEach(({ rowSeats, radius, fullStartDeg, fullEndDeg, isShortRow, seatStepDeg }) => {
       rowSeats.forEach((seat, seatIdx) => {
         let angle: number;
-        if (isShortRow) {
-          // Place seats from left edge using same density as full neighboring rows
-          angle = fullStartDeg + seatIdx * seatStepDeg;
-        } else {
-          angle = rowSeats.length === 1
-            ? zoneMidDeg
-            : fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
-        }
+        angle = rowSeats.length === 1
+          ? zoneMidDeg
+          : fullStartDeg + seatIdx * seatStepDeg;
 
         const rad = toRad(angle);
         positions.set(seat.id, {
