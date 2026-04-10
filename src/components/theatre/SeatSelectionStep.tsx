@@ -35,6 +35,7 @@ interface ActiveZone {
   id: string;
   name: string;
   color: string;
+  seatCount: number;
 }
 
 export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({

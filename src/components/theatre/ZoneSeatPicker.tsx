@@ -110,7 +110,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         .eq('is_active', true)
         .order('row_label')
         .order('seat_number')
-        .limit(1000);
+        .limit(5000);
 
       const loadedSeats = (seatsRes.data || []) as VenueSeat[];
       setSeats(loadedSeats);
