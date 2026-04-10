@@ -1,39 +1,65 @@
 
+I understand exactly what you mean.
 
-# Populate Correct Pattihio Seat Data (2,017 seats)
+Right now there are three separate problems in the business production-creation flow for Pattihio:
 
-## What This Does
-Deletes all incorrect seat data for the Pattihio venue and inserts exactly 2,017 seats with the correct row-by-row seat number ranges you provided. No UI or layout changes — only database data.
+1. The overview horseshoe uses hardcoded arc sizes in `theatreConstants.ts`, so the zone proportions do not reflect the real section widths/capacities.
+2. The “available seats” numbers on the overview are computed from whatever seat rows exist in `venue_seats`, and because the underlying seat dataset / layout mapping is still not aligned with the real theatre, those labels are wrong or even show 0.
+3. Inside each section, `ZoneSeatPicker.tsx` currently spreads seats evenly across a synthetic arc based only on row length. That preserves row letters and the aisle, but it does not preserve the real row-by-row visual shape of each section.
 
-## Steps
+What I will implement after approval:
 
-### 1. Delete all existing seats for Pattihio zones
-Remove all ~2,725 incorrect seats from `venue_seats` for all 9 zones (including Πλατεία).
+1. Fix the business production seat-picker data source
+- Re-check the Pattihio `venue_seats` and `venue_zones` data that the production flow reads.
+- Confirm the real per-zone counts being returned in the business flow, not just in ticket purchase.
+- Remove any mismatch between zone records, seat records, and counts shown in the creation UI.
 
-### 2. Delete the Πλατεία zone
-Remove zone `88cfdd26-77b6-4edd-a0aa-cce66df2b5d1` — it's not part of the real layout.
+2. Fix the overview section proportions
+- Replace the current fixed `ZONE_ARCS` proportions with Pattihio-specific section spans that match the real venue more closely.
+- Keep the same horseshoe concept, same row letters, and same central aisle logic.
+- Update the overview labels so each section size visually corresponds to its real section width instead of arbitrary hardcoded spans.
 
-### 3. Insert 2,017 correct seats
-Using a Python script to generate and execute INSERT statements with the exact data:
+3. Fix wrong availability labels in the overview
+- Make the overview counts derive from the actual active seats per zone consistently in the production-creation context.
+- Ensure `__new__` instances never incorrectly subtract sold/held seats.
+- Verify no zone renders 0 unless that zone truly has no seats.
 
-| Section | Zone ID | Total |
-|---------|---------|-------|
-| Α | `aa9b38d1...` | 206 |
-| Β | `64cbf972...` | 269 |
-| Γ | `b03afd3a...` | 267 |
-| Δ | `16551c22...` | 249 |
-| Ε | `2692ac39...` | 270 |
-| Ζ | `e3b5b0e6...` | 268 |
-| Η | `84b46333...` | 271 |
-| Θ | `6fe669bd...` | 217 |
+4. Fix the detailed section layout
+- Adjust `ZoneSeatPicker.tsx` so rows are not just evenly distributed along a generic arc.
+- Preserve exactly:
+  - row letters
+  - row placement order
+  - the aisle between inner and outer halves
+- Update the per-row geometry so Pattihio sections visually match the real layout much more closely, based on the row ranges you provided for all sections.
 
-Each seat: `row_label`, `seat_number`, `seat_label` (format "Τμ.Α Σειρά Σ Θέση 1"), `seat_type`="regular", `is_active`=true, `x`=0, `y`=0.
+5. Fix related business UI data
+- Update the zone pricing list in `ShowInstanceEditor.tsx` so displayed seat counts come from real active seat totals instead of stale `venue_zones.capacity` values if those capacities are wrong.
+- Make sure production creation, house-seat selection, and later ticket inventory all stay consistent.
 
-### 4. Verify totals
-Query to confirm 2,017 seats with correct per-zone counts.
+Files I expect to change
+- `src/components/theatre/theatreConstants.ts`
+- `src/components/theatre/ZoneOverviewMap.tsx`
+- `src/components/theatre/ZoneSeatPicker.tsx`
+- `src/components/business/productions/ShowInstanceEditor.tsx`
+- possibly data records for Pattihio zone capacities if they are out of sync with actual seats
 
-## What Won't Change
-- Zone arc geometry, horseshoe shape, row letters, row placement
-- ZoneSeatPicker rendering logic
-- Any UI components
+Technical notes
+- The core issue is not just “missing seats in DB”; it is that the business flow is rendering Pattihio with generic geometry.
+- The detailed zone view currently calculates seat positions from:
+  - row count
+  - max seats in row
+  - generic arc span
+  not from Pattihio-specific section geometry.
+- So even with correct row letters and aisle, the visual section shape can still be wrong.
+- I will keep the current two-step flow:
+  - overview of all zones
+  - click into a single zone
+- I will not switch to a different seat-map system unless the code inspection proves the current architecture cannot be corrected cleanly.
+
+Expected result
+- In production creation, Pattihio will show:
+  - correct section proportions in the overview
+  - correct available-seat numbers on each zone
+  - much more accurate seat layout inside each section
+  - unchanged row letters and aisle placement
 
