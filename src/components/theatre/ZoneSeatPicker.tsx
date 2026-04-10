@@ -4,7 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import type { SelectedSeat } from './SeatMapViewer';
-import { ZONE_ARCS, ROW_ORDER, toRad, annularSectorPath } from './theatreConstants';
+import { ZONE_ARCS, toRad, annularSectorPath } from './theatreConstants';
 
 interface VenueSeat {
   id: string;
