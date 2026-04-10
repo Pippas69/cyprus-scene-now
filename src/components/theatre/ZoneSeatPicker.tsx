@@ -209,6 +209,12 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       return nearby.length > 0 ? Math.max(...nearby) : counts[index] ?? 0;
     };
 
+    // --- Compute per-section max smoothed count for unified envelope ---
+    const outerSmoothed = outerCounts.map((_, i) => getSmoothedCount(outerCounts, i));
+    const innerSmoothed = innerCounts.map((_, i) => getSmoothedCount(innerCounts, i));
+    const maxOuterSmoothed = outerSmoothed.length > 0 ? Math.max(...outerSmoothed) : 0;
+    const maxInnerSmoothed = innerSmoothed.length > 0 ? Math.max(...innerSmoothed) : 0;
+
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
       const isOuter = idx < OUTER_COUNT;
       const rowSeats = seatsByRow.get(rowLabel) || [];
@@ -234,11 +240,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       const maxNearby = getReferenceCount(sectionCounts, sectionIndex);
       const isShortRow = rowSeats.length > 0 && maxNearby > 0 && rowSeats.length < maxNearby * 0.6;
 
-      // For short rows, use the closest non-short neighbor's count (not max of ±2)
-      let fullEnvelopeCount = smoothedCount;
+      // Use section-wide max smoothed count as envelope for ALL rows (unified alignment)
+      const sectionMaxSmoothed = isOuter ? maxOuterSmoothed : maxInnerSmoothed;
+
+      // For short rows, find closest non-short neighbor's smoothed count (same as before)
+      let fullEnvelopeCount = sectionMaxSmoothed;
       if (isShortRow) {
-        // Find nearest non-short row in the same section
-        let refCount = maxNearby;
+        let refCount = sectionMaxSmoothed;
         for (let d = 1; d <= sectionCounts.length; d++) {
           for (const dir of [sectionIndex + d, sectionIndex - d]) {
             if (dir >= 0 && dir < sectionCounts.length) {
@@ -251,20 +259,14 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             }
           }
         }
-        fullEnvelopeCount = refCount;
+        fullEnvelopeCount = Math.max(refCount, sectionMaxSmoothed);
       }
-      const fullEnvelopeSpanDeg = fullEnvelopeCount > 1
-        ? (fullEnvelopeCount - 1) * seatAngleDeg + paddingDeg
-        : rawSpanDeg + paddingDeg;
 
-      // Normal row span
-      const normalSpanDeg = smoothedCount > 1
-        ? Math.max(rawSpanDeg * 0.9, (smoothedCount - 1) * seatAngleDeg) + paddingDeg
-        : rawSpanDeg + paddingDeg;
-
-      // Full row width (for labels and background) — always use envelope for short rows
+      // Full row width — use section-wide envelope for consistent alignment
       const fullSpanDeg = rowSeats.length > 0
-        ? (isShortRow ? fullEnvelopeSpanDeg : normalSpanDeg)
+        ? (sectionMaxSmoothed > 1
+          ? (sectionMaxSmoothed - 1) * seatAngleDeg + paddingDeg
+          : rawSpanDeg + paddingDeg)
         : 0;
 
       const fullStartDeg = zoneMidDeg - fullSpanDeg / 2;
