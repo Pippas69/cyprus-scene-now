@@ -181,16 +181,31 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
   const [showSeatMap, setShowSeatMap] = useState(false);
 
   const { data: zones, isLoading: zonesLoading } = useQuery({
-    queryKey: ['venue-zones', instance.venue_id],
+    queryKey: ['venue-zones-with-counts', instance.venue_id],
     queryFn: async () => {
       if (!instance.venue_id) return [];
-      const { data, error } = await supabase
-        .from('venue_zones')
-        .select('id, name, capacity, sort_order, color')
-        .eq('venue_id', instance.venue_id)
-        .order('sort_order');
-      if (error) throw error;
-      return data;
+      const [zonesRes, seatsRes] = await Promise.all([
+        supabase
+          .from('venue_zones')
+          .select('id, name, capacity, sort_order, color')
+          .eq('venue_id', instance.venue_id)
+          .order('sort_order'),
+        supabase
+          .from('venue_seats')
+          .select('id, zone_id')
+          .eq('venue_id', instance.venue_id)
+          .eq('is_active', true)
+          .limit(5000),
+      ]);
+      if (zonesRes.error) throw zonesRes.error;
+      const seatCounts: Record<string, number> = {};
+      for (const s of seatsRes.data || []) {
+        seatCounts[s.zone_id] = (seatCounts[s.zone_id] || 0) + 1;
+      }
+      return (zonesRes.data || []).map(z => ({
+        ...z,
+        actual_seat_count: seatCounts[z.id] || 0,
+      }));
     },
     enabled: !!instance.venue_id,
   });
@@ -305,7 +320,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
                       {zp.zone_name}
                       {zone && (
                         <span className="text-muted-foreground ml-1">
-                          ({zone.capacity} {language === 'el' ? 'θέσεις' : 'seats'})
+                          ({zone.actual_seat_count} {language === 'el' ? 'θέσεις' : 'seats'})
                         </span>
                       )}
                     </span>
