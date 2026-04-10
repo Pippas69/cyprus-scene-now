@@ -239,6 +239,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         hasData: rowSeats.length > 0,
         isShortRow,
         seatSpanDeg: actualSeatSpanDeg,
+        seatAngleDeg,
       };
     });
   }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
