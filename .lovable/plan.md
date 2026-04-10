@@ -1,29 +1,35 @@
 
 
-## Plan: Right-align seats in Section A
+## Plan: Evenly distribute inner Section A seats (no gaps)
 
-### Problem
-Seats are currently left-aligned (`fullStartDeg + seatIdx * seatStepDeg`), so shorter rows leave gaps on the right. The real theatre layout shows gaps should be on the **left** — all rows share the same right edge.
+### What I understood
+- **Outer rows**: Right-aligned, shorter rows leave gaps on the left — current behavior is correct
+- **Inner rows**: Seats spread evenly from edge to edge across the full envelope — no gaps on either side. Each row fills its entire arc regardless of seat count.
 
 ### Fix (single file: `src/components/theatre/ZoneSeatPicker.tsx`)
 
-**Change line 333** from left-aligned to right-aligned placement:
+**Change the seat placement logic (line 331-333)** to use different distribution based on outer vs inner:
 
 ```tsx
-// Before (left-aligned):
-angle = rowSeats.length === 1
-  ? zoneMidDeg
-  : fullStartDeg + seatIdx * seatStepDeg;
-
-// After (right-aligned):
+// Before (all rows right-aligned):
 angle = rowSeats.length === 1
   ? zoneMidDeg
   : fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
+
+// After:
+if (rowSeats.length === 1) {
+  angle = zoneMidDeg;
+} else if (isOuter) {
+  // Outer: right-aligned (gaps on left)
+  angle = fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
+} else {
+  // Inner: evenly distributed edge-to-edge (no gaps)
+  angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
+}
 ```
 
-This places the last seat at `fullEndDeg` and works backwards. Rows with fewer seats will have empty space on the left while all sharing the same right boundary.
+This requires adding `isOuter` to the destructured values in the `seatPositions` memo (line 328).
 
 ### What stays the same
-- Fixed section-wide boundaries, short-row logic, smoothing, all geometry constants
-- Section Δ behavior
+- Fixed section-wide boundaries, uniform step for outer rows, smoothing, Section Δ
 
