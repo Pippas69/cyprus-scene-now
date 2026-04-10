@@ -330,7 +330,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         let angle: number;
         angle = rowSeats.length === 1
           ? zoneMidDeg
-          : fullStartDeg + seatIdx * seatStepDeg;
+          : fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
 
         const rad = toRad(angle);
         positions.set(seat.id, {
