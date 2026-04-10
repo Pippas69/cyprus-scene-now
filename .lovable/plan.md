@@ -1,68 +1,42 @@
 
-## Plan: Actually fix rows Κ and Λ in Section Δ
 
-### What I found
-You’re right: the code was changed, but not in a way that produces the visual result we agreed on.
+## Plan: Fix Section Δ seat counts and Row M alignment
 
-The current file already contains:
-- short-row detection (`isShortRow`)
-- custom short-row spacing (`shortRowSeatAngle`)
-- wheelchair rendering (`♿`)
+### Two issues to fix
 
-But the layout still looks wrong because the geometry is still driven by a single centered row arc. So changing the seat angle alone does not properly create:
-- the same left starting point as the other rows
-- a blank remainder on the right
-- row letters staying at the full row width
+**1. Wrong seat counts in database (7 rows affected)**
 
-### What I will change
-In `src/components/theatre/ZoneSeatPicker.tsx` I will separate each row into two different geometries:
+The database has fewer seats than the actual theatre for most outer rows in Section Δ. Current vs correct:
 
-1. **Full row envelope**
-- used for the row background shape
-- used for left/right row letters
-- keeps the same full width as neighboring rows
+| Row | Current DB | Correct | Seats to add |
+|-----|-----------|---------|-------------|
+| Σ | 59-74 (16) | 59-82 (24) | 75-82 (+8) |
+| Ρ | 56-72 (17) | 56-78 (23) | 73-78 (+6) |
+| Π | 55-71 (17) | 55-76 (22) | 72-76 (+5) |
+| Ο | 54-69 (16) | 54-74 (21) | 70-74 (+5) |
+| Ξ | 53-68 (16) | 53-72 (20) | 69-72 (+4) |
+| Ν | 52-67 (16) | 52-70 (19) | 68-70 (+3) |
+| Μ | 51-66 (16) | 51-68 (18) | 67-68 (+2) |
+| Ι | 40-52 (13) | 40-53 (14) | 53 (+1) |
 
-2. **Occupied seat segment**
-- used only for actual seat placement
-- for rows Κ and Λ in Section Δ, it will begin at the same left boundary as the other rows
-- it will stop after the real seats, leaving the rest of the row empty on the right
+**Fix:** Database migration to INSERT the missing seat records into `venue_seats` for zone `Τμήμα Δ` (zone_id: `16551c22-6eda-4978-855c-f8dfdb9dc30b`).
 
-### Implementation steps
-1. Refactor `rowLayouts` so each row stores:
-- `fullStartDeg` / `fullEndDeg`
-- `seatStartDeg`
-- `seatStepDeg`
-- `isShortRow`
+**2. Row M starts too far inside**
 
-2. For normal rows:
-- seats continue to fill the full row as they do now
+With the current short-row detection (`< 60% of max nearby`), Row M (18 seats after fix) next to Λ (8) and Κ (4) may be getting classified oddly by the smoothing/reference logic. After fixing the seat counts, the `maxNearby` and `smoothedCount` values will change since rows will now have more seats. This should naturally fix Row M's alignment. If not, a small tweak to the smoothing window or short-row threshold in `ZoneSeatPicker.tsx` will be needed.
 
-3. For short rows (Κ and Λ in Section Δ):
-- compute the full row width from neighboring rows
-- anchor `seatStartDeg` to the same left edge as those rows
-- place seats using the neighboring seat density
-- stop after 4 seats for Κ and 8 seats for Λ
+Also need to update the zone capacity in `venue_zones` table to reflect the new total.
 
-4. Keep row letters tied to the **full** row envelope, not the occupied seat segment
+### Steps
 
-5. Leave wheelchair rendering unchanged, since that part is already present and correct
-
-6. Build and visually verify against the screenshot so the result matches exactly:
-- same left start as adjacent rows
-- empty space on the right
-- right-side row letter remains at the normal row end
+1. **Database migration**: Insert missing seats for rows Σ, Ρ, Π, Ο, Ξ, Ν, Μ, and Ι in Section Δ (34 new seats total)
+2. **Update zone capacity**: Update `venue_zones` capacity for Τμήμα Δ from current value to current + 34
+3. **Verify Row M alignment**: After the data fix, check if Row M aligns correctly. If not, adjust the smoothing logic in `ZoneSeatPicker.tsx`
 
 ### Technical details
-Right now the bug is that `startDeg`/`endDeg` and seat placement are still too coupled.  
-The fix is to decouple:
-- **visual row boundary**
-from
-- **actual occupied seat positions**
 
-That is the missing piece.
+- Zone ID: `16551c22-6eda-4978-855c-f8dfdb9dc30b`
+- All new seats will be `seat_type = 'regular'`, `is_active = true`
+- Seat labels will match seat numbers as strings
+- Rows Κ and Λ will NOT be touched
 
-### Expected result
-After this fix:
-- Row Λ will start where the other rows start, show only seats 49–56, then remain blank until the row letter
-- Row Κ will do the same with the 4 AMEA seats
-- The section will keep its proper fan symmetry
