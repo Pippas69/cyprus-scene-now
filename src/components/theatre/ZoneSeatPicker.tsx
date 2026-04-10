@@ -186,11 +186,13 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
 
   // Wider arc for dense zones — ensure minimum angular separation
   const detailSpanDeg = useMemo(() => {
-    const minAngularSep = (seatRadius * 2.4) / (BASE_RADIUS + INNER_COUNT * rowSpacing);
+    // Calculate minimum arc needed so innermost row seats don't overlap
+    const innerMostRadius = BASE_RADIUS;
+    const minAngularSep = (seatRadius * 2.6) / innerMostRadius;
     const minSpanRad = minAngularSep * maxSeatsInRow;
     const minSpanDeg = (minSpanRad * 180) / Math.PI;
-    return clamp(Math.max(maxSeatsInRow * 3.2, minSpanDeg), 90, 176);
-  }, [maxSeatsInRow, seatRadius, rowSpacing]);
+    return clamp(minSpanDeg + EDGE_PAD_DEG * 2 + 4, 50, 140);
+  }, [maxSeatsInRow, seatRadius]);
 
   const detailStartDeg = zoneMidDeg - detailSpanDeg / 2;
   const detailEndDeg = zoneMidDeg + detailSpanDeg / 2;
