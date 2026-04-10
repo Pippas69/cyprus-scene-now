@@ -226,23 +226,33 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       const seatAngleDeg = ((seatRadius * 2.05) / radius) * (180 / Math.PI);
       const rawSpanDeg = rowSeats.length > 1 ? (rowSeats.length - 1) * seatAngleDeg : 0;
       const smoothedCount = getSmoothedCount(sectionCounts, sectionIndex);
-      const isShortRow = rowSeats.length > 0 && smoothedCount > 0 && rowSeats.length < smoothedCount * 0.6;
+      
+      // Detect short rows by comparing to the MAX of nearby rows (not the smoothed average)
+      const maxNearby = getReferenceCount(sectionCounts, sectionIndex);
+      const isShortRow = rowSeats.length > 0 && maxNearby > 0 && rowSeats.length < maxNearby * 0.6;
 
-      const layoutCount = isShortRow
-        ? Math.max(getReferenceCount(sectionCounts, sectionIndex), smoothedCount, rowSeats.length)
-        : smoothedCount;
+      // For short rows, use the full envelope width of neighboring rows
+      const fullEnvelopeCount = isShortRow ? maxNearby : smoothedCount;
+      const fullEnvelopeSpanDeg = fullEnvelopeCount > 1
+        ? (fullEnvelopeCount - 1) * seatAngleDeg + paddingDeg
+        : rawSpanDeg + paddingDeg;
 
-      const layoutSpanDeg = layoutCount > 1
-        ? (layoutCount - 1) * seatAngleDeg
-        : rawSpanDeg;
+      // Normal row span
+      const normalSpanDeg = smoothedCount > 1
+        ? Math.max(rawSpanDeg * 0.9, (smoothedCount - 1) * seatAngleDeg) + paddingDeg
+        : rawSpanDeg + paddingDeg;
 
-      const rowSpanDeg = rowSeats.length > 0
-        ? Math.max(rawSpanDeg * 0.9, layoutSpanDeg) + paddingDeg
+      // Full row width (for labels and background) — always use envelope for short rows
+      const fullSpanDeg = rowSeats.length > 0
+        ? (isShortRow ? fullEnvelopeSpanDeg : normalSpanDeg)
         : 0;
 
-      const actualSeatSpanDeg = rawSpanDeg + paddingDeg;
-      const shortRowSeatAngle = isShortRow && layoutCount > 1
-        ? rowSpanDeg / (layoutCount - 1)
+      const fullStartDeg = zoneMidDeg - fullSpanDeg / 2;
+      const fullEndDeg = zoneMidDeg + fullSpanDeg / 2;
+
+      // Per-seat step for short rows: same density as a full row at this radius
+      const seatStepDeg = isShortRow && fullEnvelopeCount > 1
+        ? fullSpanDeg / (fullEnvelopeCount - 1)
         : seatAngleDeg;
 
       return {
@@ -250,12 +260,14 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
         isOuter,
-        startDeg: zoneMidDeg - rowSpanDeg / 2,
-        endDeg: zoneMidDeg + rowSpanDeg / 2,
+        fullStartDeg,
+        fullEndDeg,
+        startDeg: fullStartDeg,
+        endDeg: fullEndDeg,
         hasData: rowSeats.length > 0,
         isShortRow,
-        seatSpanDeg: actualSeatSpanDeg,
-        seatAngleDeg: shortRowSeatAngle,
+        seatStepDeg,
+        seatAngleDeg,
       };
     });
   }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
