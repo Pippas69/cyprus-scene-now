@@ -163,7 +163,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
               <g
                 key={zone.id}
                 className="cursor-pointer"
-                onClick={() => onZoneClick(zone)}
+                onClick={() => onZoneClick({ ...zone, seatCount: total } as any)}
                 onMouseEnter={() => setHoveredZone(zone.id)}
                 onMouseLeave={() => setHoveredZone(null)}
                 role="button"

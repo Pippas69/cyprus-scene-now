@@ -110,7 +110,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         .eq('is_active', true)
         .order('row_label')
         .order('seat_number')
-        .limit(1000);
+        .limit(5000);
 
       const loadedSeats = (seatsRes.data || []) as VenueSeat[];
       setSeats(loadedSeats);
@@ -495,19 +495,21 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             className="flex h-6 w-6 items-center justify-center rounded-full border-2 text-[8px]"
             style={{ borderColor: zoneColor, color: zoneColor }}
           >
-            1
+            {seats.length - soldSeatIds.size - selectedSeats.filter(s => s.zoneId === zoneId).length}
           </div>
           <span className="text-[11px] text-muted-foreground">{t.available}</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60 text-[8px] text-muted-foreground/50">
-            1
+        {showInstanceId !== '__new__' && (
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60 text-[8px] text-muted-foreground/50">
+              {soldSeatIds.size}
+            </div>
+            <span className="text-[11px] text-muted-foreground">{t.sold}</span>
           </div>
-          <span className="text-[11px] text-muted-foreground">{t.sold}</span>
-        </div>
+        )}
         <div className="flex items-center gap-1.5">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[8px] text-primary-foreground">
-            1
+            {selectedSeats.filter(s => s.zoneId === zoneId).length}
           </div>
           <span className="text-[11px] text-muted-foreground">{t.selected}</span>
         </div>

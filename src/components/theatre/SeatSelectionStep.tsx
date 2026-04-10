@@ -35,6 +35,7 @@ interface ActiveZone {
   id: string;
   name: string;
   color: string;
+  seatCount: number;
 }
 
 export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
@@ -98,15 +99,15 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         </Badge>
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium">
-            {t.selectedCount}: {selectedSeats.length} {t.of} {maxSeats}
+            {t.selectedCount}: {activeZone ? selectedSeats.filter(s => s.zoneId === activeZone.id).length : selectedSeats.length} {t.of} {activeZone ? activeZone.seatCount : maxSeats}
           </span>
           {/* Seat dots - cap at 10 to avoid overflow */}
           <div className="flex gap-0.5">
-            {Array.from({ length: Math.min(maxSeats, 10) }).map((_, i) => (
+            {Array.from({ length: Math.min(activeZone ? activeZone.seatCount : maxSeats, 10) }).map((_, i) => (
               <div
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                  i < selectedSeats.length
+                  i < (activeZone ? selectedSeats.filter(s => s.zoneId === activeZone.id).length : selectedSeats.length)
                     ? 'bg-primary'
                     : 'bg-muted-foreground/20'
                 }`}
@@ -136,9 +137,10 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
             venueId={venueId}
             showInstanceId={showInstanceId}
             selectedSeats={selectedSeats}
-            onZoneClick={(zone) =>
-              setActiveZone({ id: zone.id, name: zone.name, color: zone.color })
-            }
+            onZoneClick={(zone) => {
+              const count = (zone as any).seatCount ?? 0;
+              setActiveZone({ id: zone.id, name: zone.name, color: zone.color, seatCount: count });
+            }}
           />
         )
       ) : (
