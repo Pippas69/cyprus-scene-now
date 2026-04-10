@@ -229,6 +229,11 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       const isShortRow = rowSeats.length > 0 && smoothedCount > 0 && rowSeats.length < smoothedCount * 0.6;
       const actualSeatSpanDeg = rawSpanDeg + (isOuter ? 4 : 3);
 
+      // For short rows, compute per-seat angle from the full arc (as if it were a full row)
+      const neighborSeatAngle = isShortRow && smoothedCount > 1
+        ? rowSpanDeg / (smoothedCount - 1)
+        : seatAngleDeg;
+
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
@@ -239,7 +244,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         hasData: rowSeats.length > 0,
         isShortRow,
         seatSpanDeg: actualSeatSpanDeg,
-        seatAngleDeg,
+        seatAngleDeg: neighborSeatAngle,
       };
     });
   }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
