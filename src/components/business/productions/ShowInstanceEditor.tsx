@@ -320,7 +320,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
                       {zp.zone_name}
                       {zone && (
                         <span className="text-muted-foreground ml-1">
-                          ({zone.capacity} {language === 'el' ? 'θέσεις' : 'seats'})
+                          ({zone.actual_seat_count} {language === 'el' ? 'θέσεις' : 'seats'})
                         </span>
                       )}
                     </span>
