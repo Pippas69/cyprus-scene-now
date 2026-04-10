@@ -198,6 +198,14 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
       return (prev + curr * 2 + next) / 4;
     };
 
+    const getReferenceCount = (counts: number[], index: number) => {
+      const nearby = [index - 2, index - 1, index, index + 1, index + 2]
+        .map((i) => counts[i] ?? 0)
+        .filter((count) => count > 0);
+
+      return nearby.length > 0 ? Math.max(...nearby) : counts[index] ?? 0;
+    };
+
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
       const isOuter = idx < OUTER_COUNT;
       const rowSeats = seatsByRow.get(rowLabel) || [];
@@ -214,24 +222,27 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
+      const paddingDeg = isOuter ? 4 : 3;
       const seatAngleDeg = ((seatRadius * 2.05) / radius) * (180 / Math.PI);
       const rawSpanDeg = rowSeats.length > 1 ? (rowSeats.length - 1) * seatAngleDeg : 0;
       const smoothedCount = getSmoothedCount(sectionCounts, sectionIndex);
-      const smoothSpanDeg = smoothedCount > 1
-        ? (smoothedCount - 1) * seatAngleDeg
+      const isShortRow = rowSeats.length > 0 && smoothedCount > 0 && rowSeats.length < smoothedCount * 0.6;
+
+      const layoutCount = isShortRow
+        ? Math.max(getReferenceCount(sectionCounts, sectionIndex), smoothedCount, rowSeats.length)
+        : smoothedCount;
+
+      const layoutSpanDeg = layoutCount > 1
+        ? (layoutCount - 1) * seatAngleDeg
         : rawSpanDeg;
+
       const rowSpanDeg = rowSeats.length > 0
-        ? Math.max(rawSpanDeg * 0.9, smoothSpanDeg) + (isOuter ? 4 : 3)
+        ? Math.max(rawSpanDeg * 0.9, layoutSpanDeg) + paddingDeg
         : 0;
 
-      // For short rows (significantly fewer seats than neighbors), use neighbor arc width
-      // but only fill seats from the left edge
-      const isShortRow = rowSeats.length > 0 && smoothedCount > 0 && rowSeats.length < smoothedCount * 0.6;
-      const actualSeatSpanDeg = rawSpanDeg + (isOuter ? 4 : 3);
-
-      // For short rows, compute per-seat angle from the full arc (as if it were a full row)
-      const neighborSeatAngle = isShortRow && smoothedCount > 1
-        ? rowSpanDeg / (smoothedCount - 1)
+      const actualSeatSpanDeg = rawSpanDeg + paddingDeg;
+      const shortRowSeatAngle = isShortRow && layoutCount > 1
+        ? rowSpanDeg / (layoutCount - 1)
         : seatAngleDeg;
 
       return {
@@ -244,8 +255,9 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         hasData: rowSeats.length > 0,
         isShortRow,
         seatSpanDeg: actualSeatSpanDeg,
-        seatAngleDeg: neighborSeatAngle,
+        seatAngleDeg: shortRowSeatAngle,
       };
+    });
     });
   }, [seatsByRow, zoneMidDeg, rowSpacing, seatRadius]);
 
