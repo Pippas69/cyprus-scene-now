@@ -625,12 +625,12 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
                       y={position.y + 0.5}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fontSize={seatRadius >= 10 ? 8 : 6}
+                      fontSize={seat.seat_type === 'wheelchair' ? (seatRadius >= 10 ? 10 : 8) : (seatRadius >= 10 ? 8 : 6)}
                       fontWeight={700}
                       fill={textColor}
                       className="pointer-events-none select-none"
                     >
-                      {seat.seat_number}
+                      {seat.seat_type === 'wheelchair' ? '♿' : seat.seat_number}
                     </text>
                   )}
                 </g>
