@@ -187,9 +187,22 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
   // Fixed angular seat spacing based on seat size — no global arc span needed
 
   const rowLayouts = useMemo(() => {
+    const outerCounts = OUTER_ROWS.map((label) => (seatsByRow.get(label) || []).length);
+    const innerCounts = INNER_ROWS.map((label) => (seatsByRow.get(label) || []).length);
+
+    const getSmoothedCount = (counts: number[], index: number) => {
+      const prev = counts[Math.max(0, index - 1)] ?? 0;
+      const curr = counts[index] ?? 0;
+      const next = counts[Math.min(counts.length - 1, index + 1)] ?? 0;
+      if (curr === 0) return 0;
+      return (prev + curr * 2 + next) / 4;
+    };
+
     return FULL_ROWS_DESC.map((rowLabel, idx) => {
       const isOuter = idx < OUTER_COUNT;
       const rowSeats = seatsByRow.get(rowLabel) || [];
+      const sectionIndex = isOuter ? idx : idx - OUTER_COUNT;
+      const sectionCounts = isOuter ? outerCounts : innerCounts;
 
       let radius: number;
       if (isOuter) {
@@ -201,19 +214,22 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         radius = BASE_RADIUS + localIdx * rowSpacing;
       }
 
-      // Each row gets its own arc span based on seat count and physical spacing at its radius
-      const seatAngleDeg = ((seatRadius * 2.5) / radius) * (180 / Math.PI);
-      const rowSpanDeg = rowSeats.length > 0 ? (rowSeats.length - 1) * seatAngleDeg : 0;
-      const rowStartDeg = zoneMidDeg - rowSpanDeg / 2;
-      const rowEndDeg = zoneMidDeg + rowSpanDeg / 2;
+      const seatAngleDeg = ((seatRadius * 2.05) / radius) * (180 / Math.PI);
+      const rawSpanDeg = rowSeats.length > 1 ? (rowSeats.length - 1) * seatAngleDeg : 0;
+      const smoothSpanDeg = getSmoothedCount(sectionCounts, sectionIndex) > 1
+        ? (getSmoothedCount(sectionCounts, sectionIndex) - 1) * seatAngleDeg
+        : rawSpanDeg;
+      const rowSpanDeg = rowSeats.length > 0
+        ? Math.max(rawSpanDeg * 0.9, smoothSpanDeg) + (isOuter ? 4 : 3)
+        : 0;
 
       return {
         rowLabel,
         rowSeats: [...rowSeats].sort((a, b) => a.seat_number - b.seat_number),
         radius,
         isOuter,
-        startDeg: rowStartDeg,
-        endDeg: rowEndDeg,
+        startDeg: zoneMidDeg - rowSpanDeg / 2,
+        endDeg: zoneMidDeg + rowSpanDeg / 2,
         hasData: rowSeats.length > 0,
       };
     });
