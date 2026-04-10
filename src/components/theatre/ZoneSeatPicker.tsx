@@ -243,7 +243,7 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
           for (const dir of [sectionIndex + d, sectionIndex - d]) {
             if (dir >= 0 && dir < sectionCounts.length) {
               const nc = sectionCounts[dir];
-              if (nc >= rowSeats.length / 0.6) {
+              if (nc >= maxNearby * 0.6) {
                 refCount = getSmoothedCount(sectionCounts, dir);
                 d = sectionCounts.length; // break outer
                 break;
