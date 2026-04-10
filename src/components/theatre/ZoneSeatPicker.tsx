@@ -49,11 +49,11 @@ const translations = {
   },
 };
 
-const HC = { x: 500, y: 760 };
-const BASE_RADIUS = 140;
-const SECTION_GAP = 50;
-const EDGE_PAD_DEG = 3;
-const UPPER_SECTION_INSET_DEG = 6;
+const HC = { x: 500, y: 900 };
+const BASE_RADIUS = 360;
+const SECTION_GAP = 28;
+const EDGE_PAD_DEG = 2;
+const UPPER_SECTION_INSET_DEG = 3;
 
 const OUTER_ROWS = ['Σ', 'Ρ', 'Π', 'Ο', 'Ξ', 'Ν', 'Μ', 'Λ', 'Κ'] as const;
 const INNER_ROWS = ['Ι', 'Θ', 'Η', 'Ζ', 'Ε', 'Δ', 'Γ', 'Β', 'Α'] as const;
@@ -65,9 +65,10 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 // Dynamic sizing based on density
 function getDynamicSizes(maxSeatsInRow: number) {
-  if (maxSeatsInRow <= 20) return { seatRadius: 12, rowSpacing: 40 };
-  if (maxSeatsInRow <= 35) return { seatRadius: 9, rowSpacing: 32 };
-  return { seatRadius: 7, rowSpacing: 26 };
+  if (maxSeatsInRow <= 12) return { seatRadius: 12, rowSpacing: 28 };
+  if (maxSeatsInRow <= 20) return { seatRadius: 10, rowSpacing: 24 };
+  if (maxSeatsInRow <= 30) return { seatRadius: 8, rowSpacing: 22 };
+  return { seatRadius: 7, rowSpacing: 20 };
 }
 
 export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
