@@ -1112,7 +1112,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             {submitting ? (
               <><Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />{t.processing}</>
             ) : isFreeOrder ? (
-              <><Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Booking') : t.getTickets}</>
+              <><Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση' : 'Complete') : t.getTickets}</>
             ) : (
               <><CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{t.pay} {formatPrice(total)}</>
             )}

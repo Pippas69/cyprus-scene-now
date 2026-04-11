@@ -561,7 +561,7 @@ export const TicketPurchaseCard = ({
               ) : total === 0 || isPayAtDoor ? (
                 <>
                   <PartyPopper className="h-4 w-4 mr-2" />
-                  {isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Booking') : text.getTickets}
+                  {isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση' : 'Complete') : text.getTickets}
                 </>
               ) : (
                 <>
