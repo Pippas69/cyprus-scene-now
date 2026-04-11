@@ -466,6 +466,31 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     setSubmitting(true);
     try {
+      // Pay at door: use free reservation flow (no Stripe)
+      if (isPayAtDoor) {
+        const { data, error } = await supabase.functions.invoke('create-free-reservation-event', {
+          body: {
+            event_id: eventId,
+            seating_type_id: selectedSeating.id,
+            party_size: partySize,
+            reservation_name: reservationName.trim(),
+            phone_number: phoneNumber.trim(),
+            special_requests: specialRequests || null,
+            guests: guests.map(g => ({
+              name: g.name.trim(),
+              age: parseInt(g.age) || 0,
+            })),
+          },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
+        onSuccess?.();
+        return;
+      }
+
       const edgeFunction = isDeferredPayment ? 'create-deferred-checkout' : 'create-reservation-event-checkout';
 
       const { data, error } = await supabase.functions.invoke(edgeFunction, {
