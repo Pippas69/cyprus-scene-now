@@ -182,6 +182,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
   t,
 }) => {
   const [showSeatMap, setShowSeatMap] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: zones, isLoading: zonesLoading } = useQuery({
     queryKey: ['venue-zones-with-counts', instance.venue_id],
