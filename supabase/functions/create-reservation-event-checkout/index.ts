@@ -95,6 +95,11 @@ serve(async (req) => {
       throw new Error("This event does not accept prepaid reservations");
     }
 
+    // Security: reject Stripe checkout for pay-at-door events
+    if (event.pay_at_door === true) {
+      throw new Error("This event uses pay-at-door. No online payment required.");
+    }
+
     const business = event.businesses;
 
     // Fetch per-business pricing profile

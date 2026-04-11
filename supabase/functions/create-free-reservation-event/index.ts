@@ -77,13 +77,19 @@ serve(async (req) => {
 
     const { data: event, error: eventError } = await supabaseService
       .from("events")
-      .select("id, title, start_at, end_at, event_type, business_id")
+      .select("id, title, start_at, end_at, event_type, business_id, pay_at_door")
       .eq("id", eventId)
       .single();
 
     if (eventError || !event) return json({ error: "Event not found" }, 404);
     if (event.event_type !== "reservation") {
       return json({ error: "Event is not a reservation event" }, 400);
+    }
+
+    // Security: only allow free reservation creation if pay_at_door is enabled
+    // This prevents bypassing Stripe by calling this function directly on paid events
+    if (!event.pay_at_door) {
+      return json({ error: "This event requires online payment" }, 403);
     }
 
     // Choose seating type
