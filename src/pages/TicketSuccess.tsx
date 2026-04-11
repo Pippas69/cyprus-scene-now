@@ -151,14 +151,19 @@ export const TicketSuccess = () => {
         }
 
         // Check if this order is linked to a reservation (hybrid event)
+        // Walk-in tickets should route to "My Tickets" even if linked
         const { data: orderData } = await supabase
           .from("ticket_orders")
-          .select("linked_reservation_id")
+          .select("linked_reservation_id, reservations:linked_reservation_id(source)")
           .eq("id", orderId)
           .single();
         
         if (orderData?.linked_reservation_id) {
-          setIsLinkedToReservation(true);
+          const linkedSource = (orderData as any)?.reservations?.source;
+          // Only treat as linked reservation if NOT a walk-in
+          if (linkedSource !== 'walk_in') {
+            setIsLinkedToReservation(true);
+          }
         }
 
         const allTicketData: TicketData[] = tickets.map((ticket: any) => {
