@@ -118,7 +118,19 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       }
 
       const reservations = (reservationsRaw || []);
-      const checkedIn = reservations.filter(r => r.checked_in_at).length;
+
+      // Count per-person check-ins from reservation_guests (not per-reservation)
+      const reservationIds = reservations.map(r => r.id);
+      let reservationGuestCheckedIn = 0;
+      if (reservationIds.length > 0) {
+        const { data: guestsData, error: guestsError } = await supabase
+          .from("reservation_guests")
+          .select("id, checked_in_at")
+          .in("reservation_id", reservationIds);
+        if (!guestsError && guestsData) {
+          reservationGuestCheckedIn = guestsData.filter(g => g.checked_in_at).length;
+        }
+      }
 
       // --- Walk-in tickets ---
       // Fetch ticket tiers
@@ -171,6 +183,10 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
+      const walkInCheckedIn = walkInTickets.filter(t => t.status === 'used').length;
+
+      // Total check-ins = per-person reservation guest check-ins + walk-in ticket check-ins
+      const checkedIn = reservationGuestCheckedIn + walkInCheckedIn;
 
       // Per-tier sold count for walk-ins
       const tierSoldCount = new Map<string, number>();
