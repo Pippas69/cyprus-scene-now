@@ -1,31 +1,23 @@
 
 
-## Plan: Fix fullscreen seat selector not showing on mobile
+## Plan: Zoom in the zone overview map on mobile fullscreen
 
 ### Problem
-The `FullscreenSeatSelector` uses `position: fixed` but it's rendered inside a component tree where framer-motion's `AnimatePresence` applies CSS `transform` on page transitions. When any ancestor has `transform`, `position: fixed` becomes relative to that ancestor instead of the viewport — so the overlay is either clipped or positioned incorrectly and invisible.
+The zone overview SVG has a viewBox of `0 0 600 500` with significant empty space below the stage and entrance labels. On mobile fullscreen, this makes the theatre look distant and small.
 
-### Fix (single file: `src/components/theatre/FullscreenSeatSelector.tsx`)
+### Fix (single file: `src/components/theatre/ZoneOverviewMap.tsx`)
 
-Wrap the fullscreen overlay in a **React Portal** (`createPortal`) that renders directly into `document.body`, bypassing all parent CSS contexts.
+**Crop the viewBox** to tighten around the actual content. The theatre arcs span roughly x:30–570, y:25–400. The "2nd entrance" and "canteen" labels sit at y:460/480 — move them up closer to the stage.
 
-```tsx
-import { createPortal } from 'react-dom';
-
-// Wrap the return in a portal:
-return createPortal(
-  <div className="fixed inset-0 z-[60] bg-background flex flex-col" style={{ height: '100dvh' }}>
-    {/* ...existing header, seat map, footer... */}
-  </div>,
-  document.body
-);
-```
+1. **Change viewBox** from `0 0 600 500` to `0 20 600 420` — this crops ~80px of dead space from the bottom and top, making the theatre fill more of the screen
+2. **Move "2nd Entrance" label** from y=460 to y=390
+3. **Move "Canteen" label** from y=480 to y=405
 
 ### What stays the same
-- All props, translations, header/footer layout — unchanged
-- `ShowInstanceEditor.tsx` and `TicketPurchaseFlow.tsx` — no changes needed
-- All seat map internals — untouched
+- All zone arcs, stage, seat counts, click handlers — untouched
+- FullscreenSeatSelector, SeatSelectionStep — no changes
+- Desktop experience — the tighter viewBox benefits all screen sizes equally
 
 ### Result
-The fullscreen overlay will always render on top of everything, regardless of parent transforms from framer-motion or other CSS contexts.
+The theatre map appears noticeably larger/closer on mobile, filling more of the available screen space.
 
