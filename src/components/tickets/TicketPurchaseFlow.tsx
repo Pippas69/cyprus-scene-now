@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
+import { FullscreenSeatSelector } from "@/components/theatre/FullscreenSeatSelector";
 import type { SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { InlineAuthGate } from "./InlineAuthGate";
 import { ProfileCompletionGate } from "./ProfileCompletionGate";
@@ -982,8 +983,57 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     </div>
   );
 
+  const [mobileSeatsOpen, setMobileSeatsOpen] = useState(false);
+
   const renderSeatStep = () => {
     if (!hasSeating || !venueId || !showInstanceId) return null;
+
+    if (isMobile) {
+      return (
+        <div className="space-y-3 py-4">
+          <p className="text-sm text-center text-muted-foreground">
+            {language === 'el' ? 'Πατήστε για να επιλέξετε θέσεις' : 'Tap to select your seats'}
+          </p>
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => setMobileSeatsOpen(true)}
+          >
+            <Ticket className="h-4 w-4" />
+            {selectedSeats.length > 0
+              ? `${selectedSeats.length} ${language === 'el' ? 'θέσεις επιλεγμένες' : 'seats selected'}`
+              : (language === 'el' ? 'Επιλογή Θέσεων' : 'Select Seats')
+            }
+          </Button>
+          {selectedSeats.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-1">
+              {selectedSeats.map((s) => (
+                <span
+                  key={s.seatId}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                >
+                  {s.label}
+                </span>
+              ))}
+            </div>
+          )}
+          {mobileSeatsOpen && (
+            <FullscreenSeatSelector
+              venueId={venueId}
+              showInstanceId={showInstanceId}
+              maxSeats={10}
+              selectedSeats={selectedSeats}
+              onSeatToggle={handleSeatToggle}
+              eventTitle={eventTitle}
+              eventDate={eventDate || ''}
+              onClose={() => setMobileSeatsOpen(false)}
+              onDone={() => setMobileSeatsOpen(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
     return (
       <SeatSelectionStep
         venueId={venueId}

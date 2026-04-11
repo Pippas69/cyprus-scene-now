@@ -11,6 +11,8 @@ import { Plus, Trash2, Calendar, Clock, Euro, Armchair, ChevronDown, ChevronUp }
 import { VenueSelector } from "./VenueSelector";
 import { type SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
+import { FullscreenSeatSelector } from "@/components/theatre/FullscreenSeatSelector";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface ZonePrice {
   zone_id: string;
@@ -180,6 +182,7 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
   t,
 }) => {
   const [showSeatMap, setShowSeatMap] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: zones, isLoading: zonesLoading } = useQuery({
     queryKey: ['venue-zones-with-counts', instance.venue_id],
@@ -395,8 +398,8 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
 
           {/* Interactive seat map */}
           {showSeatMap && (
-            <div className="border rounded-lg overflow-hidden bg-muted/10 min-h-[500px] lg:min-h-[600px]">
-              <SeatSelectionStep
+            isMobile ? (
+              <FullscreenSeatSelector
                 venueId={instance.venue_id!}
                 showInstanceId="__new__"
                 maxSeats={zones ? zones.reduce((sum, z) => sum + (z.actual_seat_count || 0), 0) : 0}
@@ -404,8 +407,22 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
                 onSeatToggle={handleSeatToggle}
                 eventTitle={t.houseSeats}
                 eventDate=""
+                onClose={() => setShowSeatMap(false)}
+                onDone={() => setShowSeatMap(false)}
               />
-            </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden bg-muted/10 min-h-[500px] lg:min-h-[600px]">
+                <SeatSelectionStep
+                  venueId={instance.venue_id!}
+                  showInstanceId="__new__"
+                  maxSeats={zones ? zones.reduce((sum, z) => sum + (z.actual_seat_count || 0), 0) : 0}
+                  selectedSeats={instance.house_seats || []}
+                  onSeatToggle={handleSeatToggle}
+                  eventTitle={t.houseSeats}
+                  eventDate=""
+                />
+              </div>
+            )
           )}
         </div>
       )}
