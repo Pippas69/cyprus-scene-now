@@ -4,9 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Users, Euro, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface EventReservationOverviewProps {
   eventId: string;
@@ -30,36 +29,31 @@ interface SeatingType {
   tiers: SeatingTier[];
 }
 
-interface ReservationData {
-  id: string;
-  party_size: number;
-  checked_in_at: string | null;
-  seating_preference: string | null;
-  seating_type_id: string | null;
-  prepaid_min_charge_cents?: number;
-}
-
 const t = {
   el: {
     totalRevenue: "Συνολικά Έσοδα",
     reservations: "Κρατήσεις",
+    tickets: "Εισιτήρια",
     checkedIn: "Check-ins",
-    netRevenue: "Καθαρά Έσοδα",
-    bySeating: "Ανά Κατηγορία",
+    tables: "ΤΡΑΠΕΖΙΑ",
+    walkInTickets: "ΕΙΣΙΤΗΡΙΑ (Walk-ins)",
     booked: "κρατημένα",
     available: "διαθέσιμα",
-    commission: "Προμήθεια",
+    sold: "πωλημένα",
+    free: "Δωρεάν",
     noSeating: "Δεν υπάρχουν κρατήσεις",
   },
   en: {
     totalRevenue: "Total Revenue",
     reservations: "Reservations",
+    tickets: "Tickets",
     checkedIn: "Check-ins",
-    netRevenue: "Net Revenue",
-    bySeating: "By Seating Type",
+    tables: "TABLES",
+    walkInTickets: "TICKETS (Walk-ins)",
     booked: "booked",
     available: "available",
-    commission: "Commission",
+    sold: "sold",
+    free: "Free",
     noSeating: "No reservations found",
   },
 };
@@ -67,10 +61,6 @@ const t = {
 export const EventReservationOverview = ({ eventId, businessId }: EventReservationOverviewProps) => {
   const { language } = useLanguage();
   const text = t[language];
-
-  // Get the business's commission rate (dynamic per plan)
-  const { data: commissionData } = useCommissionRate(businessId || null);
-  const commissionPercent = commissionData?.commissionPercent ?? 12;
 
   const { data: overview, isLoading } = useQuery({
     queryKey: ["event-reservation-overview", eventId],
@@ -103,7 +93,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         });
       }
 
-      // Fetch confirmed (accepted) reservations for revenue/commission metrics
+      // Fetch confirmed (accepted) reservations
       const { data: reservationsRaw, error: reservationsError } = await supabase
         .from("reservations")
         .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at")
@@ -127,62 +117,89 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         }
       }
 
-      const reservations = (reservationsRaw || []) as (ReservationData & { created_at: string })[];
-
+      const reservations = (reservationsRaw || []);
       const checkedIn = reservations.filter(r => r.checked_in_at).length;
 
-      // Fetch current active subscription as the SOURCE OF TRUTH
-      const resolvedBizId = businessId || null;
-      const commissionRates: Record<string, number> = { free: 12, basic: 10, pro: 8, elite: 6 };
-      let currentPlanSlug = 'free';
-      let currentPeriodStart = '';
+      // --- Walk-in tickets ---
+      // Fetch ticket tiers
+      const { data: ticketTiers, error: ticketTiersError } = await supabase
+        .from("ticket_tiers")
+        .select("*")
+        .eq("event_id", eventId)
+        .order("sort_order");
+      if (ticketTiersError) throw ticketTiersError;
 
-      if (resolvedBizId) {
-        const { data: currentSub } = await supabase
-          .from("business_subscriptions")
-          .select("plan_id, status, current_period_start, subscription_plans(slug)")
-          .eq("business_id", resolvedBizId)
-          .eq("status", "active")
-          .maybeSingle();
-        if (currentSub?.subscription_plans) {
-          currentPlanSlug = (currentSub.subscription_plans as any)?.slug || 'free';
-          currentPeriodStart = currentSub.current_period_start || '';
-        }
+      // Fetch completed ticket orders
+      const { data: allOrders, error: allOrdersError } = await supabase
+        .from("ticket_orders")
+        .select("id, subtotal_cents, linked_reservation_id")
+        .eq("event_id", eventId)
+        .eq("status", "completed");
+      if (allOrdersError) throw allOrdersError;
+
+      // Identify walk-in orders (no linked reservation or legacy walk-ins)
+      const linkedReservationIds = (allOrders || [])
+        .map(o => o.linked_reservation_id)
+        .filter((id): id is string => !!id);
+
+      let legacyWalkInReservationIds = new Set<string>();
+      if (linkedReservationIds.length > 0) {
+        const { data: linkedReservations } = await supabase
+          .from("reservations")
+          .select("id, auto_created_from_tickets, seating_type_id")
+          .in("id", linkedReservationIds);
+
+        legacyWalkInReservationIds = new Set(
+          (linkedReservations || [])
+            .filter(r => r.auto_created_from_tickets === true && !r.seating_type_id)
+            .map(r => r.id)
+        );
       }
 
-      const currentPlanCommission = commissionRates[currentPlanSlug] ?? 12;
+      const walkInOrders = (allOrders || []).filter(
+        o => !o.linked_reservation_id || legacyWalkInReservationIds.has(o.linked_reservation_id)
+      );
+      const walkInOrderIds = new Set(walkInOrders.map(o => o.id));
 
-      // Fetch plan history only for transactions BEFORE the current billing period
-      let planHistory: { plan_slug: string; valid_from: string; valid_to: string | null; source: string }[] = [];
-      if (resolvedBizId) {
-        const { data: history } = await supabase
-          .from("business_subscription_plan_history")
-          .select("plan_slug, valid_from, valid_to, source")
-          .eq("business_id", resolvedBizId)
-          .order("valid_from", { ascending: true });
-        planHistory = (history || []).filter(h => h.source !== 'downgrade_scheduled');
-      }
+      // Fetch walk-in tickets
+      const { data: allTickets, error: allTicketsError } = await supabase
+        .from("tickets")
+        .select("status, tier_id, order_id")
+        .eq("event_id", eventId)
+        .in("status", ["valid", "used"]);
+      if (allTicketsError) throw allTicketsError;
 
-      const getCommissionForTimestamp = (createdAt: string): number => {
-        // CRITICAL: If the transaction happened during the CURRENT billing period,
-        // ALWAYS use the current active subscription rate — plan history may be stale/corrupt
-        if (currentPeriodStart && createdAt >= currentPeriodStart) {
-          return currentPlanCommission;
+      const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
+      const walkInTicketCount = walkInTickets.length;
+
+      // Per-tier sold count for walk-ins
+      const tierSoldCount = new Map<string, number>();
+      walkInTickets.forEach(t => {
+        tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
+      });
+
+      // Filter and aggregate walk-in display tiers
+      const walkInDisplayTiers = (ticketTiers || []).filter(tier => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+      const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
+      walkInDisplayTiers.forEach(tier => {
+        const sold = tierSoldCount.get(tier.id) || 0;
+        const existing = tierAggMap.get(tier.name);
+        if (existing) {
+          existing.quantity_total += tier.quantity_total;
+          existing.actual_sold += sold;
+        } else {
+          tierAggMap.set(tier.name, {
+            name: tier.name,
+            price_cents: tier.price_cents,
+            quantity_total: tier.quantity_total,
+            actual_sold: sold,
+            id: tier.id,
+          });
         }
-        // For older transactions, look up plan history
-        for (let i = planHistory.length - 1; i >= 0; i--) {
-          const h = planHistory[i];
-          if (createdAt >= h.valid_from && (!h.valid_to || createdAt <= h.valid_to)) {
-            return commissionRates[h.plan_slug] ?? currentPlanCommission;
-          }
-        }
-        return currentPlanCommission;
-      };
+      });
+      const enrichedWalkInTiers = Array.from(tierAggMap.values());
 
       // Group by seating type
-      const seatingTypeIds = new Set(seatingTypes.map(st => st.id));
-      const seatingTypeNames = new Set(seatingTypes.map(st => st.seating_type));
-
       const seatingStats = seatingTypes.map((st) => {
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
@@ -206,29 +223,16 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         };
       });
 
-      // Revenue uses accepted reservations, availability uses live booked counts
       const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
       const totalRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
-
-      // Calculate commission per-reservation using the plan that was active at each reservation's creation
-      const categorizedReservations = reservations.filter(
-        r => r.seating_type_id && seatingTypeIds.has(r.seating_type_id) || 
-             r.seating_preference && seatingTypeNames.has(r.seating_preference)
-      );
-      const totalCommission = categorizedReservations.reduce((sum, r) => {
-        const charge = r.prepaid_min_charge_cents || 0;
-        if (charge === 0) return sum;
-        const rate = getCommissionForTimestamp(r.created_at);
-        return sum + Math.round(charge * (rate / 100));
-      }, 0);
 
       return {
         seatingTypes: seatingStats,
         totalRevenue,
-        totalCommission,
-        netRevenue: totalRevenue - totalCommission,
         totalReservations,
         checkedIn,
+        walkInTicketCount,
+        walkInTiers: enrichedWalkInTiers,
       };
     },
   });
@@ -243,7 +247,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
     );
   }
 
-  if (!overview || overview.totalReservations === 0) {
+  if (!overview || (overview.totalReservations === 0 && overview.walkInTicketCount === 0)) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-muted-foreground">
@@ -258,7 +262,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
   return (
     <div className="space-y-4">
-      {/* Stats cards */}
+      {/* Stats cards: Revenue, Reservations, Tickets, Check-ins */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4">
@@ -283,65 +287,97 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
-              <CheckCircle2 className="h-4 w-4" />
-              {text.checkedIn}
+              <Ticket className="h-4 w-4" />
+              {text.tickets}
             </div>
-            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.checkedIn}</p>
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.walkInTicketCount}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs md:text-xs whitespace-nowrap">
-              <TrendingUp className="h-4 w-4" />
-              {text.netRevenue}
+              <CheckCircle2 className="h-4 w-4" />
+              {text.checkedIn}
             </div>
-            <p className="text-xl md:text-xl font-bold mt-1 text-green-600 whitespace-nowrap">{formatPrice(overview.netRevenue)}</p>
-            {overview.totalCommission > 0 && (
-              <p className="text-[11px] md:text-xs text-muted-foreground whitespace-nowrap">
-                {text.commission}: {formatPrice(overview.totalCommission)}
-              </p>
-            )}
+            <p className="text-xl md:text-xl font-bold mt-1 whitespace-nowrap">{overview.checkedIn}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Seating breakdown */}
-      {overview.seatingTypes.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">{text.bySeating}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {overview.seatingTypes.map((seating) => {
-              const total = seating.available_slots || 1;
-              const bookedPercent = total > 0 ? (seating.booked / total) * 100 : 0;
+      {/* Category breakdown */}
+      <Card>
+        <CardHeader className="pb-2">
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Seating types - TABLES */}
+          {overview.seatingTypes.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{text.tables}</p>
+              {overview.seatingTypes.map((seating) => {
+                const total = seating.available_slots || 1;
+                const bookedPercent = total > 0 ? (seating.booked / total) * 100 : 0;
 
-              return (
-                <div key={seating.id} className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
-                      {seating.minPrice > 0 && (
+                return (
+                  <div key={seating.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
+                        {seating.minPrice > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
+                          >
+                            {formatPrice(seating.minPrice)}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                        {seating.booked} {text.booked} / {seating.available} {text.available}
+                      </span>
+                    </div>
+                    <Progress value={bookedPercent} className="h-2" />
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Walk-in ticket tiers */}
+          {overview.walkInTiers.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-2">{text.walkInTickets}</p>
+              {overview.walkInTiers.map((tier) => {
+                const actualSold = tier.actual_sold || 0;
+                const available = Math.max(tier.quantity_total - actualSold, 0);
+                const soldPercent = tier.quantity_total > 0
+                  ? Math.min((actualSold / tier.quantity_total) * 100, 100)
+                  : 0;
+
+                return (
+                  <div key={tier.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{tier.name}</span>
                         <Badge
                           variant="outline"
                           className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
                         >
-                          {formatPrice(seating.minPrice)}
+                          {tier.price_cents === 0 ? text.free : formatPrice(tier.price_cents)}
                         </Badge>
-                      )}
+                      </div>
+                      <span className="text-[11px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                        {actualSold} {text.sold} / {available} {text.available}
+                      </span>
                     </div>
-                    <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
-                      {seating.booked} {text.booked} / {seating.available} {text.available}
-                    </span>
+                    <Progress value={soldPercent} className="h-2" />
                   </div>
-                  <Progress value={bookedPercent} className="h-2" />
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+                );
+              })}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
