@@ -22,10 +22,13 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // Get business events for filtering
       const { data: events } = await supabase
         .from("events")
-        .select("id")
+        .select("id, event_type")
         .eq("business_id", businessId);
       
       const eventIds = events?.map(e => e.id) || [];
+      const ticketEventIds = (events || [])
+        .filter(e => e.event_type !== 'reservation')
+        .map(e => e.id);
 
       // Get business discounts for filtering
       const { data: businessDiscounts } = await supabase
@@ -92,11 +95,11 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
 
       // B) Load sources for "returning" calculation and other metrics
       const [ticketsRes, directReservationsRes, eventReservationsRes, offerPurchasesRes, studentRedemptionsRes] = await Promise.all([
-        eventIds.length > 0
+        ticketEventIds.length > 0
           ? supabase
               .from("tickets")
               .select("id, user_id, order_id")
-              .in("event_id", eventIds)
+              .in("event_id", ticketEventIds)
               .gte("created_at", startDate.toISOString())
               .lte("created_at", endDate.toISOString())
           : Promise.resolve({ data: [], error: null }),
@@ -244,11 +247,11 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // 5. TICKETS (all tickets from events only)
       // =====================================================
       let tickets = 0;
-      if (eventIds.length > 0) {
+      if (ticketEventIds.length > 0) {
         const { count } = await supabase
           .from("tickets")
           .select("*", { count: "exact", head: true })
-          .in("event_id", eventIds)
+          .in("event_id", ticketEventIds)
           .gte("created_at", startDate.toISOString())
           .lte("created_at", endDate.toISOString());
         tickets = count || 0;
