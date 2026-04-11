@@ -473,20 +473,31 @@ Deno.serve(async (req) => {
           });
         }
 
-        await supabaseClient.functions.invoke('send-ticket-email', {
-          body: {
+        const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-ticket-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": `${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
             orderId: order.id,
             userId: user.id,
-            userEmail: customerEmail || user.email,
-            customerName: customerName,
+            userEmail: (customerEmail || user.email || '').trim(),
+            customerName,
             eventTitle: event.title,
             eventDate: event.start_at,
             eventLocation: event.venue_name || event.location,
             businessName: business.name,
             eventCoverImage: event.cover_image_url,
             tickets: formattedTickets,
-          },
+          }),
         });
+
+        if (!emailResponse.ok) {
+          throw new Error(await emailResponse.text());
+        }
+
         logStep("Ticket email sent");
       } catch (emailError) {
         logStep("Ticket email error", String(emailError));

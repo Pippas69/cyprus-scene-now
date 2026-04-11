@@ -475,6 +475,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             seating_type_id: selectedSeating.id,
             party_size: partySize,
             reservation_name: reservationName.trim(),
+            customer_email: customerEmail.trim(),
             phone_number: phoneNumber.trim(),
             special_requests: specialRequests || null,
             guests: guests.map(g => ({
