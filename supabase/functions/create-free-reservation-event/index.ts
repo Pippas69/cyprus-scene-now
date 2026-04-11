@@ -18,6 +18,7 @@ const BodySchema = z.object({
   seating_type_id: flexId.optional(),
   party_size: positiveInt.optional(),
   reservation_name: safeString(200).optional(),
+  customer_email: optionalEmail,
   phone_number: optionalString(25),
   special_requests: optionalString(1000),
   guests: z.array(GuestSchema).optional(),
@@ -45,7 +46,7 @@ serve(async (req) => {
 
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
-    const { event_id, seating_type_id, party_size, reservation_name, phone_number, special_requests, guests } =
+    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests } =
       await parseBody(req, BodySchema);
 
     // Service client for privileged DB writes (required for demo/preview flows)
@@ -119,6 +120,7 @@ serve(async (req) => {
         event_id: eventId,
         user_id: user.id,
         reservation_name: (reservation_name as string | undefined) ?? "Test Reservation",
+        email: (customer_email as string | undefined)?.trim() || user.email || null,
         party_size: safePartySize,
         phone_number: (phone_number as string | undefined) ?? null,
         preferred_time: event.start_at,
@@ -175,19 +177,6 @@ serve(async (req) => {
       console.error("[create-free-reservation-event] User push failed", e);
     }
 
-    // Send reservation notifications (user confirmation + business alert) via dedicated function
-    // Best-effort: do not fail the booking if notifications fail.
-    try {
-      await supabaseService.functions.invoke('send-reservation-notification', {
-        body: {
-          reservationId: reservation.id,
-          type: 'new',
-        },
-      });
-    } catch (e) {
-      console.error("[create-free-reservation-event] send-reservation-notification failed", e);
-    }
-
     // Decrement seating slots best-effort (avoid failing the whole response)
     try {
       await supabaseService.rpc("decrement_seating_slots", { p_seating_type_id: seatingTypeId });
@@ -201,12 +190,36 @@ serve(async (req) => {
         supabaseClient: supabaseService,
         reservationId: reservation.id,
         guests: Array.isArray(guests) ? (guests as Array<{ name?: string; age?: number | string | null }>) : [],
-        customerEmail: user.email || null,
+        customerEmail: (customer_email as string | undefined)?.trim() || user.email || null,
       });
 
       console.log(`[create-free-reservation-event] Ensured ${createdTickets} guest tickets`);
     } catch (e) {
       console.error("[create-free-reservation-event] guest tickets creation failed", e);
+    }
+
+    // Send reservation notifications (user confirmation + business alert) via dedicated function
+    // Best-effort: do not fail the booking if notifications fail.
+    try {
+      const response = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-reservation-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": `${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          reservationId: reservation.id,
+          type: 'new',
+          recipientEmail: (customer_email as string | undefined)?.trim() || user.email || null,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("[create-free-reservation-event] send-reservation-notification failed", await response.text());
+      }
+    } catch (e) {
+      console.error("[create-free-reservation-event] send-reservation-notification failed", e);
     }
 
     return json({
