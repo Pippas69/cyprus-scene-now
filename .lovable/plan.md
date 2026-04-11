@@ -1,24 +1,31 @@
 
 
-## Plan: Make theatre map fill the mobile screen
+## Plan: Fix stage position and size in the zone overview map
 
 ### Problem
-The SVG viewBox has a landscape aspect ratio (~1.4:1), but the mobile screen is portrait. With `preserveAspectRatio="xMidYMid meet"`, the SVG scales to fit the width (390px), becoming only ~278px tall — leaving ~50% of the vertical space empty.
+The stage semicircle is currently drawn as a small ellipse (`A 90 60`) positioned below the center point (`CY + 20`). Looking at the screenshot with the white outline, the stage should fill the **entire inner area** of the horseshoe — matching the `INNER_R = 100` radius — not be a small shape tucked underneath.
 
-### Fix (2 files)
+### Fix (single file: `src/components/theatre/ZoneOverviewMap.tsx`)
 
-**1. `src/components/theatre/ZoneOverviewMap.tsx`**
-- Remove `maxWidth: 600` from the container div
-- Add `h-full` to both the wrapper div and the SVG element so they stretch to fill available height
+Replace the current small stage semicircle path:
+```
+M ${CX - 90} ${CY + 20} A 90 60 0 0 0 ${CX + 90} ${CY + 20} Z
+```
 
-**2. `src/components/theatre/FullscreenSeatSelector.tsx`**
-- Change the seat map container from `overflow-y-auto` to `flex items-center justify-center` with a defined height, so the ZoneOverviewMap can expand vertically to fill the space
-- Alternatively, set a `min-height` style on the SeatSelectionStep wrapper (e.g., `calc(100dvh - 120px)`) so the SVG parent has height to fill
+With a proper semicircle that fills the inner horseshoe area, using `INNER_R` (100):
+```
+M ${CX - INNER_R} ${CY} A {INNER_R} {INNER_R} 0 0 0 ${CX + INNER_R} ${CY} Z
+```
+
+This draws a semicircle from the left edge to the right edge of the inner arc boundary, curving downward to fill the hollow center of the horseshoe — exactly where the white outline indicates the stage should be.
+
+Also adjust the "STAGE" text label `y` position from `CY + 10` to `CY + 30` so it sits centered inside the larger semicircle.
 
 ### What stays the same
-- viewBox values, zone arcs, stage, labels — all untouched
-- Desktop rendering unaffected (maxWidth only removed inside mobile fullscreen context, or made conditional)
+- All zone arcs, viewBox, labels, click handlers — untouched
+- FullscreenSeatSelector, SeatSelectionStep — no changes
+- theatreConstants — unchanged
 
 ### Result
-The theatre map scales up to fill the majority of the phone screen instead of sitting small at the top with empty space below.
+The stage fills the inner opening of the horseshoe as it does in the real theatre layout, matching the user's white-outline reference.
 
