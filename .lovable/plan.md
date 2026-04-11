@@ -1,30 +1,36 @@
 
 
-## Plan: Left-align short outer rows in Section Δ
+## Plan: Fullscreen Seat Selection on Mobile
 
 ### Problem
-Rows Κ (4 seats) and Λ (8 seats) in Τμήμα Δ are stretched edge-to-edge across the full arc, making them look unnaturally spaced. They should start from the left and end early, with blank space on the right.
+On mobile, the seat selection map (both for ticket buyers and business owners selecting house seats) is crammed inside a small dialog/container, making it nearly impossible to tap individual seats in a 2,000+ seat theatre layout.
 
-### Fix (single file: `src/components/theatre/ZoneSeatPicker.tsx`)
+### Solution
+When on mobile, open the seat selection step in a **fullscreen overlay** that takes 100% of the screen, giving users maximum space to pan, zoom, and tap seats. A sticky header shows the zone name and selection count, and a sticky footer shows the selected seats and navigation buttons.
 
-**Change the else branch at lines 340-343** to add a special case for Section Δ outer short rows:
+### Changes
 
-```tsx
-} else if (zoneName === 'Τμήμα Δ' && isOuter && isShortRow) {
-  // Section Δ outer short rows: left-aligned, same spacing as full rows
-  angle = fullStartDeg + seatIdx * seatStepDeg;
-} else {
-  // All other sections/rows: edge-to-edge distribution
-  angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
-}
-```
+**1. Create `src/components/theatre/FullscreenSeatSelector.tsx`**
+- A new wrapper component that renders `SeatSelectionStep` inside a fullscreen fixed overlay (`fixed inset-0 z-50 bg-background`)
+- Sticky top bar: zone name, back button, selected count
+- Sticky bottom bar: selected seat chips + Done button
+- Only used when `isMobile` is true
 
-### What stays the same
-- **Τμήμα Α**: Completely untouched
-- **All other sections**: Edge-to-edge distribution unchanged
-- **Inner rows of Τμήμα Δ**: Edge-to-edge, unchanged
-- **Full-length outer rows of Τμήμα Δ (Σ, Ρ, Π, etc.)**: Edge-to-edge, unchanged
+**2. Update `src/components/tickets/TicketPurchaseFlow.tsx`**
+- On the seat selection step, when `isMobile`: instead of rendering `SeatSelectionStep` inline inside the dialog, open the `FullscreenSeatSelector` overlay
+- The dialog stays open underneath; the fullscreen overlay sits on top
+- When user taps "Done", close the fullscreen overlay and return to the dialog flow
+- On desktop: no change, keep current inline rendering with `max-w-5xl`
 
-### Result
-- Κ and Λ start at the same left edge as all rows, use uniform spacing, and stop early leaving blank space on the right
+**3. Update `src/components/business/productions/ShowInstanceEditor.tsx`**
+- Same pattern: when `isMobile` and showing the seat map, render `FullscreenSeatSelector` instead of the inline `SeatSelectionStep`
+- Add a "Select Seats" button that opens the fullscreen overlay
+- Selected seats summary shown inline after closing
+
+### Technical Details
+- Uses `useIsMobile()` hook (already exists)
+- The fullscreen overlay uses `fixed inset-0 z-[60]` to sit above dialogs (z-50)
+- SVG seat map inside gets full viewport height minus header/footer (~calc(100dvh - 120px))
+- No changes to `ZoneSeatPicker`, `ZoneOverviewMap`, or `SeatMapViewer` internals
+- Bilingual support (el/en) for all new UI text
 
