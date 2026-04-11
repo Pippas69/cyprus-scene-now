@@ -1190,7 +1190,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           reservationDate={eventDate}
           guestName={currentTicket?.guest_name}
           showSuccessMessage={ticketSuccessIndex === 0}
-          onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); onOpenChange(false); }}
+          onViewDashboard={() => { navigate('/dashboard-user?tab=events'); onOpenChange(false); }}
           viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
           onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); onOpenChange(false); }}
         />
