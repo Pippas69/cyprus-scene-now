@@ -313,6 +313,31 @@ export const TicketPurchaseCard = ({
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
+
+        // For pay-at-door: show QR codes inline
+        if (isPayAtDoor) {
+          try {
+            const { data: tickets } = await supabase
+              .from('tickets')
+              .select('guest_name, qr_code_token')
+              .eq('order_id', data.orderId)
+              .order('created_at');
+            if (tickets && tickets.length > 0) {
+              setTicketSuccessData({
+                orderId: data.orderId,
+                tickets: tickets.map(tk => ({
+                  guest_name: tk.guest_name || '',
+                  qr_code_token: tk.qr_code_token,
+                })),
+              });
+              setTicketSuccessIndex(0);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to fetch tickets for success screen', e);
+          }
+        }
+
         window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
         setCheckoutUrl(data.url);
