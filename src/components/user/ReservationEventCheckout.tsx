@@ -893,11 +893,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             <Separator />
 
             {isPayAtDoor && (
-              <div className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 text-sm space-y-1">
-                <p className="font-medium text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
+              <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm space-y-1">
+                <p className="font-medium text-primary flex items-center gap-1.5">
                   💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
                 </p>
-                <p className="text-emerald-700 dark:text-emerald-300 text-xs">
+                <p className="text-muted-foreground text-xs">
                   {language === 'el'
                     ? `Δεν απαιτείται online πληρωμή. Θα πληρώσετε ${price ? formatPrice(price) : ''} κατά την άφιξή σας.`
                     : `No online payment required. You will pay ${price ? formatPrice(price) : ''} upon arrival.`

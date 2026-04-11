@@ -499,8 +499,8 @@ export const TicketPurchaseCard = ({
 
           {/* Pay at door banner */}
           {isPayAtDoor && total > 0 && (
-            <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-center">
-              <p className="text-sm font-medium text-emerald-400">
+            <div className="w-full bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
+              <p className="text-sm font-medium text-primary">
                 💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
