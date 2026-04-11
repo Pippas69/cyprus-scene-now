@@ -138,7 +138,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
       <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
 
       <div className="relative w-full" style={{ maxWidth: 600, margin: '0 auto' }}>
-        <svg viewBox="0 20 600 420" className="w-full" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="20 25 560 400" className="w-full" preserveAspectRatio="xMidYMid meet">
           {/* Outer theatre boundary */}
           <path
             d={annularSectorPath(CX, CY, OUTER_R + 8, OUTER_R + 12, 188, 352)}
