@@ -62,6 +62,7 @@ interface DirectReservationsListProps {
   onReservationCountChange?: (count: number) => void;
   selectedEventId?: string | null;
   selectedEventType?: string | null;
+  payAtDoor?: boolean;
   forceEventMode?: boolean;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;

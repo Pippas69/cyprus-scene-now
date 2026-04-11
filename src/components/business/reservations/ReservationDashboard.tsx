@@ -27,6 +27,7 @@ interface EventOption {
   start_at: string;
   end_at: string;
   event_type: string | null;
+  pay_at_door?: boolean;
   reservationCount: number;
 }
 
