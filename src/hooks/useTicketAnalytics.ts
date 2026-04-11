@@ -44,15 +44,17 @@ export function useTicketAnalytics(businessId: string, dateRange?: DateRange) {
       // Get all events for this business
       const { data: events, error: eventsError } = await supabase
         .from("events")
-        .select("id, title")
+        .select("id, title, event_type")
         .eq("business_id", businessId);
 
       if (eventsError) throw eventsError;
-      if (!events || events.length === 0) {
+      // Exclude reservation-only events from ticket analytics
+      const ticketEvents = (events || []).filter(e => e.event_type !== 'reservation');
+      if (!ticketEvents || ticketEvents.length === 0) {
         return getEmptyData(startDate, endDate);
       }
 
-      const eventIds = events.map((e) => e.id);
+      const eventIds = ticketEvents.map((e) => e.id);
 
       // Fetch ticket orders within date range
       const { data: orders, error: ordersError } = await supabase
