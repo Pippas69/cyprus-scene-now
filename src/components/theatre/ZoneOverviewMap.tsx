@@ -236,16 +236,16 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
             );
           })}
 
-          {/* Stage semicircle at bottom */}
+          {/* Stage semicircle filling inner horseshoe */}
           <path
-            d={`M ${CX - 90} ${CY + 20} A 90 60 0 0 0 ${CX + 90} ${CY + 20} Z`}
+            d={`M ${CX - INNER_R} ${CY} A ${INNER_R} ${INNER_R} 0 0 0 ${CX + INNER_R} ${CY} Z`}
             fill="hsl(var(--primary) / 0.12)"
             stroke="hsl(var(--primary) / 0.5)"
             strokeWidth={2}
           />
           <text
             x={CX}
-            y={CY + 10}
+            y={CY + 30}
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={13}
