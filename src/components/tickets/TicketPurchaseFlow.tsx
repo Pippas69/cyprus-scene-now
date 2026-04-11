@@ -27,6 +27,9 @@ import { useProfileName } from "@/hooks/useProfileName";
 
 import { getMinAge } from "@/lib/ageRestrictions";
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface TicketTier {
   id: string;
