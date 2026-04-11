@@ -1826,8 +1826,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         {ticket.tier_name ? (
                           <>
                             <span className="text-sm font-medium">
-                              {ticket.subtotal_cents > 0 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                              {ticket.subtotal_cents > 0
+                                ? `€${(ticket.subtotal_cents / 100).toFixed(2)}`
+                                : payAtDoor && ticket.tier_price_cents > 0
+                                  ? `€${(ticket.tier_price_cents / 100).toFixed(2)}`
+                                  : (language === 'el' ? 'Δωρεάν' : 'Free')}
                             </span>
+                            {payAtDoor && ticket.subtotal_cents === 0 && ticket.tier_price_cents > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                ({language === 'el'
+                                  ? (selectedEventType === 'reservation' ? 'Στο κατάστημα' : 'Στην είσοδο')
+                                  : (selectedEventType === 'reservation' ? 'At venue' : 'At door')})
+                              </span>
+                            )}
                             <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
                               {ticket.tier_name}
                             </span>
