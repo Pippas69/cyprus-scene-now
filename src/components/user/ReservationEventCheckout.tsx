@@ -467,8 +467,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     setSubmitting(true);
     try {
-      // Pay at door: use free reservation flow (no Stripe)
-      if (isPayAtDoor) {
+      // Pay at door OR €0 minimum charge: use free reservation flow (no Stripe)
+      if (isPayAtDoor || price === 0) {
         const { data, error } = await supabase.functions.invoke('create-free-reservation-event', {
           body: {
             event_id: eventId,
