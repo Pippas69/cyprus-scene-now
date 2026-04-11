@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check } from 'lucide-react';
 import { SeatSelectionStep } from './SeatSelectionStep';
@@ -92,6 +93,7 @@ export const FullscreenSeatSelector: React.FC<FullscreenSeatSelectorProps> = ({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
