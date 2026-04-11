@@ -119,19 +119,6 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       const reservations = (reservationsRaw || []);
 
-      // Count per-person check-ins from reservation_guests (not per-reservation)
-      const reservationIds = reservations.map(r => r.id);
-      let reservationGuestCheckedIn = 0;
-      if (reservationIds.length > 0) {
-        const { data: guestsData, error: guestsError } = await supabase
-          .from("reservation_guests")
-          .select("id, checked_in_at")
-          .in("reservation_id", reservationIds);
-        if (!guestsError && guestsData) {
-          reservationGuestCheckedIn = guestsData.filter(g => g.checked_in_at).length;
-        }
-      }
-
       // --- Walk-in tickets ---
       // Fetch ticket tiers
       const { data: ticketTiers, error: ticketTiersError } = await supabase
@@ -173,7 +160,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       );
       const walkInOrderIds = new Set(walkInOrders.map(o => o.id));
 
-      // Fetch walk-in tickets
+      // Fetch ALL tickets for this event (reservation-linked + walk-in)
       const { data: allTickets, error: allTicketsError } = await supabase
         .from("tickets")
         .select("status, tier_id, order_id")
@@ -183,10 +170,9 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
-      const walkInCheckedIn = walkInTickets.filter(t => t.status === 'used').length;
 
-      // Total check-ins = per-person reservation guest check-ins + walk-in ticket check-ins
-      const checkedIn = reservationGuestCheckedIn + walkInCheckedIn;
+      // Total check-ins = ALL tickets with status 'used' (reservation-linked + walk-in)
+      const checkedIn = (allTickets || []).filter(t => t.status === 'used').length;
 
       // Per-tier sold count for walk-ins
       const tierSoldCount = new Map<string, number>();
