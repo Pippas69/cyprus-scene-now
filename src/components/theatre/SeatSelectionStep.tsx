@@ -154,6 +154,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
           onSeatToggle={onSeatToggle}
         />
       )}
+      </div>
 
       {/* All selected seats summary (shown in overview mode for horseshoe, always for flat) */}
       {(useHorseshoe ? !activeZone : true) && selectedSeats.length > 0 && (
