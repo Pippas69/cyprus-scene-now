@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS pay_at_door BOOLEAN NOT NULL DEFAULT false;
