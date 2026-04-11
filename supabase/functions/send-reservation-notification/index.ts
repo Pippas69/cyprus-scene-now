@@ -14,6 +14,7 @@ import {
   successBadge,
   noteBox,
 } from "../_shared/email-templates.ts";
+import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -157,6 +158,47 @@ const handler = async (req: Request): Promise<Response> => {
       ? `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(qrCodeToken)}&bgcolor=ffffff&color=000000`
       : null;
 
+    // For event-based reservations, fetch individual guest tickets (QR per guest)
+    let guestTickets: { guest_name: string; qr_code_token: string }[] = [];
+    if (!isDirectReservation && reservation.id) {
+      try {
+        const { data: tickets } = await supabase
+          .from('tickets')
+          .select('guest_name, qr_code_token, ticket_orders!inner(linked_reservation_id)')
+          .eq('ticket_orders.linked_reservation_id', reservation.id)
+          .order('created_at', { ascending: true });
+
+        if (tickets && tickets.length > 0) {
+          guestTickets = tickets.map((t: any) => ({
+            guest_name: t.guest_name || 'Guest',
+            qr_code_token: t.qr_code_token,
+          }));
+        }
+      } catch (e) {
+        console.log('[send-reservation-notification] Guest tickets fetch failed (non-fatal)', e);
+      }
+    }
+
+    // Build QR section: individual guest QRs for event reservations, single QR for direct
+    const buildQrSection = () => {
+      if (guestTickets.length > 0) {
+        // Show individual QR codes for each guest
+        return guestTickets.map((guest) => {
+          const guestQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(guest.qr_code_token)}&bgcolor=ffffff&color=000000`;
+          return `
+            <div style="margin-bottom: 24px; text-align: center;">
+              <p style="color: #334155; font-size: 13px; font-weight: 600; margin: 0 0 8px 0; text-transform: lowercase;">
+                ${guest.guest_name}
+              </p>
+              ${qrCodeSection(guestQrUrl, '', 'Δείξε στην είσοδο')}
+            </div>
+          `;
+        }).join('');
+      }
+      // Fallback: single QR code
+      return qrCodeUrl ? qrCodeSection(qrCodeUrl, reservation.confirmation_code, 'Δείξε στην είσοδο') : '';
+    };
+
     let userSubject = '';
     let userHtml = '';
     let businessSubject = '';
@@ -177,17 +219,22 @@ const handler = async (req: Request): Promise<Response> => {
       return rows;
     };
 
+    // Determine deep link based on reservation type
+    const userDeepLink = isDirectReservation 
+      ? '/dashboard-user?tab=reservations&subtab=direct' 
+      : '/dashboard-user?tab=reservations&subtab=event';
+
     if (type === 'new') {
       const isAutoAccepted = reservation.status === 'accepted';
       
-      if (isAutoAccepted && qrCodeUrl) {
-        // Auto-accepted reservation with QR code
+      if (isAutoAccepted && (qrCodeUrl || guestTickets.length > 0)) {
+        // Auto-accepted reservation with QR code(s)
         userSubject = `✓ Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
         inAppNotification = {
           title: '✅ Κράτηση επιβεβαιώθηκε!',
           message: `${reservationContext} · ${formattedDate} ${formattedTime}`,
           event_type: 'reservation_confirmed',
-          deep_link: `/dashboard-user?tab=reservations`
+          deep_link: userDeepLink
         };
         
         const content = `
@@ -206,9 +253,9 @@ const handler = async (req: Request): Promise<Response> => {
 
           ${infoCard(reservationTypeLabel, buildInfoRows())}
 
-          ${qrCodeSection(qrCodeUrl, reservation.confirmation_code, 'Δείξε στην είσοδο')}
+          ${buildQrSection()}
 
-          ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations')}
+          ${ctaButton('Οι κρατήσεις μου', `https://fomo.com.cy${userDeepLink}`)}
         `;
         
         userHtml = wrapPremiumEmail(content, '✓ Επιβεβαιώθηκε');
