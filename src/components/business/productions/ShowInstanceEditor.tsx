@@ -11,6 +11,8 @@ import { Plus, Trash2, Calendar, Clock, Euro, Armchair, ChevronDown, ChevronUp }
 import { VenueSelector } from "./VenueSelector";
 import { type SelectedSeat } from "@/components/theatre/SeatMapViewer";
 import { SeatSelectionStep } from "@/components/theatre/SeatSelectionStep";
+import { FullscreenSeatSelector } from "@/components/theatre/FullscreenSeatSelector";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface ZonePrice {
   zone_id: string;
