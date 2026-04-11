@@ -824,11 +824,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           is_account_user: isAccountUser,
           is_manual_entry: (t as any).is_manual_entry || false,
           subtotal_cents: perTicketPrice,
+          tier_price_cents: tierInfo[t.tier_id]?.price_cents || 0,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
           manual_status: (t as any).manual_status || null,
           created_at: t.created_at,
-          tier_name: tierNames[t.tier_id] || '',
+          tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
         };
