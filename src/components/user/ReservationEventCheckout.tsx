@@ -893,8 +893,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             <Separator />
 
             {isPayAtDoor && (
-              <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm space-y-1">
-                <p className="font-medium text-primary flex items-center gap-1.5">
+              <div className="rounded-lg border border-border bg-muted p-3 text-sm space-y-1">
+                <p className="font-medium text-foreground flex items-center gap-1.5">
                   💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
                 </p>
                 <p className="text-muted-foreground text-xs">

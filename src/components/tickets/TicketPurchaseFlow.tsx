@@ -895,8 +895,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {isPayAtDoor && subtotal > 0 && (
         <>
           <Separator />
-          <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
-            <p className="text-sm font-medium text-primary">
+          <div className="bg-muted border border-border rounded-lg p-3 text-center">
+            <p className="text-sm font-medium text-foreground">
               💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
