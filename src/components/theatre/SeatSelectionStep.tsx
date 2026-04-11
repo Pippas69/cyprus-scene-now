@@ -212,3 +212,4 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
       )}
     </div>
   );
+};
