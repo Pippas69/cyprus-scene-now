@@ -298,7 +298,7 @@ export const TicketSuccess = () => {
             seatRow={currentTicket.seat_row || undefined}
             seatNumber={currentTicket.seat_number || undefined}
             showSuccessMessage={currentIdx === 0}
-            onViewDashboard={() => navigate(isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets")}
+            onViewDashboard={() => navigate(isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=tickets")}
             viewDashboardLabel={isLinkedToReservation ? text.viewReservations : text.viewTickets}
           />
 
@@ -314,7 +314,7 @@ export const TicketSuccess = () => {
             {language === "el" ? "Η αγορά ολοκληρώθηκε!" : "Purchase complete!"}
           </p>
           <Button asChild className="mt-4">
-            <Link to={isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=events&subtab=tickets"}>
+            <Link to={isLinkedToReservation ? "/dashboard-user?tab=reservations" : "/dashboard-user?tab=tickets"}>
               {isLinkedToReservation ? text.viewReservations : text.viewTickets}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
