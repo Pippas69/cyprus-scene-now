@@ -347,9 +347,10 @@ Deno.serve(async (req) => {
       return ticketsToCreate;
     };
 
-    // For free tickets, skip Stripe and create order directly
-    if (subtotalCents === 0) {
-      logStep("Free tickets - creating order directly");
+    // For free tickets OR pay-at-door events, skip Stripe and create order directly
+    const isPayAtDoor = event.pay_at_door === true;
+    if (subtotalCents === 0 || isPayAtDoor) {
+      logStep(isPayAtDoor ? "Pay-at-door event - creating order directly (skip Stripe)" : "Free tickets - creating order directly");
       
       // Create order
       const { data: order, error: orderError } = await supabaseClient
