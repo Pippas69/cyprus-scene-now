@@ -419,7 +419,8 @@ const EventCreationForm = ({
       noMinSpend: false,
       noReservation: false
     },
-    termsAndConditions: ''
+    termsAndConditions: '',
+    payAtDoor: false,
   });
 
   // Walk-in tickets toggle (for ticket_and_reservation and reservation events)
@@ -682,6 +683,7 @@ const EventCreationForm = ({
         deferred_payment_enabled: deferredEnabled,
         deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
         deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
+        pay_at_door: (formData.eventType === 'ticket' || formData.eventType === 'reservation') ? formData.payAtDoor : false,
       };
       const {
         data: createdEvent,
