@@ -90,6 +90,7 @@ interface TicketOnlyOrder {
   is_account_user: boolean;
   is_manual_entry: boolean;
   subtotal_cents: number;
+  tier_price_cents: number;
   status: string;
   checked_in: boolean;
   manual_status: string | null;
