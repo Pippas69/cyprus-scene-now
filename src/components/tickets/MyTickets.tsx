@@ -95,14 +95,23 @@ export const MyTickets = () => {
           ticket_code,
           ticket_tiers(name, price_cents, currency),
           events(id, title, start_at, location, cover_image_url, businesses(name)),
-          ticket_orders!inner(customer_name, total_cents, linked_reservation_id)
+          ticket_orders!inner(customer_name, total_cents, linked_reservation_id, reservations:linked_reservation_id(source))
         `)
         .eq("user_id", user.id)
-        .is("ticket_orders.linked_reservation_id", null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+
+      // Show tickets that either have NO linked reservation, or are walk-in tickets
+      const filtered = (data || []).filter(ticket => {
+        const linkedRes = (ticket.ticket_orders as any)?.reservations;
+        const hasLinkedReservation = ticket.ticket_orders?.linked_reservation_id != null;
+        if (!hasLinkedReservation) return true;
+        // Walk-in tickets should appear in My Tickets even if linked
+        return linkedRes?.source === 'walk_in';
+      });
+
+      return filtered;
     },
   });
 
