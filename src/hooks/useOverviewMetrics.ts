@@ -22,10 +22,13 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       // Get business events for filtering
       const { data: events } = await supabase
         .from("events")
-        .select("id")
+        .select("id, event_type")
         .eq("business_id", businessId);
       
       const eventIds = events?.map(e => e.id) || [];
+      const ticketEventIds = (events || [])
+        .filter(e => e.event_type !== 'reservation')
+        .map(e => e.id);
 
       // Get business discounts for filtering
       const { data: businessDiscounts } = await supabase
