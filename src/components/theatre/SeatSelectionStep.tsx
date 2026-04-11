@@ -3,10 +3,13 @@ import { type SelectedSeat } from './SeatMapViewer';
 import { SeatMapViewer } from './SeatMapViewer';
 import { ZoneOverviewMap } from './ZoneOverviewMap';
 import { ZoneSeatPicker } from './ZoneSeatPicker';
+import { PefkiosOverviewMap } from './PefkiosOverviewMap';
+import { PefkiosSeatPicker } from './PefkiosSeatPicker';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { ZONE_ARCS } from './theatreConstants';
+import { isPefkiosVenue } from './pefkiosConstants';
 
 interface SeatSelectionStepProps {
   venueId: string;
@@ -38,6 +41,8 @@ interface ActiveZone {
   seatCount: number;
 }
 
+type VenueType = 'horseshoe' | 'pefkios' | 'flat' | null;
+
 export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   venueId,
   showInstanceId,
@@ -50,9 +55,9 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   const { language } = useLanguage();
   const t = translations[language];
   const [activeZone, setActiveZone] = useState<ActiveZone | null>(null);
-  const [useHorseshoe, setUseHorseshoe] = useState<boolean | null>(null);
+  const [venueType, setVenueType] = useState<VenueType>(null);
 
-  // Detect venue type: if zones match ZONE_ARCS keys, use horseshoe; otherwise use flat SeatMapViewer
+  // Detect venue type
   useEffect(() => {
     const detect = async () => {
       const { data: zones } = await supabase
@@ -61,28 +66,38 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         .eq('venue_id', venueId);
 
       if (!zones || zones.length === 0) {
-        setUseHorseshoe(false);
+        setVenueType('flat');
         return;
       }
 
-      // Check if any zone name matches the horseshoe arc definitions
-      const hasArcZones = zones.some((z) => ZONE_ARCS[z.name] !== undefined);
-      setUseHorseshoe(hasArcZones);
+      const zoneNames = zones.map((z) => z.name);
+
+      // Check Pefkios first (Αριστερά/Κέντρο/Δεξιά)
+      if (isPefkiosVenue(zoneNames)) {
+        setVenueType('pefkios');
+        return;
+      }
+
+      // Check horseshoe (Τμήμα Α, Β, etc.)
+      const hasArcZones = zoneNames.some((name) => ZONE_ARCS[name] !== undefined);
+      setVenueType(hasArcZones ? 'horseshoe' : 'flat');
     };
 
-    setUseHorseshoe(null);
+    setVenueType(null);
     setActiveZone(null);
     detect();
   }, [venueId]);
 
   // Still loading venue type detection
-  if (useHorseshoe === null) {
+  if (venueType === null) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground">
         <div className="animate-pulse text-sm">...</div>
       </div>
     );
   }
+
+  const isZoneBased = venueType === 'horseshoe' || venueType === 'pefkios';
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -119,7 +134,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
 
       {/* Venue-appropriate seat map - flex-1 to fill remaining height */}
       <div className="flex-1 min-h-0">
-      {useHorseshoe ? (
+      {venueType === 'horseshoe' ? (
         // Horseshoe amphitheatre flow (zone overview → zone detail)
         activeZone ? (
           <ZoneSeatPicker
@@ -144,6 +159,30 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
             }}
           />
         )
+      ) : venueType === 'pefkios' ? (
+        // Pefkios 3-section flow (overview → section detail)
+        activeZone ? (
+          <PefkiosSeatPicker
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            zoneId={activeZone.id}
+            zoneName={activeZone.name}
+            zoneColor={activeZone.color}
+            maxSeats={maxSeats}
+            selectedSeats={selectedSeats}
+            onSeatToggle={onSeatToggle}
+            onBack={() => setActiveZone(null)}
+          />
+        ) : (
+          <PefkiosOverviewMap
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            selectedSeats={selectedSeats}
+            onZoneClick={(zone) => {
+              setActiveZone({ id: zone.id, name: zone.name, color: zone.color, seatCount: zone.seatCount });
+            }}
+          />
+        )
       ) : (
         // Flat coordinate-based seat map (original viewer)
         <SeatMapViewer
@@ -156,8 +195,8 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
       )}
       </div>
 
-      {/* All selected seats summary (shown in overview mode for horseshoe, always for flat) */}
-      {(useHorseshoe ? !activeZone : true) && selectedSeats.length > 0 && (
+      {/* All selected seats summary (shown in overview mode for zone-based, always for flat) */}
+      {(isZoneBased ? !activeZone : true) && selectedSeats.length > 0 && (
         <div className="flex flex-wrap gap-1 px-1 pt-1 border-t">
           {selectedSeats.map((s) => (
             <button
