@@ -102,6 +102,7 @@ export const TicketPurchaseCard = ({
   isLinkedReservation = false,
 }: TicketPurchaseCardProps) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const text = t[language];
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -115,6 +116,11 @@ export const TicketPurchaseCard = ({
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
   const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number }[]>([]);
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
+  const [ticketSuccessData, setTicketSuccessData] = useState<{
+    orderId: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
+  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Fetch all price tiers for linked reservation events (Kaliva)
   useEffect(() => {
