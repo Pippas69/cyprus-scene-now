@@ -244,17 +244,61 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
       const bookings = (directBookings || 0) + eventBookings;
 
       // =====================================================
-      // 5. TICKETS (all tickets from events only)
+      // 5. TICKETS (all tickets from ALL event types)
+      // - Ticket-only events: all tickets
+      // - Hybrid events: all tickets (reservation-linked + walk-in)
+      // - Reservation-only events: only walk-in tickets
       // =====================================================
       let tickets = 0;
-      if (ticketEventIds.length > 0) {
-        const { count } = await supabase
-          .from("tickets")
-          .select("*", { count: "exact", head: true })
-          .in("event_id", ticketEventIds)
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-        tickets = count || 0;
+      if (eventIds.length > 0) {
+        // Get ticket-only and hybrid event IDs (count ALL their tickets)
+        const ticketAndHybridIds = (events || [])
+          .filter(e => e.event_type !== 'reservation')
+          .map(e => e.id);
+        
+        // Get reservation-only event IDs (count only walk-in tickets)
+        const reservationOnlyIds = (events || [])
+          .filter(e => e.event_type === 'reservation')
+          .map(e => e.id);
+
+        // Count all tickets from ticket-only and hybrid events
+        let ticketHybridCount = 0;
+        if (ticketAndHybridIds.length > 0) {
+          const { count } = await supabase
+            .from("tickets")
+            .select("*", { count: "exact", head: true })
+            .in("event_id", ticketAndHybridIds)
+            .gte("created_at", startDate.toISOString())
+            .lte("created_at", endDate.toISOString());
+          ticketHybridCount = count || 0;
+        }
+
+        // Count walk-in tickets from reservation-only events
+        // Walk-in tickets belong to orders WITHOUT a linked_reservation_id
+        let reservationWalkinCount = 0;
+        if (reservationOnlyIds.length > 0) {
+          // Get walk-in ticket orders (no linked reservation)
+          const { data: walkinOrders } = await supabase
+            .from("ticket_orders")
+            .select("id")
+            .in("event_id", reservationOnlyIds)
+            .is("linked_reservation_id", null)
+            .gte("created_at", startDate.toISOString())
+            .lte("created_at", endDate.toISOString());
+          
+          const walkinOrderIds = (walkinOrders || []).map(o => o.id);
+          if (walkinOrderIds.length > 0) {
+            const { count } = await supabase
+              .from("tickets")
+              .select("*", { count: "exact", head: true })
+              .in("order_id", walkinOrderIds)
+              .gte("created_at", startDate.toISOString())
+              .lte("created_at", endDate.toISOString());
+            reservationWalkinCount = count || 0;
+          }
+        }
+
+        tickets = ticketHybridCount + reservationWalkinCount;
       }
 
       // =====================================================
