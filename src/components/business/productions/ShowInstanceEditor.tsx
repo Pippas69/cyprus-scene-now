@@ -184,22 +184,25 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
     queryKey: ['venue-zones-with-counts', instance.venue_id],
     queryFn: async () => {
       if (!instance.venue_id) return [];
-      const [zonesRes, seatsRes] = await Promise.all([
+      const [zonesRes, allSeats] = await Promise.all([
         supabase
           .from('venue_zones')
           .select('id, name, capacity, sort_order, color')
           .eq('venue_id', instance.venue_id)
           .order('sort_order'),
-        supabase
-          .from('venue_seats')
-          .select('id, zone_id')
-          .eq('venue_id', instance.venue_id)
-          .eq('is_active', true)
-          .limit(5000),
+        fetchAllRows<{ id: string; zone_id: string }>(
+          (from, to) =>
+            supabase
+              .from('venue_seats')
+              .select('id, zone_id')
+              .eq('venue_id', instance.venue_id!)
+              .eq('is_active', true)
+              .range(from, to)
+        ),
       ]);
       if (zonesRes.error) throw zonesRes.error;
       const seatCounts: Record<string, number> = {};
-      for (const s of seatsRes.data || []) {
+      for (const s of allSeats) {
         seatCounts[s.zone_id] = (seatCounts[s.zone_id] || 0) + 1;
       }
       return (zonesRes.data || []).map(z => ({
