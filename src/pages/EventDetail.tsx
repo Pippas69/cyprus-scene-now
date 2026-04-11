@@ -699,10 +699,16 @@ export default function EventDetail() {
                 {(isLinkedHybridEvent || eventType === 'reservation') && lowestMinChargeCents ? (
                   <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {language === 'el' ? 'Από' : 'From'} {formatPrice(lowestMinChargeCents)}
+                    {event?.pay_at_door && eventType === 'reservation' && (
+                      <span className="font-normal text-xs sm:text-sm block sm:inline"> ({language === 'el' ? 'πληρώνεται στο κατάστημα' : 'pay at venue'})</span>
+                    )}
                   </span>
                 ) : eventHasTickets && startingPriceCents !== null && !isLinkedHybridEvent ? (
                   <span className="shrink-0 text-white text-sm sm:text-lg lg:text-xl font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {formatPrice(startingPriceCents)}
+                    {event?.pay_at_door && eventType === 'ticket' && (
+                      <span className="font-normal text-xs sm:text-sm block sm:inline"> ({language === 'el' ? 'πληρωμή στην είσοδο' : 'pay at door'})</span>
+                    )}
                   </span>
                 ) : null}
               </div>

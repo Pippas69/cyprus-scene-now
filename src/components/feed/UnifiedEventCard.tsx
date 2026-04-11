@@ -170,14 +170,8 @@ export const UnifiedEventCard = ({
   
   const getEntryBadgeLabel = () => {
     if (entryType === 'free') return t.free;
-    if (entryType === 'reservation') {
-      if (event.pay_at_door) return language === 'el' ? 'Κράτηση (πληρώνεται στο κατάστημα)' : 'Reservation (pay at venue)';
-      return t.reservation;
-    }
-    if (entryType === 'ticket') {
-      if (event.pay_at_door) return language === 'el' ? 'Εισιτήριο (πληρωμή στην είσοδο)' : 'Ticket (pay at door)';
-      return t.ticket;
-    }
+    if (entryType === 'reservation') return t.reservation;
+    if (entryType === 'ticket') return t.ticket;
     if (entryType === 'ticket_and_reservation') return language === 'el' ? 'Κράτηση Θέσης' : 'Book a Seat';
     return null;
   };
