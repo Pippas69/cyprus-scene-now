@@ -212,17 +212,3 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
       )}
     </div>
   );
-};
-              key={s.seatId}
-              onClick={() => onSeatToggle(s)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
-            >
-              {s.label}
-              <span className="text-[10px] opacity-70">✕</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
