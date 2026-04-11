@@ -486,8 +486,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
+        // Show success screen with QR codes
+        setSuccessData({
+          qrToken: data.qr_code_token,
+          confirmationCode: data.confirmation_code,
+          prepaidAmount: 0,
+        });
         toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
-        onSuccess?.();
         return;
       }
 
@@ -1014,10 +1019,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
 
     return (
-      <div className="flex justify-between pt-4">
+      <div className="flex justify-between pt-4 gap-2">
         {step > 1 ? (
-          <Button variant="outline" onClick={() => setStep(step - 1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" className="text-xs px-3 h-9" onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
             {t.back}
           </Button>
         ) : (
@@ -1026,6 +1031,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
         {step < 3 ? (
           <Button
+            size="sm"
+            className="text-xs px-3 h-9"
             onClick={() => setStep(step + 1)}
             disabled={
               (step === 1 && !canProceedToStep2) ||
@@ -1033,27 +1040,28 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             }
           >
             {t.next}
-            <ArrowRight className="h-4 w-4 ml-2" />
+            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
           </Button>
         ) : (
           <Button
+            size="sm"
+            className="text-xs px-3 h-9 gap-1.5"
             onClick={handleCheckout}
             disabled={submitting || !selectedSeating || !price || !termsAccepted}
-            className="gap-2"
           >
             {submitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 {t.processing}
               </>
             ) : isPayAtDoor ? (
               <>
-                <Users className="h-4 w-4" />
+                <Users className="h-3.5 w-3.5" />
                 {language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Reservation'}
               </>
             ) : (
               <>
-                <CreditCard className="h-4 w-4" />
+                <CreditCard className="h-3.5 w-3.5" />
                 {isDeferredPayment
                   ? (language === 'el' ? `Δέσμευση ${formatPrice(total)}` : `Hold ${formatPrice(total)}`)
                   : `${t.pay} ${formatPrice(total)}`
