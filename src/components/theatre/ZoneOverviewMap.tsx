@@ -138,7 +138,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
       <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
 
       <div className="relative w-full" style={{ maxWidth: 600, margin: '0 auto' }}>
-        <svg viewBox="0 0 600 500" className="w-full" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 20 600 420" className="w-full" preserveAspectRatio="xMidYMid meet">
           {/* Outer theatre boundary */}
           <path
             d={annularSectorPath(CX, CY, OUTER_R + 8, OUTER_R + 12, 188, 352)}
@@ -272,7 +272,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
           </text>
           <text
             x={55}
-            y={460}
+            y={390}
             textAnchor="middle"
             fontSize={8}
             fontWeight={600}
@@ -284,7 +284,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
           </text>
           <text
             x={55}
-            y={480}
+            y={405}
             textAnchor="middle"
             fontSize={7}
             fill="hsl(var(--muted-foreground))"
