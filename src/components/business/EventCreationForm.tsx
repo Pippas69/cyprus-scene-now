@@ -625,6 +625,8 @@ const EventCreationForm = ({
 
   // Submit handler
   const handleSubmit = async () => {
+    // Prevent re-submission if event was already created
+    if (createdEventId) return;
     const error = validate();
     if (error) {
       toast.error(error);
