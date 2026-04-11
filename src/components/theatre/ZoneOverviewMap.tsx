@@ -134,11 +134,11 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
   }
 
   return (
-    <div className="w-full space-y-3">
-      <p className="text-xs text-muted-foreground text-center">{t.selectZone}</p>
+    <div className="w-full h-full flex flex-col">
+      <p className="text-xs text-muted-foreground text-center py-2">{t.selectZone}</p>
 
-      <div className="relative w-full" style={{ maxWidth: 600, margin: '0 auto' }}>
-        <svg viewBox="20 25 560 400" className="w-full" preserveAspectRatio="xMidYMid meet">
+      <div className="relative w-full h-full flex-1" style={{ margin: '0 auto' }}>
+        <svg viewBox="20 25 560 400" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
           {/* Outer theatre boundary */}
           <path
             d={annularSectorPath(CX, CY, OUTER_R + 8, OUTER_R + 12, 188, 352)}

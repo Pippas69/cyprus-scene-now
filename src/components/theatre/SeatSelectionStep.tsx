@@ -85,7 +85,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full gap-4">
       {/* Header info */}
       <div className="space-y-1">
         <h3 className="font-semibold text-sm">{eventTitle}</h3>
@@ -117,7 +117,8 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         </div>
       </div>
 
-      {/* Venue-appropriate seat map */}
+      {/* Venue-appropriate seat map - flex-1 to fill remaining height */}
+      <div className="flex-1 min-h-0">
       {useHorseshoe ? (
         // Horseshoe amphitheatre flow (zone overview → zone detail)
         activeZone ? (
@@ -153,6 +154,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
           onSeatToggle={onSeatToggle}
         />
       )}
+      </div>
 
       {/* All selected seats summary (shown in overview mode for horseshoe, always for flat) */}
       {(useHorseshoe ? !activeZone : true) && selectedSeats.length > 0 && (
