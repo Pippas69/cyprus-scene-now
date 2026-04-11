@@ -438,7 +438,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Handle checkout
   const handleCheckout = async () => {
-    if (!selectedSeating || !price) return;
+    if (!selectedSeating || price === null) return;
 
     const hasReservationName = reservationName.trim().length >= 2;
     const isPhoneValidNow = isValidPhone(phoneNumber.trim());
@@ -686,7 +686,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       <h4 className={cn("font-semibold", isSelected && colors.text)}>
                         {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes]}
                       </h4>
-                      {minPrice && (
+                      {minPrice !== null && minPrice !== undefined && (
                         <p className="text-sm text-muted-foreground">
                           {isPayAtDoor
                             ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στο κατάστημα` : `${t.from} ${formatPrice(minPrice)} at venue`)
@@ -838,7 +838,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 })}
               </div>
             </div>
-            {price ? (
+            {price !== null ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                 <span className="text-sm font-medium">
                   {isPayAtDoor
