@@ -1829,14 +1829,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               {ticket.subtotal_cents > 0
                                 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}`
                                 : payAtDoor && ticket.tier_price_cents > 0
-                                  ? `€${(ticket.tier_price_cents / 100).toFixed(2)}`
+                                  ? `€${(ticket.tier_price_cents / 100).toFixed(2)} (${language === 'el' ? 'Είσοδο' : 'Door'})`
                                   : (language === 'el' ? 'Δωρεάν' : 'Free')}
                             </span>
-                            {payAtDoor && ticket.subtotal_cents === 0 && ticket.tier_price_cents > 0 && (
-                              <span className="text-xs text-muted-foreground">
-                                ({language === 'el' ? 'Στην είσοδο' : 'At door'})
-                              </span>
-                            )}
                             <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
                               {ticket.tier_name}
                             </span>
@@ -2079,13 +2074,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   <EditableCell
                                     reservationId={reservation.id}
                                     field="prepaid_min_charge_cents"
-                                    displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
+                                    displayValue={minChargeCents > 0 ? (payAtDoor ? `€${(minChargeCents / 100).toFixed(2)} (${language === 'el' ? 'Κατάστημα' : 'Venue'})` : `€${(minChargeCents / 100).toFixed(2)}`) : '-'}
                                     rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
-                                  {payAtDoor && minChargeCents > 0 && (
-                                    <span className="text-xs text-muted-foreground">
-                                      ({language === 'el' ? 'Στο κατάστημα' : 'At venue'})
-                                    </span>
-                                  )}
                                 </div>
                               );
                             }
