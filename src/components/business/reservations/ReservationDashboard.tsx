@@ -57,7 +57,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const fetchArchivedEvents = useCallback(async () => {
     const { data } = await supabase
       .from('events')
-      .select('id, title, start_at, end_at, event_type')
+      .select('id, title, start_at, end_at, event_type, pay_at_door')
       .eq('business_id', businessId)
       .not('archived_at', 'is', null)
       .order('start_at', { ascending: false });
@@ -175,7 +175,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, end_at, event_type')
+        .select('id, title, start_at, end_at, event_type, pay_at_door')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
@@ -282,7 +282,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, end_at, event_type')
+        .select('id, title, start_at, end_at, event_type, pay_at_door')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
