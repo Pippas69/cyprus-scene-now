@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -103,6 +104,7 @@ export const TicketPurchaseCard = ({
 }: TicketPurchaseCardProps) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const text = t[language];
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -313,6 +315,8 @@ export const TicketPurchaseCard = ({
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
+        queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-tickets-events"] });
 
         // For pay-at-door: show QR codes inline
         if (isPayAtDoor) {

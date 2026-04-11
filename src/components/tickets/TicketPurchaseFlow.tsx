@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from 'date-fns';
 import { el as elLocale, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -201,6 +202,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { language } = useLanguage();
   const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const t = translations[language];
@@ -548,6 +550,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       if (data.isFree) {
         setSubmitting(false);
         toast.success(language === 'el' ? 'Εισιτήρια επιβεβαιώθηκαν!' : 'Tickets confirmed!');
+        queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-tickets-events"] });
 
         // For pay-at-door: show QR codes inline instead of redirecting
         if (isPayAtDoor) {
