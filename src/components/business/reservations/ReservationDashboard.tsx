@@ -235,6 +235,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         start_at: e.start_at,
         end_at: e.end_at,
         event_type: e.event_type,
+        pay_at_door: e.pay_at_door,
         reservationCount: counts[e.id] || 0,
       }));
 
@@ -252,6 +253,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             p.title === options[i].title &&
             p.start_at === options[i].start_at &&
             p.event_type === options[i].event_type &&
+            p.pay_at_door === options[i].pay_at_door &&
             p.reservationCount === options[i].reservationCount
           )
         ) {
@@ -338,6 +340,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         start_at: e.start_at,
         end_at: e.end_at,
         event_type: e.event_type,
+        pay_at_door: e.pay_at_door,
         reservationCount: counts[e.id] || 0,
       }));
 
@@ -349,6 +352,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             p.title === options[i].title &&
             p.start_at === options[i].start_at &&
             p.event_type === options[i].event_type &&
+            p.pay_at_door === options[i].pay_at_door &&
             p.reservationCount === options[i].reservationCount
           )
         ) {
