@@ -398,7 +398,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       const matchedTier = matchingTiers.find(
         (t) => r.party_size >= t.min_people && r.party_size <= t.max_people
       ) || matchingTiers[0];
-      if (matchedTier?.prepaid_min_charge_cents) {
+      if (matchedTier && matchedTier.prepaid_min_charge_cents != null) {
         chargeMap[r.id] = matchedTier.prepaid_min_charge_cents;
       }
     });
