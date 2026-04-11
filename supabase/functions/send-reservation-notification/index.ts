@@ -23,7 +23,14 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 interface NotificationRequest {
   reservationId: string;
   type: 'new' | 'status_change' | 'cancellation';
+  recipientEmail?: string;
 }
+
+const BodySchema = z.object({
+  reservationId: flexId,
+  type: z.enum(['new', 'status_change', 'cancellation']),
+  recipientEmail: email.optional(),
+});
 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-reservation-notification invoked with method:", req.method);
@@ -34,25 +41,28 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
 
-    // Auth guard: require authenticated user
+    // Auth guard: allow authenticated user JWTs and internal service-role calls
     const authHeader = req.headers.get("Authorization");
+    const serviceRoleAuth = `Bearer ${supabaseServiceKey}`;
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...securityHeaders, "Content-Type": "application/json" },
       });
     }
-    const _token = authHeader.replace("Bearer ", "");
-    const _authClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    );
-    const { error: _authError } = await _authClient.auth.getUser(_token);
-    if (_authError) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...securityHeaders, "Content-Type": "application/json" },
-      });
+    if (authHeader !== serviceRoleAuth) {
+      const _token = authHeader.replace("Bearer ", "");
+      const _authClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      );
+      const { error: _authError } = await _authClient.auth.getUser(_token);
+      if (_authError) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -62,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const resend = new Resend(resendApiKey);
     
-    const { reservationId, type } = await parseBody(req, BodySchema);
+    const { reservationId, type, recipientEmail } = await parseBody(req, BodySchema);
     console.log(`Processing ${type} notification for reservation ${reservationId}`);
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -422,7 +432,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send emails with idempotency
-    const userEmailAddr = await getEmailForUserId(supabase, reservation.user_id);
+    const userEmailAddr =
+      recipientEmail?.trim() ||
+      reservation.email?.trim() ||
+      await getEmailForUserId(supabase, reservation.user_id);
     const bizEmailAddr = businessData?.user_id ? await getEmailForUserId(supabase, businessData.user_id) : null;
 
     const userEmailKey = buildNotificationKey({
