@@ -229,6 +229,26 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         });
       }
 
+      // For reservation/hybrid events, also count walk-in tickets
+      const nonTicketOnlyEventIds = eventsData
+        .filter((e) => e.event_type !== 'ticket')
+        .map((e) => e.id);
+
+      if (nonTicketOnlyEventIds.length > 0) {
+        const { data: walkInTickets } = await supabase
+          .from('tickets')
+          .select('event_id')
+          .in('event_id', nonTicketOnlyEventIds)
+          .in('status', ['valid', 'used'])
+          .eq('source', 'walk_in');
+
+        if (requestId !== fetchEventsRequestRef.current) return;
+
+        (walkInTickets || []).forEach((t) => {
+          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
+        });
+      }
+
       const options: EventOption[] = eventsData.map((e) => ({
         id: e.id,
         title: e.title,
@@ -330,6 +350,26 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         if (requestId !== diningFetchRef.current) return;
 
         (tickets || []).forEach((t) => {
+          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
+        });
+      }
+
+      // For reservation/hybrid events, also count walk-in tickets
+      const nonTicketOnlyIds = eventsData
+        .filter((e) => e.event_type !== 'ticket')
+        .map((e) => e.id);
+
+      if (nonTicketOnlyIds.length > 0) {
+        const { data: walkInTickets } = await supabase
+          .from('tickets')
+          .select('event_id')
+          .in('event_id', nonTicketOnlyIds)
+          .in('status', ['valid', 'used'])
+          .eq('source', 'walk_in');
+
+        if (requestId !== diningFetchRef.current) return;
+
+        (walkInTickets || []).forEach((t) => {
           if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
         });
       }
