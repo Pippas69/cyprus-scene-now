@@ -346,7 +346,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         setIsDeferredPayment(eventData.deferred_payment_enabled || false);
         setDeferredCancellationFeePercent(eventData.deferred_cancellation_fee_percent || 50);
         setDeferredConfirmationHours(eventData.deferred_confirmation_hours || 4);
-        setIsPayAtDoor((eventData as any).pay_at_door || false);
+        setIsPayAtDoor(eventData.pay_at_door || false);
       }
 
       const { data: seatingTypes, error: seatingError } = await supabase
@@ -658,7 +658,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       </h4>
                       {minPrice && (
                         <p className="text-sm text-muted-foreground">
-                          {t.from} {formatPrice(minPrice)}
+                          {isPayAtDoor
+                            ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στην είσοδο` : `${t.from} ${formatPrice(minPrice)} at door`)
+                            : `${t.from} ${formatPrice(minPrice)}`
+                          }
                         </p>
                       )}
                     </div>
@@ -807,9 +810,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             </div>
             {price ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
-                <span className="text-sm font-medium">{t.prepaidAmount}</span>
+                <span className="text-sm font-medium">
+                  {isPayAtDoor
+                    ? (language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend')
+                    : t.prepaidAmount
+                  }
+                </span>
                 <span className="text-base font-semibold text-foreground ml-3 shrink-0">
-                  {formatPrice(price)}
+                  {isPayAtDoor
+                    ? (language === 'el' ? `${formatPrice(price)} στην είσοδο` : `${formatPrice(price)} at door`)
+                    : formatPrice(price)
+                  }
                 </span>
               </div>
             ) : (
@@ -881,7 +892,21 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
-            {isDeferredPayment && (
+            {isPayAtDoor && (
+              <div className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 text-sm space-y-1">
+                <p className="font-medium text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
+                  💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
+                </p>
+                <p className="text-emerald-700 dark:text-emerald-300 text-xs">
+                  {language === 'el'
+                    ? `Δεν απαιτείται online πληρωμή. Θα πληρώσετε ${price ? formatPrice(price) : ''} κατά την άφιξή σας.`
+                    : `No online payment required. You will pay ${price ? formatPrice(price) : ''} upon arrival.`
+                  }
+                </p>
+              </div>
+            )}
+
+            {!isPayAtDoor && isDeferredPayment && (
               <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-sm space-y-1">
                 <p className="font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
                   <Shield className="h-4 w-4" />
@@ -898,35 +923,52 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t.prepaidAmount}</span>
-                <span>
-                  {price ? formatPrice(subtotal) : '-'}
-                </span>
-              </div>
-              {!isDeferredPayment && platformFeeCents > 0 && (
+            {isPayAtDoor ? (
+              <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t.serviceFee}</span>
-                  <span>{formatPrice(platformFeeCents)}</span>
+                  <span className="text-muted-foreground">
+                    {language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend'}
+                  </span>
+                  <span>{price ? formatPrice(subtotal) : '-'}</span>
                 </div>
-              )}
-              {!isDeferredPayment && stripeFeesCents > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t.processingFee}</span>
-                  <span>{formatPrice(stripeFeesCents)}</span>
+                <div className="flex justify-between font-bold text-lg">
+                  <span>{language === 'el' ? 'Online πληρωμή' : 'Online payment'}</span>
+                  <span className="text-emerald-600">
+                    {language === 'el' ? 'Δωρεάν' : 'Free'}
+                  </span>
                 </div>
-              )}
-              <div className="flex justify-between font-bold text-lg">
-                <span>{t.total}</span>
-                <span className="text-foreground">
-                  {isDeferredPayment
-                    ? (language === 'el' ? 'Δέσμευση ' : 'Hold ') + formatPrice(total)
-                    : formatPrice(total)
-                  }
-                </span>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t.prepaidAmount}</span>
+                  <span>
+                    {price ? formatPrice(subtotal) : '-'}
+                  </span>
+                </div>
+                {!isDeferredPayment && platformFeeCents > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t.serviceFee}</span>
+                    <span>{formatPrice(platformFeeCents)}</span>
+                  </div>
+                )}
+                {!isDeferredPayment && stripeFeesCents > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t.processingFee}</span>
+                    <span>{formatPrice(stripeFeesCents)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg">
+                  <span>{t.total}</span>
+                  <span className="text-foreground">
+                    {isDeferredPayment
+                      ? (language === 'el' ? 'Δέσμευση ' : 'Hold ') + formatPrice(total)
+                      : formatPrice(total)
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
 
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               {language === 'el'
@@ -1003,6 +1045,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t.processing}
+              </>
+            ) : isPayAtDoor ? (
+              <>
+                <Users className="h-4 w-4" />
+                {language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Reservation'}
               </>
             ) : (
               <>
