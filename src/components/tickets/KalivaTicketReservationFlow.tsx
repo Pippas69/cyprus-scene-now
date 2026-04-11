@@ -26,9 +26,6 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
-import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface SeatingTypeOption {
   id: string;
@@ -226,7 +223,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   businessId,
 }) => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const { language } = useLanguage();
   const t = translations[language];
   const { data: pricingDisplay } = useEventPricingProfile(businessId);
@@ -247,11 +243,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [specialRequests, setSpecialRequests] = useState('');
   const [reservationName, setReservationName] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [ticketSuccessData, setTicketSuccessData] = useState<{
-    orderId: string;
-    tickets: { guest_name: string; qr_code_token: string }[];
-  } | null>(null);
-  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
