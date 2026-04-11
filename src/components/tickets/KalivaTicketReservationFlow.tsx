@@ -247,6 +247,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [specialRequests, setSpecialRequests] = useState('');
   const [reservationName, setReservationName] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [ticketSuccessData, setTicketSuccessData] = useState<{
+    orderId: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
+  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Auto-fill booker name (slot 0)
   const [userId, setUserId] = useState<string | null>(null);
