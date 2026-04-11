@@ -229,6 +229,26 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         });
       }
 
+      // For reservation/hybrid events, also count walk-in tickets
+      const nonTicketOnlyEventIds = eventsData
+        .filter((e) => e.event_type !== 'ticket')
+        .map((e) => e.id);
+
+      if (nonTicketOnlyEventIds.length > 0) {
+        const { data: walkInTickets } = await (supabase
+          .from('tickets')
+          .select('event_id')
+          .in('event_id', nonTicketOnlyEventIds)
+          .in('status', ['valid', 'used']) as any)
+          .eq('source', 'walk_in');
+
+        if (requestId !== fetchEventsRequestRef.current) return;
+
+        (walkInTickets || []).forEach((t) => {
+          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
+        });
+      }
+
       const options: EventOption[] = eventsData.map((e) => ({
         id: e.id,
         title: e.title,
@@ -334,6 +354,26 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         });
       }
 
+      // For reservation/hybrid events, also count walk-in tickets
+      const nonTicketOnlyIds = eventsData
+        .filter((e) => e.event_type !== 'ticket')
+        .map((e) => e.id);
+
+      if (nonTicketOnlyIds.length > 0) {
+        const { data: walkInTickets } = await (supabase
+          .from('tickets')
+          .select('event_id')
+          .in('event_id', nonTicketOnlyIds)
+          .in('status', ['valid', 'used']) as any)
+          .eq('source', 'walk_in');
+
+        if (requestId !== diningFetchRef.current) return;
+
+        (walkInTickets || []).forEach((t) => {
+          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
+        });
+      }
+
       const options: EventOption[] = eventsData.map((e) => ({
         id: e.id,
         title: e.title,
@@ -388,6 +428,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     const channel = supabase
       .channel('dashboard_reservation_counts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchEvents())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchEvents())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isTicketLinked, fetchEvents]);
@@ -398,6 +439,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     const channel = supabase
       .channel('dashboard_dining_reservation_counts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchDiningEvents())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDiningEvents())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isDiningBar, isTicketLinked, fetchDiningEvents]);
