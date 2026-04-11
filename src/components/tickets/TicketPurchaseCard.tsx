@@ -111,11 +111,31 @@ export const TicketPurchaseCard = ({
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
   const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number }[]>([]);
+  const [isPayAtDoor, setIsPayAtDoor] = useState(false);
 
   // Fetch all price tiers for linked reservation events (Kaliva)
   useEffect(() => {
-    if (!isLinkedReservation) return;
+    if (!isLinkedReservation) {
+      // Still fetch pay_at_door for non-linked events
+      supabase
+        .from('events')
+        .select('pay_at_door')
+        .eq('id', eventId)
+        .single()
+        .then(({ data }) => {
+          if (data) setIsPayAtDoor(data.pay_at_door === true);
+        });
+      return;
+    }
     const fetchTiers = async () => {
+      // Also fetch pay_at_door
+      const { data: evData } = await supabase
+        .from('events')
+        .select('pay_at_door')
+        .eq('id', eventId)
+        .single();
+      if (evData) setIsPayAtDoor(evData.pay_at_door === true);
+
       const { data: seatingTypes } = await supabase
         .from("reservation_seating_types")
         .select("id")
@@ -471,10 +491,26 @@ export const TicketPurchaseCard = ({
           <div className="flex items-center justify-between w-full">
             <span className="font-medium">{text.total}</span>
             <span className="text-xl font-bold text-primary">
-              {total === 0 ? text.free : `€${(total / 100).toFixed(2)}`}
+              {isPayAtDoor
+                ? (language === 'el' ? 'Δωρεάν online' : 'Free online')
+                : total === 0 ? text.free : `€${(total / 100).toFixed(2)}`}
             </span>
           </div>
-          
+
+          {/* Pay at door banner */}
+          {isPayAtDoor && total > 0 && (
+            <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-center">
+              <p className="text-sm font-medium text-emerald-400">
+                💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === 'el'
+                  ? `Θα πληρώσετε €${(total / 100).toFixed(2)} στην είσοδο του χώρου`
+                  : `You will pay €${(total / 100).toFixed(2)} at the venue entrance`}
+              </p>
+            </div>
+          )}
+
           {/* Checkout URL redirect state */}
           {checkoutUrl ? (
             <div className="w-full space-y-3">
@@ -522,10 +558,10 @@ export const TicketPurchaseCard = ({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {text.processing}
                 </>
-              ) : total === 0 ? (
+              ) : total === 0 || isPayAtDoor ? (
                 <>
                   <PartyPopper className="h-4 w-4 mr-2" />
-                  {text.getTickets}
+                  {isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Booking') : text.getTickets}
                 </>
               ) : (
                 <>
