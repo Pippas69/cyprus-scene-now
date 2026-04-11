@@ -337,6 +337,9 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
           } else {
             angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
           }
+        } else if (zoneName === 'Τμήμα Δ' && isOuter && isShortRow) {
+          // Section Δ outer short rows: left-aligned, same spacing as full rows
+          angle = fullStartDeg + seatIdx * seatStepDeg;
         } else {
           // All other sections: edge-to-edge distribution (original behavior)
           angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
