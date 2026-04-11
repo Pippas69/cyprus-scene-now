@@ -623,7 +623,7 @@ export const TicketPurchaseCard = ({
                 language={language}
                 guestName={currentTicket?.guest_name}
                 showSuccessMessage={ticketSuccessIndex === 0}
-                onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); setTicketSuccessData(null); }}
+                onViewDashboard={() => { navigate('/dashboard-user?tab=events'); setTicketSuccessData(null); }}
                 viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
                 onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); setTicketSuccessData(null); }}
               />
