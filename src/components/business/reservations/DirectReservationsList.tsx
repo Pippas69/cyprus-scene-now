@@ -62,6 +62,7 @@ interface DirectReservationsListProps {
   onReservationCountChange?: (count: number) => void;
   selectedEventId?: string | null;
   selectedEventType?: string | null;
+  payAtDoor?: boolean;
   forceEventMode?: boolean;
   manualEntryOpen?: boolean;
   onManualEntryOpenChange?: (open: boolean) => void;
@@ -89,6 +90,7 @@ interface TicketOnlyOrder {
   is_account_user: boolean;
   is_manual_entry: boolean;
   subtotal_cents: number;
+  tier_price_cents: number;
   status: string;
   checked_in: boolean;
   manual_status: string | null;
@@ -97,7 +99,7 @@ interface TicketOnlyOrder {
   ticket_code: string | null;
   staff_memo: string | null;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
@@ -779,16 +781,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       // Get tier names
       const tierIds = [...new Set(completedTickets.map(t => t.tier_id).filter(Boolean))];
-      const tierNames: Record<string, string> = {};
+      const tierInfo: Record<string, { name: string; price_cents: number }> = {};
       if (tierIds.length > 0) {
         const { data: tiers } = await supabase
           .from('ticket_tiers')
-          .select('id, name')
+          .select('id, name, price_cents')
           .in('id', tierIds);
 
         if (isStaleRequest()) return;
 
-        (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
+        (tiers || []).forEach(t => { tierInfo[t.id] = { name: t.name, price_cents: t.price_cents }; });
       }
 
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
@@ -822,11 +824,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           is_account_user: isAccountUser,
           is_manual_entry: (t as any).is_manual_entry || false,
           subtotal_cents: perTicketPrice,
+          tier_price_cents: tierInfo[t.tier_id]?.price_cents || 0,
           status: 'completed',
           checked_in: t.status === 'used' || !!t.checked_in_at,
           manual_status: (t as any).manual_status || null,
           created_at: t.created_at,
-          tier_name: tierNames[t.tier_id] || '',
+          tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
         };
@@ -1823,8 +1826,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         {ticket.tier_name ? (
                           <>
                             <span className="text-sm font-medium">
-                              {ticket.subtotal_cents > 0 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}` : (language === 'el' ? 'Δωρεάν' : 'Free')}
+                              {ticket.subtotal_cents > 0
+                                ? `€${(ticket.subtotal_cents / 100).toFixed(2)}`
+                                : payAtDoor && ticket.tier_price_cents > 0
+                                  ? `€${(ticket.tier_price_cents / 100).toFixed(2)}`
+                                  : (language === 'el' ? 'Δωρεάν' : 'Free')}
                             </span>
+                            {payAtDoor && ticket.subtotal_cents === 0 && ticket.tier_price_cents > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                ({language === 'el' ? 'Στην είσοδο' : 'At door'})
+                              </span>
+                            )}
                             <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
                               {ticket.tier_name}
                             </span>
@@ -2063,11 +2075,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             } else {
                               // Reservation-only: just min charge
                               return (
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="prepaid_min_charge_cents"
-                                  displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
-                                  rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                                <div className="flex flex-col items-start">
+                                  <EditableCell
+                                    reservationId={reservation.id}
+                                    field="prepaid_min_charge_cents"
+                                    displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
+                                    rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                                  {payAtDoor && minChargeCents > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({language === 'el' ? 'Στο κατάστημα' : 'At venue'})
+                                    </span>
+                                  )}
+                                </div>
                               );
                             }
                           })()}

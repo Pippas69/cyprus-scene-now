@@ -27,6 +27,7 @@ interface EventOption {
   start_at: string;
   end_at: string;
   event_type: string | null;
+  pay_at_door?: boolean;
   reservationCount: number;
 }
 
@@ -57,7 +58,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const fetchArchivedEvents = useCallback(async () => {
     const { data } = await supabase
       .from('events')
-      .select('id, title, start_at, end_at, event_type')
+      .select('id, title, start_at, end_at, event_type, pay_at_door')
       .eq('business_id', businessId)
       .not('archived_at', 'is', null)
       .order('start_at', { ascending: false });
@@ -175,7 +176,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, end_at, event_type')
+        .select('id, title, start_at, end_at, event_type, pay_at_door')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
@@ -282,7 +283,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('events')
-        .select('id, title, start_at, end_at, event_type')
+        .select('id, title, start_at, end_at, event_type, pay_at_door')
         .eq('business_id', businessId)
         .not('event_type', 'in', '("free","free_entry")')
         .is('archived_at', null)
@@ -831,6 +832,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={undefined}
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
+              payAtDoor={diningSelectedEvent?.pay_at_door || false}
               forceEventMode
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
@@ -844,6 +846,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={isTicketLinked ? handleReservationCountChange : undefined}
               selectedEventId={isTicketLinked ? selectedEventId : undefined}
               selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
+              payAtDoor={isTicketLinked ? (selectedEvent?.pay_at_door || false) : false}
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
               searchQuery={searchQuery}
