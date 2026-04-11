@@ -659,7 +659,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       {minPrice && (
                         <p className="text-sm text-muted-foreground">
                           {isPayAtDoor
-                            ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στην είσοδο` : `${t.from} ${formatPrice(minPrice)} at door`)
+                            ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στο κατάστημα` : `${t.from} ${formatPrice(minPrice)} at venue`)
                             : `${t.from} ${formatPrice(minPrice)}`
                           }
                         </p>
@@ -818,7 +818,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 </span>
                 <span className="text-base font-semibold text-foreground ml-3 shrink-0">
                   {isPayAtDoor
-                    ? (language === 'el' ? `${formatPrice(price)} στην είσοδο` : `${formatPrice(price)} at door`)
+                    ? (language === 'el' ? `${formatPrice(price)} στο κατάστημα` : `${formatPrice(price)} at venue`)
                     : formatPrice(price)
                   }
                 </span>
