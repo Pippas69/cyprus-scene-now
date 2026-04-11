@@ -417,9 +417,6 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
                 {event.pay_at_door && event.event_type === 'ticket' && (
                   <span className="font-normal text-[10px]"> ({language === 'el' ? 'πληρωμή στην είσοδο' : 'pay at door'})</span>
                 )}
-                {event.pay_at_door && event.event_type === 'reservation' && (
-                  <span className="font-normal text-[10px]"> ({language === 'el' ? 'πληρώνεται στο κατάστημα' : 'pay at venue'})</span>
-                )}
               </>
             ) : event.price_tier === 'free' ? (
               t.free
