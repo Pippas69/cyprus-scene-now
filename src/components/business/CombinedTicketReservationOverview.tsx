@@ -201,33 +201,11 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
 
       const reservationRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
       const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
-      // Count per-person check-ins from reservation_guests (not per-reservation)
-      const reservationIds = (reservations || []).map(r => r.id);
-      let reservationCheckedIn = 0;
-      if (reservationIds.length > 0) {
-        const { data: guestsData } = await supabase
-          .from("reservation_guests")
-          .select("id, checked_in_at")
-          .in("reservation_id", reservationIds);
-        reservationCheckedIn = (guestsData || []).filter(g => g.checked_in_at).length;
-      }
-
-      // For linked ticket+reservation flows (Kaliva), check-ins are sourced strictly from tickets
-      let isLinkedTicketReservationFlow = false;
-      if (businessId) {
-        const { data: businessSettings } = await supabase.
-        from("businesses").
-        select("ticket_reservation_linked, category").
-        eq("id", businessId).
-        maybeSingle();
-
-        isLinkedTicketReservationFlow = !!businessSettings?.ticket_reservation_linked || isClubOrEventBusiness(businessSettings?.category || []);
-      }
 
       // --- Combined ---
       const totalRevenue = ticketRevenue + reservationRevenue;
-      const totalCheckedIn = isLinkedTicketReservationFlow ?
-      ticketCheckedIn :
+      // All check-ins happen through tickets (each guest gets a ticket/QR), so count all used tickets
+      const totalCheckedIn = ticketCheckedIn;
       ticketCheckedIn + reservationCheckedIn;
 
       return {
