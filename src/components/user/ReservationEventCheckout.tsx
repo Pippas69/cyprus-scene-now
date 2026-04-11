@@ -424,7 +424,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     const tier = selectedSeating.tiers.find(
       t => partySize >= t.min_people && partySize <= t.max_people
     );
-    return tier?.prepaid_min_charge_cents || null;
+    return tier ? tier.prepaid_min_charge_cents : null;
   };
 
   const price = getPrice();
