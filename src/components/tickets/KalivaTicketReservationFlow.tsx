@@ -26,6 +26,9 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SeatingTypeOption {
   id: string;
@@ -223,6 +226,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   businessId,
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const t = translations[language];
   const { data: pricingDisplay } = useEventPricingProfile(businessId);
