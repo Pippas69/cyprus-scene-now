@@ -44,6 +44,8 @@ interface Event {
   accepts_reservations?: boolean;
   seating_options?: string[];
   requires_approval?: boolean;
+  event_type?: string | null;
+  pay_at_door?: boolean | null;
   businesses?: {
     name: string;
     logo_url: string | null;
@@ -410,7 +412,15 @@ const EventCard = ({ language, event, user, style, className }: EventCardProps) 
           {/* Price badge with gradient */}
           <span className="absolute bottom-3 right-3 text-white font-semibold text-xs z-10 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
             {event.price ? (
-              `€${event.price.toFixed(2)}`
+              <>
+                {`€${event.price.toFixed(2)}`}
+                {event.pay_at_door && event.event_type === 'ticket' && (
+                  <span className="font-normal text-[10px]"> ({language === 'el' ? 'πληρωμή στην είσοδο' : 'pay at door'})</span>
+                )}
+                {event.pay_at_door && event.event_type === 'reservation' && (
+                  <span className="font-normal text-[10px]"> ({language === 'el' ? 'πληρώνεται στο κατάστημα' : 'pay at venue'})</span>
+                )}
+              </>
             ) : event.price_tier === 'free' ? (
               t.free
             ) : (
