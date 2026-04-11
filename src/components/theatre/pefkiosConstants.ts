@@ -14,7 +14,7 @@ export const PEFKIOS_SECTIONS: Record<PefkiosSectionKey, {
   labelAnchor: 'start' | 'middle' | 'end';
 }> = {
   'Αριστερά': {
-    rotationDeg: 15,
+    rotationDeg: -15,
     fallbackColor: '#3b82f6',
     labelAnchor: 'end',
   },
@@ -24,7 +24,7 @@ export const PEFKIOS_SECTIONS: Record<PefkiosSectionKey, {
     labelAnchor: 'middle',
   },
   'Δεξιά': {
-    rotationDeg: -15,
+    rotationDeg: 15,
     fallbackColor: '#22c55e',
     labelAnchor: 'start',
   },
