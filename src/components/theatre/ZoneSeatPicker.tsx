@@ -330,12 +330,16 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
         let angle: number;
         if (rowSeats.length === 1) {
           angle = zoneMidDeg;
-        } else if (isOuter) {
-          // Outer: right-aligned (gaps on left)
-          angle = fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
+        } else if (zoneName === 'Τμήμα Α') {
+          // Section A only: outer right-aligned, inner edge-to-edge
+          if (isOuter) {
+            angle = fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
+          } else {
+            angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
+          }
         } else {
-          // Inner: evenly distributed edge-to-edge (no gaps)
-          angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
+          // All other sections: uniform left-aligned placement
+          angle = fullStartDeg + seatIdx * seatStepDeg;
         }
 
         const rad = toRad(angle);
