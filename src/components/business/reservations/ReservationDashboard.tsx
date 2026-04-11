@@ -167,6 +167,110 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   // Keep ref in sync with state
   useEffect(() => { selectedEventIdRef.current = selectedEventId; }, [selectedEventId]);
 
+  const buildEventCounts = useCallback(async (
+    eventsData: Array<{ id: string; event_type: string | null }>,
+    requestId: number,
+    requestRef: { current: number }
+  ) => {
+    const eventIds = eventsData.map((e) => e.id);
+    const counts: Record<string, number> = {};
+
+    if (eventIds.length === 0) {
+      return counts;
+    }
+
+    const { data: reservations, error: reservationsError } = await supabase
+      .from('reservations')
+      .select('event_id')
+      .in('event_id', eventIds)
+      .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+
+    if (reservationsError) throw reservationsError;
+    if (requestId !== requestRef.current) return null;
+
+    (reservations || []).forEach((reservation) => {
+      if (reservation.event_id) counts[reservation.event_id] = (counts[reservation.event_id] || 0) + 1;
+    });
+
+    const ticketOnlyEventIds = eventsData
+      .filter((event) => event.event_type === 'ticket')
+      .map((event) => event.id);
+
+    if (ticketOnlyEventIds.length > 0) {
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('event_id')
+        .in('event_id', ticketOnlyEventIds)
+        .in('status', ['valid', 'used']);
+
+      if (ticketsError) throw ticketsError;
+      if (requestId !== requestRef.current) return null;
+
+      (tickets || []).forEach((ticket) => {
+        if (ticket.event_id) counts[ticket.event_id] = (counts[ticket.event_id] || 0) + 1;
+      });
+    }
+
+    const nonTicketOnlyEventIds = eventsData
+      .filter((event) => event.event_type !== 'ticket')
+      .map((event) => event.id);
+
+    if (nonTicketOnlyEventIds.length > 0) {
+      const { data: completedOrders, error: completedOrdersError } = await supabase
+        .from('ticket_orders')
+        .select('id, event_id, linked_reservation_id')
+        .in('event_id', nonTicketOnlyEventIds)
+        .eq('status', 'completed');
+
+      if (completedOrdersError) throw completedOrdersError;
+      if (requestId !== requestRef.current) return null;
+
+      const linkedReservationIds = (completedOrders || [])
+        .map((order) => order.linked_reservation_id)
+        .filter((id): id is string => !!id);
+
+      let legacyWalkInReservationIds = new Set<string>();
+      if (linkedReservationIds.length > 0) {
+        const { data: linkedReservations, error: linkedReservationsError } = await supabase
+          .from('reservations')
+          .select('id, auto_created_from_tickets, seating_type_id')
+          .in('id', linkedReservationIds);
+
+        if (linkedReservationsError) throw linkedReservationsError;
+        if (requestId !== requestRef.current) return null;
+
+        legacyWalkInReservationIds = new Set(
+          (linkedReservations || [])
+            .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
+            .map((reservation) => reservation.id)
+        );
+      }
+
+      const walkInOrders = (completedOrders || []).filter(
+        (order) => !order.linked_reservation_id || legacyWalkInReservationIds.has(order.linked_reservation_id)
+      );
+
+      const walkInOrderIds = walkInOrders.map((order) => order.id);
+      if (walkInOrderIds.length > 0) {
+        const { data: walkInTickets, error: walkInTicketsError } = await supabase
+          .from('tickets')
+          .select('order_id')
+          .in('order_id', walkInOrderIds);
+
+        if (walkInTicketsError) throw walkInTicketsError;
+        if (requestId !== requestRef.current) return null;
+
+        const walkInOrderEventMap = new Map(walkInOrders.map((order) => [order.id, order.event_id]));
+        (walkInTickets || []).forEach((ticket) => {
+          const eventId = walkInOrderEventMap.get(ticket.order_id);
+          if (eventId) counts[eventId] = (counts[eventId] || 0) + 1;
+        });
+      }
+    }
+
+    return counts;
+  }, []);
+
   // Fetch events for ticket-linked businesses
   const fetchEvents = useCallback(async () => {
     if (!isTicketLinked) return;
@@ -192,62 +296,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         return;
       }
 
-      const eventIds = eventsData.map((e) => e.id);
-
-      // Match list logic: count visible reservations only (exclude walk-in auto-created)
-      const { data: reservations, error: reservationsError } = await supabase
-        .from('reservations')
-        .select('event_id')
-        .in('event_id', eventIds)
-        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
-
-      if (reservationsError) throw reservationsError;
-      if (requestId !== fetchEventsRequestRef.current) return;
-
-      const counts: Record<string, number> = {};
-      (reservations || []).forEach((r) => {
-        if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
-      });
-
-      // For ticket-only events, count ticket orders instead
-      const ticketOnlyEventIds = eventsData
-        .filter((e) => e.event_type === 'ticket')
-        .map((e) => e.id);
-
-      if (ticketOnlyEventIds.length > 0) {
-        const { data: tickets, error: ticketsError } = await supabase
-          .from('tickets')
-          .select('event_id')
-          .in('event_id', ticketOnlyEventIds)
-          .in('status', ['valid', 'used']);
-
-        if (ticketsError) throw ticketsError;
-        if (requestId !== fetchEventsRequestRef.current) return;
-
-        (tickets || []).forEach((t) => {
-          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
-        });
-      }
-
-      // For reservation/hybrid events, also count walk-in tickets
-      const nonTicketOnlyEventIds = eventsData
-        .filter((e) => e.event_type !== 'ticket')
-        .map((e) => e.id);
-
-      if (nonTicketOnlyEventIds.length > 0) {
-        const { data: walkInTickets } = await (supabase
-          .from('tickets')
-          .select('event_id')
-          .in('event_id', nonTicketOnlyEventIds)
-          .in('status', ['valid', 'used']) as any)
-          .eq('source', 'walk_in');
-
-        if (requestId !== fetchEventsRequestRef.current) return;
-
-        (walkInTickets || []).forEach((t) => {
-          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
-        });
-      }
+      const counts = await buildEventCounts(eventsData, requestId, fetchEventsRequestRef);
+      if (!counts) return;
 
       const options: EventOption[] = eventsData.map((e) => ({
         id: e.id,
@@ -264,7 +314,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           ? selectedEventIdRef.current
           : (options[0]?.id || null);
 
-      // Only update state if data actually changed to prevent visual refresh/flicker
       setEvents((prev) => {
         if (
           prev.length === options.length &&
@@ -291,7 +340,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       console.error('Error fetching reservation dashboard events:', error);
       setEventsHydrated(true);
     }
-  }, [isTicketLinked, businessId]);
+  }, [isTicketLinked, businessId, buildEventCounts]);
 
   // Fetch events for dining/bar businesses (non-ticket-linked)
   const [diningEvents, setDiningEvents] = useState<EventOption[]>([]);
@@ -320,59 +369,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         return;
       }
 
-      const eventIds = eventsData.map((e) => e.id);
-
-      // Count reservations per event
-      const { data: reservations } = await supabase
-        .from('reservations')
-        .select('event_id')
-        .in('event_id', eventIds);
-
-      if (requestId !== diningFetchRef.current) return;
-
-      const counts: Record<string, number> = {};
-      (reservations || []).forEach((r) => {
-        if (r.event_id) counts[r.event_id] = (counts[r.event_id] || 0) + 1;
-      });
-
-      // For ticket-only events, count tickets
-      const ticketOnlyIds = eventsData
-        .filter((e) => e.event_type === 'ticket')
-        .map((e) => e.id);
-
-      if (ticketOnlyIds.length > 0) {
-        const { data: tickets } = await supabase
-          .from('tickets')
-          .select('event_id')
-          .in('event_id', ticketOnlyIds)
-          .in('status', ['valid', 'used']);
-
-        if (requestId !== diningFetchRef.current) return;
-
-        (tickets || []).forEach((t) => {
-          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
-        });
-      }
-
-      // For reservation/hybrid events, also count walk-in tickets
-      const nonTicketOnlyIds = eventsData
-        .filter((e) => e.event_type !== 'ticket')
-        .map((e) => e.id);
-
-      if (nonTicketOnlyIds.length > 0) {
-        const { data: walkInTickets } = await (supabase
-          .from('tickets')
-          .select('event_id')
-          .in('event_id', nonTicketOnlyIds)
-          .in('status', ['valid', 'used']) as any)
-          .eq('source', 'walk_in');
-
-        if (requestId !== diningFetchRef.current) return;
-
-        (walkInTickets || []).forEach((t) => {
-          if (t.event_id) counts[t.event_id] = (counts[t.event_id] || 0) + 1;
-        });
-      }
+      const counts = await buildEventCounts(eventsData, requestId, diningFetchRef);
+      if (!counts) return;
 
       const options: EventOption[] = eventsData.map((e) => ({
         id: e.id,
@@ -406,7 +404,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       console.error('Error fetching dining events:', error);
       setDiningEventsHydrated(true);
     }
-  }, [isDiningBar, isTicketLinked, businessId]);
+  }, [isDiningBar, isTicketLinked, businessId, buildEventCounts]);
 
   useEffect(() => {
     fetchEvents();
