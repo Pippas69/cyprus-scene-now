@@ -1176,6 +1176,59 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     </div>
   );
 
+  // Success Screen for pay-at-door tickets
+  if (ticketSuccessData) {
+    const currentTicket = ticketSuccessData.tickets[ticketSuccessIndex];
+    const successContent = (
+      <div className="space-y-4">
+        <SuccessQRCard
+          type="ticket"
+          qrToken={currentTicket?.qr_code_token || ''}
+          title={eventTitle}
+          businessName=""
+          language={language}
+          reservationDate={eventDate}
+          guestName={currentTicket?.guest_name}
+          showSuccessMessage={ticketSuccessIndex === 0}
+          onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); onOpenChange(false); }}
+          viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
+          onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); onOpenChange(false); }}
+        />
+        {ticketSuccessData.tickets.length > 1 && (
+          <div className="flex items-center justify-center gap-3 pb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTicketSuccessIndex(Math.max(0, ticketSuccessIndex - 1))}
+              disabled={ticketSuccessIndex === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium text-foreground">
+              {currentTicket?.guest_name} ({ticketSuccessIndex + 1}/{ticketSuccessData.tickets.length})
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTicketSuccessIndex(Math.min(ticketSuccessData.tickets.length - 1, ticketSuccessIndex + 1))}
+              disabled={ticketSuccessIndex === ticketSuccessData.tickets.length - 1}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+          {successContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (isMobile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
