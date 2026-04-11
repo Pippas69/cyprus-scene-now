@@ -831,6 +831,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={undefined}
               selectedEventId={diningSelectedEventId}
               selectedEventType={diningSelectedEvent?.event_type || null}
+              payAtDoor={diningSelectedEvent?.pay_at_door || false}
               forceEventMode
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
@@ -844,6 +845,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onReservationCountChange={isTicketLinked ? handleReservationCountChange : undefined}
               selectedEventId={isTicketLinked ? selectedEventId : undefined}
               selectedEventType={isTicketLinked ? (selectedEvent?.event_type || null) : null}
+              payAtDoor={isTicketLinked ? (selectedEvent?.pay_at_door || false) : false}
               manualEntryOpen={manualEntryOpen}
               onManualEntryOpenChange={setManualEntryOpen}
               searchQuery={searchQuery}
