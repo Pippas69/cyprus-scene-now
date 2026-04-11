@@ -608,6 +608,43 @@ export const TicketPurchaseCard = ({
         </CardFooter>
       )}
     </Card>
+    {ticketSuccessData && (() => {
+      const currentTicket = ticketSuccessData.tickets[ticketSuccessIndex];
+      return (
+        <Dialog open={true} onOpenChange={() => { onSuccess?.(ticketSuccessData.orderId, true); setTicketSuccessData(null); }}>
+          <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+            <div className="space-y-4">
+              <SuccessQRCard
+                type="ticket"
+                qrToken={currentTicket?.qr_code_token || ''}
+                title={eventTitle}
+                businessName=""
+                language={language}
+                guestName={currentTicket?.guest_name}
+                showSuccessMessage={ticketSuccessIndex === 0}
+                onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); setTicketSuccessData(null); }}
+                viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
+                onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); setTicketSuccessData(null); }}
+              />
+              {ticketSuccessData.tickets.length > 1 && (
+                <div className="flex items-center justify-center gap-3 pb-2">
+                  <Button variant="outline" size="sm" onClick={() => setTicketSuccessIndex(Math.max(0, ticketSuccessIndex - 1))} disabled={ticketSuccessIndex === 0}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm font-medium text-foreground">
+                    {currentTicket?.guest_name} ({ticketSuccessIndex + 1}/{ticketSuccessData.tickets.length})
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => setTicketSuccessIndex(Math.min(ticketSuccessData.tickets.length - 1, ticketSuccessIndex + 1))} disabled={ticketSuccessIndex === ticketSuccessData.tickets.length - 1}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    })()}
+    </>
   );
 };
 
