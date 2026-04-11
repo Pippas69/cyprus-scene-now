@@ -95,7 +95,7 @@ export function useTicketAnalytics(businessId: string, dateRange?: DateRange) {
       const avgTicketPrice = ticketsSold > 0 ? totalRevenue / ticketsSold : 0;
 
       // Event breakdown - use actual ticket count
-      const eventBreakdown = events.map((event) => {
+      const eventBreakdown = ticketEvents.map((event) => {
         const eventOrders = orders?.filter((o) => o.event_id === event.id) || [];
         const eventTickets = tickets?.filter((t) => t.event_id === event.id) || [];
         const eventValidTickets = eventTickets.filter((t) => ["valid", "used"].includes(t.status));
