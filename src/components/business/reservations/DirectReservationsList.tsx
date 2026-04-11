@@ -2075,11 +2075,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             } else {
                               // Reservation-only: just min charge
                               return (
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="prepaid_min_charge_cents"
-                                  displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
-                                  rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                                <div className="flex flex-col items-start">
+                                  <EditableCell
+                                    reservationId={reservation.id}
+                                    field="prepaid_min_charge_cents"
+                                    displayValue={minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-'}
+                                    rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                                  {payAtDoor && minChargeCents > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({language === 'el' ? 'Στο κατάστημα' : 'At venue'})
+                                    </span>
+                                  )}
+                                </div>
                               );
                             }
                           })()}
