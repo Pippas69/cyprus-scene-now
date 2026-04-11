@@ -147,6 +147,8 @@ interface FormData {
   };
   // Terms & Conditions (optional)
   termsAndConditions: string;
+  // Pay at door (ticket-only & reservation-only)
+  payAtDoor: boolean;
 }
 
 // ============================================
