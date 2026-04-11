@@ -487,12 +487,35 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        // Show success screen with QR codes
+        // Fetch individual guest tickets for QR carousel
+        let guestTickets: { guest_name: string; qr_code_token: string }[] = [];
+        try {
+          const { data: tickets } = await supabase
+            .from('tickets')
+            .select('guest_name, qr_code_token, order_id, ticket_orders!inner(linked_reservation_id)')
+            .eq('ticket_orders.linked_reservation_id', data.reservation_id)
+            .order('created_at');
+          if (tickets && tickets.length > 0) {
+            guestTickets = tickets.map(t => ({
+              guest_name: t.guest_name || '',
+              qr_code_token: t.qr_code_token,
+            }));
+          }
+        } catch (e) {
+          console.error('Failed to fetch guest tickets', e);
+        }
+
+        // Fallback: if no individual tickets found, use main reservation QR
+        if (guestTickets.length === 0) {
+          guestTickets = [{ guest_name: reservationName.trim(), qr_code_token: data.qr_code_token }];
+        }
+
         setSuccessData({
-          qrToken: data.qr_code_token,
+          tickets: guestTickets,
           confirmationCode: data.confirmation_code,
           prepaidAmount: 0,
         });
+        setSuccessIndex(0);
         toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
         return;
       }
@@ -1095,20 +1118,47 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Success Screen
   if (successData) {
+    const currentTicket = successData.tickets[successIndex];
     const successContent = (
-      <SuccessQRCard
-        type="event_reservation"
-        qrToken={successData.qrToken}
-        title={eventTitle}
-        businessName=""
-        language={language}
-        reservationDate={eventDate}
-        prepaidAmountCents={successData.prepaidAmount}
-        showSuccessMessage={true}
-        onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
-        viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
-        onClose={() => { onSuccess?.(); onOpenChange(false); }}
-      />
+      <div className="space-y-4">
+        <SuccessQRCard
+          type="event_reservation"
+          qrToken={currentTicket?.qr_code_token || ''}
+          title={eventTitle}
+          businessName=""
+          language={language}
+          reservationDate={eventDate}
+          prepaidAmountCents={successData.prepaidAmount}
+          guestName={currentTicket?.guest_name}
+          showSuccessMessage={successIndex === 0}
+          onViewDashboard={() => { navigate('/dashboard-user?tab=reservations'); onOpenChange(false); }}
+          viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
+          onClose={() => { onSuccess?.(); onOpenChange(false); }}
+        />
+        {successData.tickets.length > 1 && (
+          <div className="flex items-center justify-center gap-3 pb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSuccessIndex(Math.max(0, successIndex - 1))}
+              disabled={successIndex === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium text-foreground">
+              {currentTicket?.guest_name} ({successIndex + 1}/{successData.tickets.length})
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSuccessIndex(Math.min(successData.tickets.length - 1, successIndex + 1))}
+              disabled={successIndex === successData.tickets.length - 1}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     );
 
     return (
