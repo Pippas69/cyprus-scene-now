@@ -266,10 +266,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   // Success state for showing premium QR card
   const [successData, setSuccessData] = useState<{
-    qrToken: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
     confirmationCode: string;
     prepaidAmount: number;
   } | null>(null);
+  const [successIndex, setSuccessIndex] = useState(0);
 
   // Selection state
   const [selectedSeating, setSelectedSeating] = useState<SeatingTypeOption | null>(null);
