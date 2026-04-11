@@ -398,8 +398,8 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
 
           {/* Interactive seat map */}
           {showSeatMap && (
-            <div className="border rounded-lg overflow-hidden bg-muted/10 min-h-[500px] lg:min-h-[600px]">
-              <SeatSelectionStep
+            isMobile ? (
+              <FullscreenSeatSelector
                 venueId={instance.venue_id!}
                 showInstanceId="__new__"
                 maxSeats={zones ? zones.reduce((sum, z) => sum + (z.actual_seat_count || 0), 0) : 0}
@@ -407,8 +407,22 @@ const ShowInstanceCard: React.FC<ShowInstanceCardProps> = ({
                 onSeatToggle={handleSeatToggle}
                 eventTitle={t.houseSeats}
                 eventDate=""
+                onClose={() => setShowSeatMap(false)}
+                onDone={() => setShowSeatMap(false)}
               />
-            </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden bg-muted/10 min-h-[500px] lg:min-h-[600px]">
+                <SeatSelectionStep
+                  venueId={instance.venue_id!}
+                  showInstanceId="__new__"
+                  maxSeats={zones ? zones.reduce((sum, z) => sum + (z.actual_seat_count || 0), 0) : 0}
+                  selectedSeats={instance.house_seats || []}
+                  onSeatToggle={handleSeatToggle}
+                  eventTitle={t.houseSeats}
+                  eventDate=""
+                />
+              </div>
+            )
           )}
         </div>
       )}
