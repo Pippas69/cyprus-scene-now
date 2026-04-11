@@ -80,7 +80,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
       setZones(zoneData);
 
       const counts: Record<string, number> = {};
-      for (const s of seatsRes.data || []) {
+      for (const s of allSeats) {
         counts[s.zone_id] = (counts[s.zone_id] || 0) + 1;
       }
       setSeatCounts(counts);
@@ -104,7 +104,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
               .map((s: any) => s.venue_seat_id)
           );
           const zoneSold: Record<string, number> = {};
-          for (const seat of seatsRes.data || []) {
+          for (const seat of allSeats) {
             if (soldSeatIds.has(seat.id)) {
               zoneSold[seat.zone_id] = (zoneSold[seat.zone_id] || 0) + 1;
             }

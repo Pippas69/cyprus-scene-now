@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+
 
 /**
  * Fetches all rows from a Supabase table, paginating in batches to bypass
