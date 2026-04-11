@@ -360,11 +360,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         .map((e) => e.id);
 
       if (nonTicketOnlyIds.length > 0) {
-        const { data: walkInTickets } = await supabase
+        const { data: walkInTickets } = await (supabase
           .from('tickets')
           .select('event_id')
           .in('event_id', nonTicketOnlyIds)
-          .in('status', ['valid', 'used'])
+          .in('status', ['valid', 'used']) as any)
           .eq('source', 'walk_in');
 
         if (requestId !== diningFetchRef.current) return;
