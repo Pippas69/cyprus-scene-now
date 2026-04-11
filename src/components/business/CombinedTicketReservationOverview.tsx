@@ -206,7 +206,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       const totalRevenue = ticketRevenue + reservationRevenue;
       // All check-ins happen through tickets (each guest gets a ticket/QR), so count all used tickets
       const totalCheckedIn = ticketCheckedIn;
-      ticketCheckedIn + reservationCheckedIn;
+      
 
       return {
         totalRevenue,
