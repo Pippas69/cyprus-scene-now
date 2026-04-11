@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
 
 interface TicketTier {
   id: string;
