@@ -237,6 +237,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [isFreshSignup, setIsFreshSignup] = useState(false);
   const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
+  const [isPayAtDoor, setIsPayAtDoor] = useState(false);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
@@ -254,6 +255,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch pay_at_door flag
+  useEffect(() => {
+    if (!eventId) return;
+    supabase
+      .from('events')
+      .select('pay_at_door')
+      .eq('id', eventId)
+      .single()
+      .then(({ data }) => {
+        if (data) setIsPayAtDoor(data.pay_at_door === true);
+      });
+  }, [eventId]);
 
   // Apply profileName as fallback for returning users
   useEffect(() => {
@@ -415,12 +429,12 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const subtotal = calculateTotal();
   // Stripe fees: only shown/added to customer total if buyer pays
   const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
-  const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
+  const stripeFeesCents = subtotal > 0 && buyerPaysStripe && !isPayAtDoor ? Math.ceil(subtotal * 0.029 + 25) : 0;
   // Platform fixed fee: only shown/added if buyer pays fixed fee (ticket type)
   const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
-  const platformFeeCents = buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeTicketCents || 0) * totalTickets : 0;
+  const platformFeeCents = buyerPaysPlatformFee && !isPayAtDoor ? (pricingDisplay?.fixedFeeTicketCents || 0) * totalTickets : 0;
   const total = subtotal + stripeFeesCents + platformFeeCents;
-  const isFreeOrder = subtotal === 0 && totalTickets > 0;
+  const isFreeOrder = (subtotal === 0 && totalTickets > 0) || isPayAtDoor;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
   const minAge = getMinAge(eventId);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)) && Number(a) >= minAge);
@@ -853,7 +867,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       </div>
 
       {/* Fee breakdown */}
-      {!isFreeOrder && (stripeFeesCents > 0 || platformFeeCents > 0) && (
+      {!isPayAtDoor && !isFreeOrder && (stripeFeesCents > 0 || platformFeeCents > 0) && (
         <>
           <Separator />
           <div className="space-y-1 text-sm">
@@ -877,12 +891,33 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
         </>
       )}
 
+      {/* Pay at door banner */}
+      {isPayAtDoor && subtotal > 0 && (
+        <>
+          <Separator />
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-center">
+            <p className="text-sm font-medium text-emerald-400">
+              💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {language === 'el'
+                ? `Θα πληρώσετε ${formatPrice(subtotal)} στην είσοδο του χώρου`
+                : `You will pay ${formatPrice(subtotal)} at the venue entrance`}
+            </p>
+          </div>
+        </>
+      )}
+
       <Separator />
 
       {/* Total */}
       <div className="flex justify-between font-bold text-base sm:text-lg">
         <span>{t.total}</span>
-        <span className="text-foreground">{isFreeOrder ? t.free : formatPrice(total)}</span>
+        <span className="text-foreground">
+          {isPayAtDoor
+            ? (language === 'el' ? 'Δωρεάν online' : 'Free online')
+            : isFreeOrder ? t.free : formatPrice(total)}
+        </span>
       </div>
 
       {/* QR info */}
@@ -1077,7 +1112,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             {submitting ? (
               <><Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />{t.processing}</>
             ) : isFreeOrder ? (
-              <><Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{t.getTickets}</>
+              <><Ticket className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{isPayAtDoor ? (language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Booking') : t.getTickets}</>
             ) : (
               <><CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />{t.pay} {formatPrice(total)}</>
             )}
