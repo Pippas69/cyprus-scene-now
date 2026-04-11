@@ -781,16 +781,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       // Get tier names
       const tierIds = [...new Set(completedTickets.map(t => t.tier_id).filter(Boolean))];
-      const tierNames: Record<string, string> = {};
+      const tierInfo: Record<string, { name: string; price_cents: number }> = {};
       if (tierIds.length > 0) {
         const { data: tiers } = await supabase
           .from('ticket_tiers')
-          .select('id, name')
+          .select('id, name, price_cents')
           .in('id', tierIds);
 
         if (isStaleRequest()) return;
 
-        (tiers || []).forEach(t => { tierNames[t.id] = t.name; });
+        (tiers || []).forEach(t => { tierInfo[t.id] = { name: t.name, price_cents: t.price_cents }; });
       }
 
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
