@@ -3,10 +3,13 @@ import { type SelectedSeat } from './SeatMapViewer';
 import { SeatMapViewer } from './SeatMapViewer';
 import { ZoneOverviewMap } from './ZoneOverviewMap';
 import { ZoneSeatPicker } from './ZoneSeatPicker';
+import { PefkiosOverviewMap } from './PefkiosOverviewMap';
+import { PefkiosSeatPicker } from './PefkiosSeatPicker';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/hooks/useLanguage';
 import { supabase } from '@/integrations/supabase/client';
 import { ZONE_ARCS } from './theatreConstants';
+import { isPefkiosVenue } from './pefkiosConstants';
 
 interface SeatSelectionStepProps {
   venueId: string;
@@ -38,6 +41,8 @@ interface ActiveZone {
   seatCount: number;
 }
 
+type VenueType = 'horseshoe' | 'pefkios' | 'flat' | null;
+
 export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   venueId,
   showInstanceId,
@@ -50,9 +55,9 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   const { language } = useLanguage();
   const t = translations[language];
   const [activeZone, setActiveZone] = useState<ActiveZone | null>(null);
-  const [useHorseshoe, setUseHorseshoe] = useState<boolean | null>(null);
+  const [venueType, setVenueType] = useState<VenueType>(null);
 
-  // Detect venue type: if zones match ZONE_ARCS keys, use horseshoe; otherwise use flat SeatMapViewer
+  // Detect venue type
   useEffect(() => {
     const detect = async () => {
       const { data: zones } = await supabase
@@ -61,16 +66,24 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
         .eq('venue_id', venueId);
 
       if (!zones || zones.length === 0) {
-        setUseHorseshoe(false);
+        setVenueType('flat');
         return;
       }
 
-      // Check if any zone name matches the horseshoe arc definitions
-      const hasArcZones = zones.some((z) => ZONE_ARCS[z.name] !== undefined);
-      setUseHorseshoe(hasArcZones);
+      const zoneNames = zones.map((z) => z.name);
+
+      // Check Pefkios first (Αριστερά/Κέντρο/Δεξιά)
+      if (isPefkiosVenue(zoneNames)) {
+        setVenueType('pefkios');
+        return;
+      }
+
+      // Check horseshoe (Τμήμα Α, Β, etc.)
+      const hasArcZones = zoneNames.some((name) => ZONE_ARCS[name] !== undefined);
+      setVenueType(hasArcZones ? 'horseshoe' : 'flat');
     };
 
-    setUseHorseshoe(null);
+    setVenueType(null);
     setActiveZone(null);
     detect();
   }, [venueId]);
