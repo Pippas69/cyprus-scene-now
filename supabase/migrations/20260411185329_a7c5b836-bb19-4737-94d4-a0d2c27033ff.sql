@@ -1,0 +1,2 @@
+ALTER TABLE public.seating_type_tiers DROP CONSTRAINT IF EXISTS seating_type_tiers_prepaid_min_charge_cents_check;
+ALTER TABLE public.seating_type_tiers ADD CONSTRAINT seating_type_tiers_prepaid_min_charge_cents_check CHECK (prepaid_min_charge_cents >= 0);
