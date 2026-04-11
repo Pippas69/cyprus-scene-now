@@ -260,6 +260,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [seatingOptions, setSeatingOptions] = useState<SeatingTypeOption[]>([]);
   const [paymentsReady, setPaymentsReady] = useState<boolean | null>(null);
   const [isDeferredPayment, setIsDeferredPayment] = useState(false);
+  const [isPayAtDoor, setIsPayAtDoor] = useState(false);
   const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
   const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
 
@@ -334,10 +335,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     if (!silent) setLoading(true);
 
     try {
-      // Check deferred payment status
+      // Check deferred payment status and pay_at_door
       const { data: eventData } = await supabase
         .from('events')
-        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours')
+        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours, pay_at_door')
         .eq('id', eventId)
         .single();
 
@@ -345,6 +346,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         setIsDeferredPayment(eventData.deferred_payment_enabled || false);
         setDeferredCancellationFeePercent(eventData.deferred_cancellation_fee_percent || 50);
         setDeferredConfirmationHours(eventData.deferred_confirmation_hours || 4);
+        setIsPayAtDoor((eventData as any).pay_at_door || false);
       }
 
       const { data: seatingTypes, error: seatingError } = await supabase
