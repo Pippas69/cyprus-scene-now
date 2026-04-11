@@ -315,6 +315,8 @@ export const TicketPurchaseCard = ({
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
+        queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-tickets-events"] });
 
         // For pay-at-door: show QR codes inline
         if (isPayAtDoor) {

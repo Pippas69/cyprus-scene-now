@@ -550,6 +550,8 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       if (data.isFree) {
         setSubmitting(false);
         toast.success(language === 'el' ? 'Εισιτήρια επιβεβαιώθηκαν!' : 'Tickets confirmed!');
+        queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["my-tickets-events"] });
 
         // For pay-at-door: show QR codes inline instead of redirecting
         if (isPayAtDoor) {
