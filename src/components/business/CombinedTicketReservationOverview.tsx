@@ -201,7 +201,16 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
 
       const reservationRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
       const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
-      const reservationCheckedIn = (reservations || []).filter((r) => r.checked_in_at).length;
+      // Count per-person check-ins from reservation_guests (not per-reservation)
+      const reservationIds = (reservations || []).map(r => r.id);
+      let reservationCheckedIn = 0;
+      if (reservationIds.length > 0) {
+        const { data: guestsData } = await supabase
+          .from("reservation_guests")
+          .select("id, checked_in_at")
+          .in("reservation_id", reservationIds);
+        reservationCheckedIn = (guestsData || []).filter(g => g.checked_in_at).length;
+      }
 
       // For linked ticket+reservation flows (Kaliva), check-ins are sourced strictly from tickets
       let isLinkedTicketReservationFlow = false;
