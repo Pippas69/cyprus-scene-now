@@ -659,7 +659,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       {minPrice && (
                         <p className="text-sm text-muted-foreground">
                           {isPayAtDoor
-                            ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στην είσοδο` : `${t.from} ${formatPrice(minPrice)} at door`)
+                            ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στο κατάστημα` : `${t.from} ${formatPrice(minPrice)} at venue`)
                             : `${t.from} ${formatPrice(minPrice)}`
                           }
                         </p>
@@ -818,7 +818,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 </span>
                 <span className="text-base font-semibold text-foreground ml-3 shrink-0">
                   {isPayAtDoor
-                    ? (language === 'el' ? `${formatPrice(price)} στην είσοδο` : `${formatPrice(price)} at door`)
+                    ? (language === 'el' ? `${formatPrice(price)} στο κατάστημα` : `${formatPrice(price)} at venue`)
                     : formatPrice(price)
                   }
                 </span>
@@ -895,12 +895,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             {isPayAtDoor && (
               <div className="rounded-lg border border-border bg-muted p-3 text-sm space-y-1">
                 <p className="font-medium text-foreground flex items-center gap-1.5">
-                  💰 {language === 'el' ? 'Πληρωμή στην Είσοδο' : 'Pay at Door'}
+                  💰 {language === 'el' ? 'Πληρωμή στο Κατάστημα' : 'Pay at Venue'}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   {language === 'el'
-                    ? `Δεν απαιτείται online πληρωμή. Θα πληρώσετε ${price ? formatPrice(price) : ''} κατά την άφιξή σας.`
-                    : `No online payment required. You will pay ${price ? formatPrice(price) : ''} upon arrival.`
+                    ? `Δεν απαιτείται online πληρωμή. Θα πληρώσετε ${price ? formatPrice(price) : ''} στο κατάστημα.`
+                    : `No online payment required. You will pay ${price ? formatPrice(price) : ''} at the venue.`
                   }
                 </p>
               </div>
