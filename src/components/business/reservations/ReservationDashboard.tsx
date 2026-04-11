@@ -562,32 +562,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 const totalCount = getTypeTabCount(type);
                 const isActive = activeTypeTab === type;
 
-                // Single event: simple button
-                if (evts.length === 1) {
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        setActiveTypeTab(type);
-                        setSelectedEventId(evts[0].id);
-                      }}
-                      className={`h-8 sm:h-9 px-2.5 sm:px-4 text-xs sm:text-sm font-medium rounded-full transition-all whitespace-nowrap ${
-                        isActive
-                          ? 'bg-card text-foreground shadow-sm border border-border/50'
-                          : 'text-foreground/50 hover:text-foreground/70'
-                      }`}
-                    >
-                      {getTypeTabLabel(type)}
-                      {totalCount > 0 && (
-                        <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full border border-foreground/40 text-foreground">
-                          {totalCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                }
-
-                // Multiple events: dropdown badge
+                // Always use dropdown
                 return (
                   <Select
                     key={type}
