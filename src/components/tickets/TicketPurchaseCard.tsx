@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare } from "lucide-react";
+import { Ticket, Minus, Plus, Loader2, CreditCard, PartyPopper, ExternalLink, Users, Info, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
 
 interface TicketTier {
   id: string;
@@ -99,6 +102,7 @@ export const TicketPurchaseCard = ({
   isLinkedReservation = false,
 }: TicketPurchaseCardProps) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const text = t[language];
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -112,6 +116,11 @@ export const TicketPurchaseCard = ({
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
   const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number }[]>([]);
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
+  const [ticketSuccessData, setTicketSuccessData] = useState<{
+    orderId: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
+  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Fetch all price tiers for linked reservation events (Kaliva)
   useEffect(() => {
@@ -304,6 +313,31 @@ export const TicketPurchaseCard = ({
           ? "Εισιτήρια επιβεβαιώθηκαν!" 
           : "Tickets confirmed!"
         );
+
+        // For pay-at-door: show QR codes inline
+        if (isPayAtDoor) {
+          try {
+            const { data: tickets } = await supabase
+              .from('tickets')
+              .select('guest_name, qr_code_token')
+              .eq('order_id', data.orderId)
+              .order('created_at');
+            if (tickets && tickets.length > 0) {
+              setTicketSuccessData({
+                orderId: data.orderId,
+                tickets: tickets.map(tk => ({
+                  guest_name: tk.guest_name || '',
+                  qr_code_token: tk.qr_code_token,
+                })),
+              });
+              setTicketSuccessIndex(0);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to fetch tickets for success screen', e);
+          }
+        }
+
         window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
         setCheckoutUrl(data.url);
@@ -329,6 +363,7 @@ export const TicketPurchaseCard = ({
   const totalTickets = getTotalTickets();
 
   return (
+    <>
     <Card>
       <CardHeader className="pb-2 md:pb-3 lg:pb-4">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
@@ -574,6 +609,43 @@ export const TicketPurchaseCard = ({
         </CardFooter>
       )}
     </Card>
+    {ticketSuccessData && (() => {
+      const currentTicket = ticketSuccessData.tickets[ticketSuccessIndex];
+      return (
+        <Dialog open={true} onOpenChange={() => { onSuccess?.(ticketSuccessData.orderId, true); setTicketSuccessData(null); }}>
+          <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+            <div className="space-y-4">
+              <SuccessQRCard
+                type="ticket"
+                qrToken={currentTicket?.qr_code_token || ''}
+                title={eventTitle}
+                businessName=""
+                language={language}
+                guestName={currentTicket?.guest_name}
+                showSuccessMessage={ticketSuccessIndex === 0}
+                onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); setTicketSuccessData(null); }}
+                viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
+                onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); setTicketSuccessData(null); }}
+              />
+              {ticketSuccessData.tickets.length > 1 && (
+                <div className="flex items-center justify-center gap-3 pb-2">
+                  <Button variant="outline" size="sm" onClick={() => setTicketSuccessIndex(Math.max(0, ticketSuccessIndex - 1))} disabled={ticketSuccessIndex === 0}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm font-medium text-foreground">
+                    {currentTicket?.guest_name} ({ticketSuccessIndex + 1}/{ticketSuccessData.tickets.length})
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => setTicketSuccessIndex(Math.min(ticketSuccessData.tickets.length - 1, ticketSuccessIndex + 1))} disabled={ticketSuccessIndex === ticketSuccessData.tickets.length - 1}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    })()}
+    </>
   );
 };
 

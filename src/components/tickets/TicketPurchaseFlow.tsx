@@ -27,6 +27,9 @@ import { useProfileName } from "@/hooks/useProfileName";
 
 import { getMinAge } from "@/lib/ageRestrictions";
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface TicketTier {
   id: string;
@@ -197,6 +200,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   businessId,
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const t = translations[language];
@@ -238,6 +242,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [isFreshSignup, setIsFreshSignup] = useState(false);
   const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
+  const [ticketSuccessData, setTicketSuccessData] = useState<{
+    orderId: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
+  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
@@ -539,6 +548,31 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       if (data.isFree) {
         setSubmitting(false);
         toast.success(language === 'el' ? 'Εισιτήρια επιβεβαιώθηκαν!' : 'Tickets confirmed!');
+
+        // For pay-at-door: show QR codes inline instead of redirecting
+        if (isPayAtDoor) {
+          try {
+            const { data: tickets } = await supabase
+              .from('tickets')
+              .select('guest_name, qr_code_token')
+              .eq('order_id', data.orderId)
+              .order('created_at');
+            if (tickets && tickets.length > 0) {
+              setTicketSuccessData({
+                orderId: data.orderId,
+                tickets: tickets.map(t2 => ({
+                  guest_name: t2.guest_name || '',
+                  qr_code_token: t2.qr_code_token,
+                })),
+              });
+              setTicketSuccessIndex(0);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to fetch tickets for success screen', e);
+          }
+        }
+
         onSuccess?.(data.orderId, true);
         window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
@@ -1141,6 +1175,59 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       {renderNavigation()}
     </div>
   );
+
+  // Success Screen for pay-at-door tickets
+  if (ticketSuccessData) {
+    const currentTicket = ticketSuccessData.tickets[ticketSuccessIndex];
+    const successContent = (
+      <div className="space-y-4">
+        <SuccessQRCard
+          type="ticket"
+          qrToken={currentTicket?.qr_code_token || ''}
+          title={eventTitle}
+          businessName=""
+          language={language}
+          reservationDate={eventDate}
+          guestName={currentTicket?.guest_name}
+          showSuccessMessage={ticketSuccessIndex === 0}
+          onViewDashboard={() => { navigate('/dashboard-user?tab=tickets'); onOpenChange(false); }}
+          viewDashboardLabel={language === 'el' ? 'Τα Εισιτήριά Μου' : 'My Tickets'}
+          onClose={() => { onSuccess?.(ticketSuccessData.orderId, true); onOpenChange(false); }}
+        />
+        {ticketSuccessData.tickets.length > 1 && (
+          <div className="flex items-center justify-center gap-3 pb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTicketSuccessIndex(Math.max(0, ticketSuccessIndex - 1))}
+              disabled={ticketSuccessIndex === 0}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium text-foreground">
+              {currentTicket?.guest_name} ({ticketSuccessIndex + 1}/{ticketSuccessData.tickets.length})
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTicketSuccessIndex(Math.min(ticketSuccessData.tickets.length - 1, ticketSuccessIndex + 1))}
+              disabled={ticketSuccessIndex === ticketSuccessData.tickets.length - 1}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[92vw] max-w-sm p-0 overflow-hidden border-0 bg-transparent [&>button]:hidden max-h-[90vh] overflow-y-auto overflow-x-hidden">
+          {successContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (isMobile) {
     return (
