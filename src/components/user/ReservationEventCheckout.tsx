@@ -17,7 +17,7 @@ import {
   GlassWater, TableIcon, Crown, Sofa, Users, 
   Clock, Phone, User, MessageSquare, CreditCard, Mail,
   CheckCircle, ArrowRight, ArrowLeft, Loader2, Euro,
-  AlertCircle, Calendar, Shield
+  AlertCircle, Calendar, Shield, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
