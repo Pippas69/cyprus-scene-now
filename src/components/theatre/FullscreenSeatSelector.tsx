@@ -45,7 +45,7 @@ export const FullscreenSeatSelector: React.FC<FullscreenSeatSelectorProps> = ({
   const { language } = useLanguage();
   const t = translations[language];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-background flex flex-col" style={{ height: '100dvh' }}>
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-3 py-2.5 border-b border-border/50 bg-background">
