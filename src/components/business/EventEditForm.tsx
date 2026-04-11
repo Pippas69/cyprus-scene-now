@@ -510,7 +510,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           noReservation: event.free_entry_declaration || false,
         },
         termsAndConditions: event.terms_and_conditions || '',
-        payAtDoor: (event as any).pay_at_door || false,
+        payAtDoor: event.pay_at_door || false,
       });
 
       setWalkInEnabled(hasWalkIn);
@@ -722,7 +722,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
           deferred_cancellation_fee_percent: deferredEnabled ? deferredCancellationFeePercent : null,
           pay_at_door: (formData.eventType === 'ticket' || formData.eventType === 'reservation') ? formData.payAtDoor : false,
-        } as any)
+        })
         .eq('id', event.id);
 
       if (updateError) throw updateError;
