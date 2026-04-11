@@ -202,6 +202,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { language } = useLanguage();
   const { data: pricingDisplay } = useEventPricingProfile(businessId);
   const t = translations[language];

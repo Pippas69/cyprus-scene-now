@@ -104,6 +104,7 @@ export const TicketPurchaseCard = ({
 }: TicketPurchaseCardProps) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const text = t[language];
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
