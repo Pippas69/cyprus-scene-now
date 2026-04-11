@@ -983,6 +983,26 @@ const EventCreationForm = ({
                   hideQuantity={false} />
                 </div>}
 
+                {/* PAY AT DOOR TOGGLE - only for ticket-only or reservation-only */}
+                {((isTicketSelected && !isReservationSelected) || (isReservationSelected && !isTicketSelected)) && !isFreeEntrySelected && (
+                  <div className="mt-4 flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-xs sm:text-sm flex items-center gap-1.5">
+                        💰 {language === 'el' ? 'Πληρωμή στην είσοδο' : 'Pay at door'}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {language === 'el'
+                          ? 'Ο πελάτης πληρώνει κατά την άφιξη. Δεν γίνεται online πληρωμή.'
+                          : 'Customer pays upon arrival. No online payment required.'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.payAtDoor}
+                      onCheckedChange={(checked) => updateField('payAtDoor', checked)}
+                    />
+                  </div>
+                )}
+
                 {/* RESERVATION CONFIG */}
                 {isReservationSelected && <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6 p-3 sm:p-4 bg-muted/30 rounded-lg">
                     
