@@ -183,6 +183,10 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
 
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
+      const walkInCheckedIn = walkInTickets.filter(t => t.status === 'used').length;
+
+      // Total check-ins = per-person reservation guest check-ins + walk-in ticket check-ins
+      const checkedIn = reservationGuestCheckedIn + walkInCheckedIn;
 
       // Per-tier sold count for walk-ins
       const tierSoldCount = new Map<string, number>();
