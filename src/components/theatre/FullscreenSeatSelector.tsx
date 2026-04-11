@@ -64,7 +64,7 @@ export const FullscreenSeatSelector: React.FC<FullscreenSeatSelectorProps> = ({
       </div>
 
       {/* Seat map - takes all available space */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 flex flex-col items-center justify-center px-2 py-2 overflow-hidden">
         <SeatSelectionStep
           venueId={venueId}
           showInstanceId={showInstanceId}
