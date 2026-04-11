@@ -338,8 +338,8 @@ export const ZoneSeatPicker: React.FC<ZoneSeatPickerProps> = ({
             angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
           }
         } else {
-          // All other sections: uniform left-aligned placement
-          angle = fullStartDeg + seatIdx * seatStepDeg;
+          // All other sections: edge-to-edge distribution (original behavior)
+          angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
         }
 
         const rad = toRad(angle);
