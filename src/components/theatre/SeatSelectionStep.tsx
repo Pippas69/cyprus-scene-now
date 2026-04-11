@@ -89,13 +89,15 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
   }, [venueId]);
 
   // Still loading venue type detection
-  if (useHorseshoe === null) {
+  if (venueType === null) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground">
         <div className="animate-pulse text-sm">...</div>
       </div>
     );
   }
+
+  const isZoneBased = venueType === 'horseshoe' || venueType === 'pefkios';
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -132,7 +134,7 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
 
       {/* Venue-appropriate seat map - flex-1 to fill remaining height */}
       <div className="flex-1 min-h-0">
-      {useHorseshoe ? (
+      {venueType === 'horseshoe' ? (
         // Horseshoe amphitheatre flow (zone overview → zone detail)
         activeZone ? (
           <ZoneSeatPicker
@@ -157,6 +159,30 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
             }}
           />
         )
+      ) : venueType === 'pefkios' ? (
+        // Pefkios 3-section flow (overview → section detail)
+        activeZone ? (
+          <PefkiosSeatPicker
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            zoneId={activeZone.id}
+            zoneName={activeZone.name}
+            zoneColor={activeZone.color}
+            maxSeats={maxSeats}
+            selectedSeats={selectedSeats}
+            onSeatToggle={onSeatToggle}
+            onBack={() => setActiveZone(null)}
+          />
+        ) : (
+          <PefkiosOverviewMap
+            venueId={venueId}
+            showInstanceId={showInstanceId}
+            selectedSeats={selectedSeats}
+            onZoneClick={(zone) => {
+              setActiveZone({ id: zone.id, name: zone.name, color: zone.color, seatCount: zone.seatCount });
+            }}
+          />
+        )
       ) : (
         // Flat coordinate-based seat map (original viewer)
         <SeatMapViewer
@@ -169,11 +195,24 @@ export const SeatSelectionStep: React.FC<SeatSelectionStepProps> = ({
       )}
       </div>
 
-      {/* All selected seats summary (shown in overview mode for horseshoe, always for flat) */}
-      {(useHorseshoe ? !activeZone : true) && selectedSeats.length > 0 && (
+      {/* All selected seats summary (shown in overview mode for zone-based, always for flat) */}
+      {(isZoneBased ? !activeZone : true) && selectedSeats.length > 0 && (
         <div className="flex flex-wrap gap-1 px-1 pt-1 border-t">
           {selectedSeats.map((s) => (
             <button
+              key={s.seatId}
+              onClick={() => onSeatToggle(s)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
+            >
+              {s.label}
+              <span className="text-[10px] opacity-70">✕</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
               key={s.seatId}
               onClick={() => onSeatToggle(s)}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
