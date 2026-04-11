@@ -544,6 +544,31 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       if (data.isFree) {
         setSubmitting(false);
         toast.success(language === 'el' ? 'Εισιτήρια επιβεβαιώθηκαν!' : 'Tickets confirmed!');
+
+        // For pay-at-door: show QR codes inline instead of redirecting
+        if (isPayAtDoor) {
+          try {
+            const { data: tickets } = await supabase
+              .from('tickets')
+              .select('guest_name, qr_code_token')
+              .eq('order_id', data.orderId)
+              .order('created_at');
+            if (tickets && tickets.length > 0) {
+              setTicketSuccessData({
+                orderId: data.orderId,
+                tickets: tickets.map(t2 => ({
+                  guest_name: t2.guest_name || '',
+                  qr_code_token: t2.qr_code_token,
+                })),
+              });
+              setTicketSuccessIndex(0);
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to fetch tickets for success screen', e);
+          }
+        }
+
         onSuccess?.(data.orderId, true);
         window.location.href = `/dashboard-user/tickets?success=true&order_id=${data.orderId}`;
       } else {
