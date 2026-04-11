@@ -1,41 +1,31 @@
 
 
-## Plan: Revert outer row alignment for all sections except A
+## Plan: Restore edge-to-edge fitting for sections Β–Θ
 
 ### Problem
-When fixing Section A's alignment (outer = right-aligned, inner = edge-to-edge), the logic was applied globally to ALL zones. Sections Β, Γ, Δ, Ε, Ζ, Η, Θ now have incorrectly right-aligned outer rows.
+Sections Β–Θ were set to left-aligned placement. Before the Section A fix, they used **edge-to-edge** distribution where every row fills the full arc width perfectly.
 
 ### Fix (single file: `src/components/theatre/ZoneSeatPicker.tsx`)
 
-**Change lines 328-339** in the `seatPositions` memo to only apply Section A logic when `zoneName === 'Τμήμα Α'`:
+Change the `else` branch at line 340-343 from left-aligned to edge-to-edge:
 
 ```tsx
-// Current (applies to ALL zones):
-if (isOuter) {
-  angle = fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
+// Current (left-aligned):
 } else {
-  angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
+  angle = fullStartDeg + seatIdx * seatStepDeg;
 }
 
-// Fixed (Section A only):
-if (zoneName === 'Τμήμα Α') {
-  if (isOuter) {
-    angle = fullEndDeg - (rowSeats.length - 1 - seatIdx) * seatStepDeg;
-  } else {
-    angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
-  }
+// Fixed (edge-to-edge, original behavior):
 } else {
-  // All other sections: uniform left-aligned placement (original behavior)
-  angle = fullStartDeg + seatIdx * seatStepDeg;
+  angle = fullStartDeg + (seatIdx / (rowSeats.length - 1)) * (fullEndDeg - fullStartDeg);
 }
 ```
 
 ### What stays the same
-- Section A: outer rows right-aligned, inner rows edge-to-edge (perfect, untouched)
-- Section Δ short rows (Κ, Λ): naturally left-aligned because they use the same `seatStepDeg` and stop early
-- All geometry constants, smoothing logic, short-row detection, viewBox calculation
+- **Τμήμα Α**: Completely untouched (outer right-aligned, inner edge-to-edge)
+- All geometry constants, smoothing, short-row detection, viewBox
 
 ### Result
-- **Τμήμα Α**: Unchanged (outer right-aligned, inner edge-to-edge)
-- **All other sections**: Restored to uniform left-aligned placement as it was before the Section A fix
+- **Τμήμα Α**: Unchanged
+- **Β, Γ, Δ, Ε, Ζ, Η, Θ**: Every row fills its arc perfectly from edge to edge, no gaps on either side
 
