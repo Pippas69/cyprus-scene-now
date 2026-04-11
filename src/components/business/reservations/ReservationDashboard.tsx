@@ -428,6 +428,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     const channel = supabase
       .channel('dashboard_reservation_counts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchEvents())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchEvents())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isTicketLinked, fetchEvents]);
@@ -438,6 +439,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     const channel = supabase
       .channel('dashboard_dining_reservation_counts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchDiningEvents())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDiningEvents())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isDiningBar, isTicketLinked, fetchDiningEvents]);
