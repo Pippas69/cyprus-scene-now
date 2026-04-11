@@ -238,6 +238,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [isFreshSignup, setIsFreshSignup] = useState(false);
   const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState(false);
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
+  const [ticketSuccessData, setTicketSuccessData] = useState<{
+    orderId: string;
+    tickets: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
+  const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
