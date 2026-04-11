@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { SelectedSeat } from './SeatMapViewer';
 import { CX, CY, INNER_R, OUTER_R, ZONE_ARCS, annularSectorPath, midPoint } from './theatreConstants';
 
@@ -58,25 +59,28 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [zonesRes, seatsRes] = await Promise.all([
+      const [zonesRes, allSeats] = await Promise.all([
         supabase
           .from('venue_zones')
           .select('id, name, description, color, sort_order')
           .eq('venue_id', venueId)
           .order('sort_order'),
-        supabase
-          .from('venue_seats')
-          .select('id, zone_id')
-          .eq('venue_id', venueId)
-          .eq('is_active', true)
-          .limit(5000),
+        fetchAllRows<{ id: string; zone_id: string }>(
+          (from, to) =>
+            supabase
+              .from('venue_seats')
+              .select('id, zone_id')
+              .eq('venue_id', venueId)
+              .eq('is_active', true)
+              .range(from, to)
+        ),
       ]);
 
       const zoneData = (zonesRes.data || []) as VenueZone[];
       setZones(zoneData);
 
       const counts: Record<string, number> = {};
-      for (const s of seatsRes.data || []) {
+      for (const s of allSeats) {
         counts[s.zone_id] = (counts[s.zone_id] || 0) + 1;
       }
       setSeatCounts(counts);
@@ -100,7 +104,7 @@ export const ZoneOverviewMap: React.FC<ZoneOverviewMapProps> = ({
               .map((s: any) => s.venue_seat_id)
           );
           const zoneSold: Record<string, number> = {};
-          for (const seat of seatsRes.data || []) {
+          for (const seat of allSeats) {
             if (soldSeatIds.has(seat.id)) {
               zoneSold[seat.zone_id] = (zoneSold[seat.zone_id] || 0) + 1;
             }
