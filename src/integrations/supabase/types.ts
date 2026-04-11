@@ -2612,6 +2612,7 @@ export type Database = {
           min_age_hint: number | null
           min_party_size: number | null
           parking_info: string | null
+          pay_at_door: boolean
           performers: string[] | null
           price: number | null
           price_tier: Database["public"]["Enums"]["price_tier"] | null
@@ -2656,6 +2657,7 @@ export type Database = {
           min_age_hint?: number | null
           min_party_size?: number | null
           parking_info?: string | null
+          pay_at_door?: boolean
           performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
@@ -2700,6 +2702,7 @@ export type Database = {
           min_age_hint?: number | null
           min_party_size?: number | null
           parking_info?: string | null
+          pay_at_door?: boolean
           performers?: string[] | null
           price?: number | null
           price_tier?: Database["public"]["Enums"]["price_tier"] | null
