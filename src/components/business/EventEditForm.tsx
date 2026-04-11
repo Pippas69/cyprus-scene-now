@@ -388,7 +388,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       let walkInTiers: TicketTier[] = [];
       let hasWalkIn = false;
 
-      if (eventType === 'ticket' || eventType === 'ticket_and_reservation') {
+      if (eventType === 'ticket' || eventType === 'ticket_and_reservation' || eventType === 'reservation') {
         const { data: tiers } = await supabase
           .from('ticket_tiers')
           .select('*')
@@ -409,6 +409,25 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             sort_order: tier.sort_order ?? index,
             dress_code: null,
           }));
+        }
+        // For reservation-only events, non-999999 tiers are walk-in tiers
+        if (tiers && eventType === 'reservation') {
+          for (const tier of tiers) {
+            if (tier.quantity_total !== 999999) {
+              hasWalkIn = true;
+              walkInTiers.push({
+                id: tier.id,
+                name: tier.name,
+                description: tier.description || '',
+                price_cents: tier.price_cents,
+                currency: tier.currency || 'EUR',
+                quantity_total: tier.quantity_total,
+                max_per_order: tier.max_per_order,
+                sort_order: tier.sort_order ?? 0,
+                dress_code: null,
+              });
+            }
+          }
         }
         // For hybrid events, tiers with quantity_total=999999 are reservation-linked
         // Others are walk-in tiers
@@ -644,7 +663,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       }
     }
 
-    if (isHybrid && walkInEnabled) {
+    if ((isHybrid || formData.eventType === 'reservation') && walkInEnabled) {
       const walkInErrors = validateTicketTiers(walkInTicketTiers, language);
       if (walkInErrors.length > 0) {
         setWalkInTicketValidationErrors(walkInErrors);
@@ -728,7 +747,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       if (updateError) throw updateError;
 
       // ── Handle ticket tiers ──
-      if (formData.eventType === 'ticket' || isHybrid) {
+      if (formData.eventType === 'ticket' || isHybrid || (formData.eventType === 'reservation' && walkInEnabled)) {
         // Get existing tiers
         const { data: existingTiers } = await supabase
           .from('ticket_tiers')
@@ -1449,8 +1468,8 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             })()}
           </SectionCard>
 
-          {/* Walk-in toggle for hybrid events - placed above Terms */}
-          {formData.eventType === 'ticket_and_reservation' && (
+          {/* Walk-in toggle for hybrid and reservation-only events - placed above Terms */}
+          {(formData.eventType === 'ticket_and_reservation' || formData.eventType === 'reservation') && (
             <>
               <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                 <div className="space-y-0.5">
