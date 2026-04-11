@@ -363,6 +363,7 @@ export const TicketPurchaseCard = ({
   const totalTickets = getTotalTickets();
 
   return (
+    <>
     <Card>
       <CardHeader className="pb-2 md:pb-3 lg:pb-4">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
