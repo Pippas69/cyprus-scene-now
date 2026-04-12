@@ -141,15 +141,21 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
 
   useEffect(() => {
     const checkLinked = async () => {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('ticket_reservation_linked, category')
-        .eq('id', businessId)
-        .maybeSingle();
+      // Try to use cached data first (prefetched by DashboardBusiness)
+      let data = queryClient.getQueryData<{ ticket_reservation_linked: boolean | null; category: string[] }>(['business-category', businessId]);
+      
+      if (!data) {
+        const result = await supabase
+          .from('businesses')
+          .select('ticket_reservation_linked, category')
+          .eq('id', businessId)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error checking reservation mode:', error);
-        return;
+        if (result.error) {
+          console.error('Error checking reservation mode:', result.error);
+          return;
+        }
+        data = result.data;
       }
 
       const categories = data?.category || [];
@@ -164,7 +170,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       setIsDiningBar(isDining);
     };
     checkLinked();
-  }, [businessId]);
+  }, [businessId, queryClient]);
 
   // Keep ref in sync with state
   useEffect(() => { selectedEventIdRef.current = selectedEventId; }, [selectedEventId]);
