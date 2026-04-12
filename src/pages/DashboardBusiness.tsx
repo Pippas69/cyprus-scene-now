@@ -236,6 +236,38 @@ const DashboardBusiness = () => {
       },
       staleTime: 5 * 60 * 1000,
     });
+
+    // Prefetch business category data (used by ReservationDashboard)
+    queryClient.prefetchQuery({
+      queryKey: ['business-category', businessId],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('businesses')
+          .select('ticket_reservation_linked, category')
+          .eq('id', businessId)
+          .maybeSingle();
+        if (error) throw error;
+        return data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+
+    // Prefetch reservation dashboard events
+    queryClient.prefetchQuery({
+      queryKey: ['reservation-dashboard-events', businessId],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, title, start_at, end_at, event_type, pay_at_door')
+          .eq('business_id', businessId)
+          .not('event_type', 'in', '("free","free_entry")')
+          .is('archived_at', null)
+          .order('start_at', { ascending: true });
+        if (error) throw error;
+        return data || [];
+      },
+      staleTime: 3 * 60 * 1000,
+    });
   }, [businessId, queryClient]);
 
   // Show onboarding tour for new businesses
