@@ -70,7 +70,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const translations = {
@@ -158,6 +160,8 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['business-events', businessId],
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data: eventsData, error: eventsError } = await supabase.
       from('events').
