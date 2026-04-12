@@ -11,14 +11,9 @@ import { useSubscriptionPlan, hasAccessToSection, getSectionRequiredPlan } from 
 import { subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Lock } from 'lucide-react';
-import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
-import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
-import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
-import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldHideOffers } from '@/lib/shouldHideOffers';
-import { useEffect } from 'react';
 
 const translations = {
   el: {
@@ -40,7 +35,6 @@ interface AnalyticsDashboardProps {
 export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  const queryClient = useQueryClient();
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -80,20 +74,8 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   { from: dateRange.from, to: dateRange.to } :
   undefined;
 
-  // Prefetch data
-  useOverviewMetrics(businessId, convertedDateRange);
-  usePerformanceMetrics(businessId, convertedDateRange);
-  useAudienceMetrics(businessId, convertedDateRange);
-  useBoostValueMetrics(businessId, convertedDateRange);
-
-  // Prefetch CRM data in the background so switching to CRM tab is instant
-  useEffect(() => {
-    if (!businessId) return;
-    queryClient.prefetchQuery({
-      queryKey: ['crm-guests', businessId],
-      staleTime: 1000 * 60 * 5,
-    });
-  }, [businessId, queryClient]);
+  // No prefetching here — child components call their own hooks.
+  // This prevents flooding the database with 30+ concurrent queries on mount.
 
   const hasOverviewAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('overview'));
   const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
