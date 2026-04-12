@@ -15,9 +15,10 @@ import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldHideOffers } from '@/lib/shouldHideOffers';
+import { useEffect } from 'react';
 
 const translations = {
   el: {

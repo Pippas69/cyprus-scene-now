@@ -69,6 +69,8 @@ export function useCrmGuests(businessId: string | null) {
   const guestsQuery = useQuery({
     queryKey: ["crm-guests", businessId],
     enabled: !!businessId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     placeholderData: (prev) => prev,
     queryFn: async () => {
       if (!businessId) return [];
