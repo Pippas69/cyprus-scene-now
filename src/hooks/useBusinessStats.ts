@@ -83,6 +83,8 @@ export const useBusinessStats = (businessId: string | null) => {
       };
     },
     enabled: !!businessId,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 };

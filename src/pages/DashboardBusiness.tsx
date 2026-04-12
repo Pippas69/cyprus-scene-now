@@ -2,6 +2,7 @@ import { useNavigate, Routes, Route, useLocation, Navigate } from "react-router-
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import EventCreationForm from "@/components/business/EventCreationForm";
@@ -168,7 +169,74 @@ const DashboardBusiness = () => {
   // Onboarding tour
   const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
+  const queryClient = useQueryClient();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Prefetch key dashboard data in the background so tabs load instantly
+  useEffect(() => {
+    if (!businessId) return;
+
+    // Prefetch events list
+    queryClient.prefetchQuery({
+      queryKey: ['business-events', businessId],
+      queryFn: async () => {
+        const { data: eventsData, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('business_id', businessId)
+          .order('start_at', { ascending: true });
+        if (error) throw error;
+        if (!eventsData || eventsData.length === 0) return [];
+        
+        const eventIds = eventsData.map((e) => e.id);
+        const [countsResult, tiersResult, soldResult] = await Promise.all([
+          supabase.rpc('get_event_rsvp_counts_bulk', { p_event_ids: eventIds }),
+          supabase.from('ticket_tiers').select('id, event_id, quantity_total, active').in('event_id', eventIds).eq('active', true),
+          supabase.rpc('get_event_walk_in_ticket_sold_counts', { p_event_ids: eventIds }),
+        ]);
+        
+        const countsMap = new Map();
+        countsResult.data?.forEach((c: any) => {
+          countsMap.set(c.event_id, { interested_count: Number(c.interested_count) || 0, going_count: Number(c.going_count) || 0 });
+        });
+
+        const tiersByEvent = new Map<string, number>();
+        tiersResult.data?.forEach((t: any) => {
+          tiersByEvent.set(t.event_id, (tiersByEvent.get(t.event_id) || 0) + (t.quantity_total || 0));
+        });
+
+        const soldByEvent = new Map<string, number>();
+        soldResult.data?.forEach((s: any) => {
+          soldByEvent.set(s.event_id, Number(s.sold_count) || 0);
+        });
+
+        return eventsData.map((event) => ({
+          ...event,
+          interested_count: countsMap.get(event.id)?.interested_count || 0,
+          going_count: countsMap.get(event.id)?.going_count || 0,
+          is_sold_out: (tiersByEvent.get(event.id) || 0) > 0 && (soldByEvent.get(event.id) || 0) >= (tiersByEvent.get(event.id) || 0),
+        }));
+      },
+      staleTime: 3 * 60 * 1000,
+    });
+
+    // Prefetch business stats
+    queryClient.prefetchQuery({
+      queryKey: ['business-stats', businessId],
+      staleTime: 3 * 60 * 1000,
+    });
+
+    // Prefetch subscription status
+    queryClient.prefetchQuery({
+      queryKey: ['subscription-status'],
+      queryFn: async () => {
+        const { data, error } = await supabase.functions.invoke("check-subscription");
+        if (error) throw error;
+        return data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [businessId, queryClient]);
 
   // Show onboarding tour for new businesses
   useEffect(() => {
