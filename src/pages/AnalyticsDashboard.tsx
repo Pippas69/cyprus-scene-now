@@ -40,6 +40,7 @@ interface AnalyticsDashboardProps {
 export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardProps) {
   const { language } = useLanguage();
   const t = translations[language];
+  const queryClient = useQueryClient();
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -84,6 +85,15 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   usePerformanceMetrics(businessId, convertedDateRange);
   useAudienceMetrics(businessId, convertedDateRange);
   useBoostValueMetrics(businessId, convertedDateRange);
+
+  // Prefetch CRM data in the background so switching to CRM tab is instant
+  useEffect(() => {
+    if (!businessId) return;
+    queryClient.prefetchQuery({
+      queryKey: ['crm-guests', businessId],
+      staleTime: 1000 * 60 * 5,
+    });
+  }, [businessId, queryClient]);
 
   const hasOverviewAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('overview'));
   const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));
