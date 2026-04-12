@@ -179,57 +179,65 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       return counts;
     }
 
-    const { data: reservations, error: reservationsError } = await supabase
-      .from('reservations')
-      .select('event_id')
-      .in('event_id', eventIds)
-      .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
-
-    if (reservationsError) throw reservationsError;
-    if (requestId !== requestRef.current) return null;
-
-    (reservations || []).forEach((reservation) => {
-      if (reservation.event_id) counts[reservation.event_id] = (counts[reservation.event_id] || 0) + 1;
-    });
-
     const ticketOnlyEventIds = eventsData
       .filter((event) => event.event_type === 'ticket')
       .map((event) => event.id);
-
-    if (ticketOnlyEventIds.length > 0) {
-      const { data: tickets, error: ticketsError } = await supabase
-        .from('tickets')
-        .select('event_id')
-        .in('event_id', ticketOnlyEventIds)
-        .in('status', ['valid', 'used']);
-
-      if (ticketsError) throw ticketsError;
-      if (requestId !== requestRef.current) return null;
-
-      (tickets || []).forEach((ticket) => {
-        if (ticket.event_id) counts[ticket.event_id] = (counts[ticket.event_id] || 0) + 1;
-      });
-    }
 
     const nonTicketOnlyEventIds = eventsData
       .filter((event) => event.event_type !== 'ticket')
       .map((event) => event.id);
 
-    if (nonTicketOnlyEventIds.length > 0) {
-      const { data: completedOrders, error: completedOrdersError } = await supabase
-        .from('ticket_orders')
-        .select('id, event_id, linked_reservation_id')
-        .in('event_id', nonTicketOnlyEventIds)
-        .eq('status', 'completed');
+    // Fire all independent queries in parallel
+    const [reservationsResult, ticketsResult, completedOrdersResult] = await Promise.all([
+      // 1. Reservations for all events
+      supabase
+        .from('reservations')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null'),
+      // 2. Tickets for ticket-only events
+      ticketOnlyEventIds.length > 0
+        ? supabase
+            .from('tickets')
+            .select('event_id')
+            .in('event_id', ticketOnlyEventIds)
+            .in('status', ['valid', 'used'])
+        : Promise.resolve({ data: [], error: null }),
+      // 3. Completed orders for non-ticket events
+      nonTicketOnlyEventIds.length > 0
+        ? supabase
+            .from('ticket_orders')
+            .select('id, event_id, linked_reservation_id')
+            .in('event_id', nonTicketOnlyEventIds)
+            .eq('status', 'completed')
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-      if (completedOrdersError) throw completedOrdersError;
-      if (requestId !== requestRef.current) return null;
+    if (reservationsResult.error) throw reservationsResult.error;
+    if (ticketsResult.error) throw ticketsResult.error;
+    if (completedOrdersResult.error) throw completedOrdersResult.error;
+    if (requestId !== requestRef.current) return null;
 
-      const linkedReservationIds = (completedOrders || [])
-        .map((order) => order.linked_reservation_id)
-        .filter((id): id is string => !!id);
+    // Process reservations
+    (reservationsResult.data || []).forEach((reservation) => {
+      if (reservation.event_id) counts[reservation.event_id] = (counts[reservation.event_id] || 0) + 1;
+    });
 
+    // Process ticket-only tickets
+    (ticketsResult.data || []).forEach((ticket: any) => {
+      if (ticket.event_id) counts[ticket.event_id] = (counts[ticket.event_id] || 0) + 1;
+    });
+
+    // Process walk-in tickets from completed orders (needs sequential follow-up)
+    const completedOrders = completedOrdersResult.data || [];
+    if (completedOrders.length > 0) {
+      const linkedReservationIds = completedOrders
+        .map((order: any) => order.linked_reservation_id)
+        .filter((id: any): id is string => !!id);
+
+      // Fetch linked reservations and all walk-in order tickets in parallel
       let legacyWalkInReservationIds = new Set<string>();
+
       if (linkedReservationIds.length > 0) {
         const { data: linkedReservations, error: linkedReservationsError } = await supabase
           .from('reservations')
@@ -246,11 +254,11 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         );
       }
 
-      const walkInOrders = (completedOrders || []).filter(
-        (order) => !order.linked_reservation_id || legacyWalkInReservationIds.has(order.linked_reservation_id)
+      const walkInOrders = completedOrders.filter(
+        (order: any) => !order.linked_reservation_id || legacyWalkInReservationIds.has(order.linked_reservation_id)
       );
 
-      const walkInOrderIds = walkInOrders.map((order) => order.id);
+      const walkInOrderIds = walkInOrders.map((order: any) => order.id);
       if (walkInOrderIds.length > 0) {
         const { data: walkInTickets, error: walkInTicketsError } = await supabase
           .from('tickets')
@@ -260,7 +268,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         if (walkInTicketsError) throw walkInTicketsError;
         if (requestId !== requestRef.current) return null;
 
-        const walkInOrderEventMap = new Map(walkInOrders.map((order) => [order.id, order.event_id]));
+        const walkInOrderEventMap = new Map(walkInOrders.map((order: any) => [order.id, order.event_id]));
         (walkInTickets || []).forEach((ticket) => {
           const eventId = walkInOrderEventMap.get(ticket.order_id);
           if (eventId) counts[eventId] = (counts[eventId] || 0) + 1;
