@@ -2,6 +2,7 @@ import { useNavigate, Routes, Route, useLocation, Navigate } from "react-router-
 import { BusinessAccountSettings } from "@/components/user/BusinessAccountSettings";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import EventCreationForm from "@/components/business/EventCreationForm";
