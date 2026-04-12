@@ -15,9 +15,10 @@ import { useOverviewMetrics } from '@/hooks/useOverviewMetrics';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import { useAudienceMetrics } from '@/hooks/useAudienceMetrics';
 import { useBoostValueMetrics } from '@/hooks/useBoostValueMetrics';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldHideOffers } from '@/lib/shouldHideOffers';
+import { useEffect } from 'react';
 
 const translations = {
   el: {
@@ -39,6 +40,7 @@ interface AnalyticsDashboardProps {
 export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardProps) {
   const { language } = useLanguage();
   const t = translations[language];
+  const queryClient = useQueryClient();
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -83,6 +85,15 @@ export default function AnalyticsDashboard({ businessId }: AnalyticsDashboardPro
   usePerformanceMetrics(businessId, convertedDateRange);
   useAudienceMetrics(businessId, convertedDateRange);
   useBoostValueMetrics(businessId, convertedDateRange);
+
+  // Prefetch CRM data in the background so switching to CRM tab is instant
+  useEffect(() => {
+    if (!businessId) return;
+    queryClient.prefetchQuery({
+      queryKey: ['crm-guests', businessId],
+      staleTime: 1000 * 60 * 5,
+    });
+  }, [businessId, queryClient]);
 
   const hasOverviewAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('overview'));
   const hasPerformanceAccess = hasAccessToSection(currentPlan, getSectionRequiredPlan('performance'));

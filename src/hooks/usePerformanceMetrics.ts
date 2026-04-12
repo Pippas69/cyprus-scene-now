@@ -36,74 +36,166 @@ export const usePerformanceMetrics = (
       const startDate = dateRange?.from?.toISOString() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const endDate = dateRange?.to?.toISOString() || new Date().toISOString();
 
-      // Profile views from engagement_events
-      const { count: profileViewsCount } = await supabase
-        .from("engagement_events")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId)
-        .eq("event_type", "profile_view")
-        .gte("created_at", startDate)
-        .lte("created_at", endDate);
+      // ===== PHASE 1: Get events + discounts + all independent counts in parallel =====
+      const [
+        businessEventsRes,
+        businessOffersRes,
+        profileViewsRes,
+        profileInteractionsRes,
+        followerCountRes,
+        studentDiscountVisitsRes,
+      ] = await Promise.all([
+        supabase.from("events").select("id").eq("business_id", businessId),
+        supabase.from("discounts").select("id").eq("business_id", businessId),
+        // Profile views
+        supabase
+          .from("engagement_events")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("event_type", "profile_view")
+          .gte("created_at", startDate)
+          .lte("created_at", endDate),
+        // Profile interactions
+        supabase
+          .from("engagement_events")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .in("event_type", ["follow", "favorite", "profile_click", "profile_interaction"])
+          .gte("created_at", startDate)
+          .lte("created_at", endDate),
+        // Follower count
+        supabase
+          .from("business_followers")
+          .select("*", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .is("unfollowed_at", null)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate),
+        // Student discount visits
+        supabase
+          .from("student_discount_redemptions")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .gte("created_at", startDate)
+          .lte("created_at", endDate),
+      ]);
 
-      // Profile interactions (follows, profile clicks ONLY - NO shares, not event clicks)
-      const { count: profileInteractionsCount } = await supabase
-        .from("engagement_events")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId)
-        .in("event_type", ["follow", "favorite", "profile_click", "profile_interaction"])
-        .gte("created_at", startDate)
-        .lte("created_at", endDate);
-      
-      // Also count business followers for interactions
-      const { count: followerCount } = await supabase
-        .from("business_followers")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", businessId)
-        .is("unfollowed_at", null)
-        .gte("created_at", startDate)
-        .lte("created_at", endDate);
+      const totalProfileInteractions = (profileInteractionsRes.count || 0) + (followerCountRes.count || 0);
+      const offerIds = (businessOffersRes.data || []).map(o => o.id);
+      const eventIds = (businessEventsRes.data || []).map(e => e.id);
 
-      const totalProfileInteractions = (profileInteractionsCount || 0) + (followerCount || 0);
+      // ===== PHASE 2: All queries that depend on offerIds/eventIds, fired in parallel =====
+      const [
+        checkedInReservationsRes,
+        offerViewsRes,
+        offerInteractionsRes,
+        offerVisitsRes,
+        eventViewsRes,
+        rsvpCountRes,
+        ticketCheckinsRes,
+        eventResCheckinsRes,
+      ] = await Promise.all([
+        // Profile visits: checked-in direct reservations
+        (async () => {
+          const pageSize = 1000;
+          const out: { id: string; special_requests: string | null }[] = [];
+          for (let from = 0; ; from += pageSize) {
+            const { data } = await supabase
+              .from("reservations")
+              .select("id,special_requests")
+              .eq("business_id", businessId)
+              .is("event_id", null)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
+              .range(from, from + pageSize - 1);
+            const page = (data || []) as { id: string; special_requests: string | null }[];
+            out.push(...page);
+            if (page.length < pageSize) break;
+          }
+          return out;
+        })(),
+        // Offer views
+        offerIds.length > 0
+          ? supabase
+              .from("discount_views")
+              .select("id", { count: 'exact', head: true })
+              .in("discount_id", offerIds)
+              .gte("viewed_at", startDate)
+              .lte("viewed_at", endDate)
+          : Promise.resolve({ count: 0 }),
+        // Offer interactions
+        offerIds.length > 0
+          ? supabase
+              .from("engagement_events")
+              .select("id", { count: "exact", head: true })
+              .eq("business_id", businessId)
+              .eq("event_type", "offer_redeem_click")
+              .in("entity_id", offerIds)
+              .gte("created_at", startDate)
+              .lte("created_at", endDate)
+          : Promise.resolve({ count: 0 }),
+        // Offer visits (verified redemptions)
+        offerIds.length > 0
+          ? supabase
+              .from("offer_purchases")
+              .select("id", { count: "exact", head: true })
+              .in("discount_id", offerIds)
+              .not("redeemed_at", "is", null)
+              .gte("redeemed_at", startDate)
+              .lte("redeemed_at", endDate)
+          : Promise.resolve({ count: 0 }),
+        // Event views
+        eventIds.length > 0
+          ? supabase
+              .from("event_views")
+              .select("id", { count: 'exact', head: true })
+              .in("event_id", eventIds)
+              .gte("viewed_at", startDate)
+              .lte("viewed_at", endDate)
+          : Promise.resolve({ count: 0 }),
+        // RSVPs
+        eventIds.length > 0
+          ? supabase
+              .from("rsvps")
+              .select("id", { count: 'exact', head: true })
+              .in("event_id", eventIds)
+              .in("status", ["interested", "going"])
+              .gte("created_at", startDate)
+              .lte("created_at", endDate)
+          : Promise.resolve({ count: 0 }),
+        // Ticket check-ins (with user_id, event_id for dedup)
+        eventIds.length > 0
+          ? supabase
+              .from("tickets")
+              .select("id, user_id, event_id")
+              .in("event_id", eventIds)
+              .not("checked_in_at", "is", null)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
+          : Promise.resolve({ data: [] }),
+        // Event reservation check-ins
+        eventIds.length > 0
+          ? supabase
+              .from("reservations")
+              .select("id, user_id, event_id")
+              .in("event_id", eventIds)
+              .not("checked_in_at", "is", null)
+              .neq("auto_created_from_tickets", true)
+              .gte("checked_in_at", startDate)
+              .lte("checked_in_at", endDate)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-      // Profile visits = verified reservation check-ins for DIRECT profile reservations only
-      // IMPORTANT: Offer-linked reservations also have event_id = NULL, so we must exclude them.
-      // + student discount redemptions (QR check-ins from student discounts)
-
-      // 1) Fetch reservation IDs that checked in (event_id IS NULL) in range
-      const checkedInReservations = await (async () => {
-        const pageSize = 1000;
-        const out: { id: string; special_requests: string | null }[] = [];
-        for (let from = 0; ; from += pageSize) {
-          const { data } = await supabase
-            .from("reservations")
-            .select("id,special_requests")
-            .eq("business_id", businessId)
-            .is("event_id", null)
-            .not("checked_in_at", "is", null)
-            .gte("checked_in_at", startDate)
-            .lte("checked_in_at", endDate)
-            .range(from, from + pageSize - 1);
-
-          const page = (data || []) as { id: string; special_requests: string | null }[];
-          out.push(...page);
-          if (page.length < pageSize) break;
-        }
-        return out;
-      })();
-
-      // Offer-linked reservations can have event_id = NULL.
-      // Normally we exclude them by joining to offer_purchases.reservation_id.
-      // However, some offer-reservations are only marked in reservations.special_requests
-      // (e.g. "Offer claim: ..."), so we exclude those too.
+      // ===== PROCESS PROFILE VISITS =====
+      const checkedInReservations = checkedInReservationsRes as { id: string; special_requests: string | null }[];
       const offerMarkedReservationIds = new Set(
         checkedInReservations
           .filter((r) => (r.special_requests || "").toLowerCase().includes("offer claim:"))
           .map((r) => r.id)
       );
-
       const reservationIds = checkedInReservations.map((r) => r.id);
 
-      // 2) Find which of those reservations were created via an offer purchase
       let offerLinkedReservationIds = new Set<string>();
       if (reservationIds.length > 0) {
         const { data: offerLinks } = await supabase
@@ -111,7 +203,6 @@ export const usePerformanceMetrics = (
           .select("reservation_id")
           .in("reservation_id", reservationIds)
           .not("reservation_id", "is", null);
-
         offerLinkedReservationIds = new Set(
           (offerLinks || [])
             .map((o) => (o as { reservation_id: string | null }).reservation_id)
@@ -123,112 +214,15 @@ export const usePerformanceMetrics = (
         (id) => !offerLinkedReservationIds.has(id) && !offerMarkedReservationIds.has(id)
       ).length;
 
-      // 3) Student discount redemptions (QR check-ins from student discounts)
-      const { count: studentDiscountVisitsCount } = await supabase
-        .from("student_discount_redemptions")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId)
-        .gte("created_at", startDate)
-        .lte("created_at", endDate);
+      const totalProfileVisits = directProfileReservationVisits + (studentDiscountVisitsRes.count || 0);
 
-      const totalProfileVisits = directProfileReservationVisits + (studentDiscountVisitsCount || 0);
+      // ===== PROCESS EVENT VISITS (dedup ticket + reservation check-ins) =====
+      const ticketCheckins = ((ticketCheckinsRes as any).data || []) as { id: string; user_id: string | null; event_id: string }[];
+      let eventVisitsCount = ticketCheckins.length;
 
-      // Offer views from discount_views
-      const { data: businessOffers } = await supabase
-        .from("discounts")
-        .select("id")
-        .eq("business_id", businessId);
+      const eventResCheckins = ((eventResCheckinsRes as any).data || []) as { id: string; user_id: string | null; event_id: string | null }[];
 
-      const offerIds = businessOffers?.map(o => o.id) || [];
-      
-      let offerViewsCount = 0;
-      if (offerIds.length > 0) {
-        const { count } = await supabase
-          .from("discount_views")
-          .select("id", { count: 'exact', head: true })
-          .in("discount_id", offerIds)
-          .gte("viewed_at", startDate)
-          .lte("viewed_at", endDate);
-        offerViewsCount = count || 0;
-      }
-
-      // Offer interactions = clicks on "Εξαργύρωσε" (intent)
-      let offerInteractionsCount = 0;
-      if (offerIds.length > 0) {
-        const { count } = await supabase
-          .from("engagement_events")
-          .select("id", { count: "exact", head: true })
-          .eq("business_id", businessId)
-          .eq("event_type", "offer_redeem_click")
-          .in("entity_id", offerIds)
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        offerInteractionsCount = count || 0;
-      }
-
-      // Offer visits = verified offer redemptions
-      // IMPORTANT: We count offer_purchases.redeemed_at (1 row per redemption).
-      let offerVisitsCount = 0;
-      if (offerIds.length > 0) {
-        const { count } = await supabase
-          .from("offer_purchases")
-          .select("id", { count: "exact", head: true })
-          .in("discount_id", offerIds)
-          .not("redeemed_at", "is", null)
-          .gte("redeemed_at", startDate)
-          .lte("redeemed_at", endDate);
-        offerVisitsCount = count || 0;
-      }
-
-      // Event views
-      const { data: businessEvents } = await supabase
-        .from("events")
-        .select("id")
-        .eq("business_id", businessId);
-
-      const eventIds = businessEvents?.map(e => e.id) || [];
-
-      let eventViewsCount = 0;
-      if (eventIds.length > 0) {
-        const { count } = await supabase
-          .from("event_views")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", eventIds)
-          .gte("viewed_at", startDate)
-          .lte("viewed_at", endDate);
-        eventViewsCount = count || 0;
-      }
-
-      // Event interactions (RSVPs) - direct from rsvps table for accuracy
-      let totalRsvps = 0;
-      if (eventIds.length > 0) {
-        const { count: rsvpCount } = await supabase
-          .from("rsvps")
-          .select("id", { count: 'exact', head: true })
-          .in("event_id", eventIds)
-          .in("status", ["interested", "going"])
-          .gte("created_at", startDate)
-          .lte("created_at", endDate);
-        totalRsvps = rsvpCount || 0;
-      }
-
-      // Event visits = (1) ticket check-ins + (2) verified reservation check-ins for event-linked reservations
-      // DEDUP: same user + same event = 1 visit (ticket+reservation counted once)
-      let eventVisitsCount = 0;
-      if (eventIds.length > 0) {
-        // Fetch ticket check-ins with user_id and event_id for dedup
-        const { data: ticketCheckinData } = await supabase
-          .from("tickets")
-          .select("id, user_id, event_id")
-          .in("event_id", eventIds)
-          .not("checked_in_at", "is", null)
-          .gte("checked_in_at", startDate)
-          .lte("checked_in_at", endDate);
-
-        const ticketCheckins = (ticketCheckinData || []) as { id: string; user_id: string | null; event_id: string }[];
-        eventVisitsCount = ticketCheckins.length;
-
-        // Build set of (user_id, event_id) pairs from ticket check-ins
+      if (eventResCheckins.length > 0) {
         const ticketCheckinPairs = new Set<string>();
         ticketCheckins.forEach((t) => {
           if (t.user_id && t.event_id) {
@@ -236,43 +230,23 @@ export const usePerformanceMetrics = (
           }
         });
 
-        // Fetch event reservation check-ins
-        const { data: eventResCheckinData } = await supabase
-          .from("reservations")
-          .select("id, user_id, event_id")
-          .in("event_id", eventIds)
-          .not("checked_in_at", "is", null)
-          .neq("auto_created_from_tickets", true)
-          .gte("checked_in_at", startDate)
-          .lte("checked_in_at", endDate);
-
-        const eventResCheckins = (eventResCheckinData || []) as { id: string; user_id: string | null; event_id: string | null }[];
-
-        // Exclude linked reservations created from ticket flows (already represented by ticket check-ins)
-        let linkedReservationIds = new Set<string>();
         const eventResIds = eventResCheckins.map((r) => r.id);
-        if (eventResIds.length > 0) {
-          const { data: linkedRows } = await supabase
-            .from("ticket_orders")
-            .select("linked_reservation_id")
-            .in("linked_reservation_id", eventResIds)
-            .not("linked_reservation_id", "is", null);
+        
+        const { data: linkedRows } = await supabase
+          .from("ticket_orders")
+          .select("linked_reservation_id")
+          .in("linked_reservation_id", eventResIds)
+          .not("linked_reservation_id", "is", null);
 
-          linkedReservationIds = new Set(
-            (linkedRows || [])
-              .map((row) => (row as { linked_reservation_id: string | null }).linked_reservation_id)
-              .filter(Boolean) as string[]
-          );
-        }
+        const linkedReservationIds = new Set(
+          (linkedRows || [])
+            .map((row) => (row as { linked_reservation_id: string | null }).linked_reservation_id)
+            .filter(Boolean) as string[]
+        );
 
-        // Only count event reservations where user doesn't already have a checked-in ticket
         const dedupedEventResVisits = eventResCheckins.filter((r) => {
-          if (linkedReservationIds.has(r.id)) {
-            return false;
-          }
-          if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) {
-            return false; // Already counted via ticket
-          }
+          if (linkedReservationIds.has(r.id)) return false;
+          if (r.user_id && r.event_id && ticketCheckinPairs.has(`${r.user_id}:${r.event_id}`)) return false;
           return true;
         });
 
@@ -281,18 +255,18 @@ export const usePerformanceMetrics = (
 
       return {
         profile: {
-          views: profileViewsCount || 0,
+          views: profileViewsRes.count || 0,
           interactions: totalProfileInteractions,
           visits: totalProfileVisits,
         },
         offers: {
-          views: offerViewsCount,
-          interactions: offerInteractionsCount,
-          visits: offerVisitsCount,
+          views: (offerViewsRes as any).count || 0,
+          interactions: (offerInteractionsRes as any).count || 0,
+          visits: (offerVisitsRes as any).count || 0,
         },
         events: {
-          views: eventViewsCount,
-          interactions: totalRsvps,
+          views: (eventViewsRes as any).count || 0,
+          interactions: (rsvpCountRes as any).count || 0,
           visits: eventVisitsCount,
         },
       };
