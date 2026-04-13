@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { X, Loader2, MapPin, Heart, GraduationCap, Mail, CheckCircle, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -57,7 +58,6 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     town: "",
     gender: "",
     phone: "",
-    phoneCountry: "CY" as "CY" | "GR",
   });
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [isStudent, setIsStudent] = useState(false);
@@ -205,9 +205,8 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
     try {
       const redirectUrl = `${window.location.origin}/ekdiloseis`;
       
-      // Format full phone number
-      const phonePrefix = formData.phoneCountry === 'CY' ? '+357' : '+30';
-      const fullPhone = phonePrefix + formData.phone.replace(/\D/g, '');
+      // Phone is already in E.164 format from PhoneInput
+      const fullPhone = formData.phone;
 
       // Sign up with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -440,31 +439,14 @@ const SignupModal = ({ onClose, language }: SignupModalProps) => {
                 <Phone className="h-4 w-4 text-primary" />
                 {t.phone}
               </Label>
-              <div className="flex gap-2">
-                <Select
-                  value={formData.phoneCountry}
-                  onValueChange={(value) => setFormData({ ...formData, phoneCountry: value as "CY" | "GR" })}
-                  disabled={loading}
-                >
-                  <SelectTrigger className="rounded-xl w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CY">🇨🇾 +357</SelectItem>
-                    <SelectItem value="GR">🇬🇷 +30</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="tel"
-                  inputMode="numeric"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder={formData.phoneCountry === 'CY' ? '99123456' : '6912345678'}
-                  disabled={loading}
-                  className="rounded-xl flex-1"
-                  required
-                />
-              </div>
+              <PhoneInput
+                value={formData.phone}
+                onChange={(val) => setFormData({ ...formData, phone: val })}
+                language={language}
+                disabled={loading}
+                selectClassName="rounded-xl"
+                inputClassName="rounded-xl flex-1"
+              />
             </div>
 
             {/* Gender */}
