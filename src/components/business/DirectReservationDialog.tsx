@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -784,14 +785,14 @@ export const DirectReservationDialog = ({
               <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
               {t.phoneNumber}
             </Label>
-            <Input
+            <PhoneInput
               id="phone_number"
-              type="tel"
               value={formData.phone_number}
-              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-              placeholder={t.phonePlaceholder}
-              required
-              className="text-xs sm:text-sm h-9 sm:h-10" />
+              onChange={(val) => setFormData({ ...formData, phone_number: val })}
+              language={language}
+              selectClassName="text-xs sm:text-sm h-9 sm:h-10"
+              inputClassName="text-xs sm:text-sm h-9 sm:h-10"
+            />
           </div>
 
           {/* Seating Preference (Optional) */}

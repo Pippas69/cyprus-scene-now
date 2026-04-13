@@ -6,6 +6,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, CheckCircle2 } from "lucide-react";
@@ -182,13 +183,12 @@ const BookDemo = () => {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="phone" className="text-foreground/80 text-sm">{c.phone}</Label>
-                  <Input
+                  <PhoneInput
                     id="phone"
-                    type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className={`text-base ${errors.phone ? "border-red-500" : ""}`}
-                    autoComplete="tel"
+                    onChange={(val) => setForm({ ...form, phone: val })}
+                    language={language}
+                    inputClassName={`text-base ${errors.phone ? "border-red-500" : ""}`}
                   />
                   {errors.phone && <p className="text-red-400 text-xs">{errors.phone}</p>}
                 </div>

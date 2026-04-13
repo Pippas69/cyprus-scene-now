@@ -5,6 +5,7 @@ import { el as elLocale, enUS } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -810,13 +811,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
             <Separator />
             <div className="space-y-1.5">
               <Label htmlFor="ticket-checkout-phone" className="text-xs sm:text-sm">{t.phone}</Label>
-              <Input
+              <PhoneInput
                 id="ticket-checkout-phone"
-                type="tel"
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="+357 99 123456"
-                className="h-8 sm:h-9 text-xs sm:text-sm"
+                onChange={setCustomerPhone}
+                language={language}
+                selectClassName="h-8 sm:h-9 text-xs sm:text-sm"
+                inputClassName="h-8 sm:h-9 text-xs sm:text-sm"
               />
             </div>
             <div className="space-y-1.5">

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -587,7 +588,7 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs sm:text-sm">{t.groupPhone}</Label>
-                    <Input value={groupPhone} onChange={(e) => setGroupPhone(e.target.value)} type="tel" className="h-8 sm:h-9 text-xs sm:text-sm" />
+                    <PhoneInput value={groupPhone} onChange={setGroupPhone} selectClassName="h-8 sm:h-9 text-xs sm:text-sm" inputClassName="h-8 sm:h-9 text-xs sm:text-sm" />
                   </div>
                 </div>
               )}

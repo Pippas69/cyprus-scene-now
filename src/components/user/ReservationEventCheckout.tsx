@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { CollapsibleSpecialRequests } from "@/components/ui/CollapsibleSpecialRequests";
 import { Card, CardContent } from "@/components/ui/card";
@@ -728,13 +729,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   <Phone className="h-3.5 w-3.5" />
                   {t.phone}
                 </Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="+357 99 123456"
-                  className="h-9 text-sm"
+                  onChange={setPhoneNumber}
+                  language={language}
+                  selectClassName="h-9 text-sm"
+                  inputClassName="h-9 text-sm"
                 />
               </div>
             )}

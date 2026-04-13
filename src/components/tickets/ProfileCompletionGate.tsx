@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, User, Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCityOptions } from "@/lib/cityTranslations";
 import { InlineAuthGate } from "./InlineAuthGate";
+import { parseE164Phone } from "@/lib/countries";
 
 const translations = {
   el: {
@@ -59,8 +61,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState<'CY' | 'GR'>('CY');
+  const [phone, setPhone] = useState(''); // E.164 format
   const [city, setCity] = useState('');
   const [greekCity, setGreekCity] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,28 +71,16 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
   const cityOptions = getCityOptions(language);
 
-  const parseStoredPhone = (rawPhone: string): { country: 'CY' | 'GR'; local: string } | null => {
-    const digits = rawPhone.replace(/\D/g, '');
-    if (!digits) return null;
-
-    if (digits.startsWith('357') && digits.length === 11) {
-      return { country: 'CY', local: digits.slice(3) };
-    }
-
-    if (digits.startsWith('30') && digits.length === 12) {
-      return { country: 'GR', local: digits.slice(2) };
-    }
-
-    if (digits.length === 8) {
-      return { country: 'CY', local: digits };
-    }
-
-    if (digits.length === 10) {
-      return { country: 'GR', local: digits };
-    }
-
-    return null;
+  // Determine if stored phone is CY/GR for city logic
+  const getCountryFromPhone = (phoneVal: string): 'CY' | 'GR' | 'OTHER' => {
+    const parsed = parseE164Phone(phoneVal);
+    if (!parsed) return 'CY';
+    if (parsed.countryCode === 'CY') return 'CY';
+    if (parsed.countryCode === 'GR') return 'GR';
+    return 'OTHER';
   };
+
+  const phoneCountry = getCountryFromPhone(phone);
 
   // Check if profile is already complete; if not authenticated, show auth gate first
   useEffect(() => {
@@ -119,20 +108,17 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       if (profile) {
         const p = profile as any;
         const profileCity = p.city || p.town || '';
-        const parsedPhone = parseStoredPhone(p.phone || '');
-        const hasValidPhone = !!parsedPhone && (parsedPhone.country === 'CY' ? parsedPhone.local.length === 8 : parsedPhone.local.length === 10);
+        const storedPhone = p.phone || '';
+        const phoneDigitCount = storedPhone.replace(/\D/g, '').length;
+        const hasValidPhone = phoneDigitCount >= 8;
 
         if (p.first_name && p.last_name && hasValidPhone && profileCity) {
-          const normalizedPhone = parsedPhone.country === 'CY'
-            ? `+357${parsedPhone.local}`
-            : `+30${parsedPhone.local}`;
-
           const authEmail = (await supabase.auth.getUser()).data.user?.email || '';
 
           onComplete({
             firstName: p.first_name,
             lastName: p.last_name,
-            phone: normalizedPhone,
+            phone: storedPhone,
             city: profileCity,
             email: authEmail,
           });
@@ -140,16 +126,16 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           if (p.first_name) setFirstName(p.first_name);
           if (p.last_name) setLastName(p.last_name);
 
-          if (parsedPhone) {
-            setCountry(parsedPhone.country);
-            setPhone(parsedPhone.local);
+          if (storedPhone) {
+            setPhone(storedPhone); // Already E.164
           }
 
           if (profileCity) {
-            if ((parsedPhone?.country ?? 'CY') === 'CY') {
-              setCity(profileCity);
-            } else {
+            const parsedCountry = getCountryFromPhone(storedPhone);
+            if (parsedCountry === 'GR') {
               setGreekCity(profileCity);
+            } else {
+              setCity(profileCity);
             }
           }
         }
@@ -159,12 +145,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     checkProfile();
   }, [authRetryTick]);
 
-  const getPhoneDigits = (val: string) => val.replace(/\D/g, '');
-  const expectedPhoneLength = country === 'CY' ? 8 : 10;
-  const phoneDigits = getPhoneDigits(phone);
-  const isPhoneLengthValid = phoneDigits.length === expectedPhoneLength;
-
-  const validatePhone = (): boolean => isPhoneLengthValid;
+  const phoneDigitCount = phone.replace(/\D/g, '').length;
+  const isPhoneValid = phoneDigitCount >= 8;
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
@@ -172,13 +154,13 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       return;
     }
 
-    const selectedCity = country === 'CY' ? city : greekCity;
-    if (!selectedCity.trim()) {
+    const selectedCity = phoneCountry === 'GR' ? greekCity : city;
+    if (phoneCountry !== 'OTHER' && !selectedCity.trim()) {
       toast.error(t.fillAll);
       return;
     }
 
-    if (!validatePhone()) {
+    if (!isPhoneValid) {
       toast.error(t.invalidPhone);
       return;
     }
@@ -187,14 +169,14 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     try {
       let user = (await supabase.auth.getUser()).data.user;
       if (!user) {
-        // Fallback: session may exist but getUser failed (timing after OTP)
         const { data: { session } } = await supabase.auth.getSession();
         user = session?.user ?? null;
       }
       if (!user) throw new Error('Not authenticated');
 
-      const localPhone = getPhoneDigits(phone);
-      const fullPhone = country === 'CY' ? `+357${localPhone}` : `+30${localPhone}`;
+      // Phone is already E.164 from PhoneInput
+      const fullPhone = phone;
+      const finalCity = phoneCountry === 'GR' ? greekCity.trim() : (phoneCountry === 'OTHER' ? greekCity.trim() || city : city);
 
       const { error } = await supabase
         .from('profiles')
@@ -202,8 +184,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: fullPhone,
-          city: selectedCity.trim(),
-          town: selectedCity.trim(),
+          city: finalCity.trim(),
+          town: finalCity.trim(),
         })
         .eq('id', user.id);
 
@@ -280,38 +262,19 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           </div>
         </div>
 
-        {/* Country + Phone */}
+        {/* Phone */}
         <div className="space-y-1">
           <Label className="text-sm flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" /> {t.phone}
           </Label>
-          <div className="flex gap-2">
-            <Select value={country} onValueChange={(val) => { setCountry(val as 'CY' | 'GR'); setPhone(''); }}>
-              <SelectTrigger className="h-9 w-[100px] text-sm shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CY">🇨🇾 +357</SelectItem>
-                <SelectItem value="GR">🇬🇷 +30</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="tel"
-              inputMode="numeric"
-              maxLength={expectedPhoneLength}
-              value={phone}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^\d]/g, '');
-                setPhone(val.slice(0, expectedPhoneLength));
-              }}
-              placeholder={country === 'CY' ? '99123456' : '6912345678'}
-              className="h-9 text-sm flex-1"
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground">
-            {country === 'CY' ? t.cyprusPhoneHint : t.greecePhoneHint}
-          </p>
-          {!!phoneDigits && !isPhoneLengthValid && (
+          <PhoneInput
+            value={phone}
+            onChange={setPhone}
+            language={language}
+            selectClassName="h-9 text-sm"
+            inputClassName="h-9 text-sm"
+          />
+          {phone && !isPhoneValid && (
             <p className="text-[10px] text-destructive">{t.invalidPhone}</p>
           )}
         </div>
@@ -321,7 +284,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           <Label className="text-sm flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5" /> {t.city}
           </Label>
-          {country === 'CY' ? (
+          {phoneCountry === 'CY' ? (
             <Select value={city} onValueChange={setCity}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder={t.city} />
@@ -334,6 +297,13 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
                 ))}
               </SelectContent>
             </Select>
+          ) : phoneCountry === 'GR' ? (
+            <Input
+              value={greekCity}
+              onChange={(e) => setGreekCity(e.target.value)}
+              placeholder={t.cityPlaceholder}
+              className="h-9 text-sm"
+            />
           ) : (
             <Input
               value={greekCity}
@@ -351,8 +321,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
             !firstName.trim() ||
             !lastName.trim() ||
             !phone.trim() ||
-            !isPhoneLengthValid ||
-            (country === 'CY' ? !city : !greekCity.trim())
+            !isPhoneValid ||
+            (phoneCountry === 'CY' ? !city : !greekCity.trim())
           }
           className="w-full"
         >
