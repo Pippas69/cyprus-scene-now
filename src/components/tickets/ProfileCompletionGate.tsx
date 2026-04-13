@@ -262,38 +262,19 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           </div>
         </div>
 
-        {/* Country + Phone */}
+        {/* Phone */}
         <div className="space-y-1">
           <Label className="text-sm flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" /> {t.phone}
           </Label>
-          <div className="flex gap-2">
-            <Select value={country} onValueChange={(val) => { setCountry(val as 'CY' | 'GR'); setPhone(''); }}>
-              <SelectTrigger className="h-9 w-[100px] text-sm shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CY">🇨🇾 +357</SelectItem>
-                <SelectItem value="GR">🇬🇷 +30</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              type="tel"
-              inputMode="numeric"
-              maxLength={expectedPhoneLength}
-              value={phone}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^\d]/g, '');
-                setPhone(val.slice(0, expectedPhoneLength));
-              }}
-              placeholder={country === 'CY' ? '99123456' : '6912345678'}
-              className="h-9 text-sm flex-1"
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground">
-            {country === 'CY' ? t.cyprusPhoneHint : t.greecePhoneHint}
-          </p>
-          {!!phoneDigits && !isPhoneLengthValid && (
+          <PhoneInput
+            value={phone}
+            onChange={setPhone}
+            language={language}
+            selectClassName="h-9 text-sm"
+            inputClassName="h-9 text-sm"
+          />
+          {phone && !isPhoneValid && (
             <p className="text-[10px] text-destructive">{t.invalidPhone}</p>
           )}
         </div>
@@ -303,7 +284,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           <Label className="text-sm flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5" /> {t.city}
           </Label>
-          {country === 'CY' ? (
+          {phoneCountry === 'CY' ? (
             <Select value={city} onValueChange={setCity}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder={t.city} />
@@ -316,6 +297,13 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
                 ))}
               </SelectContent>
             </Select>
+          ) : phoneCountry === 'GR' ? (
+            <Input
+              value={greekCity}
+              onChange={(e) => setGreekCity(e.target.value)}
+              placeholder={t.cityPlaceholder}
+              className="h-9 text-sm"
+            />
           ) : (
             <Input
               value={greekCity}
@@ -333,8 +321,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
             !firstName.trim() ||
             !lastName.trim() ||
             !phone.trim() ||
-            !isPhoneLengthValid ||
-            (country === 'CY' ? !city : !greekCity.trim())
+            !isPhoneValid ||
+            (phoneCountry === 'CY' ? !city : !greekCity.trim())
           }
           className="w-full"
         >
