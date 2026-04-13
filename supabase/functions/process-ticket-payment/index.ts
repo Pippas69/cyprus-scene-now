@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
         if (usesLinkedReservations && seatingTypeId) {
           logStep("Creating linked reservation for ticket+reservation purchase", { seatingTypeId });
 
-          const totalTicketCreditCents = order.total_cents || 0;
+          const totalTicketCreditCents = order.subtotal_cents || 0;
           const partySize = ticketsToCreate.length;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
