@@ -49,6 +49,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{id: string;title: string;} | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{id: string;title: string;} | null>(null);
   const [combinedEvent, setCombinedEvent] = useState<{id: string;title: string;} | null>(null);
+  const [invitationEvent, setInvitationEvent] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
