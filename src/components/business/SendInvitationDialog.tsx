@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
+import { getCityOptions } from "@/lib/cityTranslations";
 import { Send, Loader2 } from "lucide-react";
 
 interface SendInvitationDialogProps {
@@ -32,14 +33,12 @@ const getAvailableTypes = (event: SendInvitationDialogProps["event"]): { value: 
     types.push({ value: "ticket", label: "Εισιτήριο", labelEn: "Ticket" });
   } else if (eventType === "reservation") {
     types.push({ value: "reservation", label: "Κράτηση", labelEn: "Reservation" });
-    // Check if walk-in is possible (has ticket tiers with qty != 999999)
     types.push({ value: "walk_in", label: "Walk-in", labelEn: "Walk-in" });
   } else if (eventType === "ticket_and_reservation") {
     types.push({ value: "hybrid", label: "Κράτηση", labelEn: "Reservation" });
     types.push({ value: "ticket", label: "Εισιτήριο", labelEn: "Ticket" });
     types.push({ value: "walk_in", label: "Walk-in", labelEn: "Walk-in" });
   } else {
-    // free_entry or unknown
     types.push({ value: "ticket", label: "Εισιτήριο Εισόδου", labelEn: "Entry Ticket" });
   }
 
@@ -60,12 +59,14 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
   const [guestCity, setGuestCity] = useState("");
   const [guestAge, setGuestAge] = useState("");
   const [minAge, setMinAge] = useState("");
-  const [partySize, setPartySize] = useState("2");
+  const [partySize, setPartySize] = useState("");
   const [seatingTypeId, setSeatingTypeId] = useState("");
 
   const isReservationType = invitationType === "reservation" || invitationType === "hybrid";
   const isTicketOnly = invitationType === "ticket";
   const isWalkIn = invitationType === "walk_in";
+
+  const cityOptions = getCityOptions(language);
 
   const t = language === "el" ? {
     title: "Αποστολή Πρόσκλησης",
@@ -87,6 +88,7 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
     errorDesc: "Δεν ήταν δυνατή η αποστολή της πρόσκλησης",
     required: "Συμπληρώστε τα υποχρεωτικά πεδία",
     selectSeating: "Επιλέξτε θέση",
+    selectCity: "Επιλέξτε πόλη",
   } : {
     title: "Send Invitation",
     subtitle: "Send a free invitation for",
@@ -107,6 +109,7 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
     errorDesc: "Could not send invitation",
     required: "Fill in required fields",
     selectSeating: "Select seating",
+    selectCity: "Select city",
   };
 
   const resetForm = () => {
@@ -116,7 +119,7 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
     setGuestCity("");
     setGuestAge("");
     setMinAge("");
-    setPartySize("2");
+    setPartySize("");
     setSeatingTypeId("");
   };
 
@@ -136,12 +139,12 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
       };
 
       if (guestPhone.trim()) payload.guest_phone = guestPhone.trim();
-      if (guestCity.trim()) payload.guest_city = guestCity.trim();
+      if (guestCity) payload.guest_city = guestCity;
 
-      if (isTicketOnly && guestAge) {
+      if ((isTicketOnly || isWalkIn) && guestAge) {
         payload.guest_age = parseInt(guestAge, 10);
       }
-      if ((isReservationType || isWalkIn) && minAge) {
+      if (isReservationType && minAge) {
         payload.min_age = parseInt(minAge, 10);
       }
       if (isReservationType) {
@@ -170,6 +173,11 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
       setSending(false);
     }
   };
+
+  // Determine which age field label to show
+  // Walk-in = single person → "Ηλικία" / "Age"
+  // Reservation/Hybrid = group → "Ελάχιστη Ηλικία" / "Minimum Age"
+  const ageLabel = isWalkIn ? t.age : t.minAge;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,7 +216,7 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
             <Input
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
-              placeholder="π.χ. Γιάννης Παπαδόπουλος"
+              placeholder={language === "el" ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Smith"}
               className="h-9 text-sm"
             />
           </div>
@@ -236,19 +244,25 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
             />
           </div>
 
-          {/* City */}
+          {/* City - Dropdown */}
           <div className="space-y-1.5">
             <Label className="text-xs">{t.city}</Label>
-            <Input
-              value={guestCity}
-              onChange={(e) => setGuestCity(e.target.value)}
-              placeholder={language === "el" ? "π.χ. Λεμεσός" : "e.g. Limassol"}
-              className="h-9 text-sm"
-            />
+            <Select value={guestCity} onValueChange={setGuestCity}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder={t.selectCity} />
+              </SelectTrigger>
+              <SelectContent>
+                {cityOptions.map((city) => (
+                  <SelectItem key={city.value} value={city.value}>
+                    {city.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Age - ticket-only */}
-          {isTicketOnly && (
+          {/* Age - ticket-only or walk-in (single person) */}
+          {(isTicketOnly || isWalkIn) && (
             <div className="space-y-1.5">
               <Label className="text-xs">{t.age}</Label>
               <Input
@@ -257,14 +271,13 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
                 max={120}
                 value={guestAge}
                 onChange={(e) => setGuestAge(e.target.value)}
-                placeholder="25"
                 className="h-9 text-sm"
               />
             </div>
           )}
 
-          {/* Min Age - reservation/hybrid/walk-in */}
-          {(isReservationType || isWalkIn) && (
+          {/* Min Age - reservation/hybrid (group) */}
+          {isReservationType && (
             <div className="space-y-1.5">
               <Label className="text-xs">{t.minAge}</Label>
               <Input
@@ -273,7 +286,6 @@ const SendInvitationDialog = ({ open, onOpenChange, event, seatingTypes }: SendI
                 max={120}
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}
-                placeholder="18"
                 className="h-9 text-sm"
               />
             </div>
