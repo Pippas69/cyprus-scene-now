@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, User, Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCityOptions } from "@/lib/cityTranslations";
 import { InlineAuthGate } from "./InlineAuthGate";
+import { parseE164Phone } from "@/lib/countries";
 
 const translations = {
   el: {
@@ -59,8 +61,7 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState<'CY' | 'GR'>('CY');
+  const [phone, setPhone] = useState(''); // E.164 format
   const [city, setCity] = useState('');
   const [greekCity, setGreekCity] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,28 +71,16 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
 
   const cityOptions = getCityOptions(language);
 
-  const parseStoredPhone = (rawPhone: string): { country: 'CY' | 'GR'; local: string } | null => {
-    const digits = rawPhone.replace(/\D/g, '');
-    if (!digits) return null;
-
-    if (digits.startsWith('357') && digits.length === 11) {
-      return { country: 'CY', local: digits.slice(3) };
-    }
-
-    if (digits.startsWith('30') && digits.length === 12) {
-      return { country: 'GR', local: digits.slice(2) };
-    }
-
-    if (digits.length === 8) {
-      return { country: 'CY', local: digits };
-    }
-
-    if (digits.length === 10) {
-      return { country: 'GR', local: digits };
-    }
-
-    return null;
+  // Determine if stored phone is CY/GR for city logic
+  const getCountryFromPhone = (phoneVal: string): 'CY' | 'GR' | 'OTHER' => {
+    const parsed = parseE164Phone(phoneVal);
+    if (!parsed) return 'CY';
+    if (parsed.countryCode === 'CY') return 'CY';
+    if (parsed.countryCode === 'GR') return 'GR';
+    return 'OTHER';
   };
+
+  const phoneCountry = getCountryFromPhone(phone);
 
   // Check if profile is already complete; if not authenticated, show auth gate first
   useEffect(() => {
