@@ -9,6 +9,7 @@ import {
   detailRow,
   ctaButton,
   successBadge,
+  noteBox,
 } from "../_shared/email-templates.ts";
 import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, optionalEmail, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
@@ -18,6 +19,9 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...securityHeaders, "Content-Type": "application/json" },
   });
+
+const makeQrUrl = (token: string) =>
+  `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(token)}&bgcolor=ffffff&color=000000`;
 
 const BodySchema = z.object({
   event_id: flexId,
@@ -172,8 +176,8 @@ serve(async (req) => {
         .limit(1);
 
       const tier = tiers?.[0];
+      let tierId: string;
       if (!tier) {
-        // Auto-create a tier for invitation
         const { data: createdTier, error: tierError } = await supabase
           .from("ticket_tiers")
           .insert({
@@ -194,10 +198,9 @@ serve(async (req) => {
           console.error("[send-invitation] tier creation failed", tierError);
           return json({ error: "Failed to setup ticket tier" }, 400);
         }
-
-        var tierId = createdTier!.id;
+        tierId = createdTier!.id;
       } else {
-        var tierId = tier.id;
+        tierId = tier.id;
       }
 
       // Create ticket order
@@ -288,49 +291,66 @@ serve(async (req) => {
         minute: "2-digit",
       });
 
+      const venueName = event.venue_name || event.location || "—";
+
       // Build QR sections based on type
       let qrContent = "";
       
       if (isReservationType && partySize > 1 && reservationId) {
         // Fetch individual ticket QR tokens for multi-person reservations
-        const { data: tickets } = await supabase
-          .from("tickets")
-          .select("qr_code_token, guest_name")
-          .eq("order_id", (await supabase
-            .from("ticket_orders")
-            .select("id")
-            .eq("linked_reservation_id", reservationId)
-            .maybeSingle()).data?.id || "")
-          .order("created_at", { ascending: true });
+        const { data: linkedOrder } = await supabase
+          .from("ticket_orders")
+          .select("id")
+          .eq("linked_reservation_id", reservationId)
+          .maybeSingle();
 
-        if (tickets && tickets.length > 0) {
-          qrContent = tickets.map((t: any) => `
-            <div style="text-align: center; margin-bottom: 20px;">
-              <p style="font-size: 13px; color: #64748b; margin: 0 0 8px 0; text-transform: lowercase;">${t.guest_name}</p>
-              ${qrCodeSection(t.qr_code_token)}
-            </div>
-          `).join("");
+        const orderId = linkedOrder?.id;
+        let tickets: { qr_code_token: string; guest_name: string }[] = [];
+
+        if (orderId) {
+          const { data: tix } = await supabase
+            .from("tickets")
+            .select("qr_code_token, guest_name")
+            .eq("order_id", orderId)
+            .order("created_at", { ascending: true });
+          tickets = tix || [];
+        }
+
+        if (tickets.length > 0) {
+          qrContent = tickets.map((t) => {
+            const qrUrl = makeQrUrl(t.qr_code_token);
+            return `
+              <div style="text-align: center; margin-bottom: 24px;">
+                <p style="font-size: 13px; color: #64748b; margin: 0 0 8px 0; text-transform: lowercase; font-weight: 500;">${t.guest_name}</p>
+                ${qrCodeSection(qrUrl, undefined, 'Δείξε στην είσοδο')}
+              </div>
+            `;
+          }).join("");
         } else {
-          qrContent = qrCodeSection(qrCodeToken);
+          // Fallback: single QR
+          qrContent = qrCodeSection(makeQrUrl(qrCodeToken), undefined, 'Δείξε στην είσοδο');
         }
       } else {
-        qrContent = qrCodeSection(qrCodeToken);
+        qrContent = qrCodeSection(makeQrUrl(qrCodeToken), undefined, 'Δείξε στην είσοδο');
       }
+
+      const detailRows = [
+        detailRow("📅 Ημερομηνία", eventDate),
+        detailRow("📍 Τοποθεσία", venueName),
+        partySize > 1 ? detailRow("👥 Άτομα", `${partySize}`) : "",
+      ].filter(Boolean).join("");
 
       const emailHtml = wrapPremiumEmail(`
         ${successBadge("🎉 Είστε Καλεσμένος!")}
         
-        ${infoCard(`
-          <p style="font-size: 15px; color: #334155; margin: 0 0 4px 0;">
-            Το <strong>${business.name}</strong> σας προσκαλεί στην εκδήλωση:
-          </p>
-          <h2 style="font-size: 20px; color: #0D3B66; margin: 8px 0 16px 0;">${event.title}</h2>
-          ${detailRow("📅", eventDate)}
-          ${detailRow("📍", event.venue_name || event.location || "")}
-          ${partySize > 1 ? detailRow("👥", `${partySize} άτομα`) : ""}
-        `)}
+        <p style="font-size: 15px; color: #334155; margin: 0 0 4px 0; text-align: center;">
+          Το <strong>${business.name}</strong> σας προσκαλεί στην εκδήλωση:
+        </p>
+        <h2 style="font-size: 22px; color: #0D3B66; margin: 8px 0 20px 0; text-align: center; font-weight: 700;">${event.title}</h2>
 
-        <div style="padding: 24px 0; text-align: center;">
+        ${infoCard('Λεπτομέρειες', detailRows)}
+
+        <div style="padding: 16px 0; text-align: center;">
           <p style="font-size: 14px; color: #64748b; margin: 0 0 16px 0;">
             ${partySize > 1 && isReservationType
               ? "Δείξτε τα παρακάτω QR codes στην είσοδο — ένα για κάθε άτομο:"
@@ -339,11 +359,7 @@ serve(async (req) => {
           ${qrContent}
         </div>
 
-        <div style="background: #FFF7ED; border-radius: 8px; padding: 12px 16px; margin: 0 0 16px 0;">
-          <p style="font-size: 12px; color: #92400E; margin: 0;">
-            ⚠️ Κάθε QR code μπορεί να χρησιμοποιηθεί μόνο μία φορά.
-          </p>
-        </div>
+        ${noteBox("Κάθε QR code μπορεί να χρησιμοποιηθεί μόνο μία φορά.", "warning")}
       `);
 
       try {
