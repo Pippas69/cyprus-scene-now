@@ -35,6 +35,31 @@ const ActiveBoostBadge = ({ eventId, label }: {eventId: string;label: string;}) 
   return null;
 };
 
+// Wrapper to fetch seating types for the invitation dialog
+const InvitationDialogWrapper = ({ event, onClose }: { event: any; onClose: () => void }) => {
+  const { data: seatingTypes } = useQuery({
+    queryKey: ["seating-types-for-invitation", event.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reservation_seating_types")
+        .select("id, name")
+        .eq("event_id", event.id)
+        .order("created_at", { ascending: true });
+      return data || [];
+    },
+    enabled: !!event.id,
+  });
+
+  return (
+    <SendInvitationDialog
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      event={event}
+      seatingTypes={seatingTypes || []}
+    />
+  );
+};
+
 type EventFilter = 'all' | 'ticket' | 'reservation' | 'free_entry';
 
 const EventsList = ({ businessId }: EventsListProps) => {
