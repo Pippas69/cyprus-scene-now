@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -108,11 +109,12 @@ export function CrmAddGuestDialog({ open, onOpenChange, businessId, onAdd, onSuc
           </div>
           <div>
             <Label className="text-xs">{t.phone}</Label>
-            <Input
+            <PhoneInput
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder={t.phonePlaceholder}
-              className="h-9 text-sm mt-1"
+              onChange={setPhone}
+              language={language}
+              selectClassName="h-9 text-sm mt-1"
+              inputClassName="h-9 text-sm mt-1"
             />
           </div>
           <div>
