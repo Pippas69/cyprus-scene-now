@@ -108,20 +108,17 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       if (profile) {
         const p = profile as any;
         const profileCity = p.city || p.town || '';
-        const parsedPhone = parseStoredPhone(p.phone || '');
-        const hasValidPhone = !!parsedPhone && (parsedPhone.country === 'CY' ? parsedPhone.local.length === 8 : parsedPhone.local.length === 10);
+        const storedPhone = p.phone || '';
+        const phoneDigitCount = storedPhone.replace(/\D/g, '').length;
+        const hasValidPhone = phoneDigitCount >= 8;
 
         if (p.first_name && p.last_name && hasValidPhone && profileCity) {
-          const normalizedPhone = parsedPhone.country === 'CY'
-            ? `+357${parsedPhone.local}`
-            : `+30${parsedPhone.local}`;
-
           const authEmail = (await supabase.auth.getUser()).data.user?.email || '';
 
           onComplete({
             firstName: p.first_name,
             lastName: p.last_name,
-            phone: normalizedPhone,
+            phone: storedPhone,
             city: profileCity,
             email: authEmail,
           });
@@ -129,16 +126,16 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           if (p.first_name) setFirstName(p.first_name);
           if (p.last_name) setLastName(p.last_name);
 
-          if (parsedPhone) {
-            setCountry(parsedPhone.country);
-            setPhone(parsedPhone.local);
+          if (storedPhone) {
+            setPhone(storedPhone); // Already E.164
           }
 
           if (profileCity) {
-            if ((parsedPhone?.country ?? 'CY') === 'CY') {
-              setCity(profileCity);
-            } else {
+            const parsedCountry = getCountryFromPhone(storedPhone);
+            if (parsedCountry === 'GR') {
               setGreekCity(profileCity);
+            } else {
+              setCity(profileCity);
             }
           }
         }
@@ -148,12 +145,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     checkProfile();
   }, [authRetryTick]);
 
-  const getPhoneDigits = (val: string) => val.replace(/\D/g, '');
-  const expectedPhoneLength = country === 'CY' ? 8 : 10;
-  const phoneDigits = getPhoneDigits(phone);
-  const isPhoneLengthValid = phoneDigits.length === expectedPhoneLength;
-
-  const validatePhone = (): boolean => isPhoneLengthValid;
+  const phoneDigitCount = phone.replace(/\D/g, '').length;
+  const isPhoneValid = phoneDigitCount >= 8;
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !phone.trim()) {
@@ -161,13 +154,13 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
       return;
     }
 
-    const selectedCity = country === 'CY' ? city : greekCity;
-    if (!selectedCity.trim()) {
+    const selectedCity = phoneCountry === 'GR' ? greekCity : city;
+    if (phoneCountry !== 'OTHER' && !selectedCity.trim()) {
       toast.error(t.fillAll);
       return;
     }
 
-    if (!validatePhone()) {
+    if (!isPhoneValid) {
       toast.error(t.invalidPhone);
       return;
     }
@@ -176,14 +169,14 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
     try {
       let user = (await supabase.auth.getUser()).data.user;
       if (!user) {
-        // Fallback: session may exist but getUser failed (timing after OTP)
         const { data: { session } } = await supabase.auth.getSession();
         user = session?.user ?? null;
       }
       if (!user) throw new Error('Not authenticated');
 
-      const localPhone = getPhoneDigits(phone);
-      const fullPhone = country === 'CY' ? `+357${localPhone}` : `+30${localPhone}`;
+      // Phone is already E.164 from PhoneInput
+      const fullPhone = phone;
+      const finalCity = phoneCountry === 'GR' ? greekCity.trim() : (phoneCountry === 'OTHER' ? greekCity.trim() || city : city);
 
       const { error } = await supabase
         .from('profiles')
@@ -191,8 +184,8 @@ export const ProfileCompletionGate: React.FC<ProfileCompletionGateProps> = ({ on
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: fullPhone,
-          city: selectedCity.trim(),
-          town: selectedCity.trim(),
+          city: finalCity.trim(),
+          town: finalCity.trim(),
         })
         .eq('id', user.id);
 
