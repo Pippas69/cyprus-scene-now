@@ -691,6 +691,15 @@ const EventsList = ({ businessId }: EventsListProps) => {
         </DialogContent>
       </Dialog>
 
+      {/* Invitation Dialog */}
+      {invitationEvent && (
+        <SendInvitationDialog
+          open={!!invitationEvent}
+          onOpenChange={(open) => !open && setInvitationEvent(null)}
+          event={invitationEvent}
+        />
+      )}
+
     </>);
 
 };
