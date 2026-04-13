@@ -648,12 +648,13 @@ export function OfferPurchaseDialog({ offer: initialOffer, isOpen, onClose, lang
                 <Phone className="h-3 w-3" />
                 {t("phone")}
               </Label>
-              <Input
+              <PhoneInput
                 value={reservationPhone}
-                onChange={(e) => setReservationPhone(e.target.value)}
-                placeholder={language === "el" ? "π.χ. 99123456" : "e.g. 99123456"}
-                className="h-9 sm:h-10 text-xs sm:text-sm"
-                type="tel" />
+                onChange={setReservationPhone}
+                language={language}
+                selectClassName="h-9 sm:h-10 text-xs sm:text-sm"
+                inputClassName="h-9 sm:h-10 text-xs sm:text-sm"
+              />
             </div>
 
             {/* Date Selection */}
