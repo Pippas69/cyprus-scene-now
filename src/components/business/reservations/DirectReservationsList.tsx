@@ -2088,7 +2088,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 displayValue={actualSpendDisplay}
                                 rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
                             ) : (
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">{remainderDisplay}</span>
+                              <span className="text-sm text-foreground whitespace-nowrap">{remainderDisplay}</span>
                             )
                           ) : null}
                         </div>
