@@ -604,9 +604,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 </div>
                 {isUnavailable ? (
                   <Badge variant="destructive">{t.soldOut}</Badge>
-                ) : (
-                  <Badge variant="secondary">{remaining} {t.available}</Badge>
-                )}
+                ) : remaining <= 3 ? (
+                  <Badge variant="secondary" className="text-foreground font-medium">{remaining} {t.available}</Badge>
+                ) : null}
               </div>
               <div>
                 <h4 className={cn("font-semibold", isSelected && !isUnavailable && colors.text)}>

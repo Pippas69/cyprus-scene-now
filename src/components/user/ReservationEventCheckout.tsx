@@ -676,7 +676,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       {isSoldOut ? (
                         <Badge variant="destructive">{t.soldOut}</Badge>
                       ) : remaining <= 3 ? (
-                        <Badge variant="secondary" className="text-destructive/80 font-medium">
+                        <Badge variant="secondary" className="text-foreground font-medium">
                           {remaining} {t.available}
                         </Badge>
                       ) : null}
