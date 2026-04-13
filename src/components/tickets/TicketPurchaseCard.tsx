@@ -420,10 +420,10 @@ export const TicketPurchaseCard = ({
                   </span>
                   {isSoldOut ? (
                     <span className="text-[10px] md:text-xs text-destructive font-semibold whitespace-nowrap">
-                      Sold out
+                      {text.soldOut}
                     </span>
                   ) : available <= 10 && available !== Infinity ? (
-                    <span className="text-[10px] md:text-xs text-destructive/80 font-medium whitespace-nowrap">
+                    <span className="text-[10px] md:text-xs text-muted-foreground font-medium whitespace-nowrap">
                       ({available} {text.available})
                     </span>
                   ) : null}
