@@ -562,9 +562,7 @@ export default function EventDetail() {
   const hasNativeTickets = ticketTiers.length > 0;
   const activeTicketTiers = ticketTiers.filter((t: any) => t.active !== false);
   const isLinkedHybridEvent = isBusinessTicketLinked && event?.event_type === 'ticket_and_reservation';
-  const walkInTicketTiers = isLinkedHybridEvent ?
-  activeTicketTiers.filter((t: any) => t.quantity_total !== 999999) :
-  activeTicketTiers;
+  const walkInTicketTiers = activeTicketTiers.filter((t: any) => t.quantity_total !== 999999);
   const reservationFlowTicketTiers = isLinkedHybridEvent ?
   (() => {
     const reservationTiers = activeTicketTiers.filter((t: any) => t.quantity_total === 999999);
