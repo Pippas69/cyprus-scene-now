@@ -1,9 +1,50 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useTicketTiers = (eventId: string | undefined) => {
+  const queryClient = useQueryClient();
+  const queryKey = ["ticket-tiers", eventId, "availability-unified-v2"];
+
+  // Realtime subscription for instant availability updates
+  useEffect(() => {
+    if (!eventId) return;
+
+    const channel = supabase
+      .channel(`ticket-availability-${eventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tickets',
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ticket_orders',
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId, queryClient]);
+
   return useQuery({
-    queryKey: ["ticket-tiers", eventId, "availability-unified-v2"],
+    queryKey,
     queryFn: async () => {
       if (!eventId) return [];
 
