@@ -2074,8 +2074,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   <EditableCell
                                     reservationId={reservation.id}
                                     field="prepaid_min_charge_cents"
-                                    displayValue={minChargeCents > 0 ? (payAtDoor ? `€${(minChargeCents / 100).toFixed(2)} (${language === 'el' ? 'Κατάστημα' : 'Venue'})` : `€${(minChargeCents / 100).toFixed(2)}`) : '-'}
-                                    rawValue={minChargeCents > 0 ? (minChargeCents / 100).toFixed(2) : '0'} />
+                                    displayValue={minChargeCents >= 0 ? (payAtDoor ? `€${(minChargeCents / 100).toFixed(2)} (${language === 'el' ? 'Κατάστημα' : 'Venue'})` : `€${(minChargeCents / 100).toFixed(2)}`) : '-'}
+                                    rawValue={(minChargeCents / 100).toFixed(2)} />
                                 </div>
                               );
                             }
