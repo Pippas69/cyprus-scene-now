@@ -2037,6 +2037,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
+                            // Invitation source: show "Πρόσκληση" badge only
+                            if (reservation.source === 'invitation') {
+                              return (
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-primary whitespace-nowrap">
+                                    {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
+                                  </span>
+                                </div>
+                              );
+                            }
                             const isWalkInSource = reservation.source === 'walk_in' && !reservation.seating_type_id;
                             if (isWalkInSource) {
                               // Walk-in: show "Walk-in" label + ticket price from walk-in tier
@@ -2080,7 +2090,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               );
                             }
                           })()}
-                          {reservation.source !== 'walk_in' || reservation.seating_type_id ? (
+                          {reservation.source !== 'walk_in' && reservation.source !== 'invitation' || reservation.seating_type_id ? (
+                            reservation.source === 'invitation' ? null :
                             isReservationOnly ? (
                               <EditableCell
                                 reservationId={reservation.id}

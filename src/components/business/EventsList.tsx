@@ -693,10 +693,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
 
       {/* Invitation Dialog */}
       {invitationEvent && (
-        <SendInvitationDialog
-          open={!!invitationEvent}
-          onOpenChange={(open) => !open && setInvitationEvent(null)}
+        <InvitationDialogWrapper
           event={invitationEvent}
+          onClose={() => setInvitationEvent(null)}
         />
       )}
 
