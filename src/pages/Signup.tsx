@@ -672,42 +672,25 @@ const Signup = () => {
                     <FormMessage />
                   </FormItem>} />
 
-              {/* Phone field with country selector */}
-              <div className="space-y-1.5">
-                <FormLabel className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  {language === "el" ? "Τηλέφωνο" : "Phone"}
-                </FormLabel>
-                <div className="flex gap-2">
-                  <FormField control={form.control} name="phoneCountry" render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || "CY"}>
-                      <FormControl>
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm w-[100px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="CY">🇨🇾 +357</SelectItem>
-                        <SelectItem value="GR">🇬🇷 +30</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )} />
-                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          type="tel"
-                          inputMode="numeric"
-                          placeholder={form.watch('phoneCountry') === 'CY' ? '99123456' : '6912345678'}
-                          {...field}
-                          className="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-              </div>
+              {/* Phone field with international country selector */}
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
+                    {language === "el" ? "Τηλέφωνο" : "Phone"}
+                  </FormLabel>
+                  <FormControl>
+                    <PhoneInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      language={language}
+                      selectClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
+                      inputClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
               <FormField control={form.control} name="gender" render={({
               field
