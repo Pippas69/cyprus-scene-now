@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -379,12 +380,12 @@ export const ManualEntryDialog = ({
           {/* 2. Phone (required) */}
           <div className={fieldClass}>
             <Label className={labelClass}>{txt.phone} *</Label>
-            <Input
+            <PhoneInput
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder={txt.phone}
-              type="tel"
-              className={inputClass}
+              onChange={setPhone}
+              language={language}
+              selectClassName={inputClass}
+              inputClassName={inputClass}
             />
           </div>
 
