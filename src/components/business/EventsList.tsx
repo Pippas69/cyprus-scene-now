@@ -506,7 +506,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
                     {/* Right column: Boost + Edit icons (top) and Pause + Delete (bottom) */}
                     <div className="flex flex-col items-end justify-between gap-1">
                       {/* Top: Boost + Edit */}
-                      <div className="flex items-center gap-0.5 md:gap-1">
+                        <div className="flex items-center gap-0.5 md:gap-1">
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setInvitationEvent(event)}
+                        title={language === 'el' ? 'Πρόσκληση' : 'Invite'}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary">
+                        
+                          <Send className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                        </Button>
                         <Button
                         variant="ghost"
                         size="icon"
