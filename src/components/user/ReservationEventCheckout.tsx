@@ -675,11 +675,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       </div>
                       {isSoldOut ? (
                         <Badge variant="destructive">{t.soldOut}</Badge>
-                      ) : (
-                        <Badge variant="secondary">
+                      ) : remaining <= 3 ? (
+                        <Badge variant="secondary" className="text-destructive/80 font-medium">
                           {remaining} {t.available}
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
 
                     <div>

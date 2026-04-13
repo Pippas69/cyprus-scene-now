@@ -619,11 +619,15 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 )}
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="font-semibold text-primary text-sm">{formatPrice(tier.price_cents)}</span>
-                  {!isSoldOut && (
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {isSoldOut ? (
+                    <span className="text-[10px] text-destructive font-semibold whitespace-nowrap">
+                      Sold out
+                    </span>
+                  ) : available <= 10 ? (
+                    <span className="text-[10px] text-destructive/80 font-medium whitespace-nowrap">
                       ({available} {t.available})
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

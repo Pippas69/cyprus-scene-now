@@ -418,11 +418,15 @@ export const TicketPurchaseCard = ({
                   <span className="font-semibold text-primary text-sm md:text-base">
                     {formatPrice(tier.price_cents)}
                   </span>
-                  {!isSoldOut && (
-                    <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
+                  {isSoldOut ? (
+                    <span className="text-[10px] md:text-xs text-destructive font-semibold whitespace-nowrap">
+                      Sold out
+                    </span>
+                  ) : available <= 10 && available !== Infinity ? (
+                    <span className="text-[10px] md:text-xs text-destructive/80 font-medium whitespace-nowrap">
                       ({available} {text.available})
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
