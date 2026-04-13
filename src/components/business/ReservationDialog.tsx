@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -371,12 +372,11 @@ export const ReservationDialog = ({
           <Phone className="w-4 h-4" />
           {t.phoneNumber}
         </Label>
-        <Input
+        <PhoneInput
           id="phone_number"
-          type="tel"
           value={formData.phone_number}
-          onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-          placeholder={t.phonePlaceholder}
+          onChange={(val) => setFormData({ ...formData, phone_number: val })}
+          language={language}
         />
       </div>
 
