@@ -802,9 +802,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Payment info — each on single line */}
-          {(minCharge > 0 || ticketTotal > 0) && (
+          {(minCharge >= 0 || ticketTotal > 0) && (
             <div className="space-y-0.5">
-              {minCharge > 0 && (
+              {minCharge >= 0 && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                   <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
