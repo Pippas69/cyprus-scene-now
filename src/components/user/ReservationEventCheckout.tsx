@@ -1072,7 +1072,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             size="sm"
             className="text-xs px-3 h-9 gap-1.5"
             onClick={handleCheckout}
-            disabled={submitting || !selectedSeating || !price || !termsAccepted}
+            disabled={submitting || !selectedSeating || price === null || price === undefined || !termsAccepted}
           >
             {submitting ? (
               <>
