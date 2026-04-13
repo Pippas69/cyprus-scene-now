@@ -711,7 +711,7 @@ export default function EventDetail() {
 
             {/* Description (if any) */}
             {event.description &&
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
+            <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words">
                 {event.description}
               </p>
             }
