@@ -42,10 +42,10 @@ const InvitationDialogWrapper = ({ event, onClose }: { event: any; onClose: () =
     queryFn: async () => {
       const { data } = await supabase
         .from("reservation_seating_types")
-        .select("id, name")
+        .select("id, seating_type")
         .eq("event_id", event.id)
         .order("created_at", { ascending: true });
-      return data || [];
+      return (data || []).map(st => ({ id: st.id, name: st.seating_type }));
     },
     enabled: !!event.id,
   });
