@@ -2477,6 +2477,115 @@ export type Database = {
           },
         ]
       }
+      event_invitations: {
+        Row: {
+          business_id: string
+          created_at: string
+          event_id: string
+          guest_age: number | null
+          guest_city: string | null
+          guest_email: string
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          invitation_type: string
+          invited_by: string
+          min_age: number | null
+          party_size: number
+          qr_code_token: string | null
+          reservation_id: string | null
+          seating_type_id: string | null
+          status: string
+          ticket_order_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          event_id: string
+          guest_age?: number | null
+          guest_city?: string | null
+          guest_email: string
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          invitation_type?: string
+          invited_by: string
+          min_age?: number | null
+          party_size?: number
+          qr_code_token?: string | null
+          reservation_id?: string | null
+          seating_type_id?: string | null
+          status?: string
+          ticket_order_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          event_id?: string
+          guest_age?: number | null
+          guest_city?: string | null
+          guest_email?: string
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          invitation_type?: string
+          invited_by?: string
+          min_age?: number | null
+          party_size?: number
+          qr_code_token?: string | null
+          reservation_id?: string | null
+          seating_type_id?: string | null
+          status?: string
+          ticket_order_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_ticket_order_id_fkey"
+            columns: ["ticket_order_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_posts: {
         Row: {
           content: string

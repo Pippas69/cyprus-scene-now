@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play } from "lucide-react";
+import { Calendar, MapPin, Users, Pencil, Rocket, Sparkles, Ticket, Grid3X3, Gift, Pause, Play, Send } from "lucide-react";
+import SendInvitationDialog from "./SendInvitationDialog";
 import EventEditForm from "./EventEditForm";
 import ProductionEditForm from "./productions/ProductionEditForm";
 import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
@@ -48,6 +49,7 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [ticketSalesEvent, setTicketSalesEvent] = useState<{id: string;title: string;} | null>(null);
   const [reservationEvent, setReservationEvent] = useState<{id: string;title: string;} | null>(null);
   const [combinedEvent, setCombinedEvent] = useState<{id: string;title: string;} | null>(null);
+  const [invitationEvent, setInvitationEvent] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
@@ -504,7 +506,16 @@ const EventsList = ({ businessId }: EventsListProps) => {
                     {/* Right column: Boost + Edit icons (top) and Pause + Delete (bottom) */}
                     <div className="flex flex-col items-end justify-between gap-1">
                       {/* Top: Boost + Edit */}
-                      <div className="flex items-center gap-0.5 md:gap-1">
+                        <div className="flex items-center gap-0.5 md:gap-1">
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setInvitationEvent(event)}
+                        title={language === 'el' ? 'Πρόσκληση' : 'Invite'}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 text-primary hover:text-primary">
+                        
+                          <Send className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
+                        </Button>
                         <Button
                         variant="ghost"
                         size="icon"
@@ -679,6 +690,15 @@ const EventsList = ({ businessId }: EventsListProps) => {
           }
         </DialogContent>
       </Dialog>
+
+      {/* Invitation Dialog */}
+      {invitationEvent && (
+        <SendInvitationDialog
+          open={!!invitationEvent}
+          onOpenChange={(open) => !open && setInvitationEvent(null)}
+          event={invitationEvent}
+        />
+      )}
 
     </>);
 
