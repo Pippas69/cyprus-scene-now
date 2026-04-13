@@ -69,7 +69,6 @@ const Signup = () => {
       const digits = val.replace(/\D/g, '').length;
       return digits >= 8;
     }, { message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number' }),
-    phoneCountry: z.enum(['CY', 'GR']).default('CY'),
     gender: z.enum(['male', 'female', 'other']).optional(),
     preferences: z.array(z.string()).optional(),
     isStudent: z.boolean().optional(),
@@ -88,7 +87,6 @@ const Signup = () => {
       password: "",
       town: "",
       phone: "",
-      phoneCountry: "CY" as const,
       gender: undefined,
       preferences: [],
       isStudent: false,
@@ -164,9 +162,8 @@ const Signup = () => {
         }
       }
 
-      // Format full phone number
-      const phonePrefix = values.phoneCountry === 'CY' ? '+357' : '+30';
-      const fullPhone = phonePrefix + values.phone.replace(/\D/g, '');
+      // Phone is already in E.164 format from PhoneInput
+      const fullPhone = values.phone;
 
       const {
         data,
