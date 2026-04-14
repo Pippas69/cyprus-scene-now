@@ -130,7 +130,7 @@ export const TicketSuccess = () => {
               seat_row,
               seat_number,
               ticket_tiers(name),
-              events(title, start_at, public_businesses_safe(name, logo_url))
+              events(title, start_at, businesses:public_businesses_safe(name, logo_url))
             `)
             .eq("order_id", orderId)
             .order("created_at", { ascending: true });

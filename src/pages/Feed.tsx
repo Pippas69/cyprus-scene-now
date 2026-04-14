@@ -138,9 +138,9 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       let query = supabase
         .from("events")
-        .select("*, public_businesses_safe!inner(name, logo_url, verified, city)")
+        .select("*, businesses:public_businesses_safe!inner(name, logo_url, verified, city)")
         .in("id", boostedEventIds)
-        .eq("public_businesses_safe.verified", true)
+        .eq("businesses.verified", true)
         .gte("end_at", new Date().toISOString())
         .order("start_at", { ascending: true }); // Chronological order
 
