@@ -211,6 +211,7 @@ serve(async (req) => {
           user_id: user.id,
           customer_name: guest_name,
           customer_email: guest_email,
+          customer_phone: guest_phone || null,
           status: "completed",
           subtotal_cents: 0,
           commission_cents: 0,
