@@ -31,6 +31,7 @@ interface ScanResult {
   alreadyUsed?: boolean;
   alreadyRedeemed?: boolean;
   alreadyCheckedIn?: boolean;
+  isInvitation?: boolean;
   requiresPriceEntry?: boolean;
   details?: {
     // Ticket
@@ -621,7 +622,12 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{scanResult.details.tierName}</span>
                             </div>
                           )}
-                          {scanResult.details.tierPrice !== undefined && (
+                          {scanResult.isInvitation ? (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                              <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                            </div>
+                          ) : scanResult.details.tierPrice !== undefined && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t.price}:</span>
                               <span className="font-medium">{formatPrice(scanResult.details.tierPrice)}</span>
@@ -638,7 +644,12 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
                                 <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
                               </div>
-                              {(() => {
+                              {scanResult.isInvitation ? (
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                                  <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                                </div>
+                              ) : (() => {
                                 const minCharge = scanResult.linkedReservation.minimumChargeCents || 0;
                                 const ticketCredit = scanResult.linkedReservation.ticketCreditCents || 0;
                                 const balance = Math.max(0, minCharge - ticketCredit);
@@ -743,7 +754,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                             </div>
                           )}
                           {/* Financial data for event reservations (hybrid) */}
-                          {!scanResult.details.isDirectReservation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
+                          {!scanResult.details.isDirectReservation && !scanResult.isInvitation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
                             <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
                               <div className="flex justify-between text-xs">
                                 <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
@@ -766,6 +777,13 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                   })()}
                                 </>
                               )}
+                            </div>
+                          )}
+                          {/* Invitation badge for reservation scans */}
+                          {scanResult.isInvitation && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                              <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
                             </div>
                           )}
                         </>
