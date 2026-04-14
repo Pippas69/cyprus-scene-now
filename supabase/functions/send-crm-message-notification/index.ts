@@ -10,11 +10,6 @@ interface SendCrmMessageRequest {
   message: string;
 }
 
-const jsonResponse = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...securityHeaders, "Content-Type": "application/json" },
-  });
 
 const BodySchema = z.object({
   guestId: flexId,
