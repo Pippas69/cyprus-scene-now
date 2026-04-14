@@ -644,7 +644,12 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
                                 <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
                               </div>
-                              {(() => {
+                              {scanResult.isInvitation ? (
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                                  <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                                </div>
+                              ) : (() => {
                                 const minCharge = scanResult.linkedReservation.minimumChargeCents || 0;
                                 const ticketCredit = scanResult.linkedReservation.ticketCreditCents || 0;
                                 const balance = Math.max(0, minCharge - ticketCredit);
