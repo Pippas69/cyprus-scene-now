@@ -786,7 +786,6 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
                             </div>
                           )}
-                          )}
                         </>
                       )}
                     </CardContent>
