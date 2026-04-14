@@ -96,17 +96,18 @@ describe("sortBusinessesByPlanAndProximity", () => {
   });
 
   it("uses manual order for elite businesses", () => {
-    const eliteIds = Object.entries(ELITE_MANUAL_ORDER)
+    const eliteEntries = Object.entries(ELITE_MANUAL_ORDER)
       .sort(([, a], [, b]) => a - b)
-      .slice(0, 3)
-      .map(([id]) => id);
+      .slice(0, 3);
+    const expectedIds = eliteEntries.map(([id]) => id);
 
-    const businesses = eliteIds
+    // Feed them in reverse order
+    const businesses = [...eliteEntries]
       .reverse()
-      .map((id) => ({ id, planTierIndex: 0, city: "Nicosia" }));
+      .map(([id]) => ({ id, planTierIndex: 0, city: "Nicosia" }));
 
     const sorted = sortBusinessesByPlanAndProximity(businesses, "Nicosia");
-    expect(sorted.map((b) => b.id)).toEqual(eliteIds);
+    expect(sorted.map((b) => b.id)).toEqual(expectedIds);
   });
 
   it("sorts by proximity within same non-elite tier", () => {
