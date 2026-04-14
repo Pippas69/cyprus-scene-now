@@ -96,11 +96,15 @@ Deno.serve(async (req) => {
     if (expiresAt) {
       try {
         const date = new Date(expiresAt);
-        formattedExpiry = date.toLocaleDateString("en-GB", {
+        formattedExpiry = date.toLocaleDateString("el-GR", {
           weekday: "long",
           day: "numeric",
           month: "long",
           year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "Europe/Nicosia",
         });
       } catch {
         formattedExpiry = expiresAt;

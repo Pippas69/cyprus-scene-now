@@ -317,7 +317,7 @@ serve(async (req) => {
         weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Nicosia'
       });
       const formattedTime = new Date(reservation.events?.start_at).toLocaleTimeString('el-GR', {
-        hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Nicosia'
+        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Nicosia'
       });
 
       // ========== USER NOTIFICATIONS ==========

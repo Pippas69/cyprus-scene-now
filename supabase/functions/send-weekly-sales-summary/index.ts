@@ -244,6 +244,7 @@ Deno.serve(async (req) => {
             weekday: "long",
             day: "numeric",
             month: "long",
+            timeZone: "Europe/Nicosia",
           });
           dayActivity[day] = (dayActivity[day] || 0) + 1;
         });

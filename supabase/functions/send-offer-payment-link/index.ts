@@ -182,11 +182,13 @@ Deno.serve(async (req) => {
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       
-      const formattedExpiry = expiresAt.toLocaleString('en-GB', {
+      const formattedExpiry = expiresAt.toLocaleString('el-GR', {
         day: 'numeric',
         month: 'long',
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Nicosia',
       });
 
       const emailHtml = `
