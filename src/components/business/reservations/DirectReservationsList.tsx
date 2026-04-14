@@ -98,6 +98,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   ticket_code: string | null;
   staff_memo: string | null;
+  source: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
@@ -822,6 +823,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (isStaleRequest()) return;
 
         (tiers || []).forEach(t => { tierInfo[t.id] = { name: t.name, price_cents: t.price_cents }; });
+      }
+
+      // Detect invitation orders
+      const ticketOnlyInvitationOrderIds = new Set<string>();
+      if (orderIds.length > 0) {
+        const { data: ticketInvitations } = await supabase
+          .from('event_invitations')
+          .select('ticket_order_id')
+          .in('ticket_order_id', orderIds);
+        if (isStaleRequest()) return;
+        (ticketInvitations || []).forEach(inv => {
+          if (inv.ticket_order_id) ticketOnlyInvitationOrderIds.add(inv.ticket_order_id);
+        });
       }
 
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
