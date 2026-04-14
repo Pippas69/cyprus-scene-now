@@ -124,6 +124,7 @@ serve(async (req) => {
           prepaid_min_charge_cents: 0,
           prepaid_charge_status: "paid",
           status: "accepted",
+          source: "invitation",
           confirmation_code: confirmationCode,
           qr_code_token: qrCodeToken,
           guest_city: guest_city || null,
