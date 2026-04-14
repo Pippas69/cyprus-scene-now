@@ -72,7 +72,7 @@ export function useMyStudentRedemptions(userId?: string) {
         .from('student_discount_redemptions')
         .select(`
           *,
-          business:businesses(name, logo_url)
+          business:public_businesses_safe(name, logo_url)
         `)
         .eq('student_verification_id', verification.id)
         .order('created_at', { ascending: false });

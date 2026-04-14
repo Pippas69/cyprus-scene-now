@@ -136,7 +136,7 @@ export const ReservationSuccess = () => {
               preferred_time,
               prepaid_min_charge_cents,
               seating_type_id,
-              events!inner(title, start_at, businesses!inner(name, logo_url))
+              events!inner(title, start_at, public_businesses_safe!inner(name, logo_url))
             `
           )
           .eq("id", targetReservationId)

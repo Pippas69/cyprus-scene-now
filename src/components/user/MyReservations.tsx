@@ -177,7 +177,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           ${reservationFields},
           events!inner(
             id, title, start_at, end_at, location, event_type, cover_image_url,
-            businesses(id, name, logo_url)
+            public_businesses_safe(id, name, logo_url)
           )
         `)
         .eq('user_id', userId)
@@ -190,7 +190,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           ${reservationFields},
           events!inner(
             id, title, start_at, end_at, location, event_type, cover_image_url,
-            businesses(id, name, logo_url)
+            public_businesses_safe(id, name, logo_url)
           )
         `)
         .eq('user_id', userId)
@@ -199,7 +199,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .limit(100),
       supabase
         .from('reservations')
-        .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
+        .select(`${reservationFields}, public_businesses_safe(id, name, logo_url, address)`)
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
@@ -207,7 +207,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .gte('preferred_time', nowIso),
       supabase
         .from('reservations')
-        .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
+        .select(`${reservationFields}, public_businesses_safe(id, name, logo_url, address)`)
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
@@ -226,7 +226,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           created_at,
           events!inner(
             id, title, start_at, end_at, location, event_type, cover_image_url,
-            businesses(id, name, logo_url)
+            public_businesses_safe(id, name, logo_url)
           )
         `)
         .eq('user_id', userId)

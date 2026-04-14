@@ -298,7 +298,7 @@ export default function EventDetail() {
         .select(
           `
           *,
-            businesses!inner(
+            public_businesses_safe!inner(
             id,
             name,
             logo_url,
