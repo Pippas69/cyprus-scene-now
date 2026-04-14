@@ -622,7 +622,12 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{scanResult.details.tierName}</span>
                             </div>
                           )}
-                          {scanResult.details.tierPrice !== undefined && (
+                          {scanResult.isInvitation ? (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                              <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                            </div>
+                          ) : scanResult.details.tierPrice !== undefined && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t.price}:</span>
                               <span className="font-medium">{formatPrice(scanResult.details.tierPrice)}</span>
