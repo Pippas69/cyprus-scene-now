@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
           weekday: 'long', 
           year: 'numeric', 
           month: 'long', 
-          day: 'numeric' 
+          day: 'numeric',
+          timeZone: 'Europe/Nicosia',
         });
 
         // Build event breakdown HTML

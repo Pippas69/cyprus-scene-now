@@ -139,8 +139,8 @@ Deno.serve(async (req) => {
     lastSunday.setDate(lastMonday.getDate() + 6);
     lastSunday.setHours(23, 59, 59, 999);
 
-    const weekStart = lastMonday.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' });
-    const weekEnd = lastSunday.toLocaleDateString('el-GR', { day: 'numeric', month: 'short' });
+    const weekStart = lastMonday.toLocaleDateString('el-GR', { day: 'numeric', month: 'short', timeZone: 'Europe/Nicosia' });
+    const weekEnd = lastSunday.toLocaleDateString('el-GR', { day: 'numeric', month: 'short', timeZone: 'Europe/Nicosia' });
 
     logStep("Date range", { 
       lastMonday: lastMonday.toISOString(), 

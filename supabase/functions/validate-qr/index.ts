@@ -1450,6 +1450,7 @@ async function handleStudentQR(
     const checkInTime = new Date().toLocaleTimeString('el-GR', { 
       hour: '2-digit', 
       minute: '2-digit',
+      hour12: false,
       timeZone: 'Europe/Nicosia'
     });
     const checkInDate = new Date().toLocaleDateString('el-GR', {

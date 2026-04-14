@@ -299,6 +299,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         month: 'long',
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Nicosia',
       });
 
       const pref = prefMap.get(notification.user_id);

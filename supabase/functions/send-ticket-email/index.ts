@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         formattedTime = date.toLocaleTimeString("el-GR", {
           hour: "2-digit",
           minute: "2-digit",
+          hour12: false,
           timeZone: "Europe/Nicosia",
         });
       } catch {

@@ -138,7 +138,8 @@ Deno.serve(async (req) => {
         month: 'long',
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Europe/Athens',
+        hour12: false,
+        timeZone: 'Europe/Nicosia',
       });
       notifMessage += ` Νέα ημερομηνία: ${newDate}`;
     }
@@ -208,7 +209,7 @@ Deno.serve(async (req) => {
                   </div>
                 ` : `
                   <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                    <p style="margin: 0; color: #92400e;">
+                      <p style="margin: 0; color: #92400e;">
                       <strong>Νέα ημερομηνία:</strong> ${newStartAt ? new Date(newStartAt).toLocaleDateString('el-GR', {
                         weekday: 'long',
                         day: 'numeric',
@@ -216,7 +217,8 @@ Deno.serve(async (req) => {
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
-                        timeZone: 'Europe/Athens',
+                        hour12: false,
+                        timeZone: 'Europe/Nicosia',
                       }) : 'Θα ανακοινωθεί'}
                     </p>
                     <p style="margin: 10px 0 0; color: #92400e;">
