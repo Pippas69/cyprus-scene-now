@@ -477,10 +477,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               const orderMap: Record<string, typeof walkInOrders[0]> = {};
               walkInOrders.forEach(o => { orderMap[o.id] = o; });
 
+              // Detect which orders come from invitations
+              const invitationOrderIds = new Set<string>();
+              const invitationPhoneMap = new Map<string, string | null>();
+              if (orderIds.length > 0) {
+                const { data: invitations } = await supabase
+                  .from('event_invitations')
+                  .select('ticket_order_id, guest_phone')
+                  .in('ticket_order_id', orderIds);
+                (invitations || []).forEach(inv => {
+                  if (inv.ticket_order_id) {
+                    invitationOrderIds.add(inv.ticket_order_id);
+                    invitationPhoneMap.set(inv.ticket_order_id, inv.guest_phone);
+                  }
+                });
+              }
+
               // Create one synthetic reservation PER TICKET (not per order)
               walkInSynthetic = (walkInTickets || []).map(ticket => {
                   const order = orderMap[ticket.order_id];
+                  const isInvitation = invitationOrderIds.has(ticket.order_id);
                   const ticketPriceCents = ticket.tier_id ? (tierPriceMap[ticket.tier_id] || 0) : 0;
+                  const invPhone = invitationPhoneMap.get(ticket.order_id);
                   return {
                     id: `walkin-${ticket.id}`,
                     business_id: businessId,
@@ -489,7 +507,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     party_size: 1,
                     status: ticket.checked_in_at ? 'checked_in' : 'accepted',
                     created_at: order?.created_at || ticket.checked_in_at || '',
-                    phone_number: order?.customer_phone || null,
+                    phone_number: invPhone || order?.customer_phone || null,
                     preferred_time: null,
                     seating_preference: null,
                     special_requests: null,
@@ -507,7 +525,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     is_manual_entry: false,
                     manual_status: null,
                     min_age: ticket.guest_age || null,
-                    source: 'walk_in',
+                    source: isInvitation ? 'invitation' : 'walk_in',
                     email: order?.customer_email || null,
                     guest_ages: ticket.guest_age ? String(ticket.guest_age) : null,
                     guest_city: (ticket as any).guest_city || null,
