@@ -391,8 +391,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         });
       }
 
+      const invitationReservationIds = new Set<string>();
+      if (reservationIds.length > 0) {
+        const { data: reservationInvitations } = await supabase
+          .from('event_invitations')
+          .select('reservation_id')
+          .in('reservation_id', reservationIds);
+
+        (reservationInvitations || []).forEach((row) => {
+          if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
+        });
+      }
+
       const enrichedData = (data || []).map((r) => ({
         ...r,
+        source: invitationReservationIds.has(r.id) ? 'invitation' : r.source,
         email: emailMap.get(r.id) ?? r.email ?? null,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
