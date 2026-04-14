@@ -126,7 +126,6 @@ serve(async (req) => {
           status: "accepted",
           confirmation_code: confirmationCode,
           qr_code_token: qrCodeToken,
-          source: "invitation",
           guest_city: guest_city || null,
           guest_ages: min_age ? [min_age] : null,
         })
@@ -217,7 +216,6 @@ serve(async (req) => {
           commission_cents: 0,
           commission_percent: 0,
           total_cents: 0,
-          source: "invitation",
         })
         .select("id")
         .single();
