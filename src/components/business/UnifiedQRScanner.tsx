@@ -31,6 +31,7 @@ interface ScanResult {
   alreadyUsed?: boolean;
   alreadyRedeemed?: boolean;
   alreadyCheckedIn?: boolean;
+  isInvitation?: boolean;
   requiresPriceEntry?: boolean;
   details?: {
     // Ticket
