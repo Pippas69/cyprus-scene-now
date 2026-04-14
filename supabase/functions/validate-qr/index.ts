@@ -982,10 +982,13 @@ async function handleReservationQR(
     }
   }
 
+  const isInvitation = reservation.source === "invitation";
+
   return new Response(JSON.stringify({
     success: true,
     message: m.checkedIn,
     qrType: "reservation",
+    isInvitation,
     details: {
       id: reservation.id,
       name: reservation.reservation_name,
