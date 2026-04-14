@@ -29,7 +29,7 @@ export const SavedEvents = ({ userId, language }: SavedEventsProps) => {
         created_at,
         event:events(
           *,
-          business:businesses(id, name, logo_url)
+          business:public_businesses_safe(id, name, logo_url)
         )
       `)
       .eq('user_id', userId)

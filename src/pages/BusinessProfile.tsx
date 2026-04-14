@@ -256,7 +256,7 @@ const BusinessProfile = () => {
       select(
         `
           *,
-          businesses!inner(name, logo_url, city)
+          businesses:public_businesses_safe!inner(name, logo_url, city)
         `
       ).
       eq("business_id", businessId).
@@ -272,7 +272,7 @@ const BusinessProfile = () => {
       from("discounts").
       select(`
           *,
-          businesses!inner(name, logo_url, city, cover_url, accepts_direct_reservations, reservation_time_slots, reservation_days)
+          businesses:public_businesses_safe!inner(name, logo_url, city, cover_url, accepts_direct_reservations, reservation_time_slots, reservation_days)
         `).
       eq("business_id", businessId).
       eq("active", true).

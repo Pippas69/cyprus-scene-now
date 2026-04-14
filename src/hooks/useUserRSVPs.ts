@@ -57,7 +57,7 @@ export const useUserRSVPs = (userId: string | null) => {
             event_type,
             accepts_reservations,
             external_ticket_url,
-            business:businesses(id, name, logo_url, city)
+            business:public_businesses_safe(id, name, logo_url, city)
           )
         `)
         .eq('user_id', userId);

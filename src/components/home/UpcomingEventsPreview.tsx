@@ -41,7 +41,7 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
         .select(`
           id, title, location, start_at, end_at, cover_image_url, category, business_id,
           appearance_start_at, appearance_end_at,
-          businesses!inner(id, name, logo_url)
+          businesses:public_businesses_safe!inner(id, name, logo_url)
         `)
         .gte("start_at", new Date().toISOString())
         .order("start_at", { ascending: true })

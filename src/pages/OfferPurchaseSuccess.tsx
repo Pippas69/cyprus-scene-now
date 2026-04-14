@@ -64,7 +64,7 @@ export default function OfferPurchaseSuccess() {
           .select(`
             *,
             discounts!inner(title, percent_off, end_at),
-            businesses!inner(name, logo_url)
+            businesses:public_businesses_safe!inner(name, logo_url)
           `)
           .eq("id", purchaseId)
           .single();

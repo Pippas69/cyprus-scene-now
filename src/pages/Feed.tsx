@@ -138,7 +138,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
 
       let query = supabase
         .from("events")
-        .select("*, businesses!inner(name, logo_url, verified, city)")
+        .select("*, businesses:public_businesses_safe!inner(name, logo_url, verified, city)")
         .in("id", boostedEventIds)
         .eq("businesses.verified", true)
         .gte("end_at", new Date().toISOString())
