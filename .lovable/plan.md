@@ -19,3 +19,5 @@ Everything else — zone arcs, viewBox, click handlers, all other files.
 ### Result
 The stage semicircle will curve upward into the center of the horseshoe, matching the actual theatre layout shown in the screenshot.
 
+<!-- Test -->
+
