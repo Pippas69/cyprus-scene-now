@@ -98,6 +98,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   ticket_code: string | null;
   staff_memo: string | null;
+  source: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
@@ -824,6 +825,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         (tiers || []).forEach(t => { tierInfo[t.id] = { name: t.name, price_cents: t.price_cents }; });
       }
 
+      // Detect invitation orders
+      const ticketOnlyInvitationOrderIds = new Set<string>();
+      if (orderIds.length > 0) {
+        const { data: ticketInvitations } = await supabase
+          .from('event_invitations')
+          .select('ticket_order_id')
+          .in('ticket_order_id', orderIds);
+        if (isStaleRequest()) return;
+        (ticketInvitations || []).forEach(inv => {
+          if (inv.ticket_order_id) ticketOnlyInvitationOrderIds.add(inv.ticket_order_id);
+        });
+      }
+
       const enrichedOrders: TicketOnlyOrder[] = completedTickets.map(t => {
         const order = orderMap[t.order_id];
         const perTicketPrice = order && order.ticketCount > 0
@@ -863,6 +877,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
+          source: ticketOnlyInvitationOrderIds.has(t.order_id) ? 'invitation' : 'purchase',
         };
       });
 
@@ -1854,7 +1869,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start">
-                        {ticket.tier_name ? (
+                        {ticket.source === 'invitation' ? (
+                          <Badge variant="secondary" className="whitespace-nowrap">
+                            {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
+                          </Badge>
+                        ) : ticket.tier_name ? (
                           <>
                             <span className="text-sm font-medium">
                               {ticket.subtotal_cents > 0
