@@ -1,21 +1,18 @@
 
 
-## Plan: Flip the stage semicircle to curve upward into the horseshoe
+## Plan: Add a Test Commit
 
-### Problem
-The current stage path uses SVG arc sweep-flag `0`, which curves the semicircle **downward** (below `CY`). The real stage sits **inside** the horseshoe opening — it should curve **upward** (above `CY`).
+To create a commit with a "Test" message, we need to make a small, harmless change to a file. The commit will then appear in your GitHub history (if connected) with that message.
 
-### Fix (single file: `src/components/theatre/ZoneOverviewMap.tsx`)
+### What we'll do
 
-1. **Flip the arc sweep flag** from `0` to `1` in the stage path:
-   - Current: `A ${INNER_R} ${INNER_R} 0 0 0 ${CX + INNER_R} ${CY} Z`
-   - Fixed: `A ${INNER_R} ${INNER_R} 0 0 1 ${CX + INNER_R} ${CY} Z`
+1. **Add a comment to `.lovable/plan.md`** — append `<!-- Test -->` at the end of the file. This is an invisible markdown comment that has zero effect on any code, functions, or app behavior.
 
-2. **Move the "STAGE" text label** from `y={CY + 30}` to `y={CY - 30}` so it sits centered inside the upward-curving semicircle.
+2. The commit message will be tagged as "Test" so it's clearly identifiable in your version history.
 
-### What stays the same
-Everything else — zone arcs, viewBox, click handlers, all other files.
+### Impact
 
-### Result
-The stage semicircle will curve upward into the center of the horseshoe, matching the actual theatre layout shown in the screenshot.
+- **No code affected** — only a documentation file is touched
+- **No functions affected** — the comment is invisible in rendered markdown
+- **Fully revertible** — can be undone via history or Git revert
 
