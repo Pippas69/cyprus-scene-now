@@ -877,6 +877,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
+          source: ticketOnlyInvitationOrderIds.has(t.order_id) ? 'invitation' : 'purchase',
         };
       });
 
