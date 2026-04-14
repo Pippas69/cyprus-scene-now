@@ -524,7 +524,26 @@ async function handleTicketQR(
     }
   }
 
-  const isInvitation = ticket.ticket_orders?.source === "invitation";
+  // Detect invitation by checking event_invitations table
+  let isInvitation = false;
+  if (ticket.ticket_orders) {
+    const { data: invCheck } = await supabaseAdmin
+      .from("event_invitations")
+      .select("id")
+      .eq("ticket_order_id", ticket.order_id)
+      .maybeSingle();
+    if (invCheck) {
+      isInvitation = true;
+    } else if (ticket.ticket_orders.linked_reservation_id) {
+      // Also check if linked reservation is from an invitation
+      const { data: resInvCheck } = await supabaseAdmin
+        .from("event_invitations")
+        .select("id")
+        .eq("reservation_id", ticket.ticket_orders.linked_reservation_id)
+        .maybeSingle();
+      if (resInvCheck) isInvitation = true;
+    }
+  }
 
   return new Response(JSON.stringify({
     success: true,
