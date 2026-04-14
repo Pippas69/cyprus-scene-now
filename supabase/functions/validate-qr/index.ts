@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     // 1. Try ticket
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email, user_id, linked_reservation_id), events(id, title, start_at, business_id)`)
+      .select(`*, ticket_tiers(name, price_cents), ticket_orders(customer_name, customer_email, user_id, linked_reservation_id, source), events(id, title, start_at, business_id)`)
       .eq("qr_code_token", token)
       .single();
 
@@ -524,12 +524,15 @@ async function handleTicketQR(
     }
   }
 
+  const isInvitation = ticket.ticket_orders?.source === "invitation";
+
   return new Response(JSON.stringify({
     success: true,
     message: linkedReservationInfo 
       ? (language === "el" ? "Check-in + Κράτηση ενεργοποιήθηκε!" : "Check-in + Reservation activated!")
       : m.checkedIn,
     qrType: "ticket",
+    isInvitation,
     linkedReservation: linkedReservationInfo,
     details: {
       id: ticket.id,
