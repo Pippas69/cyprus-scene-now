@@ -754,7 +754,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                             </div>
                           )}
                           {/* Financial data for event reservations (hybrid) */}
-                          {!scanResult.details.isDirectReservation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
+                          {!scanResult.details.isDirectReservation && !scanResult.isInvitation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
                             <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
                               <div className="flex justify-between text-xs">
                                 <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
@@ -778,6 +778,14 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 </>
                               )}
                             </div>
+                          )}
+                          {/* Invitation badge for reservation scans */}
+                          {scanResult.isInvitation && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
+                              <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                            </div>
+                          )}
                           )}
                         </>
                       )}
