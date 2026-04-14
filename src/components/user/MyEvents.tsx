@@ -42,7 +42,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           seat_number,
           ticket_code,
           ticket_tiers(name, price_cents, currency, quantity_total),
-          events(id, title, start_at, end_at, location, cover_image_url, business_id, accepts_reservations, businesses:public_businesses_safe(name)),
+          events(id, title, start_at, end_at, location, cover_image_url, business_id, accepts_reservations, businesses(name)),
           ticket_orders(customer_name, total_cents, linked_reservation_id)
         `)
         .eq("user_id", userId)

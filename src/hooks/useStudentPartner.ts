@@ -45,7 +45,7 @@ export function useAllStudentPartners() {
         .from('student_discount_partners')
         .select(`
           *,
-          business:public_businesses_safe(id, name, logo_url, city)
+          business:businesses(id, name, logo_url, city)
         `)
         .order('joined_at', { ascending: false });
       

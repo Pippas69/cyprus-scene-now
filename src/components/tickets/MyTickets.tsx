@@ -94,7 +94,7 @@ export const MyTickets = () => {
           seat_number,
           ticket_code,
           ticket_tiers(name, price_cents, currency),
-          events(id, title, start_at, location, cover_image_url, businesses:public_businesses_safe(name)),
+          events(id, title, start_at, location, cover_image_url, businesses(name)),
           ticket_orders!inner(customer_name, total_cents, linked_reservation_id, reservations:linked_reservation_id(source))
         `)
         .eq("user_id", user.id)

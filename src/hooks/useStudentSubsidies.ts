@@ -27,7 +27,7 @@ export function useStudentSubsidyInvoices(status?: string) {
         .from('student_subsidy_invoices')
         .select(`
           *,
-          business:public_businesses_safe(id, name, logo_url)
+          business:businesses(id, name, logo_url)
         `)
         .order('period_end', { ascending: false });
       
