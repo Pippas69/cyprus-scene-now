@@ -427,6 +427,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!isTicketOnlyMode) {
           // Fetch orphan walk-in ticket orders (no linked reservation) and merge into list
           let walkInSynthetic: DirectReservation[] = [];
+          const checkoutEmailMap = new Map<string, string>();
           if (selectedEventId) {
             // Also detect legacy walk-ins: orders linked to auto_created reservations with no seating
             const { data: allCompletedOrders } = await supabase
@@ -434,6 +435,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               .select('id, customer_name, customer_phone, customer_email, total_cents, created_at, linked_reservation_id')
               .eq('event_id', selectedEventId)
               .eq('status', 'completed');
+
+            // Build checkout email map for linked reservations
+            (allCompletedOrders || []).forEach(o => {
+              if (o.linked_reservation_id && o.customer_email) {
+                checkoutEmailMap.set(o.linked_reservation_id, o.customer_email);
+              }
+            });
 
             if (allCompletedOrders && allCompletedOrders.length > 0) {
               // Identify orphan orders (no linked reservation)
@@ -549,7 +557,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             }
           }
 
-          const allReservations = sortReservationsByName([...sortedByName, ...walkInSynthetic]);
+          // Patch reservation emails: prefer checkout email over profile email
+          const patchedSorted = sortedByName.map(r => {
+            const checkoutEmail = checkoutEmailMap.get(r.id);
+            if (checkoutEmail && !r.email) {
+              return { ...r, email: checkoutEmail };
+            }
+            return r;
+          });
+
+          const allReservations = sortReservationsByName([...patchedSorted, ...walkInSynthetic]);
           setReservations(allReservations);
 
           const allIds = allReservations.filter(r => !r.id.startsWith('walkin-')).map(r => r.id);
