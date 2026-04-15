@@ -491,6 +491,7 @@ Deno.serve(async (req) => {
             businessName: business.name,
             eventCoverImage: event.cover_image_url,
             tickets: formattedTickets,
+            isHybrid: !!seatingTypeId,
           }),
         });
 
