@@ -202,6 +202,9 @@ Deno.serve(async (req) => {
     logStep("Order completed");
 
     // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS ====================
+    let usesLinkedReservations = false;
+    let seatingTypeId: string | null = (session.metadata?.seating_type_id || "").trim() || null;
+
     try {
       const { data: eventInfo } = await supabaseClient
         .from("events")
@@ -221,7 +224,7 @@ Deno.serve(async (req) => {
           ? (businessInfo?.category || []).map((c: string) => c.toLowerCase())
           : [];
 
-        const usesLinkedReservations =
+        usesLinkedReservations =
           !!businessInfo?.ticket_reservation_linked ||
           businessCategories.some((category: string) => linkedCategories.has(category));
 
