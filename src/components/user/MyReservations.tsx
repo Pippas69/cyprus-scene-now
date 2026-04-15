@@ -461,7 +461,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     if (realEventResIds.length > 0) {
       const { data: linkedOrders } = await supabase
         .from('ticket_orders')
-        .select('id, linked_reservation_id, total_cents')
+        .select('id, linked_reservation_id, subtotal_cents')
         .in('linked_reservation_id', realEventResIds);
 
       (linkedOrders || []).forEach((order) => {
@@ -469,7 +469,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         mergedOrderMappings.push({
           orderId: order.id,
           reservationId: order.linked_reservation_id,
-          totalCents: (order as any).total_cents || 0,
+          totalCents: (order as any).subtotal_cents || 0,
         });
       });
     }

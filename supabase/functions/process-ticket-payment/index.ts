@@ -379,14 +379,17 @@ Deno.serve(async (req) => {
       });
 
       if (!(await wasAlreadySent(supabaseClient, order.user_id, userPushKey))) {
+        const isHybridPurchase = !!(usesLinkedReservations && seatingTypeId);
         const userPushPayload: PushPayload = {
-          title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
-          body: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+          title: isHybridPurchase ? '📋 Κράτηση επιβεβαιώθηκε!' : '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+          body: isHybridPurchase
+            ? `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'άτομο' : 'άτομα'}`
+            : `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           icon: '/fomo-logo-new.png',
           badge: '/fomo-logo-new.png',
           tag: `n:ticket_purchased:${orderId}`,
           data: {
-            url: '/dashboard-user/tickets',
+            url: isHybridPurchase ? '/dashboard-user?tab=reservations&subtab=event' : '/dashboard-user/tickets',
             type: 'ticket_purchased',
             entityType: 'ticket_order',
             entityId: orderId,
@@ -437,6 +440,7 @@ Deno.serve(async (req) => {
             businessName,
             customerName,
             tickets,
+            isHybrid: !!(usesLinkedReservations && seatingTypeId),
           }),
         });
 

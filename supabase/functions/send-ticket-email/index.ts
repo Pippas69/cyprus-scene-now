@@ -34,6 +34,7 @@ const BodySchema = z.object({
   eventCoverImage: optionalString(2048),
   userId: flexId.optional(),
   eventId: flexId.optional(),
+  isHybrid: z.boolean().optional(),
 });
 
 Deno.serve(async (req) => {
@@ -68,8 +69,8 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage, userId, eventId } = await parseBody(req, BodySchema);
-    logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName, hasEventCover: !!eventCoverImage });
+    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage, userId, eventId, isHybrid } = await parseBody(req, BodySchema);
+    logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName, hasEventCover: !!eventCoverImage, isHybrid });
 
     if (!orderId || !userEmail || !tickets || tickets.length === 0) {
       throw new Error("Missing required fields: orderId, userEmail, or tickets");
@@ -151,13 +152,13 @@ Deno.serve(async (req) => {
     if (eventLocation) {
       infoRows += detailRow('Τοποθεσία', eventLocation);
     }
-    infoRows += detailRow('Εισιτήρια', `${tickets.length}`, true);
+    infoRows += detailRow(isHybrid ? 'Άτομα' : 'Εισιτήρια', `${tickets.length}`, true);
 
     const content = `
       ${customerName ? emailGreeting(customerName) : ''}
       
       <p style="color: #334155; font-size: 14px; margin: 0 0 20px 0; line-height: 1.6;">
-        Τα εισιτήριά σου είναι έτοιμα! Εμφάνισε τα παρακάτω QR codes στην είσοδο.
+        ${isHybrid ? 'Η κράτησή σου επιβεβαιώθηκε! Εμφάνισε τα παρακάτω QR codes στην είσοδο.' : 'Τα εισιτήριά σου είναι έτοιμα! Εμφάνισε τα παρακάτω QR codes στην είσοδο.'}
       </p>
 
       ${eventHeader(eventTitle, businessName || '', eventCoverImage)}
@@ -165,14 +166,14 @@ Deno.serve(async (req) => {
       ${infoCard('Λεπτομέρειες', infoRows)}
 
       <p style="color: #0d3b66; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 16px 0; text-align: center;">
-        Τα εισιτήριά σου
+        ${isHybrid ? 'Τα QR codes σου' : 'Τα εισιτήριά σου'}
       </p>
       
       ${ticketQRs}
 
-      ${noteBox('Κράτα αυτό το email ή έχε πρόσβαση στα εισιτήριά σου από το ΦΟΜΟ dashboard.', 'info')}
+      ${noteBox(isHybrid ? 'Κράτα αυτό το email ή έχε πρόσβαση στην κράτησή σου από το ΦΟΜΟ dashboard.' : 'Κράτα αυτό το email ή έχε πρόσβαση στα εισιτήριά σου από το ΦΟΜΟ dashboard.', 'info')}
 
-      ${ctaButton('Δες τα εισιτήριά σου', 'https://fomo.com.cy/dashboard-user?tab=events&subtab=tickets')}
+      ${ctaButton(isHybrid ? 'Δες την κράτησή σου' : 'Δες τα εισιτήριά σου', isHybrid ? 'https://fomo.com.cy/dashboard-user?tab=reservations&subtab=event' : 'https://fomo.com.cy/dashboard-user?tab=events&subtab=tickets')}
 
       <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 20px;">
         Παραγγελία #${orderId.slice(0, 8).toUpperCase()}
@@ -183,12 +184,12 @@ Deno.serve(async (req) => {
       </p>
     `;
 
-    const emailHtml = wrapPremiumEmail(content, '🎟️ Εισιτήρια Έτοιμα');
+    const emailHtml = wrapPremiumEmail(content, isHybrid ? '📋 Κράτηση' : '🎟️ Εισιτήρια Έτοιμα');
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [userEmail],
-      subject: `🎟️ Τα εισιτήριά σου για ${eventTitle}`,
+      subject: isHybrid ? `📋 Η κράτησή σου για ${eventTitle}` : `🎟️ Τα εισιτήριά σου για ${eventTitle}`,
       html: emailHtml,
     });
 
