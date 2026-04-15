@@ -590,7 +590,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                 <div className="flex items-center justify-center gap-2">
                   <Badge variant="outline" className="gap-1">
                     {getTypeIcon(scanResult.qrType)}
-                    {t[scanResult.qrType]}
+                    {scanResult.qrType === 'ticket' && scanResult.linkedReservation ? t.reservation : t[scanResult.qrType]}
                   </Badge>
                   {scanResult.details?.prepaidChargeStatus === 'paid' && (
                     <Badge className="bg-green-600 text-white">{t.paid}</Badge>
@@ -635,8 +635,8 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                           )}
                           {/* Linked Reservation Info */}
                           {scanResult.linkedReservation && (
-                            <div className="mt-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-1.5">
-                              <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-400 font-medium text-xs">
+                            <div className="mt-2 p-2.5 rounded-lg border border-border/50 space-y-1.5">
+                              <div className="flex items-center gap-1.5 font-medium text-xs">
                                 <Users className="h-3.5 w-3.5" />
                                 {language === 'el' ? 'Κράτηση ενεργοποιήθηκε' : 'Reservation activated'}
                               </div>
@@ -647,7 +647,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               {scanResult.isInvitation ? (
                                 <div className="flex justify-between text-xs">
                                   <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
-                                  <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
+                                  <span className="font-medium">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
                                 </div>
                               ) : (() => {
                                 const minCharge = scanResult.linkedReservation.minimumChargeCents || 0;
@@ -664,14 +664,14 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                     )}
                                     {ticketCredit > 0 && (
                                       <div className="flex justify-between text-xs">
-                                        <span className="text-green-600 dark:text-green-400">💳 {t.prepaidCredit}:</span>
-                                        <span className="font-medium text-green-600 dark:text-green-400">-€{(ticketCredit / 100).toFixed(2)}</span>
+                                        <span className="text-muted-foreground">💳 {t.prepaidCredit}:</span>
+                                        <span className="font-medium">-€{(ticketCredit / 100).toFixed(2)}</span>
                                       </div>
                                     )}
                                     {balance > 0 && (
-                                      <div className="flex justify-between text-xs pt-1 border-t border-blue-200 dark:border-blue-700">
-                                        <span className="font-semibold text-amber-600 dark:text-amber-400">{t.balanceAtVenue}:</span>
-                                        <span className="font-bold text-amber-600 dark:text-amber-400">€{(balance / 100).toFixed(2)}</span>
+                                      <div className="flex justify-between text-xs pt-1 border-t border-border/30">
+                                        <span className="font-semibold">{t.balanceAtVenue}:</span>
+                                        <span className="font-bold">€{(balance / 100).toFixed(2)}</span>
                                       </div>
                                     )}
                                   </>
