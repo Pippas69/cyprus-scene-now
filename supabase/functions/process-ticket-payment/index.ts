@@ -271,6 +271,7 @@ Deno.serve(async (req) => {
 
           const totalTicketCreditCents = order.subtotal_cents || 0;
           const partySize = ticketsToCreate.length;
+          const reservationNameFromMeta = session.metadata?.reservation_name?.trim() || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
           const confirmationCode = `TR-${orderId.substring(0, 8).toUpperCase()}`;
@@ -280,7 +281,7 @@ Deno.serve(async (req) => {
             event_id: order.event_id,
             business_id: eventInfo.business_id,
             user_id: order.user_id,
-            reservation_name: order.customer_name || "Guest",
+            reservation_name: reservationNameFromMeta || order.customer_name || "Guest",
             phone_number: order.customer_phone || null,
             party_size: partySize,
             status: "accepted",
