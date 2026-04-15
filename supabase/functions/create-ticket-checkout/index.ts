@@ -20,6 +20,7 @@ const CheckoutBodySchema = z.object({
   customerPhone: optionalString(20),
   specialRequests: optionalString(1000),
   seatingTypeId: flexId.optional(),
+  reservationName: safeString(200).optional(),
   guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
   seatIds: z.array(flexId).optional(),
   showInstanceId: flexId.optional(),
@@ -43,6 +44,7 @@ interface CheckoutRequest {
   customerPhone?: string | null;
   specialRequests?: string | null;
   seatingTypeId?: string | null;
+  reservationName?: string | null;
   guests?: GuestData[];
   seatIds?: string[];
   showInstanceId?: string;
@@ -89,8 +91,8 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
-    logStep("Request data", { eventId, items, customerName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
+    logStep("Request data", { eventId, items, customerName, reservationName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
     // Fetch event and business info (including Stripe Connect status)
     const { data: event, error: eventError } = await supabaseClient
@@ -623,6 +625,7 @@ Deno.serve(async (req) => {
         ticket_breakdown: JSON.stringify(ticketBreakdown),
         guests: guests ? JSON.stringify(guests) : undefined,
         seating_type_id: seatingTypeId || undefined,
+        reservation_name: reservationName?.trim() || undefined,
         special_requests: specialRequests || undefined,
         seat_ids: seatIds ? JSON.stringify(seatIds) : undefined,
         seat_details: seatDetailsForMeta,
