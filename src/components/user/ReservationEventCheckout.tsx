@@ -709,12 +709,13 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
           <div className="space-y-3">
             {/* Reservation Name */}
             <div className="space-y-1">
-              <Label htmlFor="name" className="flex items-center gap-2 text-sm">
+              <Label htmlFor="reservation_name" className="flex items-center gap-2 text-sm">
                 <User className="h-3.5 w-3.5" />
                 {t.name} *
               </Label>
               <Input
-                id="name"
+                id="reservation_name"
+                autoComplete="off"
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
