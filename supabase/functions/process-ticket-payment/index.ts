@@ -229,7 +229,6 @@ Deno.serve(async (req) => {
           businessCategories.some((category: string) => linkedCategories.has(category));
 
         // Validate/resolve seating type id
-        let seatingTypeId = (session.metadata?.seating_type_id || "").trim() || null;
         const { data: eventSeatingTypes } = await supabaseClient
           .from("reservation_seating_types")
           .select("id, seating_type")
