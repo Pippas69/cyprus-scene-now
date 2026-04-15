@@ -435,6 +435,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               .eq('event_id', selectedEventId)
               .eq('status', 'completed');
 
+            // Build checkout email map for linked reservations
+            const checkoutEmailMap = new Map<string, string>();
+            (allCompletedOrders || []).forEach(o => {
+              if (o.linked_reservation_id && o.customer_email) {
+                checkoutEmailMap.set(o.linked_reservation_id, o.customer_email);
+              }
+            });
+
             if (allCompletedOrders && allCompletedOrders.length > 0) {
               // Identify orphan orders (no linked reservation)
               const orphanOrderIds = new Set(
