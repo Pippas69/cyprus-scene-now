@@ -427,6 +427,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (!isTicketOnlyMode) {
           // Fetch orphan walk-in ticket orders (no linked reservation) and merge into list
           let walkInSynthetic: DirectReservation[] = [];
+          const checkoutEmailMap = new Map<string, string>();
           if (selectedEventId) {
             // Also detect legacy walk-ins: orders linked to auto_created reservations with no seating
             const { data: allCompletedOrders } = await supabase
@@ -436,7 +437,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               .eq('status', 'completed');
 
             // Build checkout email map for linked reservations
-            const checkoutEmailMap = new Map<string, string>();
             (allCompletedOrders || []).forEach(o => {
               if (o.linked_reservation_id && o.customer_email) {
                 checkoutEmailMap.set(o.linked_reservation_id, o.customer_email);
