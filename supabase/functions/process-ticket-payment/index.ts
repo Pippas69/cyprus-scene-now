@@ -437,6 +437,7 @@ Deno.serve(async (req) => {
             businessName,
             customerName,
             tickets,
+            isHybrid: !!(usesLinkedReservations && seatingTypeId),
           }),
         });
 
