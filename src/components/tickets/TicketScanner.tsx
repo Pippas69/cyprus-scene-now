@@ -307,11 +307,11 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
               )}
 
               {scanResult.linkedReservation && (
-                <div className="mt-3 p-3 border border-primary/30 rounded-lg space-y-1">
-                  <p className="text-sm font-semibold text-primary">{text.reservationActivated}</p>
+                <div className="mt-3 p-3 border border-border/50 rounded-lg space-y-1">
+                  <p className="text-sm font-semibold">{text.reservationActivated}</p>
                   <p><strong>{text.people}:</strong> {scanResult.linkedReservation.partySize}</p>
                   {linkedReservationAmountCents != null && linkedReservationAmountCents > 0 && (
-                    <p><strong>{text.minimumCharge}:</strong> <span className="text-primary">€{(linkedReservationAmountCents / 100).toFixed(2)}</span></p>
+                    <p><strong>{text.minimumCharge}:</strong> <span>€{(linkedReservationAmountCents / 100).toFixed(2)}</span></p>
                   )}
                 </div>
               )}
