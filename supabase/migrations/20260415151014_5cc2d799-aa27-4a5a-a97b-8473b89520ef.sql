@@ -1,0 +1,56 @@
+
+DO $$
+DECLARE
+  uid uuid := '951d1208-419a-428a-bcea-3aea73337d2e';
+BEGIN
+  DELETE FROM public.tickets WHERE order_id IN (SELECT id FROM public.ticket_orders WHERE user_id = uid);
+  DELETE FROM public.ticket_orders WHERE user_id = uid;
+  DELETE FROM public.reservation_table_assignments WHERE reservation_id IN (SELECT id FROM public.reservations WHERE user_id = uid);
+  DELETE FROM public.reservation_zone_assignments WHERE reservation_id IN (SELECT id FROM public.reservations WHERE user_id = uid);
+  DELETE FROM public.reservation_scans WHERE reservation_id IN (SELECT id FROM public.reservations WHERE user_id = uid);
+  DELETE FROM public.reservation_guests WHERE reservation_id IN (SELECT id FROM public.reservations WHERE user_id = uid);
+  DELETE FROM public.reservation_no_shows WHERE reservation_id IN (SELECT id FROM public.reservations WHERE user_id = uid);
+  DELETE FROM public.reservations WHERE user_id = uid;
+  DELETE FROM public.event_invitations WHERE invited_by = uid;
+  DELETE FROM public.offer_purchase_guests WHERE purchase_id IN (SELECT id FROM public.offer_purchases WHERE user_id = uid);
+  DELETE FROM public.credit_transactions WHERE purchase_id IN (SELECT id FROM public.offer_purchases WHERE user_id = uid);
+  DELETE FROM public.offer_purchases WHERE user_id = uid;
+  DELETE FROM public.redemptions WHERE user_id = uid;
+  DELETE FROM public.student_redemptions WHERE user_id = uid;
+  DELETE FROM public.business_followers WHERE user_id = uid;
+  DELETE FROM public.business_post_likes WHERE user_id = uid;
+  DELETE FROM public.business_post_poll_votes WHERE user_id = uid;
+  DELETE FROM public.business_post_views WHERE user_id = uid;
+  DELETE FROM public.favorites WHERE user_id = uid;
+  DELETE FROM public.favorite_discounts WHERE user_id = uid;
+  DELETE FROM public.rsvps WHERE user_id = uid;
+  DELETE FROM public.post_reactions WHERE user_id = uid;
+  DELETE FROM public.notifications WHERE user_id = uid;
+  DELETE FROM public.push_subscriptions WHERE user_id = uid;
+  DELETE FROM public.direct_messages WHERE sender_id = uid;
+  DELETE FROM public.conversation_participants WHERE user_id = uid;
+  DELETE FROM public.messages WHERE user_id = uid;
+  DELETE FROM public.discount_views WHERE user_id = uid;
+  DELETE FROM public.discount_scans WHERE scanned_by = uid;
+  DELETE FROM public.engagement_events WHERE user_id = uid;
+  DELETE FROM public.event_views WHERE user_id = uid;
+  DELETE FROM public.crm_guest_tag_assignments WHERE assigned_by = uid;
+  DELETE FROM public.crm_guest_notes WHERE author_id = uid;
+  UPDATE public.crm_guests SET brought_by_user_id = NULL WHERE brought_by_user_id = uid;
+  DELETE FROM public.crm_guests WHERE user_id = uid;
+  DELETE FROM public.reports WHERE user_id = uid;
+  DELETE FROM public.student_verifications WHERE user_id = uid;
+  DELETE FROM public.student_discount_redemptions WHERE scanned_by = uid;
+  DELETE FROM public.user_connections WHERE requester_id = uid OR receiver_id = uid;
+  DELETE FROM public.audit_trail WHERE actor_id = uid;
+  DELETE FROM public.admin_audit_log WHERE admin_user_id = uid;
+  DELETE FROM public.user_roles WHERE user_id = uid;
+  DELETE FROM public.user_2fa_settings WHERE user_id = uid;
+  DELETE FROM public.user_preferences WHERE user_id = uid;
+  DELETE FROM public.email_otp_codes WHERE user_id = uid;
+  DELETE FROM public.offline_scan_results WHERE scanned_by = uid;
+  DELETE FROM public.free_entry_reports WHERE reporter_user_id = uid;
+  DELETE FROM public.notification_log WHERE user_id = uid;
+  DELETE FROM public.profiles WHERE id = uid;
+  DELETE FROM auth.users WHERE id = uid;
+END $$;
