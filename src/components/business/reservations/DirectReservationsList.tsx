@@ -557,10 +557,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             }
           }
 
-          // Patch reservation emails: prefer checkout email over profile email
+          // Patch reservation emails: always prefer checkout email over profile email
           const patchedSorted = sortedByName.map(r => {
             const checkoutEmail = checkoutEmailMap.get(r.id);
-            if (checkoutEmail && !r.email) {
+            if (checkoutEmail) {
               return { ...r, email: checkoutEmail };
             }
             return r;
