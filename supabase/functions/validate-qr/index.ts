@@ -268,12 +268,24 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error("[VALIDATE-QR] Unhandled error", error);
-    return new Response(JSON.stringify({ success: false, message: msg("en").internalError }), {
+    return new Response(JSON.stringify({ success: false, message: msg("en").internalError, qrType: "unknown" }), {
       status: 200,
       headers: { ...securityHeaders, "Content-Type": "application/json" },
     });
   }
 });
+
+async function isReservationInvitation(supabaseAdmin: any, reservationId: string | null | undefined) {
+  if (!reservationId) return false;
+
+  const { data } = await supabaseAdmin
+    .from("event_invitations")
+    .select("id")
+    .eq("reservation_id", reservationId)
+    .maybeSingle();
+
+  return Boolean(data);
+}
 
 // Handler for Ticket QR
 async function handleTicketQR(
@@ -1001,7 +1013,7 @@ async function handleReservationQR(
     }
   }
 
-  const isInvitation = reservation.source === "invitation";
+  const isInvitation = await isReservationInvitation(supabaseAdmin, reservation.id);
 
   return new Response(JSON.stringify({
     success: true,
@@ -1211,7 +1223,7 @@ async function handleReservationGuestQR(
     }
   }
 
-  const isInvitation = reservation.source === "invitation";
+  const isInvitation = await isReservationInvitation(supabaseAdmin, reservation.id);
 
   return new Response(JSON.stringify({
     success: true,
@@ -1509,8 +1521,8 @@ async function handleStudentQR(
 
     logStep('Student discount emails sent', { student: !!studentEmail, business: !!businessEmail });
   } catch (emailErr) {
-    if (error instanceof ValidationError) {
-      return validationErrorResponse(error, securityHeaders);
+    if (emailErr instanceof ValidationError) {
+      return validationErrorResponse(emailErr, securityHeaders);
     }
     logStep('Student discount email error (non-fatal)', { error: emailErr instanceof Error ? emailErr.message : String(emailErr) });
   }
