@@ -15,6 +15,7 @@ import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { queueOfflineScan } from '@/lib/offlineScanQueue';
 import { useOfflineScanSync } from '@/hooks/useOfflineScanSync';
 import { resilientCall } from '@/lib/apiRetry';
+import { parseEdgeFunctionStructuredError } from '@/utils/parseEdgeFunctionError';
 
 interface UnifiedQRScannerProps {
   businessId: string;
@@ -23,6 +24,9 @@ interface UnifiedQRScannerProps {
 }
 
 type QRType = 'ticket' | 'offer' | 'reservation' | 'reservation_guest' | 'student' | 'unknown';
+
+const isQrType = (value: unknown): value is QRType =>
+  typeof value === 'string' && ['ticket', 'offer', 'reservation', 'reservation_guest', 'student', 'unknown'].includes(value);
 
 interface ScanResult {
   success: boolean;
@@ -213,6 +217,56 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
   const { isOffline } = useOfflineStatus();
   const { pendingCount, isSyncing, syncAllPending } = useOfflineScanSync(language);
   const createRedemption = useCreateStudentRedemption();
+
+  const buildScanErrorResult = async (error: unknown): Promise<ScanResult> => {
+    const anyError = error as any;
+    const payload = await parseEdgeFunctionStructuredError(error);
+
+    const responseStatus =
+      anyError?.context instanceof Response
+        ? anyError.context.status
+        : anyError?.context?.response instanceof Response
+          ? anyError.context.response.status
+          : typeof anyError?.status === 'number'
+            ? anyError.status
+            : null;
+
+    const payloadMessage =
+      typeof payload?.message === 'string'
+        ? payload.message
+        : typeof payload?.error === 'string'
+          ? payload.error
+          : '';
+
+    const payloadQrType = isQrType(payload?.qrType) ? payload.qrType : 'unknown';
+    const rawMessage = typeof anyError?.message === 'string' ? anyError.message : '';
+    const isAuthError =
+      responseStatus === 401 ||
+      rawMessage.includes('401') ||
+      rawMessage.includes('Unauthorized') ||
+      payloadMessage.toLowerCase() === 'unauthorized';
+
+    if (isAuthError) {
+      return { success: false, message: t.sessionExpired, qrType: payloadQrType };
+    }
+
+    if (payloadMessage) {
+      return { success: false, message: payloadMessage, qrType: payloadQrType };
+    }
+
+    if (rawMessage.includes("Circuit breaker 'validate-qr' is open")) {
+      return {
+        success: false,
+        message:
+          language === 'el'
+            ? 'Η σάρωση είναι προσωρινά μη διαθέσιμη. Δοκιμάστε ξανά σε λίγα δευτερόλεπτα.'
+            : 'Scanning is temporarily unavailable. Please try again in a few seconds.',
+        qrType: 'unknown',
+      };
+    }
+
+    return { success: false, message: t.scanError, qrType: 'unknown' };
+  };
   
   const discountPercent = scanResult?.details?.discountPercent || 0;
   const discountedPrice = originalPrice 
@@ -372,7 +426,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
         return data;
       }, { maxRetries: 1 });
 
-      const result = data as ScanResult;
+      const result = { qrType: 'unknown', ...(data as Partial<ScanResult>) } as ScanResult;
       setScanResult(result);
 
       if (result.success && !result.requiresPriceEntry) {
@@ -400,8 +454,9 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
           setScanResult({ success: false, message: t.scanError, qrType: 'unknown' });
         }
       } else {
-        const isAuthError = error?.message?.includes('401') || error?.message?.includes('Unauthorized');
-        setScanResult({ success: false, message: isAuthError ? t.sessionExpired : t.scanError, qrType: 'unknown' });
+        const errorResult = await buildScanErrorResult(error);
+        setScanResult(errorResult);
+        toast.error(errorResult.message);
       }
     } finally {
       setVerifying(false);
@@ -587,15 +642,19 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                 </Alert>
 
                 {/* Type Badge */}
-                <div className="flex items-center justify-center gap-2">
-                  <Badge variant="outline" className="gap-1">
-                    {getTypeIcon(scanResult.qrType)}
-                    {scanResult.qrType === 'ticket' && scanResult.linkedReservation ? t.reservation : t[scanResult.qrType]}
-                  </Badge>
-                  {scanResult.details?.prepaidChargeStatus === 'paid' && (
-                    <Badge className="bg-green-600 text-white">{t.paid}</Badge>
-                  )}
-                </div>
+                {(scanResult.qrType !== 'unknown' || scanResult.details?.prepaidChargeStatus === 'paid') && (
+                  <div className="flex items-center justify-center gap-2">
+                    {scanResult.qrType !== 'unknown' && (
+                      <Badge variant="outline" className="gap-1">
+                        {getTypeIcon(scanResult.qrType)}
+                        {scanResult.qrType === 'ticket' && scanResult.linkedReservation ? t.reservation : t[scanResult.qrType]}
+                      </Badge>
+                    )}
+                    {scanResult.details?.prepaidChargeStatus === 'paid' && (
+                      <Badge className="bg-green-600 text-white">{t.paid}</Badge>
+                    )}
+                  </div>
+                )}
 
                 {/* Details Card */}
                 {scanResult.details && (
