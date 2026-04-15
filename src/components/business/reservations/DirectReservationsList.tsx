@@ -549,7 +549,23 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             }
           }
 
-          const allReservations = sortReservationsByName([...sortedByName, ...walkInSynthetic]);
+          // Patch reservation emails: prefer checkout email over profile email
+          const checkoutEmailMap = new Map<string, string>();
+          (allCompletedOrders || []).forEach(o => {
+            if (o.linked_reservation_id && o.customer_email) {
+              checkoutEmailMap.set(o.linked_reservation_id, o.customer_email);
+            }
+          });
+
+          const patchedSorted = sortedByName.map(r => {
+            const checkoutEmail = checkoutEmailMap.get(r.id);
+            if (checkoutEmail && !r.email) {
+              return { ...r, email: checkoutEmail };
+            }
+            return r;
+          });
+
+          const allReservations = sortReservationsByName([...patchedSorted, ...walkInSynthetic]);
           setReservations(allReservations);
 
           const allIds = allReservations.filter(r => !r.id.startsWith('walkin-')).map(r => r.id);
