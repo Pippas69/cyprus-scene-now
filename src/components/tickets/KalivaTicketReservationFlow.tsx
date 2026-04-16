@@ -252,12 +252,18 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [isFreshSignup, setIsFreshSignup] = useState(false);
   const [wasAuthenticatedOnMount, setWasAuthenticatedOnMount] = useState<boolean | null>(null);
   const profileName = useProfileName(userId);
+  const [eventMinimumAge, setEventMinimumAge] = useState<number | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setIsAuthenticated(!!data.user);
       setWasAuthenticatedOnMount(!!data.user);
+    });
+    // Fetch minimum_age
+    supabase.from('events').select('minimum_age').eq('id', eventId).single().then(({ data }) => {
+      setEventMinimumAge(data?.minimum_age ?? null);
+    });
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
@@ -472,7 +478,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   // Validation
   const canProceedToStep2 = selectedSeating !== null;
-  const minAge = getMinAge(eventId);
+  const minAge = getMinAge(eventId, eventMinimumAge);
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
   const hasReservationName = reservationName.trim().length >= 2;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
