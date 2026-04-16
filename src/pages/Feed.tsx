@@ -36,7 +36,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
 import { isBoostCurrentlyActive, type EventBoostRecord, type OfferBoostRecord } from "@/lib/boostUtils";
-import { isStudentDiscountActiveToday } from "@/lib/studentDiscountDays";
+
 interface FeedProps {
   showNavbar?: boolean;
 }
