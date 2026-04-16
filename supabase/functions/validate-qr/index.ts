@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     // Verify the caller owns this business
     const { data: business, error: businessError } = await supabaseAdmin
       .from("businesses")
-      .select("id, name, user_id, student_discount_enabled, student_discount_percent, student_discount_mode")
+      .select("id, name, user_id, student_discount_enabled, student_discount_percent, student_discount_mode, student_discount_days")
       .eq("id", body.businessId)
       .single();
 
@@ -1295,6 +1295,37 @@ async function handleStudentQR(
     return new Response(JSON.stringify({
       success: false,
       message: language === "el" ? "Οι φοιτητικές εκπτώσεις δεν είναι ενεργοποιημένες" : "Student discounts not enabled",
+      qrType: "student"
+    }), {
+      status: 200,
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Check if today is an active discount day
+  const dayMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const cyprusNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Nicosia' }));
+  const todayDay = dayMap[cyprusNow.getDay()];
+  const activeDays: string[] = business.student_discount_days || [];
+  
+  if (activeDays.length === 0 || !activeDays.includes(todayDay)) {
+    const dayNamesEl: Record<string, string> = {
+      monday: 'Δευτέρα', tuesday: 'Τρίτη', wednesday: 'Τετάρτη',
+      thursday: 'Πέμπτη', friday: 'Παρασκευή', saturday: 'Σάββατο', sunday: 'Κυριακή'
+    };
+    const dayNamesEn: Record<string, string> = {
+      monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
+      thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday'
+    };
+    const dayNames = language === "el" ? dayNamesEl : dayNamesEn;
+    const activeDaysList = activeDays.map(d => dayNames[d] || d).join(', ');
+    const msg_text = language === "el"
+      ? `Η φοιτητική έκπτωση δεν ισχύει σήμερα. Ισχύει: ${activeDaysList || 'Καμία μέρα'}`
+      : `Student discount is not active today. Active days: ${activeDaysList || 'None'}`;
+    
+    return new Response(JSON.stringify({
+      success: false,
+      message: msg_text,
       qrType: "student"
     }), {
       status: 200,
