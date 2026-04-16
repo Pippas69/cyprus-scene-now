@@ -531,6 +531,7 @@ export function VenueSVGCanvas({
 
         return (
           <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter={filterAttr}>
+            {/* Base shape */}
             {g.shape === 'round' ? (
               <circle cx={cx} cy={cy} r={g.w / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
             ) : (
@@ -541,56 +542,87 @@ export function VenueSVGCanvas({
               />
             )}
 
+            {/* Assigned table: inner accent line for depth */}
+            {hasTableAssignment && (
+              g.shape === 'round' ? (
+                <circle cx={cx} cy={cy} r={g.w / 2 - 0.5} fill="none" stroke="hsl(168 55% 55% / 0.12)" strokeWidth={0.12} />
+              ) : (
+                <rect
+                  x={g.x + 0.4} y={g.y + 0.4} width={g.w - 0.8} height={g.h - 0.8}
+                  rx={g.shape === 'rectangle' ? 0.2 : 0.4}
+                  fill="none" stroke="hsl(168 55% 55% / 0.12)" strokeWidth={0.12}
+                />
+              )
+            )}
+
             {/* Show full name when assigned, or label when not */}
             {hasTableAssignment && displayName ? (
               <g transform={isVertical ? `rotate(-90 ${cx} ${cy})` : undefined}>
-                {/* Table number small at top */}
-                <text
-                  x={cx} y={cy - availH * (displayName.isMultiLine ? 0.28 : 0.22)}
-                  textAnchor="middle" dominantBaseline="central"
-                  fill="hsl(168 50% 55% / 0.6)"
-                  fontSize={labelFontSize * 0.6}
-                  fontWeight={500}
-                  className="pointer-events-none"
-                  style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
-                >
-                  {item.label}
-                </text>
-                {/* Full name centered */}
+                {/* Table number — small pill badge at top */}
+                {(() => {
+                  const badgeY = cy - availH * (displayName.isMultiLine ? 0.30 : 0.24);
+                  const badgeFontSize = labelFontSize * 0.55;
+                  const badgeW = Math.max(item.label.length * badgeFontSize * 0.65, 2.2);
+                  const badgeH = badgeFontSize * 1.8;
+                  return (
+                    <>
+                      <rect
+                        x={cx - badgeW / 2} y={badgeY - badgeH / 2}
+                        width={badgeW} height={badgeH}
+                        rx={badgeH / 2}
+                        fill="hsl(168 50% 50% / 0.15)"
+                        stroke="hsl(168 55% 55% / 0.25)"
+                        strokeWidth={0.08}
+                      />
+                      <text
+                        x={cx} y={badgeY}
+                        textAnchor="middle" dominantBaseline="central"
+                        fill="hsl(168 55% 65%)"
+                        fontSize={badgeFontSize}
+                        fontWeight={600}
+                        className="pointer-events-none"
+                        style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.05em' }}
+                      >
+                        {item.label}
+                      </text>
+                    </>
+                  );
+                })()}
+                {/* Full name — bold and bright */}
                 {displayName.isMultiLine ? (
                   <>
                     <text
-                      x={cx} y={cy - nameFontSize * 0.15}
+                      x={cx} y={cy + nameFontSize * 0.1}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(168 50% 60%)"
+                      fill="hsl(168 50% 75%)"
                       fontSize={nameFontSize}
-                      fontWeight={600}
+                      fontWeight={700}
                       className="pointer-events-none"
-                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.02em' }}
                     >
                       {displayName.lines[0]}
                     </text>
                     <text
-                      x={cx} y={cy + nameFontSize * 1.15}
+                      x={cx} y={cy + nameFontSize * 1.35}
                       textAnchor="middle" dominantBaseline="central"
-                      fill="hsl(168 50% 60%)"
+                      fill="hsl(168 50% 75%)"
                       fontSize={nameFontSize}
-                      fontWeight={600}
+                      fontWeight={700}
                       className="pointer-events-none"
-                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
+                      style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.02em' }}
                     >
                       {displayName.lines[1]}
                     </text>
                   </>
                 ) : (
                   <text
-                    x={cx} y={cy + nameFontSize * 0.4}
+                    x={cx} y={cy + nameFontSize * 0.55}
                     textAnchor="middle" dominantBaseline="central"
-                    fill="hsl(168 50% 60%)"
+                    fill="hsl(168 50% 75%)"
                     fontSize={nameFontSize}
-                    fontWeight={600}
+                    fontWeight={700}
                     className="pointer-events-none"
-                    style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.03em' }}
+                    style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.02em' }}
                   >
                     {displayName.lines[0]}
                   </text>
