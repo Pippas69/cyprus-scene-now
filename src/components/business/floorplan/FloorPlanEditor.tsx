@@ -43,6 +43,11 @@ interface FloorPlanZone {
 
 interface FloorPlanEditorProps {
   businessId: string;
+  mode?: 'legacy' | 'template' | 'event';
+  eventId?: string;
+  initialItems?: FloorPlanItemFull[];
+  onSaveTemplate?: (items: FloorPlanItemFull[]) => void;
+  onSaveEventLayout?: (items: FloorPlanItemFull[]) => void;
 }
 
 const SNAP_INCREMENT = 2;
@@ -122,7 +127,10 @@ const translations = {
   },
 };
 
-export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
+export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout }: FloorPlanEditorProps) {
+  const isTemplateMode = mode === 'template';
+  const isEventMode = mode === 'event';
+  const isLegacyMode = mode === 'legacy';
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -181,10 +189,36 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadFloorPlan(); loadEvents(); }, [businessId]);
+  // Initialize based on mode
+  useEffect(() => {
+    if (isTemplateMode || isEventMode) {
+      // Use provided initialItems
+      const loaded = (initialItems || []).map((i: any) => ({
+        ...i,
+        id: i.id || crypto.randomUUID(),
+        rotation: i.rotation ?? 0,
+        width_percent: i.width_percent ?? 5,
+        height_percent: i.height_percent ?? 5,
+        is_locked: i.is_locked ?? false,
+        item_type: i.item_type ?? 'table',
+        color: i.color ?? null,
+      }));
+      setItems(loaded);
+      setHasFloorPlan(loaded.length > 0);
+      setIsDesignMode(true);
+      history.reset(loaded);
+      setLoading(false);
+      if (isEventMode && propEventId) {
+        setSelectedEventId(propEventId);
+      }
+    } else {
+      loadFloorPlan();
+      loadEvents();
+    }
+  }, [businessId, mode]);
 
   const loadEvents = async () => {
-    const now = new Date().toISOString();
+    if (!isLegacyMode) return;
     const { data } = await supabase
       .from('events')
       .select('id, title, start_at')
@@ -194,7 +228,6 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     
     const loadedEvents = (data || []) as FloorPlanEvent[];
     setEvents(loadedEvents);
-    // Auto-select nearest event
     if (loadedEvents.length > 0 && !selectedEventId) {
       setSelectedEventId(loadedEvents[0].id);
     }
@@ -435,6 +468,7 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
   };
 
   const debouncedSave = useCallback((item: FloorPlanItemFull) => {
+    if (!isLegacyMode) return; // Template/event modes save on explicit Save click
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       supabase.from('floor_plan_tables').update({
@@ -446,13 +480,36 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         if (error) console.error('Save error:', error);
       });
     }, 800);
-  }, []);
+  }, [isLegacyMode]);
 
   const updateItemLocal = (item: FloorPlanItemFull) => {
     setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
   };
 
-  const saveItemToDB = async (item: Partial<FloorPlanItemFull>) => {
+  const saveItemToDB = async (item: Partial<FloorPlanItemFull>): Promise<FloorPlanItemFull | null> => {
+    if (!isLegacyMode) {
+      // Template/event mode: just create locally with a UUID
+      const newItem: FloorPlanItemFull = {
+        id: crypto.randomUUID(),
+        business_id: businessId,
+        zone_id: zones[0]?.id || null,
+        label: item.label!,
+        x_percent: item.x_percent!,
+        y_percent: item.y_percent!,
+        seats: item.seats || 0,
+        shape: item.shape || 'square',
+        sort_order: items.length,
+        fixture_type: item.fixture_type || null,
+        rotation: item.rotation || 0,
+        width_percent: item.width_percent || 5,
+        height_percent: item.height_percent || 5,
+        is_locked: false,
+        item_type: item.item_type || 'table',
+        color: item.color || null,
+      };
+      return newItem;
+    }
+
     const { data, error } = await supabase.from('floor_plan_tables').insert({
       business_id: businessId, zone_id: zones[0]?.id || null,
       label: item.label!, x_percent: item.x_percent!, y_percent: item.y_percent!,
@@ -525,12 +582,16 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   const deleteItem = async (itemId: string) => {
     history.pushState(items, 'delete');
-    const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
-    if (error) { toast.error(error.message); return; }
+    if (isLegacyMode) {
+      const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
+      if (error) { toast.error(error.message); return; }
+    }
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     setSelectedItem(null);
     toast.success(t.deleted);
   };
+
+
 
   const duplicateItem = async (item: FloorPlanItemFull) => {
     const newItem: Partial<FloorPlanItemFull> = {
@@ -570,8 +631,10 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
 
   const clearAllItems = async () => {
     if (!window.confirm(t.clearAllConfirm)) return;
-    const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
-    if (error) { toast.error(error.message); return; }
+    if (isLegacyMode) {
+      const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
+      if (error) { toast.error(error.message); return; }
+    }
     history.pushState(items, 'clear all');
     setItems([]);
     setSelectedItem(null);
@@ -619,6 +682,21 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
     setIsSaving(true);
 
     try {
+      if (isTemplateMode && onSaveTemplate) {
+        onSaveTemplate(items);
+        setSelectedItem(null);
+        setPlacingMode(null);
+        return;
+      }
+
+      if (isEventMode && onSaveEventLayout) {
+        onSaveEventLayout(items);
+        setSelectedItem(null);
+        setPlacingMode(null);
+        return;
+      }
+
+      // Legacy mode: save to floor_plan_tables
       const updateResults = await Promise.all(items.map((item) =>
         supabase.from('floor_plan_tables').update({
           label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
@@ -992,8 +1070,8 @@ export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
         </div>
       )}
 
-      {/* Event selector (preview mode only) */}
-      {!isDesignMode && events.length > 0 && (
+      {/* Event selector (legacy preview mode only) */}
+      {isLegacyMode && !isDesignMode && events.length > 0 && (
         <div className="flex items-center gap-2 mb-3">
           <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Select value={selectedEventId || ''} onValueChange={(val) => setSelectedEventId(val)}>

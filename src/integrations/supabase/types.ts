@@ -2477,6 +2477,75 @@ export type Database = {
           },
         ]
       }
+      event_floor_plans: {
+        Row: {
+          business_id: string
+          created_at: string
+          event_id: string
+          id: string
+          layout_data: Json
+          reference_image_url: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          event_id: string
+          id?: string
+          layout_data?: Json
+          reference_image_url?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          layout_data?: Json
+          reference_image_url?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_floor_plans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_floor_plans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_floor_plans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_floor_plans_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_floor_plans_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_invitations: {
         Row: {
           business_id: string
@@ -3169,6 +3238,64 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "floor_plan_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floor_plan_templates: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          layout_data: Json
+          name: string
+          reference_image_url: string | null
+          screenshot_url: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          layout_data?: Json
+          name: string
+          reference_image_url?: string | null
+          screenshot_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          layout_data?: Json
+          name?: string
+          reference_image_url?: string | null
+          screenshot_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
         ]

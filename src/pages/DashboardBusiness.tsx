@@ -12,7 +12,7 @@ import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 import { ReservationDashboard } from '@/components/business/reservations';
-import { FloorPlanEditor } from '@/components/business/floorplan/FloorPlanEditor';
+import { FloorPlanPage } from '@/components/business/floorplan/FloorPlanPage';
 import { EventAnalytics } from "@/components/business/EventAnalytics";
 import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -491,7 +491,7 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
               <Route path="offers" element={businessId ? <div className="px-3 sm:px-0"><OffersList businessId={businessId} /></div> : null} />
               <Route path="offers/new" element={businessId ? <div className="px-3 sm:px-0"><OfferCreationForm businessId={businessId} /></div> : null} />
               <Route path="reservations" element={businessId ? <ReservationDashboard businessId={businessId} language={language} /> : null} />
-              <Route path="floor-plan" element={businessId ? <div className="px-3 sm:px-0"><FloorPlanEditor businessId={businessId} /></div> : null} />
+              <Route path="floor-plan" element={businessId ? <div className="px-3 sm:px-0"><FloorPlanPage businessId={businessId} /></div> : null} />
               {/* CRM is now integrated into analytics page - redirect for backwards compatibility */}
               <Route path="crm" element={<Navigate to="/dashboard-business/analytics" replace />} />
               <Route path="subscription" element={<div className="px-3 sm:px-0"><SubscriptionPlans embedded /></div>} />
