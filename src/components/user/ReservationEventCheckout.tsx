@@ -340,7 +340,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       // Check deferred payment status and pay_at_door
       const { data: eventData } = await supabase
         .from('events')
-        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours, pay_at_door')
+        .select('deferred_payment_enabled, deferred_cancellation_fee_percent, deferred_confirmation_hours, pay_at_door, minimum_age')
         .eq('id', eventId)
         .single();
 
