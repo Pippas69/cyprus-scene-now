@@ -128,7 +128,7 @@ const translations = {
   },
 };
 
-export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout }: FloorPlanEditorProps) {
+export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout, onDesignModeChange }: FloorPlanEditorProps) {
   const isTemplateMode = mode === 'template';
   const isEventMode = mode === 'event';
   const isLegacyMode = mode === 'legacy';
