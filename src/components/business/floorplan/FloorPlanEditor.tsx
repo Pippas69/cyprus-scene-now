@@ -590,10 +590,8 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
     setSelectedItem(null);
     toast.success(t.deleted);
   };
-    setItems((prev) => prev.filter((i) => i.id !== itemId));
-    setSelectedItem(null);
-    toast.success(t.deleted);
-  };
+
+
 
   const duplicateItem = async (item: FloorPlanItemFull) => {
     const newItem: Partial<FloorPlanItemFull> = {
