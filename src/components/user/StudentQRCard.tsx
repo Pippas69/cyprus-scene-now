@@ -8,9 +8,10 @@ import { StudentVerification } from '@/hooks/useStudentVerification';
 interface StudentQRCardProps {
   verification: StudentVerification;
   language: 'en' | 'el';
-  businessId?: string; // Required when showing discount for a specific business
-  discountMode?: 'once' | 'unlimited' | null; // null = generic view (settings page)
+  businessId?: string;
+  discountMode?: 'once' | 'unlimited' | null;
   isRedeemed?: boolean;
+  activeDays?: string[] | null;
 }
 
 const translations = {
@@ -27,6 +28,8 @@ const translations = {
     oneTimeNote: 'This discount can only be used once at this business',
     redeemedNote: 'You have already used this discount',
     genericNote: 'Show this code at participating businesses for student discounts',
+    activeDaysLabel: 'Active Days',
+    everyDay: 'Every day',
   },
   el: {
     title: 'QR Κώδικας Φοιτητικής Έκπτωσης',
@@ -41,11 +44,32 @@ const translations = {
     oneTimeNote: 'Αυτή η έκπτωση μπορεί να χρησιμοποιηθεί μόνο μία φορά σε αυτή την επιχείρηση',
     redeemedNote: 'Έχετε ήδη χρησιμοποιήσει αυτή την έκπτωση',
     genericNote: 'Δείξτε αυτόν τον κώδικα σε συνεργαζόμενες επιχειρήσεις για φοιτητικές εκπτώσεις',
+    activeDaysLabel: 'Ημέρες Ισχύος',
+    everyDay: 'Κάθε μέρα',
   },
 };
 
-export function StudentQRCard({ verification, language, businessId, discountMode = null, isRedeemed = false }: StudentQRCardProps) {
+export function StudentQRCard({ verification, language, businessId, discountMode = null, isRedeemed = false, activeDays = null }: StudentQRCardProps) {
   const t = translations[language];
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const dayNamesMap: Record<string, Record<string, string>> = {
+    en: {
+      monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
+      thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday'
+    },
+    el: {
+      monday: 'Δευτέρα', tuesday: 'Τρίτη', wednesday: 'Τετάρτη',
+      thursday: 'Πέμπτη', friday: 'Παρασκευή', saturday: 'Σάββατο', sunday: 'Κυριακή'
+    },
+  };
+
+  const orderedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const activeDaysText = activeDays && activeDays.length > 0
+    ? (activeDays.length === 7 
+        ? t.everyDay 
+        : orderedDays.filter(d => activeDays.includes(d)).map(d => dayNamesMap[language][d]).join(', '))
+    : null;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
