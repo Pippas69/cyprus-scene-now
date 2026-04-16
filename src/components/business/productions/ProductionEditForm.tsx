@@ -337,6 +337,7 @@ const ProductionEditForm = ({ event, open, onOpenChange, onSuccess }: Production
           description: description.trim(),
           cover_image_url: coverImageUrl,
           min_age_hint: minAgeHint || null,
+          minimum_age: minAgeHint && minAgeHint >= 16 ? minAgeHint : null,
           start_at: startAt?.toISOString() || event.start_at,
           end_at: endAt?.toISOString() || event.end_at,
           location: location.trim() || event.location,

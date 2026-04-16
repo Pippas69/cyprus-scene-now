@@ -145,6 +145,8 @@ interface FormData {
     noMinSpend: boolean;
     noReservation: boolean;
   };
+  // Minimum age (optional, min 16)
+  minimumAge: string;
   // Terms & Conditions (optional)
   termsAndConditions: string;
   // Pay at door (ticket-only & reservation-only)
@@ -228,6 +230,9 @@ const translations = {
     noMinSpend: "Δεν υπάρχει υποχρεωτικό minimum spend",
     noReservationRequired: "Δεν απαιτείται κράτηση για είσοδο",
     freeEntryWarning: "Τα Free Entry events εμφανίζονται μόνο όταν γίνει boost. Υπάρχει σύστημα strike αν αποδειχθεί ότι ζητήθηκε πληρωμή στην είσοδο.",
+    minimumAge: "Ελάχιστη Ηλικία (προαιρετικό)",
+    minimumAgePlaceholder: "π.χ. 18, 21...",
+    minimumAgeHint: "Ελάχιστη αποδεκτή: 16 ετών",
     termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
     termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
     boostEvent: "Boost αυτή την εκδήλωση",
@@ -312,6 +317,9 @@ const translations = {
     noMinSpend: "No mandatory minimum spend",
     noReservationRequired: "No reservation required for entry",
     freeEntryWarning: "Free Entry events only appear when boosted. A strike system applies if users report payment was required at the door.",
+    minimumAge: "Minimum Age (optional)",
+    minimumAgePlaceholder: "e.g. 18, 21...",
+    minimumAgeHint: "Minimum accepted: 16 years",
     termsConditions: "Terms & Conditions (optional)",
     termsPlaceholder: "e.g. No entry for minors...",
     boostEvent: "Boost this event",
@@ -419,6 +427,7 @@ const EventCreationForm = ({
       noMinSpend: false,
       noReservation: false
     },
+    minimumAge: '',
     termsAndConditions: '',
     payAtDoor: false,
   });
@@ -681,6 +690,7 @@ const EventCreationForm = ({
         dress_code: null,
         reservation_hours_from: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationFromTime : null,
         reservation_hours_to: formData.eventType === 'reservation' || formData.eventType === 'ticket_and_reservation' ? formData.reservationToTime : null,
+        minimum_age: formData.minimumAge && Number(formData.minimumAge) >= 16 ? Number(formData.minimumAge) : null,
         terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
         deferred_payment_enabled: deferredEnabled,
         deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
@@ -1243,6 +1253,21 @@ const EventCreationForm = ({
           language={language}
           eventType={formData.eventType}
         />
+
+        {/* Minimum Age (Optional) */}
+        <div className="space-y-1 sm:space-y-2">
+          <Label className="text-xs sm:text-sm">{t.minimumAge}</Label>
+          <Input
+            type="number"
+            min={16}
+            max={99}
+            value={formData.minimumAge}
+            onChange={(e) => updateField('minimumAge', e.target.value)}
+            placeholder={t.minimumAgePlaceholder}
+            className="h-9 sm:h-10 text-xs sm:text-sm w-32"
+          />
+          <p className="text-[9px] sm:text-xs text-muted-foreground">{t.minimumAgeHint}</p>
+        </div>
 
         {/* Terms & Conditions (Optional) */}
         <div className="space-y-1 sm:space-y-2">
