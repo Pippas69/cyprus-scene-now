@@ -1182,9 +1182,26 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
           onMouseUp={isDesignMode ? handleMouseUp : undefined}
         >
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 25% 15%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 55%, hsl(220 35% 4%) 100%)',
+            background: `
+              radial-gradient(ellipse at 20% 10%, hsl(var(--floorplan-canvas-elevated)) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 85%, hsl(220 30% 9% / 0.8) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, hsl(var(--floorplan-canvas)) 0%, hsl(220 35% 3%) 100%)
+            `,
           }} />
-          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.2)' }} />
+          {/* Subtle grid pattern overlay for blueprint feel */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.02]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="fp-micro-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#fp-micro-grid)" />
+          </svg>
+          {/* Corner vignette for cinematic depth */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)',
+          }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.3)' }} />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
             <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-fill pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
