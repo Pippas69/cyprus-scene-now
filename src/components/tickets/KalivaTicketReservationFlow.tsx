@@ -264,7 +264,6 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     supabase.from('events').select('minimum_age').eq('id', eventId).single().then(({ data }) => {
       setEventMinimumAge(data?.minimum_age ?? null);
     });
-    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsAuthenticated(!!session?.user);
       if (session?.user) setUserId(session.user.id);
