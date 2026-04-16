@@ -697,15 +697,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
+    const { data } = await supabase
+      .from('seating_type_tiers')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .in('seating_type_id', seatingTypeIds)
+      .order('min_people', { ascending: true });
+    
     const tiersMap: Record<string, SeatingTier[]> = {};
-    for (const stId of seatingTypeIds) {
-      const { data } = await supabase.
-      from('seating_type_tiers').
-      select('min_people, max_people, prepaid_min_charge_cents').
-      eq('seating_type_id', stId).
-      order('min_people', { ascending: true });
-      if (data) tiersMap[stId] = data;
-    }
+    (data || []).forEach((row: any) => {
+      if (!tiersMap[row.seating_type_id]) tiersMap[row.seating_type_id] = [];
+      tiersMap[row.seating_type_id].push({
+        min_people: row.min_people,
+        max_people: row.max_people,
+        prepaid_min_charge_cents: row.prepaid_min_charge_cents,
+      });
+    });
     setSeatingTiers(tiersMap);
   };
 
