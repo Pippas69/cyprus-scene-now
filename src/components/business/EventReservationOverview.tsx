@@ -83,7 +83,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       if (allTicketsResult.error) throw allTicketsResult.error;
 
       const seatingTypesRaw = seatingResult.data || [];
-      const reservations = reservationsResult.data || [];
+      const liveBookedCounitsRaw = liveBookedResult.data;
       const liveBookedCounts = liveBookedResult.data;
       const ticketTiers = ticketTiersResult.data;
       const allOrders = allOrdersResult.data;
@@ -186,7 +186,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         totalReservations,
         checkedIn,
         walkInTicketCount,
-        walkInTiers: enrichedWalkInTiers,
+        walkInTiers: enrichedWalkInTiers2,
       };
     },
   });
