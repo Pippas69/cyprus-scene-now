@@ -515,6 +515,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 }
               });
 
+              const orderMap: Record<string, typeof walkInOrders[0]> = {};
+              walkInOrders.forEach(o => { orderMap[o.id] = o; });
+
               // Create one synthetic reservation PER TICKET (not per order)
               walkInSynthetic = (walkInTickets || []).map(ticket => {
                   const order = orderMap[ticket.order_id];
