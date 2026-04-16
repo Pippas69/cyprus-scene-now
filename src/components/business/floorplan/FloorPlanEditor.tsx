@@ -677,6 +677,51 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
     }
   }, [businessId]);
 
+  // Sync items to floor_plan_tables so reservation_table_assignments work
+  const syncItemsToFloorPlanTables = async (layoutItems: FloorPlanItemFull[]) => {
+    // Get existing items in floor_plan_tables for this business
+    const { data: existingItems } = await supabase
+      .from('floor_plan_tables')
+      .select('id')
+      .eq('business_id', businessId);
+
+    const existingIds = new Set((existingItems || []).map((i: any) => i.id));
+    const currentIds = new Set(layoutItems.map(i => i.id));
+
+    // Delete items that no longer exist
+    const toDelete = [...existingIds].filter(id => !currentIds.has(id));
+    if (toDelete.length > 0) {
+      await supabase.from('floor_plan_tables').delete().in('id', toDelete);
+    }
+
+    // Upsert all current items
+    const upsertData = layoutItems.map((item, idx) => ({
+      id: item.id,
+      business_id: businessId,
+      label: item.label || '',
+      shape: item.shape || 'round',
+      x_percent: item.x_percent ?? 10,
+      y_percent: item.y_percent ?? 10,
+      width_percent: item.width_percent ?? 5,
+      height_percent: item.height_percent ?? 5,
+      seats: item.seats ?? 4,
+      rotation: item.rotation ?? 0,
+      is_locked: item.is_locked ?? false,
+      item_type: item.item_type ?? 'table',
+      fixture_type: item.fixture_type || null,
+      color: item.color || null,
+      sort_order: idx,
+    }));
+
+    for (const item of upsertData) {
+      if (existingIds.has(item.id)) {
+        await supabase.from('floor_plan_tables').update(item as any).eq('id', item.id);
+      } else {
+        await supabase.from('floor_plan_tables').insert(item as any);
+      }
+    }
+  };
+
   const handleSaveLayout = useCallback(async () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setIsSaving(true);
@@ -690,9 +735,16 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       }
 
       if (isEventMode && onSaveEventLayout) {
+        // Also sync to floor_plan_tables so reservation assignments work
+        await syncItemsToFloorPlanTables(items);
         onSaveEventLayout(items);
         setSelectedItem(null);
         setPlacingMode(null);
+        setIsDesignMode(false);
+        // Load assignments now that we're in preview mode
+        if (selectedEventId) {
+          await loadTableAssignments(items.map(i => i.id), selectedEventId);
+        }
         return;
       }
 
