@@ -686,7 +686,61 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     setCheckInCounts(countsMap);
   };
 
-  const fetchTicketOnlyOrders = async (eventId: string, requestId?: number) => {
+  const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
+    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))] as string[];
+    if (userIds.length === 0) return;
+
+    const { data: cityRows } = await supabase.rpc('get_user_cities', { p_user_ids: userIds });
+
+    if (!cityRows) return;
+
+    const profileMap: Record<string, { city: string | null; town: string | null }> = {};
+    ((cityRows || []) as any[]).forEach((r: any) => {
+      profileMap[r.user_id] = { city: r.city, town: r.town };
+    });
+
+    const cityMap: Record<string, string> = {};
+    reservations.forEach(r => {
+      if (!r.user_id) return;
+      const profile = profileMap[r.user_id];
+      const city = (profile?.city && profile.city.trim()) || (profile?.town && profile.town.trim()) || '';
+      if (city) cityMap[r.id] = city;
+    });
+
+    setCityByReservation(cityMap);
+  };
+
+  const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
+    const { data } = await supabase
+      .from('seating_type_tiers')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .in('seating_type_id', seatingTypeIds)
+      .order('min_people', { ascending: true });
+    
+    const tiersMap: Record<string, SeatingTier[]> = {};
+    (data || []).forEach((row: any) => {
+      if (!tiersMap[row.seating_type_id]) tiersMap[row.seating_type_id] = [];
+      tiersMap[row.seating_type_id].push({
+        min_people: row.min_people,
+        max_people: row.max_people,
+        prepaid_min_charge_cents: row.prepaid_min_charge_cents,
+      });
+    });
+    setSeatingTiers(tiersMap);
+  };
+
+  const fetchSeatingTypeNames = async (seatingTypeIds: string[]) => {
+    const { data } = await supabase
+      .from('reservation_seating_types')
+      .select('id, seating_type')
+      .in('id', seatingTypeIds);
+    if (data) {
+      const namesMap: Record<string, string> = {};
+      data.forEach((st) => { namesMap[st.id] = st.seating_type; });
+      setSeatingTypeNames(namesMap);
+    }
+  };
+
     const isStaleRequest = () => requestId !== undefined && requestId !== fetchReservationsRequestRef.current;
 
     try {
