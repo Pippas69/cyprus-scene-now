@@ -264,7 +264,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   );
 
   useEffect(() => {
-    checkBusinessFlags().then(() => fetchReservations());
+    fetchReservations();
     // Check if business has floor plan enabled AND has zones
     supabase.from('businesses').select('floor_plan_enabled').eq('id', businessId).single().then(async ({ data }) => {
       if (!data?.floor_plan_enabled) { setHasFloorPlan(false); return; }
