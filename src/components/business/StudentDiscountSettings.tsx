@@ -224,7 +224,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                 })}
               </div>
               {selectedDays.length === 0 && (
-                <p className="text-[10px] sm:text-xs text-primary/70 font-medium">✓ {t.allDays}</p>
+                <p className="text-[10px] sm:text-xs text-destructive font-medium">⚠ {t.daysRequired}</p>
               )}
             </div>
 
