@@ -253,6 +253,13 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
   const [eventMinimumAge, setEventMinimumAge] = useState<number | null>(null);
 
+  // Fetch event minimum_age
+  useEffect(() => {
+    supabase.from('events').select('minimum_age').eq('id', eventId).single().then(({ data }) => {
+      setEventMinimumAge(data?.minimum_age ?? null);
+    });
+  }, [eventId]);
+
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
 
@@ -450,7 +457,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const total = subtotal + stripeFeesCents + platformFeeCents;
   const isFreeOrder = (subtotal === 0 && totalTickets > 0) || isPayAtDoor;
   const allNamesFilled = guestNames.length > 0 && guestNames.every(n => n.trim().length > 0);
-  const minAge = getMinAge(eventId);
+  const minAge = getMinAge(eventId, eventMinimumAge);
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)) && Number(a) >= minAge);
   const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
