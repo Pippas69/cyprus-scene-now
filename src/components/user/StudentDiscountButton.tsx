@@ -17,6 +17,7 @@ interface StudentDiscountButtonProps {
   userId: string | null;
   language: 'en' | 'el';
   variant?: 'button' | 'badge';
+  activeDays?: string[] | null;
 }
 
 const translations = {
@@ -60,6 +61,7 @@ export function StudentDiscountButton({
   userId,
   language,
   variant = 'button',
+  activeDays = null,
 }: StudentDiscountButtonProps) {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
