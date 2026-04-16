@@ -48,6 +48,7 @@ interface FloorPlanEditorProps {
   initialItems?: FloorPlanItemFull[];
   onSaveTemplate?: (items: FloorPlanItemFull[]) => void;
   onSaveEventLayout?: (items: FloorPlanItemFull[]) => void;
+  onDesignModeChange?: (isDesign: boolean) => void;
 }
 
 const SNAP_INCREMENT = 2;
@@ -127,7 +128,7 @@ const translations = {
   },
 };
 
-export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout }: FloorPlanEditorProps) {
+export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout, onDesignModeChange }: FloorPlanEditorProps) {
   const isTemplateMode = mode === 'template';
   const isEventMode = mode === 'event';
   const isLegacyMode = mode === 'legacy';
@@ -205,7 +206,10 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       }));
       setItems(loaded);
       setHasFloorPlan(loaded.length > 0);
-      setIsDesignMode(true);
+      // Template mode starts in design, event mode starts in view (assignment)
+      const startInDesign = isTemplateMode;
+      setIsDesignMode(startInDesign);
+      onDesignModeChange?.(startInDesign);
       history.reset(loaded);
       setLoading(false);
       if (isEventMode && propEventId) {
@@ -694,8 +698,11 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       await supabase.from('floor_plan_tables').delete().in('id', toDelete);
     }
 
-    // Upsert all current items
-    const upsertData = layoutItems.map((item, idx) => ({
+    // Batch: delete all existing that we'll re-insert, then insert all at once
+    const toUpdate = layoutItems.filter(i => existingIds.has(i.id));
+    const toInsert = layoutItems.filter(i => !existingIds.has(i.id));
+
+    const mapItem = (item: FloorPlanItemFull, idx: number) => ({
       id: item.id,
       business_id: businessId,
       label: item.label || '',
@@ -711,15 +718,19 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       fixture_type: item.fixture_type || null,
       color: item.color || null,
       sort_order: idx,
-    }));
+    });
 
-    for (const item of upsertData) {
-      if (existingIds.has(item.id)) {
-        await supabase.from('floor_plan_tables').update(item as any).eq('id', item.id);
-      } else {
-        await supabase.from('floor_plan_tables').insert(item as any);
-      }
+    // Parallel updates + batch insert
+    const promises: PromiseLike<any>[] = [];
+    for (const item of toUpdate) {
+      const idx = layoutItems.indexOf(item);
+      promises.push(supabase.from('floor_plan_tables').update(mapItem(item, idx) as any).eq('id', item.id));
     }
+    if (toInsert.length > 0) {
+      const insertData = toInsert.map((item) => mapItem(item, layoutItems.indexOf(item)));
+      promises.push(supabase.from('floor_plan_tables').insert(insertData as any));
+    }
+    await Promise.all(promises);
   };
 
   const handleSaveLayout = useCallback(async () => {
@@ -741,6 +752,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
         setSelectedItem(null);
         setPlacingMode(null);
         setIsDesignMode(false);
+        onDesignModeChange?.(false);
         // Load assignments now that we're in preview mode
         if (selectedEventId) {
           await loadTableAssignments(items.map(i => i.id), selectedEventId);
@@ -1256,7 +1268,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
               {language === 'el' ? 'Διαθέσιμη' : 'Available'}
             </div>
           </div>
-          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
+          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => { setIsDesignMode(true); onDesignModeChange?.(true); }}>
             <Pencil className="h-3.5 w-3.5" />{t.editLayout}
           </Button>
         </div>
