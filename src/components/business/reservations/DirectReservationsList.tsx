@@ -492,35 +492,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 .select('id, order_id, tier_id, status, checked_in_at, guest_name, guest_age, guest_city')
                 .in('order_id', orderIds);
 
-              // Fetch tier prices
+              // Fetch tier prices and invitations in parallel
               const tierIds = [...new Set((walkInTickets || []).map(t => t.tier_id).filter(Boolean))];
+              const [tierResult, invResult] = await Promise.all([
+                tierIds.length > 0
+                  ? supabase.from('ticket_tiers').select('id, price_cents').in('id', tierIds)
+                  : Promise.resolve({ data: null }),
+                orderIds.length > 0
+                  ? supabase.from('event_invitations').select('ticket_order_id, guest_phone').in('ticket_order_id', orderIds)
+                  : Promise.resolve({ data: null }),
+              ]);
+
               let tierPriceMap: Record<string, number> = {};
-              if (tierIds.length > 0) {
-                const { data: tiers } = await supabase
-                  .from('ticket_tiers')
-                  .select('id, price_cents')
-                  .in('id', tierIds);
-                (tiers || []).forEach(t => { tierPriceMap[t.id] = t.price_cents; });
-              }
+              (tierResult.data || []).forEach((t: any) => { tierPriceMap[t.id] = t.price_cents; });
 
-              const orderMap: Record<string, typeof walkInOrders[0]> = {};
-              walkInOrders.forEach(o => { orderMap[o.id] = o; });
-
-              // Detect which orders come from invitations
               const invitationOrderIds = new Set<string>();
               const invitationPhoneMap = new Map<string, string | null>();
-              if (orderIds.length > 0) {
-                const { data: invitations } = await supabase
-                  .from('event_invitations')
-                  .select('ticket_order_id, guest_phone')
-                  .in('ticket_order_id', orderIds);
-                (invitations || []).forEach(inv => {
-                  if (inv.ticket_order_id) {
-                    invitationOrderIds.add(inv.ticket_order_id);
-                    invitationPhoneMap.set(inv.ticket_order_id, inv.guest_phone);
-                  }
-                });
-              }
+              (invResult.data || []).forEach((inv: any) => {
+                if (inv.ticket_order_id) {
+                  invitationOrderIds.add(inv.ticket_order_id);
+                  invitationPhoneMap.set(inv.ticket_order_id, inv.guest_phone);
+                }
+              });
 
               // Create one synthetic reservation PER TICKET (not per order)
               walkInSynthetic = (walkInTickets || []).map(ticket => {
