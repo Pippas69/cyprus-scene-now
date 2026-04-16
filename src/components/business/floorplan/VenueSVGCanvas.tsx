@@ -603,13 +603,13 @@ export function VenueSVGCanvas({
                 transform={g.shape !== 'round' && g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                 fontSize={Math.min(
-                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28),
-                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.6),
-                  4.5
+                  g.shape === 'round' ? g.w * 0.30 : (g.h > g.w * 1.3 ? g.h * 0.26 : g.w * 0.26),
+                  g.shape === 'round' ? g.w * 0.30 : (g.h > g.w * 1.3 ? g.w * 0.60 : g.h * 0.55),
+                  4.2
                 )}
-                fontWeight={600}
+                fontWeight={700}
                 className="pointer-events-none"
-                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.08em' }}
               >
                 {item.label}
               </text>
