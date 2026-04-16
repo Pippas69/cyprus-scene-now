@@ -365,44 +365,46 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       const reservationIds = data?.map((r) => r.id) || [];
 
-      let offerLinkedIds = new Set<string>();
-      if (!linked && reservationIds.length > 0) {
-        const { data: offerPurchases } = await supabase
-          .from('offer_purchases')
-          .select('reservation_id, discounts(title)')
-          .in('reservation_id', reservationIds)
-          .not('reservation_id', 'is', null);
+      // Run all enrichment queries in parallel
+      const [offerResult, emailResult, invitationResult] = await Promise.all([
+        // 1. Offer purchases (only for non-linked)
+        !linked && reservationIds.length > 0
+          ? supabase
+              .from('offer_purchases')
+              .select('reservation_id, discounts(title)')
+              .in('reservation_id', reservationIds)
+              .not('reservation_id', 'is', null)
+          : Promise.resolve({ data: null }),
+        // 2. Emails RPC
+        reservationIds.length > 0
+          ? supabase.rpc('get_business_reservation_emails', {
+              p_business_id: businessId,
+              p_reservation_ids: reservationIds,
+            })
+          : Promise.resolve({ data: null }),
+        // 3. Invitations
+        reservationIds.length > 0
+          ? supabase
+              .from('event_invitations')
+              .select('reservation_id')
+              .in('reservation_id', reservationIds)
+          : Promise.resolve({ data: null }),
+      ]);
 
-        if (offerPurchases) {
-          offerPurchases.forEach((p) => {
-            if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
-          });
-        }
-      }
+      const offerLinkedIds = new Set<string>();
+      (offerResult.data || []).forEach((p: any) => {
+        if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
+      });
 
       const emailMap = new Map<string, string | null>();
-      if (reservationIds.length > 0) {
-        const { data: reservationEmails } = await supabase.rpc('get_business_reservation_emails', {
-          p_business_id: businessId,
-          p_reservation_ids: reservationIds,
-        });
-
-        (reservationEmails || []).forEach((row: any) => {
-          emailMap.set(row.reservation_id, row.email || null);
-        });
-      }
+      (emailResult.data || []).forEach((row: any) => {
+        emailMap.set(row.reservation_id, row.email || null);
+      });
 
       const invitationReservationIds = new Set<string>();
-      if (reservationIds.length > 0) {
-        const { data: reservationInvitations } = await supabase
-          .from('event_invitations')
-          .select('reservation_id')
-          .in('reservation_id', reservationIds);
-
-        (reservationInvitations || []).forEach((row) => {
-          if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
-        });
-      }
+      (invitationResult.data || []).forEach((row: any) => {
+        if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
+      });
 
       const enrichedData = (data || []).map((r) => ({
         ...r,
