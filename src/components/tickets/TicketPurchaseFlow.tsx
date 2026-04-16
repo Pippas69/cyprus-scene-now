@@ -251,6 +251,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     tickets: { guest_name: string; qr_code_token: string }[];
   } | null>(null);
   const [ticketSuccessIndex, setTicketSuccessIndex] = useState(0);
+  const [eventMinimumAge, setEventMinimumAge] = useState<number | null>(null);
 
   // Fallback: for returning users who skip profile step
   const profileName = useProfileName(authUserId);
