@@ -52,32 +52,20 @@ export const TicketSalesOverview = ({ eventId, businessId }: TicketSalesOverview
   const { data: overview, isLoading } = useQuery({
     queryKey: ["ticket-sales-overview", eventId],
     queryFn: async () => {
-      // Fetch tiers
-      const { data: tiers, error: tiersError } = await supabase
-        .from("ticket_tiers")
-        .select("*")
-        .eq("event_id", eventId)
-        .order("sort_order");
+      // Parallel fetch: tiers, orders, tickets
+      const [tiersResult, ordersResult, ticketsResult] = await Promise.all([
+        supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
+        supabase.from("ticket_orders").select("subtotal_cents, commission_cents").eq("event_id", eventId).eq("status", "completed"),
+        supabase.from("tickets").select("status, tier_id").eq("event_id", eventId).in("status", ["valid", "used"]),
+      ]);
 
-      if (tiersError) throw tiersError;
+      if (tiersResult.error) throw tiersResult.error;
+      if (ordersResult.error) throw ordersResult.error;
+      if (ticketsResult.error) throw ticketsResult.error;
 
-      // Fetch orders (revenue source of truth) - include stored commission
-      const { data: orders, error: ordersError } = await supabase
-        .from("ticket_orders")
-        .select("subtotal_cents, commission_cents")
-        .eq("event_id", eventId)
-        .eq("status", "completed");
-
-      if (ordersError) throw ordersError;
-
-      // Fetch tickets for accurate count (source of truth instead of quantity_sold)
-      const { data: tickets, error: ticketsError } = await supabase
-        .from("tickets")
-        .select("status, tier_id")
-        .eq("event_id", eventId)
-        .in("status", ["valid", "used"]);
-
-      if (ticketsError) throw ticketsError;
+      const tiers = tiersResult.data;
+      const orders = ordersResult.data;
+      const tickets = ticketsResult.data;
 
       const totalRevenue = orders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
       const storedCommission = orders?.reduce((sum, o) => sum + (o.commission_cents || 0), 0) || 0;

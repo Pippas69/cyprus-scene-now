@@ -65,108 +65,51 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
   const { data: overview, isLoading } = useQuery({
     queryKey: ["event-reservation-overview", eventId],
     queryFn: async () => {
-      // Fetch seating types for this event
-      const { data: seatingTypesRaw, error: seatingError } = await supabase
-        .from("reservation_seating_types")
-        .select("*")
-        .eq("event_id", eventId);
+      // Parallel fetch all independent queries
+      const [seatingResult, reservationsResult, liveBookedResult, ticketTiersResult, allOrdersResult, allTicketsResult] = await Promise.all([
+        supabase.from("reservation_seating_types").select("*").eq("event_id", eventId),
+        supabase.from("reservations").select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at").eq("event_id", eventId).eq("status", "accepted"),
+        supabase.rpc("get_event_seating_booked_counts", { p_event_id: eventId }),
+        supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
+        supabase.from("ticket_orders").select("id, subtotal_cents, linked_reservation_id").eq("event_id", eventId).eq("status", "completed"),
+        supabase.from("tickets").select("status, tier_id, order_id").eq("event_id", eventId).in("status", ["valid", "used"]),
+      ]);
 
-      if (seatingError) throw seatingError;
+      if (seatingResult.error) throw seatingResult.error;
+      if (reservationsResult.error) throw reservationsResult.error;
+      if (liveBookedResult.error) throw liveBookedResult.error;
+      if (ticketTiersResult.error) throw ticketTiersResult.error;
+      if (allOrdersResult.error) throw allOrdersResult.error;
+      if (allTicketsResult.error) throw allTicketsResult.error;
 
-      // Fetch tiers for each seating type
-      const seatingTypes: SeatingType[] = [];
-      for (const st of seatingTypesRaw || []) {
-        const { data: tiers } = await supabase
+      const seatingTypesRaw = seatingResult.data || [];
+      const reservationsRaw = reservationsResult.data;
+      const liveBookedCounts = liveBookedResult.data;
+      const ticketTiers = ticketTiersResult.data;
+      const allOrders = allOrdersResult.data;
+      const allTickets = allTicketsResult.data;
+
+      // Batch fetch ALL tiers for all seating types in one query
+      const seatingTypeIds = seatingTypesRaw.map(st => st.id);
+      let allTiersData: any[] = [];
+      if (seatingTypeIds.length > 0) {
+        const { data: tiersData } = await supabase
           .from("seating_type_tiers")
           .select("*")
-          .eq("seating_type_id", st.id)
+          .in("seating_type_id", seatingTypeIds)
           .order("min_people", { ascending: true });
-
-        seatingTypes.push({
-          id: st.id,
-          seating_type: st.seating_type,
-          available_slots: st.available_slots,
-          slots_booked: st.slots_booked || 0,
-          dress_code: st.dress_code,
-          no_show_policy: st.no_show_policy,
-          tiers: (tiers || []) as SeatingTier[],
-        });
+        allTiersData = tiersData || [];
       }
 
-      // Fetch confirmed (accepted) reservations
-      const { data: reservationsRaw, error: reservationsError } = await supabase
-        .from("reservations")
-        .select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at")
-        .eq("event_id", eventId)
-        .eq("status", "accepted");
-
-      if (reservationsError) throw reservationsError;
-
-      // Fetch live booked counts (pending + accepted) for availability display
-      const { data: liveBookedCounts, error: liveBookedCountsError } = await supabase.rpc(
-        "get_event_seating_booked_counts",
-        { p_event_id: eventId }
-      );
-
-      if (liveBookedCountsError) throw liveBookedCountsError;
-
-      const liveBookedMap: Record<string, number> = {};
-      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
-        if (row.seating_type_id) {
-          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
-        }
-      }
-
-      const reservations = (reservationsRaw || []);
-
-      // --- Walk-in tickets ---
-      // Fetch ticket tiers
-      const { data: ticketTiers, error: ticketTiersError } = await supabase
-        .from("ticket_tiers")
-        .select("*")
-        .eq("event_id", eventId)
-        .order("sort_order");
-      if (ticketTiersError) throw ticketTiersError;
-
-      // Fetch completed ticket orders
-      const { data: allOrders, error: allOrdersError } = await supabase
-        .from("ticket_orders")
-        .select("id, subtotal_cents, linked_reservation_id")
-        .eq("event_id", eventId)
-        .eq("status", "completed");
-      if (allOrdersError) throw allOrdersError;
-
-      // Identify walk-in orders (no linked reservation or legacy walk-ins)
-      const linkedReservationIds = (allOrders || [])
-        .map(o => o.linked_reservation_id)
-        .filter((id): id is string => !!id);
-
-      let legacyWalkInReservationIds = new Set<string>();
-      if (linkedReservationIds.length > 0) {
-        const { data: linkedReservations } = await supabase
-          .from("reservations")
-          .select("id, auto_created_from_tickets, seating_type_id")
-          .in("id", linkedReservationIds);
-
-        legacyWalkInReservationIds = new Set(
-          (linkedReservations || [])
-            .filter(r => r.auto_created_from_tickets === true && !r.seating_type_id)
-            .map(r => r.id)
-        );
-      }
-
-      const walkInOrders = (allOrders || []).filter(
-        o => !o.linked_reservation_id || legacyWalkInReservationIds.has(o.linked_reservation_id)
-      );
-      const walkInOrderIds = new Set(walkInOrders.map(o => o.id));
-
-      // Fetch ALL tickets for this event (reservation-linked + walk-in)
-      const { data: allTickets, error: allTicketsError } = await supabase
-        .from("tickets")
-        .select("status, tier_id, order_id")
-        .eq("event_id", eventId)
-        .in("status", ["valid", "used"]);
-      if (allTicketsError) throw allTicketsError;
+      const seatingTypes: SeatingType[] = seatingTypesRaw.map(st => ({
+        id: st.id,
+        seating_type: st.seating_type,
+        available_slots: st.available_slots,
+        slots_booked: st.slots_booked || 0,
+        dress_code: st.dress_code,
+        no_show_policy: st.no_show_policy,
+        tiers: allTiersData.filter(t => t.seating_type_id === st.id) as SeatingTier[],
+      }));
 
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
