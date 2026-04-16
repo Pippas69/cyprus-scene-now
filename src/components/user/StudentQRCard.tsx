@@ -129,6 +129,13 @@ export function StudentQRCard({ verification, language, businessId, discountMode
                 )}
               </div>
             )}
+            
+            {activeDaysText && (
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{t.activeDaysLabel}</span>
+                <span className="text-[10px] sm:text-xs text-right font-medium text-primary">{activeDaysText}</span>
+              </div>
+            )}
           </div>
           
           <div className="w-full mt-1.5 sm:mt-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 text-center">
