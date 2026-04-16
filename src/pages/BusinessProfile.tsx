@@ -23,7 +23,7 @@ import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
-import { isStudentDiscountActiveToday } from "@/lib/studentDiscountDays";
+
 
 interface Business {
   id: string;
