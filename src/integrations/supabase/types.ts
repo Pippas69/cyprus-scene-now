@@ -2720,6 +2720,7 @@ export type Database = {
           max_total_reservations: number | null
           min_age_hint: number | null
           min_party_size: number | null
+          minimum_age: number | null
           parking_info: string | null
           pay_at_door: boolean
           performers: string[] | null
@@ -2765,6 +2766,7 @@ export type Database = {
           max_total_reservations?: number | null
           min_age_hint?: number | null
           min_party_size?: number | null
+          minimum_age?: number | null
           parking_info?: string | null
           pay_at_door?: boolean
           performers?: string[] | null
@@ -2810,6 +2812,7 @@ export type Database = {
           max_total_reservations?: number | null
           min_age_hint?: number | null
           min_party_size?: number | null
+          minimum_age?: number | null
           parking_info?: string | null
           pay_at_door?: boolean
           performers?: string[] | null
