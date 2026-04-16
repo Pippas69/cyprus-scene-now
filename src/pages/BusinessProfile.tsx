@@ -41,6 +41,7 @@ interface Business {
   student_discount_enabled: boolean | null;
   student_discount_percent: number | null;
   student_discount_mode: string | null;
+  student_discount_days: string[] | null;
 }
 
 interface Event {
