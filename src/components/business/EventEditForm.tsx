@@ -128,6 +128,7 @@ interface FormData {
     noMinSpend: boolean;
     noReservation: boolean;
   };
+  minimumAge: string;
   termsAndConditions: string;
   payAtDoor: boolean;
 }
@@ -203,6 +204,9 @@ const translations = {
     addAtLeastOneRange: "Κάθε τύπος θέσης χρειάζεται τουλάχιστον ένα εύρος ατόμων",
     cancel: "Ακύρωση",
     loading: "Φόρτωση...",
+    minimumAge: "Ελάχιστη Ηλικία (προαιρετικό)",
+    minimumAgePlaceholder: "π.χ. 18, 21...",
+    minimumAgeHint: "Ελάχιστη αποδεκτή: 16 ετών",
     termsConditions: "Όροι & Προϋποθέσεις (προαιρετικό)",
     termsPlaceholder: "π.χ. Δεν επιτρέπεται η είσοδος σε ανηλίκους...",
   },
@@ -272,6 +276,9 @@ const translations = {
     addAtLeastOneRange: "Each seating type needs at least one person range",
     cancel: "Cancel",
     loading: "Loading...",
+    minimumAge: "Minimum Age (optional)",
+    minimumAgePlaceholder: "e.g. 18, 21...",
+    minimumAgeHint: "Minimum accepted: 16 years",
     termsConditions: "Terms & Conditions (optional)",
     termsPlaceholder: "e.g. No minors allowed...",
   },
@@ -341,6 +348,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
       noMinSpend: false,
       noReservation: false,
     },
+    minimumAge: '',
     termsAndConditions: '',
     payAtDoor: false,
   });
@@ -528,6 +536,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           noMinSpend: event.free_entry_declaration || false,
           noReservation: event.free_entry_declaration || false,
         },
+        minimumAge: event.minimum_age ? String(event.minimum_age) : '',
         termsAndConditions: event.terms_and_conditions || '',
         payAtDoor: event.pay_at_door || false,
       });
@@ -736,6 +745,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           reservation_hours_from: hasReservation ? formData.reservationFromTime : null,
           reservation_hours_to: hasReservation ? formData.reservationToTime : null,
           dress_code: null,
+          minimum_age: formData.minimumAge && Number(formData.minimumAge) >= 16 ? Number(formData.minimumAge) : null,
           terms_and_conditions: formData.termsAndConditions.trim() ? formData.termsAndConditions.trim() : null,
           deferred_payment_enabled: deferredEnabled,
           deferred_confirmation_hours: deferredEnabled ? deferredConfirmationHours : null,
@@ -1526,6 +1536,21 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             language={language}
             eventType={formData.eventType}
           />
+
+          {/* Minimum Age (Optional) */}
+          <div className="space-y-1 sm:space-y-2">
+            <Label className="text-xs sm:text-sm">{t.minimumAge}</Label>
+            <Input
+              type="number"
+              min={16}
+              max={99}
+              value={formData.minimumAge}
+              onChange={(e) => updateField('minimumAge', e.target.value)}
+              placeholder={t.minimumAgePlaceholder}
+              className="h-9 sm:h-10 text-xs sm:text-sm w-32"
+            />
+            <p className="text-[9px] sm:text-xs text-muted-foreground">{t.minimumAgeHint}</p>
+          </div>
 
           {/* Terms & Conditions (Optional) */}
           <div className="space-y-1 sm:space-y-2">
