@@ -51,22 +51,38 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
   const { data: overview, isLoading } = useQuery({
     queryKey: ["combined-overview", eventId],
     queryFn: async () => {
-      // Fetch ticket tiers
-      const { data: tiers, error: tiersError } = await supabase.
-      from("ticket_tiers").
-      select("*").
-      eq("event_id", eventId).
-      order("sort_order");
-      if (tiersError) throw tiersError;
+      // Parallel fetch all independent queries
+      const [tiersResult, ordersResult, ticketsResult, seatingResult, reservationsResult, liveBookedResult] = await Promise.all([
+        supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
+        supabase.from("ticket_orders").select("id, subtotal_cents, commission_cents, linked_reservation_id").eq("event_id", eventId).eq("status", "completed"),
+        supabase.from("tickets").select("status, tier_id, order_id").eq("event_id", eventId).in("status", ["valid", "used"]),
+        supabase.from("reservation_seating_types").select("*").eq("event_id", eventId),
+        supabase.from("reservations").select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents").eq("event_id", eventId).eq("status", "accepted").or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null"),
+        supabase.rpc('get_event_seating_booked_counts', { p_event_id: eventId }),
+      ]);
 
-      // Fetch ALL completed ticket orders (both walk-in and reservation-linked)
-      const { data: allOrders, error: allOrdersError } = await supabase.
-      from("ticket_orders").
-      select("id, subtotal_cents, commission_cents, linked_reservation_id").
-      eq("event_id", eventId).
-      eq("status", "completed");
-      if (allOrdersError) throw allOrdersError;
+      if (tiersResult.error) throw tiersResult.error;
+      if (ordersResult.error) throw ordersResult.error;
+      if (ticketsResult.error) throw ticketsResult.error;
+      if (seatingResult.error) throw seatingResult.error;
+      if (reservationsResult.error) throw reservationsResult.error;
+      if (liveBookedResult.error) throw liveBookedResult.error;
 
+      const tiers = tiersResult.data;
+      const allOrders = ordersResult.data;
+      const allTickets = ticketsResult.data;
+      const seatingTypesRaw = seatingResult.data || [];
+      const reservations = reservationsResult.data;
+      const liveBookedCounts = liveBookedResult.data;
+
+      const liveBookedMap: Record<string, number> = {};
+      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+        if (row.seating_type_id) {
+          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
+        }
+      }
+
+      // Identify walk-in orders
       const linkedReservationIds = (allOrders || [])
         .map((order) => order.linked_reservation_id)
         .filter((id): id is string => !!id);
@@ -77,7 +93,6 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
           .from("reservations")
           .select("id, auto_created_from_tickets, seating_type_id")
           .in("id", linkedReservationIds);
-
         legacyWalkInReservationIds = new Set(
           (linkedReservations || [])
             .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
@@ -85,68 +100,34 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         );
       }
 
-      // Separate walk-in orders (unlinked OR legacy mislinked walk-ins)
       const walkInOrders = (allOrders || []).filter(
         (order) =>
           !order.linked_reservation_id ||
           legacyWalkInReservationIds.has(order.linked_reservation_id)
       );
-      const { data: allTickets, error: allTicketsError } = await supabase.
-      from("tickets").
-      select("status, tier_id, order_id").
-      eq("event_id", eventId).
-      in("status", ["valid", "used"]);
-      if (allTicketsError) throw allTicketsError;
-
       const walkInIds = new Set(walkInOrders.map((o) => o.id));
-
-      // Walk-in tickets = tickets whose order has no linked reservation
       const walkInTickets = (allTickets || []).filter((t) => walkInIds.has(t.order_id));
       const allTicketsArr = allTickets || [];
 
-      // Fetch seating types
-      const { data: seatingTypesRaw, error: seatingError } = await supabase.
-      from("reservation_seating_types").
-      select("*").
-      eq("event_id", eventId);
-      if (seatingError) throw seatingError;
+      // Batch fetch seating type tiers in one query
+      const seatingTypeIds = seatingTypesRaw.map(st => st.id);
+      let allStTiers: any[] = [];
+      if (seatingTypeIds.length > 0) {
+        const { data: stTiersData } = await supabase
+          .from("seating_type_tiers")
+          .select("seating_type_id, prepaid_min_charge_cents")
+          .in("seating_type_id", seatingTypeIds)
+          .order("min_people", { ascending: true });
+        allStTiers = stTiersData || [];
+      }
 
-      // Fetch seating type tiers for min price display
-      const seatingTypes = [];
-      for (const st of seatingTypesRaw || []) {
-        const { data: stTiers } = await supabase.
-        from("seating_type_tiers").
-        select("prepaid_min_charge_cents").
-        eq("seating_type_id", st.id).
-        order("min_people", { ascending: true });
-        seatingTypes.push({
+      const seatingTypes = seatingTypesRaw.map(st => {
+        const stTiers = allStTiers.filter(t => t.seating_type_id === st.id);
+        return {
           ...st,
-          minPrice: stTiers && stTiers.length > 0 ? Math.min(...stTiers.map((t) => t.prepaid_min_charge_cents)) : 0
-        });
-      }
-
-      // Fetch accepted reservations (used for revenue + reservation KPI)
-      const { data: reservations, error: resError } = await supabase
-        .from("reservations")
-        .select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents")
-        .eq("event_id", eventId)
-        .eq("status", "accepted")
-        .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null");
-      if (resError) throw resError;
-
-      // Fetch live seating occupancy (pending + accepted) for availability display
-      const { data: liveBookedCounts, error: liveBookedCountsError } = await supabase.rpc(
-        'get_event_seating_booked_counts',
-        { p_event_id: eventId }
-      );
-      if (liveBookedCountsError) throw liveBookedCountsError;
-
-      const liveBookedMap: Record<string, number> = {};
-      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
-        if (row.seating_type_id) {
-          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
-        }
-      }
+          minPrice: stTiers.length > 0 ? Math.min(...stTiers.map((t: any) => t.prepaid_min_charge_cents)) : 0
+        };
+      });
 
       // --- Ticket stats (ALL tickets including reservation-linked) ---
       const ticketRevenue = allOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
@@ -161,7 +142,6 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
 
       const walkInDisplayTiers = (tiers || []).filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
       
-      // Aggregate tiers by name to avoid duplicates (e.g. 2x "Αριστερά")
       const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
       walkInDisplayTiers.forEach((tier) => {
         const sold = tierSoldCount.get(tier.id) || 0;
