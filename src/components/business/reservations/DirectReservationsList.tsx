@@ -264,7 +264,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   );
 
   useEffect(() => {
-    fetchReservations();
+    checkBusinessFlags().then(() => fetchReservations());
     // Check if business has floor plan enabled AND has zones
     supabase.from('businesses').select('floor_plan_enabled').eq('id', businessId).single().then(async ({ data }) => {
       if (!data?.floor_plan_enabled) { setHasFloorPlan(false); return; }
@@ -492,31 +492,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 .select('id, order_id, tier_id, status, checked_in_at, guest_name, guest_age, guest_city')
                 .in('order_id', orderIds);
 
-              // Fetch tier prices and invitations in parallel
+              // Fetch tier prices
               const tierIds = [...new Set((walkInTickets || []).map(t => t.tier_id).filter(Boolean))];
-              const [tierResult, invResult] = await Promise.all([
-                tierIds.length > 0
-                  ? supabase.from('ticket_tiers').select('id, price_cents').in('id', tierIds)
-                  : Promise.resolve({ data: null }),
-                orderIds.length > 0
-                  ? supabase.from('event_invitations').select('ticket_order_id, guest_phone').in('ticket_order_id', orderIds)
-                  : Promise.resolve({ data: null }),
-              ]);
-
               let tierPriceMap: Record<string, number> = {};
-              (tierResult.data || []).forEach((t: any) => { tierPriceMap[t.id] = t.price_cents; });
-
-              const invitationOrderIds = new Set<string>();
-              const invitationPhoneMap = new Map<string, string | null>();
-              (invResult.data || []).forEach((inv: any) => {
-                if (inv.ticket_order_id) {
-                  invitationOrderIds.add(inv.ticket_order_id);
-                  invitationPhoneMap.set(inv.ticket_order_id, inv.guest_phone);
-                }
-              });
+              if (tierIds.length > 0) {
+                const { data: tiers } = await supabase
+                  .from('ticket_tiers')
+                  .select('id, price_cents')
+                  .in('id', tierIds);
+                (tiers || []).forEach(t => { tierPriceMap[t.id] = t.price_cents; });
+              }
 
               const orderMap: Record<string, typeof walkInOrders[0]> = {};
               walkInOrders.forEach(o => { orderMap[o.id] = o; });
+
+              // Detect which orders come from invitations
+              const invitationOrderIds = new Set<string>();
+              const invitationPhoneMap = new Map<string, string | null>();
+              if (orderIds.length > 0) {
+                const { data: invitations } = await supabase
+                  .from('event_invitations')
+                  .select('ticket_order_id, guest_phone')
+                  .in('ticket_order_id', orderIds);
+                (invitations || []).forEach(inv => {
+                  if (inv.ticket_order_id) {
+                    invitationOrderIds.add(inv.ticket_order_id);
+                    invitationPhoneMap.set(inv.ticket_order_id, inv.guest_phone);
+                  }
+                });
+              }
 
               // Create one synthetic reservation PER TICKET (not per order)
               walkInSynthetic = (walkInTickets || []).map(ticket => {
@@ -577,7 +581,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           
           // Fire ALL enrichment queries in parallel
           const enrichmentPromises: Promise<any>[] = [
-            fetchAgesAndCheckIns(allIds),
+            fetchAgesForReservations(allIds),
+            fetchCheckInCounts(allIds),
             fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
             fetchTableAssignments(allIds, selectedEventId),
           ];
@@ -635,13 +640,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const fetchAgesAndCheckIns = async (reservationIds: string[]) => {
+  const fetchAgesForReservations = async (reservationIds: string[]) => {
     if (reservationIds.length === 0) return;
-    // Single query to get ticket orders linked to these reservations
-    const { data: orders } = await supabase
-      .from('ticket_orders')
-      .select('id, linked_reservation_id')
-      .in('linked_reservation_id', reservationIds);
+    // Get ticket orders linked to these reservations
+    const { data: orders } = await supabase.
+    from('ticket_orders').
+    select('id, linked_reservation_id').
+    in('linked_reservation_id', reservationIds);
 
     if (!orders || orders.length === 0) return;
 
@@ -651,35 +656,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
     });
 
-    // Single tickets query fetching both age and status
-    const { data: tickets } = await supabase
-      .from('tickets')
-      .select('order_id, guest_age, status')
-      .in('order_id', orderIds);
+    // Get tickets with ages
+    const { data: tickets } = await supabase.
+    from('tickets').
+    select('order_id, guest_age').
+    in('order_id', orderIds).
+    not('guest_age', 'is', null);
 
     if (!tickets) return;
 
     const agesMap: Record<string, number[]> = {};
-    const countsMap: Record<string, { used: number; total: number }> = {};
-
     tickets.forEach((ticket) => {
       const resId = orderToReservation[ticket.order_id];
-      if (!resId) return;
-      // Ages
-      if (ticket.guest_age) {
+      if (resId && ticket.guest_age) {
         if (!agesMap[resId]) agesMap[resId] = [];
         agesMap[resId].push(ticket.guest_age);
-      }
-      // Check-in counts
-      if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
-      countsMap[resId].total++;
-      if (ticket.status === 'used') {
-        countsMap[resId].used++;
       }
     });
 
     setAgesByReservation(agesMap);
-    setCheckInCounts(countsMap);
   };
 
   const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
@@ -726,15 +721,54 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const fetchSeatingTypeNames = async (seatingTypeIds: string[]) => {
-    const { data } = await supabase
-      .from('reservation_seating_types')
-      .select('id, seating_type')
-      .in('id', seatingTypeIds);
+    const { data } = await supabase.
+    from('reservation_seating_types').
+    select('id, seating_type').
+    in('id', seatingTypeIds);
     if (data) {
       const namesMap: Record<string, string> = {};
-      data.forEach((st) => { namesMap[st.id] = st.seating_type; });
+      data.forEach((st) => {namesMap[st.id] = st.seating_type;});
       setSeatingTypeNames(namesMap);
     }
+  };
+
+  const fetchCheckInCounts = async (reservationIds: string[]) => {
+    if (reservationIds.length === 0) return;
+    // Get ticket orders linked to these reservations
+    const { data: orders } = await supabase.
+    from('ticket_orders').
+    select('id, linked_reservation_id').
+    in('linked_reservation_id', reservationIds);
+
+    if (!orders || orders.length === 0) return;
+
+    const orderIds = orders.map((o) => o.id);
+    const orderToReservation: Record<string, string> = {};
+    orders.forEach((o) => {
+      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
+    });
+
+    // Get all tickets for these orders
+    const { data: tickets } = await supabase.
+    from('tickets').
+    select('order_id, status').
+    in('order_id', orderIds);
+
+    if (!tickets) return;
+
+    const countsMap: Record<string, {used: number;total: number;}> = {};
+    tickets.forEach((ticket) => {
+      const resId = orderToReservation[ticket.order_id];
+      if (resId) {
+        if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
+        countsMap[resId].total++;
+        if (ticket.status === 'used') {
+          countsMap[resId].used++;
+        }
+      }
+    });
+
+    setCheckInCounts(countsMap);
   };
 
   const fetchTicketOnlyOrders = async (eventId: string, requestId?: number) => {
