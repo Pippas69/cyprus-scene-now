@@ -582,8 +582,14 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
 
   const deleteItem = async (itemId: string) => {
     history.pushState(items, 'delete');
-    const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
-    if (error) { toast.error(error.message); return; }
+    if (isLegacyMode) {
+      const { error } = await supabase.from('floor_plan_tables').delete().eq('id', itemId);
+      if (error) { toast.error(error.message); return; }
+    }
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+    setSelectedItem(null);
+    toast.success(t.deleted);
+  };
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     setSelectedItem(null);
     toast.success(t.deleted);
