@@ -572,27 +572,33 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           setReservations(allReservations);
 
           const allIds = allReservations.filter(r => !r.id.startsWith('walkin-')).map(r => r.id);
-          fetchAgesForReservations(allIds);
-          fetchCheckInCounts(allIds);
-          fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-')));
-          fetchTableAssignments(allIds, selectedEventId);
           const seatingTypeIds = [...new Set(allReservations.map((r) => r.seating_type_id).filter(Boolean))] as string[];
+          
+          // Fire ALL enrichment queries in parallel
+          const enrichmentPromises: Promise<void>[] = [
+            fetchAgesForReservations(allIds),
+            fetchCheckInCounts(allIds),
+            fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
+            fetchTableAssignments(allIds, selectedEventId),
+          ];
           if (seatingTypeIds.length > 0) {
-            fetchSeatingTiers(seatingTypeIds);
-            fetchSeatingTypeNames(seatingTypeIds);
+            enrichmentPromises.push(fetchSeatingTiers(seatingTypeIds));
+            enrichmentPromises.push(fetchSeatingTypeNames(seatingTypeIds));
           }
-          // Fetch walk-in ticket price for the event
           if (selectedEventId) {
-            supabase
-              .from('ticket_tiers')
-              .select('price_cents')
-              .eq('event_id', selectedEventId)
-              .ilike('name', '%walk%')
-              .limit(1)
-              .then(({ data: walkTiers }) => {
-                setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
-              });
+            enrichmentPromises.push(
+              supabase
+                .from('ticket_tiers')
+                .select('price_cents')
+                .eq('event_id', selectedEventId)
+                .ilike('name', '%walk%')
+                .limit(1)
+                .then(({ data: walkTiers }) => {
+                  setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
+                })
+            );
           }
+          await Promise.all(enrichmentPromises);
         }
       } else {
         setReservations(sortedByName);
