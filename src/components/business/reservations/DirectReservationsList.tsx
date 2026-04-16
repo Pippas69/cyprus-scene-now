@@ -322,13 +322,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (!silent) setLoading(true);
 
     try {
-      const { data: bizData, error: bizError } = await supabase.
-      from('businesses').
-      select('ticket_reservation_linked, category').
-      eq('id', businessId).
-      maybeSingle();
-
-      if (bizError) throw bizError;
+      // Try cached data first, fall back to DB query
+      let bizData = queryClient.getQueryData<{ ticket_reservation_linked: boolean | null; category: string[] }>(['business-category', businessId]);
+      
+      if (!bizData) {
+        const { data, error: bizError } = await supabase
+          .from('businesses')
+          .select('ticket_reservation_linked, category')
+          .eq('id', businessId)
+          .maybeSingle();
+        if (bizError) throw bizError;
+        bizData = data;
+      }
 
       const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []) || !!forceEventMode;
 
@@ -365,44 +370,46 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
       const reservationIds = data?.map((r) => r.id) || [];
 
-      let offerLinkedIds = new Set<string>();
-      if (!linked && reservationIds.length > 0) {
-        const { data: offerPurchases } = await supabase
-          .from('offer_purchases')
-          .select('reservation_id, discounts(title)')
-          .in('reservation_id', reservationIds)
-          .not('reservation_id', 'is', null);
+      // Run all enrichment queries in parallel
+      const [offerResult, emailResult, invitationResult] = await Promise.all([
+        // 1. Offer purchases (only for non-linked)
+        !linked && reservationIds.length > 0
+          ? supabase
+              .from('offer_purchases')
+              .select('reservation_id, discounts(title)')
+              .in('reservation_id', reservationIds)
+              .not('reservation_id', 'is', null)
+          : Promise.resolve({ data: null }),
+        // 2. Emails RPC
+        reservationIds.length > 0
+          ? supabase.rpc('get_business_reservation_emails', {
+              p_business_id: businessId,
+              p_reservation_ids: reservationIds,
+            })
+          : Promise.resolve({ data: null }),
+        // 3. Invitations
+        reservationIds.length > 0
+          ? supabase
+              .from('event_invitations')
+              .select('reservation_id')
+              .in('reservation_id', reservationIds)
+          : Promise.resolve({ data: null }),
+      ]);
 
-        if (offerPurchases) {
-          offerPurchases.forEach((p) => {
-            if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
-          });
-        }
-      }
+      const offerLinkedIds = new Set<string>();
+      (offerResult.data || []).forEach((p: any) => {
+        if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
+      });
 
       const emailMap = new Map<string, string | null>();
-      if (reservationIds.length > 0) {
-        const { data: reservationEmails } = await supabase.rpc('get_business_reservation_emails', {
-          p_business_id: businessId,
-          p_reservation_ids: reservationIds,
-        });
-
-        (reservationEmails || []).forEach((row: any) => {
-          emailMap.set(row.reservation_id, row.email || null);
-        });
-      }
+      (emailResult.data || []).forEach((row: any) => {
+        emailMap.set(row.reservation_id, row.email || null);
+      });
 
       const invitationReservationIds = new Set<string>();
-      if (reservationIds.length > 0) {
-        const { data: reservationInvitations } = await supabase
-          .from('event_invitations')
-          .select('reservation_id')
-          .in('reservation_id', reservationIds);
-
-        (reservationInvitations || []).forEach((row) => {
-          if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
-        });
-      }
+      (invitationResult.data || []).forEach((row: any) => {
+        if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
+      });
 
       const enrichedData = (data || []).map((r) => ({
         ...r,
@@ -570,27 +577,34 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           setReservations(allReservations);
 
           const allIds = allReservations.filter(r => !r.id.startsWith('walkin-')).map(r => r.id);
-          fetchAgesForReservations(allIds);
-          fetchCheckInCounts(allIds);
-          fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-')));
-          fetchTableAssignments(allIds, selectedEventId);
           const seatingTypeIds = [...new Set(allReservations.map((r) => r.seating_type_id).filter(Boolean))] as string[];
+          
+          // Fire ALL enrichment queries in parallel
+          const enrichmentPromises: Promise<any>[] = [
+            fetchAgesForReservations(allIds),
+            fetchCheckInCounts(allIds),
+            fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
+            fetchTableAssignments(allIds, selectedEventId),
+          ];
           if (seatingTypeIds.length > 0) {
-            fetchSeatingTiers(seatingTypeIds);
-            fetchSeatingTypeNames(seatingTypeIds);
+            enrichmentPromises.push(fetchSeatingTiers(seatingTypeIds));
+            enrichmentPromises.push(fetchSeatingTypeNames(seatingTypeIds));
           }
-          // Fetch walk-in ticket price for the event
           if (selectedEventId) {
-            supabase
-              .from('ticket_tiers')
-              .select('price_cents')
-              .eq('event_id', selectedEventId)
-              .ilike('name', '%walk%')
-              .limit(1)
-              .then(({ data: walkTiers }) => {
+            enrichmentPromises.push(
+              Promise.resolve(
+                supabase
+                  .from('ticket_tiers')
+                  .select('price_cents')
+                  .eq('event_id', selectedEventId)
+                  .ilike('name', '%walk%')
+                  .limit(1)
+              ).then(({ data: walkTiers }) => {
                 setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
-              });
+              })
+            );
           }
+          await Promise.all(enrichmentPromises);
         }
       } else {
         setReservations(sortedByName);
@@ -688,15 +702,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
+    const { data } = await supabase
+      .from('seating_type_tiers')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .in('seating_type_id', seatingTypeIds)
+      .order('min_people', { ascending: true });
+    
     const tiersMap: Record<string, SeatingTier[]> = {};
-    for (const stId of seatingTypeIds) {
-      const { data } = await supabase.
-      from('seating_type_tiers').
-      select('min_people, max_people, prepaid_min_charge_cents').
-      eq('seating_type_id', stId).
-      order('min_people', { ascending: true });
-      if (data) tiersMap[stId] = data;
-    }
+    (data || []).forEach((row: any) => {
+      if (!tiersMap[row.seating_type_id]) tiersMap[row.seating_type_id] = [];
+      tiersMap[row.seating_type_id].push({
+        min_people: row.min_people,
+        max_people: row.max_people,
+        prepaid_min_charge_cents: row.prepaid_min_charge_cents,
+      });
+    });
     setSeatingTiers(tiersMap);
   };
 
