@@ -87,6 +87,61 @@ export function FloorPlanTemplateManager({ businessId }: FloorPlanTemplateManage
   const [renameTarget, setRenameTarget] = useState<Template | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
+  const migrateLegacyItems = useCallback(async () => {
+    // Check if there are legacy items in floor_plan_tables
+    const { data: legacyItems } = await supabase
+      .from('floor_plan_tables')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('sort_order');
+
+    if (!legacyItems || legacyItems.length === 0) return false;
+
+    // Also get reference image from floor_plan_zones metadata
+    const { data: zones } = await supabase
+      .from('floor_plan_zones')
+      .select('metadata')
+      .eq('business_id', businessId)
+      .limit(1);
+
+    const referenceImageUrl = (zones?.[0]?.metadata as any)?.reference_image_url || null;
+
+    // Convert legacy items to layout_data format
+    const layoutData = legacyItems.map((item: any) => ({
+      id: item.id,
+      label: item.label || '',
+      shape: item.shape || 'round',
+      x_percent: item.x_percent ?? 10,
+      y_percent: item.y_percent ?? 10,
+      width_percent: item.width_percent ?? 5,
+      height_percent: item.height_percent ?? 5,
+      seats: item.seats ?? 4,
+      rotation: item.rotation ?? 0,
+      is_locked: item.is_locked ?? false,
+      item_type: item.item_type ?? 'table',
+      fixture_type: item.fixture_type || null,
+      color: item.color || null,
+      sort_order: item.sort_order ?? 0,
+    }));
+
+    // Create a template from legacy data
+    const { error } = await supabase.from('floor_plan_templates').insert({
+      business_id: businessId,
+      name: language === 'el' ? 'Αρχικό Layout' : 'Original Layout',
+      layout_data: layoutData as any,
+      reference_image_url: referenceImageUrl,
+      sort_order: 0,
+    });
+
+    if (error) {
+      console.error('Migration error:', error);
+      return false;
+    }
+
+    toast.success(language === 'el' ? 'Τα υπάρχοντα στοιχεία μεταφέρθηκαν σε πρότυπο' : 'Existing items migrated to template');
+    return true;
+  }, [businessId, language]);
+
   const loadTemplates = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -96,13 +151,33 @@ export function FloorPlanTemplateManager({ businessId }: FloorPlanTemplateManage
       .order('sort_order', { ascending: true });
 
     if (!error && data) {
+      // If no templates exist, try to migrate legacy data
+      if (data.length === 0) {
+        const migrated = await migrateLegacyItems();
+        if (migrated) {
+          // Reload after migration
+          const { data: newData } = await supabase
+            .from('floor_plan_templates')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('sort_order', { ascending: true });
+          if (newData) {
+            setTemplates(newData.map((d: any) => ({
+              ...d,
+              layout_data: Array.isArray(d.layout_data) ? d.layout_data : [],
+            })));
+          }
+          setLoading(false);
+          return;
+        }
+      }
       setTemplates(data.map((d: any) => ({
         ...d,
         layout_data: Array.isArray(d.layout_data) ? d.layout_data : [],
       })));
     }
     setLoading(false);
-  }, [businessId]);
+  }, [businessId, migrateLegacyItems]);
 
   useEffect(() => { loadTemplates(); }, [loadTemplates]);
 
