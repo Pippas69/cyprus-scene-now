@@ -48,6 +48,7 @@ interface FloorPlanEditorProps {
   initialItems?: FloorPlanItemFull[];
   onSaveTemplate?: (items: FloorPlanItemFull[]) => void;
   onSaveEventLayout?: (items: FloorPlanItemFull[]) => void;
+  onDesignModeChange?: (isDesign: boolean) => void;
 }
 
 const SNAP_INCREMENT = 2;
