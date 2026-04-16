@@ -29,7 +29,8 @@ const translations = {
     enableDesc: "Verified students will be able to redeem discounts at your business",
     percent: "Discount percentage",
     days: "Valid days",
-    daysDesc: "Select which days the discount is active. If none selected, it applies every day.",
+    daysDesc: "Select which days the discount is active.",
+    daysRequired: "Please select at least one day",
     allDays: "Every day",
     mode: "Redemption mode",
     modeOnce: "One-time only",
@@ -48,7 +49,8 @@ const translations = {
     enableDesc: "Οι επιβεβαιωμένοι φοιτητές θα μπορούν να εξαργυρώνουν εκπτώσεις στην επιχείρησή σας",
     percent: "Ποσοστό έκπτωσης",
     days: "Ημέρες ισχύος",
-    daysDesc: "Επιλέξτε ποιες μέρες ισχύει η έκπτωση. Αν δεν επιλέξετε καμία, ισχύει κάθε μέρα.",
+    daysDesc: "Επιλέξτε ποιες μέρες ισχύει η έκπτωση.",
+    daysRequired: "Επιλέξτε τουλάχιστον μία ημέρα",
     allDays: "Κάθε μέρα",
     mode: "Τρόπος εξαργύρωσης",
     modeOnce: "Μία φορά μόνο",
@@ -112,13 +114,18 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
   const handleSave = async () => {
     setSaving(true);
     try {
+      if (enabled && selectedDays.length === 0) {
+        toast.error(t.daysRequired);
+        setSaving(false);
+        return;
+      }
       const { error } = await supabase
         .from('businesses')
         .update({
           student_discount_enabled: enabled,
           student_discount_percent: enabled ? percent : null,
           student_discount_mode: enabled ? mode : null,
-          student_discount_days: enabled && selectedDays.length > 0 ? selectedDays : null,
+          student_discount_days: enabled ? selectedDays : null,
         })
         .eq('id', businessId);
 
@@ -217,7 +224,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                 })}
               </div>
               {selectedDays.length === 0 && (
-                <p className="text-[10px] sm:text-xs text-primary/70 font-medium">✓ {t.allDays}</p>
+                <p className="text-[10px] sm:text-xs text-destructive font-medium">⚠ {t.daysRequired}</p>
               )}
             </div>
 
