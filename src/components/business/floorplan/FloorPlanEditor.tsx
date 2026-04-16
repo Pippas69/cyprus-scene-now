@@ -1070,8 +1070,8 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
         </div>
       )}
 
-      {/* Event selector (preview mode only) */}
-      {!isDesignMode && events.length > 0 && (
+      {/* Event selector (legacy preview mode only) */}
+      {isLegacyMode && !isDesignMode && events.length > 0 && (
         <div className="flex items-center gap-2 mb-3">
           <CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <Select value={selectedEventId || ''} onValueChange={(val) => setSelectedEventId(val)}>
