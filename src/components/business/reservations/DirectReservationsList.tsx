@@ -575,7 +575,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           const seatingTypeIds = [...new Set(allReservations.map((r) => r.seating_type_id).filter(Boolean))] as string[];
           
           // Fire ALL enrichment queries in parallel
-          const enrichmentPromises: Promise<void>[] = [
+          const enrichmentPromises: Promise<any>[] = [
             fetchAgesForReservations(allIds),
             fetchCheckInCounts(allIds),
             fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
