@@ -587,15 +587,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           }
           if (selectedEventId) {
             enrichmentPromises.push(
-              supabase
-                .from('ticket_tiers')
-                .select('price_cents')
-                .eq('event_id', selectedEventId)
-                .ilike('name', '%walk%')
-                .limit(1)
-                .then(({ data: walkTiers }) => {
-                  setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
-                })
+              Promise.resolve(
+                supabase
+                  .from('ticket_tiers')
+                  .select('price_cents')
+                  .eq('event_id', selectedEventId)
+                  .ilike('name', '%walk%')
+                  .limit(1)
+              ).then(({ data: walkTiers }) => {
+                setWalkInTicketPriceCents(walkTiers?.[0]?.price_cents ?? null);
+              })
             );
           }
           await Promise.all(enrichmentPromises);
