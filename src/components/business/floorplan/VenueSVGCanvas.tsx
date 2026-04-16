@@ -485,15 +485,15 @@ export function VenueSVGCanvas({
         const self = isSelf(item);
 
         const customColor = item.color || null;
-        let fill = customColor ? `${customColor}08` : THEME.tableFill;
+        let fill = customColor ? `${customColor}08` : 'url(#fp-table-fill)';
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = 0.25;
-        let filterAttr: string | undefined = 'url(#fp-table-shadow)';
+        let strokeWidth = 0.2;
+        let filterAttr: string | undefined = 'url(#fp-table-ambient)';
 
         if (hasTableAssignment) {
-          fill = 'hsl(168 45% 48% / 0.12)';
-          stroke = 'hsl(168 50% 50%)';
-          strokeWidth = 0.4;
+          fill = 'url(#fp-assigned-fill)';
+          stroke = 'hsl(168 55% 52%)';
+          strokeWidth = 0.35;
           filterAttr = 'url(#fp-glow-assigned)';
         } else if (occupied) {
           fill = THEME.occupiedFill;
