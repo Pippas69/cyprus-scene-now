@@ -896,6 +896,7 @@ export type Database = {
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           stripe_payouts_enabled: boolean | null
+          student_discount_days: string[] | null
           student_discount_enabled: boolean | null
           student_discount_mode: string | null
           student_discount_percent: number | null
@@ -941,6 +942,7 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          student_discount_days?: string[] | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
@@ -986,6 +988,7 @@ export type Database = {
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          student_discount_days?: string[] | null
           student_discount_enabled?: boolean | null
           student_discount_mode?: string | null
           student_discount_percent?: number | null
