@@ -189,10 +189,36 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
   const history = useFloorPlanHistory<FloorPlanItemFull>(items);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadFloorPlan(); loadEvents(); }, [businessId]);
+  // Initialize based on mode
+  useEffect(() => {
+    if (isTemplateMode || isEventMode) {
+      // Use provided initialItems
+      const loaded = (initialItems || []).map((i: any) => ({
+        ...i,
+        id: i.id || crypto.randomUUID(),
+        rotation: i.rotation ?? 0,
+        width_percent: i.width_percent ?? 5,
+        height_percent: i.height_percent ?? 5,
+        is_locked: i.is_locked ?? false,
+        item_type: i.item_type ?? 'table',
+        color: i.color ?? null,
+      }));
+      setItems(loaded);
+      setHasFloorPlan(loaded.length > 0);
+      setIsDesignMode(true);
+      history.reset(loaded);
+      setLoading(false);
+      if (isEventMode && propEventId) {
+        setSelectedEventId(propEventId);
+      }
+    } else {
+      loadFloorPlan();
+      loadEvents();
+    }
+  }, [businessId, mode]);
 
   const loadEvents = async () => {
-    const now = new Date().toISOString();
+    if (!isLegacyMode) return;
     const { data } = await supabase
       .from('events')
       .select('id, title, start_at')
@@ -202,7 +228,6 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
     
     const loadedEvents = (data || []) as FloorPlanEvent[];
     setEvents(loadedEvents);
-    // Auto-select nearest event
     if (loadedEvents.length > 0 && !selectedEventId) {
       setSelectedEventId(loadedEvents[0].id);
     }
