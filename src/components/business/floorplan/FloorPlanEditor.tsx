@@ -698,8 +698,11 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       await supabase.from('floor_plan_tables').delete().in('id', toDelete);
     }
 
-    // Upsert all current items
-    const upsertData = layoutItems.map((item, idx) => ({
+    // Batch: delete all existing that we'll re-insert, then insert all at once
+    const toUpdate = layoutItems.filter(i => existingIds.has(i.id));
+    const toInsert = layoutItems.filter(i => !existingIds.has(i.id));
+
+    const mapItem = (item: FloorPlanItemFull, idx: number) => ({
       id: item.id,
       business_id: businessId,
       label: item.label || '',
@@ -715,15 +718,19 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       fixture_type: item.fixture_type || null,
       color: item.color || null,
       sort_order: idx,
-    }));
+    });
 
-    for (const item of upsertData) {
-      if (existingIds.has(item.id)) {
-        await supabase.from('floor_plan_tables').update(item as any).eq('id', item.id);
-      } else {
-        await supabase.from('floor_plan_tables').insert(item as any);
-      }
+    // Parallel updates + batch insert
+    const promises: Promise<any>[] = [];
+    for (const item of toUpdate) {
+      const idx = layoutItems.indexOf(item);
+      promises.push(supabase.from('floor_plan_tables').update(mapItem(item, idx) as any).eq('id', item.id));
     }
+    if (toInsert.length > 0) {
+      const insertData = toInsert.map((item) => mapItem(item, layoutItems.indexOf(item)));
+      promises.push(supabase.from('floor_plan_tables').insert(insertData as any));
+    }
+    await Promise.all(promises);
   };
 
   const handleSaveLayout = useCallback(async () => {
@@ -745,6 +752,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
         setSelectedItem(null);
         setPlacingMode(null);
         setIsDesignMode(false);
+        onDesignModeChange?.(false);
         // Load assignments now that we're in preview mode
         if (selectedEventId) {
           await loadTableAssignments(items.map(i => i.id), selectedEventId);
