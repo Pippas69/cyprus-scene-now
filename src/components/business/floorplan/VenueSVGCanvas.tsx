@@ -86,14 +86,14 @@ type Geometry = {
 /* ═══ Premium SevenRooms-inspired theme ═══ */
 const THEME = {
   grid: 'rgba(255,255,255,0.04)',
-  fixtureFill: 'rgba(255,255,255,0.03)',
-  fixtureStroke: 'rgba(255,255,255,0.25)',
-  fixtureText: 'rgba(255,255,255,0.45)',
-  tableStroke: 'rgba(255,255,255,0.30)',
-  tableFill: 'rgba(255,255,255,0.04)',
+  fixtureFill: 'rgba(255,255,255,0.035)',
+  fixtureStroke: 'rgba(255,255,255,0.22)',
+  fixtureText: 'rgba(255,255,255,0.50)',
+  tableStroke: 'rgba(255,255,255,0.18)',
+  tableFill: 'rgba(255,255,255,0.025)',
   tableSelectedStroke: 'hsl(var(--primary))',
   tableSelectedFill: 'hsl(var(--primary) / 0.10)',
-  tableText: 'rgba(255,255,255,0.75)',
+  tableText: 'rgba(255,255,255,0.70)',
   occupiedStroke: 'hsl(0 72% 55%)',
   occupiedFill: 'hsl(0 72% 55% / 0.10)',
   selfStroke: 'hsl(var(--floorplan-accent))',
@@ -341,24 +341,48 @@ export function VenueSVGCanvas({
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
       <defs>
-        {/* Premium subtle glow for assigned tables */}
-        <filter id="fp-glow-assigned" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" result="blur" />
-          <feFlood floodColor="hsl(168 50% 55%)" floodOpacity="0.25" result="color" />
+        {/* Premium glow for assigned tables */}
+        <filter id="fp-glow-assigned" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
+          <feFlood floodColor="hsl(168 55% 55%)" floodOpacity="0.30" result="color" />
           <feComposite in="color" in2="blur" operator="in" result="glow" />
           <feMerge>
             <feMergeNode in="glow" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        {/* Subtle inner shadow for tables */}
-        <filter id="fp-table-shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="0.15" stdDeviation="0.3" floodColor="rgba(0,0,0,0.35)" />
+        {/* Elegant table shadow with subtle lift */}
+        <filter id="fp-table-shadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="0.2" stdDeviation="0.4" floodColor="rgba(0,0,0,0.45)" />
         </filter>
-        {/* Fixture shadow */}
-        <filter id="fp-fixture-shadow" x="-5%" y="-5%" width="110%" height="110%">
-          <feDropShadow dx="0" dy="0.1" stdDeviation="0.2" floodColor="rgba(0,0,0,0.25)" />
+        {/* Fixture shadow — deeper for presence */}
+        <filter id="fp-fixture-shadow" x="-8%" y="-8%" width="116%" height="116%">
+          <feDropShadow dx="0" dy="0.15" stdDeviation="0.35" floodColor="rgba(0,0,0,0.35)" />
         </filter>
+        {/* Subtle ambient glow for unassigned tables */}
+        <filter id="fp-table-ambient" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="0.5" floodColor="rgba(255,255,255,0.04)" />
+        </filter>
+        {/* Gradient for fixture labels */}
+        <linearGradient id="fp-fixture-text-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.35)" />
+        </linearGradient>
+        {/* Assigned table fill gradient */}
+        <linearGradient id="fp-assigned-fill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="hsl(168 50% 50% / 0.14)" />
+          <stop offset="100%" stopColor="hsl(168 50% 40% / 0.06)" />
+        </linearGradient>
+        {/* Table fill gradient */}
+        <linearGradient id="fp-table-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.04)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.015)" />
+        </linearGradient>
+        {/* Fixture fill gradient */}
+        <linearGradient id="fp-fixture-fill-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.015)" />
+        </linearGradient>
       </defs>
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
@@ -401,29 +425,30 @@ export function VenueSVGCanvas({
           <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter="url(#fp-fixture-shadow)">
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
-              rx={isDj ? 0.8 : 0.4}
-              fill={item.color ? `${item.color}06` : THEME.fixtureFill}
+              rx={isDj ? 1.2 : 0.5}
+              fill={item.color ? `${item.color}08` : 'url(#fp-fixture-fill-grad)'}
               stroke={selected ? THEME.selectionStroke : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.5 : 0.25}
+              strokeWidth={selected ? 0.5 : 0.2}
             />
-            {isBar && (
+            {/* Inner border for depth */}
+            {(isBar || isDj) && (
               <rect
-                x={g.x + g.w * 0.06} y={g.y + g.h * 0.06}
-                width={g.w * 0.88} height={g.h * 0.88}
-                rx={0.3} fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.08} opacity={0.3}
+                x={g.x + g.w * 0.04} y={g.y + g.h * 0.04}
+                width={g.w * 0.92} height={g.h * 0.92}
+                rx={isDj ? 0.9 : 0.35} fill="none" stroke={THEME.fixtureStroke}
+                strokeWidth={0.06} opacity={0.2}
               />
             )}
             {isDj && (
               <>
                 <circle
-                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.22}
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.24}
                   fill="none" stroke={THEME.fixtureStroke}
-                  strokeWidth={0.1} opacity={0.4}
+                  strokeWidth={0.08} opacity={0.3}
                 />
                 <circle
-                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.08}
-                  fill={THEME.fixtureStroke} opacity={0.25}
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.09}
+                  fill={THEME.fixtureStroke} opacity={0.2}
                 />
               </>
             )}
@@ -432,10 +457,10 @@ export function VenueSVGCanvas({
                 x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
                 transform={g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
-                fill={item.color || THEME.fixtureText}
+                fill={item.color || 'url(#fp-fixture-text-grad)'}
                 fontSize={Math.min(g.h > g.w * 1.3 ? g.h * 0.26 : g.w * 0.26, g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.65, 5.5)}
-                fontWeight={700}
-                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase' }}
+                fontWeight={800}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase' }}
                 className="pointer-events-none"
               >
                 {item.label.toUpperCase()}
@@ -460,15 +485,15 @@ export function VenueSVGCanvas({
         const self = isSelf(item);
 
         const customColor = item.color || null;
-        let fill = customColor ? `${customColor}08` : THEME.tableFill;
+        let fill = customColor ? `${customColor}08` : 'url(#fp-table-fill)';
         let stroke = customColor || THEME.tableStroke;
-        let strokeWidth = 0.25;
-        let filterAttr: string | undefined = 'url(#fp-table-shadow)';
+        let strokeWidth = 0.2;
+        let filterAttr: string | undefined = 'url(#fp-table-ambient)';
 
         if (hasTableAssignment) {
-          fill = 'hsl(168 45% 48% / 0.12)';
-          stroke = 'hsl(168 50% 50%)';
-          strokeWidth = 0.4;
+          fill = 'url(#fp-assigned-fill)';
+          stroke = 'hsl(168 55% 52%)';
+          strokeWidth = 0.35;
           filterAttr = 'url(#fp-glow-assigned)';
         } else if (occupied) {
           fill = THEME.occupiedFill;
@@ -578,13 +603,13 @@ export function VenueSVGCanvas({
                 transform={g.shape !== 'round' && g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
                 fill={occupied ? THEME.occupiedStroke : (item.color || THEME.tableText)}
                 fontSize={Math.min(
-                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.h * 0.28 : g.w * 0.28),
-                  g.shape === 'round' ? g.w * 0.32 : (g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.6),
-                  4.5
+                  g.shape === 'round' ? g.w * 0.30 : (g.h > g.w * 1.3 ? g.h * 0.26 : g.w * 0.26),
+                  g.shape === 'round' ? g.w * 0.30 : (g.h > g.w * 1.3 ? g.w * 0.60 : g.h * 0.55),
+                  4.2
                 )}
-                fontWeight={600}
+                fontWeight={700}
                 className="pointer-events-none"
-                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.06em' }}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.08em' }}
               >
                 {item.label}
               </text>

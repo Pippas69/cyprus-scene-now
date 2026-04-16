@@ -1154,7 +1154,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       )}
 
       {/* ═══ CANVAS — always full width, never changes with sidebars ═══ */}
-      <div className="relative overflow-hidden border border-white/[0.06] shadow-[0_8px_40px_rgba(0,0,0,0.4)] rounded-xl w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
+      <div className="relative overflow-hidden border border-white/[0.08] shadow-[0_12px_50px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.03)] rounded-2xl w-full touch-none" style={{ aspectRatio: '4 / 3' }}>
         <div
           ref={canvasRef}
           className={`absolute inset-0 select-none touch-none ${isDesignMode && placingMode ? 'cursor-crosshair' : 'cursor-default'}`}
@@ -1182,9 +1182,26 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
           onMouseUp={isDesignMode ? handleMouseUp : undefined}
         >
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse at 25% 15%, hsl(var(--floorplan-canvas-elevated)) 0%, hsl(var(--floorplan-canvas)) 55%, hsl(220 35% 4%) 100%)',
+            background: `
+              radial-gradient(ellipse at 20% 10%, hsl(var(--floorplan-canvas-elevated)) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 85%, hsl(220 30% 9% / 0.8) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, hsl(var(--floorplan-canvas)) 0%, hsl(220 35% 3%) 100%)
+            `,
           }} />
-          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(0,0,0,0.2)' }} />
+          {/* Subtle grid pattern overlay for blueprint feel */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.02]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="fp-micro-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#fp-micro-grid)" />
+          </svg>
+          {/* Corner vignette for cinematic depth */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)',
+          }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.3)' }} />
 
           {isDesignMode && referenceImageUrl && showReferenceImage && (
             <img src={referenceImageUrl} alt="" className="absolute inset-0 w-full h-full object-fill pointer-events-none" style={{ opacity: referenceOpacity / 100 }} draggable={false} />
@@ -1258,17 +1275,24 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
         </div>
       ) : (
         <div className="flex items-center justify-end gap-2 mt-3">
-          <div className="flex items-center gap-4 bg-card/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-border/20 shadow-lg">
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ border: '1.5px solid hsl(168 50% 50%)', background: 'hsl(168 45% 48% / 0.12)', boxShadow: '0 0 4px hsl(168 50% 55% / 0.3)' }} />
+          <div className="flex items-center gap-5 bg-card/80 backdrop-blur-xl rounded-xl px-5 py-2.5 border border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/80">
+              <div className="w-3 h-3 rounded-full" style={{
+                border: '1.5px solid hsl(168 55% 52%)',
+                background: 'linear-gradient(135deg, hsl(168 50% 50% / 0.14), hsl(168 50% 40% / 0.06))',
+                boxShadow: '0 0 6px hsl(168 55% 55% / 0.35), inset 0 0 2px hsl(168 55% 55% / 0.1)',
+              }} />
               {language === 'el' ? 'Τοποθετημένη' : 'Assigned'}
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <div className="w-2.5 h-2.5 rounded-full border border-white/25 bg-white/4" />
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/80">
+              <div className="w-3 h-3 rounded-full" style={{
+                border: '1.5px solid rgba(255,255,255,0.18)',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))',
+              }} />
               {language === 'el' ? 'Διαθέσιμη' : 'Available'}
             </div>
           </div>
-          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => { setIsDesignMode(true); onDesignModeChange?.(true); }}>
+          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.2)] bg-card/80 backdrop-blur-xl border-white/[0.08] hover:border-white/[0.15] transition-all" onClick={() => { setIsDesignMode(true); onDesignModeChange?.(true); }}>
             <Pencil className="h-3.5 w-3.5" />{t.editLayout}
           </Button>
         </div>
