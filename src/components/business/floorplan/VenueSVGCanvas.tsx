@@ -425,29 +425,30 @@ export function VenueSVGCanvas({
           <g key={item.id} transform={g.rotation ? `rotate(${g.rotation} ${cx} ${cy})` : undefined} {...handlers} filter="url(#fp-fixture-shadow)">
             <rect
               x={g.x} y={g.y} width={g.w} height={g.h}
-              rx={isDj ? 0.8 : 0.4}
-              fill={item.color ? `${item.color}06` : THEME.fixtureFill}
+              rx={isDj ? 1.2 : 0.5}
+              fill={item.color ? `${item.color}08` : 'url(#fp-fixture-fill-grad)'}
               stroke={selected ? THEME.selectionStroke : (item.color || THEME.fixtureStroke)}
-              strokeWidth={selected ? 0.5 : 0.25}
+              strokeWidth={selected ? 0.5 : 0.2}
             />
-            {isBar && (
+            {/* Inner border for depth */}
+            {(isBar || isDj) && (
               <rect
-                x={g.x + g.w * 0.06} y={g.y + g.h * 0.06}
-                width={g.w * 0.88} height={g.h * 0.88}
-                rx={0.3} fill="none" stroke={THEME.fixtureStroke}
-                strokeWidth={0.08} opacity={0.3}
+                x={g.x + g.w * 0.04} y={g.y + g.h * 0.04}
+                width={g.w * 0.92} height={g.h * 0.92}
+                rx={isDj ? 0.9 : 0.35} fill="none" stroke={THEME.fixtureStroke}
+                strokeWidth={0.06} opacity={0.2}
               />
             )}
             {isDj && (
               <>
                 <circle
-                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.22}
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.24}
                   fill="none" stroke={THEME.fixtureStroke}
-                  strokeWidth={0.1} opacity={0.4}
+                  strokeWidth={0.08} opacity={0.3}
                 />
                 <circle
-                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.08}
-                  fill={THEME.fixtureStroke} opacity={0.25}
+                  cx={cx} cy={cy} r={Math.min(g.w, g.h) * 0.09}
+                  fill={THEME.fixtureStroke} opacity={0.2}
                 />
               </>
             )}
@@ -456,10 +457,10 @@ export function VenueSVGCanvas({
                 x={cx} y={cy}
                 textAnchor="middle" dominantBaseline="central"
                 transform={g.h > g.w * 1.3 ? `rotate(-90 ${cx} ${cy})` : undefined}
-                fill={item.color || THEME.fixtureText}
+                fill={item.color || 'url(#fp-fixture-text-grad)'}
                 fontSize={Math.min(g.h > g.w * 1.3 ? g.h * 0.26 : g.w * 0.26, g.h > g.w * 1.3 ? g.w * 0.65 : g.h * 0.65, 5.5)}
-                fontWeight={700}
-                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.12em', textTransform: 'uppercase' }}
+                fontWeight={800}
+                style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase' }}
                 className="pointer-events-none"
               >
                 {item.label.toUpperCase()}
