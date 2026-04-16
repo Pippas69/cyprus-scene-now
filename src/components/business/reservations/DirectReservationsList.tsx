@@ -639,13 +639,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const fetchAgesForReservations = async (reservationIds: string[]) => {
+  const fetchAgesAndCheckIns = async (reservationIds: string[]) => {
     if (reservationIds.length === 0) return;
-    // Get ticket orders linked to these reservations
-    const { data: orders } = await supabase.
-    from('ticket_orders').
-    select('id, linked_reservation_id').
-    in('linked_reservation_id', reservationIds);
+    // Single query to get ticket orders linked to these reservations
+    const { data: orders } = await supabase
+      .from('ticket_orders')
+      .select('id, linked_reservation_id')
+      .in('linked_reservation_id', reservationIds);
 
     if (!orders || orders.length === 0) return;
 
@@ -655,118 +655,34 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
     });
 
-    // Get tickets with ages
-    const { data: tickets } = await supabase.
-    from('tickets').
-    select('order_id, guest_age').
-    in('order_id', orderIds).
-    not('guest_age', 'is', null);
+    // Single tickets query fetching both age and status
+    const { data: tickets } = await supabase
+      .from('tickets')
+      .select('order_id, guest_age, status')
+      .in('order_id', orderIds);
 
     if (!tickets) return;
 
     const agesMap: Record<string, number[]> = {};
+    const countsMap: Record<string, { used: number; total: number }> = {};
+
     tickets.forEach((ticket) => {
       const resId = orderToReservation[ticket.order_id];
-      if (resId && ticket.guest_age) {
+      if (!resId) return;
+      // Ages
+      if (ticket.guest_age) {
         if (!agesMap[resId]) agesMap[resId] = [];
         agesMap[resId].push(ticket.guest_age);
+      }
+      // Check-in counts
+      if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
+      countsMap[resId].total++;
+      if (ticket.status === 'used') {
+        countsMap[resId].used++;
       }
     });
 
     setAgesByReservation(agesMap);
-  };
-
-  const fetchCitiesForReservations = async (reservations: DirectReservation[]) => {
-    const userIds = [...new Set(reservations.map(r => r.user_id).filter(Boolean))] as string[];
-    if (userIds.length === 0) return;
-
-    const { data: cityRows } = await supabase.rpc('get_user_cities', { p_user_ids: userIds });
-
-    if (!cityRows) return;
-
-    const profileMap: Record<string, { city: string | null; town: string | null }> = {};
-    ((cityRows || []) as any[]).forEach((r: any) => {
-      profileMap[r.user_id] = { city: r.city, town: r.town };
-    });
-
-    const cityMap: Record<string, string> = {};
-    reservations.forEach(r => {
-      if (!r.user_id) return;
-      const profile = profileMap[r.user_id];
-      const city = (profile?.city && profile.city.trim()) || (profile?.town && profile.town.trim()) || '';
-      if (city) cityMap[r.id] = city;
-    });
-
-    setCityByReservation(cityMap);
-  };
-
-  const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
-    const { data } = await supabase
-      .from('seating_type_tiers')
-      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
-      .in('seating_type_id', seatingTypeIds)
-      .order('min_people', { ascending: true });
-    
-    const tiersMap: Record<string, SeatingTier[]> = {};
-    (data || []).forEach((row: any) => {
-      if (!tiersMap[row.seating_type_id]) tiersMap[row.seating_type_id] = [];
-      tiersMap[row.seating_type_id].push({
-        min_people: row.min_people,
-        max_people: row.max_people,
-        prepaid_min_charge_cents: row.prepaid_min_charge_cents,
-      });
-    });
-    setSeatingTiers(tiersMap);
-  };
-
-  const fetchSeatingTypeNames = async (seatingTypeIds: string[]) => {
-    const { data } = await supabase.
-    from('reservation_seating_types').
-    select('id, seating_type').
-    in('id', seatingTypeIds);
-    if (data) {
-      const namesMap: Record<string, string> = {};
-      data.forEach((st) => {namesMap[st.id] = st.seating_type;});
-      setSeatingTypeNames(namesMap);
-    }
-  };
-
-  const fetchCheckInCounts = async (reservationIds: string[]) => {
-    if (reservationIds.length === 0) return;
-    // Get ticket orders linked to these reservations
-    const { data: orders } = await supabase.
-    from('ticket_orders').
-    select('id, linked_reservation_id').
-    in('linked_reservation_id', reservationIds);
-
-    if (!orders || orders.length === 0) return;
-
-    const orderIds = orders.map((o) => o.id);
-    const orderToReservation: Record<string, string> = {};
-    orders.forEach((o) => {
-      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
-    });
-
-    // Get all tickets for these orders
-    const { data: tickets } = await supabase.
-    from('tickets').
-    select('order_id, status').
-    in('order_id', orderIds);
-
-    if (!tickets) return;
-
-    const countsMap: Record<string, {used: number;total: number;}> = {};
-    tickets.forEach((ticket) => {
-      const resId = orderToReservation[ticket.order_id];
-      if (resId) {
-        if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
-        countsMap[resId].total++;
-        if (ticket.status === 'used') {
-          countsMap[resId].used++;
-        }
-      }
-    });
-
     setCheckInCounts(countsMap);
   };
 
