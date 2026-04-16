@@ -12,7 +12,7 @@ import EventsList from "@/components/business/EventsList";
 import OffersList from "@/components/business/OffersList";
 import BusinessProfileForm from "@/components/business/BusinessProfileForm";
 import { ReservationDashboard } from '@/components/business/reservations';
-import { FloorPlanEditor } from '@/components/business/floorplan/FloorPlanEditor';
+import { FloorPlanPage } from '@/components/business/floorplan/FloorPlanPage';
 import { EventAnalytics } from "@/components/business/EventAnalytics";
 import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
