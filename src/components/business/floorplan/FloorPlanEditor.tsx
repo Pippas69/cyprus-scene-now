@@ -724,11 +724,11 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
     const promises: Promise<any>[] = [];
     for (const item of toUpdate) {
       const idx = layoutItems.indexOf(item);
-      promises.push(supabase.from('floor_plan_tables').update(mapItem(item, idx) as any).eq('id', item.id).then());
+      promises.push(supabase.from('floor_plan_tables').update(mapItem(item, idx) as any).eq('id', item.id).select().then(() => {}));
     }
     if (toInsert.length > 0) {
       const insertData = toInsert.map((item) => mapItem(item, layoutItems.indexOf(item)));
-      promises.push(supabase.from('floor_plan_tables').insert(insertData as any).then());
+      promises.push(supabase.from('floor_plan_tables').insert(insertData as any).select().then(() => {}));
     }
     await Promise.all(promises);
   };
