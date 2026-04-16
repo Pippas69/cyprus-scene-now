@@ -468,6 +468,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
   };
 
   const debouncedSave = useCallback((item: FloorPlanItemFull) => {
+    if (!isLegacyMode) return; // Template/event modes save on explicit Save click
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       supabase.from('floor_plan_tables').update({
@@ -479,13 +480,36 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
         if (error) console.error('Save error:', error);
       });
     }, 800);
-  }, []);
+  }, [isLegacyMode]);
 
   const updateItemLocal = (item: FloorPlanItemFull) => {
     setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
   };
 
-  const saveItemToDB = async (item: Partial<FloorPlanItemFull>) => {
+  const saveItemToDB = async (item: Partial<FloorPlanItemFull>): Promise<FloorPlanItemFull | null> => {
+    if (!isLegacyMode) {
+      // Template/event mode: just create locally with a UUID
+      const newItem: FloorPlanItemFull = {
+        id: crypto.randomUUID(),
+        business_id: businessId,
+        zone_id: zones[0]?.id || null,
+        label: item.label!,
+        x_percent: item.x_percent!,
+        y_percent: item.y_percent!,
+        seats: item.seats || 0,
+        shape: item.shape || 'square',
+        sort_order: items.length,
+        fixture_type: item.fixture_type || null,
+        rotation: item.rotation || 0,
+        width_percent: item.width_percent || 5,
+        height_percent: item.height_percent || 5,
+        is_locked: false,
+        item_type: item.item_type || 'table',
+        color: item.color || null,
+      };
+      return newItem;
+    }
+
     const { data, error } = await supabase.from('floor_plan_tables').insert({
       business_id: businessId, zone_id: zones[0]?.id || null,
       label: item.label!, x_percent: item.x_percent!, y_percent: item.y_percent!,
