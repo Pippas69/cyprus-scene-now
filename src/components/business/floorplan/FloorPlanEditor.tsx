@@ -682,6 +682,21 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
     setIsSaving(true);
 
     try {
+      if (isTemplateMode && onSaveTemplate) {
+        onSaveTemplate(items);
+        setSelectedItem(null);
+        setPlacingMode(null);
+        return;
+      }
+
+      if (isEventMode && onSaveEventLayout) {
+        onSaveEventLayout(items);
+        setSelectedItem(null);
+        setPlacingMode(null);
+        return;
+      }
+
+      // Legacy mode: save to floor_plan_tables
       const updateResults = await Promise.all(items.map((item) =>
         supabase.from('floor_plan_tables').update({
           label: item.label, x_percent: item.x_percent, y_percent: item.y_percent,
