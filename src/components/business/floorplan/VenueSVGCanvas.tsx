@@ -86,14 +86,14 @@ type Geometry = {
 /* ═══ Premium SevenRooms-inspired theme ═══ */
 const THEME = {
   grid: 'rgba(255,255,255,0.04)',
-  fixtureFill: 'rgba(255,255,255,0.03)',
-  fixtureStroke: 'rgba(255,255,255,0.25)',
-  fixtureText: 'rgba(255,255,255,0.45)',
-  tableStroke: 'rgba(255,255,255,0.30)',
-  tableFill: 'rgba(255,255,255,0.04)',
+  fixtureFill: 'rgba(255,255,255,0.035)',
+  fixtureStroke: 'rgba(255,255,255,0.22)',
+  fixtureText: 'rgba(255,255,255,0.50)',
+  tableStroke: 'rgba(255,255,255,0.18)',
+  tableFill: 'rgba(255,255,255,0.025)',
   tableSelectedStroke: 'hsl(var(--primary))',
   tableSelectedFill: 'hsl(var(--primary) / 0.10)',
-  tableText: 'rgba(255,255,255,0.75)',
+  tableText: 'rgba(255,255,255,0.70)',
   occupiedStroke: 'hsl(0 72% 55%)',
   occupiedFill: 'hsl(0 72% 55% / 0.10)',
   selfStroke: 'hsl(var(--floorplan-accent))',
@@ -341,24 +341,48 @@ export function VenueSVGCanvas({
   return (
     <svg ref={svgRef} className="absolute inset-0 w-full h-full" viewBox="-5 -5 110 110" preserveAspectRatio="none" shapeRendering="geometricPrecision">
       <defs>
-        {/* Premium subtle glow for assigned tables */}
-        <filter id="fp-glow-assigned" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" result="blur" />
-          <feFlood floodColor="hsl(168 50% 55%)" floodOpacity="0.25" result="color" />
+        {/* Premium glow for assigned tables */}
+        <filter id="fp-glow-assigned" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
+          <feFlood floodColor="hsl(168 55% 55%)" floodOpacity="0.30" result="color" />
           <feComposite in="color" in2="blur" operator="in" result="glow" />
           <feMerge>
             <feMergeNode in="glow" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        {/* Subtle inner shadow for tables */}
-        <filter id="fp-table-shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="0.15" stdDeviation="0.3" floodColor="rgba(0,0,0,0.35)" />
+        {/* Elegant table shadow with subtle lift */}
+        <filter id="fp-table-shadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="0.2" stdDeviation="0.4" floodColor="rgba(0,0,0,0.45)" />
         </filter>
-        {/* Fixture shadow */}
-        <filter id="fp-fixture-shadow" x="-5%" y="-5%" width="110%" height="110%">
-          <feDropShadow dx="0" dy="0.1" stdDeviation="0.2" floodColor="rgba(0,0,0,0.25)" />
+        {/* Fixture shadow — deeper for presence */}
+        <filter id="fp-fixture-shadow" x="-8%" y="-8%" width="116%" height="116%">
+          <feDropShadow dx="0" dy="0.15" stdDeviation="0.35" floodColor="rgba(0,0,0,0.35)" />
         </filter>
+        {/* Subtle ambient glow for unassigned tables */}
+        <filter id="fp-table-ambient" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="0.5" floodColor="rgba(255,255,255,0.04)" />
+        </filter>
+        {/* Gradient for fixture labels */}
+        <linearGradient id="fp-fixture-text-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.35)" />
+        </linearGradient>
+        {/* Assigned table fill gradient */}
+        <linearGradient id="fp-assigned-fill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="hsl(168 50% 50% / 0.14)" />
+          <stop offset="100%" stopColor="hsl(168 50% 40% / 0.06)" />
+        </linearGradient>
+        {/* Table fill gradient */}
+        <linearGradient id="fp-table-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.04)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.015)" />
+        </linearGradient>
+        {/* Fixture fill gradient */}
+        <linearGradient id="fp-fixture-fill-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.015)" />
+        </linearGradient>
       </defs>
       <rect x={-5} y={-5} width={110} height={110} fill="transparent" onMouseDown={() => { if (interactive && onTableClick) onTableClick(''); }} />
       {showGrid && <GridOverlay snap={gridSnap} />}
