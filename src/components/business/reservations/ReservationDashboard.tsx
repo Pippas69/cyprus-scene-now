@@ -773,14 +773,6 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               </Button>
               {/* Date picker for filtering reservations */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-6 sm:h-9 sm:w-7 p-0"
-                  onClick={() => setSelectedDate(prev => prev ? subDays(prev, 1) : subDays(new Date(), 1))}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -809,17 +801,10 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                       selected={selectedDate || undefined}
                       onSelect={(date) => { setSelectedDate(date || null); setDatePickerOpen(false); }}
                       locale={language === 'el' ? el : enUS}
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-6 sm:h-9 sm:w-7 p-0"
-                  onClick={() => setSelectedDate(prev => prev ? addDays(prev, 1) : addDays(new Date(), 1))}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
             </div>
             {searchOpen && (
