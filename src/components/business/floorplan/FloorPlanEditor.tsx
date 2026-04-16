@@ -206,7 +206,10 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       }));
       setItems(loaded);
       setHasFloorPlan(loaded.length > 0);
-      setIsDesignMode(true);
+      // Template mode starts in design, event mode starts in view (assignment)
+      const startInDesign = isTemplateMode;
+      setIsDesignMode(startInDesign);
+      onDesignModeChange?.(startInDesign);
       history.reset(loaded);
       setLoading(false);
       if (isEventMode && propEventId) {
