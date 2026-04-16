@@ -690,9 +690,16 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
       }
 
       if (isEventMode && onSaveEventLayout) {
+        // Also sync to floor_plan_tables so reservation assignments work
+        await syncItemsToFloorPlanTables(items);
         onSaveEventLayout(items);
         setSelectedItem(null);
         setPlacingMode(null);
+        setIsDesignMode(false);
+        // Load assignments now that we're in preview mode
+        if (selectedEventId) {
+          await loadTableAssignments(items.map(i => i.id), selectedEventId);
+        }
         return;
       }
 
