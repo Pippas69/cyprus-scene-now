@@ -23,7 +23,7 @@ import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
-import { isStudentDiscountActiveToday } from "@/lib/studentDiscountDays";
+
 
 interface Business {
   id: string;
@@ -390,7 +390,7 @@ const BusinessProfile = () => {
               </button>
               
               {/* Student Discount Badge overlaid on avatar - clickable with icon + percentage */}
-              {business.student_discount_enabled && business.student_discount_percent && user && isStudentDiscountActiveToday(business.student_discount_days) &&
+              {business.student_discount_enabled && business.student_discount_percent && user && (business.student_discount_days?.length ?? 0) > 0 &&
               <div className="absolute -top-1 -right-1 z-10">
                   <StudentDiscountButton
                   businessId={business.id}
@@ -399,13 +399,14 @@ const BusinessProfile = () => {
                   discountMode={business.student_discount_mode === 'unlimited' ? 'unlimited' : 'one_time'}
                   userId={user?.id || null}
                   language={language}
-                  variant="badge" />
+                  variant="badge"
+                  activeDays={business.student_discount_days} />
 
                 </div>
               }
               
               {/* Non-clickable badge when not logged in */}
-              {business.student_discount_enabled && business.student_discount_percent && !user && isStudentDiscountActiveToday(business.student_discount_days) &&
+              {business.student_discount_enabled && business.student_discount_percent && !user && (business.student_discount_days?.length ?? 0) > 0 &&
               <div className="absolute -top-1 -right-1 z-10">
                   <div className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md">
                     <GraduationCap className="h-3 w-3" />
