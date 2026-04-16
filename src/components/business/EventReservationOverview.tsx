@@ -111,38 +111,47 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         tiers: allTiersData.filter(t => t.seating_type_id === st.id) as SeatingTier[],
       }));
 
+      const liveBookedMap: Record<string, number> = {};
+      for (const row of (liveBookedCounts || []) as { seating_type_id: string; slots_booked: number | string }[]) {
+        if (row.seating_type_id) {
+          liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
+        }
+      }
+
+      const reservations = reservationsResult.data || [];
+
+      // Identify walk-in orders
+      const linkedReservationIds = (allOrders || [])
+        .map(o => o.linked_reservation_id)
+        .filter((id): id is string => !!id);
+
+      let legacyWalkInReservationIds = new Set<string>();
+      if (linkedReservationIds.length > 0) {
+        const { data: linkedReservations } = await supabase
+          .from("reservations")
+          .select("id, auto_created_from_tickets, seating_type_id")
+          .in("id", linkedReservationIds);
+        legacyWalkInReservationIds = new Set(
+          (linkedReservations || [])
+            .filter(r => r.auto_created_from_tickets === true && !r.seating_type_id)
+            .map(r => r.id)
+        );
+      }
+
+      const walkInOrders = (allOrders || []).filter(
+        o => !o.linked_reservation_id || legacyWalkInReservationIds.has(o.linked_reservation_id)
+      );
+      const walkInOrderIds = new Set(walkInOrders.map(o => o.id));
+
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
 
-      // Total check-ins = ALL tickets with status 'used' (reservation-linked + walk-in)
       const checkedIn = (allTickets || []).filter(t => t.status === 'used').length;
 
-      // Per-tier sold count for walk-ins
       const tierSoldCount = new Map<string, number>();
       walkInTickets.forEach(t => {
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
-
-      // Filter and aggregate walk-in display tiers
-      const walkInDisplayTiers = (ticketTiers || []).filter(tier => tier.quantity_total > 0 && tier.quantity_total !== 999999);
-      const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
-      walkInDisplayTiers.forEach(tier => {
-        const sold = tierSoldCount.get(tier.id) || 0;
-        const existing = tierAggMap.get(tier.name);
-        if (existing) {
-          existing.quantity_total += tier.quantity_total;
-          existing.actual_sold += sold;
-        } else {
-          tierAggMap.set(tier.name, {
-            name: tier.name,
-            price_cents: tier.price_cents,
-            quantity_total: tier.quantity_total,
-            actual_sold: sold,
-            id: tier.id,
-          });
-        }
-      });
-      const enrichedWalkInTiers = Array.from(tierAggMap.values());
 
       // Group by seating type
       const seatingStats = seatingTypes.map((st) => {

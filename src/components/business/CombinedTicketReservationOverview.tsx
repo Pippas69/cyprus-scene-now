@@ -82,6 +82,53 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         }
       }
 
+      // Identify walk-in orders
+      const linkedReservationIds = (allOrders || [])
+        .map((order) => order.linked_reservation_id)
+        .filter((id): id is string => !!id);
+
+      let legacyWalkInReservationIds = new Set<string>();
+      if (linkedReservationIds.length > 0) {
+        const { data: linkedReservations } = await supabase
+          .from("reservations")
+          .select("id, auto_created_from_tickets, seating_type_id")
+          .in("id", linkedReservationIds);
+        legacyWalkInReservationIds = new Set(
+          (linkedReservations || [])
+            .filter((reservation) => reservation.auto_created_from_tickets === true && !reservation.seating_type_id)
+            .map((reservation) => reservation.id)
+        );
+      }
+
+      const walkInOrders = (allOrders || []).filter(
+        (order) =>
+          !order.linked_reservation_id ||
+          legacyWalkInReservationIds.has(order.linked_reservation_id)
+      );
+      const walkInIds = new Set(walkInOrders.map((o) => o.id));
+      const walkInTickets = (allTickets || []).filter((t) => walkInIds.has(t.order_id));
+      const allTicketsArr = allTickets || [];
+
+      // Batch fetch seating type tiers in one query
+      const seatingTypeIds = seatingTypesRaw.map(st => st.id);
+      let allStTiers: any[] = [];
+      if (seatingTypeIds.length > 0) {
+        const { data: stTiersData } = await supabase
+          .from("seating_type_tiers")
+          .select("seating_type_id, prepaid_min_charge_cents")
+          .in("seating_type_id", seatingTypeIds)
+          .order("min_people", { ascending: true });
+        allStTiers = stTiersData || [];
+      }
+
+      const seatingTypes = seatingTypesRaw.map(st => {
+        const stTiers = allStTiers.filter(t => t.seating_type_id === st.id);
+        return {
+          ...st,
+          minPrice: stTiers.length > 0 ? Math.min(...stTiers.map((t: any) => t.prepaid_min_charge_cents)) : 0
+        };
+      });
+
       // --- Ticket stats (ALL tickets including reservation-linked) ---
       const ticketRevenue = allOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
       const ticketsSold = allTicketsArr.length;
@@ -95,7 +142,6 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
 
       const walkInDisplayTiers = (tiers || []).filter((tier) => tier.quantity_total > 0 && tier.quantity_total !== 999999);
       
-      // Aggregate tiers by name to avoid duplicates (e.g. 2x "Αριστερά")
       const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
       walkInDisplayTiers.forEach((tier) => {
         const sold = tierSoldCount.get(tier.id) || 0;
