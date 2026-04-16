@@ -70,7 +70,6 @@ export function StudentQRCard({ verification, language, businessId, discountMode
         ? t.everyDay 
         : orderedDays.filter(d => activeDays.includes(d)).map(d => dayNamesMap[language][d]).join(', '))
     : null;
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
     if (canvasRef.current && verification.qr_code_token) {
