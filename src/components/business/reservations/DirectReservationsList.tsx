@@ -322,13 +322,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (!silent) setLoading(true);
 
     try {
-      const { data: bizData, error: bizError } = await supabase.
-      from('businesses').
-      select('ticket_reservation_linked, category').
-      eq('id', businessId).
-      maybeSingle();
-
-      if (bizError) throw bizError;
+      // Try cached data first, fall back to DB query
+      let bizData = queryClient.getQueryData<{ ticket_reservation_linked: boolean | null; category: string[] }>(['business-category', businessId]);
+      
+      if (!bizData) {
+        const { data, error: bizError } = await supabase
+          .from('businesses')
+          .select('ticket_reservation_linked, category')
+          .eq('id', businessId)
+          .maybeSingle();
+        if (bizError) throw bizError;
+        bizData = data;
+      }
 
       const linked = !!bizData?.ticket_reservation_linked || isClubOrEventBusiness(bizData?.category || []) || !!forceEventMode;
 
