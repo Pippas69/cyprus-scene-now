@@ -127,7 +127,10 @@ const translations = {
   },
 };
 
-export function FloorPlanEditor({ businessId }: FloorPlanEditorProps) {
+export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEventId, initialItems, onSaveTemplate, onSaveEventLayout }: FloorPlanEditorProps) {
+  const isTemplateMode = mode === 'template';
+  const isEventMode = mode === 'event';
+  const isLegacyMode = mode === 'legacy';
   const { language } = useLanguage();
   const t = translations[language];
   const canvasRef = useRef<HTMLDivElement>(null);
