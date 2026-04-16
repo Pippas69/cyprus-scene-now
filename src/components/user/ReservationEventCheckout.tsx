@@ -264,6 +264,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
   const [deferredCancellationFeePercent, setDeferredCancellationFeePercent] = useState(50);
   const [deferredConfirmationHours, setDeferredConfirmationHours] = useState(4);
+  const [eventMinimumAge, setEventMinimumAge] = useState<number | null>(null);
 
   // Success state for showing premium QR card
   const [successData, setSuccessData] = useState<{
@@ -349,6 +350,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         setDeferredCancellationFeePercent(eventData.deferred_cancellation_fee_percent || 50);
         setDeferredConfirmationHours(eventData.deferred_confirmation_hours || 4);
         setIsPayAtDoor(eventData.pay_at_door || false);
+        setEventMinimumAge(eventData.minimum_age ?? null);
       }
 
       const { data: seatingTypes, error: seatingError } = await supabase
@@ -566,7 +568,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return updated;
     });
   };
-  const minAge = getMinAge(eventId);
+  const minAge = getMinAge(eventId, eventMinimumAge);
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
 
   // Validation
