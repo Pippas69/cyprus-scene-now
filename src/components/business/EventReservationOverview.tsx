@@ -207,7 +207,6 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         walkInTicketCount,
         walkInTiers: enrichedWalkInTiers,
       };
-      };
     },
   });
 
