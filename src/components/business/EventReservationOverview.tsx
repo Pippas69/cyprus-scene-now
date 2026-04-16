@@ -83,11 +83,11 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       if (allTicketsResult.error) throw allTicketsResult.error;
 
       const seatingTypesRaw = seatingResult.data || [];
-      const liveBookedCounitsRaw = liveBookedResult.data;
       const liveBookedCounts = liveBookedResult.data;
       const ticketTiers = ticketTiersResult.data;
       const allOrders = allOrdersResult.data;
       const allTickets = allTicketsResult.data;
+      const reservations = reservationsResult.data || [];
 
       // Batch fetch ALL tiers for all seating types in one query
       const seatingTypeIds = seatingTypesRaw.map(st => st.id);
@@ -117,8 +117,6 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
           liveBookedMap[row.seating_type_id] = Number(row.slots_booked) || 0;
         }
       }
-
-      const reservations = reservationsResult.data || [];
 
       // Identify walk-in orders
       const linkedReservationIds = (allOrders || [])
@@ -153,6 +151,27 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         tierSoldCount.set(t.tier_id, (tierSoldCount.get(t.tier_id) || 0) + 1);
       });
 
+      // Filter and aggregate walk-in display tiers
+      const walkInDisplayTiers = (ticketTiers || []).filter(tier => tier.quantity_total > 0 && tier.quantity_total !== 999999);
+      const tierAggMap = new Map<string, { name: string; price_cents: number; quantity_total: number; actual_sold: number; id: string }>();
+      walkInDisplayTiers.forEach(tier => {
+        const sold = tierSoldCount.get(tier.id) || 0;
+        const existing = tierAggMap.get(tier.name);
+        if (existing) {
+          existing.quantity_total += tier.quantity_total;
+          existing.actual_sold += sold;
+        } else {
+          tierAggMap.set(tier.name, {
+            name: tier.name,
+            price_cents: tier.price_cents,
+            quantity_total: tier.quantity_total,
+            actual_sold: sold,
+            id: tier.id,
+          });
+        }
+      });
+      const enrichedWalkInTiers = Array.from(tierAggMap.values());
+
       // Group by seating type
       const seatingStats = seatingTypes.map((st) => {
         const stReservations = reservations.filter(
@@ -186,7 +205,8 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         totalReservations,
         checkedIn,
         walkInTicketCount,
-        walkInTiers: enrichedWalkInTiers2,
+        walkInTiers: enrichedWalkInTiers,
+      };
       };
     },
   });
