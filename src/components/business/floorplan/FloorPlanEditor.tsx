@@ -631,8 +631,10 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
 
   const clearAllItems = async () => {
     if (!window.confirm(t.clearAllConfirm)) return;
-    const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
-    if (error) { toast.error(error.message); return; }
+    if (isLegacyMode) {
+      const { error } = await supabase.from('floor_plan_tables').delete().eq('business_id', businessId);
+      if (error) { toast.error(error.message); return; }
+    }
     history.pushState(items, 'clear all');
     setItems([]);
     setSelectedItem(null);
