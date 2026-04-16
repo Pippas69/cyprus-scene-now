@@ -581,8 +581,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           
           // Fire ALL enrichment queries in parallel
           const enrichmentPromises: Promise<any>[] = [
-            fetchAgesForReservations(allIds),
-            fetchCheckInCounts(allIds),
+            fetchAgesAndCheckIns(allIds),
             fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
             fetchTableAssignments(allIds, selectedEventId),
           ];
