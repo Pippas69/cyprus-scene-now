@@ -741,6 +741,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
+  const fetchTicketOnlyOrders = async (eventId: string, requestId?: number) => {
     const isStaleRequest = () => requestId !== undefined && requestId !== fetchReservationsRequestRef.current;
 
     try {
