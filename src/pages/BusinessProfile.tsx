@@ -235,7 +235,7 @@ const BusinessProfile = () => {
       // Fetch business details including direct reservation settings and student discount
       const { data: businessData, error: businessError } = await supabase.
       from("businesses").
-      select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode").
+      select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode, student_discount_days").
       eq("id", businessId).
       eq("verified", true).
       maybeSingle();

@@ -290,7 +290,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     queryFn: async () => {
       let query = supabase
         .from("public_businesses_safe")
-        .select("id, name, logo_url, city, category, student_discount_percent, student_discount_mode")
+        .select("id, name, logo_url, city, category, student_discount_percent, student_discount_mode, student_discount_days")
         .eq("verified", true)
         .eq("student_discount_enabled", true)
         .gt("student_discount_percent", 0);
