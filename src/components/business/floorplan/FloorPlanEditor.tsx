@@ -1268,7 +1268,7 @@ export function FloorPlanEditor({ businessId, mode = 'legacy', eventId: propEven
               {language === 'el' ? 'Διαθέσιμη' : 'Available'}
             </div>
           </div>
-          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => setIsDesignMode(true)}>
+          <Button variant="outline" size="sm" className="h-9 px-5 text-xs gap-2 rounded-lg shadow-lg bg-card/90 backdrop-blur-sm border-border/40" onClick={() => { setIsDesignMode(true); onDesignModeChange?.(true); }}>
             <Pencil className="h-3.5 w-3.5" />{t.editLayout}
           </Button>
         </div>
