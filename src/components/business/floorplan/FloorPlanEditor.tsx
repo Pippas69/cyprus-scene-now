@@ -43,6 +43,11 @@ interface FloorPlanZone {
 
 interface FloorPlanEditorProps {
   businessId: string;
+  mode?: 'legacy' | 'template' | 'event';
+  eventId?: string;
+  initialItems?: FloorPlanItemFull[];
+  onSaveTemplate?: (items: FloorPlanItemFull[]) => void;
+  onSaveEventLayout?: (items: FloorPlanItemFull[]) => void;
 }
 
 const SNAP_INCREMENT = 2;
