@@ -197,6 +197,7 @@ export function StudentDiscountButton({
                   businessId={businessId}
                   discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
                   isRedeemed={isRedeemed}
+                  activeDays={activeDays}
                 />
 
                 <Button 
@@ -304,6 +305,7 @@ export function StudentDiscountButton({
                 businessId={businessId}
                 discountMode={discountMode === 'one_time' ? 'once' : 'unlimited'}
                 isRedeemed={isRedeemed}
+                activeDays={activeDays}
               />
 
               <Button 
