@@ -342,6 +342,7 @@ const ProductionCreationForm = ({ businessId }: ProductionCreationFormProps) => 
         appearance_mode: 'date_range',
         appearance_start_at: appearanceStart?.toISOString() || new Date().toISOString(),
         appearance_end_at: appearanceEnd?.toISOString() || earliestStart.toISOString(),
+        minimum_age: minAgeHint && minAgeHint >= 16 ? minAgeHint : null,
       }).select().single();
 
       if (eventErr || !linkedEvent) throw eventErr || new Error('Failed to create event');
