@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { GraduationCap, Percent, Infinity, RotateCcw, Loader2, Save } from "lucide-react";
+import { GraduationCap, Percent, Infinity, RotateCcw, Loader2, Save, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -15,6 +14,13 @@ interface StudentDiscountSettingsProps {
   businessId: string;
 }
 
+const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+
+const dayLabels = {
+  en: { monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun' },
+  el: { monday: 'Δευ', tuesday: 'Τρί', wednesday: 'Τετ', thursday: 'Πέμ', friday: 'Παρ', saturday: 'Σάβ', sunday: 'Κυρ' },
+};
+
 const translations = {
   en: {
     title: "Student Discounts",
@@ -22,7 +28,9 @@ const translations = {
     enable: "Enable student discounts",
     enableDesc: "Verified students will be able to redeem discounts at your business",
     percent: "Discount percentage",
-    percentPlaceholder: "e.g. 10",
+    days: "Valid days",
+    daysDesc: "Select which days the discount is active. If none selected, it applies every day.",
+    allDays: "Every day",
     mode: "Redemption mode",
     modeOnce: "One-time only",
     modeOnceDesc: "Student can redeem once, then it's done",
@@ -39,7 +47,9 @@ const translations = {
     enable: "Ενεργοποίηση φοιτητικών εκπτώσεων",
     enableDesc: "Οι επιβεβαιωμένοι φοιτητές θα μπορούν να εξαργυρώνουν εκπτώσεις στην επιχείρησή σας",
     percent: "Ποσοστό έκπτωσης",
-    percentPlaceholder: "π.χ. 10",
+    days: "Ημέρες ισχύος",
+    daysDesc: "Επιλέξτε ποιες μέρες ισχύει η έκπτωση. Αν δεν επιλέξετε καμία, ισχύει κάθε μέρα.",
+    allDays: "Κάθε μέρα",
     mode: "Τρόπος εξαργύρωσης",
     modeOnce: "Μία φορά μόνο",
     modeOnceDesc: "Ο φοιτητής εξαργυρώνει μία φορά και τέλος",
@@ -55,9 +65,11 @@ const translations = {
 export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsProps) {
   const { language } = useLanguage();
   const t = translations[language];
+  const dl = dayLabels[language];
   
   const [enabled, setEnabled] = useState(false);
   const [percent, setPercent] = useState<number>(10);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [mode, setMode] = useState<'once' | 'unlimited'>('once');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,7 +79,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
       try {
         const { data, error } = await supabase
           .from('businesses')
-          .select('student_discount_enabled, student_discount_percent, student_discount_mode')
+          .select('student_discount_enabled, student_discount_percent, student_discount_mode, student_discount_days')
           .eq('id', businessId)
           .single();
 
@@ -77,6 +89,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
           setEnabled(data.student_discount_enabled || false);
           setPercent(data.student_discount_percent || 10);
           setMode((data.student_discount_mode as 'once' | 'unlimited') || 'once');
+          setSelectedDays(data.student_discount_days || []);
         }
       } catch (err) {
         console.error('Failed to fetch student discount settings:', err);
@@ -90,6 +103,12 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
     }
   }, [businessId]);
 
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -99,6 +118,7 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
           student_discount_enabled: enabled,
           student_discount_percent: enabled ? percent : null,
           student_discount_mode: enabled ? mode : null,
+          student_discount_days: enabled && selectedDays.length > 0 ? selectedDays : null,
         })
         .eq('id', businessId);
 
@@ -168,6 +188,37 @@ export function StudentDiscountSettings({ businessId }: StudentDiscountSettingsP
                 />
                 <span className="text-muted-foreground text-xs sm:text-sm">%</span>
               </div>
+            </div>
+
+            {/* Valid Days */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-xs sm:text-sm">
+                <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
+                {t.days}
+              </Label>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{t.daysDesc}</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {ALL_DAYS.map(day => {
+                  const isActive = selectedDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDay(day)}
+                      className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-[10px] sm:text-xs font-medium transition-all border ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:bg-muted'
+                      }`}
+                    >
+                      {dl[day]}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedDays.length === 0 && (
+                <p className="text-[10px] sm:text-xs text-primary/70 font-medium">✓ {t.allDays}</p>
+              )}
             </div>
 
             {/* Redemption Mode */}

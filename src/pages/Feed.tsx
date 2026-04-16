@@ -36,6 +36,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
 import { isBoostCurrentlyActive, type EventBoostRecord, type OfferBoostRecord } from "@/lib/boostUtils";
+import { isStudentDiscountActiveToday } from "@/lib/studentDiscountDays";
 interface FeedProps {
   showNavbar?: boolean;
 }
@@ -290,7 +291,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
     queryFn: async () => {
       let query = supabase
         .from("public_businesses_safe")
-        .select("id, name, logo_url, city, category, student_discount_percent, student_discount_mode")
+        .select("id, name, logo_url, city, category, student_discount_percent, student_discount_mode, student_discount_days")
         .eq("verified", true)
         .eq("student_discount_enabled", true)
         .gt("student_discount_percent", 0);
@@ -473,7 +474,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                {studentDiscountBusinesses.map((business: any, index: number) => (
+                {studentDiscountBusinesses.filter((b: any) => isStudentDiscountActiveToday(b.student_discount_days)).map((business: any, index: number) => (
                   <motion.div
                     key={business.id}
                     initial={{ opacity: 0, y: 10 }}

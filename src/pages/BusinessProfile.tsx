@@ -23,6 +23,7 @@ import { ShareProfileDialog } from "@/components/sharing/ShareProfileDialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCity } from "@/lib/cityTranslations";
 import { isEventPaused } from "@/lib/eventVisibility";
+import { isStudentDiscountActiveToday } from "@/lib/studentDiscountDays";
 
 interface Business {
   id: string;
@@ -40,6 +41,7 @@ interface Business {
   student_discount_enabled: boolean | null;
   student_discount_percent: number | null;
   student_discount_mode: string | null;
+  student_discount_days: string[] | null;
 }
 
 interface Event {
@@ -235,7 +237,7 @@ const BusinessProfile = () => {
       // Fetch business details including direct reservation settings and student discount
       const { data: businessData, error: businessError } = await supabase.
       from("businesses").
-      select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode").
+      select("*, accepts_direct_reservations, student_discount_enabled, student_discount_percent, student_discount_mode, student_discount_days").
       eq("id", businessId).
       eq("verified", true).
       maybeSingle();
@@ -388,7 +390,7 @@ const BusinessProfile = () => {
               </button>
               
               {/* Student Discount Badge overlaid on avatar - clickable with icon + percentage */}
-              {business.student_discount_enabled && business.student_discount_percent && user &&
+              {business.student_discount_enabled && business.student_discount_percent && user && isStudentDiscountActiveToday(business.student_discount_days) &&
               <div className="absolute -top-1 -right-1 z-10">
                   <StudentDiscountButton
                   businessId={business.id}
@@ -403,7 +405,7 @@ const BusinessProfile = () => {
               }
               
               {/* Non-clickable badge when not logged in */}
-              {business.student_discount_enabled && business.student_discount_percent && !user &&
+              {business.student_discount_enabled && business.student_discount_percent && !user && isStudentDiscountActiveToday(business.student_discount_days) &&
               <div className="absolute -top-1 -right-1 z-10">
                   <div className="bg-accent text-accent-foreground text-[9px] font-bold rounded-full h-7 w-7 flex flex-col items-center justify-center border-2 border-background shadow-md">
                     <GraduationCap className="h-3 w-3" />

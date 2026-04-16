@@ -1,0 +1,1 @@
+ALTER TABLE public.businesses ADD COLUMN student_discount_days text[] DEFAULT NULL;
