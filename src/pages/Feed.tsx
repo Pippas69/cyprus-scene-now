@@ -474,7 +474,7 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                {studentDiscountBusinesses.filter((b: any) => isStudentDiscountActiveToday(b.student_discount_days)).map((business: any, index: number) => (
+                {studentDiscountBusinesses.filter((b: any) => (b.student_discount_days?.length ?? 0) > 0).map((business: any, index: number) => (
                   <motion.div
                     key={business.id}
                     initial={{ opacity: 0, y: 10 }}
