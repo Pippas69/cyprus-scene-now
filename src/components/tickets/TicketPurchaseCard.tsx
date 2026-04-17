@@ -305,6 +305,16 @@ export const TicketPurchaseCard = ({
         }));
       }
 
+      // PR Attribution: attach promoter ref if active
+      try {
+        const { getActivePromoterRef } = await import('@/lib/promoterTracking');
+        const pref = getActivePromoterRef();
+        if (pref) {
+          body.promoterSessionId = pref.session_id;
+          body.promoterTrackingCode = pref.tracking_code;
+        }
+      } catch { /* noop */ }
+
       const { data, error } = await supabase.functions.invoke('create-ticket-checkout', { body });
 
       if (error) throw error;
