@@ -244,6 +244,8 @@ serve(async (req) => {
             deferred_mode: "auth_hold",
             cancellation_fee_percent: cancellationFeePercent.toString(),
             customer_email: customer_email || emailForStripe || "",
+            ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+            ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
             ...guestsMeta,
           },
           ...(hasConnectSetup ? {
@@ -260,6 +262,8 @@ serve(async (req) => {
           event_id,
           reservation_id: reservation.id,
           deferred_mode: "auth_hold",
+          ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+          ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
         },
       };
 
@@ -299,6 +303,8 @@ serve(async (req) => {
           business_id: business?.id ?? "",
           cancellation_fee_percent: cancellationFeePercent.toString(),
           customer_email: customer_email || emailForStripe || "",
+          ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+          ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
           ...guestsMeta,
         },
       });
