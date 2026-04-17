@@ -157,12 +157,9 @@ export const UserAccountDropdown = ({
         <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
           {/* Context-aware Account Switcher */}
           {isPromoterDashboard ? (
-            // On PR Dashboard: Show "My Account" to go back to user dashboard
+            // On PR Dashboard: Show "My Account" to go to user feed
             <DropdownMenuItem
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate('/dashboard-user');
-              }}
+              onClick={handleMyAccount}
               className="text-sm cursor-pointer"
             >
               <User className="mr-2 h-4 w-4" />
