@@ -63,8 +63,19 @@ const attachPromoterProfiles = async (
     return applications.map((application) => ({ ...application, promoter: null }));
   }
 
-  const promoterMap = new Map<string, PromoterProfilePreview>(
-    (promoters || []).map((promoter) => [promoter.id, promoter as PromoterProfilePreview]),
+  const promoterMap = new Map<string, BusinessPromoterApplication['promoter']>(
+    (promoters || []).map((promoter) => [
+      promoter.id,
+      {
+        id: promoter.id,
+        name: promoter.name ?? null,
+        first_name: promoter.first_name ?? null,
+        last_name: promoter.last_name ?? null,
+        avatar_url: promoter.avatar_url ?? null,
+        city: promoter.city ?? null,
+        email: null,
+      },
+    ]),
   );
 
   return applications.map((application) => ({
