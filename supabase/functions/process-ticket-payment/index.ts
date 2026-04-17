@@ -641,6 +641,7 @@ Deno.serve(async (req) => {
       logStep("PR attribution exception", { error: err instanceof Error ? err.message : String(err) });
     }
 
+    return new Response(JSON.stringify({ success: true, orderId }), {
       headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });
