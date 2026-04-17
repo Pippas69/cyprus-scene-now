@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Megaphone, Plus, Clock, Check, X, Trash2 } from 'lucide-react';
 import {
   usePromoterApplications,
+  usePromoterApplicationsRealtime,
   useRevokePromoterApplication,
   type PromoterApplication,
 } from '@/hooks/usePromoter';
