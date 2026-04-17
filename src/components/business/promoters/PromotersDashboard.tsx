@@ -249,7 +249,7 @@ export function PromotersDashboard({ businessId }: Props) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-yellow-500" />
+                <Trophy className="h-4 w-4 text-primary" />
                 Top Promoters του μήνα
               </CardTitle>
             </CardHeader>
