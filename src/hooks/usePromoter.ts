@@ -7,9 +7,41 @@
  * - Mutations to apply / revoke applications
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+
+/**
+ * Realtime: ακούει αλλαγές στον πίνακα promoter_applications για τον τρέχοντα
+ * χρήστη και κάνει invalidate τα queries ώστε το UI να ενημερώνεται άμεσα
+ * μόλις ο επιχειρηματίας εγκρίνει/απορρίψει το αίτημα.
+ */
+export const usePromoterApplicationsRealtime = (userId: string | undefined) => {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`promoter-applications-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'promoter_applications',
+          filter: `promoter_user_id=eq.${userId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['promoter-applications', userId] });
+          queryClient.invalidateQueries({ queryKey: ['is-active-promoter', userId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
+};
 
 export type PromoterApplicationStatus = 'pending' | 'accepted' | 'declined' | 'revoked';
 export type PromoterCommissionType = 'fixed' | 'percent';
