@@ -22,6 +22,8 @@ const BodySchema = z.object({
   phone_number: optionalString(25),
   special_requests: optionalString(1000),
   guests: z.array(GuestSchema).optional(),
+  promoter_session_id: optionalString(120),
+  promoter_tracking_code: optionalString(60),
 }).default({});
 
 serve(async (req) => {
@@ -46,7 +48,7 @@ serve(async (req) => {
 
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
-    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests } =
+    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests, promoter_session_id, promoter_tracking_code } =
       await parseBody(req, BodySchema);
 
     // Service client for privileged DB writes (required for demo/preview flows)
