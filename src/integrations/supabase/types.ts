@@ -4531,10 +4531,15 @@ export type Database = {
             | Database["public"]["Enums"]["promoter_commission_type"]
             | null
           created_at: string
+          customer_email: string | null
+          customer_name: string | null
           customer_user_id: string | null
           event_id: string | null
           id: string
           order_amount_cents: number | null
+          paid_at: string | null
+          paid_notes: string | null
+          payment_status: string
           promoter_link_id: string | null
           promoter_user_id: string
           reservation_id: string | null
@@ -4554,10 +4559,15 @@ export type Database = {
             | Database["public"]["Enums"]["promoter_commission_type"]
             | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           customer_user_id?: string | null
           event_id?: string | null
           id?: string
           order_amount_cents?: number | null
+          paid_at?: string | null
+          paid_notes?: string | null
+          payment_status?: string
           promoter_link_id?: string | null
           promoter_user_id: string
           reservation_id?: string | null
@@ -4577,10 +4587,15 @@ export type Database = {
             | Database["public"]["Enums"]["promoter_commission_type"]
             | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           customer_user_id?: string | null
           event_id?: string | null
           id?: string
           order_amount_cents?: number | null
+          paid_at?: string | null
+          paid_notes?: string | null
+          payment_status?: string
           promoter_link_id?: string | null
           promoter_user_id?: string
           reservation_id?: string | null
@@ -4636,6 +4651,64 @@ export type Database = {
             columns: ["ticket_order_id"]
             isOneToOne: false
             referencedRelation: "ticket_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_link_clicks: {
+        Row: {
+          clicked_at: string
+          expires_at: string
+          id: string
+          ip_hash: string | null
+          is_self_click: boolean
+          link_id: string
+          session_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          expires_at?: string
+          id?: string
+          ip_hash?: string | null
+          is_self_click?: boolean
+          link_id: string
+          session_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          expires_at?: string
+          id?: string
+          ip_hash?: string | null
+          is_self_click?: boolean
+          link_id?: string
+          session_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_link_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_link_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7545,7 +7618,9 @@ export type Database = {
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       generate_confirmation_code: { Args: never; Returns: string }
-      generate_promoter_tracking_code: { Args: never; Returns: string }
+      generate_promoter_tracking_code:
+        | { Args: never; Returns: string }
+        | { Args: { _promoter_user_id: string }; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -7645,6 +7720,15 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_active_promoter_attribution: {
+        Args: { _event_id?: string; _session_id: string; _user_id?: string }
+        Returns: {
+          business_id: string
+          event_id: string
+          link_id: string
+          promoter_user_id: string
+        }[]
+      }
       get_audience_demographics: {
         Args: {
           p_business_id: string
@@ -8071,6 +8155,16 @@ export type Database = {
           read_ct: number
         }[]
       }
+      record_promoter_click: {
+        Args: {
+          _ip_hash?: string
+          _session_id: string
+          _tracking_code: string
+          _user_agent?: string
+          _user_id?: string
+        }
+        Returns: string
+      }
       release_offer_spots: {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: undefined
@@ -8086,6 +8180,16 @@ export type Database = {
       resolve_crm_guest_for_ticket: {
         Args: { p_business_id: string; p_guest_name: string; p_user_id: string }
         Returns: string
+      }
+      resolve_promoter_tracking_code: {
+        Args: { _tracking_code: string }
+        Returns: {
+          business_id: string
+          event_id: string
+          is_active: boolean
+          link_id: string
+          promoter_user_id: string
+        }[]
       }
       search_content:
         | {
