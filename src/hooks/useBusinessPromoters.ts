@@ -1,0 +1,239 @@
+/**
+ * Hooks για διαχείριση Promoters από την πλευρά της επιχείρησης (Phase 2).
+ */
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import type {
+  PromoterApplicationStatus,
+  PromoterCommissionType,
+} from './usePromoter';
+
+export interface BusinessPromoterApplication {
+  id: string;
+  promoter_user_id: string;
+  business_id: string;
+  status: PromoterApplicationStatus;
+  message: string | null;
+  commission_type: PromoterCommissionType | null;
+  commission_fixed_ticket_cents: number | null;
+  commission_fixed_reservation_cents: number | null;
+  commission_percent: number | null;
+  decided_at: string | null;
+  decline_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  promoter?: {
+    id: string;
+    name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+  } | null;
+}
+
+/**
+ * Όλες οι αιτήσεις PR για μια επιχείρηση (pending + accepted + declined + revoked).
+ */
+export const useBusinessPromoterApplications = (businessId: string | undefined) => {
+  return useQuery({
+    queryKey: ['business-promoter-applications', businessId],
+    queryFn: async () => {
+      if (!businessId) return [] as BusinessPromoterApplication[];
+      const { data, error } = await supabase
+        .from('promoter_applications')
+        .select(
+          `
+          *,
+          promoter:profiles!promoter_applications_promoter_user_id_fkey (
+            id, name, first_name, last_name, avatar_url, city
+          )
+        `,
+        )
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as BusinessPromoterApplication[];
+    },
+    enabled: !!businessId,
+  });
+};
+
+interface UpdateStatusPayload {
+  applicationId: string;
+  status: 'accepted' | 'declined' | 'revoked';
+  declineReason?: string;
+  /** Αμοιβές την ώρα του accept (προαιρετικά — μπορεί να οριστούν αργότερα). */
+  commissionType?: PromoterCommissionType;
+  commissionFixedTicketCents?: number;
+  commissionFixedReservationCents?: number;
+  commissionPercent?: number;
+}
+
+/**
+ * Accept / Decline / Revoke μιας αίτησης + αυτόματη ειδοποίηση + email.
+ */
+export const useUpdatePromoterApplicationStatus = (businessId: string | undefined) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: UpdateStatusPayload) => {
+      const updateFields: Record<string, unknown> = {
+        status: payload.status,
+        decided_at: new Date().toISOString(),
+      };
+      if (payload.status === 'declined' && payload.declineReason) {
+        updateFields.decline_reason = payload.declineReason;
+      }
+      if (payload.status === 'accepted') {
+        if (payload.commissionType) updateFields.commission_type = payload.commissionType;
+        if (typeof payload.commissionFixedTicketCents === 'number')
+          updateFields.commission_fixed_ticket_cents = payload.commissionFixedTicketCents;
+        if (typeof payload.commissionFixedReservationCents === 'number')
+          updateFields.commission_fixed_reservation_cents = payload.commissionFixedReservationCents;
+        if (typeof payload.commissionPercent === 'number')
+          updateFields.commission_percent = payload.commissionPercent;
+      }
+
+      const { data, error } = await supabase
+        .from('promoter_applications')
+        .update(updateFields)
+        .eq('id', payload.applicationId)
+        .select(
+          `
+          *,
+          promoter:profiles!promoter_applications_promoter_user_id_fkey (
+            id, name, first_name, last_name, email
+          ),
+          business:businesses!promoter_applications_business_id_fkey (
+            id, name
+          )
+        `,
+        )
+        .single();
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: async (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['business-promoter-applications', businessId] });
+
+      // In-app notification + email (best-effort, μη-blocking)
+      try {
+        const promoterUserId: string | undefined = data?.promoter_user_id;
+        const promoter = data?.promoter;
+        const business = data?.business;
+        if (!promoterUserId || !business) return;
+
+        const isAccepted = variables.status === 'accepted';
+        const title = isAccepted
+          ? 'Η αίτησή σου εγκρίθηκε! 🎉'
+          : variables.status === 'declined'
+            ? 'Η αίτησή σου απορρίφθηκε'
+            : 'Η συνεργασία τερματίστηκε';
+        const message = isAccepted
+          ? `Είσαι πλέον επίσημος Promoter στην επιχείρηση "${business.name}".`
+          : variables.status === 'declined'
+            ? `Η αίτησή σου ως Promoter για την "${business.name}" απορρίφθηκε.${
+                variables.declineReason ? ` Λόγος: ${variables.declineReason}` : ''
+              }`
+            : `Η ιδιότητά σου ως Promoter στην "${business.name}" ανακλήθηκε.`;
+
+        await supabase.from('notifications').insert({
+          user_id: promoterUserId,
+          title,
+          message,
+          type: isAccepted ? 'success' : 'info',
+          entity_type: 'promoter_application',
+          entity_id: data.id,
+          deep_link: '/dashboard-user?tab=settings',
+          event_type: `promoter_application_${variables.status}`,
+        });
+
+        // Email (μόνο για accepted/declined — όχι για revoked)
+        if (variables.status === 'accepted' || variables.status === 'declined') {
+          const recipientEmail = promoter?.email;
+          if (recipientEmail) {
+            const fullName =
+              promoter?.name ||
+              [promoter?.first_name, promoter?.last_name].filter(Boolean).join(' ') ||
+              null;
+            await supabase.functions.invoke('send-transactional-email', {
+              body: {
+                templateName:
+                  variables.status === 'accepted'
+                    ? 'promoter-application-accepted'
+                    : 'promoter-application-declined',
+                recipientEmail,
+                idempotencyKey: `promoter-${variables.status}-${data.id}`,
+                templateData: {
+                  name: fullName,
+                  businessName: business.name,
+                  declineReason: variables.declineReason || null,
+                },
+              },
+            });
+          }
+        }
+      } catch (notifyErr) {
+        // δεν φέρνουμε το mutation σε αποτυχία — απλά log
+        console.warn('[promoter] notify/email failed', notifyErr);
+      }
+
+      toast({
+        title:
+          variables.status === 'accepted'
+            ? 'Η αίτηση εγκρίθηκε'
+            : variables.status === 'declined'
+              ? 'Η αίτηση απορρίφθηκε'
+              : 'Η συνεργασία τερματίστηκε',
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Σφάλμα',
+        description: err?.message || 'Δεν ήταν δυνατή η ενέργεια.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+interface UpdateCommissionPayload {
+  applicationId: string;
+  commissionType: PromoterCommissionType;
+  commissionFixedTicketCents?: number;
+  commissionFixedReservationCents?: number;
+  commissionPercent?: number;
+}
+
+/**
+ * Ενημέρωση ρύθμισης αμοιβής για ήδη εγκεκριμένο PR.
+ */
+export const useUpdatePromoterCommission = (businessId: string | undefined) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: UpdateCommissionPayload) => {
+      const { error } = await supabase
+        .from('promoter_applications')
+        .update({
+          commission_type: payload.commissionType,
+          commission_fixed_ticket_cents: payload.commissionFixedTicketCents ?? 0,
+          commission_fixed_reservation_cents: payload.commissionFixedReservationCents ?? 0,
+          commission_percent: payload.commissionPercent ?? 0,
+        })
+        .eq('id', payload.applicationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['business-promoter-applications', businessId] });
+      toast({ title: 'Η αμοιβή ενημερώθηκε' });
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Σφάλμα',
+        description: err?.message || 'Δεν ήταν δυνατή η ενημέρωση.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
