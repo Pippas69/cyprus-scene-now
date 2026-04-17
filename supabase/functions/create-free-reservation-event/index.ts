@@ -22,6 +22,8 @@ const BodySchema = z.object({
   phone_number: optionalString(25),
   special_requests: optionalString(1000),
   guests: z.array(GuestSchema).optional(),
+  promoter_session_id: optionalString(120),
+  promoter_tracking_code: optionalString(60),
 }).default({});
 
 serve(async (req) => {
@@ -46,7 +48,7 @@ serve(async (req) => {
 
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
-    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests } =
+    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests, promoter_session_id, promoter_tracking_code } =
       await parseBody(req, BodySchema);
 
     // Service client for privileged DB writes (required for demo/preview flows)
@@ -220,6 +222,33 @@ serve(async (req) => {
       }
     } catch (e) {
       console.error("[create-free-reservation-event] send-reservation-notification failed", e);
+    }
+
+    // PR Attribution: link this free reservation to a promoter (if applicable)
+    try {
+      if (promoter_session_id && event.business_id) {
+        const { data: attrResult, error: attrError } = await supabaseService.rpc(
+          "attribute_promoter_purchase",
+          {
+            _business_id: event.business_id,
+            _event_id: eventId,
+            _session_id: String(promoter_session_id),
+            _customer_user_id: user.id,
+            _ticket_order_id: null,
+            _reservation_id: reservation.id,
+            _order_amount_cents: 0,
+            _customer_name: (reservation_name as string | undefined) ?? null,
+            _customer_email: (customer_email as string | undefined)?.trim() || user.email || null,
+          },
+        );
+        if (attrError) {
+          console.error("[create-free-reservation-event] PR attribution error", attrError);
+        } else {
+          console.log("[create-free-reservation-event] PR attribution result", attrResult);
+        }
+      }
+    } catch (e) {
+      console.error("[create-free-reservation-event] PR attribution exception", e);
     }
 
     return json({

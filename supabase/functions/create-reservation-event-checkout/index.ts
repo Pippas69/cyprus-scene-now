@@ -20,6 +20,8 @@ const BodySchema = z.object({
   cancel_url: optionalUrl,
   customer_email: email.optional(),
   guests: z.array(GuestSchema).optional(),
+  promoter_session_id: optionalString(120),
+  promoter_tracking_code: optionalString(60),
 });
 
 serve(async (req) => {
@@ -65,6 +67,8 @@ serve(async (req) => {
       cancel_url,
       customer_email,
       guests,
+      promoter_session_id,
+      promoter_tracking_code,
     } = await parseBody(req, BodySchema);
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
@@ -247,6 +251,14 @@ serve(async (req) => {
       revenue_model: pricingProfile.revenue_model,
       commission_percent: pricingProfile.commission_percent.toString(),
     };
+
+    // PR Attribution: forward promoter tracking via Stripe metadata so the webhook can attribute the sale
+    if (promoter_session_id) {
+      sessionMetadata.promoter_session_id = String(promoter_session_id);
+    }
+    if (promoter_tracking_code) {
+      sessionMetadata.promoter_tracking_code = String(promoter_tracking_code);
+    }
 
     // Serialize guests into metadata (chunked if needed)
     if (guests && Array.isArray(guests)) {

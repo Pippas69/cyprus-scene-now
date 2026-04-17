@@ -251,6 +251,35 @@ serve(async (req) => {
         }
       }
 
+      // PR Attribution: link this reservation to a promoter (if applicable)
+      try {
+        const promoterSessionId = metadata?.promoter_session_id;
+        const resBusinessIdForAttr = reservation?.events?.businesses?.id || reservation?.events?.business_id;
+        if (promoterSessionId && resBusinessIdForAttr) {
+          const { data: attrResult, error: attrError } = await supabaseClient.rpc(
+            "attribute_promoter_purchase",
+            {
+              _business_id: resBusinessIdForAttr,
+              _event_id: eventId,
+              _session_id: promoterSessionId,
+              _customer_user_id: userId || null,
+              _ticket_order_id: null,
+              _reservation_id: reservationId,
+              _order_amount_cents: paidAmountCents || 0,
+              _customer_name: reservationName || null,
+              _customer_email: metadata?.customer_email || null,
+            },
+          );
+          if (attrError) {
+            logStep("PR attribution error", { error: attrError.message });
+          } else {
+            logStep("PR attribution result", attrResult);
+          }
+        }
+      } catch (err) {
+        logStep("PR attribution exception", { error: err instanceof Error ? err.message : String(err) });
+      }
+
       // Decrement seating slots
       if (seatingTypeId) {
         const { error: decrementError } = await supabaseClient

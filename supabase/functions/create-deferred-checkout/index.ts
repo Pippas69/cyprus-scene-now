@@ -18,6 +18,8 @@ const BodySchema = z.object({
   cancel_url: optionalUrl,
   customer_email: email.optional(),
   guests: z.array(GuestSchema).optional(),
+  promoter_session_id: optionalString(120),
+  promoter_tracking_code: optionalString(60),
 });
 
 serve(async (req) => {
@@ -43,6 +45,7 @@ serve(async (req) => {
       event_id, seating_type_id, party_size, reservation_name,
       phone_number, special_requests, success_url, cancel_url,
       customer_email, guests,
+      promoter_session_id, promoter_tracking_code,
     } = await parseBody(req, BodySchema);
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
@@ -241,6 +244,8 @@ serve(async (req) => {
             deferred_mode: "auth_hold",
             cancellation_fee_percent: cancellationFeePercent.toString(),
             customer_email: customer_email || emailForStripe || "",
+            ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+            ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
             ...guestsMeta,
           },
           ...(hasConnectSetup ? {
@@ -257,6 +262,8 @@ serve(async (req) => {
           event_id,
           reservation_id: reservation.id,
           deferred_mode: "auth_hold",
+          ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+          ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
         },
       };
 
@@ -296,6 +303,8 @@ serve(async (req) => {
           business_id: business?.id ?? "",
           cancellation_fee_percent: cancellationFeePercent.toString(),
           customer_email: customer_email || emailForStripe || "",
+          ...(promoter_session_id ? { promoter_session_id: String(promoter_session_id) } : {}),
+          ...(promoter_tracking_code ? { promoter_tracking_code: String(promoter_tracking_code) } : {}),
           ...guestsMeta,
         },
       });
