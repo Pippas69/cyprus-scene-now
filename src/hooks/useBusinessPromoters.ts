@@ -55,7 +55,7 @@ const attachPromoterProfiles = async (
 
   const { data: promoters, error } = await supabase
     .from('profiles')
-    .select('id, name, first_name, last_name, avatar_url, city')
+    .select('id, name, first_name, last_name, avatar_url, city, email')
     .in('id', promoterIds);
 
   if (error) {
@@ -73,7 +73,7 @@ const attachPromoterProfiles = async (
         last_name: promoter.last_name ?? null,
         avatar_url: promoter.avatar_url ?? null,
         city: promoter.city ?? null,
-        email: null,
+        email: (promoter as { email?: string | null }).email ?? null,
       },
     ]),
   );

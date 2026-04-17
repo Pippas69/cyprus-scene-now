@@ -123,18 +123,33 @@ export function PromotersDashboard({ businessId }: Props) {
           ) : (
             pending.map((a) => {
               const name = promoterDisplayName(a.promoter);
+              const email = a.promoter?.email;
               return (
-                <Card key={a.id}>
+                <Card key={a.id} className="border-primary/20">
                   <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-primary/15 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
+                        Νέος Promoter
+                      </Badge>
+                    </div>
                     <div className="flex items-start gap-3">
                       <Avatar className="h-10 w-10 shrink-0">
                         <AvatarImage src={a.promoter?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">{initials(name)}</AvatarFallback>
+                        <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">
+                          {initials(name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{name}</p>
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <p className="text-sm font-semibold truncate">{name}</p>
+                          {email && (
+                            <p className="text-xs text-muted-foreground truncate" title={email}>
+                              · {email}
+                            </p>
+                          )}
+                        </div>
                         {a.promoter?.city && (
-                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
                             <MapPin className="h-3 w-3" />
                             {a.promoter.city}
                           </p>
