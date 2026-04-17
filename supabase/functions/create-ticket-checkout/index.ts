@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId, promoterSessionId, promoterTrackingCode } = await parseBody(req, CheckoutBodySchema);
     logStep("Request data", { eventId, items, customerName, reservationName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
     // Fetch event and business info (including Stripe Connect status)
@@ -632,8 +632,8 @@ Deno.serve(async (req) => {
         seat_ids: seatIds ? JSON.stringify(seatIds) : undefined,
         seat_details: seatDetailsForMeta,
         show_instance_id: showInstanceId || undefined,
-        promoter_session_id: (body as any).promoterSessionId || undefined,
-        promoter_tracking_code: (body as any).promoterTrackingCode || undefined,
+        promoter_session_id: promoterSessionId || undefined,
+        promoter_tracking_code: promoterTrackingCode || undefined,
       },
     };
     
