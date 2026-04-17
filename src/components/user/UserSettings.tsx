@@ -24,6 +24,7 @@ import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
 import { InterestSelectorList } from '@/components/categories/InterestSelectorList';
 import { StudentVerificationSection } from '@/components/user/StudentVerificationSection';
+import { PromoterSettingsCard } from '@/components/promoter/PromoterSettingsCard';
 
 interface UserSettingsProps {
   userId: string;
@@ -783,6 +784,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Promoter / PR */}
+      <PromoterSettingsCard userId={userId} language={language} />
     </div>
   );
 };
