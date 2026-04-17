@@ -9,6 +9,16 @@ import type {
   PromoterCommissionType,
 } from './usePromoter';
 
+interface PromoterProfilePreview {
+  id: string;
+  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url?: string | null;
+  city?: string | null;
+  email?: string | null;
+}
+
 export interface BusinessPromoterApplication {
   id: string;
   promoter_user_id: string;
@@ -30,8 +40,49 @@ export interface BusinessPromoterApplication {
     last_name: string | null;
     avatar_url: string | null;
     city: string | null;
+    email?: string | null;
   } | null;
 }
+
+const attachPromoterProfiles = async (
+  applications: BusinessPromoterApplication[],
+): Promise<BusinessPromoterApplication[]> => {
+  const promoterIds = [...new Set(applications.map((a) => a.promoter_user_id).filter(Boolean))];
+
+  if (promoterIds.length === 0) {
+    return applications.map((application) => ({ ...application, promoter: null }));
+  }
+
+  const { data: promoters, error } = await supabase
+    .from('profiles')
+    .select('id, name, first_name, last_name, avatar_url, city')
+    .in('id', promoterIds);
+
+  if (error) {
+    console.warn('[promoters] failed to load promoter profiles', error);
+    return applications.map((application) => ({ ...application, promoter: null }));
+  }
+
+  const promoterMap = new Map<string, BusinessPromoterApplication['promoter']>(
+    (promoters || []).map((promoter) => [
+      promoter.id,
+      {
+        id: promoter.id,
+        name: promoter.name ?? null,
+        first_name: promoter.first_name ?? null,
+        last_name: promoter.last_name ?? null,
+        avatar_url: promoter.avatar_url ?? null,
+        city: promoter.city ?? null,
+        email: null,
+      },
+    ]),
+  );
+
+  return applications.map((application) => ({
+    ...application,
+    promoter: promoterMap.get(application.promoter_user_id) ?? null,
+  }));
+};
 
 /**
  * Όλες οι αιτήσεις PR για μια επιχείρηση (pending + accepted + declined + revoked).
@@ -41,20 +92,15 @@ export const useBusinessPromoterApplications = (businessId: string | undefined) 
     queryKey: ['business-promoter-applications', businessId],
     queryFn: async () => {
       if (!businessId) return [] as BusinessPromoterApplication[];
+
       const { data, error } = await supabase
         .from('promoter_applications')
-        .select(
-          `
-          *,
-          promoter:profiles!promoter_applications_promoter_user_id_fkey (
-            id, name, first_name, last_name, avatar_url, city
-          )
-        `,
-        )
+        .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
+
       if (error) throw error;
-      return (data || []) as unknown as BusinessPromoterApplication[];
+      return await attachPromoterProfiles((data || []) as BusinessPromoterApplication[]);
     },
     enabled: !!businessId,
   });
@@ -82,100 +128,127 @@ export const useUpdatePromoterApplicationStatus = (businessId: string | undefine
         status: payload.status,
         decided_at: new Date().toISOString(),
       };
-      if (payload.status === 'declined' && payload.declineReason) {
-        updateFields.decline_reason = payload.declineReason;
-      }
-      if (payload.status === 'accepted') {
-        if (payload.commissionType) updateFields.commission_type = payload.commissionType;
-        if (typeof payload.commissionFixedTicketCents === 'number')
-          updateFields.commission_fixed_ticket_cents = payload.commissionFixedTicketCents;
-        if (typeof payload.commissionFixedReservationCents === 'number')
-          updateFields.commission_fixed_reservation_cents = payload.commissionFixedReservationCents;
-        if (typeof payload.commissionPercent === 'number')
-          updateFields.commission_percent = payload.commissionPercent;
+
+      if (payload.status === 'declined') {
+        updateFields.decline_reason = payload.declineReason || null;
       }
 
-      const { data, error } = await supabase
+      if (payload.status === 'accepted') {
+        if (payload.commissionType) updateFields.commission_type = payload.commissionType;
+        if (typeof payload.commissionFixedTicketCents === 'number') {
+          updateFields.commission_fixed_ticket_cents = payload.commissionFixedTicketCents;
+        }
+        if (typeof payload.commissionFixedReservationCents === 'number') {
+          updateFields.commission_fixed_reservation_cents = payload.commissionFixedReservationCents;
+        }
+        if (typeof payload.commissionPercent === 'number') {
+          updateFields.commission_percent = payload.commissionPercent;
+        }
+      }
+
+      let updateQuery = supabase
         .from('promoter_applications')
         .update(updateFields)
-        .eq('id', payload.applicationId)
-        .select(
-          `
-          *,
-          promoter:profiles!promoter_applications_promoter_user_id_fkey (
-            id, name, first_name, last_name, email
-          ),
-          business:businesses!promoter_applications_business_id_fkey (
-            id, name
-          )
-        `,
-        )
+        .eq('id', payload.applicationId);
+
+      if (businessId) {
+        updateQuery = updateQuery.eq('business_id', businessId);
+      }
+
+      const { data, error } = await updateQuery
+        .select('id, promoter_user_id, business_id')
         .single();
+
       if (error) throw error;
-      return data as any;
+
+      const [promoterResult, businessResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, name, first_name, last_name, email')
+          .eq('id', data.promoter_user_id)
+          .maybeSingle(),
+        supabase
+          .from('businesses')
+          .select('id, name')
+          .eq('id', data.business_id)
+          .maybeSingle(),
+      ]);
+
+      if (promoterResult.error) {
+        console.warn('[promoters] failed to load promoter email/details', promoterResult.error);
+      }
+
+      if (businessResult.error) {
+        console.warn('[promoters] failed to load business details', businessResult.error);
+      }
+
+      return {
+        ...data,
+        promoter: (promoterResult.data as PromoterProfilePreview | null) ?? null,
+        business: businessResult.data ?? null,
+      };
     },
     onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['business-promoter-applications', businessId] });
 
-      // In-app notification + email (best-effort, μη-blocking)
       try {
         const promoterUserId: string | undefined = data?.promoter_user_id;
         const promoter = data?.promoter;
         const business = data?.business;
-        if (!promoterUserId || !business) return;
 
-        const isAccepted = variables.status === 'accepted';
-        const title = isAccepted
-          ? 'Η αίτησή σου εγκρίθηκε! 🎉'
-          : variables.status === 'declined'
-            ? 'Η αίτησή σου απορρίφθηκε'
-            : 'Η συνεργασία τερματίστηκε';
-        const message = isAccepted
-          ? `Είσαι πλέον επίσημος Promoter στην επιχείρηση "${business.name}".`
-          : variables.status === 'declined'
-            ? `Η αίτησή σου ως Promoter για την "${business.name}" απορρίφθηκε.${
-                variables.declineReason ? ` Λόγος: ${variables.declineReason}` : ''
-              }`
-            : `Η ιδιότητά σου ως Promoter στην "${business.name}" ανακλήθηκε.`;
+        if (promoterUserId && business) {
+          const isAccepted = variables.status === 'accepted';
+          const title = isAccepted
+            ? 'Η αίτησή σου εγκρίθηκε! 🎉'
+            : variables.status === 'declined'
+              ? 'Η αίτησή σου απορρίφθηκε'
+              : 'Η συνεργασία τερματίστηκε';
+          const message = isAccepted
+            ? `Είσαι πλέον επίσημος Promoter στην επιχείρηση "${business.name}".`
+            : variables.status === 'declined'
+              ? `Η αίτησή σου ως Promoter για την "${business.name}" απορρίφθηκε.${
+                  variables.declineReason ? ` Λόγος: ${variables.declineReason}` : ''
+                }`
+              : `Η ιδιότητά σου ως Promoter στην "${business.name}" ανακλήθηκε.`;
 
-        await supabase.from('notifications').insert({
-          user_id: promoterUserId,
-          title,
-          message,
-          type: isAccepted ? 'success' : 'info',
-          entity_type: 'promoter_application',
-          entity_id: data.id,
-          deep_link: '/dashboard-user?tab=settings',
-          event_type: `promoter_application_${variables.status}`,
-        });
+          await supabase.from('notifications').insert({
+            user_id: promoterUserId,
+            title,
+            message,
+            type: isAccepted ? 'success' : 'info',
+            entity_type: 'promoter_application',
+            entity_id: data.id,
+            deep_link: '/dashboard-user?tab=settings',
+            event_type: `promoter_application_${variables.status}`,
+          });
 
-        // Email (μόνο για accepted/declined — όχι για revoked)
-        if (variables.status === 'accepted' || variables.status === 'declined') {
-          const recipientEmail = promoter?.email;
-          if (recipientEmail) {
-            const fullName =
-              promoter?.name ||
-              [promoter?.first_name, promoter?.last_name].filter(Boolean).join(' ') ||
-              null;
-            await supabase.functions.invoke('send-transactional-email', {
-              body: {
-                templateName:
-                  variables.status === 'accepted'
-                    ? 'promoter-application-accepted'
-                    : 'promoter-application-declined',
-                recipientEmail,
-                idempotencyKey: `promoter-${variables.status}-${data.id}`,
-                templateData: {
-                  name: fullName,
-                  businessName: business.name,
-                  declineReason: variables.declineReason || null,
+          if (variables.status === 'accepted' || variables.status === 'declined') {
+            const recipientEmail = promoter?.email;
+            if (recipientEmail) {
+              const fullName =
+                promoter?.name ||
+                [promoter?.first_name, promoter?.last_name].filter(Boolean).join(' ') ||
+                null;
+
+              await supabase.functions.invoke('send-transactional-email', {
+                body: {
+                  templateName:
+                    variables.status === 'accepted'
+                      ? 'promoter-application-accepted'
+                      : 'promoter-application-declined',
+                  recipientEmail,
+                  idempotencyKey: `promoter-${variables.status}-${data.id}`,
+                  templateData: {
+                    name: fullName,
+                    businessName: business.name,
+                    declineReason: variables.declineReason || null,
+                  },
                 },
-              },
-            });
+              });
+            }
           }
         }
       } catch (notifyErr) {
-        // δεν φέρνουμε το mutation σε αποτυχία — απλά log
         console.warn('[promoter] notify/email failed', notifyErr);
       }
 
