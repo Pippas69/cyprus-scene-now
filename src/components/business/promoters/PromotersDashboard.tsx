@@ -128,7 +128,7 @@ export function PromotersDashboard({ businessId }: Props) {
                 <Card key={a.id} className="border-primary/20">
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-primary/15 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
+                      <Badge className="bg-primary/15 text-primary border-primary/30 text-[10px] tracking-wide">
                         Νέος Promoter
                       </Badge>
                     </div>
