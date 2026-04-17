@@ -3,7 +3,7 @@
  * Phase 1 — Foundations.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,10 +33,10 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
   const hasAnyApplication = applications.length > 0;
   const [enabled, setEnabled] = useState(hasAnyApplication);
 
-  // Keep local toggle in sync with data
-  if (hasAnyApplication && !enabled) {
-    setEnabled(true);
-  }
+  // Keep local toggle in sync with data when applications load/change
+  useEffect(() => {
+    if (hasAnyApplication) setEnabled(true);
+  }, [hasAnyApplication]);
 
   const t =
     language === 'el'
