@@ -7840,6 +7840,18 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      get_promoter_applicants_for_business: {
+        Args: { _business_id: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          name: string
+        }[]
+      }
       get_reservation_by_guest_token: {
         Args: { p_token: string }
         Returns: {
