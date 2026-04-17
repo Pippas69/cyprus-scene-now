@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can resolve tracking codes" ON public.promoter_links;
