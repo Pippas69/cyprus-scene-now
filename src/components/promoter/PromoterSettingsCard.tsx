@@ -132,9 +132,9 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
             <div className="space-y-2">
               <h4 className="text-xs sm:text-sm font-semibold">{t.myApplications}</h4>
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">...</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">...</p>
               ) : applications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t.empty}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t.empty}</p>
               ) : (
                 <div className="space-y-2">
                   {applications.map((a) => (
