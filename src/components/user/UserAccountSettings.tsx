@@ -344,10 +344,6 @@ export const UserAccountSettings = ({ userId, language }: UserAccountSettingsPro
           </div>
         </CardContent>
       </Card>
-
-      {/* Promoter / PR */}
-      <PromoterSettingsCard userId={userId} language={language} />
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
