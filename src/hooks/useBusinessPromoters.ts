@@ -53,14 +53,30 @@ const attachPromoterProfiles = async (
     return applications.map((application) => ({ ...application, promoter: null }));
   }
 
-  const { data: promoters, error } = await supabase
-    .from('profiles')
-    .select('id, name, first_name, last_name, avatar_url, city, email')
-    .in('id', promoterIds);
+  // Use SECURITY DEFINER RPC because RLS on `profiles` blocks businesses
+  // from reading other users' rows. The RPC returns only promoters who
+  // applied to a business owned by the current user.
+  const businessId = applications[0]?.business_id;
+  let promoters: Array<{
+    id: string;
+    name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+    email: string | null;
+  }> | null = null;
 
-  if (error) {
-    console.warn('[promoters] failed to load promoter profiles', error);
-    return applications.map((application) => ({ ...application, promoter: null }));
+  if (businessId) {
+    const { data, error } = await supabase.rpc(
+      'get_promoter_applicants_for_business' as never,
+      { _business_id: businessId } as never,
+    );
+    if (error) {
+      console.warn('[promoters] failed to load promoter profiles via RPC', error);
+    } else {
+      promoters = (data as typeof promoters) ?? null;
+    }
   }
 
   const promoterMap = new Map<string, BusinessPromoterApplication['promoter']>(
