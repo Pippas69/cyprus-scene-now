@@ -48,13 +48,6 @@ const PromoterEarningsPage = () => {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold">Τα Κέρδη μου</h1>
-        <p className="text-sm text-muted-foreground">
-          Λίστα με τους πελάτες που έφερες και το αντίστοιχο κέρδος σου.
-        </p>
-      </div>
-
       {/* Totals */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card>

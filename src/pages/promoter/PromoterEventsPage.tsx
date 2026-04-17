@@ -31,13 +31,6 @@ const PromoterEventsPage = () => {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold">Events & Links</h1>
-        <p className="text-sm text-muted-foreground">
-          Αντίγραψε το μοναδικό σου link για κάθε event και μοιράσου το όπου θέλεις.
-        </p>
-      </div>
-
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
