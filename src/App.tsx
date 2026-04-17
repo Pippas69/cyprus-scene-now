@@ -14,6 +14,7 @@ import { AnimatePresence } from "framer-motion";
 // Inline splash is now in index.html for instant display
 import { PageTransition } from "@/components/ui/page-transition";
 import { UserLayout } from "@/components/layouts/UserLayout";
+import { PromoterLayout } from "@/components/layouts/PromoterLayout";
 import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
@@ -35,7 +36,9 @@ import SignupBusiness from "./pages/SignupBusiness";
 
 // Secondary pages lazy-loaded for reduced initial bundle
 const DashboardUser = lazy(() => import("./pages/DashboardUser"));
-const DashboardPromoter = lazy(() => import("./pages/DashboardPromoter"));
+const PromoterOverview = lazy(() => import("./pages/promoter/PromoterOverview"));
+const PromoterEventsPage = lazy(() => import("./pages/promoter/PromoterEventsPage"));
+const PromoterEarningsPage = lazy(() => import("./pages/promoter/PromoterEarningsPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminVerification = lazy(() => import("./pages/AdminVerification"));
 const AdminGeocoding = lazy(() => import("./pages/AdminGeocoding"));
@@ -136,7 +139,9 @@ function AppContent() {
           <Route path="/verify-student" element={<VerifyStudent />} />
           <Route path="/signup-business" element={<SignupBusiness />} />
           <Route path="/dashboard-user/*" element={<UserLayout><DashboardUser /></UserLayout>} />
-          <Route path="/dashboard-promoter" element={<UserLayout><DashboardPromoter /></UserLayout>} />
+          <Route path="/dashboard-promoter" element={<PromoterLayout><PromoterOverview /></PromoterLayout>} />
+          <Route path="/dashboard-promoter/events" element={<PromoterLayout><PromoterEventsPage /></PromoterLayout>} />
+          <Route path="/dashboard-promoter/earnings" element={<PromoterLayout><PromoterEarningsPage /></PromoterLayout>} />
           <Route path="/messages" element={<PageTransition><Messages /></PageTransition>} />
           <Route path="/dashboard-business/*" element={<DashboardBusiness />} />
           <Route path="/subscription-plans" element={<SubscriptionPlans />} />
