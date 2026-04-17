@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket, Megaphone } from 'lucide-react';
+import { useIsActivePromoter, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,7 @@ const translations = {
     reservations: 'Οι Κρατήσεις Μου',
     myOffers: 'Οι Προσφορές Μου',
     settings: 'Ρυθμίσεις',
+    promoterDashboard: 'PR Dashboard',
   },
   en: {
     feed: 'Feed',
@@ -37,6 +39,7 @@ const translations = {
     reservations: 'My Reservations',
     myOffers: 'My Offers',
     settings: 'Settings',
+    promoterDashboard: 'PR Dashboard',
   },
 };
 
@@ -80,6 +83,10 @@ export function UserSidebar() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // PR access: ενεργό μόνο αν έχει ένα τουλάχιστον εγκεκριμένο αίτημα.
+  const { data: isActivePromoter } = useIsActivePromoter(user?.id);
+  usePromoterApplicationsRealtime(user?.id);
   
   const currentPath = location.pathname;
   const searchParams = new URLSearchParams(location.search);
@@ -174,6 +181,18 @@ export function UserSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isActivePromoter && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={currentPath === '/dashboard-promoter'}
+                    onClick={() => handleNavClick('/dashboard-promoter')}
+                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
+                  >
+                    <Megaphone className="h-4 w-4" />
+                    <span>{t.promoterDashboard}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
