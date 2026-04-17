@@ -74,19 +74,6 @@ const DashboardPromoter = () => {
 
   return (
     <div className="w-full max-w-full px-3 sm:px-4 py-4 sm:py-8 overflow-x-hidden space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard-user?tab=settings')} aria-label={t.back}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            {t.title}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">{t.subtitle}</p>
-        </div>
-      </div>
 
       {/* Active Collaborations */}
       <Card>
