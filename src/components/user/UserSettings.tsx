@@ -678,6 +678,9 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         </CardContent>
       </Card>
 
+      {/* Promoter / PR — between Notifications and Password */}
+      <PromoterSettingsCard userId={userId} language={language} />
+
       {/* Password Management - MOVED BELOW NOTIFICATIONS */}
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
@@ -785,8 +788,6 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         </CardContent>
       </Card>
 
-      {/* Promoter / PR */}
-      <PromoterSettingsCard userId={userId} language={language} />
     </div>
   );
 };

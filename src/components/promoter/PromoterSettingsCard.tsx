@@ -41,7 +41,7 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
   const t =
     language === 'el'
       ? {
-          title: 'Είμαι PR / Promoter',
+          title: 'Είμαι Promoter',
           desc: 'Ενεργοποίησε αυτή τη λειτουργία αν προωθείς events για επιχειρήσεις. Θα μπορείς να στέλνεις αιτήματα συνεργασίας και να αποκτάς πρόσβαση σε ξεχωριστό PR Dashboard μετά την έγκριση.',
           choose: 'Επιλογή Επιχείρησης',
           myApplications: 'Τα Αιτήματά μου',
@@ -54,7 +54,7 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
           revoked_toast: 'Το αίτημα ακυρώθηκε.',
         }
       : {
-          title: 'I am a PR / Promoter',
+          title: 'I am a Promoter',
           desc: 'Enable this if you promote events for businesses. You can send collaboration requests and unlock a dedicated PR Dashboard once approved.',
           choose: 'Choose a Business',
           myApplications: 'My Requests',
@@ -96,14 +96,14 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 sm:pb-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <CardTitle className="flex items-center gap-2">
-                <Megaphone className="h-5 w-5" />
+            <div className="flex-1 min-w-0">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Megaphone className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                 {t.title}
               </CardTitle>
-              <CardDescription className="mt-2">{t.desc}</CardDescription>
+              <CardDescription className="mt-2 text-xs sm:text-sm">{t.desc}</CardDescription>
             </div>
             <Switch
               checked={enabled}
