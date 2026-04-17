@@ -24,6 +24,8 @@ const CheckoutBodySchema = z.object({
   guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
   seatIds: z.array(flexId).optional(),
   showInstanceId: flexId.optional(),
+  promoterSessionId: optionalString(100),
+  promoterTrackingCode: optionalString(100),
 });
 
 interface TicketItem {
@@ -630,6 +632,8 @@ Deno.serve(async (req) => {
         seat_ids: seatIds ? JSON.stringify(seatIds) : undefined,
         seat_details: seatDetailsForMeta,
         show_instance_id: showInstanceId || undefined,
+        promoter_session_id: (body as any).promoterSessionId || undefined,
+        promoter_tracking_code: (body as any).promoterTrackingCode || undefined,
       },
     };
     
