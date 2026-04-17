@@ -39,6 +39,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { UnifiedQRScanner } from "@/components/business/UnifiedQRScanner";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
+import { PromotersDashboard } from "@/components/business/promoters/PromotersDashboard";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -476,6 +477,7 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
                 })()
               } />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
+              <Route path="promoters" element={businessId ? <PromotersDashboard businessId={businessId} /> : null} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostsList businessId={businessId} language={language} /></div> : null} />
               <Route path="posts/new" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /></div> : null} />
