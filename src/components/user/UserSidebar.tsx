@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket, Megaphone } from 'lucide-react';
-import { useIsActivePromoter, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,9 +83,6 @@ export function UserSidebar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // PR access: ενεργό μόνο αν έχει ένα τουλάχιστον εγκεκριμένο αίτημα.
-  const { data: isActivePromoter } = useIsActivePromoter(user?.id);
-  usePromoterApplicationsRealtime(user?.id);
   
   const currentPath = location.pathname;
   const searchParams = new URLSearchParams(location.search);
@@ -169,18 +165,6 @@ export function UserSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isActivePromoter && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={currentPath === '/dashboard-promoter'}
-                    onClick={() => handleNavClick('/dashboard-promoter')}
-                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
-                  >
-                    <Megaphone className="h-4 w-4" />
-                    <span>{t.promoterDashboard}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               {personalItems.map((item) => (
                 <SidebarMenuItem key={item.tab}>
                   <SidebarMenuButton
