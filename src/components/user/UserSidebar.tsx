@@ -169,18 +169,6 @@ export function UserSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isActivePromoter && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={currentPath === '/dashboard-promoter'}
-                    onClick={() => handleNavClick('/dashboard-promoter')}
-                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
-                  >
-                    <Megaphone className="h-4 w-4" />
-                    <span>{t.promoterDashboard}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               {personalItems.map((item) => (
                 <SidebarMenuItem key={item.tab}>
                   <SidebarMenuButton

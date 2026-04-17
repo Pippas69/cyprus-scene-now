@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Building2, LogOut, Shield, User } from 'lucide-react';
+import { Bell, Building2, LogOut, Megaphone, Shield, User } from 'lucide-react';
 import { useBusinessOwner } from '@/hooks/useBusinessOwner';
+import { useIsActivePromoter, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -36,6 +37,7 @@ export const UserAccountDropdown = ({
   
   // Detect if we're on a business dashboard route
   const isBusinessDashboard = location.pathname.startsWith('/dashboard-business');
+  const isPromoterDashboard = location.pathname.startsWith('/dashboard-promoter');
   const notificationContext = isBusinessDashboard ? 'business' : 'user';
   
   const { unreadCount } = useNotifications(userId, notificationContext);
@@ -43,6 +45,8 @@ export const UserAccountDropdown = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { isBusinessOwner, isLoading: isBusinessLoading } = useBusinessOwner();
+  const { data: isActivePromoter } = useIsActivePromoter(userId);
+  usePromoterApplicationsRealtime(userId);
 
   const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
@@ -58,6 +62,7 @@ export const UserAccountDropdown = ({
       myAccount: 'Ο λογαριασμός μου',
       myBusiness: 'Η επιχείρησή μου',
       myUserAccount: 'Ο προσωπικός μου λογαριασμός',
+      promoterDashboard: 'PR Dashboard',
       notifications: 'Ειδοποιήσεις',
       admin: 'Admin',
       signOut: 'Αποσύνδεση',
@@ -66,6 +71,7 @@ export const UserAccountDropdown = ({
       myAccount: 'My Account',
       myBusiness: 'My Business',
       myUserAccount: 'My User Account',
+      promoterDashboard: 'PR Dashboard',
       notifications: 'Notifications',
       admin: 'Admin',
       signOut: 'Sign Out',
@@ -150,7 +156,19 @@ export const UserAccountDropdown = ({
 
         <DropdownMenuContent align="end" className="w-48 sm:w-56 bg-background border-border z-50">
           {/* Context-aware Account Switcher */}
-          {isBusinessDashboard ? (
+          {isPromoterDashboard ? (
+            // On PR Dashboard: Show "My Account" to go back to user dashboard
+            <DropdownMenuItem
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate('/dashboard-user');
+              }}
+              className="text-sm cursor-pointer"
+            >
+              <User className="mr-2 h-4 w-4" />
+              {t.myAccount}
+            </DropdownMenuItem>
+          ) : isBusinessDashboard ? (
             // On Business Dashboard: Show "My Account" to go to user feed
             <DropdownMenuItem 
               onClick={handleMyAccount} 
@@ -160,19 +178,34 @@ export const UserAccountDropdown = ({
               {t.myAccount}
             </DropdownMenuItem>
           ) : (
-            // On User Dashboard: Show "My Business" if business owner
-            !isBusinessLoading && isBusinessOwner && (
-              <DropdownMenuItem 
-                onClick={() => {
-                  setDropdownOpen(false);
-                  navigate('/dashboard-business');
-                }} 
-                className="text-sm cursor-pointer"
-              >
-                <Building2 className="mr-2 h-4 w-4" />
-                {t.myBusiness}
-              </DropdownMenuItem>
-            )
+            <>
+              {/* On User Dashboard: Show "My Business" if business owner */}
+              {!isBusinessLoading && isBusinessOwner && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    navigate('/dashboard-business');
+                  }}
+                  className="text-sm cursor-pointer"
+                >
+                  <Building2 className="mr-2 h-4 w-4" />
+                  {t.myBusiness}
+                </DropdownMenuItem>
+              )}
+              {/* PR Dashboard link — only if user is an active promoter */}
+              {isActivePromoter && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    navigate('/dashboard-promoter');
+                  }}
+                  className="text-sm cursor-pointer"
+                >
+                  <Megaphone className="mr-2 h-4 w-4" />
+                  {t.promoterDashboard}
+                </DropdownMenuItem>
+              )}
+            </>
           )}
 
           {/* Admin Panel */}
