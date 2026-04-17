@@ -7512,6 +7512,20 @@ export type Database = {
         Args: { p_staff_user_id: string; p_ticket_id: string }
         Returns: Json
       }
+      attribute_promoter_purchase: {
+        Args: {
+          _business_id: string
+          _customer_email?: string
+          _customer_name?: string
+          _customer_user_id?: string
+          _event_id: string
+          _order_amount_cents?: number
+          _reservation_id?: string
+          _session_id: string
+          _ticket_order_id?: string
+        }
+        Returns: Json
+      }
       backfill_crm_guests: {
         Args: { p_business_id?: string }
         Returns: undefined
@@ -8155,16 +8169,26 @@ export type Database = {
           read_ct: number
         }[]
       }
-      record_promoter_click: {
-        Args: {
-          _ip_hash?: string
-          _session_id: string
-          _tracking_code: string
-          _user_agent?: string
-          _user_id?: string
-        }
-        Returns: string
-      }
+      record_promoter_click:
+        | {
+            Args: {
+              _ip_hash?: string
+              _session_id: string
+              _tracking_code: string
+              _user_agent?: string
+              _user_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _session_id: string
+              _tracking_code: string
+              _user_agent?: string
+              _user_id?: string
+            }
+            Returns: Json
+          }
       release_offer_spots: {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: undefined
