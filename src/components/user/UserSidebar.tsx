@@ -83,9 +83,6 @@ export function UserSidebar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // PR access: ενεργό μόνο αν έχει ένα τουλάχιστον εγκεκριμένο αίτημα.
-  const { data: isActivePromoter } = useIsActivePromoter(user?.id);
-  usePromoterApplicationsRealtime(user?.id);
   
   const currentPath = location.pathname;
   const searchParams = new URLSearchParams(location.search);
