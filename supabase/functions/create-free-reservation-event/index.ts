@@ -224,6 +224,33 @@ serve(async (req) => {
       console.error("[create-free-reservation-event] send-reservation-notification failed", e);
     }
 
+    // PR Attribution: link this free reservation to a promoter (if applicable)
+    try {
+      if (promoter_session_id && event.business_id) {
+        const { data: attrResult, error: attrError } = await supabaseService.rpc(
+          "attribute_promoter_purchase",
+          {
+            _business_id: event.business_id,
+            _event_id: eventId,
+            _session_id: String(promoter_session_id),
+            _customer_user_id: user.id,
+            _ticket_order_id: null,
+            _reservation_id: reservation.id,
+            _order_amount_cents: 0,
+            _customer_name: (reservation_name as string | undefined) ?? null,
+            _customer_email: (customer_email as string | undefined)?.trim() || user.email || null,
+          },
+        );
+        if (attrError) {
+          console.error("[create-free-reservation-event] PR attribution error", attrError);
+        } else {
+          console.log("[create-free-reservation-event] PR attribution result", attrResult);
+        }
+      }
+    } catch (e) {
+      console.error("[create-free-reservation-event] PR attribution exception", e);
+    }
+
     return json({
       reservation_id: reservation.id,
       confirmation_code: reservation.confirmation_code,
