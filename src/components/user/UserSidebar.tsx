@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket, Megaphone } from 'lucide-react';
-import { useIsActivePromoter, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
+import { Home, MapPin, Calendar, Settings, CalendarCheck, Percent, Ticket } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
