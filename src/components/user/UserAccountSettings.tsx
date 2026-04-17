@@ -16,7 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { Lock, Bell, Shield, Download, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PromoterSettingsCard } from '@/components/promoter/PromoterSettingsCard';
+
 
 interface UserAccountSettingsProps {
   userId: string;
