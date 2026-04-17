@@ -169,18 +169,6 @@ export function UserSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {personalItems.map((item) => (
-                <SidebarMenuItem key={item.tab}>
-                  <SidebarMenuButton
-                    isActive={isTabActive(item.tab)}
-                    onClick={() => handleTabClick(item.tab)}
-                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
               {isActivePromoter && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -193,6 +181,18 @@ export function UserSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {personalItems.map((item) => (
+                <SidebarMenuItem key={item.tab}>
+                  <SidebarMenuButton
+                    isActive={isTabActive(item.tab)}
+                    onClick={() => handleTabClick(item.tab)}
+                    className="flex items-center gap-2 text-sidebar-foreground cursor-pointer"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
