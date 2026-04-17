@@ -92,7 +92,7 @@ const queryClient = new QueryClient({
 // Component to conditionally render BottomNav
 function AppContent() {
   const location = useLocation();
-  const userLayoutRoutes = ['/feed', '/events', '/ekdiloseis', '/map', '/xartis', '/offers', '/dashboard-user', '/messages'];
+  const userLayoutRoutes = ['/feed', '/events', '/ekdiloseis', '/map', '/xartis', '/offers', '/dashboard-user', '/dashboard-promoter', '/messages'];
   const adminRoutes = ['/admin'];
   const businessRoutes = ['/dashboard-business'];
   const isUserLayoutRoute = userLayoutRoutes.some(route => location.pathname.startsWith(route));
