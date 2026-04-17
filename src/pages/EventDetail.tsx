@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { trackEventView, trackEngagement } from '@/lib/analyticsTracking';
+import { trackPromoterClick } from '@/lib/promoterTracking';
 import { isEventPaused } from '@/lib/eventVisibility';
 import { ReservationDialog } from '@/components/business/ReservationDialog';
 import { ReservationEventCheckout } from '@/components/user/ReservationEventCheckout';
@@ -134,10 +135,16 @@ export default function EventDetail() {
       const authPromise = checkUser();
       if (eventId) {
         const eventPromise = fetchEventDetails();
-        const src = new URLSearchParams(location.search).get('src');
+        const params = new URLSearchParams(location.search);
+        const src = params.get('src');
         const analyticsTracked = location.state?.analyticsTracked === true;
         if (src !== 'dashboard_user' && !analyticsTracked) {
           trackEventView(eventId, 'direct');
+        }
+        // PR Attribution: track promoter link click if ?ref= is present
+        const promoterRef = params.get('ref');
+        if (promoterRef) {
+          trackPromoterClick(promoterRef);
         }
         await Promise.all([authPromise, eventPromise]);
       } else {
