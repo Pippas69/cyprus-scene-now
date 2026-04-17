@@ -470,6 +470,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     setSubmitting(true);
     try {
+      // PR Attribution: attach promoter ref if active for this business
+      let promoterPayload: { promoter_session_id?: string; promoter_tracking_code?: string } = {};
+      try {
+        const { getActivePromoterRef } = await import('@/lib/promoterTracking');
+        const pref = getActivePromoterRef();
+        if (pref) {
+          promoterPayload = {
+            promoter_session_id: pref.session_id,
+            promoter_tracking_code: pref.tracking_code,
+          };
+        }
+      } catch { /* noop */ }
+
       // Pay at door OR €0 minimum charge: use free reservation flow (no Stripe)
       if (isPayAtDoor || price === 0) {
         const { data, error } = await supabase.functions.invoke('create-free-reservation-event', {
@@ -485,6 +498,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               name: g.name.trim(),
               age: parseInt(g.age) || 0,
             })),
+            ...promoterPayload,
           },
         });
 
@@ -539,6 +553,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             name: g.name.trim(),
             age: parseInt(g.age) || 0,
           })),
+          ...promoterPayload,
         },
       });
 
