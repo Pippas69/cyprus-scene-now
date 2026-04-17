@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Megaphone, Building2, Sparkles, ArrowLeft } from 'lucide-react';
+import { Megaphone, Building2, Sparkles, ArrowLeft, CalendarDays } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePromoterApplications, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
+import { usePromoterEvents } from '@/hooks/usePromoterLinks';
+import { PromoterEventCard } from '@/components/promoter/PromoterEventCard';
 
 const DashboardPromoter = () => {
   const navigate = useNavigate();
@@ -29,6 +31,7 @@ const DashboardPromoter = () => {
 
   const { data: applications = [], isLoading } = usePromoterApplications(user?.id);
   usePromoterApplicationsRealtime(user?.id);
+  const { data: events = [], isLoading: eventsLoading } = usePromoterEvents(user?.id);
 
   const accepted = applications.filter((a) => a.status === 'accepted');
 
@@ -135,16 +138,39 @@ const DashboardPromoter = () => {
         </CardContent>
       </Card>
 
-      {/* Coming Soon */}
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            {t.soonTitle}
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">{t.soonDesc}</CardDescription>
-        </CardHeader>
-      </Card>
+      {/* Events to promote */}
+      {accepted.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5" />
+              Events προς Προώθηση
+              <Badge variant="secondary" className="ml-2">{events.length}</Badge>
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Δημιούργησε μοναδικό link για κάθε event και μοίρασέ το στους πελάτες σου.
+              Κάθε πώληση μέσω του link σου καταγράφεται αυτόματα.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                Φόρτωση events…
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                Δεν υπάρχουν ενεργά events αυτή τη στιγμή από τις επιχειρήσεις σου.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {events.map((ev) => (
+                  <PromoterEventCard key={ev.id} event={ev} userId={user?.id} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
