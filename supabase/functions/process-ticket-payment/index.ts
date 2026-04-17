@@ -605,7 +605,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    // PR Attribution: link this purchase to a promoter (if applicable)
+    try {
+      const promoterSessionId = session.metadata?.promoter_session_id;
+      if (promoterSessionId) {
+        const { data: eventData } = await supabaseClient
+          .from("events")
+          .select("business_id")
+          .eq("id", order.event_id)
+          .single();
+
+        if (eventData?.business_id) {
+          const { data: attrResult, error: attrError } = await supabaseClient.rpc(
+            "attribute_promoter_purchase",
+            {
+              _business_id: eventData.business_id,
+              _event_id: order.event_id,
+              _session_id: promoterSessionId,
+              _customer_user_id: order.user_id || null,
+              _ticket_order_id: orderId,
+              _reservation_id: null,
+              _order_amount_cents: order.subtotal_cents || session.amount_total || 0,
+              _customer_name: order.customer_name || null,
+              _customer_email: order.customer_email || null,
+            },
+          );
+          if (attrError) {
+            logStep("PR attribution error", { error: attrError.message });
+          } else {
+            logStep("PR attribution result", attrResult);
+          }
+        }
+      }
+    } catch (err) {
+      logStep("PR attribution exception", { error: err instanceof Error ? err.message : String(err) });
+    }
+
       headers: { ...securityHeaders, "Content-Type": "application/json" },
       status: 200,
     });

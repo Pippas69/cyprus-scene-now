@@ -24,6 +24,8 @@ const CheckoutBodySchema = z.object({
   guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
   seatIds: z.array(flexId).optional(),
   showInstanceId: flexId.optional(),
+  promoterSessionId: optionalString(100),
+  promoterTrackingCode: optionalString(100),
 });
 
 interface TicketItem {
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId } = await parseBody(req, CheckoutBodySchema);
+    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId, promoterSessionId, promoterTrackingCode } = await parseBody(req, CheckoutBodySchema);
     logStep("Request data", { eventId, items, customerName, reservationName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
     // Fetch event and business info (including Stripe Connect status)
@@ -630,6 +632,8 @@ Deno.serve(async (req) => {
         seat_ids: seatIds ? JSON.stringify(seatIds) : undefined,
         seat_details: seatDetailsForMeta,
         show_instance_id: showInstanceId || undefined,
+        promoter_session_id: promoterSessionId || undefined,
+        promoter_tracking_code: promoterTrackingCode || undefined,
       },
     };
     
