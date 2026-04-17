@@ -10,7 +10,7 @@ export interface AdminUser {
   name: string | null;
   city: string | null;
   avatar_url: string | null;
-  role: 'user' | 'business' | 'admin';
+  role: 'user' | 'business' | 'admin' | 'promoter';
   created_at: string;
   updated_at: string;
   suspended: boolean;
@@ -64,7 +64,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
       }
       
       if (role && role !== 'all') {
-        query = query.eq('role', role as 'user' | 'business' | 'admin');
+        query = query.eq('role', role as 'user' | 'business' | 'admin' | 'promoter');
       }
       
       if (city) {

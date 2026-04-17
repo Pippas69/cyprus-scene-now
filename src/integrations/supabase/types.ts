@@ -4439,6 +4439,275 @@ export type Database = {
         }
         Relationships: []
       }
+      promoter_applications: {
+        Row: {
+          business_id: string
+          commission_fixed_reservation_cents: number | null
+          commission_fixed_ticket_cents: number | null
+          commission_percent: number | null
+          commission_type:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decline_reason: string | null
+          id: string
+          message: string | null
+          promoter_user_id: string
+          status: Database["public"]["Enums"]["promoter_application_status"]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          commission_fixed_reservation_cents?: number | null
+          commission_fixed_ticket_cents?: number | null
+          commission_percent?: number | null
+          commission_type?:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decline_reason?: string | null
+          id?: string
+          message?: string | null
+          promoter_user_id: string
+          status?: Database["public"]["Enums"]["promoter_application_status"]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          commission_fixed_reservation_cents?: number | null
+          commission_fixed_ticket_cents?: number | null
+          commission_percent?: number | null
+          commission_type?:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decline_reason?: string | null
+          id?: string
+          message?: string | null
+          promoter_user_id?: string
+          status?: Database["public"]["Enums"]["promoter_application_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_applications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_applications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_applications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_attributions: {
+        Row: {
+          attribution_source: string
+          business_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          commission_earned_cents: number
+          commission_fixed_cents: number | null
+          commission_percent: number | null
+          commission_type:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at: string
+          customer_user_id: string | null
+          event_id: string | null
+          id: string
+          order_amount_cents: number | null
+          promoter_link_id: string | null
+          promoter_user_id: string
+          reservation_id: string | null
+          status: string
+          ticket_order_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attribution_source?: string
+          business_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          commission_earned_cents?: number
+          commission_fixed_cents?: number | null
+          commission_percent?: number | null
+          commission_type?:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at?: string
+          customer_user_id?: string | null
+          event_id?: string | null
+          id?: string
+          order_amount_cents?: number | null
+          promoter_link_id?: string | null
+          promoter_user_id: string
+          reservation_id?: string | null
+          status?: string
+          ticket_order_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attribution_source?: string
+          business_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          commission_earned_cents?: number
+          commission_fixed_cents?: number | null
+          commission_percent?: number | null
+          commission_type?:
+            | Database["public"]["Enums"]["promoter_commission_type"]
+            | null
+          created_at?: string
+          customer_user_id?: string | null
+          event_id?: string | null
+          id?: string
+          order_amount_cents?: number | null
+          promoter_link_id?: string | null
+          promoter_user_id?: string
+          reservation_id?: string | null
+          status?: string
+          ticket_order_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_attributions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_promoter_link_id_fkey"
+            columns: ["promoter_link_id"]
+            isOneToOne: false
+            referencedRelation: "promoter_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_ticket_order_id_fkey"
+            columns: ["ticket_order_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promoter_links: {
+        Row: {
+          active: boolean
+          business_id: string
+          clicks_count: number
+          conversions_count: number
+          created_at: string
+          event_id: string | null
+          id: string
+          promoter_user_id: string
+          tracking_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          promoter_user_id: string
+          tracking_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          clicks_count?: number
+          conversions_count?: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          promoter_user_id?: string
+          tracking_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_links_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
@@ -7276,6 +7545,7 @@ export type Database = {
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       generate_confirmation_code: { Args: never; Returns: string }
+      generate_promoter_tracking_code: { Args: never; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -7706,9 +7976,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_promoter: { Args: { _user_id: string }; Returns: boolean }
       is_business_owner: { Args: { p_business_id: string }; Returns: boolean }
       is_performance_business: {
         Args: { p_business_id: string }
+        Returns: boolean
+      }
+      is_promoter_for_business: {
+        Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
@@ -8525,7 +8800,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "user" | "business" | "admin"
+      app_role: "user" | "business" | "admin" | "promoter"
       billing_cycle: "monthly" | "annual"
       boost_source: "subscription" | "purchase"
       boost_status:
@@ -8550,6 +8825,12 @@ export type Database = {
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
       post_visibility: "public" | "followers" | "private"
       price_tier: "free" | "low" | "medium" | "high"
+      promoter_application_status:
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "revoked"
+      promoter_commission_type: "fixed" | "percent"
       revenue_model: "commission" | "fixed_fee"
       rsvp_status: "interested" | "going"
       subscription_status:
@@ -8695,7 +8976,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["user", "business", "admin"],
+      app_role: ["user", "business", "admin", "promoter"],
       billing_cycle: ["monthly", "annual"],
       boost_source: ["subscription", "purchase"],
       boost_status: [
@@ -8722,6 +9003,13 @@ export const Constants = {
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
       post_visibility: ["public", "followers", "private"],
       price_tier: ["free", "low", "medium", "high"],
+      promoter_application_status: [
+        "pending",
+        "accepted",
+        "declined",
+        "revoked",
+      ],
+      promoter_commission_type: ["fixed", "percent"],
       revenue_model: ["commission", "fixed_fee"],
       rsvp_status: ["interested", "going"],
       subscription_status: [
