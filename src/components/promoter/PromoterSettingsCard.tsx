@@ -119,17 +119,22 @@ export const PromoterSettingsCard = ({ userId, language }: PromoterSettingsCardP
 
         {enabled && (
           <CardContent className="space-y-4">
-            <Button onClick={() => setSearchOpen(true)} variant="outline" className="w-full gap-2">
-              <Plus className="h-4 w-4" />
+            <Button
+              onClick={() => setSearchOpen(true)}
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 text-xs sm:text-sm font-medium"
+            >
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t.choose}
             </Button>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold">{t.myApplications}</h4>
+              <h4 className="text-xs sm:text-sm font-semibold">{t.myApplications}</h4>
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">...</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">...</p>
               ) : applications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t.empty}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t.empty}</p>
               ) : (
                 <div className="space-y-2">
                   {applications.map((a) => (

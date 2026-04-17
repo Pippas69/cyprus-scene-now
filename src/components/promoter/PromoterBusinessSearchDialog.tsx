@@ -133,56 +133,56 @@ export const PromoterBusinessSearchDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{t.title}</DialogTitle>
-          <DialogDescription>{t.desc}</DialogDescription>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[420px] sm:max-w-lg max-h-[85vh] p-4 sm:p-6 gap-3 sm:gap-4 flex flex-col overflow-hidden">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base sm:text-lg">{t.title}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">{t.desc}</DialogDescription>
         </DialogHeader>
 
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={t.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9 text-sm"
             autoFocus
           />
         </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 min-h-0 -mx-4 sm:-mx-6 px-4 sm:px-6">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">{t.loading}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground py-8 text-center">{t.loading}</p>
           ) : businesses.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">{t.empty}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground py-8 text-center">{t.empty}</p>
           ) : (
-            <div className="space-y-2 py-2">
+            <div className="space-y-2 py-1">
               {businesses.map((b) => {
                 const existing = applicationsByBusiness.get(b.id);
                 return (
                   <div
                     key={b.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-card"
                   >
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-9 w-9 flex-shrink-0">
                       <AvatarImage src={b.logo_url || undefined} alt={b.name} />
-                      <AvatarFallback>{b.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="text-xs">{b.name.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{b.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="font-medium truncate text-sm">{b.name}</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                         {b.city}
                         {b.category?.length ? ` • ${b.category.slice(0, 2).join(', ')}` : ''}
                       </p>
                     </div>
                     {existing ? (
-                      renderStatusBadge(existing.status)
+                      <div className="flex-shrink-0">{renderStatusBadge(existing.status)}</div>
                     ) : (
                       <Button
                         size="sm"
                         onClick={() => handleApply(b.id)}
                         disabled={apply.isPending}
-                        className="gap-1"
+                        className="gap-1 h-8 px-2.5 text-xs flex-shrink-0"
                       >
                         <Send className="h-3 w-3" />
                         {t.apply}
