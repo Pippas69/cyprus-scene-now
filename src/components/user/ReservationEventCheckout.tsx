@@ -689,8 +689,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               const isSoldOut = remaining <= 0;
               const isSelected = selectedSeating?.id === option.id;
               const colors = seatingTypeColors[option.seating_type];
-              const minPrice = option.tiers.length > 0 
-                ? Math.min(...option.tiers.map(t => t.prepaid_min_charge_cents))
+              // Determine the cheapest tier label. If ANY tier is bottle-mode, show bottle label for it.
+              const sortedTiers = [...option.tiers].sort((a, b) => a.min_people - b.min_people);
+              const firstTier = sortedTiers[0];
+              const firstTierIsBottles = !!firstTier && firstTier.pricing_mode === 'bottles' && !!firstTier.bottle_type && (firstTier.bottle_count ?? 0) >= 1;
+              const minPrice = !firstTierIsBottles && option.tiers.length > 0
+                ? Math.min(...option.tiers.filter(t => t.pricing_mode !== 'bottles').map(t => t.prepaid_min_charge_cents))
                 : null;
 
               return (
@@ -731,14 +735,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       <h4 className={cn("font-semibold", isSelected && colors.text)}>
                         {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes]}
                       </h4>
-                      {minPrice !== null && minPrice !== undefined && (
+                      {firstTierIsBottles ? (
+                        <p className="text-sm text-muted-foreground">
+                          {`${t.from} ${bottleLabel(firstTier.bottle_count as number, firstTier.bottle_type as 'bottle' | 'premium_bottle')}`}
+                        </p>
+                      ) : minPrice !== null && minPrice !== undefined ? (
                         <p className="text-sm text-muted-foreground">
                           {isPayAtDoor
                             ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στο κατάστημα` : `${t.from} ${formatPrice(minPrice)} at venue`)
                             : `${t.from} ${formatPrice(minPrice)}`
                           }
                         </p>
-                      )}
+                      ) : null}
                     </div>
 
                   </CardContent>
