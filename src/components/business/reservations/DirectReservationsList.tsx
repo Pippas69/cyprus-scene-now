@@ -2166,6 +2166,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               );
                             }
+                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" — read-only
+                            if (isBottleRow && matchedTier) {
+                              const bottle = formatBottleLabel(
+                                matchedTier.bottle_type as 'bottle' | 'premium_bottle',
+                                matchedTier.bottle_count as number,
+                                language
+                              );
+                              return (
+                                <div className="flex flex-col items-start">
+                                  <span className="text-sm font-medium text-foreground whitespace-nowrap">{bottle}</span>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'στο κατάστημα' : 'at venue'}
+                                  </span>
+                                </div>
+                              );
+                            }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
                               // Hybrid: show "€100.00 (€20.00)" as one editable field
