@@ -206,6 +206,11 @@ const translations = {
     andThe: "and the",
     privacyLink: "Privacy Policy",
     termsRequired: "You must accept the terms of service",
+    minimumConsumption: "Minimum consumption",
+    atVenue: "at venue",
+    confirmReservation: "Confirm Reservation",
+    ticketCostOnline: "Ticket cost (online)",
+    bottleAtVenue: "At venue",
   },
 };
 
