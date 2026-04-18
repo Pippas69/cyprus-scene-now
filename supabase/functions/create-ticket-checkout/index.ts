@@ -252,6 +252,23 @@ Deno.serve(async (req) => {
       stripeFeeBearer: pricingProfile.stripe_fee_bearer,
     });
 
+    // Stripe minimum charge validation (EUR: €0.50)
+    // Only applies to paid checkouts (free tickets / pay-at-door bypass Stripe entirely)
+    const STRIPE_MIN_EUR_CENTS = 50;
+    if (subtotalCents > 0 && totalCents < STRIPE_MIN_EUR_CENTS) {
+      logStep("ERROR: Total below Stripe minimum", { totalCents, minimum: STRIPE_MIN_EUR_CENTS });
+      return new Response(
+        JSON.stringify({
+          error: "MINIMUM_CHARGE_NOT_MET",
+          message: "Το συνολικό ποσό πληρωμής πρέπει να είναι τουλάχιστον €0.50. Παρακαλώ αυξήστε την ποσότητα ή επιλέξτε ακριβότερο εισιτήριο.",
+          message_en: "The total payment amount must be at least €0.50. Please increase quantity or select a higher-priced ticket.",
+          minimum_cents: STRIPE_MIN_EUR_CENTS,
+          current_cents: totalCents,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Add processing fee as separate line item (when buyer pays)
     if (pricing.addProcessingFeeLineItem && pricing.processingFeeLineItemCents > 0) {
       lineItems.push({

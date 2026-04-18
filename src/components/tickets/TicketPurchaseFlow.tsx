@@ -607,7 +607,19 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
       }
     } catch (error: unknown) {
       console.error('Checkout error:', error);
-      const msg = error instanceof Error ? error.message : (language === 'el' ? 'Αποτυχία αγοράς' : 'Purchase failed');
+      let msg = error instanceof Error ? error.message : (language === 'el' ? 'Αποτυχία αγοράς' : 'Purchase failed');
+      // Try to extract structured error body from Supabase FunctionsHttpError
+      try {
+        const ctx = (error as { context?: Response })?.context;
+        if (ctx && typeof ctx.json === 'function') {
+          const body = await ctx.json();
+          if (body?.error === 'MINIMUM_CHARGE_NOT_MET') {
+            msg = language === 'el' ? body.message : (body.message_en || body.message);
+          } else if (body?.message) {
+            msg = language === 'el' ? body.message : (body.message_en || body.message);
+          }
+        }
+      } catch { /* keep default msg */ }
       toast.error(msg);
       setSubmitting(false);
     }
