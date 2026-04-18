@@ -333,6 +333,8 @@ export const ReservationSuccess = () => {
             partySize={reservationData.party_size}
             prepaidAmountCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.ticket_total_cents : reservationData.prepaid_min_charge_cents}
             minChargeCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.seating_min_charge_cents : undefined}
+            bottleType={reservationData.bottle_type}
+            bottleCount={reservationData.bottle_count}
             showSuccessMessage={!hasGuestTickets || currentGuestIndex === 0}
             onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
             viewDashboardLabel={text.viewReservations}
