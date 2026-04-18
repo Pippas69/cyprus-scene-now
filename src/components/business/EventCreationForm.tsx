@@ -101,10 +101,16 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
 type EventType = 'ticket' | 'reservation' | 'free_entry' | 'ticket_and_reservation';
 type AppearanceMode = 'hours' | 'days';
 type SeatingType = 'bar' | 'table' | 'vip' | 'sofa';
+type TierPricingMode = 'amount' | 'bottles';
+type BottleType = 'bottle' | 'premium_bottle';
 interface PersonTier {
   minPeople: number;
   maxPeople: number;
   prepaidChargeCents: number;
+  // Optional bottle-mode fields. Default mode is 'amount' (existing behavior).
+  pricingMode?: TierPricingMode;
+  bottleType?: BottleType;
+  bottleCount?: number;
 }
 interface SeatingConfig {
   type: SeatingType;
