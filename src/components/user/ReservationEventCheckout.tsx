@@ -1006,7 +1006,29 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             <Separator />
 
-            {isPayAtDoor ? (
+            {isBottleTier && matchedTier ? (
+              <div className="space-y-2">
+                <div className="rounded-lg border border-border bg-muted p-3 text-sm space-y-1">
+                  <p className="font-medium text-foreground flex items-center gap-1.5">
+                    🍾 {language === 'el' ? 'Πώς λειτουργεί η πληρωμή' : 'How payment works'}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {language === 'el'
+                      ? `Δεν απαιτείται online πληρωμή. Η ελάχιστη κατανάλωση (${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')}) πληρώνεται στο κατάστημα.`
+                      : `No online payment required. Minimum consumption (${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')}) is paid at the venue.`
+                    }
+                  </p>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum consumption'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')}
+                  </span>
+                </div>
+              </div>
+            ) : isPayAtDoor ? (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
@@ -1132,10 +1154,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 {t.processing}
               </>
-            ) : isPayAtDoor ? (
+            ) : isPayAtDoor || isBottleTier ? (
               <>
                 <Users className="h-3.5 w-3.5" />
-                {language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Reservation'}
+                {language === 'el' ? 'Επιβεβαίωση Κράτησης' : 'Confirm Reservation'}
               </>
             ) : (
               <>
