@@ -27,6 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ReservationQRCard } from './ReservationQRCard';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { isBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 
 interface MyReservationsProps {
   userId: string;
@@ -108,6 +109,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [currentEventGuestIndex, setCurrentEventGuestIndex] = useState(0);
   const [ticketOrderTotals, setTicketOrderTotals] = useState<Record<string, number>>({});
   const [seatingMinCharge, setSeatingMinCharge] = useState<Record<string, number>>({});
+  const [seatingBottleInfo, setSeatingBottleInfo] = useState<Record<string, { bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number }>>({});
   const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
   const tt = toastTranslations[language];
 
@@ -747,6 +749,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const minCharge = reservation.prepaid_min_charge_cents || seatingMinCharge[reservation.id] || 0;
     const ticketTotal = ticketOrderTotals[reservation.id] || 0;
     const isHybrid = ticketTotal > 0;
+    const bottleInfo = seatingBottleInfo[reservation.id];
+    const isBottle = !!bottleInfo;
 
     return (
       <Card key={reservation.id} className={`overflow-hidden hover:shadow-md transition-shadow ${isPast ? 'opacity-60' : ''}`}>
@@ -802,27 +806,39 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Payment info — each on single line */}
-          {(minCharge >= 0 || ticketTotal > 0) && (
+          {(isBottle || minCharge >= 0 || ticketTotal > 0) && (
             <div className="space-y-0.5">
-              {minCharge >= 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
-                </div>
-              )}
-              {isHybrid && (
+              {isBottle ? (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                   <span>
-                    {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
-                    {(() => {
-                      const balance = Math.max(0, minCharge - ticketTotal);
-                      return balance > 0 ? (
-                        <span> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
-                      ) : null;
-                    })()}
+                    {t.minCharge}: {formatBottleLabel(bottleInfo.bottle_type, bottleInfo.bottle_count, language)}
+                    {' '}({language === 'el' ? 'στο κατάστημα' : 'at venue'})
                   </span>
                 </div>
+              ) : (
+                <>
+                  {minCharge >= 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {isHybrid && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <span>
+                        {t.prepaidCredit}: €{(ticketTotal / 100).toFixed(2)}
+                        {(() => {
+                          const balance = Math.max(0, minCharge - ticketTotal);
+                          return balance > 0 ? (
+                            <span> → {t.balanceAtVenue}: €{(balance / 100).toFixed(2)}</span>
+                          ) : null;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
