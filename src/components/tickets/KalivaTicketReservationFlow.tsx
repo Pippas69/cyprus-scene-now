@@ -723,10 +723,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             >+</Button>
             <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
-          {isCurrentBottleTier && currentBottleLabel ? (
-            <span className="text-base font-semibold text-foreground">{currentBottleLabel}</span>
-          ) : ticketTier && ticketPricePerPerson > 0 ? (
+          {ticketTier && ticketPricePerPerson > 0 ? (
             <span className="text-base font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
+          ) : isCurrentBottleTier && currentBottleLabel ? (
+            <span className="text-base font-semibold text-foreground">{currentBottleLabel}</span>
           ) : ticketTier && ticketPricePerPerson === 0 ? (
             <span className="text-sm font-medium text-foreground">{t.free}</span>
           ) : null}
