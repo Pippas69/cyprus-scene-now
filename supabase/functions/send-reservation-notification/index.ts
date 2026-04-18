@@ -16,6 +16,7 @@ import {
 } from "../_shared/email-templates.ts";
 import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { fetchReservationTier, isBottleTier, formatTierMinSpendLabel } from "../_shared/bottle-pricing.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -219,6 +220,21 @@ const handler = async (req: Request): Promise<Response> => {
     const reservationTypeLabel = isDirectReservation ? 'Κράτηση' : 'Εκδήλωση';
     const userName = userProfile?.name || reservation.reservation_name || 'φίλε';
 
+    // Resolve tier pricing mode (amount vs bottles) for min-spend label
+    const tierInfo = await fetchReservationTier(
+      supabase,
+      reservation.seating_type_id,
+      reservation.party_size || 1,
+    );
+    const minSpendLabel = formatTierMinSpendLabel(tierInfo, 'el');
+    const tierIsBottles = isBottleTier(tierInfo);
+    const hasMinSpendInfo = tierIsBottles || (tierInfo?.prepaid_min_charge_cents ?? 0) > 0;
+    console.log('[send-reservation-notification] Tier resolved', {
+      pricing_mode: tierInfo?.pricing_mode || 'amount',
+      bottles: tierIsBottles,
+      label: minSpendLabel,
+    });
+
     // Build common info rows
     const buildInfoRows = () => {
       let rows = detailRow('Ημερομηνία', formattedDate);
@@ -226,6 +242,9 @@ const handler = async (req: Request): Promise<Response> => {
       rows += detailRow('Άτομα', `${reservation.party_size}`);
       if (reservation.seating_preference) {
         rows += detailRow('Θέση', reservation.seating_preference);
+      }
+      if (hasMinSpendInfo) {
+        rows += detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true);
       }
       return rows;
     };
@@ -317,6 +336,7 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Ημερομηνία', formattedDate) +
           detailRow('Ώρα', formattedTime) +
           detailRow('Άτομα', `${reservation.party_size}`) +
+          (hasMinSpendInfo ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true) : '') +
           (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
           detailRow('Κωδικός', reservation.confirmation_code, true)
         )}

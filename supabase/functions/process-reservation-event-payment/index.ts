@@ -18,6 +18,7 @@ import {
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
+import { fetchReservationTier, isBottleTier, formatTierMinSpendLabel } from "../_shared/bottle-pricing.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[PROCESS-RESERVATION-EVENT-PAYMENT] ${step}`, details ? JSON.stringify(details) : '');
@@ -331,6 +332,20 @@ serve(async (req) => {
         }
       }
 
+      // Fetch matched tier to determine pricing mode (amount vs bottles)
+      const tierInfo = await fetchReservationTier(
+        supabaseClient,
+        seatingTypeId,
+        reservation.party_size || 1,
+      );
+      const minSpendLabel = formatTierMinSpendLabel(tierInfo, "el");
+      const tierIsBottles = isBottleTier(tierInfo);
+      logStep("Tier pricing mode resolved", {
+        pricing_mode: tierInfo?.pricing_mode || "amount",
+        bottles: tierIsBottles,
+        label: minSpendLabel,
+      });
+
       // Get user profile
       const { data: profile } = await supabaseClient
         .from("profiles")
@@ -466,7 +481,9 @@ serve(async (req) => {
               detailRow('Άτομα', `${reservation.party_size}`) +
               (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
               (dressCode ? detailRow('Dress Code', dressCode) : '') +
-              detailRow('Πληρωμένο', `€${paidAmount}`, true)
+              (tierIsBottles
+                ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true)
+                : detailRow('Πληρωμένο', `€${paidAmount}`, true))
             )}
 
             ${allGuestQrSections}
@@ -554,7 +571,9 @@ serve(async (req) => {
                 (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
                 (reservation.phone_number ? detailRow('Τηλέφωνο', reservation.phone_number) : '') +
                 (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
-                detailRow('Πληρωμένο', `€${paidAmount}`, true) +
+                (tierIsBottles
+                  ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true)
+                  : detailRow('Πληρωμένο', `€${paidAmount}`, true)) +
                 detailRow('Κωδικός', reservation.confirmation_code, true)
               )}
 
