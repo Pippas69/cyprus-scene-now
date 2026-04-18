@@ -571,7 +571,9 @@ serve(async (req) => {
                 (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
                 (reservation.phone_number ? detailRow('Τηλέφωνο', reservation.phone_number) : '') +
                 (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
-                detailRow('Πληρωμένο', `€${paidAmount}`, true) +
+                (tierIsBottles
+                  ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true)
+                  : detailRow('Πληρωμένο', `€${paidAmount}`, true)) +
                 detailRow('Κωδικός', reservation.confirmation_code, true)
               )}
 
