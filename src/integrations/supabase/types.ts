@@ -5575,30 +5575,45 @@ export type Database = {
       }
       seating_type_tiers: {
         Row: {
+          bottle_count: number | null
+          bottle_type:
+            | Database["public"]["Enums"]["seating_tier_bottle_type"]
+            | null
           created_at: string | null
           currency: string | null
           id: string
           max_people: number
           min_people: number
           prepaid_min_charge_cents: number
+          pricing_mode: Database["public"]["Enums"]["seating_tier_pricing_mode"]
           seating_type_id: string
         }
         Insert: {
+          bottle_count?: number | null
+          bottle_type?:
+            | Database["public"]["Enums"]["seating_tier_bottle_type"]
+            | null
           created_at?: string | null
           currency?: string | null
           id?: string
           max_people: number
           min_people: number
           prepaid_min_charge_cents: number
+          pricing_mode?: Database["public"]["Enums"]["seating_tier_pricing_mode"]
           seating_type_id: string
         }
         Update: {
+          bottle_count?: number | null
+          bottle_type?:
+            | Database["public"]["Enums"]["seating_tier_bottle_type"]
+            | null
           created_at?: string | null
           currency?: string | null
           id?: string
           max_people?: number
           min_people?: number
           prepaid_min_charge_cents?: number
+          pricing_mode?: Database["public"]["Enums"]["seating_tier_pricing_mode"]
           seating_type_id?: string
         }
         Relationships: [
@@ -8973,6 +8988,8 @@ export type Database = {
       promoter_commission_type: "fixed" | "percent"
       revenue_model: "commission" | "fixed_fee"
       rsvp_status: "interested" | "going"
+      seating_tier_bottle_type: "bottle" | "premium_bottle"
+      seating_tier_pricing_mode: "amount" | "bottles"
       subscription_status:
         | "active"
         | "past_due"
@@ -9152,6 +9169,8 @@ export const Constants = {
       promoter_commission_type: ["fixed", "percent"],
       revenue_model: ["commission", "fixed_fee"],
       rsvp_status: ["interested", "going"],
+      seating_tier_bottle_type: ["bottle", "premium_bottle"],
+      seating_tier_pricing_mode: ["amount", "bottles"],
       subscription_status: [
         "active",
         "past_due",
