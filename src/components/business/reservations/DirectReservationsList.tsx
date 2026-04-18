@@ -2031,8 +2031,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                 <TableRow>
                   <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
                   <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.seating}</TableHead>
+                  <TableHead className="text-xs w-[14%] pr-6">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[12%] pl-2">{t.seating}</TableHead>
                   <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
                   <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
                   {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
@@ -2138,7 +2138,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 3. Ελάχιστη Χρέωση - single combined editable */}
-                      <TableCell className="align-top">
+                      <TableCell className="align-top pr-6">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
                             // Invitation source: show "Πρόσκληση" badge only
@@ -2225,7 +2225,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
-                      <TableCell className="align-top">
+                      <TableCell className="align-top pl-2">
                         <div className="flex flex-col gap-0.5">
                           <EventSeatingTypeEditCell
                             reservationId={reservation.id}
