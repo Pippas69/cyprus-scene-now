@@ -920,8 +920,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             </div>
             <p className="text-[9px] text-muted-foreground mt-1">
               {language === 'el'
-                ? 'Η ελάχιστη κατανάλωση πληρώνεται απευθείας στο κατάστημα.'
-                : 'The minimum consumption is paid directly at the venue.'}
+                ? 'Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.'
+                : 'The prepayment is automatically deducted from your final bill.'}
             </p>
           </div>
         </>

@@ -1014,8 +1014,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   </p>
                   <p className="text-muted-foreground text-xs">
                     {language === 'el'
-                      ? `Δεν απαιτείται online πληρωμή. Η ελάχιστη κατανάλωση (${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')}) πληρώνεται στο κατάστημα.`
-                      : `No online payment required. Minimum consumption (${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')}) is paid at the venue.`
+                      ? `Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.`
+                      : `The prepayment is automatically deducted from your final bill.`
                     }
                   </p>
                 </div>
