@@ -693,18 +693,22 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         />
       </div>
 
-      {/* Party Size + Ticket Price - Same Row */}
+      {/* Party Size + Ticket Price / Min Consumption - Same Row */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="flex items-center gap-2 text-sm">
             <Users className="h-3.5 w-3.5" />
             {t.partySize}
           </Label>
-          {ticketTier && ticketPricePerPerson > 0 && (
+          {isCurrentBottleTier ? (
+            <Label className="text-sm text-foreground font-medium">
+              {t.minimumConsumption}
+            </Label>
+          ) : ticketTier && ticketPricePerPerson > 0 ? (
             <Label className="text-sm text-foreground font-medium">
               {language === 'el' ? 'Τιμή εισιτηρίων' : 'Ticket price'}
             </Label>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center justify-between rounded-lg border border-border bg-card p-2">
           <div className="flex items-center gap-2">
@@ -719,21 +723,34 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             >+</Button>
             <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
-          {ticketTier && ticketPricePerPerson > 0 && (
+          {isCurrentBottleTier && currentBottleLabel ? (
+            <span className="text-base font-semibold text-foreground">{currentBottleLabel}</span>
+          ) : ticketTier && ticketPricePerPerson > 0 ? (
             <span className="text-base font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
-          )}
-          {ticketTier && ticketPricePerPerson === 0 && (
+          ) : ticketTier && ticketPricePerPerson === 0 ? (
             <span className="text-sm font-medium text-foreground">{t.free}</span>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Min Charge Info */}
-      {minChargeCents != null && minChargeCents > 0 && (
+      {/* Min Charge Info — amount mode only (bottle min consumption is shown in the row above) */}
+      {!isCurrentBottleTier && minChargeCents != null && minChargeCents > 0 && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card/60">
           <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{t.minimumCharge}: {formatPrice(minChargeCents)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottle info hint */}
+      {isCurrentBottleTier && currentBottleLabel && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card/60">
+          <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {t.minimumConsumption}: {currentBottleLabel} ({t.atVenue})
+            </span>
           </div>
         </div>
       )}
