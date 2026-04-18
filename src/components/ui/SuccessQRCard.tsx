@@ -289,24 +289,40 @@ export const SuccessQRCard = ({
         const resHolderName = guestName || (language === "el" ? "Εσύ" : "You");
         const resDate = reservationDate ? formatDate(reservationDate) : "-";
         const resTime = reservationTime || (reservationDate ? formatTime(reservationDate) : "-");
+        const hasBottle = !!bottleType && (bottleCount ?? 0) >= 1;
         return (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{resHolderName}</p>
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{resHolderName}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{resDate}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{resTime}</p>
+              </div>
             </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{resDate}</p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{resTime}</p>
-            </div>
-          </div>
+            {hasBottle && (
+              <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-2.5 mb-3 text-center">
+                <p className="text-[9px] text-[#92400e] uppercase tracking-wide font-medium mb-0.5">
+                  {language === "el" ? "Ελάχιστη Κατανάλωση" : "Minimum Consumption"}
+                </p>
+                <p className="text-sm font-bold text-[#92400e]">
+                  {formatBottleLabel(bottleType as BottleType, bottleCount as number, language)}
+                </p>
+                <p className="text-[9px] text-[#a8a29e] mt-0.5">
+                  {language === "el" ? "(πληρωτέα στο κατάστημα)" : "(payable at venue)"}
+                </p>
+              </div>
+            )}
+          </>
         );
       }
 
