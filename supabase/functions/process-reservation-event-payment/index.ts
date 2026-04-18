@@ -481,7 +481,9 @@ serve(async (req) => {
               detailRow('Άτομα', `${reservation.party_size}`) +
               (seatingTypeName ? detailRow('Θέση', seatingTypeName) : '') +
               (dressCode ? detailRow('Dress Code', dressCode) : '') +
-              detailRow('Πληρωμένο', `€${paidAmount}`, true)
+              (tierIsBottles
+                ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true)
+                : detailRow('Πληρωμένο', `€${paidAmount}`, true))
             )}
 
             ${allGuestQrSections}
