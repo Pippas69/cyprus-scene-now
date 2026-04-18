@@ -822,7 +822,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                   <span>
                     {t.minCharge}: {formatBottleLabel(bottleInfo.bottle_type, bottleInfo.bottle_count, language)}
-                    {' '}({language === 'el' ? 'στο κατάστημα' : 'at venue'})
+                    {' '}({language === 'el' ? 'στο κατάστημα' : 'at venue'}
+                    {isHybrid && ticketTotal > 0 && (
+                      <>
+                        {language === 'el' ? ' — ' : ' — '}
+                        €{(ticketTotal / 100).toFixed(2)}{' '}
+                        {language === 'el' ? 'προπληρωμένο' : 'prepaid'}
+                      </>
+                    )}
+                    )
                   </span>
                 </div>
               ) : (

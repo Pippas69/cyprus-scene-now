@@ -655,8 +655,8 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
                 <TableHead>{t.event}</TableHead>
                 <TableHead>{t.name}</TableHead>
                 <TableHead>{t.contact}</TableHead>
-                <TableHead>{t.details}</TableHead>
-                <TableHead>{t.prepaidCredit}</TableHead>
+                <TableHead className="pr-8">{t.details}</TableHead>
+                <TableHead className="pl-6">{t.prepaidCredit}</TableHead>
                 <TableHead>{t.confirmationCode}</TableHead>
                 <TableHead>{t.status}</TableHead>
                 <TableHead>{t.staffMemo}</TableHead>
