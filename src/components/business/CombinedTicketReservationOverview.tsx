@@ -180,8 +180,9 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         };
       });
 
-      const reservationRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
-      const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
+      const sortedSeatingStats = sortSeatingTypes(seatingStats, (st: any) => st.seating_type);
+      const reservationRevenue = sortedSeatingStats.reduce((sum, st) => sum + st.revenue, 0);
+      const totalReservations = sortedSeatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
 
       // --- Combined ---
       const totalRevenue = ticketRevenue + reservationRevenue;
