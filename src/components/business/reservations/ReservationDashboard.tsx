@@ -110,9 +110,25 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       return;
     }
     toast.success(language === 'el' ? 'Αρχειοθετήθηκε' : 'Archived');
-    fetchEvents();
-    fetchDiningEvents();
-  }, [language]);
+    // Clear selection if the archived event was currently selected
+    if (selectedEventId === eventId) {
+      setSelectedEventId(null);
+      selectedEventIdRef.current = null;
+    }
+    if (diningSelectedEventId === eventId) {
+      setDiningSelectedEventId(null);
+    }
+    // Refresh both active and archived lists so the UI updates instantly
+    await Promise.all([
+      fetchEvents(),
+      fetchDiningEvents(),
+      fetchArchivedEvents(getArchivedFilterTypes()),
+    ]);
+    // Invalidate reservation/ticket caches so any open list refreshes
+    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['direct-reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['ticket-orders'] });
+  }, [language, selectedEventId, diningSelectedEventId, fetchArchivedEvents, getArchivedFilterTypes, queryClient]);
 
   const restoreEvent = useCallback(async (eventId: string) => {
     const { error } = await supabase
@@ -124,8 +140,16 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       return;
     }
     toast.success(language === 'el' ? 'Επαναφέρθηκε' : 'Restored');
-    fetchArchivedEvents(getArchivedFilterTypes());
-  }, [language, fetchArchivedEvents, getArchivedFilterTypes]);
+    // Refresh both lists so the event reappears in active and disappears from archived
+    await Promise.all([
+      fetchEvents(),
+      fetchDiningEvents(),
+      fetchArchivedEvents(getArchivedFilterTypes()),
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['direct-reservations'] });
+    queryClient.invalidateQueries({ queryKey: ['ticket-orders'] });
+  }, [language, fetchArchivedEvents, getArchivedFilterTypes, queryClient]);
   const text = useMemo(
     () => ({
       el: {
