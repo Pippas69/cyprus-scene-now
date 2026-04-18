@@ -806,9 +806,9 @@ const EventCreationForm = ({
               max_people: tier.maxPeople,
               // When bottle mode: no online prepayment (paid at venue)
               prepaid_min_charge_cents: isBottles ? 0 : tier.prepaidChargeCents,
-              pricing_mode: isBottles ? 'bottles' : 'amount',
-              bottle_type: isBottles ? tier.bottleType : null,
-              bottle_count: isBottles ? tier.bottleCount : null,
+              pricing_mode: (isBottles ? 'bottles' : 'amount') as 'bottles' | 'amount',
+              bottle_type: isBottles ? (tier.bottleType as 'bottle' | 'premium_bottle') : null,
+              bottle_count: isBottles ? (tier.bottleCount as number) : null,
             };
           });
           const {
