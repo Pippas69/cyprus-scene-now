@@ -232,7 +232,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   language,
   onSuccess,
   businessId,
+  eventType,
 }) => {
+  const isHybridEvent = eventType === 'ticket_and_reservation';
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
