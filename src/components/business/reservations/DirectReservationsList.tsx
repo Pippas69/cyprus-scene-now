@@ -2210,7 +2210,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               );
                             }
                           })()}
-                          {reservation.source !== 'walk_in' && reservation.source !== 'invitation' || reservation.seating_type_id ? (
+                          {!isBottleRow && (reservation.source !== 'walk_in' && reservation.source !== 'invitation' || reservation.seating_type_id) ? (
                             reservation.source === 'invitation' ? null :
                             isReservationOnly ? (
                               <EditableCell
