@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { isClubOrEventBusiness } from "@/lib/isClubOrEventBusiness";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 import { useLanguage } from "@/hooks/useLanguage";
 
