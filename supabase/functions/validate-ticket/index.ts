@@ -169,6 +169,27 @@ Deno.serve(async (req) => {
       let linkedReservation = null;
       const linkedReservationId = ticket.ticket_orders?.linked_reservation_id;
 
+      // Helper: lookup matched tier (with bottle fields) for a reservation
+      const lookupTier = async (seatingTypeId: string, partySize: number) => {
+        const { data: tiers } = await supabaseClient
+          .from("seating_type_tiers")
+          .select("min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count")
+          .eq("seating_type_id", seatingTypeId)
+          .order("min_people", { ascending: true });
+        if (!tiers || tiers.length === 0) return null;
+        const matched = tiers.find((t: any) => partySize >= t.min_people && partySize <= t.max_people);
+        return matched ?? [...tiers].reverse().find((t: any) => partySize >= t.min_people) ?? tiers[0];
+      };
+
+      const buildLinkedReservation = (resData: any, tier: any | null) => ({
+        partySize: resData.party_size,
+        minimumChargeCents: (tier?.prepaid_min_charge_cents ?? resData.prepaid_min_charge_cents ?? resData.ticket_credit_cents ?? 0),
+        ticketCreditCents: resData.ticket_credit_cents,
+        pricingMode: tier?.pricing_mode ?? 'amount',
+        bottleType: tier?.bottle_type ?? null,
+        bottleCount: tier?.bottle_count ?? null,
+      });
+
       if (linkedReservationId) {
         const { data: resData, error: resError } = await supabaseClient
           .from("reservations")
@@ -180,26 +201,9 @@ Deno.serve(async (req) => {
           logStep("Linked reservation lookup error", { linkedReservationId, error: resError.message });
         }
 
-        // Only show reservation info for real table reservations (with seating_type_id)
         if (resData && resData.seating_type_id) {
-          // Look up correct min charge from seating tiers based on party size
-          let tierMinChargeCents: number | null = null;
-          const { data: tiers } = await supabaseClient
-            .from("seating_type_tiers")
-            .select("min_people, max_people, prepaid_min_charge_cents")
-            .eq("seating_type_id", resData.seating_type_id)
-            .order("min_people", { ascending: true });
-          if (tiers) {
-            const matchedTier = tiers.find((t: any) => resData.party_size >= t.min_people && resData.party_size <= t.max_people);
-            const fallbackTier = matchedTier ?? [...tiers].reverse().find((t: any) => resData.party_size >= t.min_people) ?? tiers[0];
-            if (fallbackTier) tierMinChargeCents = fallbackTier.prepaid_min_charge_cents;
-          }
-
-          linkedReservation = {
-            partySize: resData.party_size,
-            minimumChargeCents: tierMinChargeCents ?? resData.prepaid_min_charge_cents ?? resData.ticket_credit_cents ?? 0,
-            ticketCreditCents: resData.ticket_credit_cents,
-          };
+          const tier = await lookupTier(resData.seating_type_id, resData.party_size);
+          linkedReservation = buildLinkedReservation(resData, tier);
         }
       } else {
         // Fallback for older orders without linked_reservation_id
@@ -219,25 +223,9 @@ Deno.serve(async (req) => {
             logStep("Fallback linked reservation lookup error", { orderUserId, error: fallbackResError.message });
           }
 
-          // Only show reservation info for real table reservations (with seating_type_id)
           if (fallbackResData && fallbackResData.seating_type_id) {
-            let fallbackTierMinCharge: number | null = null;
-            const { data: fallbackTiers } = await supabaseClient
-              .from("seating_type_tiers")
-              .select("min_people, max_people, prepaid_min_charge_cents")
-              .eq("seating_type_id", fallbackResData.seating_type_id)
-              .order("min_people", { ascending: true });
-            if (fallbackTiers) {
-              const matchedTier = fallbackTiers.find((t: any) => fallbackResData.party_size >= t.min_people && fallbackResData.party_size <= t.max_people);
-              const fallbackTier = matchedTier ?? [...fallbackTiers].reverse().find((t: any) => fallbackResData.party_size >= t.min_people) ?? fallbackTiers[0];
-              if (fallbackTier) fallbackTierMinCharge = fallbackTier.prepaid_min_charge_cents;
-            }
-
-            linkedReservation = {
-              partySize: fallbackResData.party_size,
-              minimumChargeCents: fallbackTierMinCharge ?? fallbackResData.prepaid_min_charge_cents ?? fallbackResData.ticket_credit_cents ?? 0,
-              ticketCreditCents: fallbackResData.ticket_credit_cents,
-            };
+            const tier = await lookupTier(fallbackResData.seating_type_id, fallbackResData.party_size);
+            linkedReservation = buildLinkedReservation(fallbackResData, tier);
           }
         }
       }
