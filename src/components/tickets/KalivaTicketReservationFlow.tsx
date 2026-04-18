@@ -28,6 +28,7 @@ import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 import { isBottleTier as isBottleTierFn, formatBottleLabel } from "@/lib/bottlePricing";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface SeatingTypeOption {
   id: string;
@@ -410,8 +411,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         });
       }
 
-      setSeatingOptions(optionsWithTiers);
-      setSelectedSeating(prev => prev ? optionsWithTiers.find(option => option.id === prev.id) ?? null : prev);
+      const sortedOptions = sortSeatingTypes(optionsWithTiers, (o) => o.seating_type);
+      setSeatingOptions(sortedOptions);
+      setSelectedSeating(prev => prev ? sortedOptions.find(option => option.id === prev.id) ?? null : prev);
     } catch (error) {
       console.error('Error fetching seating options:', error);
     } finally {

@@ -28,6 +28,7 @@ import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface SeatingTypeOption {
   id: string;
@@ -397,8 +398,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         });
       }
 
-      setSeatingOptions(optionsWithTiers);
-      setSelectedSeating(prev => prev ? optionsWithTiers.find(option => option.id === prev.id) ?? null : prev);
+      const sortedOptions = sortSeatingTypes(optionsWithTiers, (o) => o.seating_type);
+      setSeatingOptions(sortedOptions);
+      setSelectedSeating(prev => prev ? sortedOptions.find(option => option.id === prev.id) ?? null : prev);
       // Don't pre-block the flow; backend handles preview fallback.
       setPaymentsReady(null);
     } catch (error) {

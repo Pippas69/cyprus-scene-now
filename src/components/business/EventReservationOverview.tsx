@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface EventReservationOverviewProps {
   eventId: string;
@@ -176,8 +177,9 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       });
       const enrichedWalkInTiers = Array.from(tierAggMap.values());
 
-      // Group by seating type
-      const seatingStats = seatingTypes.map((st) => {
+      // Group by seating type (sorted by canonical order: bar → table → sofa → vip)
+      const sortedSeatingTypes = sortSeatingTypes(seatingTypes, (st) => st.seating_type);
+      const seatingStats = sortedSeatingTypes.map((st) => {
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
         );
