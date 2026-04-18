@@ -1122,6 +1122,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <Button onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-2">
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" />{t.processing}</>
+            ) : isCurrentBottleTier && isFreeOrder ? (
+              <><Ticket className="h-4 w-4" />{t.confirmReservation}</>
             ) : isFreeOrder ? (
               <><Ticket className="h-4 w-4" />{t.getTickets}</>
             ) : (
