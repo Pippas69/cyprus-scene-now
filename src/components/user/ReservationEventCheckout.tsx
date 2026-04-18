@@ -28,6 +28,7 @@ import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { InlineAuthGate } from '@/components/tickets/InlineAuthGate';
 import { ProfileCompletionGate } from '@/components/tickets/ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface SeatingTypeOption {
   id: string;

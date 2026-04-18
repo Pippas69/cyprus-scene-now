@@ -28,6 +28,7 @@ import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
 import { isBottleTier as isBottleTierFn, formatBottleLabel } from "@/lib/bottlePricing";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface SeatingTypeOption {
   id: string;

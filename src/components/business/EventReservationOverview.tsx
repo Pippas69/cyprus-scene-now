@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 interface EventReservationOverviewProps {
   eventId: string;
