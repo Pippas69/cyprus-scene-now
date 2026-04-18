@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 
 
 interface DirectReservation {
@@ -943,6 +944,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // Fallback to closest lower tier, otherwise the first configured tier
     const fallbackTier = [...tiers].reverse().find((t) => partySize >= t.min_people) ?? tiers[0];
     return fallbackTier?.prepaid_min_charge_cents ?? null;
+  };
+
+  const getMatchedTierForPartySize = (seatingTypeId: string | null | undefined, partySize: number): SeatingTier | null => {
+    if (!seatingTypeId || !seatingTiers[seatingTypeId] || seatingTiers[seatingTypeId].length === 0) return null;
+    const tiers = seatingTiers[seatingTypeId];
+    const exactTier = tiers.find((t) => partySize >= t.min_people && partySize <= t.max_people);
+    if (exactTier) return exactTier;
+    return [...tiers].reverse().find((t) => partySize >= t.min_people) ?? tiers[0] ?? null;
   };
 
   const getMinAge = (reservation: DirectReservation): string => {
