@@ -23,6 +23,7 @@ import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { cn } from "@/lib/utils";
 import { TicketTierEditor, TicketTier, validateTicketTiers } from "@/components/tickets/TicketTierEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 // ============================================
 // HELPER COMPONENTS
@@ -521,6 +522,11 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
           }
         }
       }
+
+      // Apply canonical seating order: Bar → Table → Sofa → VIP
+      const sortedSelected = sortSeatingTypes(selectedSeatingTypes, (t) => t as string) as SeatingType[];
+      selectedSeatingTypes.length = 0;
+      selectedSeatingTypes.push(...sortedSelected);
 
       setFormData({
         title: event.title || '',
