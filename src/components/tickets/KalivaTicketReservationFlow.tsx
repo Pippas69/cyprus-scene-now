@@ -346,22 +346,25 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     });
   }, [partySize]);
 
-  // Update min charge when party size or seating changes
+  // Update min charge + matched tier when party size or seating changes
   useEffect(() => {
     if (!selectedSeating || selectedSeating.tiers.length === 0) {
       setMinChargeCents(null);
+      setMatchedTier(null);
       return;
     }
     const matched = selectedSeating.tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
-    if (matched) {
-      setMinChargeCents(matched.prepaid_min_charge_cents);
+    const effective = matched
+      ?? (partySize > selectedSeating.tiers[selectedSeating.tiers.length - 1].max_people
+            ? selectedSeating.tiers[selectedSeating.tiers.length - 1]
+            : null);
+    if (effective) {
+      setMatchedTier(effective);
+      // For bottle tiers, no online min-charge prepayment
+      setMinChargeCents(isBottleTierFn(effective) ? 0 : effective.prepaid_min_charge_cents);
     } else {
-      const last = selectedSeating.tiers[selectedSeating.tiers.length - 1];
-      if (partySize > last.max_people) {
-        setMinChargeCents(last.prepaid_min_charge_cents);
-      } else {
-        setMinChargeCents(null);
-      }
+      setMatchedTier(null);
+      setMinChargeCents(null);
     }
   }, [partySize, selectedSeating]);
 
