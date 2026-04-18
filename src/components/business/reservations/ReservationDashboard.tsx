@@ -73,9 +73,32 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     }
   }, [businessId]);
 
+  // Compute which event_types should appear in the archived view, based on
+  // currently selected/active event context. Returns null = no filter (show all).
+  const getArchivedFilterTypes = useCallback((): string[] | null => {
+    if (isTicketLinked) {
+      if (activeTypeTab === 'ticket') return ['ticket'];
+      if (activeTypeTab === 'reservation') return ['reservation'];
+      if (activeTypeTab === 'ticket_reservation') return ['ticket_reservation', 'ticket_and_reservation'];
+      return null;
+    }
+    // Dining/bar mode
+    if (diningSelectedEventId) {
+      const ev = events.find(e => e.id === diningSelectedEventId) ||
+                 archivedEvents.find(e => e.id === diningSelectedEventId);
+      if (ev?.event_type) {
+        if (ev.event_type === 'ticket_and_reservation' || ev.event_type === 'ticket_reservation') {
+          return ['ticket_reservation', 'ticket_and_reservation'];
+        }
+        return [ev.event_type];
+      }
+    }
+    return null;
+  }, [isTicketLinked, activeTypeTab, diningSelectedEventId, events, archivedEvents]);
+
   useEffect(() => {
-    if (showArchived) fetchArchivedEvents();
-  }, [showArchived, fetchArchivedEvents]);
+    if (showArchived) fetchArchivedEvents(getArchivedFilterTypes());
+  }, [showArchived, fetchArchivedEvents, getArchivedFilterTypes]);
 
   const archiveEvent = useCallback(async (eventId: string) => {
     const { error } = await supabase
