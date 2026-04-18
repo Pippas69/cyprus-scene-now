@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { queueOfflineScan } from "@/lib/offlineScanQueue";
 import { resilientCall } from "@/lib/apiRetry";
+import { isBottleTier, formatTierFullLabel } from "@/lib/bottlePricing";
 
 interface ScanResult {
   valid: boolean;
@@ -33,6 +34,9 @@ interface ScanResult {
     partySize: number;
     minimumChargeCents: number | null;
     ticketCreditCents: number | null;
+    pricingMode?: 'amount' | 'bottles' | null;
+    bottleType?: 'bottle' | 'premium_bottle' | null;
+    bottleCount?: number | null;
   };
 }
 
@@ -306,15 +310,29 @@ export const TicketScanner = ({ eventId }: TicketScannerProps) => {
                 </div>
               )}
 
-              {scanResult.linkedReservation && (
-                <div className="mt-3 p-3 border border-border/50 rounded-lg space-y-1">
-                  <p className="text-sm font-semibold">{text.reservationActivated}</p>
-                  <p><strong>{text.people}:</strong> {scanResult.linkedReservation.partySize}</p>
-                  {linkedReservationAmountCents != null && linkedReservationAmountCents > 0 && (
-                    <p><strong>{text.minimumCharge}:</strong> <span>€{(linkedReservationAmountCents / 100).toFixed(2)}</span></p>
-                  )}
-                </div>
-              )}
+              {scanResult.linkedReservation && (() => {
+                const lr = scanResult.linkedReservation;
+                const tierForLabel = {
+                  pricing_mode: lr.pricingMode ?? null,
+                  bottle_type: lr.bottleType ?? null,
+                  bottle_count: lr.bottleCount ?? null,
+                  prepaid_min_charge_cents: lr.minimumChargeCents ?? 0,
+                };
+                const isBottle = isBottleTier(tierForLabel as any);
+                const showAmountRow = !isBottle && linkedReservationAmountCents != null && linkedReservationAmountCents > 0;
+                return (
+                  <div className="mt-3 p-3 border border-border/50 rounded-lg space-y-1">
+                    <p className="text-sm font-semibold">{text.reservationActivated}</p>
+                    <p><strong>{text.people}:</strong> {lr.partySize}</p>
+                    {isBottle && (
+                      <p><strong>{text.minimumCharge}:</strong> <span>{formatTierFullLabel(tierForLabel as any, language)}</span></p>
+                    )}
+                    {showAmountRow && (
+                      <p><strong>{text.minimumCharge}:</strong> <span>€{(linkedReservationAmountCents! / 100).toFixed(2)}</span></p>
+                    )}
+                  </div>
+                );
+              })()}
             </AlertDescription>
           </Alert>
         )}

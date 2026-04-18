@@ -16,6 +16,7 @@ import { queueOfflineScan } from '@/lib/offlineScanQueue';
 import { useOfflineScanSync } from '@/hooks/useOfflineScanSync';
 import { resilientCall } from '@/lib/apiRetry';
 import { parseEdgeFunctionStructuredError } from '@/utils/parseEdgeFunctionError';
+import { isBottleTier, formatTierFullLabel } from '@/lib/bottlePricing';
 
 interface UnifiedQRScannerProps {
   businessId: string;
@@ -68,6 +69,10 @@ interface ScanResult {
     reservationId?: string;
     checkedInCount?: number;
     ticketCreditCents?: number;
+    // Bottle pricing fields (for reservation tiers)
+    pricingMode?: 'amount' | 'bottles' | null;
+    bottleType?: 'bottle' | 'premium_bottle' | null;
+    bottleCount?: number | null;
     // Student
     verificationId?: string;
     redemptionId?: string;
@@ -81,6 +86,9 @@ interface ScanResult {
     minimumChargeCents?: number | null;
     ticketCreditCents: number;
     reservationName: string;
+    pricingMode?: 'amount' | 'bottles' | null;
+    bottleType?: 'bottle' | 'premium_bottle' | null;
+    bottleCount?: number | null;
   };
 }
 
@@ -709,25 +717,39 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                   <span className="font-medium">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
                                 </div>
                               ) : (() => {
-                                const minCharge = scanResult.linkedReservation.minimumChargeCents || 0;
-                                const ticketCredit = scanResult.linkedReservation.ticketCreditCents || 0;
+                                const lr = scanResult.linkedReservation!;
+                                const tierForLabel = {
+                                  pricing_mode: lr.pricingMode ?? null,
+                                  bottle_type: lr.bottleType ?? null,
+                                  bottle_count: lr.bottleCount ?? null,
+                                  prepaid_min_charge_cents: lr.minimumChargeCents ?? 0,
+                                };
+                                const isBottle = isBottleTier(tierForLabel as any);
+                                const minCharge = lr.minimumChargeCents || 0;
+                                const ticketCredit = lr.ticketCreditCents || 0;
                                 const balance = Math.max(0, minCharge - ticketCredit);
-                                if (minCharge === 0 && ticketCredit === 0) return null;
+                                if (!isBottle && minCharge === 0 && ticketCredit === 0) return null;
                                 return (
                                   <>
-                                    {minCharge > 0 && (
+                                    {isBottle && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-muted-foreground">{t.minimumCharge}:</span>
+                                        <span className="font-semibold">{formatTierFullLabel(tierForLabel as any, language)}</span>
+                                      </div>
+                                    )}
+                                    {!isBottle && minCharge > 0 && (
                                       <div className="flex justify-between text-xs">
                                         <span className="text-muted-foreground">{t.minimumCharge}:</span>
                                         <span className="font-semibold">€{(minCharge / 100).toFixed(2)}</span>
                                       </div>
                                     )}
-                                    {ticketCredit > 0 && (
+                                    {!isBottle && ticketCredit > 0 && (
                                       <div className="flex justify-between text-xs">
                                         <span className="text-muted-foreground">💳 {t.prepaidCredit}:</span>
                                         <span className="font-medium">-€{(ticketCredit / 100).toFixed(2)}</span>
                                       </div>
                                     )}
-                                    {balance > 0 && (
+                                    {!isBottle && balance > 0 && (
                                       <div className="flex justify-between text-xs pt-1 border-t border-border/30">
                                         <span className="font-semibold">{t.balanceAtVenue}:</span>
                                         <span className="font-bold">€{(balance / 100).toFixed(2)}</span>
@@ -812,32 +834,55 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{scanResult.details.arrivalTime}</span>
                             </div>
                           )}
-                          {/* Financial data for event reservations (hybrid) */}
-                          {!scanResult.details.isDirectReservation && !scanResult.isInvitation && scanResult.details.prepaidMinChargeCents && scanResult.details.prepaidMinChargeCents > 0 && (
-                            <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
-                                <span className="font-semibold">{formatPrice(scanResult.details.prepaidMinChargeCents)}</span>
-                              </div>
-                              {scanResult.details.ticketCreditCents && scanResult.details.ticketCreditCents > 0 && (
-                                <>
+                          {/* Financial data for event reservations (hybrid + reservation-only) */}
+                          {!scanResult.details.isDirectReservation && !scanResult.isInvitation && (() => {
+                            const tierForLabel = {
+                              pricing_mode: scanResult.details!.pricingMode ?? null,
+                              bottle_type: scanResult.details!.bottleType ?? null,
+                              bottle_count: scanResult.details!.bottleCount ?? null,
+                              prepaid_min_charge_cents: scanResult.details!.prepaidMinChargeCents ?? 0,
+                            };
+                            const isBottle = isBottleTier(tierForLabel as any);
+                            const minCharge = scanResult.details!.prepaidMinChargeCents ?? 0;
+                            const ticketCredit = scanResult.details!.ticketCreditCents ?? 0;
+                            if (!isBottle && minCharge === 0 && ticketCredit === 0) return null;
+                            return (
+                              <div className="mt-2 p-2.5 rounded-lg bg-muted/50 border border-border space-y-1.5">
+                                {isBottle ? (
                                   <div className="flex justify-between text-xs">
-                                    <span className="text-green-600 dark:text-green-400">✅ {t.prepaidCredit}:</span>
-                                    <span className="font-medium text-green-600 dark:text-green-400">-{formatPrice(scanResult.details.ticketCreditCents)}</span>
+                                    <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
+                                    <span className="font-semibold">{formatTierFullLabel(tierForLabel as any, language)}</span>
                                   </div>
-                                  {(() => {
-                                    const balance = Math.max(0, scanResult.details.prepaidMinChargeCents! - scanResult.details.ticketCreditCents!);
-                                    return balance > 0 ? (
-                                      <div className="flex justify-between text-xs pt-1 border-t border-border">
-                                        <span className="font-semibold text-amber-600 dark:text-amber-400">🔥 {t.balanceAtVenue}:</span>
-                                        <span className="font-bold text-amber-600 dark:text-amber-400">{formatPrice(balance)}</span>
+                                ) : (
+                                  <>
+                                    {minCharge > 0 && (
+                                      <div className="flex justify-between text-xs">
+                                        <span className="text-muted-foreground font-medium">{t.minimumCharge}:</span>
+                                        <span className="font-semibold">{formatPrice(minCharge)}</span>
                                       </div>
-                                    ) : null;
-                                  })()}
-                                </>
-                              )}
-                            </div>
-                          )}
+                                    )}
+                                    {ticketCredit > 0 && (
+                                      <>
+                                        <div className="flex justify-between text-xs">
+                                          <span className="text-green-600 dark:text-green-400">✅ {t.prepaidCredit}:</span>
+                                          <span className="font-medium text-green-600 dark:text-green-400">-{formatPrice(ticketCredit)}</span>
+                                        </div>
+                                        {(() => {
+                                          const balance = Math.max(0, minCharge - ticketCredit);
+                                          return balance > 0 ? (
+                                            <div className="flex justify-between text-xs pt-1 border-t border-border">
+                                              <span className="font-semibold text-amber-600 dark:text-amber-400">🔥 {t.balanceAtVenue}:</span>
+                                              <span className="font-bold text-amber-600 dark:text-amber-400">{formatPrice(balance)}</span>
+                                            </div>
+                                          ) : null;
+                                        })()}
+                                      </>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })()}
                           {/* Invitation badge for reservation scans */}
                           {scanResult.isInvitation && (
                             <div className="flex justify-between">
