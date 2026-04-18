@@ -193,7 +193,7 @@ export const KalivaStaffControls = ({ businessId, language, selectedEventId: ext
         }
       });
 
-      const seatingTypeOrder = ['table', 'vip', 'bar', 'sofa'];
+      const seatingTypeOrder = ['bar', 'table', 'sofa', 'vip'];
 
       const enrichedEvents: EventWithControls[] = eventsData.map((event) => {
         const eventSeatingTypes = seatingTypes

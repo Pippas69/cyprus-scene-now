@@ -397,8 +397,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
         });
       }
 
-      setSeatingOptions(optionsWithTiers);
-      setSelectedSeating(prev => prev ? optionsWithTiers.find(option => option.id === prev.id) ?? null : prev);
+      const sortedOptions = sortSeatingTypes(optionsWithTiers, (o) => o.seating_type);
+      setSeatingOptions(sortedOptions);
+      setSelectedSeating(prev => prev ? sortedOptions.find(option => option.id === prev.id) ?? null : prev);
       // Don't pre-block the flow; backend handles preview fallback.
       setPaymentsReady(null);
     } catch (error) {

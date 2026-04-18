@@ -1305,7 +1305,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                         <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
                         <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
                         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map((type) => (
+                          {(['bar', 'table', 'sofa', 'vip'] as SeatingType[]).map((type) => (
                             <Button
                               key={type}
                               type="button"

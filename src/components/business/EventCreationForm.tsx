@@ -1057,7 +1057,7 @@ const EventCreationForm = ({
                       <Label className="text-xs sm:text-sm">{t.seatingTypes}</Label>
                       <p className="text-[10px] sm:text-sm text-muted-foreground">{t.selectSeatingTypes}</p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {(['bar', 'table', 'vip', 'sofa'] as SeatingType[]).map((type) => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
+                        {(['bar', 'table', 'sofa', 'vip'] as SeatingType[]).map((type) => <Button key={type} type="button" variant={formData.selectedSeatingTypes.includes(type) ? "default" : "outline"} size="sm" onClick={() => toggleSeatingType(type)} className="text-[10px] sm:text-sm h-7 sm:h-9 px-2 sm:px-3">
                             {formData.selectedSeatingTypes.includes(type) && <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />}
                             {t[type]}
                           </Button>)}
