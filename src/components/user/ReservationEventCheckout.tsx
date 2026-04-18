@@ -63,6 +63,7 @@ interface ReservationEventCheckoutProps {
   language: 'el' | 'en';
   onSuccess?: () => void;
   businessId?: string;
+  eventType?: 'reservation' | 'ticket_and_reservation' | string;
 }
 
 const translations = {
