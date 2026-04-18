@@ -336,6 +336,7 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Ημερομηνία', formattedDate) +
           detailRow('Ώρα', formattedTime) +
           detailRow('Άτομα', `${reservation.party_size}`) +
+          (hasMinSpendInfo ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true) : '') +
           (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
           detailRow('Κωδικός', reservation.confirmation_code, true)
         )}
