@@ -332,6 +332,20 @@ serve(async (req) => {
         }
       }
 
+      // Fetch matched tier to determine pricing mode (amount vs bottles)
+      const tierInfo = await fetchReservationTier(
+        supabaseClient,
+        seatingTypeId,
+        reservation.party_size || 1,
+      );
+      const minSpendLabel = formatTierMinSpendLabel(tierInfo, "el");
+      const tierIsBottles = isBottleTier(tierInfo);
+      logStep("Tier pricing mode resolved", {
+        pricing_mode: tierInfo?.pricing_mode || "amount",
+        bottles: tierIsBottles,
+        label: minSpendLabel,
+      });
+
       // Get user profile
       const { data: profile } = await supabaseClient
         .from("profiles")
