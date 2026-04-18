@@ -57,13 +57,17 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  const fetchArchivedEvents = useCallback(async () => {
-    const { data } = await supabase
+  const fetchArchivedEvents = useCallback(async (eventTypes?: string[] | null) => {
+    let query = supabase
       .from('events')
       .select('id, title, start_at, end_at, event_type, pay_at_door')
       .eq('business_id', businessId)
       .not('archived_at', 'is', null)
       .order('start_at', { ascending: false });
+    if (eventTypes && eventTypes.length > 0) {
+      query = query.in('event_type', eventTypes);
+    }
+    const { data } = await query;
     if (data) {
       setArchivedEvents(data.map(e => ({ ...e, reservationCount: 0 })) as EventOption[]);
     }
