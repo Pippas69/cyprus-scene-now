@@ -137,6 +137,11 @@ const translations = {
     andThe: "και την",
     privacyLink: "Πολιτική Απορρήτου",
     termsRequired: "Πρέπει να αποδεχτείτε τους όρους χρήσης",
+    minimumConsumption: "Ελάχιστη κατανάλωση",
+    atVenue: "στο κατάστημα",
+    confirmReservation: "Επιβεβαίωση Κράτησης",
+    ticketCostOnline: "Κόστος εισιτηρίων (online)",
+    bottleAtVenue: "Στο venue",
   },
   en: {
     title: "Ticket & Reservation",
