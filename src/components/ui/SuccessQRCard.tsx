@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Calendar, Clock, QrCode as QrCodeIcon, Ticket, Tag, Users, User, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import { formatBottleLabel, type BottleType } from "@/lib/bottlePricing";
 
 export type SuccessType = "ticket" | "reservation" | "offer" | "event_reservation";
 
@@ -30,6 +31,9 @@ interface SuccessQRCardProps {
   // For event reservations (hybrid)
   prepaidAmountCents?: number;
   minChargeCents?: number;
+  // Bottle-based minimum (alternative to minChargeCents)
+  bottleType?: BottleType | null;
+  bottleCount?: number | null;
   // Guest info (for individual tickets in group bookings)
   guestName?: string;
   guestAge?: number;
@@ -140,6 +144,8 @@ export const SuccessQRCard = ({
   expiryDate,
   prepaidAmountCents,
   minChargeCents,
+  bottleType,
+  bottleCount,
   guestName,
   guestAge,
   seatZone,
@@ -283,24 +289,40 @@ export const SuccessQRCard = ({
         const resHolderName = guestName || (language === "el" ? "Εσύ" : "You");
         const resDate = reservationDate ? formatDate(reservationDate) : "-";
         const resTime = reservationTime || (reservationDate ? formatTime(reservationDate) : "-");
+        const hasBottle = !!bottleType && (bottleCount ?? 0) >= 1;
         return (
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{resHolderName}</p>
+          <>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <User className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.name}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{resHolderName}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
+                <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{resDate}</p>
+              </div>
+              <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
+                <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
+                <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
+                <p className="text-xs font-semibold text-[#102b4a] truncate">{resTime}</p>
+              </div>
             </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Calendar className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.date}</p>
-              <p className="text-[11px] font-semibold text-[#102b4a] leading-tight">{resDate}</p>
-            </div>
-            <div className="bg-[#f0f9ff] rounded-lg p-2 text-center">
-              <Clock className="h-3 w-3 text-[#3ec3b7] mx-auto mb-0.5" />
-              <p className="text-[8px] text-[#64748b] uppercase tracking-wide">{text.time}</p>
-              <p className="text-xs font-semibold text-[#102b4a] truncate">{resTime}</p>
-            </div>
-          </div>
+            {hasBottle && (
+              <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-2.5 mb-3 text-center">
+                <p className="text-[9px] text-[#92400e] uppercase tracking-wide font-medium mb-0.5">
+                  {language === "el" ? "Ελάχιστη Κατανάλωση" : "Minimum Consumption"}
+                </p>
+                <p className="text-sm font-bold text-[#92400e]">
+                  {formatBottleLabel(bottleType as BottleType, bottleCount as number, language)}
+                </p>
+                <p className="text-[9px] text-[#a8a29e] mt-0.5">
+                  {language === "el" ? "(πληρωτέα στο κατάστημα)" : "(payable at venue)"}
+                </p>
+              </div>
+            )}
+          </>
         );
       }
 
@@ -354,8 +376,22 @@ export const SuccessQRCard = ({
                 </p>
               </div>
             </div>
-            {/* Financial breakdown for hybrid events */}
-            {prepaidAmountCents && prepaidAmountCents > 0 && minChargeCents && minChargeCents > 0 ? (
+            {/* Bottle-based minimum (paid at venue) */}
+            {bottleType && (bottleCount ?? 0) >= 1 && (
+              <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-2.5 mb-3 text-center">
+                <p className="text-[9px] text-[#92400e] uppercase tracking-wide font-medium mb-0.5">
+                  {language === "el" ? "Ελάχιστη Κατανάλωση" : "Minimum Consumption"}
+                </p>
+                <p className="text-sm font-bold text-[#92400e]">
+                  {formatBottleLabel(bottleType as BottleType, bottleCount as number, language)}
+                </p>
+                <p className="text-[9px] text-[#a8a29e] mt-0.5">
+                  {language === "el" ? "(πληρωτέα στο κατάστημα)" : "(payable at venue)"}
+                </p>
+              </div>
+            )}
+            {/* Financial breakdown for hybrid events (amount mode only) */}
+            {!bottleType && prepaidAmountCents && prepaidAmountCents > 0 && minChargeCents && minChargeCents > 0 ? (
               <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-3 mb-3 space-y-2">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-xs font-semibold text-[#92400e]">
@@ -387,7 +423,7 @@ export const SuccessQRCard = ({
                     : "The prepayment is automatically deducted from your final bill."}
                 </p>
               </div>
-            ) : prepaidAmountCents && prepaidAmountCents > 0 ? (
+            ) : !bottleType && prepaidAmountCents && prepaidAmountCents > 0 ? (
               <div className="bg-[#ecfdf5] border border-[#a7f3d0] rounded-lg p-2.5 mb-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-[#065f46] uppercase tracking-wide">

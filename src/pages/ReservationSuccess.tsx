@@ -40,6 +40,8 @@ interface ReservationData {
   seating_type_id?: string | null;
   ticket_total_cents?: number;
   seating_min_charge_cents?: number;
+  bottle_type?: 'bottle' | 'premium_bottle' | null;
+  bottle_count?: number | null;
 }
 
 interface GuestTicketData {
@@ -161,12 +163,14 @@ export const ReservationSuccess = () => {
           ticketTotalCents = linkedOrders.reduce((sum, o) => sum + ((o as any).total_cents || 0), 0);
         }
 
-        // Fetch seating tier min charge for accurate display
+        // Fetch seating tier min charge / bottle info for accurate display
         let seatingMinChargeCents = 0;
+        let bottleType: 'bottle' | 'premium_bottle' | null = null;
+        let bottleCount: number | null = null;
         if ((reservation as any).seating_type_id) {
           const { data: tiers } = await supabase
             .from("seating_type_tiers")
-            .select("min_people, max_people, prepaid_min_charge_cents")
+            .select("min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count")
             .eq("seating_type_id", (reservation as any).seating_type_id)
             .order("min_people", { ascending: true });
           if (tiers) {
@@ -174,7 +178,13 @@ export const ReservationSuccess = () => {
               (t: any) => reservation.party_size >= t.min_people && reservation.party_size <= t.max_people
             );
             const fallback = matched ?? [...tiers].reverse().find((t: any) => reservation.party_size >= t.min_people) ?? tiers[0];
-            if (fallback) seatingMinChargeCents = fallback.prepaid_min_charge_cents;
+            if (fallback) {
+              seatingMinChargeCents = fallback.prepaid_min_charge_cents;
+              if ((fallback as any).pricing_mode === 'bottles' && (fallback as any).bottle_type && (fallback as any).bottle_count) {
+                bottleType = (fallback as any).bottle_type;
+                bottleCount = (fallback as any).bottle_count;
+              }
+            }
           }
         }
 
@@ -193,6 +203,8 @@ export const ReservationSuccess = () => {
           seating_type_id: (reservation as any).seating_type_id,
           ticket_total_cents: ticketTotalCents,
           seating_min_charge_cents: seatingMinChargeCents || reservation.prepaid_min_charge_cents || 0,
+          bottle_type: bottleType,
+          bottle_count: bottleCount,
         };
 
         setReservationData(baseReservationData);
@@ -321,6 +333,8 @@ export const ReservationSuccess = () => {
             partySize={reservationData.party_size}
             prepaidAmountCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.ticket_total_cents : reservationData.prepaid_min_charge_cents}
             minChargeCents={reservationData.ticket_total_cents && reservationData.ticket_total_cents > 0 ? reservationData.seating_min_charge_cents : undefined}
+            bottleType={reservationData.bottle_type}
+            bottleCount={reservationData.bottle_count}
             showSuccessMessage={!hasGuestTickets || currentGuestIndex === 0}
             onViewDashboard={() => navigate("/dashboard-user?tab=reservations")}
             viewDashboardLabel={text.viewReservations}

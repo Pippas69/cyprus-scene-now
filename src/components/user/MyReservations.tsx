@@ -382,29 +382,38 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   const fetchSeatingMinCharges = async (reservations: ReservationData[]) => {
-    // Get min charge from seating_type_tiers for event reservations with a seating_type_id
-    const eventResWithSeating = reservations.filter((r) => !!r.events && r.seating_type_id);
-    if (eventResWithSeating.length === 0) return;
+    // Get min charge & bottle info from seating_type_tiers for ANY reservation with a seating_type_id
+    const resWithSeating = reservations.filter((r) => !!r.seating_type_id);
+    if (resWithSeating.length === 0) return;
 
-    const uniqueSeatingTypeIds = [...new Set(eventResWithSeating.map((r) => r.seating_type_id!))];
+    const uniqueSeatingTypeIds = [...new Set(resWithSeating.map((r) => r.seating_type_id!))];
     const { data: tiers } = await supabase
       .from('seating_type_tiers')
-      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count')
       .in('seating_type_id', uniqueSeatingTypeIds);
 
     if (!tiers) return;
 
     const chargeMap: Record<string, number> = {};
-    eventResWithSeating.forEach((r) => {
+    const bottleMap: Record<string, { bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number }> = {};
+    resWithSeating.forEach((r) => {
       const matchingTiers = tiers.filter((t) => t.seating_type_id === r.seating_type_id);
       const matchedTier = matchingTiers.find(
         (t) => r.party_size >= t.min_people && r.party_size <= t.max_people
       ) || matchingTiers[0];
-      if (matchedTier && matchedTier.prepaid_min_charge_cents != null) {
+      if (!matchedTier) return;
+      if (isBottleTier(matchedTier as any)) {
+        bottleMap[r.id] = {
+          bottle_type: (matchedTier as any).bottle_type,
+          bottle_count: (matchedTier as any).bottle_count,
+        };
+      }
+      if (matchedTier.prepaid_min_charge_cents != null) {
         chargeMap[r.id] = matchedTier.prepaid_min_charge_cents;
       }
     });
     setSeatingMinCharge(chargeMap);
+    setSeatingBottleInfo(bottleMap);
   };
 
   const fetchDirectReservationGuests = async (reservations: ReservationData[]) => {
@@ -1243,6 +1252,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             language={language}
             guestName={currentGuest?.guest_name}
             reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
+            bottleType={seatingBottleInfo[selectedDirectGuestsReservation.id]?.bottle_type ?? null}
+            bottleCount={seatingBottleInfo[selectedDirectGuestsReservation.id]?.bottle_count ?? null}
             showSuccessMessage={false}
             onClose={closeDialog} />
           
