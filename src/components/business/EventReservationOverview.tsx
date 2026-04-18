@@ -313,14 +313,25 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
-                        {seating.minPrice > 0 && (
+                        {seating.allBottles && seating.firstBottleTier ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
+                          >
+                            {formatBottleLabel(
+                              seating.firstBottleTier.bottle_type as 'bottle' | 'premium_bottle',
+                              seating.firstBottleTier.bottle_count as number,
+                              language,
+                            )}
+                          </Badge>
+                        ) : seating.minPrice > 0 ? (
                           <Badge
                             variant="outline"
                             className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
                           >
                             {formatPrice(seating.minPrice)}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                       <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                         {seating.booked} {text.booked} / {seating.available} {text.available}
