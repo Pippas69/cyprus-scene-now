@@ -892,18 +892,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 })}
               </div>
             </div>
-            {price !== null ? (
+            {matchedTier ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                 <span className="text-sm font-medium">
-                  {isPayAtDoor
-                    ? (language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend')
-                    : t.prepaidAmount
-                  }
+                  {language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend'}
                 </span>
                 <span className="text-base font-semibold text-foreground ml-3 shrink-0">
-                  {isPayAtDoor
-                    ? (language === 'el' ? `${formatPrice(price)} στο κατάστημα` : `${formatPrice(price)} at venue`)
-                    : formatPrice(price)
+                  {isBottleTier
+                    ? `${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')} ${language === 'el' ? 'στο κατάστημα' : 'at venue'}`
+                    : (isPayAtDoor
+                        ? (language === 'el' ? `${formatPrice(price as number)} στο κατάστημα` : `${formatPrice(price as number)} at venue`)
+                        : formatPrice(price as number))
                   }
                 </span>
               </div>
