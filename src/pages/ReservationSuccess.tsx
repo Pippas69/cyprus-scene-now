@@ -40,6 +40,8 @@ interface ReservationData {
   seating_type_id?: string | null;
   ticket_total_cents?: number;
   seating_min_charge_cents?: number;
+  bottle_type?: 'bottle' | 'premium_bottle' | null;
+  bottle_count?: number | null;
 }
 
 interface GuestTicketData {
