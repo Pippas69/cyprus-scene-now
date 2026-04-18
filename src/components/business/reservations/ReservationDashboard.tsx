@@ -587,13 +587,34 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       {showArchived ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {language === 'el' ? 'Αρχειοθετημένες Εκδηλώσεις' : 'Archived Events'}
-            </h3>
+            <div className="min-w-0">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                {language === 'el' ? 'Αρχειοθετημένες Εκδηλώσεις' : 'Archived Events'}
+              </h3>
+              {(() => {
+                const filterTypes = getArchivedFilterTypes();
+                if (!filterTypes) return null;
+                let label = '';
+                if (filterTypes.includes('ticket') && filterTypes.length === 1) {
+                  label = language === 'el' ? 'Εισιτήρια' : 'Tickets';
+                } else if (filterTypes.includes('reservation') && filterTypes.length === 1) {
+                  label = language === 'el' ? 'Κρατήσεις' : 'Reservations';
+                } else if (filterTypes.includes('ticket_reservation') || filterTypes.includes('ticket_and_reservation')) {
+                  label = language === 'el' ? 'Εισιτήρια & Κρατήσεις' : 'Tickets & Reservations';
+                } else {
+                  label = filterTypes.join(', ');
+                }
+                return (
+                  <p className="text-[11px] text-muted-foreground/70 mt-0.5 truncate">
+                    {language === 'el' ? 'Φίλτρο: ' : 'Filter: '}{label}
+                  </p>
+                );
+              })()}
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground gap-1.5"
+              className="text-xs text-muted-foreground gap-1.5 flex-shrink-0"
               onClick={() => setShowArchived(false)}
             >
               <ArchiveRestore className="h-3.5 w-3.5" />
@@ -602,7 +623,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           </div>
           {archivedEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground/60 text-center py-8">
-              {language === 'el' ? 'Δεν υπάρχουν αρχειοθετημένες εκδηλώσεις' : 'No archived events'}
+              {language === 'el' ? 'Δεν υπάρχουν αρχειοθετημένες εκδηλώσεις σε αυτή την κατηγορία' : 'No archived events in this category'}
             </p>
           ) : (
             <div className="space-y-2">
