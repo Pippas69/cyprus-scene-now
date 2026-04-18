@@ -31,6 +31,9 @@ interface SuccessQRCardProps {
   // For event reservations (hybrid)
   prepaidAmountCents?: number;
   minChargeCents?: number;
+  // Bottle-based minimum (alternative to minChargeCents)
+  bottleType?: BottleType | null;
+  bottleCount?: number | null;
   // Guest info (for individual tickets in group bookings)
   guestName?: string;
   guestAge?: number;
