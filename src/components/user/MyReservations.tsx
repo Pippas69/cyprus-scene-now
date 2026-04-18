@@ -1243,6 +1243,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             language={language}
             guestName={currentGuest?.guest_name}
             reservationDate={selectedDirectGuestsReservation.preferred_time || undefined}
+            bottleType={seatingBottleInfo[selectedDirectGuestsReservation.id]?.bottle_type ?? null}
+            bottleCount={seatingBottleInfo[selectedDirectGuestsReservation.id]?.bottle_count ?? null}
             showSuccessMessage={false}
             onClose={closeDialog} />
           
