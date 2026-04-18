@@ -454,6 +454,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
 
   const formatPrice = (cents: number) => cents === 0 ? t.free : `€${(cents / 100).toFixed(2)}`;
 
+  // Bottle helpers
+  const isCurrentBottleTier = isBottleTierFn(matchedTier as any);
+  const currentBottleLabel = isCurrentBottleTier && matchedTier?.bottle_type && matchedTier?.bottle_count
+    ? formatBottleLabel(matchedTier.bottle_type, matchedTier.bottle_count, language)
+    : null;
+
   // Match ticket tier to selected seating type
   // Each seating type (bar, table, vip, sofa) has its own reservation-linked ticket tier
   // with a matching name (e.g., "Bar", "Table", "VIP", "Sofa") or sort_order
