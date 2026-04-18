@@ -614,9 +614,23 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         const isUnavailable = isSoldOut || isPaused;
         const isSelected = selectedSeating?.id === option.id;
         const colors = seatingTypeColors[option.seating_type] || seatingTypeColors.table;
-        const minPrice = option.tiers.length > 0
-          ? Math.min(...option.tiers.map(t => t.prepaid_min_charge_cents))
+
+        // Build "από" label: prefer the smallest tier; if it's a bottle tier show bottle label,
+        // otherwise show the cheapest amount price across non-bottle tiers.
+        const sortedTiers = [...option.tiers].sort((a, b) => a.min_people - b.min_people);
+        const firstTier = sortedTiers[0];
+        const firstIsBottle = isBottleTierFn(firstTier as any);
+        const amountTiers = option.tiers.filter(tt => !isBottleTierFn(tt as any));
+        const minAmountCents = amountTiers.length > 0
+          ? Math.min(...amountTiers.map(tt => tt.prepaid_min_charge_cents))
           : null;
+
+        let fromLabel: string | null = null;
+        if (firstIsBottle && firstTier?.bottle_type && firstTier?.bottle_count) {
+          fromLabel = formatBottleLabel(firstTier.bottle_type, firstTier.bottle_count, language);
+        } else if (minAmountCents != null) {
+          fromLabel = formatPrice(minAmountCents);
+        }
 
         return (
           <Card
@@ -652,8 +666,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 <h4 className={cn("font-semibold", isSelected && !isUnavailable && colors.text)}>
                   {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes] || option.seating_type}
                 </h4>
-                {minPrice != null && !isUnavailable && (
-                  <p className="text-sm text-muted-foreground">{t.from} {formatPrice(minPrice)}</p>
+                {fromLabel && !isUnavailable && (
+                  <p className="text-sm text-muted-foreground">{t.from} {fromLabel}</p>
                 )}
               </div>
             </CardContent>
