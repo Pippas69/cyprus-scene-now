@@ -424,13 +424,37 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   const partySizeLimits = getPartySizeLimits();
 
-  // Calculate price for current selection
-  const getPrice = (): number | null => {
+  // Find the matching tier for the current party size
+  const getMatchedTier = () => {
     if (!selectedSeating) return null;
-    const tier = selectedSeating.tiers.find(
+    return selectedSeating.tiers.find(
       t => partySize >= t.min_people && partySize <= t.max_people
-    );
-    return tier ? tier.prepaid_min_charge_cents : null;
+    ) ?? null;
+  };
+
+  const matchedTier = getMatchedTier();
+  const isBottleTier = !!matchedTier && matchedTier.pricing_mode === 'bottles' && !!matchedTier.bottle_type && (matchedTier.bottle_count ?? 0) >= 1;
+
+  // Customer-facing label: bottles → "2 Premium Bottles", amount → "€100"
+  const bottleLabel = (count: number, type: 'bottle' | 'premium_bottle'): string => {
+    const isPremium = type === 'premium_bottle';
+    if (language === 'el') {
+      const word = count === 1
+        ? (isPremium ? 'Premium Μπουκάλι' : 'Μπουκάλι')
+        : (isPremium ? 'Premium Μπουκάλια' : 'Μπουκάλια');
+      return `${count} ${word}`;
+    }
+    const word = count === 1
+      ? (isPremium ? 'Premium Bottle' : 'Bottle')
+      : (isPremium ? 'Premium Bottles' : 'Bottles');
+    return `${count} ${word}`;
+  };
+
+  // Calculate online price. For bottle tiers it is always 0 (paid at venue).
+  const getPrice = (): number | null => {
+    if (!matchedTier) return null;
+    if (isBottleTier) return 0;
+    return matchedTier.prepaid_min_charge_cents;
   };
 
   const price = getPrice();
