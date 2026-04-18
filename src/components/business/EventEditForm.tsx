@@ -23,6 +23,7 @@ import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { cn } from "@/lib/utils";
 import { TicketTierEditor, TicketTier, validateTicketTiers } from "@/components/tickets/TicketTierEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 // ============================================
 // HELPER COMPONENTS
