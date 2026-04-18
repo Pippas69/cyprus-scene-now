@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Calendar, Clock, QrCode as QrCodeIcon, Ticket, Tag, Users, User, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import { el, enUS } from "date-fns/locale";
+import { formatBottleLabel, type BottleType } from "@/lib/bottlePricing";
 
 export type SuccessType = "ticket" | "reservation" | "offer" | "event_reservation";
 
