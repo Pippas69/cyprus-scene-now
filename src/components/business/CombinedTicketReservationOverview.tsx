@@ -196,7 +196,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         ticketsSold,
         totalCheckedIn,
         ticketTiers: enrichedTiers,
-        seatingStats
+        seatingStats: sortedSeatingStats
       };
     }
   });
