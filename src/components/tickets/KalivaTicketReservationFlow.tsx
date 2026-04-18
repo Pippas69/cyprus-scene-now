@@ -891,7 +891,44 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
       </div>
 
-      {minChargeCents != null && minChargeCents > 0 && (
+      {/* Bottle mode: show consumption breakdown (no online deduction) */}
+      {isCurrentBottleTier && currentBottleLabel && (
+        <>
+          <Separator />
+          <div className="border border-border/40 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold text-foreground">
+                💡 {t.howPaymentWorks}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                {t.minimumConsumption} ({partySize} {t.people}):
+              </span>
+              <span className="font-semibold text-foreground">{currentBottleLabel}</span>
+            </div>
+            {ticketTotal > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{t.ticketCostOnline}:</span>
+                <span className="font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
+              </div>
+            )}
+            <div className="border-t border-border/30 my-1" />
+            <div className="flex justify-between text-xs">
+              <span className="font-semibold text-foreground">{t.bottleAtVenue}:</span>
+              <span className="font-bold text-foreground">{currentBottleLabel}</span>
+            </div>
+            <p className="text-[9px] text-muted-foreground mt-1">
+              {language === 'el'
+                ? 'Η ελάχιστη κατανάλωση πληρώνεται απευθείας στο κατάστημα.'
+                : 'The minimum consumption is paid directly at the venue.'}
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Amount mode: classic prepaid breakdown */}
+      {!isCurrentBottleTier && minChargeCents != null && minChargeCents > 0 && (
         <>
           <Separator />
           <div className="border border-border/40 rounded-lg p-3 space-y-2">
