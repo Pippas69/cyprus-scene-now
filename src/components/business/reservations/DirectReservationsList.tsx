@@ -75,6 +75,9 @@ interface SeatingTier {
   min_people: number;
   max_people: number;
   prepaid_min_charge_cents: number;
+  pricing_mode?: 'amount' | 'bottles' | null;
+  bottle_type?: 'bottle' | 'premium_bottle' | null;
+  bottle_count?: number | null;
 }
 
 // Cache for seating type names (seating_type_id -> seating_type string)
