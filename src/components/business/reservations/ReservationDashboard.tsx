@@ -124,8 +124,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       return;
     }
     toast.success(language === 'el' ? 'Επαναφέρθηκε' : 'Restored');
-    fetchArchivedEvents();
-  }, [language, fetchArchivedEvents]);
+    fetchArchivedEvents(getArchivedFilterTypes());
+  }, [language, fetchArchivedEvents, getArchivedFilterTypes]);
   const text = useMemo(
     () => ({
       el: {
