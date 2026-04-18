@@ -16,6 +16,7 @@ import {
 } from "../_shared/email-templates.ts";
 import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { fetchReservationTier, isBottleTier, formatTierMinSpendLabel } from "../_shared/bottle-pricing.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
