@@ -27,6 +27,7 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { isBottleTier as isBottleTierFn, formatBottleLabel } from "@/lib/bottlePricing";
 
 interface SeatingTypeOption {
   id: string;
@@ -40,6 +41,9 @@ interface SeatingTypeOption {
     min_people: number;
     max_people: number;
     prepaid_min_charge_cents: number;
+    pricing_mode?: 'amount' | 'bottles' | null;
+    bottle_type?: 'bottle' | 'premium_bottle' | null;
+    bottle_count?: number | null;
   }[];
 }
 
