@@ -63,6 +63,7 @@ interface ReservationEventCheckoutProps {
   language: 'el' | 'en';
   onSuccess?: () => void;
   businessId?: string;
+  eventType?: 'reservation' | 'ticket_and_reservation' | string;
 }
 
 const translations = {
@@ -231,7 +232,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   language,
   onSuccess,
   businessId,
+  eventType,
 }) => {
+  const isHybridEvent = eventType === 'ticket_and_reservation';
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
@@ -1010,17 +1013,19 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
             {isBottleTier && matchedTier ? (
               <div className="space-y-2">
-                <div className="rounded-lg border border-border bg-muted p-3 text-sm space-y-1">
-                  <p className="font-medium text-foreground flex items-center gap-1.5">
-                    🍾 {language === 'el' ? 'Πώς λειτουργεί η πληρωμή' : 'How payment works'}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {language === 'el'
-                      ? `Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.`
-                      : `The prepayment is automatically deducted from your final bill.`
-                    }
-                  </p>
-                </div>
+                {isHybridEvent && (
+                  <div className="rounded-lg border border-border bg-muted p-3 text-sm space-y-1">
+                    <p className="font-medium text-foreground flex items-center gap-1.5">
+                      🍾 {language === 'el' ? 'Πώς λειτουργεί η πληρωμή' : 'How payment works'}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {language === 'el'
+                        ? `Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.`
+                        : `The prepayment is automatically deducted from your final bill.`
+                      }
+                    </p>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     {language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum consumption'}

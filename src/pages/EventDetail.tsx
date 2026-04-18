@@ -1153,6 +1153,7 @@ export default function EventDetail() {
         userId={user?.id}
         language={language}
         businessId={event.businesses?.id}
+        eventType={event.event_type}
         onSuccess={() => {
           setShowReservationCheckout(false);
           toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
