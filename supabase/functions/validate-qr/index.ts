@@ -16,6 +16,7 @@ import {
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { isBottleTier, formatBottleLabel, formatTierMinSpendLabel } from "../_shared/bottle-pricing.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -414,18 +415,18 @@ async function handleTicketQR(
         // Only show reservation info if it's a real table reservation (has seating_type_id)
         // Walk-in tickets don't have table reservations, so skip the reservation UI
         if (linkedResForUi.seating_type_id) {
-          // Look up correct min charge from seating tiers based on party size
-          let tierMinChargeCents: number | null = null;
+          // Look up matched tier (with bottle fields) for accurate min charge display
+          let matchedTier: any = null;
           try {
             const { data: tiers } = await supabaseAdmin
               .from("seating_type_tiers")
-              .select("min_people, max_people, prepaid_min_charge_cents")
+              .select("min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count")
               .eq("seating_type_id", linkedResForUi.seating_type_id)
               .order("min_people", { ascending: true });
-            if (tiers) {
-              const matchedTier = tiers.find((t: any) => linkedResForUi.party_size >= t.min_people && linkedResForUi.party_size <= t.max_people);
-              const fallbackTier = matchedTier ?? [...tiers].reverse().find((t: any) => linkedResForUi.party_size >= t.min_people) ?? tiers[0];
-              if (fallbackTier) tierMinChargeCents = fallbackTier.prepaid_min_charge_cents;
+            if (tiers && tiers.length > 0) {
+              matchedTier = tiers.find((t: any) => linkedResForUi.party_size >= t.min_people && linkedResForUi.party_size <= t.max_people)
+                ?? [...tiers].reverse().find((t: any) => linkedResForUi.party_size >= t.min_people)
+                ?? tiers[0];
             }
           } catch (tierErr) {
             logStep("Tier lookup error (non-fatal)", { error: tierErr instanceof Error ? tierErr.message : String(tierErr) });
@@ -434,9 +435,12 @@ async function handleTicketQR(
           linkedReservationInfo = {
             reservationId: linkedResForUi.id,
             partySize: linkedResForUi.party_size,
-            minimumChargeCents: tierMinChargeCents ?? linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents ?? 0,
+            minimumChargeCents: matchedTier?.prepaid_min_charge_cents ?? linkedResForUi.prepaid_min_charge_cents ?? linkedResForUi.ticket_credit_cents ?? 0,
             ticketCreditCents: linkedResForUi.ticket_credit_cents,
             reservationName: linkedResForUi.reservation_name,
+            pricingMode: matchedTier?.pricing_mode ?? 'amount',
+            bottleType: matchedTier?.bottle_type ?? null,
+            bottleCount: matchedTier?.bottle_count ?? null,
           };
           logStep("Linked reservation info prepared", linkedReservationInfo);
         } else {
@@ -486,10 +490,23 @@ async function handleTicketQR(
   const ticketUserId = ticket.ticket_orders?.user_id;
   if (ticketUserId) {
     try {
-      const linkedAmountCents = linkedReservationInfo?.minimumChargeCents ?? linkedReservationInfo?.ticketCreditCents ?? 0;
+      // Build min-spend label that respects bottle vs amount mode
+      let minSpendLabel = '';
+      if (linkedReservationInfo) {
+        if (isBottleTier(linkedReservationInfo as any)) {
+          minSpendLabel = formatTierMinSpendLabel(linkedReservationInfo as any, language);
+        } else {
+          const cents = linkedReservationInfo.minimumChargeCents ?? linkedReservationInfo.ticketCreditCents ?? 0;
+          minSpendLabel = `€${(cents / 100).toFixed(2)}`;
+        }
+      }
       const userMessage = linkedReservationInfo
-        ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Κράτηση ενεργοποιήθηκε (${linkedReservationInfo.partySize} άτομα, minimum charge €${(linkedAmountCents / 100).toFixed(2)})`
-        : `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`;
+        ? (language === 'el'
+            ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Κράτηση ενεργοποιήθηκε (${linkedReservationInfo.partySize} άτομα, ελάχιστη κατανάλωση: ${minSpendLabel})`
+            : `Welcome to "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}. Reservation activated (${linkedReservationInfo.partySize} people, minimum consumption: ${minSpendLabel})`)
+        : (language === 'el'
+            ? `Καλωσήρθατε στο "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`
+            : `Welcome to "${ticket.events?.title}"${businessName ? ` - ${businessName}` : ''}`);
 
       await supabaseAdmin.from('notifications').insert({
         user_id: ticketUserId,
