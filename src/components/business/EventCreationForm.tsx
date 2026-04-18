@@ -797,13 +797,20 @@ const EventCreationForm = ({
             throw seatingError || new Error('Failed to create seating type');
           }
 
-          // Insert price tiers
-          const tiersToInsert = config.tiers.map((tier) => ({
-            seating_type_id: seatingData.id,
-            min_people: tier.minPeople,
-            max_people: tier.maxPeople,
-            prepaid_min_charge_cents: tier.prepaidChargeCents
-          }));
+          // Insert price tiers (with optional bottle-mode metadata)
+          const tiersToInsert = config.tiers.map((tier) => {
+            const isBottles = tier.pricingMode === 'bottles' && !!tier.bottleType && (tier.bottleCount ?? 0) >= 1;
+            return {
+              seating_type_id: seatingData.id,
+              min_people: tier.minPeople,
+              max_people: tier.maxPeople,
+              // When bottle mode: no online prepayment (paid at venue)
+              prepaid_min_charge_cents: isBottles ? 0 : tier.prepaidChargeCents,
+              pricing_mode: isBottles ? 'bottles' : 'amount',
+              bottle_type: isBottles ? tier.bottleType : null,
+              bottle_count: isBottles ? tier.bottleCount : null,
+            };
+          });
           const {
             error: tiersError
           } = await supabase.from('seating_type_tiers').insert(tiersToInsert);
