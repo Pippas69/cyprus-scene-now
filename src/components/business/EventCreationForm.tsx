@@ -101,10 +101,16 @@ const CommissionBanner: React.FC<CommissionBannerProps> = ({
 type EventType = 'ticket' | 'reservation' | 'free_entry' | 'ticket_and_reservation';
 type AppearanceMode = 'hours' | 'days';
 type SeatingType = 'bar' | 'table' | 'vip' | 'sofa';
+type TierPricingMode = 'amount' | 'bottles';
+type BottleType = 'bottle' | 'premium_bottle';
 interface PersonTier {
   minPeople: number;
   maxPeople: number;
   prepaidChargeCents: number;
+  // Optional bottle-mode fields. Default mode is 'amount' (existing behavior).
+  pricingMode?: TierPricingMode;
+  bottleType?: BottleType;
+  bottleCount?: number;
 }
 interface SeatingConfig {
   type: SeatingType;
@@ -791,13 +797,20 @@ const EventCreationForm = ({
             throw seatingError || new Error('Failed to create seating type');
           }
 
-          // Insert price tiers
-          const tiersToInsert = config.tiers.map((tier) => ({
-            seating_type_id: seatingData.id,
-            min_people: tier.minPeople,
-            max_people: tier.maxPeople,
-            prepaid_min_charge_cents: tier.prepaidChargeCents
-          }));
+          // Insert price tiers (with optional bottle-mode metadata)
+          const tiersToInsert = config.tiers.map((tier) => {
+            const isBottles = tier.pricingMode === 'bottles' && !!tier.bottleType && (tier.bottleCount ?? 0) >= 1;
+            return {
+              seating_type_id: seatingData.id,
+              min_people: tier.minPeople,
+              max_people: tier.maxPeople,
+              // When bottle mode: no online prepayment (paid at venue)
+              prepaid_min_charge_cents: isBottles ? 0 : tier.prepaidChargeCents,
+              pricing_mode: (isBottles ? 'bottles' : 'amount') as 'bottles' | 'amount',
+              bottle_type: isBottles ? (tier.bottleType as 'bottle' | 'premium_bottle') : null,
+              bottle_count: isBottles ? (tier.bottleCount as number) : null,
+            };
+          });
           const {
             error: tiersError
           } = await supabase.from('seating_type_tiers').insert(tiersToInsert);
@@ -1116,42 +1129,98 @@ const EventCreationForm = ({
                             </div>
                             <p className="text-[10px] sm:text-xs text-muted-foreground">{t.rangeHint}</p>
                             
-                            {config.tiers.map((tier, index) => <div key={index} className="flex items-center gap-1 sm:gap-3 bg-background p-1.5 sm:p-3 rounded-lg flex-nowrap">
-                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap shrink-0">
-                                  <NumberInput
-                            value={tier.minPeople}
-                            onChange={(value) => updateTier(type, index, { minPeople: value })}
-                            min={1}
-                            max={99}
-                            className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
-                          
-                                  <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
-                                  <NumberInput
-                            value={tier.maxPeople}
-                            onChange={(value) => updateTier(type, index, { maxPeople: value })}
-                            min={tier.minPeople}
-                            max={99}
-                            className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
-                          
-                                  <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap shrink-0 ml-0.5">
-                                    {language === 'el' ? 'άτ.' : 'ppl'}
-                                  </span>
+                            {config.tiers.map((tier, index) => {
+                              const tierMode: TierPricingMode = tier.pricingMode === 'bottles' ? 'bottles' : 'amount';
+                              return (
+                              <div key={index} className="flex flex-col gap-1.5 sm:gap-2 bg-background p-1.5 sm:p-3 rounded-lg">
+                                <div className="flex items-center gap-1 sm:gap-3 flex-nowrap">
+                                  <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap shrink-0">
+                                    <NumberInput
+                              value={tier.minPeople}
+                              onChange={(value) => updateTier(type, index, { minPeople: value })}
+                              min={1}
+                              max={99}
+                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                            
+                                    <span className="text-muted-foreground text-[10px] sm:text-xs">-</span>
+                                    <NumberInput
+                              value={tier.maxPeople}
+                              onChange={(value) => updateTier(type, index, { maxPeople: value })}
+                              min={tier.minPeople}
+                              max={99}
+                              className="w-11 sm:w-16 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                            
+                                    <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap shrink-0 ml-0.5">
+                                      {language === 'el' ? 'άτ.' : 'ppl'}
+                                    </span>
+                                  </div>
+                                  <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
+
+                                  {/* Mode dropdown: € amount vs Bottles */}
+                                  <select
+                                    value={tierMode}
+                                    onChange={(e) => {
+                                      const newMode = e.target.value as TierPricingMode;
+                                      if (newMode === 'bottles') {
+                                        updateTier(type, index, {
+                                          pricingMode: 'bottles',
+                                          bottleType: tier.bottleType ?? 'bottle',
+                                          bottleCount: tier.bottleCount ?? 1,
+                                        });
+                                      } else {
+                                        updateTier(type, index, {
+                                          pricingMode: 'amount',
+                                        });
+                                      }
+                                    }}
+                                    className="h-6 sm:h-10 text-[10px] sm:text-sm bg-background border border-input rounded px-1 sm:px-2 shrink-0"
+                                    aria-label={language === 'el' ? 'Τύπος τιμής' : 'Pricing type'}
+                                  >
+                                    <option value="amount">€</option>
+                                    <option value="bottles">{language === 'el' ? 'Μπουκάλι' : 'Bottle'}</option>
+                                  </select>
+
+                                  {tierMode === 'amount' ? (
+                                    <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                                      <NumberInput
+                                value={Math.round(tier.prepaidChargeCents / 100)}
+                                onChange={(value) => updateTier(type, index, { prepaidChargeCents: value * 100 })}
+                                min={0}
+                                max={9999}
+                                className="w-14 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
+                                      <NumberInput
+                                value={tier.bottleCount ?? 1}
+                                onChange={(value) => updateTier(type, index, { bottleCount: Math.max(1, value) })}
+                                min={1}
+                                max={20}
+                                className="w-11 sm:w-14 h-6 sm:h-10 text-[10px] sm:text-sm" />
+                                      <select
+                                        value={tier.bottleType ?? 'bottle'}
+                                        onChange={(e) => updateTier(type, index, { bottleType: e.target.value as BottleType })}
+                                        className="h-6 sm:h-10 text-[10px] sm:text-sm bg-background border border-input rounded px-1 sm:px-2"
+                                      >
+                                        <option value="bottle">{language === 'el' ? 'Μπουκάλι' : 'Bottle'}</option>
+                                        <option value="premium_bottle">{language === 'el' ? 'Premium' : 'Premium'}</option>
+                                      </select>
+                                    </div>
+                                  )}
+
+                                  {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
+                                      <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
+                                    </Button>}
                                 </div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">→</span>
-                                <div className="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
-                                  <span className="text-muted-foreground text-[10px] sm:text-xs">€</span>
-                                  <NumberInput
-                            value={Math.round(tier.prepaidChargeCents / 100)}
-                            onChange={(value) => updateTier(type, index, { prepaidChargeCents: value * 100 })}
-                            min={0}
-                            max={9999}
-                            className="w-14 sm:w-20 h-6 sm:h-10 text-[10px] sm:text-sm" />
-                          
-                                </div>
-                                {config.tiers.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeTier(type, index)} className="h-5 w-5 sm:h-8 sm:w-8 text-destructive flex-shrink-0 p-0">
-                                    <Trash2 className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-                                  </Button>}
-                              </div>)}
+                                {tierMode === 'bottles' && (
+                                  <p className="text-[9px] sm:text-[10px] text-muted-foreground pl-1">
+                                    {language === 'el'
+                                      ? 'Πληρωμή στο κατάστημα. Δεν χρεώνεται online.'
+                                      : 'Paid at venue. No online charge.'}
+                                  </p>
+                                )}
+                              </div>);
+                            })}
                           </div>
                         </div>;
                 })}

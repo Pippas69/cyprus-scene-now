@@ -41,6 +41,9 @@ interface SeatingTypeOption {
     min_people: number;
     max_people: number;
     prepaid_min_charge_cents: number;
+    pricing_mode?: 'amount' | 'bottles' | null;
+    bottle_type?: 'bottle' | 'premium_bottle' | null;
+    bottle_count?: number | null;
   }[];
 }
 
@@ -421,13 +424,37 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   const partySizeLimits = getPartySizeLimits();
 
-  // Calculate price for current selection
-  const getPrice = (): number | null => {
+  // Find the matching tier for the current party size
+  const getMatchedTier = () => {
     if (!selectedSeating) return null;
-    const tier = selectedSeating.tiers.find(
+    return selectedSeating.tiers.find(
       t => partySize >= t.min_people && partySize <= t.max_people
-    );
-    return tier ? tier.prepaid_min_charge_cents : null;
+    ) ?? null;
+  };
+
+  const matchedTier = getMatchedTier();
+  const isBottleTier = !!matchedTier && matchedTier.pricing_mode === 'bottles' && !!matchedTier.bottle_type && (matchedTier.bottle_count ?? 0) >= 1;
+
+  // Customer-facing label: bottles → "2 Premium Bottles", amount → "€100"
+  const bottleLabel = (count: number, type: 'bottle' | 'premium_bottle'): string => {
+    const isPremium = type === 'premium_bottle';
+    if (language === 'el') {
+      const word = count === 1
+        ? (isPremium ? 'Premium Μπουκάλι' : 'Μπουκάλι')
+        : (isPremium ? 'Premium Μπουκάλια' : 'Μπουκάλια');
+      return `${count} ${word}`;
+    }
+    const word = count === 1
+      ? (isPremium ? 'Premium Bottle' : 'Bottle')
+      : (isPremium ? 'Premium Bottles' : 'Bottles');
+    return `${count} ${word}`;
+  };
+
+  // Calculate online price. For bottle tiers it is always 0 (paid at venue).
+  const getPrice = (): number | null => {
+    if (!matchedTier) return null;
+    if (isBottleTier) return 0;
+    return matchedTier.prepaid_min_charge_cents;
   };
 
   const price = getPrice();
@@ -662,8 +689,12 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               const isSoldOut = remaining <= 0;
               const isSelected = selectedSeating?.id === option.id;
               const colors = seatingTypeColors[option.seating_type];
-              const minPrice = option.tiers.length > 0 
-                ? Math.min(...option.tiers.map(t => t.prepaid_min_charge_cents))
+              // Determine the cheapest tier label. If ANY tier is bottle-mode, show bottle label for it.
+              const sortedTiers = [...option.tiers].sort((a, b) => a.min_people - b.min_people);
+              const firstTier = sortedTiers[0];
+              const firstTierIsBottles = !!firstTier && firstTier.pricing_mode === 'bottles' && !!firstTier.bottle_type && (firstTier.bottle_count ?? 0) >= 1;
+              const minPrice = !firstTierIsBottles && option.tiers.length > 0
+                ? Math.min(...option.tiers.filter(t => t.pricing_mode !== 'bottles').map(t => t.prepaid_min_charge_cents))
                 : null;
 
               return (
@@ -704,14 +735,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                       <h4 className={cn("font-semibold", isSelected && colors.text)}>
                         {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes]}
                       </h4>
-                      {minPrice !== null && minPrice !== undefined && (
+                      {firstTierIsBottles ? (
+                        <p className="text-sm text-muted-foreground">
+                          {`${t.from} ${bottleLabel(firstTier.bottle_count as number, firstTier.bottle_type as 'bottle' | 'premium_bottle')}`}
+                        </p>
+                      ) : minPrice !== null && minPrice !== undefined ? (
                         <p className="text-sm text-muted-foreground">
                           {isPayAtDoor
                             ? (language === 'el' ? `${t.from} ${formatPrice(minPrice)} στο κατάστημα` : `${t.from} ${formatPrice(minPrice)} at venue`)
                             : `${t.from} ${formatPrice(minPrice)}`
                           }
                         </p>
-                      )}
+                      ) : null}
                     </div>
 
                   </CardContent>
@@ -857,18 +892,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 })}
               </div>
             </div>
-            {price !== null ? (
+            {matchedTier ? (
               <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                 <span className="text-sm font-medium">
-                  {isPayAtDoor
-                    ? (language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend')
-                    : t.prepaidAmount
-                  }
+                  {language === 'el' ? 'Ελάχιστη κατανάλωση' : 'Minimum spend'}
                 </span>
                 <span className="text-base font-semibold text-foreground ml-3 shrink-0">
-                  {isPayAtDoor
-                    ? (language === 'el' ? `${formatPrice(price)} στο κατάστημα` : `${formatPrice(price)} at venue`)
-                    : formatPrice(price)
+                  {isBottleTier
+                    ? `${bottleLabel(matchedTier.bottle_count as number, matchedTier.bottle_type as 'bottle' | 'premium_bottle')} ${language === 'el' ? 'στο κατάστημα' : 'at venue'}`
+                    : (isPayAtDoor
+                        ? (language === 'el' ? `${formatPrice(price as number)} στο κατάστημα` : `${formatPrice(price as number)} at venue`)
+                        : formatPrice(price as number))
                   }
                 </span>
               </div>
