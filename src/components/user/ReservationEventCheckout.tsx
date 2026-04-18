@@ -1154,10 +1154,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 {t.processing}
               </>
-            ) : isPayAtDoor ? (
+            ) : isPayAtDoor || isBottleTier ? (
               <>
                 <Users className="h-3.5 w-3.5" />
-                {language === 'el' ? 'Ολοκλήρωση Κράτησης' : 'Complete Reservation'}
+                {language === 'el' ? 'Επιβεβαίωση Κράτησης' : 'Confirm Reservation'}
               </>
             ) : (
               <>
