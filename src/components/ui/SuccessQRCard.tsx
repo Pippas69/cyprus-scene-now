@@ -376,8 +376,22 @@ export const SuccessQRCard = ({
                 </p>
               </div>
             </div>
-            {/* Financial breakdown for hybrid events */}
-            {prepaidAmountCents && prepaidAmountCents > 0 && minChargeCents && minChargeCents > 0 ? (
+            {/* Bottle-based minimum (paid at venue) */}
+            {bottleType && (bottleCount ?? 0) >= 1 && (
+              <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-2.5 mb-3 text-center">
+                <p className="text-[9px] text-[#92400e] uppercase tracking-wide font-medium mb-0.5">
+                  {language === "el" ? "Ελάχιστη Κατανάλωση" : "Minimum Consumption"}
+                </p>
+                <p className="text-sm font-bold text-[#92400e]">
+                  {formatBottleLabel(bottleType as BottleType, bottleCount as number, language)}
+                </p>
+                <p className="text-[9px] text-[#a8a29e] mt-0.5">
+                  {language === "el" ? "(πληρωτέα στο κατάστημα)" : "(payable at venue)"}
+                </p>
+              </div>
+            )}
+            {/* Financial breakdown for hybrid events (amount mode only) */}
+            {!bottleType && prepaidAmountCents && prepaidAmountCents > 0 && minChargeCents && minChargeCents > 0 ? (
               <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg p-3 mb-3 space-y-2">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-xs font-semibold text-[#92400e]">
@@ -409,7 +423,7 @@ export const SuccessQRCard = ({
                     : "The prepayment is automatically deducted from your final bill."}
                 </p>
               </div>
-            ) : prepaidAmountCents && prepaidAmountCents > 0 ? (
+            ) : !bottleType && prepaidAmountCents && prepaidAmountCents > 0 ? (
               <div className="bg-[#ecfdf5] border border-[#a7f3d0] rounded-lg p-2.5 mb-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium text-[#065f46] uppercase tracking-wide">
