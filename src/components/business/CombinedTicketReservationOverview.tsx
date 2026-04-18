@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { isClubOrEventBusiness } from "@/lib/isClubOrEventBusiness";
+import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -179,8 +180,9 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         };
       });
 
-      const reservationRevenue = seatingStats.reduce((sum, st) => sum + st.revenue, 0);
-      const totalReservations = seatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
+      const sortedSeatingStats = sortSeatingTypes(seatingStats, (st: any) => st.seating_type);
+      const reservationRevenue = sortedSeatingStats.reduce((sum, st) => sum + st.revenue, 0);
+      const totalReservations = sortedSeatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
 
       // --- Combined ---
       const totalRevenue = ticketRevenue + reservationRevenue;
@@ -194,7 +196,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         ticketsSold,
         totalCheckedIn,
         ticketTiers: enrichedTiers,
-        seatingStats
+        seatingStats: sortedSeatingStats
       };
     }
   });
