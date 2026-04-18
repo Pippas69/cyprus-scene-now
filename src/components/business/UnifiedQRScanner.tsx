@@ -16,6 +16,7 @@ import { queueOfflineScan } from '@/lib/offlineScanQueue';
 import { useOfflineScanSync } from '@/hooks/useOfflineScanSync';
 import { resilientCall } from '@/lib/apiRetry';
 import { parseEdgeFunctionStructuredError } from '@/utils/parseEdgeFunctionError';
+import { isBottleTier, formatTierFullLabel } from '@/lib/bottlePricing';
 
 interface UnifiedQRScannerProps {
   businessId: string;
@@ -68,6 +69,10 @@ interface ScanResult {
     reservationId?: string;
     checkedInCount?: number;
     ticketCreditCents?: number;
+    // Bottle pricing fields (for reservation tiers)
+    pricingMode?: 'amount' | 'bottles' | null;
+    bottleType?: 'bottle' | 'premium_bottle' | null;
+    bottleCount?: number | null;
     // Student
     verificationId?: string;
     redemptionId?: string;
@@ -81,6 +86,9 @@ interface ScanResult {
     minimumChargeCents?: number | null;
     ticketCreditCents: number;
     reservationName: string;
+    pricingMode?: 'amount' | 'bottles' | null;
+    bottleType?: 'bottle' | 'premium_bottle' | null;
+    bottleCount?: number | null;
   };
 }
 
