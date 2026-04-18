@@ -144,6 +144,8 @@ export const SuccessQRCard = ({
   expiryDate,
   prepaidAmountCents,
   minChargeCents,
+  bottleType,
+  bottleCount,
   guestName,
   guestAge,
   seatZone,
