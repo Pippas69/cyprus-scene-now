@@ -27,6 +27,7 @@ import { useProfileName } from '@/hooks/useProfileName';
 import { InlineAuthGate } from './InlineAuthGate';
 import { ProfileCompletionGate } from './ProfileCompletionGate';
 import { useEventPricingProfile } from "@/hooks/useEventPricingProfile";
+import { isBottleTier as isBottleTierFn, formatBottleLabel } from "@/lib/bottlePricing";
 
 interface SeatingTypeOption {
   id: string;
@@ -40,6 +41,9 @@ interface SeatingTypeOption {
     min_people: number;
     max_people: number;
     prepaid_min_charge_cents: number;
+    pricing_mode?: 'amount' | 'bottles' | null;
+    bottle_type?: 'bottle' | 'premium_bottle' | null;
+    bottle_count?: number | null;
   }[];
 }
 
@@ -133,6 +137,11 @@ const translations = {
     andThe: "και την",
     privacyLink: "Πολιτική Απορρήτου",
     termsRequired: "Πρέπει να αποδεχτείτε τους όρους χρήσης",
+    minimumConsumption: "Ελάχιστη κατανάλωση",
+    atVenue: "στο κατάστημα",
+    confirmReservation: "Επιβεβαίωση Κράτησης",
+    ticketCostOnline: "Κόστος εισιτηρίων (online)",
+    bottleAtVenue: "Στο venue",
   },
   en: {
     title: "Ticket & Reservation",
@@ -197,6 +206,11 @@ const translations = {
     andThe: "and the",
     privacyLink: "Privacy Policy",
     termsRequired: "You must accept the terms of service",
+    minimumConsumption: "Minimum consumption",
+    atVenue: "at venue",
+    confirmReservation: "Confirm Reservation",
+    ticketCostOnline: "Ticket cost (online)",
+    bottleAtVenue: "At venue",
   },
 };
 
@@ -288,8 +302,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Min charge
+  // Min charge + matched tier (with bottle metadata)
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
+  const [matchedTier, setMatchedTier] = useState<SeatingTypeOption['tiers'][number] | null>(null);
 
   // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
@@ -331,22 +346,25 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     });
   }, [partySize]);
 
-  // Update min charge when party size or seating changes
+  // Update min charge + matched tier when party size or seating changes
   useEffect(() => {
     if (!selectedSeating || selectedSeating.tiers.length === 0) {
       setMinChargeCents(null);
+      setMatchedTier(null);
       return;
     }
     const matched = selectedSeating.tiers.find(t => partySize >= t.min_people && partySize <= t.max_people);
-    if (matched) {
-      setMinChargeCents(matched.prepaid_min_charge_cents);
+    const effective = matched
+      ?? (partySize > selectedSeating.tiers[selectedSeating.tiers.length - 1].max_people
+            ? selectedSeating.tiers[selectedSeating.tiers.length - 1]
+            : null);
+    if (effective) {
+      setMatchedTier(effective);
+      // For bottle tiers, no online min-charge prepayment
+      setMinChargeCents(isBottleTierFn(effective) ? 0 : effective.prepaid_min_charge_cents);
     } else {
-      const last = selectedSeating.tiers[selectedSeating.tiers.length - 1];
-      if (partySize > last.max_people) {
-        setMinChargeCents(last.prepaid_min_charge_cents);
-      } else {
-        setMinChargeCents(null);
-      }
+      setMatchedTier(null);
+      setMinChargeCents(null);
     }
   }, [partySize, selectedSeating]);
 
@@ -435,6 +453,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   };
 
   const formatPrice = (cents: number) => cents === 0 ? t.free : `€${(cents / 100).toFixed(2)}`;
+
+  // Bottle helpers
+  const isCurrentBottleTier = isBottleTierFn(matchedTier as any);
+  const currentBottleLabel = isCurrentBottleTier && matchedTier?.bottle_type && matchedTier?.bottle_count
+    ? formatBottleLabel(matchedTier.bottle_type, matchedTier.bottle_count, language)
+    : null;
 
   // Match ticket tier to selected seating type
   // Each seating type (bar, table, vip, sofa) has its own reservation-linked ticket tier
@@ -590,9 +614,23 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         const isUnavailable = isSoldOut || isPaused;
         const isSelected = selectedSeating?.id === option.id;
         const colors = seatingTypeColors[option.seating_type] || seatingTypeColors.table;
-        const minPrice = option.tiers.length > 0
-          ? Math.min(...option.tiers.map(t => t.prepaid_min_charge_cents))
+
+        // Build "από" label: prefer the smallest tier; if it's a bottle tier show bottle label,
+        // otherwise show the cheapest amount price across non-bottle tiers.
+        const sortedTiers = [...option.tiers].sort((a, b) => a.min_people - b.min_people);
+        const firstTier = sortedTiers[0];
+        const firstIsBottle = isBottleTierFn(firstTier as any);
+        const amountTiers = option.tiers.filter(tt => !isBottleTierFn(tt as any));
+        const minAmountCents = amountTiers.length > 0
+          ? Math.min(...amountTiers.map(tt => tt.prepaid_min_charge_cents))
           : null;
+
+        let fromLabel: string | null = null;
+        if (firstIsBottle && firstTier?.bottle_type && firstTier?.bottle_count) {
+          fromLabel = formatBottleLabel(firstTier.bottle_type, firstTier.bottle_count, language);
+        } else if (minAmountCents != null) {
+          fromLabel = formatPrice(minAmountCents);
+        }
 
         return (
           <Card
@@ -628,8 +666,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 <h4 className={cn("font-semibold", isSelected && !isUnavailable && colors.text)}>
                   {t.seatingTypes[option.seating_type as keyof typeof t.seatingTypes] || option.seating_type}
                 </h4>
-                {minPrice != null && !isUnavailable && (
-                  <p className="text-sm text-muted-foreground">{t.from} {formatPrice(minPrice)}</p>
+                {fromLabel && !isUnavailable && (
+                  <p className="text-sm text-muted-foreground">{t.from} {fromLabel}</p>
                 )}
               </div>
             </CardContent>
@@ -655,18 +693,22 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         />
       </div>
 
-      {/* Party Size + Ticket Price - Same Row */}
+      {/* Party Size + Ticket Price / Min Consumption - Same Row */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="flex items-center gap-2 text-sm">
             <Users className="h-3.5 w-3.5" />
             {t.partySize}
           </Label>
-          {ticketTier && ticketPricePerPerson > 0 && (
+          {isCurrentBottleTier ? (
+            <Label className="text-sm text-foreground font-medium">
+              {t.minimumConsumption}
+            </Label>
+          ) : ticketTier && ticketPricePerPerson > 0 ? (
             <Label className="text-sm text-foreground font-medium">
               {language === 'el' ? 'Τιμή εισιτηρίων' : 'Ticket price'}
             </Label>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center justify-between rounded-lg border border-border bg-card p-2">
           <div className="flex items-center gap-2">
@@ -681,21 +723,34 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             >+</Button>
             <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">{t.people}</span>
           </div>
-          {ticketTier && ticketPricePerPerson > 0 && (
+          {isCurrentBottleTier && currentBottleLabel ? (
+            <span className="text-base font-semibold text-foreground">{currentBottleLabel}</span>
+          ) : ticketTier && ticketPricePerPerson > 0 ? (
             <span className="text-base font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
-          )}
-          {ticketTier && ticketPricePerPerson === 0 && (
+          ) : ticketTier && ticketPricePerPerson === 0 ? (
             <span className="text-sm font-medium text-foreground">{t.free}</span>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Min Charge Info */}
-      {minChargeCents != null && minChargeCents > 0 && (
+      {/* Min Charge Info — amount mode only (bottle min consumption is shown in the row above) */}
+      {!isCurrentBottleTier && minChargeCents != null && minChargeCents > 0 && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card/60">
           <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{t.minimumCharge}: {formatPrice(minChargeCents)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottle info hint */}
+      {isCurrentBottleTier && currentBottleLabel && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card/60">
+          <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">
+              {t.minimumConsumption}: {currentBottleLabel} ({t.atVenue})
+            </span>
           </div>
         </div>
       )}
@@ -836,7 +891,44 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
       </div>
 
-      {minChargeCents != null && minChargeCents > 0 && (
+      {/* Bottle mode: show consumption breakdown (no online deduction) */}
+      {isCurrentBottleTier && currentBottleLabel && (
+        <>
+          <Separator />
+          <div className="border border-border/40 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold text-foreground">
+                💡 {t.howPaymentWorks}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                {t.minimumConsumption} ({partySize} {t.people}):
+              </span>
+              <span className="font-semibold text-foreground">{currentBottleLabel}</span>
+            </div>
+            {ticketTotal > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{t.ticketCostOnline}:</span>
+                <span className="font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
+              </div>
+            )}
+            <div className="border-t border-border/30 my-1" />
+            <div className="flex justify-between text-xs">
+              <span className="font-semibold text-foreground">{t.bottleAtVenue}:</span>
+              <span className="font-bold text-foreground">{currentBottleLabel}</span>
+            </div>
+            <p className="text-[9px] text-muted-foreground mt-1">
+              {language === 'el'
+                ? 'Η ελάχιστη κατανάλωση πληρώνεται απευθείας στο κατάστημα.'
+                : 'The minimum consumption is paid directly at the venue.'}
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Amount mode: classic prepaid breakdown */}
+      {!isCurrentBottleTier && minChargeCents != null && minChargeCents > 0 && (
         <>
           <Separator />
           <div className="border border-border/40 rounded-lg p-3 space-y-2">
@@ -1030,6 +1122,8 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           <Button onClick={handleCheckout} disabled={submitting || !termsAccepted} className="gap-2">
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" />{t.processing}</>
+            ) : isCurrentBottleTier && isFreeOrder ? (
+              <><Ticket className="h-4 w-4" />{t.confirmReservation}</>
             ) : isFreeOrder ? (
               <><Ticket className="h-4 w-4" />{t.getTickets}</>
             ) : (
