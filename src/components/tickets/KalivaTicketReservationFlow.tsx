@@ -302,8 +302,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Min charge
+  // Min charge + matched tier (with bottle metadata)
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
+  const [matchedTier, setMatchedTier] = useState<SeatingTypeOption['tiers'][number] | null>(null);
 
   // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
