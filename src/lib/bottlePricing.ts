@@ -72,3 +72,19 @@ export const formatTierMinSpend = (
 
 export const minSpendLabel = (language: 'el' | 'en' = 'el') => labels[language].minSpend;
 export const atVenueLabel = (language: 'el' | 'en' = 'el') => labels[language].atVenue;
+
+/**
+ * Returns a full display string for the minimum consumption,
+ * appending "(στο κατάστημα)" / "(at venue)" when bottle mode.
+ */
+export const formatTierFullLabel = (
+  tier: BottleTierFields & { prepaid_min_charge_cents?: number | null },
+  language: 'el' | 'en' = 'el'
+): string => {
+  if (isBottleTier(tier)) {
+    const bottle = formatBottleLabel(tier.bottle_type as BottleType, tier.bottle_count as number, language);
+    return `${bottle} (${atVenueLabel(language)})`;
+  }
+  const cents = tier.prepaid_min_charge_cents ?? 0;
+  return `€${(cents / 100).toFixed(2)}`;
+};

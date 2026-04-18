@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 
 
 interface DirectReservation {
@@ -75,6 +76,9 @@ interface SeatingTier {
   min_people: number;
   max_people: number;
   prepaid_min_charge_cents: number;
+  pricing_mode?: 'amount' | 'bottles' | null;
+  bottle_type?: 'bottle' | 'premium_bottle' | null;
+  bottle_count?: number | null;
 }
 
 // Cache for seating type names (seating_type_id -> seating_type string)
@@ -704,7 +708,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const fetchSeatingTiers = async (seatingTypeIds: string[]) => {
     const { data } = await supabase
       .from('seating_type_tiers')
-      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents')
+      .select('seating_type_id, min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count')
       .in('seating_type_id', seatingTypeIds)
       .order('min_people', { ascending: true });
     
@@ -715,6 +719,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         min_people: row.min_people,
         max_people: row.max_people,
         prepaid_min_charge_cents: row.prepaid_min_charge_cents,
+        pricing_mode: row.pricing_mode,
+        bottle_type: row.bottle_type,
+        bottle_count: row.bottle_count,
       });
     });
     setSeatingTiers(tiersMap);
@@ -937,6 +944,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     // Fallback to closest lower tier, otherwise the first configured tier
     const fallbackTier = [...tiers].reverse().find((t) => partySize >= t.min_people) ?? tiers[0];
     return fallbackTier?.prepaid_min_charge_cents ?? null;
+  };
+
+  const getMatchedTierForPartySize = (seatingTypeId: string | null | undefined, partySize: number): SeatingTier | null => {
+    if (!seatingTypeId || !seatingTiers[seatingTypeId] || seatingTiers[seatingTypeId].length === 0) return null;
+    const tiers = seatingTiers[seatingTypeId];
+    const exactTier = tiers.find((t) => partySize >= t.min_people && partySize <= t.max_people);
+    if (exactTier) return exactTier;
+    return [...tiers].reverse().find((t) => partySize >= t.min_people) ?? tiers[0] ?? null;
   };
 
   const getMinAge = (reservation: DirectReservation): string => {
@@ -2026,6 +2041,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               </TableHeader>
               <TableBody>
                 {filteredReservations.map((reservation) => {
+                const matchedTier = getMatchedTierForPartySize(reservation.seating_type_id, reservation.party_size);
+                const isBottleRow = !!matchedTier && checkIsBottleTier(matchedTier);
                 const tierMinCharge = getMinChargeForPartySize(reservation.seating_type_id, reservation.party_size);
                 const minChargeCents = reservation.is_manual_entry && reservation.prepaid_min_charge_cents != null
                   ? reservation.prepaid_min_charge_cents
@@ -2149,6 +2166,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               );
                             }
+                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" — read-only
+                            if (isBottleRow && matchedTier) {
+                              const bottle = formatBottleLabel(
+                                matchedTier.bottle_type as 'bottle' | 'premium_bottle',
+                                matchedTier.bottle_count as number,
+                                language
+                              );
+                              return (
+                                <div className="flex flex-col items-start">
+                                  <span className="text-sm font-medium text-foreground whitespace-nowrap">{bottle}</span>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'στο κατάστημα' : 'at venue'}
+                                  </span>
+                                </div>
+                              );
+                            }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
                               // Hybrid: show "€100.00 (€20.00)" as one editable field
@@ -2177,7 +2210,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               );
                             }
                           })()}
-                          {reservation.source !== 'walk_in' && reservation.source !== 'invitation' || reservation.seating_type_id ? (
+                          {!isBottleRow && (reservation.source !== 'walk_in' && reservation.source !== 'invitation' || reservation.seating_type_id) ? (
                             reservation.source === 'invitation' ? null :
                             isReservationOnly ? (
                               <EditableCell

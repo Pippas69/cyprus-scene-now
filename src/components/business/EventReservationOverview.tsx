@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
 
 interface EventReservationOverviewProps {
   eventId: string;
@@ -17,6 +18,9 @@ interface SeatingTier {
   min_people: number;
   max_people: number;
   prepaid_min_charge_cents: number;
+  pricing_mode?: 'amount' | 'bottles' | null;
+  bottle_type?: 'bottle' | 'premium_bottle' | null;
+  bottle_count?: number | null;
 }
 
 interface SeatingType {
@@ -180,8 +184,19 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         const acceptedCount = stReservations.length;
         const bookedCountForAvailability = liveBookedMap[st.id] ?? 0;
         const revenue = stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
+        // Detect if all tiers for this seating type are bottle mode
+        const allBottles = st.tiers.length > 0 && st.tiers.every((t) => isBottleTier(t));
+        const firstBottleTier = st.tiers.find((t) => isBottleTier(t)) ?? null;
         const minPrice =
-          st.tiers.length > 0 ? Math.min(...st.tiers.map((t) => t.prepaid_min_charge_cents)) : 0;
+          st.tiers.length > 0
+            ? Math.min(
+                ...st.tiers
+                  .filter((t) => !isBottleTier(t))
+                  .map((t) => t.prepaid_min_charge_cents),
+                Infinity,
+              )
+            : 0;
+        const minPriceFinal = Number.isFinite(minPrice) ? minPrice : 0;
 
         const totalSlots = st.available_slots;
         const availableSlots = totalSlots - bookedCountForAvailability;
@@ -191,7 +206,9 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
           acceptedBooked: acceptedCount,
           booked: bookedCountForAvailability,
           available: availableSlots > 0 ? availableSlots : 0,
-          minPrice,
+          minPrice: minPriceFinal,
+          allBottles,
+          firstBottleTier,
           revenue,
         };
       });
@@ -296,14 +313,25 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-medium text-[10px] md:text-sm whitespace-nowrap">{seating.seating_type}</span>
-                        {seating.minPrice > 0 && (
+                        {seating.allBottles && seating.firstBottleTier ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
+                          >
+                            {formatBottleLabel(
+                              seating.firstBottleTier.bottle_type as 'bottle' | 'premium_bottle',
+                              seating.firstBottleTier.bottle_count as number,
+                              language,
+                            )}
+                          </Badge>
+                        ) : seating.minPrice > 0 ? (
                           <Badge
                             variant="outline"
                             className="text-[10px] md:text-xs px-1.5 md:px-2 h-5 md:h-6 whitespace-nowrap flex-shrink-0"
                           >
                             {formatPrice(seating.minPrice)}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                       <span className="text-[10px] md:text-xs lg:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                         {seating.booked} {text.booked} / {seating.available} {text.available}

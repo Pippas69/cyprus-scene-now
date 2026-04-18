@@ -14,6 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SuccessQRCard } from "@/components/ui/SuccessQRCard";
+import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
 
 interface TicketTier {
   id: string;
@@ -116,7 +117,8 @@ export const TicketPurchaseCard = ({
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [minChargeCents, setMinChargeCents] = useState<number | null>(null);
-  const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number }[]>([]);
+  const [matchedBottle, setMatchedBottle] = useState<{ bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number } | null>(null);
+  const [allTiersData, setAllTiersData] = useState<{ min_people: number; max_people: number; prepaid_min_charge_cents: number; pricing_mode?: 'amount' | 'bottles' | null; bottle_type?: 'bottle' | 'premium_bottle' | null; bottle_count?: number | null }[]>([]);
   const [isPayAtDoor, setIsPayAtDoor] = useState(false);
   const [ticketSuccessData, setTicketSuccessData] = useState<{
     orderId: string;
@@ -155,13 +157,20 @@ export const TicketPurchaseCard = ({
       if (seatingTypes && seatingTypes.length > 0) {
         const { data: fetchedTiers } = await supabase
           .from("seating_type_tiers")
-          .select("min_people, max_people, prepaid_min_charge_cents")
+          .select("min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count")
           .eq("seating_type_id", seatingTypes[0].id)
           .order("min_people", { ascending: true });
         if (fetchedTiers && fetchedTiers.length > 0) {
-          setAllTiersData(fetchedTiers);
+          setAllTiersData(fetchedTiers as any);
           // Set initial value from smallest tier
-          setMinChargeCents(fetchedTiers[0].prepaid_min_charge_cents);
+          const first: any = fetchedTiers[0];
+          if (isBottleTier(first)) {
+            setMatchedBottle({ bottle_type: first.bottle_type, bottle_count: first.bottle_count });
+            setMinChargeCents(0);
+          } else {
+            setMatchedBottle(null);
+            setMinChargeCents(first.prepaid_min_charge_cents);
+          }
         }
       }
     };
@@ -172,18 +181,27 @@ export const TicketPurchaseCard = ({
   useEffect(() => {
     if (!isLinkedReservation || allTiersData.length === 0) return;
     const total = getTotalTickets();
+    const applyTier = (tier: any) => {
+      if (isBottleTier(tier)) {
+        setMatchedBottle({ bottle_type: tier.bottle_type, bottle_count: tier.bottle_count });
+        setMinChargeCents(0);
+      } else {
+        setMatchedBottle(null);
+        setMinChargeCents(tier.prepaid_min_charge_cents);
+      }
+    };
     if (total === 0) {
-      setMinChargeCents(allTiersData[0].prepaid_min_charge_cents);
+      applyTier(allTiersData[0]);
       return;
     }
     const matched = allTiersData.find(t => total >= t.min_people && total <= t.max_people);
     if (matched) {
-      setMinChargeCents(matched.prepaid_min_charge_cents);
+      applyTier(matched);
     } else {
       // If above max tier, use the highest tier
       const last = allTiersData[allTiersData.length - 1];
       if (total > last.max_people) {
-        setMinChargeCents(last.prepaid_min_charge_cents);
+        applyTier(last);
       }
     }
   }, [quantities, allTiersData, isLinkedReservation]);
@@ -396,7 +414,15 @@ export const TicketPurchaseCard = ({
         {isLinkedReservation && (
           <p className="text-xs text-muted-foreground mt-1">{text.ticketReservationHint}</p>
         )}
-        {isLinkedReservation && minChargeCents != null && minChargeCents > 0 && (
+        {isLinkedReservation && matchedBottle && (
+          <div className="flex items-center gap-1.5 mt-2 p-2 rounded-md bg-muted border border-border">
+            <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs text-muted-foreground">
+              {text.minimumChargeNote}: <strong className="text-foreground">{formatBottleLabel(matchedBottle.bottle_type, matchedBottle.bottle_count, language)}</strong> — {text.paidAtVenue}
+            </span>
+          </div>
+        )}
+        {isLinkedReservation && !matchedBottle && minChargeCents != null && minChargeCents > 0 && (
           <div className="flex items-center gap-1.5 mt-2 p-2 rounded-md bg-muted border border-border">
             <Info className="h-3.5 w-3.5 text-primary shrink-0" />
             <span className="text-xs text-muted-foreground">
