@@ -91,6 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
           start_at,
           location,
           cover_url,
+          pay_at_door,
           businesses (
             id,
             name,
