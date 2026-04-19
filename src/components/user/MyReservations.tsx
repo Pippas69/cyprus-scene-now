@@ -28,6 +28,8 @@ import { ReservationQRCard } from './ReservationQRCard';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
+import { AddGuestsDialog } from './AddGuestsDialog';
+import { Plus } from 'lucide-react';
 
 interface MyReservationsProps {
   userId: string;
@@ -111,6 +113,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [seatingMinCharge, setSeatingMinCharge] = useState<Record<string, number>>({});
   const [seatingBottleInfo, setSeatingBottleInfo] = useState<Record<string, { bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number }>>({});
   const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
+  const [addGuestsReservation, setAddGuestsReservation] = useState<ReservationData | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -910,19 +913,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* QR Codes button — full width at bottom */}
           {!isPast && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs mt-2"
-              onClick={() => {
-                setCurrentEventGuestIndex(0);
-                setSelectedEventGuestsReservation(reservation);
-              }}
-            >
-              <QrCode className="h-3.5 w-3.5 mr-1.5" />
-              {t.viewQRCodes}
-            </Button>
+            <div className="flex gap-1.5 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs"
+                onClick={() => {
+                  setCurrentEventGuestIndex(0);
+                  setSelectedEventGuestsReservation(reservation);
+                }}
+              >
+                <QrCode className="h-3.5 w-3.5 mr-1.5" />
+                {t.viewQRCodes}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="h-8 text-xs px-3"
+                onClick={() => setAddGuestsReservation(reservation)}
+                title={language === 'el' ? 'Προσθήκη ατόμων' : 'Add guests'}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                {language === 'el' ? 'Άτομα' : 'Guests'}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -1021,7 +1037,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Direct reservations with guest QR codes */}
           {!isPast && directGuests[reservation.id]?.length > 0 &&
-          <div className="flex items-center justify-between gap-1.5 mt-2">
+          <div className="flex items-center justify-between gap-1.5 mt-2 flex-wrap">
               <Button
               type="button"
               size="sm"
@@ -1033,6 +1049,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               }}>
                 <QrCode className="h-3.5 w-3.5 mr-1.5" />
                 {t.viewQRCodes}
+              </Button>
+              <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="h-8 text-xs px-3"
+              onClick={() => setAddGuestsReservation(reservation)}>
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                {language === 'el' ? 'Άτομα' : 'Guests'}
               </Button>
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
@@ -1378,6 +1403,23 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </Dialog>);
 
       })()}
+
+      {/* Add Guests Dialog */}
+      {addGuestsReservation && (
+        <AddGuestsDialog
+          open={!!addGuestsReservation}
+          onOpenChange={(o) => { if (!o) setAddGuestsReservation(null); }}
+          reservation={{
+            id: addGuestsReservation.id,
+            event_id: addGuestsReservation.event_id,
+            party_size: addGuestsReservation.party_size,
+            seating_type_id: addGuestsReservation.seating_type_id,
+            reservation_name: addGuestsReservation.reservation_name,
+          }}
+          language={language}
+          onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
+        />
+      )}
     </div>);
 
 };
