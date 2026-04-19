@@ -184,7 +184,28 @@ Deno.serve(async (req) => {
         const metadata = session.metadata;
         logStep("Processing payment checkout", { metadata });
 
-        if (metadata?.type === "reservation_event") {
+        if (metadata?.type === "add_guests") {
+          logStep("Forwarding add_guests payment to processor", {
+            reservationId: metadata.reservation_id,
+            sessionId: session.id,
+          });
+          const functionsBaseUrl = `${(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "")}/functions/v1`;
+          const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+          const fwd = await fetch(`${functionsBaseUrl}/process-add-guests-payment`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({ session_id: session.id }),
+          });
+          if (!fwd.ok) {
+            const txt = await fwd.text();
+            logStep("add_guests processor failed", { status: fwd.status, body: txt });
+            throw new Error(`add_guests processor failed: ${fwd.status}`);
+          }
+          logStep("add_guests payment processed");
+        } else if (metadata?.type === "reservation_event") {
           logStep("Forwarding reservation event payment to dedicated processor", {
             reservationId: metadata.reservation_id || "(new flow - created after payment)",
             sessionId: session.id,

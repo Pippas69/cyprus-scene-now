@@ -1,0 +1,242 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { securityHeaders } from "../_shared/security-headers.ts";
+import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
+
+const LATIN = /^[a-zA-Z\s\-\.']+$/;
+
+const log = (s: string, d?: unknown) =>
+  console.log(`[ADD-GUESTS] ${s}`, d ? JSON.stringify(d) : "");
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: securityHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header");
+
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } },
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user } } = await supabaseAuth.auth.getUser(token);
+    if (!user) throw new Error("Not authenticated");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const { reservation_id, extra_guests, guest_names } = await req.json();
+    if (!reservation_id || !extra_guests || extra_guests < 1) {
+      throw new Error("Invalid request");
+    }
+    const cleanedNames: string[] = (guest_names || []).map((n: string) => String(n).trim()).filter(Boolean);
+    if (cleanedNames.length !== extra_guests) {
+      throw new Error("Guest names count mismatch");
+    }
+    for (const n of cleanedNames) {
+      if (!LATIN.test(n)) throw new Error("Names must be Latin characters only");
+    }
+
+    // Load reservation
+    const { data: res, error: resErr } = await supabase
+      .from("reservations")
+      .select(`
+        id, user_id, event_id, business_id, party_size, seating_type_id,
+        prepaid_min_charge_cents, status, reservation_name, email,
+        events ( id, title, start_at, businesses ( id, name, stripe_account_id, stripe_onboarding_completed ) )
+      `)
+      .eq("id", reservation_id)
+      .single();
+
+    if (resErr || !res) throw new Error("Reservation not found");
+    if (res.user_id !== user.id) throw new Error("Not your reservation");
+    if (!res.event_id || !res.seating_type_id) {
+      throw new Error("Add guests is only supported for event-based reservations");
+    }
+    if (res.status === "cancelled" || res.status === "declined") {
+      throw new Error("Cannot add guests to a cancelled reservation");
+    }
+
+    const newPartySize = (res.party_size || 0) + extra_guests;
+
+    // Tier lookup for max + new charge
+    const { data: tiers, error: tiersErr } = await supabase
+      .from("seating_type_tiers")
+      .select("min_people, max_people, prepaid_min_charge_cents, pricing_mode")
+      .eq("seating_type_id", res.seating_type_id)
+      .order("min_people", { ascending: true });
+    if (tiersErr) throw tiersErr;
+    if (!tiers || tiers.length === 0) throw new Error("No tier configured");
+
+    const maxPeople = Math.max(...tiers.map((t: any) => t.max_people));
+    if (newPartySize > maxPeople) {
+      throw new Error(`Maximum ${maxPeople} guests for this seating type`);
+    }
+
+    const newTier = tiers.find((t: any) => newPartySize >= t.min_people && newPartySize <= t.max_people);
+    if (!newTier) throw new Error("No tier matches new party size");
+
+    const currentCharge = res.prepaid_min_charge_cents || 0;
+    const newCharge = newTier.prepaid_min_charge_cents || 0;
+    const extraChargeCents = Math.max(0, newCharge - currentCharge);
+
+    log("Computed", { currentCharge, newCharge, extraChargeCents, newPartySize, maxPeople });
+
+    // FREE PATH — apply immediately
+    if (extraChargeCents === 0) {
+      // Update party_size first
+      const { error: updErr } = await supabase
+        .from("reservations")
+        .update({ party_size: newPartySize, prepaid_min_charge_cents: newCharge })
+        .eq("id", reservation_id);
+      if (updErr) throw updErr;
+
+      // Build guests array (only the new ones)
+      const newGuests = cleanedNames.map((name) => ({ name, age: null }));
+
+      // Add tickets for new guests
+      await ensureReservationEventGuestTickets({
+        supabaseClient: supabase,
+        reservationId: reservation_id,
+        paymentIntentId: null,
+        session: null,
+        guests: newGuests,
+        customerEmail: res.email || null,
+      });
+
+      // Forward to processor for emails/notifications
+      const baseUrl = `${(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "")}/functions/v1`;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      try {
+        await fetch(`${baseUrl}/process-add-guests-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            reservation_id,
+            extra_guests,
+            extra_charge_cents: 0,
+            source: "add-guests-free",
+          }),
+        });
+      } catch (e) {
+        log("Free-path notify forward failed (non-fatal)", { error: String(e) });
+      }
+
+      return new Response(JSON.stringify({ ok: true, free: true }), {
+        headers: { ...securityHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // PAID PATH — create Stripe checkout for the diff
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2025-08-27.basil",
+    });
+    const business = (res as any).events?.businesses;
+    const event = (res as any).events;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email, name")
+      .eq("id", user.id)
+      .single();
+    const customerEmail = profile?.email || user.email || res.email || "";
+
+    // get/create Stripe customer
+    let customerId: string | undefined;
+    if (customerEmail) {
+      const list = await stripe.customers.list({ email: customerEmail, limit: 1 });
+      if (list.data.length > 0) customerId = list.data[0].id;
+      else {
+        const c = await stripe.customers.create({ email: customerEmail, name: profile?.name || res.reservation_name });
+        customerId = c.id;
+      }
+    }
+
+    const metadata: Record<string, string> = {
+      type: "add_guests",
+      reservation_id,
+      extra_guests: String(extra_guests),
+      new_party_size: String(newPartySize),
+      new_prepaid_charge_cents: String(newCharge),
+      extra_charge_cents: String(extraChargeCents),
+      user_id: user.id,
+      business_id: business?.id || "",
+      customer_email: customerEmail,
+    };
+
+    // Serialize guest names (chunked)
+    const guestsJson = JSON.stringify(cleanedNames.map((name) => ({ name, age: null })));
+    if (guestsJson.length <= 500) {
+      metadata.guests = guestsJson;
+    } else {
+      const chunkSize = 490;
+      for (let i = 0; i * chunkSize < guestsJson.length; i++) {
+        metadata[`guests_${i}`] = guestsJson.slice(i * chunkSize, (i + 1) * chunkSize);
+      }
+    }
+
+    const origin = req.headers.get("origin") || "https://fomo.com.cy";
+    const hasConnect = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
+
+    const baseSession: any = {
+      customer: customerId,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `${event?.title || "Reservation"} — Επιπλέον άτομα`,
+              description: `+${extra_guests} άτομα στην κράτηση`,
+            },
+            unit_amount: extraChargeCents,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=success`,
+      cancel_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=cancelled`,
+      metadata,
+    };
+
+    let session: Stripe.Checkout.Session;
+    if (hasConnect) {
+      try {
+        await stripe.accounts.retrieve(business.stripe_account_id);
+        session = await stripe.checkout.sessions.create({
+          ...baseSession,
+          payment_intent_data: {
+            transfer_data: { destination: business.stripe_account_id },
+            metadata,
+          },
+        });
+      } catch {
+        session = await stripe.checkout.sessions.create(baseSession);
+      }
+    } else {
+      session = await stripe.checkout.sessions.create(baseSession);
+    }
+
+    log("Checkout created", { sessionId: session.id, extraChargeCents });
+
+    return new Response(JSON.stringify({ checkout_url: session.url }), {
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    log("ERROR", { msg });
+    return new Response(JSON.stringify({ error: msg }), {
+      headers: { ...securityHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
+});
