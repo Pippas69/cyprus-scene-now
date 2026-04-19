@@ -69,7 +69,7 @@ interface ReservationData {
     location: string;
     event_type: string | null;
     cover_image_url: string | null;
-    minimum_age: number | null;
+    minimum_age?: number | null;
     businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
@@ -205,7 +205,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       const { data: orders } = await (supabase as any)
         .from('ticket_orders')
         .select('id')
-        .eq('reservation_id', reservationId);
+        .eq('linked_reservation_id', reservationId);
       const orderIds = (orders || []).map((o: any) => o.id);
       if (orderIds.length > 0) {
         const { data: tks } = await (supabase as any)
@@ -1527,6 +1527,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             party_size: addGuestsReservation.party_size,
             seating_type_id: addGuestsReservation.seating_type_id,
             reservation_name: addGuestsReservation.reservation_name,
+            email: addGuestsReservation.email,
+            event_minimum_age: addGuestsReservation.events?.minimum_age,
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
