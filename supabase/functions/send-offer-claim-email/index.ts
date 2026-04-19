@@ -236,6 +236,8 @@ Deno.serve(async (req) => {
 
       ${reservationInfo}
 
+      ${transactionCodeBox(purchase?.transaction_code)}
+
       ${qrCodeSection(qrCodeUrl, undefined, 'Δείξε στο κατάστημα')}
 
       ${infoCard('Λεπτομέρειες Προσφοράς', infoRows)}
