@@ -1037,7 +1037,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* Direct reservations with guest QR codes */}
           {!isPast && directGuests[reservation.id]?.length > 0 &&
-          <div className="flex items-center justify-between gap-1.5 mt-2">
+          <div className="flex items-center justify-between gap-1.5 mt-2 flex-wrap">
               <Button
               type="button"
               size="sm"
@@ -1049,6 +1049,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               }}>
                 <QrCode className="h-3.5 w-3.5 mr-1.5" />
                 {t.viewQRCodes}
+              </Button>
+              <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="h-8 text-xs px-3"
+              onClick={() => setAddGuestsReservation(reservation)}>
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                {language === 'el' ? 'Άτομα' : 'Guests'}
               </Button>
               {(reservation.status === 'pending' || reservation.status === 'accepted') &&
             <Button
