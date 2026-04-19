@@ -360,6 +360,39 @@ export function wrapBusinessEmail(content: string, subheader?: string): string {
   `;
 }
 
+// Transaction Code box - prominent, monospace, used for customer↔business identification
+// Shown on EMAILS only (NOT on push or in-app notifications)
+export function transactionCodeBox(code: string | null | undefined, language: 'el' | 'en' = 'el'): string {
+  if (!code) return '';
+  const label = language === 'en' ? 'Transaction Code' : 'Κωδικός Συναλλαγής';
+  const hint = language === 'en'
+    ? 'Use this code when contacting the venue'
+    : 'Χρησιμοποίησε αυτόν τον κωδικό όταν επικοινωνείς με την επιχείρηση';
+  return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 20px 0;">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0" border="0" style="background-color: ${BRAND_COLORS.offWhite}; border: 2px solid ${BRAND_COLORS.teal}; border-radius: 12px; padding: 14px 24px;">
+            <tr>
+              <td align="center">
+                <p style="color: ${BRAND_COLORS.gray}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 6px 0;">
+                  ${label}
+                </p>
+                <p style="color: ${BRAND_COLORS.navy}; font-size: 24px; font-weight: 700; letter-spacing: 4px; margin: 0; font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;">
+                  ${code}
+                </p>
+                <p style="color: ${BRAND_COLORS.lightGray}; font-size: 10px; margin: 6px 0 0 0;">
+                  ${hint}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
 // Stat box for business notifications (e.g., tickets sold, reservations)
 export function statBox(value: string | number, label: string): string {
   return `

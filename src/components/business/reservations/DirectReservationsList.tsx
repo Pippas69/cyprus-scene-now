@@ -38,6 +38,7 @@ interface DirectReservation {
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
+  transaction_code?: string | null;
   checked_in_at: string | null;
   cancellation_reason: string | null;
   profiles?: {name: string;email: string;};
