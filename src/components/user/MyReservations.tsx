@@ -29,6 +29,7 @@ import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { AddGuestsDialog } from './AddGuestsDialog';
+import { ReservationSuccessDialog } from './ReservationSuccessDialog';
 import { Plus } from 'lucide-react';
 
 interface MyReservationsProps {
@@ -114,6 +115,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [seatingBottleInfo, setSeatingBottleInfo] = useState<Record<string, { bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number }>>({});
   const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
   const [addGuestsReservation, setAddGuestsReservation] = useState<ReservationData | null>(null);
+  const [addGuestsSuccessData, setAddGuestsSuccessData] = useState<{
+    confirmation_code: string;
+    qr_code_token: string;
+    reservation_name: string;
+    party_size: number;
+    preferred_time: string;
+    business_name: string;
+    business_logo?: string | null;
+    guests: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
@@ -149,6 +160,105 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   useEffect(() => {
     setActiveReservationsTab(searchParams.get('subtab') === 'direct' ? 'direct' : 'event');
+  }, [searchParams]);
+
+  const openAddGuestsSuccessFor = async (reservationId: string) => {
+    try {
+      const { data: res } = await supabase
+        .from('reservations')
+        .select('id, confirmation_code, qr_code_token, reservation_name, party_size, preferred_time, event_id, business_id')
+        .eq('id', reservationId)
+        .maybeSingle();
+      if (!res) return;
+
+      let businessName = '';
+      let businessLogo: string | null = null;
+      if (res.event_id) {
+        const { data: ev } = await supabase
+          .from('events')
+          .select('business_id')
+          .eq('id', res.event_id)
+          .maybeSingle();
+        const bizId = (ev as any)?.business_id;
+        if (bizId) {
+          const { data: biz } = await supabase
+            .from('businesses')
+            .select('name, logo_url')
+            .eq('id', bizId)
+            .maybeSingle();
+          businessName = biz?.name || '';
+          businessLogo = biz?.logo_url || null;
+        }
+      } else if (res.business_id) {
+        const { data: biz } = await supabase
+          .from('businesses')
+          .select('name, logo_url')
+          .eq('id', res.business_id)
+          .maybeSingle();
+        businessName = biz?.name || '';
+        businessLogo = biz?.logo_url || null;
+      }
+
+      let guests: { guest_name: string; qr_code_token: string }[] = [];
+      const { data: orders } = await (supabase as any)
+        .from('ticket_orders')
+        .select('id')
+        .eq('reservation_id', reservationId);
+      const orderIds = (orders || []).map((o: any) => o.id);
+      if (orderIds.length > 0) {
+        const { data: tks } = await (supabase as any)
+          .from('tickets')
+          .select('guest_name, qr_code_token')
+          .in('order_id', orderIds);
+        guests = (tks || [])
+          .filter((t: any) => t.qr_code_token)
+          .map((t: any) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+      }
+      if (guests.length === 0) {
+        const { data: dg } = await supabase
+          .from('reservation_guests')
+          .select('guest_name, qr_code_token')
+          .eq('reservation_id', reservationId);
+        guests = (dg || [])
+          .filter((g: any) => g.qr_code_token)
+          .map((g: any) => ({ guest_name: g.guest_name || '', qr_code_token: g.qr_code_token }));
+      }
+
+      setAddGuestsSuccessData({
+        confirmation_code: res.confirmation_code || '',
+        qr_code_token: res.qr_code_token || (guests[0]?.qr_code_token ?? ''),
+        reservation_name: res.reservation_name || '',
+        party_size: res.party_size || guests.length,
+        preferred_time: res.preferred_time || '',
+        business_name: businessName,
+        business_logo: businessLogo,
+        guests,
+      });
+    } catch (e) {
+      console.error('openAddGuestsSuccessFor error', e);
+    }
+  };
+
+  useEffect(() => {
+    const addGuests = searchParams.get('add_guests');
+    const reservationId = searchParams.get('reservation_id');
+    if (addGuests === 'success' && reservationId) {
+      const timer = window.setTimeout(() => {
+        openAddGuestsSuccessFor(reservationId);
+        fetchReservations();
+        const url = new URL(window.location.href);
+        url.searchParams.delete('add_guests');
+        url.searchParams.delete('reservation_id');
+        window.history.replaceState({}, '', url.toString());
+      }, 1500);
+      return () => window.clearTimeout(timer);
+    }
+    if (addGuests === 'cancelled') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('add_guests');
+      window.history.replaceState({}, '', url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const fetchReservations = async () => {
@@ -1418,8 +1528,24 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
+          onShowSuccess={(rid) => {
+            setAddGuestsReservation(null);
+            // small delay so newly inserted tickets are queryable
+            window.setTimeout(() => {
+              openAddGuestsSuccessFor(rid);
+              fetchReservations();
+            }, 500);
+          }}
         />
       )}
+
+      {/* Add Guests Success Dialog (with all QR codes) */}
+      <ReservationSuccessDialog
+        open={!!addGuestsSuccessData}
+        onOpenChange={(o) => { if (!o) setAddGuestsSuccessData(null); }}
+        reservation={addGuestsSuccessData}
+        language={language}
+      />
     </div>);
 
 };
