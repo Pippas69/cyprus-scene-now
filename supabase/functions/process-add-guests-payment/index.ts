@@ -206,7 +206,7 @@ serve(async (req) => {
           })
           .join("");
 
-        const paidLabel = extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : "Χωρίς επιπλέον χρέωση";
+        const paidLabel = extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : "Χωρίς επιπλέον online χρέωση";
 
         const userContent = `
           ${successBadge("Άτομα Προστέθηκαν")}
