@@ -128,10 +128,21 @@ export const AddGuestsDialog = ({
 
   const newTier = tiers.find((tt) => newTotal >= tt.min_people && newTotal <= tt.max_people) || null;
   const newTierIsBottles = isBottleTier(newTier as any);
+  const currentTierIsBottles = isBottleTier(currentTier as any);
   const currentCharge = currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
   // Bottles mode → no online prepayment; bottles paid at venue
   const extraChargeCents = newTierIsBottles ? 0 : Math.max(0, newCharge - currentCharge);
+
+  // Bottle delta (when both current & new are bottle tiers of same type)
+  const bottleDelta = (() => {
+    if (!newTierIsBottles || !newTier) return null;
+    const newCount = newTier.bottle_count ?? 0;
+    const curCount = currentTierIsBottles ? (currentTier?.bottle_count ?? 0) : 0;
+    const sameType = currentTierIsBottles ? currentTier?.bottle_type === newTier.bottle_type : true;
+    const delta = sameType ? Math.max(0, newCount - curCount) : newCount;
+    return { delta, type: newTier.bottle_type as 'bottle' | 'premium_bottle', sameType };
+  })();
 
   const minAge = isEvent ? getMinAge(reservation.event_id || '', reservation.event_minimum_age) : 0;
 
