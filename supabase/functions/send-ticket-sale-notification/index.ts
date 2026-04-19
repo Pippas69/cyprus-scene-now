@@ -4,6 +4,7 @@ import {
   detailRow,
   ctaButton,
   successBadge,
+  transactionCodeBox,
 } from "../_shared/email-templates.ts";
 
 const logStep = (step: string, details?: unknown) => {

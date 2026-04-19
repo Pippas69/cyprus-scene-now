@@ -8,7 +8,7 @@ import {
   wrapBusinessEmailContent,
   type BusinessNotificationType 
 } from "../_shared/business-notification-helper.ts";
-import { infoCard, detailRow, ctaButton, successBadge } from "../_shared/email-templates.ts";
+import { infoCard, detailRow, ctaButton, successBadge, transactionCodeBox } from "../_shared/email-templates.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
