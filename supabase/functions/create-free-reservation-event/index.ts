@@ -147,7 +147,7 @@ serve(async (req) => {
     try {
       await supabaseService.from('notifications').insert({
         user_id: user.id,
-        title: '✅ Κράτηση επιβεβαιώθηκε!',
+        title: 'Κράτηση επιβεβαιώθηκε',
         message: `Κράτηση για ${event.title} - ${safePartySize} ${safePartySize === 1 ? 'άτομο' : 'άτομα'}`,
         type: 'reservation',
         event_type: 'reservation_confirmed',
@@ -164,7 +164,7 @@ serve(async (req) => {
     // Send push notification to user
     try {
       const pushResult = await sendPushIfEnabled(user.id, {
-        title: '✅ Κράτηση επιβεβαιώθηκε!',
+        title: 'Κράτηση επιβεβαιώθηκε',
         body: `${event.title} - ${safePartySize} ${safePartySize === 1 ? 'άτομο' : 'άτομα'}`,
         tag: `reservation-${reservation.id}`,
         data: {
