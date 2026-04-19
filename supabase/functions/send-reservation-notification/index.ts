@@ -130,12 +130,14 @@ const handler = async (req: Request): Promise<Response> => {
     let reservationContext: string;
     let reservationDateTime: string;
     let locationInfo: string | null;
+    let coverImageUrl: string | null = null;
 
     if (isDirectReservation) {
       businessData = reservation.businesses;
       reservationContext = 'Κράτηση Τραπεζιού';
       reservationDateTime = reservation.preferred_time || reservation.reservation_date;
       locationInfo = businessData?.address || null;
+      coverImageUrl = (reservation.businesses as any)?.cover_url || null;
     } else {
       const event = reservation.events;
       if (!event) {
@@ -145,6 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
       reservationContext = event.title;
       reservationDateTime = event.start_at;
       locationInfo = event.location;
+      coverImageUrl = (event as any).cover_url || (event.businesses as any)?.cover_url || null;
     }
 
     if (!businessData) {
