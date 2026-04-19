@@ -4,7 +4,7 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { ensureReservationEventGuestTickets } from "../_shared/reservation-event-tickets.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
-import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { z, parseBody, flexId, safeString, reservationName, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -17,7 +17,7 @@ const BodySchema = z.object({
   event_id: flexId.optional(),
   seating_type_id: flexId.optional(),
   party_size: positiveInt.optional(),
-  reservation_name: safeString(200).optional(),
+  reservation_name: reservationName(200).optional(),
   customer_email: optionalEmail,
   phone_number: optionalString(25),
   special_requests: optionalString(1000),
