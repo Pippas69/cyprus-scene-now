@@ -403,7 +403,7 @@ export const AddGuestsDialog = ({
                   <span className="text-sm text-muted-foreground">{tr.extraCharge}</span>
                   <span className={cn(
                     "text-base font-semibold",
-                    extraChargeCents > 0 ? "text-primary" : "text-emerald-500"
+                    extraChargeCents > 0 ? "text-primary" : "text-foreground"
                   )}>
                     {extraChargeCents > 0
                       ? `€${(extraChargeCents / 100).toFixed(2)}`
