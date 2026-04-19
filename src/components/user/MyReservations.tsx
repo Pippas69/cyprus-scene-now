@@ -913,19 +913,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
           {/* QR Codes button — full width at bottom */}
           {!isPast && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs mt-2"
-              onClick={() => {
-                setCurrentEventGuestIndex(0);
-                setSelectedEventGuestsReservation(reservation);
-              }}
-            >
-              <QrCode className="h-3.5 w-3.5 mr-1.5" />
-              {t.viewQRCodes}
-            </Button>
+            <div className="flex gap-1.5 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs"
+                onClick={() => {
+                  setCurrentEventGuestIndex(0);
+                  setSelectedEventGuestsReservation(reservation);
+                }}
+              >
+                <QrCode className="h-3.5 w-3.5 mr-1.5" />
+                {t.viewQRCodes}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="h-8 text-xs px-3"
+                onClick={() => setAddGuestsReservation(reservation)}
+                title={language === 'el' ? 'Προσθήκη ατόμων' : 'Add guests'}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                {language === 'el' ? 'Άτομα' : 'Guests'}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
