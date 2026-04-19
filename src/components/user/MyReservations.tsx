@@ -1403,6 +1403,23 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           </Dialog>);
 
       })()}
+
+      {/* Add Guests Dialog */}
+      {addGuestsReservation && (
+        <AddGuestsDialog
+          open={!!addGuestsReservation}
+          onOpenChange={(o) => { if (!o) setAddGuestsReservation(null); }}
+          reservation={{
+            id: addGuestsReservation.id,
+            event_id: addGuestsReservation.event_id,
+            party_size: addGuestsReservation.party_size,
+            seating_type_id: addGuestsReservation.seating_type_id,
+            reservation_name: addGuestsReservation.reservation_name,
+          }}
+          language={language}
+          onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
+        />
+      )}
     </div>);
 
 };
