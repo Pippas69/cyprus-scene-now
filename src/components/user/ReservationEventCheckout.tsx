@@ -783,6 +783,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
+                className={cn(
+                  "h-9 text-sm",
+                  reservationName.length > 0 && !/^[a-zA-Z\s\-.']+$/.test(reservationName) && "border-destructive focus-visible:ring-destructive"
+                )}
                 className="h-9 text-sm"
               />
             </div>
