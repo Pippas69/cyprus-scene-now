@@ -475,12 +475,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const handleCheckout = async () => {
     if (!selectedSeating || price === null) return;
 
-    const hasReservationName = reservationName.trim().length >= 2;
+    const trimmedName = reservationName.trim();
+    const hasReservationName = trimmedName.length >= 2;
+    const isLatinName = /^[a-zA-Z\s\-\.']+$/.test(trimmedName);
     const isPhoneValidNow = isValidPhone(phoneNumber.trim());
     const isEmailValidNow = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
 
     if (!hasReservationName) {
       toast.error(language === 'el' ? 'Συμπληρώστε όνομα κράτησης' : 'Please enter reservation name');
+      return;
+    }
+    if (!isLatinName) {
+      toast.error(language === 'el' ? 'Παρακαλώ χρησιμοποίησε λατινικούς χαρακτήρες (π.χ. John Doe)' : 'Please use Latin characters only (e.g. John Doe)');
       return;
     }
     if (!allGuestsFilled) {
@@ -622,7 +628,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const canProceedToStep2 = selectedSeating !== null;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = customerEmail.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && partySize > 0 && price !== null && isPhoneValid && isEmailValid;
+  const isReservationNameLatin = /^[a-zA-Z\s\-\.']+$/.test(reservationName.trim());
+  const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && isReservationNameLatin && partySize > 0 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;

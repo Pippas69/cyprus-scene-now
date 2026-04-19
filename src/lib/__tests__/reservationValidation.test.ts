@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reservationSchema } from "../reservationValidation";
 
 const validData = {
-  reservation_name: "Γιώργος",
+  reservation_name: "John Doe",
   party_size: 4,
   phone_number: "+357 99 123456",
   special_requests: "",
@@ -59,8 +59,18 @@ describe("reservationSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts Greek names", () => {
+  it("rejects Greek names (Latin only enforced)", () => {
     const result = reservationSchema.safeParse({ ...validData, reservation_name: "Μαρία Παπαδοπούλου" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts Latin names with hyphen", () => {
+    const result = reservationSchema.safeParse({ ...validData, reservation_name: "Marie-Claire" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts Latin names with apostrophe", () => {
+    const result = reservationSchema.safeParse({ ...validData, reservation_name: "O'Brien" });
     expect(result.success).toBe(true);
   });
 });
