@@ -37,6 +37,7 @@ interface DirectReservation {
   staff_memo: string | null;
   business_notes: string | null;
   confirmation_code: string | null;
+  transaction_code: string | null;
   qr_code_token: string | null;
   checked_in_at: string | null;
   cancellation_reason: string | null;
@@ -244,13 +245,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const greekCollator = useMemo(() => new Intl.Collator('el', { sensitivity: 'base', numeric: true }), []);
   const latinCollator = useMemo(() => new Intl.Collator('en', { sensitivity: 'base', numeric: true }), []);
 
+  // Λατινικά πρώτα (νέα δεδομένα — A-Z), Ελληνικά μετά (παλιά δεδομένα).
   const compareNames = useCallback((nameA: string, nameB: string) => {
     const aIsGreek = isGreek(nameA);
     const bIsGreek = isGreek(nameB);
-    // Greek names first, then Latin
-    if (aIsGreek && !bIsGreek) return -1;
-    if (!aIsGreek && bIsGreek) return 1;
-    // Same script: sort alphabetically with appropriate collator
+    if (aIsGreek && !bIsGreek) return 1;
+    if (!aIsGreek && bIsGreek) return -1;
     const collator = aIsGreek ? greekCollator : latinCollator;
     return collator.compare(nameA, nameB);
   }, [greekCollator, latinCollator]);
@@ -346,7 +346,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
+          business_notes, staff_memo, confirmation_code, transaction_code, qr_code_token, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
           cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
@@ -547,6 +547,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     business_notes: null,
                     staff_memo: null,
                     confirmation_code: null,
+                    transaction_code: null,
                     qr_code_token: null,
                     checked_in_at: ticket.checked_in_at || null,
                     cancellation_reason: null,
@@ -2088,6 +2089,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             {reservation.phone_number.replace(/^\+357/, '')}
                               </span>
                           }
+                            {reservation.transaction_code && (
+                              <span className="text-[10px] font-mono text-muted-foreground tracking-wider -ml-1.5">
+                                {reservation.transaction_code}
+                              </span>
+                            )}
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
@@ -2378,6 +2384,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
                         </div>
                       }
+                      {reservation.transaction_code && (
+                        <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-0.5">
+                          {reservation.transaction_code}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
 

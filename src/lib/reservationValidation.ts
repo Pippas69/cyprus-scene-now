@@ -4,9 +4,10 @@ import { phoneRegex, getDigitCount } from './phoneValidation';
 export const reservationSchema = z.object({
   reservation_name: z
     .string()
+    .trim()
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must not exceed 100 characters')
-    .regex(/^[a-zA-Z\s\u0370-\u03FF\u1F00-\u1FFF]+$/, 'Name must contain only letters and spaces'),
+    .regex(/^[a-zA-Z\s\-\.']+$/, 'Please use Latin characters only (A-Z)'),
   
   party_size: z
     .number()
