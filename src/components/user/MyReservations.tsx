@@ -166,19 +166,30 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     try {
       const { data: res } = await supabase
         .from('reservations')
-        .select(`
-          id, confirmation_code, qr_code_token, reservation_name, party_size, preferred_time,
-          event_id, business_id,
-          events ( id, title, businesses ( id, name, logo_url ) ),
-          businesses ( id, name, logo_url )
-        `)
+        .select('id, confirmation_code, qr_code_token, reservation_name, party_size, preferred_time, event_id, business_id')
         .eq('id', reservationId)
         .maybeSingle();
       if (!res) return;
-      const businessName =
-        (res as any).events?.businesses?.name || (res as any).businesses?.name || '';
-      const businessLogo =
-        (res as any).events?.businesses?.logo_url || (res as any).businesses?.logo_url || null;
+
+      let businessName = '';
+      let businessLogo: string | null = null;
+      if (res.event_id) {
+        const { data: ev } = await supabase
+          .from('events')
+          .select('businesses ( name, logo_url )')
+          .eq('id', res.event_id)
+          .maybeSingle();
+        businessName = (ev as any)?.businesses?.name || '';
+        businessLogo = (ev as any)?.businesses?.logo_url || null;
+      } else if (res.business_id) {
+        const { data: biz } = await supabase
+          .from('businesses')
+          .select('name, logo_url')
+          .eq('id', res.business_id)
+          .maybeSingle();
+        businessName = biz?.name || '';
+        businessLogo = biz?.logo_url || null;
+      }
 
       let guests: { guest_name: string; qr_code_token: string }[] = [];
       const { data: orders } = await supabase
