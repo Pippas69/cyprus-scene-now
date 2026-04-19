@@ -202,7 +202,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=success`,
+      success_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=success&reservation_id=${reservation_id}`,
       cancel_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=cancelled`,
       metadata,
     };
