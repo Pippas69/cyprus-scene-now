@@ -137,6 +137,19 @@ Deno.serve(async (req) => {
       reservationTime: data.reservationTime 
     });
 
+    // Fetch transaction_code for this purchase
+    let transactionCode: string | null = null;
+    try {
+      const { data: purchaseRow } = await supabaseClient
+        .from('offer_purchases')
+        .select('transaction_code')
+        .eq('id', data.purchaseId)
+        .maybeSingle();
+      transactionCode = purchaseRow?.transaction_code ?? null;
+    } catch (e) {
+      logStep("Could not fetch transaction_code (non-fatal)", { e: String(e) });
+    }
+
     // Generate QR code URL
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(data.qrCodeToken)}&bgcolor=ffffff&color=000000`;
 
@@ -236,7 +249,7 @@ Deno.serve(async (req) => {
 
       ${reservationInfo}
 
-      ${transactionCodeBox(purchase?.transaction_code)}
+      ${transactionCodeBox(transactionCode)}
 
       ${qrCodeSection(qrCodeUrl, undefined, 'Δείξε στο κατάστημα')}
 
