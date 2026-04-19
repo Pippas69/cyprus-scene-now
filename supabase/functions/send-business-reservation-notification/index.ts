@@ -11,6 +11,7 @@ import {
 import { infoCard, detailRow, ctaButton, successBadge, transactionCodeBox } from "../_shared/email-templates.ts";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[BUSINESS-RESERVATION-NOTIFICATION] ${step}`, details ? JSON.stringify(details) : '');
@@ -131,6 +132,26 @@ Deno.serve(async (req) => {
         });
     }
 
+    // Fetch transaction_code for this reservation (for email only — not push/in-app)
+    let transactionCode: string | null = null;
+    if (!skipEmail && data.reservationId) {
+      try {
+        const supabaseAdmin = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          { auth: { persistSession: false } }
+        );
+        const { data: resRow } = await supabaseAdmin
+          .from('reservations')
+          .select('transaction_code')
+          .eq('id', data.reservationId)
+          .maybeSingle();
+        transactionCode = resRow?.transaction_code ?? null;
+      } catch (e) {
+        logStep("Could not fetch transaction_code (non-fatal)", { e: String(e) });
+      }
+    }
+
     // Build email content for new reservations
     const emailHtml = skipEmail ? undefined : wrapBusinessEmailContent(`
       ${successBadge('Νέα Κράτηση')}
@@ -138,6 +159,8 @@ Deno.serve(async (req) => {
       <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
         Νέα κράτηση για το <strong>${data.businessName}</strong>.
       </p>
+
+      ${transactionCodeBox(transactionCode)}
 
       ${infoCard('Λεπτομέρειες', 
         detailRow('Πελάτης', data.customerName) +
