@@ -420,7 +420,11 @@ export const AddGuestsDialog = ({
                         ? `+${formatBottleLabel(bottleDelta.type, bottleDelta.delta, language)} (${tr.atVenue})`
                         : newTierIsBottles
                           ? tr.payAtVenue
-                          : tr.free}
+                          : isPayAtVenue
+                            ? tr.payAtVenue
+                            : (newCharge ?? 0) === 0
+                              ? tr.free
+                              : tr.noChange}
                   </span>
                 </div>
               </div>
