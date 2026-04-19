@@ -262,15 +262,36 @@ const handler = async (req: Request): Promise<Response> => {
       ? '/dashboard-user?tab=reservations&subtab=direct' 
       : '/dashboard-user?tab=reservations&subtab=event';
 
+    // Determine reservation flavor for subject differentiation (types 3-7)
+    const isPayAtDoor = !isDirectReservation && !!(reservation.events as any)?.pay_at_door;
+    const isBarFree = !hasMinSpendInfo; // No minimum charge → Bar/free seating
+    let flavorLabel = ''; // appended to subjects
+    let flavorBusinessLabel = '';
+    if (isBarFree) {
+      flavorLabel = ' - Bar';
+      flavorBusinessLabel = ' - Bar (Δωρεάν θέση)';
+    } else if (isPayAtDoor) {
+      if (tierIsBottles) {
+        flavorLabel = '';
+        flavorBusinessLabel = ' - Πληρωμή στο Μαγαζί (Μπουκάλι)';
+      } else {
+        flavorLabel = ' - Πληρωμή στο Μαγαζί';
+        flavorBusinessLabel = ' - Πληρωμή στο Μαγαζί';
+      }
+    } else if (tierIsBottles) {
+      flavorLabel = '';
+      flavorBusinessLabel = ' - Απαιτούμενα Μπουκάλια';
+    }
+
     if (type === 'new') {
       const isAutoAccepted = reservation.status === 'accepted';
       
       if (isAutoAccepted && (qrCodeUrl || guestTickets.length > 0)) {
         // Auto-accepted reservation with QR code(s)
-        userSubject = `Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
+        userSubject = `Η κράτησή σου επιβεβαιώθηκε${flavorLabel} - ${reservationContext}`;
         inAppNotification = {
-          title: 'Κράτηση επιβεβαιώθηκε',
-          message: `${reservationContext} · ${formattedDate} ${formattedTime}`,
+          title: isBarFree ? 'Νέα κράτηση Bar' : 'Νέα κράτηση',
+          message: `${reservation.party_size} ${reservation.party_size === 1 ? 'άτομο' : 'άτομα'} στο ${businessName} - επιβεβαιώθηκε`,
           event_type: 'reservation_confirmed',
           deep_link: userDeepLink
         };
@@ -338,8 +359,8 @@ const handler = async (req: Request): Promise<Response> => {
         userHtml = wrapPremiumEmail(content, 'Εκκρεμεί');
       }
 
-      // Business notification for new reservation
-      businessSubject = `Νέα κράτηση - ${reservation.reservation_name}`;
+      // Business notification for new reservation (per spec: type-aware subject)
+      businessSubject = `Νέα κράτηση${flavorBusinessLabel} - ${reservationContext}`;
       const bizContent = `
         ${successBadge('Νέα Κράτηση')}
         
@@ -355,6 +376,7 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Ώρα', formattedTime) +
           detailRow('Άτομα', `${reservation.party_size}`) +
           (hasMinSpendInfo ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true) : '') +
+          (isBarFree ? detailRow('Σημείωση', 'Δωρεάν θέση Bar - χωρίς ποσό') : '') +
           (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '')
         )}
 
