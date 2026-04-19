@@ -29,7 +29,7 @@ async function createInAppNotification(
   
   await supabase.from('notifications').insert({
     user_id: userId,
-    title: 'Εβδομαδιαία Σύνοψη 📊',
+ title: 'Εβδομαδιαία Σύνοψη',
     message,
     type: 'business',
     event_type: 'WEEKLY_DIGEST',
@@ -256,14 +256,14 @@ Deno.serve(async (req) => {
 
         // Build email content
         const emailContent = `
-          <h2 style="color: #1e293b; font-size: 20px; margin: 0 0 24px 0;">Γεια σου ${business.name}! 👋</h2>
+ <h2 style="color: #1e293b; font-size: 20px; margin: 0 0 24px 0;">Γεια σου ${business.name}! </h2>
           <p style="color: #475569; font-size: 14px; line-height: 1.6;">Εδώ είναι η εβδομαδιαία σύνοψη της επιχείρησής σας:</p>
           
           <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                  <span style="color: #64748b; font-size: 14px;">📅 Κρατήσεις</span>
+ <span style="color: #64748b; font-size: 14px;"> Κρατήσεις</span>
                 </td>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
                   <strong style="color: #1e293b; font-size: 18px;">${totalReservations}</strong>
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
               </tr>
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                  <span style="color: #64748b; font-size: 14px;">🎫 Εισιτήρια</span>
+ <span style="color: #64748b; font-size: 14px;"> Εισιτήρια</span>
                 </td>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
                   <strong style="color: #1e293b; font-size: 18px;">${totalTickets}</strong>
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
               ${!hideOffers ? `
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                  <span style="color: #64748b; font-size: 14px;">🎁 Εξαργυρώσεις Προσφορών</span>
+ <span style="color: #64748b; font-size: 14px;"> Εξαργυρώσεις Προσφορών</span>
                 </td>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
                   <strong style="color: #1e293b; font-size: 18px;">${totalOfferRedemptions}</strong>
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
               ` : ''}
               <tr>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
-                  <span style="color: #64748b; font-size: 14px;">📱 QR Check-ins</span>
+ <span style="color: #64748b; font-size: 14px;"> QR Check-ins</span>
                 </td>
                 <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
                   <strong style="color: #1e293b; font-size: 18px;">${totalQRCheckins}</strong>
@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
               </tr>
               <tr>
                 <td style="padding: 12px 0;">
-                  <span style="color: #64748b; font-size: 14px;">💰 Συνολικά Έσοδα</span>
+ <span style="color: #64748b; font-size: 14px;"> Συνολικά Έσοδα</span>
                 </td>
                 <td style="padding: 12px 0; text-align: right;">
                   <strong style="color: #10b981; font-size: 18px;">€${(totalRevenue / 100).toFixed(2)}</strong>
@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
 
           ${bestDay ? `
           <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
-            <p style="color: #92400e; font-size: 14px; margin: 0;">🏆 Καλύτερη μέρα της εβδομάδας</p>
+ <p style="color: #92400e; font-size: 14px; margin: 0;"> Καλύτερη μέρα της εβδομάδας</p>
             <p style="color: #78350f; font-size: 18px; font-weight: 700; margin: 8px 0 0 0;">${bestDay[0]}</p>
             <p style="color: #92400e; font-size: 12px; margin: 4px 0 0 0;">${bestDay[1]} δραστηριότητες</p>
           </div>
@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
         const { error: emailError } = await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [profile.email],
-          subject: `📊 Εβδομαδιαία Σύνοψη - ${business.name}`,
+ subject: `Εβδομαδιαία Σύνοψη - ${business.name}`,
           html: wrapEmailContent(emailContent),
         });
 
@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
           
           // Send push notification to business owner
           const pushResult = await sendPushIfEnabled(business.user_id, {
-            title: '📊 Εβδομαδιαία Σύνοψη',
+ title: 'Εβδομαδιαία Σύνοψη',
             body: `Κρατήσεις: ${totalReservations} | Εισιτήρια: ${totalTickets} | €${(totalRevenue / 100).toFixed(2)}`,
             tag: `weekly-summary-${business.id}`,
             data: {

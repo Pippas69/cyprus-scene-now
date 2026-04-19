@@ -241,7 +241,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           // Create in-app notification
           await supabase.from('notifications').insert({
             user_id: profile.id,
-            title: item.is_boosted ? '⭐ Προτεινόμενο για Εσένα' : '🎯 Νέο για Εσένα',
+ title: item.is_boosted ? 'Προτεινόμενο για Εσένα' : 'Νέο για Εσένα',
             message: item.type === 'event' 
               ? `Νέα εκδήλωση: ${item.title} από ${item.business_name}`
               : `Νέα προσφορά: ${item.title} από ${item.business_name}`,
@@ -256,7 +256,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           // Send push notification if enabled using shared encrypted module
           if (pref.notification_push_enabled !== false) {
             const pushResult = await sendPushIfEnabled(profile.id, {
-              title: item.is_boosted ? '⭐ Προτεινόμενο για Εσένα' : '🎯 Νέο περιεχόμενο για εσένα!',
+ title: item.is_boosted ? 'Προτεινόμενο για Εσένα' : 'Νέο περιεχόμενο για εσένα!',
               body: `${item.title} από ${item.business_name}`,
               tag: `suggestion-${item.id}`,
               data: {
@@ -302,7 +302,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           try {
             const emailHtml = wrapEmailContent(`
-              <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">🎯 Επιλεγμένα για Εσένα!</h2>
+ <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;"> Επιλεγμένα για Εσένα!</h2>
               <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
                 Γεια σου <strong>${userName}</strong>!<br><br>
                 Βρήκαμε νέο περιεχόμενο που ταιριάζει στα ενδιαφέροντά σου:
@@ -310,10 +310,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
               
               ${events.length > 0 ? `
                 <div style="margin: 24px 0;">
-                  <h3 style="color: #059669; margin: 0 0 12px 0; font-size: 18px;">🎉 Εκδηλώσεις</h3>
+ <h3 style="color: #059669; margin: 0 0 12px 0; font-size: 18px;"> Εκδηλώσεις</h3>
                   ${events.slice(0, 5).map(e => `
                     <div style="background: #f0fdfa; padding: 12px 16px; border-radius: 8px; margin: 8px 0; border-left: 4px solid ${e.is_boosted ? '#f59e0b' : '#4ecdc4'};">
-                      <p style="color: #0d3b66; margin: 0; font-weight: 600;">${e.is_boosted ? '⭐ ' : ''}${e.title}</p>
+ <p style="color: #0d3b66; margin: 0; font-weight: 600;">${e.is_boosted ? '' : ''}${e.title}</p>
                       <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">από ${e.business_name}</p>
                     </div>
                   `).join('')}
@@ -322,10 +322,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
               
               ${offers.length > 0 ? `
                 <div style="margin: 24px 0;">
-                  <h3 style="color: #f59e0b; margin: 0 0 12px 0; font-size: 18px;">🎁 Προσφορές</h3>
+ <h3 style="color: #f59e0b; margin: 0 0 12px 0; font-size: 18px;"> Προσφορές</h3>
                   ${offers.slice(0, 5).map(o => `
                     <div style="background: #fef3c7; padding: 12px 16px; border-radius: 8px; margin: 8px 0; border-left: 4px solid ${o.is_boosted ? '#dc2626' : '#f59e0b'};">
-                      <p style="color: #92400e; margin: 0; font-weight: 600;">${o.is_boosted ? '⭐ ' : ''}${o.title}</p>
+ <p style="color: #92400e; margin: 0; font-weight: 600;">${o.is_boosted ? '' : ''}${o.title}</p>
                       <p style="color: #a16207; margin: 4px 0 0 0; font-size: 14px;">από ${o.business_name}</p>
                     </div>
                   `).join('')}
@@ -346,7 +346,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             await resend.emails.send({
               from: "ΦΟΜΟ <support@fomo.com.cy>",
               to: [profile.email],
-              subject: "🎯 Νέο περιεχόμενο για εσένα στο ΦΟΜΟ!",
+ subject: "Νέο περιεχόμενο για εσένα στο ΦΟΜΟ!",
               html: emailHtml,
             });
 

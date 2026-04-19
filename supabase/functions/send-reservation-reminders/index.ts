@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
       });
 
       const emailHtml = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">⏰ Υπενθύμιση Κράτησης</h2>
+ <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;"> Υπενθύμιση Κράτησης</h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
           Γεια σου <strong>${reminder.userName}</strong>!<br><br>
           Η κράτησή σου είναι <strong>σε 2 ώρες</strong>!
@@ -269,9 +269,9 @@ Deno.serve(async (req) => {
           ` : `
             <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Κράτηση Τραπεζιού</p>
           `}
-          <p style="color: #475569; margin: 4px 0;">🏢 ${reminder.businessName}</p>
-          <p style="color: #475569; margin: 4px 0;">📅 ${formattedTime}</p>
-          ${reminder.location ? `<p style="color: #475569; margin: 4px 0;">📍 ${reminder.location}</p>` : ''}
+ <p style="color: #475569; margin: 4px 0;"> ${reminder.businessName}</p>
+ <p style="color: #475569; margin: 4px 0;"> ${formattedTime}</p>
+ ${reminder.location ? `<p style="color: #475569; margin: 4px 0;"> ${reminder.location}</p>` : ''}
           <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reminder.reservationName}</p>
           <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reminder.partySize}</p>
         </div>
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
         `}
 
         <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
-          🎉 Ανυπομονούμε να σε δούμε!
+ Ανυπομονούμε να σε δούμε!
         </p>
       `);
 
@@ -298,14 +298,14 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [reminder.userEmail],
-          subject: `⏰ Σε 2 ώρες: Κράτηση στο ${reminder.businessName}`,
+ subject: `Σε 2 ώρες: Κράτηση στο ${reminder.businessName}`,
           html: emailHtml,
         });
 
         // Create in-app notification
         await supabase.from('notifications').insert({
           user_id: reminder.userId,
-          title: '⏰ Υπενθύμιση Κράτησης',
+ title: 'Υπενθύμιση Κράτησης',
           message: `Η κράτησή σου στο ${reminder.businessName} είναι σε 2 ώρες!`,
           type: 'info',
           event_type: 'reservation_reminder',
@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
 
         // Send push notification (using encrypted push for iOS/Safari)
         const pushResult = await sendEncryptedPush(reminder.userId, {
-          title: '⏰ Υπενθύμιση Κράτησης',
+ title: 'Υπενθύμιση Κράτησης',
           body: `Η κράτησή σου στο ${reminder.businessName} είναι σε 2 ώρες!`,
           tag: `reservation-reminder-${reminder.reservationId}`,
           data: { url: '/dashboard-user/reservations' },

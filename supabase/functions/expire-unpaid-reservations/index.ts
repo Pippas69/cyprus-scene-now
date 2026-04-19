@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
   <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
     <div style="background: #ef4444; padding: 30px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">⏰ Payment Expired</h1>
+ <h1 style="color: white; margin: 0; font-size: 24px;"> Payment Expired</h1>
     </div>
     <div style="padding: 30px;">
       <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
@@ -163,14 +163,14 @@ Deno.serve(async (req) => {
               await resend.emails.send({
                 from: "ΦΟΜΟ <support@fomo.com.cy>",
                 to: [businessOwner.email],
-                subject: `⏰ Payment Expired - Reservation Cancelled`,
+ subject: `Payment Expired - Reservation Cancelled`,
                 html: emailHtml,
               });
               logStep("Business notification sent", { businessEmail: businessOwner.email });
 
               // Send push notification to business owner
               const pushResult = await sendPushIfEnabled(purchase.discounts.businesses.user_id, {
-                title: '⏰ Πληρωμή έληξε',
+ title: 'Πληρωμή έληξε',
                 body: `Κράτηση ακυρώθηκε - ${customer?.name || 'Πελάτης'}`,
                 tag: `expired-reservation-${purchase.id}`,
                 data: {

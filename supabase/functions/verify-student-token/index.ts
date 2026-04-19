@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Η φοιτητική σου ιδιότητα επαληθεύτηκε επιτυχώς! 🎉",
+ message: "Η φοιτητική σου ιδιότητα επαληθεύτηκε επιτυχώς!",
         university_name: verification.university_name
       }),
       { status: 200, headers: { ...securityHeaders, "Content-Type": "application/json" } }

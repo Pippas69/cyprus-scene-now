@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       );
 
       const businessName = (offer.businesses as any)?.name || 'A business';
-      const notifTitle = '⏰ Η προσφορά λήγει σύντομα!';
+ const notifTitle = 'Η προσφορά λήγει σύντομα!';
       const notifMessage = `"${offer.title}" από ${businessName} λήγει σε ${hoursUntilExpiry} ώρες. Μην τη χάσεις!`;
 
       // Create notifications for each user

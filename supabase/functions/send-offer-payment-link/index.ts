@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
   <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
     <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">🎉 Reservation Accepted!</h1>
+ <h1 style="color: white; margin: 0; font-size: 24px;"> Reservation Accepted!</h1>
     </div>
     <div style="padding: 30px;">
       <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
       </a>
 
       <p style="font-size: 14px; color: #ef4444; text-align: center; margin-bottom: 20px;">
-        ⏰ Payment link expires: ${formattedExpiry}
+ Payment link expires: ${formattedExpiry}
       </p>
 
       <p style="font-size: 14px; color: #666; margin-bottom: 0;">
@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [profile.email],
-          subject: `✅ Reservation Accepted - Complete Your Payment for ${purchase.discounts.businesses.name}`,
+ subject: `Reservation Accepted - Complete Your Payment for ${purchase.discounts.businesses.name}`,
           html: emailHtml,
         });
         logStep("Payment link email sent");
