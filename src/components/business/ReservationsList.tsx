@@ -14,6 +14,7 @@ interface RSVPWithEvent {
   status: 'interested' | 'going';
   notes: string | null;
   created_at: string;
+  transaction_code: string | null;
   events: { id: string; title: string; start_at: string };
   profiles: { name: string; email: string };
 }
@@ -185,7 +186,16 @@ export const ReservationsList = ({ businessId, language }: ReservationsListProps
                   <TableCell className="font-medium">
                     {reservation.events?.title || 'Deleted Event'}
                   </TableCell>
-                  <TableCell>{reservation.profiles?.name || 'Anonymous'}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span>{reservation.profiles?.name || 'Anonymous'}</span>
+                      {reservation.transaction_code && (
+                        <span className="text-xs font-mono text-muted-foreground tracking-wider">
+                          {reservation.transaction_code}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{reservation.profiles?.email || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={reservation.status === 'going' ? 'default' : 'secondary'}>
