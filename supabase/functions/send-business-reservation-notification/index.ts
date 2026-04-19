@@ -92,9 +92,9 @@ Deno.serve(async (req) => {
       case 'NEW_RESERVATION_EVENT':
       case 'NEW_RESERVATION_OFFER':
       case 'NEW_RESERVATION_PROFILE':
-        title = `Νέα κράτηση ✓`;
+        title = `Νέα κράτηση`;
         message = `${data.customerName} · ${formattedDate} ${data.reservationTime} · ${data.partySize} άτομα`;
-        emailSubject = `✓ Νέα κράτηση: ${data.customerName}`;
+        emailSubject = `Νέα κράτηση: ${data.customerName}`;
         
         if (data.eventTitle) {
           message = `${data.customerName} · ${data.eventTitle} · ${data.partySize} άτομα`;
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
         break;
 
       case 'RESERVATION_CHECK_IN':
-        title = "Check-in ✓";
+        title = "Check-in";
         message = `${data.customerName} · τώρα`;
         emailSubject = `Check-in: ${data.customerName}`;
         skipEmail = true;
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       )}
 
       ${ctaButton('Διαχείριση', 'https://fomo.com.cy/dashboard-business/reservations')}
-    `, '📋 Νέα Κράτηση');
+    `, 'Νέα Κράτηση');
 
     // Send the notification
     const result = await sendBusinessNotification({
