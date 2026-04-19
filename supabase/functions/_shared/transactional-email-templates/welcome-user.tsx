@@ -49,7 +49,7 @@ const WelcomeUserEmail = ({ name }: WelcomeUserProps) => (
 
 export const template = {
   component: WelcomeUserEmail,
-  subject: 'Καλωσόρισες στο ΦΟΜΟ! 🎉',
+  subject: 'Καλωσόρισες στο ΦΟΜΟ',
   displayName: 'Welcome — User',
   previewData: { name: 'Μαρίνος' },
 } satisfies TemplateEntry
