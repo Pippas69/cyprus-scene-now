@@ -59,8 +59,18 @@ describe("reservationSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts Greek names", () => {
+  it("rejects Greek names (Latin only enforced)", () => {
     const result = reservationSchema.safeParse({ ...validData, reservation_name: "Μαρία Παπαδοπούλου" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts Latin names with hyphen", () => {
+    const result = reservationSchema.safeParse({ ...validData, reservation_name: "Marie-Claire" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts Latin names with apostrophe", () => {
+    const result = reservationSchema.safeParse({ ...validData, reservation_name: "O'Brien" });
     expect(result.success).toBe(true);
   });
 });
