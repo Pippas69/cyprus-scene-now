@@ -1528,8 +1528,24 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
+          onShowSuccess={(rid) => {
+            setAddGuestsReservation(null);
+            // small delay so newly inserted tickets are queryable
+            window.setTimeout(() => {
+              openAddGuestsSuccessFor(rid);
+              fetchReservations();
+            }, 500);
+          }}
         />
       )}
+
+      {/* Add Guests Success Dialog (with all QR codes) */}
+      <ReservationSuccessDialog
+        open={!!addGuestsSuccessData}
+        onOpenChange={(o) => { if (!o) setAddGuestsSuccessData(null); }}
+        reservation={addGuestsSuccessData}
+        language={language}
+      />
     </div>);
 
 };
