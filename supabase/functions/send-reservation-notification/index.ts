@@ -372,6 +372,8 @@ const handler = async (req: Request): Promise<Response> => {
             Η κράτησή σου στο <strong>${businessName}</strong> εγκρίθηκε!
           </p>
 
+          ${transactionCodeBox(reservation.transaction_code)}
+
           ${infoCard(reservationTypeLabel, buildInfoRows())}
 
           ${qrCodeUrl ? qrCodeSection(qrCodeUrl, reservation.confirmation_code, 'Δείξε στην είσοδο') : `
