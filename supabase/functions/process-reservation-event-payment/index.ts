@@ -491,12 +491,12 @@ serve(async (req) => {
             ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations&subtab=event')}
           `;
 
- const userEmailHtml = wrapPremiumEmail(userContent, 'Κράτηση Εκδήλωσης');
+          const userEmailHtml = wrapPremiumEmail(userContent, 'Κράτηση Εκδήλωσης');
 
           await resend.emails.send({
             from: "ΦΟΜΟ <support@fomo.com.cy>",
             to: [userEmail],
- subject: `Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
+            subject: `Η κράτησή σου επιβεβαιώθηκε - ${eventTitle}`,
             html: userEmailHtml,
           });
           logStep("User email sent", { email: userEmail });
