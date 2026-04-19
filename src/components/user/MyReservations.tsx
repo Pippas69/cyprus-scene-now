@@ -200,13 +200,13 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       }
 
       let guests: { guest_name: string; qr_code_token: string }[] = [];
-      const { data: orders } = await supabase
+      const { data: orders } = await (supabase as any)
         .from('ticket_orders')
         .select('id')
         .eq('reservation_id', reservationId);
       const orderIds = (orders || []).map((o: any) => o.id);
       if (orderIds.length > 0) {
-        const { data: tks } = await supabase
+        const { data: tks } = await (supabase as any)
           .from('tickets')
           .select('guest_name, qr_code_token')
           .in('order_id', orderIds);
