@@ -176,11 +176,19 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       if (res.event_id) {
         const { data: ev } = await supabase
           .from('events')
-          .select('businesses ( name, logo_url )')
+          .select('business_id')
           .eq('id', res.event_id)
           .maybeSingle();
-        businessName = (ev as any)?.businesses?.name || '';
-        businessLogo = (ev as any)?.businesses?.logo_url || null;
+        const bizId = (ev as any)?.business_id;
+        if (bizId) {
+          const { data: biz } = await supabase
+            .from('businesses')
+            .select('name, logo_url')
+            .eq('id', bizId)
+            .maybeSingle();
+          businessName = biz?.name || '';
+          businessLogo = biz?.logo_url || null;
+        }
       } else if (res.business_id) {
         const { data: biz } = await supabase
           .from('businesses')
