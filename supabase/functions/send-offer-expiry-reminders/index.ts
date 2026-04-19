@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
         // Create in-app notification
         await supabase.from('notifications').insert({
           user_id: reminder.userId,
-          title: '⚠️ Η προσφορά σου λήγει σύντομα!',
+          title: 'Η προσφορά σου λήγει σύντομα',
           message: `Η προσφορά "${reminder.offerTitle}" από ${reminder.businessName} λήγει σε 2 ώρες. Μην τη χάσεις!`,
           type: 'warning',
           event_type: 'offer_expiry_reminder',
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
 
         // Send push notification (using encrypted push for iOS/Safari)
         const pushResult = await sendEncryptedPush(reminder.userId, {
-          title: '⚠️ Η προσφορά σου λήγει!',
+          title: 'Η προσφορά σου λήγει',
           body: `Η προσφορά "${reminder.offerTitle}" λήγει σε 2 ώρες!`,
           tag: `offer-expiry-${reminder.purchaseId}`,
           data: { url: '/dashboard-user/offers' },

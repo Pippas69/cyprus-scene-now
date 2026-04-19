@@ -180,15 +180,29 @@ export function ctaButton(text: string, url: string): string {
   `;
 }
 
-// Success badge
+// Success badge (no emojis per brand standards)
 export function successBadge(text: string): string {
   return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 20px;">
       <tr>
         <td align="center">
           <span style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: ${BRAND_COLORS.white}; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600;">
-            ✓ ${text}
+            ${text}
           </span>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// Event hero image — full-width landscape image (3:2) shown at the top of customer emails
+export function eventHeroImage(imageUrl: string | null | undefined, alt = ''): string {
+  if (!imageUrl) return '';
+  return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 20px 0;">
+      <tr>
+        <td>
+          <img src="${imageUrl}" alt="${alt}" style="width: 100%; height: auto; max-height: 240px; object-fit: cover; border-radius: 12px; display: block;" />
         </td>
       </tr>
     </table>
@@ -229,14 +243,12 @@ export function noteBox(text: string, type: 'warning' | 'info' = 'info'): string
   const bgColor = type === 'warning' ? '#fef3c7' : BRAND_COLORS.lightTeal;
   const borderColor = type === 'warning' ? '#f59e0b' : BRAND_COLORS.teal;
   const textColor = type === 'warning' ? '#92400e' : BRAND_COLORS.navy;
-  const icon = type === 'warning' ? '⚠️' : 'ℹ️';
-  
   return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 16px 0;">
       <tr>
         <td style="background-color: ${bgColor}; border-left: 3px solid ${borderColor}; border-radius: 0 8px 8px 0; padding: 12px 16px;">
           <p style="color: ${textColor}; font-size: 12px; margin: 0; line-height: 1.5;">
-            ${icon} ${text}
+            ${text}
           </p>
         </td>
       </tr>

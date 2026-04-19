@@ -471,7 +471,7 @@ async function handleTicketQR(
 
       await supabaseAdmin.from('notifications').insert({
         user_id: eventData.businesses.user_id,
-        title: linkedReservationInfo ? '✅ Check-in εισιτηρίου + Κράτηση!' : '✅ Check-in εισιτηρίου!',
+        title: linkedReservationInfo ? 'Check-in εισιτηρίου + Κράτηση' : 'Check-in εισιτηρίου',
         message: notifMessage,
         type: 'business',
         event_type: 'ticket_checked_in',
@@ -510,7 +510,7 @@ async function handleTicketQR(
 
       await supabaseAdmin.from('notifications').insert({
         user_id: ticketUserId,
-        title: linkedReservationInfo ? '✅ Check-in + Κράτηση!' : '✅ Check-in επιτυχές!',
+        title: linkedReservationInfo ? 'Check-in + Κράτηση' : 'Check-in επιτυχές',
         message: userMessage,
         type: 'ticket',
         event_type: 'ticket_checked_in',
@@ -537,7 +537,7 @@ async function handleTicketQR(
             : `Welcome to "${ticket.events?.title}"`);
 
       await sendPushIfEnabled(ticketUserId, {
-        title: linkedReservationInfo ? '✅ Check-in + Κράτηση!' : '✅ Check-in επιτυχές!',
+        title: linkedReservationInfo ? 'Check-in + Κράτηση' : 'Check-in επιτυχές',
         body: pushBody,
         tag: `ticket-checkin-${ticket.id}`,
         data: {
@@ -709,7 +709,7 @@ async function handleOfferQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: businessData.user_id,
-        title: '✅ Εξαργύρωση προσφοράς!',
+        title: 'Εξαργύρωση προσφοράς',
         message: `${customerName} εξαργύρωσε "${discount.title}"`,
         type: 'business',
         event_type: 'offer_redeemed',
@@ -729,7 +729,7 @@ async function handleOfferQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: purchase.user_id,
-        title: '✅ Προσφορά εξαργυρώθηκε!',
+        title: 'Προσφορά εξαργυρώθηκε',
         message: `"${discount.title}"${businessData?.name ? ` - ${businessData.name}` : ''} εξαργυρώθηκε επιτυχώς`,
         type: 'offer',
         event_type: 'offer_redeemed',
@@ -758,7 +758,7 @@ async function handleOfferQR(
       await sendPushIfEnabled(
         purchase.user_id,
         {
-          title: '✅ Προσφορά εξαργυρώθηκε!',
+          title: 'Προσφορά εξαργυρώθηκε',
           body: language === "el" ? `"${discount.title}" εξαργυρώθηκε επιτυχώς` : `"${discount.title}" redeemed successfully`,
           tag: `n:offer_redeemed:${purchase.id}`,
           data: {

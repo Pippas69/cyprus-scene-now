@@ -218,10 +218,10 @@ Deno.serve(async (req) => {
     }
 
     // Determine email subject and badge based on whether there's a reservation
-    const subheader = data.hasReservation ? '✓ Κράτηση & Προσφορά' : '✓ Προσφορά Έτοιμη';
+    const subheader = data.hasReservation ? 'Κράτηση & Προσφορά' : 'Προσφορά Έτοιμη';
     const emailSubject = data.hasReservation 
-      ? `✓ Κράτηση επιβεβαιώθηκε - ${data.offerTitle} - ${data.businessName}`
-      : `✓ ${data.offerTitle} - ${data.businessName}`;
+      ? `Κράτηση επιβεβαιώθηκε - ${data.offerTitle} - ${data.businessName}`
+      : `${data.offerTitle} - ${data.businessName}`;
 
     // Note text based on reservation status
     const noteText = data.hasReservation 

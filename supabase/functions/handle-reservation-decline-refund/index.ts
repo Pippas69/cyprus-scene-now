@@ -199,7 +199,7 @@ serve(async (req) => {
 
         // Send push notification
         const pushResult = await sendPushIfEnabled(purchase.user_id, {
-          title: '❌ Κράτηση απορρίφθηκε',
+          title: 'Κράτηση απορρίφθηκε',
           body: `Επιστροφή €${refundAmount} επεξεργάστηκε`,
           tag: `refund-${purchase.id}`,
           data: {

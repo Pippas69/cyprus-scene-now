@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
     // Send push notification if userId provided
     if (userId) {
       const pushResult = await sendPushIfEnabled(userId, {
-        title: '🎁 Η προσφορά σου είναι έτοιμη!',
+        title: 'Η προσφορά σου είναι έτοιμη',
         body: `${offerTitle} από ${businessName}`,
         tag: `offer-${purchaseId}`,
         data: {

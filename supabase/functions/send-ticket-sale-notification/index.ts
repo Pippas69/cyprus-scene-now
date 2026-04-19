@@ -127,12 +127,12 @@ Deno.serve(async (req) => {
       </p>
     `;
 
-    const html = wrapBusinessEmail(content, '🎟️ Νέα Πώληση');
+    const html = wrapBusinessEmail(content, 'Νέα Πώληση');
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [businessEmail],
-      subject: `🎟️ Νέα πώληση: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
+      subject: `Νέα πώληση: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
       html,
     });
 

@@ -416,7 +416,7 @@ Deno.serve(async (req) => {
       try {
         await supabaseClient.from('notifications').insert({
           user_id: user.id,
-          title: '🎟️ Εισιτήρια ληφθήκαν!',
+          title: 'Εισιτήρια ληφθήκαν',
           message: `${event.title} - ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           type: 'ticket',
           event_type: 'ticket_purchased',
@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
       // Send push notification to user
       try {
         const pushResult = await sendPushIfEnabled(user.id, {
-          title: '🎟️ Εισιτήρια ληφθήκαν!',
+          title: 'Εισιτήρια ληφθήκαν',
           body: `${event.title} - ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           tag: `ticket-order-${order.id}`,
           data: {
@@ -452,7 +452,7 @@ Deno.serve(async (req) => {
       try {
         await supabaseClient.from('notifications').insert({
           user_id: business.user_id,
-          title: '🎟️ Νέα λήψη εισιτηρίων!',
+          title: 'Νέα λήψη εισιτηρίων',
           message: `${customerName || user.email} πήρε ${ticketsToCreate.length} ${ticketsToCreate.length === 1 ? 'εισιτήριο' : 'εισιτήρια'} για "${event.title}"`,
           type: 'business',
           event_type: 'ticket_purchased',

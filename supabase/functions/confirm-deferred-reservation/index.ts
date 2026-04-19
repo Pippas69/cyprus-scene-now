@@ -263,7 +263,7 @@ serve(async (req) => {
     // Send notification to user
     await supabaseService.from("notifications").insert({
       user_id: user.id,
-      title: `✅ Κράτηση Επιβεβαιώθηκε`,
+      title: `Κράτηση Επιβεβαιώθηκε`,
       message: `Η κράτησή σας για ${event.title} επιβεβαιώθηκε και χρεώθηκε επιτυχώς.`,
       type: "personal",
       event_type: "reservation_confirmed",
@@ -276,7 +276,7 @@ serve(async (req) => {
 
     // Push notification
     const pushPayload: PushPayload = {
-      title: "✅ Κράτηση Επιβεβαιώθηκε",
+      title: "Κράτηση Επιβεβαιώθηκε",
       body: `Η κράτησή σας για ${event.title} επιβεβαιώθηκε.`,
       icon: "/fomo-logo-new.png",
       badge: "/fomo-logo-new.png",

@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
     try {
       await supabaseClient.from('notifications').insert({
         user_id: order.user_id,
-        title: '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+        title: 'Εισιτήρια επιβεβαιώθηκαν',
         message: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
         type: 'ticket',
         event_type: 'ticket_purchased',
@@ -384,7 +384,7 @@ Deno.serve(async (req) => {
       if (!(await wasAlreadySent(supabaseClient, order.user_id, userPushKey))) {
         const isHybridPurchase = !!(usesLinkedReservations && seatingTypeId);
         const userPushPayload: PushPayload = {
-          title: isHybridPurchase ? '📋 Κράτηση επιβεβαιώθηκε!' : '🎟️ Εισιτήρια επιβεβαιώθηκαν!',
+          title: isHybridPurchase ? 'Κράτηση επιβεβαιώθηκε' : 'Εισιτήρια επιβεβαιώθηκαν',
           body: isHybridPurchase
             ? `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'άτομο' : 'άτομα'}`
             : `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
@@ -481,7 +481,7 @@ Deno.serve(async (req) => {
       try {
         await supabaseClient.from('notifications').insert({
           user_id: businessUserId,
-          title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+          title: 'Νέα Πώληση Εισιτηρίων',
           message: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
           type: 'business',
           event_type: 'ticket_sale',

@@ -14,6 +14,7 @@ import {
   successBadge,
   noteBox,
   transactionCodeBox,
+  eventHeroImage,
 } from "../_shared/email-templates.ts";
 import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
@@ -89,6 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
           title,
           start_at,
           location,
+          cover_url,
           businesses (
             id,
             name,
@@ -100,7 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
           id,
           name,
           user_id,
-          address
+          address,
+          cover_url
         )
       `)
       .eq('id', reservationId)
@@ -127,12 +130,14 @@ const handler = async (req: Request): Promise<Response> => {
     let reservationContext: string;
     let reservationDateTime: string;
     let locationInfo: string | null;
+    let coverImageUrl: string | null = null;
 
     if (isDirectReservation) {
       businessData = reservation.businesses;
       reservationContext = 'Κράτηση Τραπεζιού';
       reservationDateTime = reservation.preferred_time || reservation.reservation_date;
       locationInfo = businessData?.address || null;
+      coverImageUrl = (reservation.businesses as any)?.cover_url || null;
     } else {
       const event = reservation.events;
       if (!event) {
@@ -142,6 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
       reservationContext = event.title;
       reservationDateTime = event.start_at;
       locationInfo = event.location;
+      coverImageUrl = (event as any).cover_url || (event.businesses as any)?.cover_url || null;
     }
 
     if (!businessData) {
@@ -260,15 +266,17 @@ const handler = async (req: Request): Promise<Response> => {
       
       if (isAutoAccepted && (qrCodeUrl || guestTickets.length > 0)) {
         // Auto-accepted reservation with QR code(s)
-        userSubject = `✓ Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
+        userSubject = `Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '✅ Κράτηση επιβεβαιώθηκε!',
+          title: 'Κράτηση επιβεβαιώθηκε',
           message: `${reservationContext} · ${formattedDate} ${formattedTime}`,
           event_type: 'reservation_confirmed',
           deep_link: userDeepLink
         };
         
         const content = `
+          ${eventHeroImage(coverImageUrl, reservationContext)}
+
           ${successBadge('Κράτηση Επιβεβαιώθηκε')}
           ${emailGreeting(userName)}
           
@@ -291,18 +299,20 @@ const handler = async (req: Request): Promise<Response> => {
           ${ctaButton('Οι κρατήσεις μου', `https://fomo.com.cy${userDeepLink}`)}
         `;
         
-        userHtml = wrapPremiumEmail(content, '✓ Επιβεβαιώθηκε');
+        userHtml = wrapPremiumEmail(content, 'Επιβεβαιώθηκε');
       } else {
         // Pending reservation
         userSubject = `Κράτηση καταχωρήθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '📋 Κράτηση καταχωρήθηκε',
+          title: 'Κράτηση καταχωρήθηκε',
           message: `${reservationContext} - αναμονή έγκρισης`,
           event_type: 'reservation_pending',
           deep_link: `/dashboard-user?tab=reservations`
         };
         
         const content = `
+          ${eventHeroImage(coverImageUrl, reservationContext)}
+
           ${emailGreeting(userName)}
           
           <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
@@ -317,14 +327,14 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
           `}
 
-          ${infoCard(reservationTypeLabel, buildInfoRows() + detailRow('Κωδικός', reservation.confirmation_code, true))}
+          ${infoCard(reservationTypeLabel, buildInfoRows())}
 
           ${noteBox('Θα ενημερωθείς όταν η επιχείρηση εγκρίνει την κράτησή σου.', 'info')}
 
           ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations')}
         `;
         
-        userHtml = wrapPremiumEmail(content, '⏳ Εκκρεμεί');
+        userHtml = wrapPremiumEmail(content, 'Εκκρεμεί');
       }
 
       // Business notification for new reservation
@@ -344,53 +354,50 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Ώρα', formattedTime) +
           detailRow('Άτομα', `${reservation.party_size}`) +
           (hasMinSpendInfo ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true) : '') +
-          (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
-          detailRow('Κωδικός', reservation.confirmation_code, true)
+          (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '')
         )}
 
         ${ctaButton('Διαχείριση', 'https://fomo.com.cy/dashboard-business/reservations')}
       `;
-      businessHtml = wrapBusinessEmail(bizContent, '📋 Νέα Κράτηση');
+      businessHtml = wrapBusinessEmail(bizContent, 'Νέα Κράτηση');
       
     } else if (type === 'status_change') {
       const isAccepted = reservation.status === 'accepted';
       
       if (isAccepted) {
-        userSubject = `✓ Κράτηση εγκρίθηκε - ${reservationContext}`;
+        userSubject = `Κράτηση εγκρίθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '✅ Κράτηση εγκρίθηκε!',
+          title: 'Κράτηση εγκρίθηκε',
           message: `${reservationContext} · ${formattedDate} ${formattedTime}`,
           event_type: 'reservation_confirmed',
           deep_link: `/dashboard-user?tab=reservations`
         };
         
         const content = `
+          ${eventHeroImage(coverImageUrl, reservationContext)}
+
           ${successBadge('Κράτηση Εγκρίθηκε')}
           ${emailGreeting(userName)}
           
           <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
-            Η κράτησή σου στο <strong>${businessName}</strong> εγκρίθηκε!
+            Η κράτησή σου στο <strong>${businessName}</strong> εγκρίθηκε.
           </p>
 
           ${transactionCodeBox(reservation.transaction_code)}
 
           ${infoCard(reservationTypeLabel, buildInfoRows())}
 
-          ${qrCodeUrl ? qrCodeSection(qrCodeUrl, reservation.confirmation_code, 'Δείξε στην είσοδο') : `
-            <p style="color: #0d3b66; font-size: 18px; font-weight: 700; text-align: center; letter-spacing: 2px; margin: 20px 0;">
-              ${reservation.confirmation_code}
-            </p>
-          `}
+          ${qrCodeUrl ? qrCodeSection(qrCodeUrl, undefined, 'Δείξε στην είσοδο') : ''}
 
           ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations')}
         `;
         
-        userHtml = wrapPremiumEmail(content, '✓ Εγκρίθηκε');
+        userHtml = wrapPremiumEmail(content, 'Εγκρίθηκε');
       } else {
         // Declined
         userSubject = `Κράτηση απορρίφθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '❌ Κράτηση απορρίφθηκε',
+          title: 'Κράτηση απορρίφθηκε',
           message: `${reservationContext} - ${businessName}`,
           event_type: 'reservation_declined',
           deep_link: `/dashboard-user?tab=reservations`
@@ -406,19 +413,19 @@ const handler = async (req: Request): Promise<Response> => {
           ${infoCard(reservationTypeLabel, buildInfoRows())}
 
           <p style="color: #64748b; font-size: 13px; text-align: center; margin: 16px 0;">
-            Ελπίζουμε να σας εξυπηρετήσουμε σύντομα!
+            Ελπίζουμε να σας εξυπηρετήσουμε σύντομα.
           </p>
 
           ${ctaButton('Δες άλλες επιλογές', 'https://fomo.com.cy/feed')}
         `;
         
-        userHtml = wrapPremiumEmail(content, '❌ Απορρίφθηκε');
+        userHtml = wrapPremiumEmail(content, 'Απορρίφθηκε');
       }
       
     } else if (type === 'cancellation') {
       userSubject = `Ακύρωση κράτησης - ${reservationContext}`;
       inAppNotification = {
-        title: '🚫 Κράτηση ακυρώθηκε',
+        title: 'Κράτηση ακυρώθηκε',
         message: `${reservationContext} - ${businessName}`,
         event_type: 'reservation_cancelled',
         deep_link: `/dashboard-user?tab=reservations`
@@ -432,17 +439,16 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
 
         ${infoCard(reservationTypeLabel, 
-          detailRow('Κωδικός', reservation.confirmation_code) +
           detailRow('Ημερομηνία', formattedDate) +
           detailRow('Ώρα', formattedTime)
         )}
 
         <p style="color: #64748b; font-size: 13px; text-align: center; margin: 16px 0;">
-          Ελπίζουμε να σας δούμε σύντομα!
+          Ελπίζουμε να σας δούμε σύντομα.
         </p>
       `;
       
-      userHtml = wrapPremiumEmail(content, '🚫 Ακυρώθηκε');
+      userHtml = wrapPremiumEmail(content, 'Ακυρώθηκε');
 
       // Business notification for cancellation
       businessSubject = `Ακύρωση - ${reservation.reservation_name}`;
@@ -458,7 +464,7 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Άτομα', `${reservation.party_size}`)
         )}
       `;
-      businessHtml = wrapBusinessEmail(bizContent, '🚫 Ακύρωση');
+      businessHtml = wrapBusinessEmail(bizContent, 'Ακύρωση');
     }
 
     // Send emails with idempotency
@@ -521,7 +527,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Business push notification for new reservations and cancellations
     if (businessData?.user_id && (type === 'new' || type === 'cancellation')) {
       try {
-        const businessPushTitle = type === 'new' ? '📋 Νέα Κράτηση' : '🚫 Ακύρωση';
+        const businessPushTitle = type === 'new' ? 'Νέα Κράτηση' : 'Ακύρωση';
         const businessPushBody = `${reservation.reservation_name} · ${formattedDate} ${formattedTime}`;
         
         await supabase.from('notifications').insert({

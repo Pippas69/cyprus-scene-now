@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
 
         // Send push notification
         const pushResult = await sendPushIfEnabled(purchase.user_id, {
-          title: '✅ Κράτηση εγκρίθηκε!',
+          title: 'Κράτηση εγκρίθηκε',
           body: `Ολοκλήρωσε την πληρωμή για ${purchase.discounts.businesses.name}`,
           tag: `payment-link-${purchase.id}`,
           data: {
