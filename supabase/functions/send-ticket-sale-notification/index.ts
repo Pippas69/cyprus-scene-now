@@ -12,6 +12,7 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 import { Resend } from "https://esm.sh/resend@2.0.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=deno";
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
@@ -84,12 +85,32 @@ Deno.serve(async (req) => {
 
     const formattedAmount = totalAmount === 0 ? 'Δωρεάν' : `€${(totalAmount / 100).toFixed(2)}`;
 
+    // Fetch transaction_code for this order
+    let transactionCode: string | null = null;
+    try {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      const { data: orderRow } = await supabaseAdmin
+        .from('ticket_orders')
+        .select('transaction_code')
+        .eq('id', orderId)
+        .maybeSingle();
+      transactionCode = orderRow?.transaction_code ?? null;
+    } catch (e) {
+      logStep("Could not fetch transaction_code (non-fatal)", { e: String(e) });
+    }
+
     const content = `
       ${successBadge('Νέα Πώληση Εισιτηρίων')}
       
       <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
         Πωλήθηκαν εισιτήρια για την εκδήλωσή σας.
       </p>
+
+      ${transactionCodeBox(transactionCode)}
 
       ${infoCard('Λεπτομέρειες', 
         detailRow('Εκδήλωση', eventTitle) +
