@@ -142,6 +142,19 @@ Deno.serve(async (req) => {
       `;
     }).join("");
 
+    // Fetch transaction_code for this order
+    let transactionCode: string | null = null;
+    try {
+      const { data: orderRow } = await supabaseClient
+        .from('ticket_orders')
+        .select('transaction_code')
+        .eq('id', orderId)
+        .maybeSingle();
+      transactionCode = orderRow?.transaction_code ?? null;
+    } catch (e) {
+      logStep("Could not fetch transaction_code (non-fatal)", { e: String(e) });
+    }
+
     // Build info rows
     let infoRows = '';
     if (formattedDate) {
@@ -161,6 +174,8 @@ Deno.serve(async (req) => {
       <p style="color: #334155; font-size: 14px; margin: 0 0 20px 0; line-height: 1.6;">
         ${isHybrid ? 'Η κράτησή σου επιβεβαιώθηκε! Εμφάνισε τα παρακάτω QR codes στην είσοδο.' : 'Τα εισιτήριά σου είναι έτοιμα! Εμφάνισε τα παρακάτω QR codes στην είσοδο.'}
       </p>
+
+      ${transactionCodeBox(transactionCode)}
 
       ${eventHeader(eventTitle, businessName || '', eventCoverImage)}
       
