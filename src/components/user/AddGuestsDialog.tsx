@@ -22,6 +22,9 @@ interface AddGuestsDialogProps {
     reservation_name: string;
     email?: string | null;
     event_minimum_age?: number | null;
+    event_type?: string | null;
+    pay_at_door?: boolean | null;
+    prepaid_min_charge_cents?: number | null;
   };
   language: 'el' | 'en';
   onSuccess?: () => void;
@@ -135,10 +138,16 @@ export const AddGuestsDialog = ({
   const newTier = tiers.find((tt) => newTotal >= tt.min_people && newTotal <= tt.max_people) || null;
   const newTierIsBottles = isBottleTier(newTier as any);
   const currentTierIsBottles = isBottleTier(currentTier as any);
-  const currentCharge = currentTier?.prepaid_min_charge_cents ?? 0;
+  const currentCharge = reservation.prepaid_min_charge_cents ?? currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
-  // Bottles mode → no online prepayment; bottles paid at venue
-  const extraChargeCents = newTierIsBottles ? 0 : Math.max(0, newCharge - currentCharge);
+  const isPayAtVenue = !!reservation.pay_at_door;
+  // Online charge mirrors the normal reservation flow:
+  //  - bottles tier → €0 online (paid at venue)
+  //  - pay-at-venue event → €0 online
+  //  - otherwise → diff between new tier min charge and what was already prepaid
+  const extraChargeCents = (newTierIsBottles || isPayAtVenue)
+    ? 0
+    : Math.max(0, newCharge - currentCharge);
 
   // Bottle delta (when both current & new are bottle tiers of same type)
   const bottleDelta = (() => {
