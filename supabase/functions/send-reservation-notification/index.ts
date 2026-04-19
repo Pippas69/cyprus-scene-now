@@ -14,6 +14,7 @@ import {
   successBadge,
   noteBox,
   transactionCodeBox,
+  eventHeroImage,
 } from "../_shared/email-templates.ts";
 import { securityHeaders } from "../_shared/security-headers.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
@@ -89,6 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
           title,
           start_at,
           location,
+          cover_url,
           businesses (
             id,
             name,
@@ -100,7 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
           id,
           name,
           user_id,
-          address
+          address,
+          cover_url
         )
       `)
       .eq('id', reservationId)
