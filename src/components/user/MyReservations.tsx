@@ -162,6 +162,86 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setActiveReservationsTab(searchParams.get('subtab') === 'direct' ? 'direct' : 'event');
   }, [searchParams]);
 
+  const openAddGuestsSuccessFor = async (reservationId: string) => {
+    try {
+      const { data: res } = await supabase
+        .from('reservations')
+        .select(`
+          id, confirmation_code, qr_code_token, reservation_name, party_size, preferred_time,
+          event_id, business_id,
+          events ( id, title, businesses ( id, name, logo_url ) ),
+          businesses ( id, name, logo_url )
+        `)
+        .eq('id', reservationId)
+        .maybeSingle();
+      if (!res) return;
+      const businessName =
+        (res as any).events?.businesses?.name || (res as any).businesses?.name || '';
+      const businessLogo =
+        (res as any).events?.businesses?.logo_url || (res as any).businesses?.logo_url || null;
+
+      let guests: { guest_name: string; qr_code_token: string }[] = [];
+      const { data: orders } = await supabase
+        .from('ticket_orders')
+        .select('id')
+        .eq('reservation_id', reservationId);
+      const orderIds = (orders || []).map((o: any) => o.id);
+      if (orderIds.length > 0) {
+        const { data: tks } = await supabase
+          .from('tickets')
+          .select('guest_name, qr_code_token')
+          .in('order_id', orderIds);
+        guests = (tks || [])
+          .filter((t: any) => t.qr_code_token)
+          .map((t: any) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+      }
+      if (guests.length === 0) {
+        const { data: dg } = await supabase
+          .from('reservation_guests')
+          .select('guest_name, qr_code_token')
+          .eq('reservation_id', reservationId);
+        guests = (dg || [])
+          .filter((g: any) => g.qr_code_token)
+          .map((g: any) => ({ guest_name: g.guest_name || '', qr_code_token: g.qr_code_token }));
+      }
+
+      setAddGuestsSuccessData({
+        confirmation_code: res.confirmation_code || '',
+        qr_code_token: res.qr_code_token || (guests[0]?.qr_code_token ?? ''),
+        reservation_name: res.reservation_name || '',
+        party_size: res.party_size || guests.length,
+        preferred_time: res.preferred_time || '',
+        business_name: businessName,
+        business_logo: businessLogo,
+        guests,
+      });
+    } catch (e) {
+      console.error('openAddGuestsSuccessFor error', e);
+    }
+  };
+
+  useEffect(() => {
+    const addGuests = searchParams.get('add_guests');
+    const reservationId = searchParams.get('reservation_id');
+    if (addGuests === 'success' && reservationId) {
+      const timer = window.setTimeout(() => {
+        openAddGuestsSuccessFor(reservationId);
+        fetchReservations();
+        const url = new URL(window.location.href);
+        url.searchParams.delete('add_guests');
+        url.searchParams.delete('reservation_id');
+        window.history.replaceState({}, '', url.toString());
+      }, 1500);
+      return () => window.clearTimeout(timer);
+    }
+    if (addGuests === 'cancelled') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('add_guests');
+      window.history.replaceState({}, '', url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const fetchReservations = async () => {
     setLoading(true);
     const nowIso = new Date().toISOString();
