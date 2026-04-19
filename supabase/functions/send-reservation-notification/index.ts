@@ -266,15 +266,17 @@ const handler = async (req: Request): Promise<Response> => {
       
       if (isAutoAccepted && (qrCodeUrl || guestTickets.length > 0)) {
         // Auto-accepted reservation with QR code(s)
-        userSubject = `✓ Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
+        userSubject = `Κράτηση επιβεβαιώθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '✅ Κράτηση επιβεβαιώθηκε!',
+          title: 'Κράτηση επιβεβαιώθηκε',
           message: `${reservationContext} · ${formattedDate} ${formattedTime}`,
           event_type: 'reservation_confirmed',
           deep_link: userDeepLink
         };
         
         const content = `
+          ${eventHeroImage(coverImageUrl, reservationContext)}
+
           ${successBadge('Κράτηση Επιβεβαιώθηκε')}
           ${emailGreeting(userName)}
           
@@ -297,18 +299,20 @@ const handler = async (req: Request): Promise<Response> => {
           ${ctaButton('Οι κρατήσεις μου', `https://fomo.com.cy${userDeepLink}`)}
         `;
         
-        userHtml = wrapPremiumEmail(content, '✓ Επιβεβαιώθηκε');
+        userHtml = wrapPremiumEmail(content, 'Επιβεβαιώθηκε');
       } else {
         // Pending reservation
         userSubject = `Κράτηση καταχωρήθηκε - ${reservationContext}`;
         inAppNotification = {
-          title: '📋 Κράτηση καταχωρήθηκε',
+          title: 'Κράτηση καταχωρήθηκε',
           message: `${reservationContext} - αναμονή έγκρισης`,
           event_type: 'reservation_pending',
           deep_link: `/dashboard-user?tab=reservations`
         };
         
         const content = `
+          ${eventHeroImage(coverImageUrl, reservationContext)}
+
           ${emailGreeting(userName)}
           
           <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
@@ -323,14 +327,14 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
           `}
 
-          ${infoCard(reservationTypeLabel, buildInfoRows() + detailRow('Κωδικός', reservation.confirmation_code, true))}
+          ${infoCard(reservationTypeLabel, buildInfoRows())}
 
           ${noteBox('Θα ενημερωθείς όταν η επιχείρηση εγκρίνει την κράτησή σου.', 'info')}
 
           ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations')}
         `;
         
-        userHtml = wrapPremiumEmail(content, '⏳ Εκκρεμεί');
+        userHtml = wrapPremiumEmail(content, 'Εκκρεμεί');
       }
 
       // Business notification for new reservation
@@ -350,13 +354,12 @@ const handler = async (req: Request): Promise<Response> => {
           detailRow('Ώρα', formattedTime) +
           detailRow('Άτομα', `${reservation.party_size}`) +
           (hasMinSpendInfo ? detailRow('Ελάχιστη κατανάλωση', minSpendLabel, true) : '') +
-          (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '') +
-          detailRow('Κωδικός', reservation.confirmation_code, true)
+          (reservation.special_requests ? detailRow('Σημειώσεις', reservation.special_requests) : '')
         )}
 
         ${ctaButton('Διαχείριση', 'https://fomo.com.cy/dashboard-business/reservations')}
       `;
-      businessHtml = wrapBusinessEmail(bizContent, '📋 Νέα Κράτηση');
+      businessHtml = wrapBusinessEmail(bizContent, 'Νέα Κράτηση');
       
     } else if (type === 'status_change') {
       const isAccepted = reservation.status === 'accepted';
