@@ -50,6 +50,9 @@ const t = {
     extraCharge: 'Επιπλέον χρέωση',
     free: 'Δωρεάν',
     atVenue: 'στο κατάστημα',
+    payAtVenue: 'Στο κατάστημα',
+    extraBottles: 'Επιπλέον στο κατάστημα',
+    noChange: 'Καμία αλλαγή',
     guestDetails: 'Στοιχεία Καλεσμένων',
     guestName: 'Όνομα',
     guestAge: 'Ηλικία',
@@ -80,6 +83,9 @@ const t = {
     extraCharge: 'Extra charge',
     free: 'Free',
     atVenue: 'at venue',
+    payAtVenue: 'At venue',
+    extraBottles: 'Extra at venue',
+    noChange: 'No change',
     guestDetails: 'Guest Details',
     guestName: 'Name',
     guestAge: 'Age',
@@ -128,10 +134,21 @@ export const AddGuestsDialog = ({
 
   const newTier = tiers.find((tt) => newTotal >= tt.min_people && newTotal <= tt.max_people) || null;
   const newTierIsBottles = isBottleTier(newTier as any);
+  const currentTierIsBottles = isBottleTier(currentTier as any);
   const currentCharge = currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
   // Bottles mode → no online prepayment; bottles paid at venue
   const extraChargeCents = newTierIsBottles ? 0 : Math.max(0, newCharge - currentCharge);
+
+  // Bottle delta (when both current & new are bottle tiers of same type)
+  const bottleDelta = (() => {
+    if (!newTierIsBottles || !newTier) return null;
+    const newCount = newTier.bottle_count ?? 0;
+    const curCount = currentTierIsBottles ? (currentTier?.bottle_count ?? 0) : 0;
+    const sameType = currentTierIsBottles ? currentTier?.bottle_type === newTier.bottle_type : true;
+    const delta = sameType ? Math.max(0, newCount - curCount) : newCount;
+    return { delta, type: newTier.bottle_type as 'bottle' | 'premium_bottle', sameType };
+  })();
 
   const minAge = isEvent ? getMinAge(reservation.event_id || '', reservation.event_minimum_age) : 0;
 
@@ -384,8 +401,17 @@ export const AddGuestsDialog = ({
                 </div>
                 <div className="flex items-center justify-between border-t pt-1.5">
                   <span className="text-sm text-muted-foreground">{tr.extraCharge}</span>
-                  <span className="text-base font-semibold text-primary">
-                    {extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : tr.free}
+                  <span className={cn(
+                    "text-base font-semibold",
+                    extraChargeCents > 0 ? "text-primary" : "text-foreground"
+                  )}>
+                    {extraChargeCents > 0
+                      ? `€${(extraChargeCents / 100).toFixed(2)}`
+                      : newTierIsBottles && bottleDelta && bottleDelta.delta > 0
+                        ? `+${formatBottleLabel(bottleDelta.type, bottleDelta.delta, language)} (${tr.atVenue})`
+                        : newTierIsBottles
+                          ? tr.payAtVenue
+                          : tr.free}
                   </span>
                 </div>
               </div>
