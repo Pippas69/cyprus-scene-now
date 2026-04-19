@@ -20,6 +20,7 @@ interface AddGuestsDialogProps {
   };
   language: 'el' | 'en';
   onSuccess?: () => void;
+  onShowSuccess?: (reservationId: string) => void;
 }
 
 interface TierInfo {
@@ -84,6 +85,7 @@ export const AddGuestsDialog = ({
   reservation,
   language,
   onSuccess,
+  onShowSuccess,
 }: AddGuestsDialogProps) => {
   const tr = t[language];
   const [extraCount, setExtraCount] = useState(1);
@@ -164,10 +166,14 @@ export const AddGuestsDialog = ({
         window.location.href = data.checkout_url;
         return;
       }
-      // free path
-      toast.success(tr.successFree);
+      // free path — open success dialog with all QR codes (same as new reservation flow)
       onOpenChange(false);
-      onSuccess?.();
+      if (onShowSuccess) {
+        onShowSuccess(reservation.id);
+      } else {
+        toast.success(tr.successFree);
+        onSuccess?.();
+      }
     } catch (e: any) {
       console.error('add-guests error', e);
       toast.error(e?.message || tr.error);
