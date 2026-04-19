@@ -162,17 +162,30 @@ serve(async (req) => {
         })
       : "";
 
-    // Fetch ALL guest tickets (old + new) for the email
+    // Fetch ALL guest QR codes — event tickets first, fallback to reservation_guests (direct)
     const { data: allOrders } = await supabase
       .from("ticket_orders")
       .select("id")
       .eq("linked_reservation_id", reservationId);
     const allOrderIds = (allOrders || []).map((o: any) => o.id);
-    const { data: allTickets } = await supabase
-      .from("tickets")
-      .select("guest_name, qr_code_token, created_at")
-      .in("order_id", allOrderIds.length > 0 ? allOrderIds : ["00000000-0000-0000-0000-000000000000"])
-      .order("created_at", { ascending: true });
+    let allTickets: { guest_name: string; qr_code_token: string }[] = [];
+    if (allOrderIds.length > 0) {
+      const { data: tks } = await supabase
+        .from("tickets")
+        .select("guest_name, qr_code_token, created_at")
+        .in("order_id", allOrderIds)
+        .order("created_at", { ascending: true });
+      allTickets = (tks || []).filter((t: any) => !!t.qr_code_token);
+    }
+    if (allTickets.length === 0) {
+      // Direct reservation fallback
+      const { data: dg } = await supabase
+        .from("reservation_guests")
+        .select("guest_name, qr_code_token, created_at")
+        .eq("reservation_id", reservationId)
+        .order("created_at", { ascending: true });
+      allTickets = (dg || []).filter((g: any) => !!g.qr_code_token);
+    }
 
     // ===== USER EMAIL (with all QR codes) =====
     const userEmail = full.email || (session?.metadata as any)?.customer_email;
