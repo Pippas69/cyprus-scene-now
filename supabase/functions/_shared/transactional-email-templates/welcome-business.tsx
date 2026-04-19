@@ -42,7 +42,7 @@ const WelcomeBusinessEmail = ({ businessName }: WelcomeBusinessProps) => (
 
 export const template = {
   component: WelcomeBusinessEmail,
-  subject: 'Καλωσορίσατε στο ΦΟΜΟ! 🏢',
+  subject: 'Καλωσορίσατε στο ΦΟΜΟ',
   displayName: 'Welcome — Business',
   previewData: { businessName: 'Kaliva on the Beach' },
 } satisfies TemplateEntry
