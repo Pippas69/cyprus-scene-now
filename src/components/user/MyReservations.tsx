@@ -57,6 +57,7 @@ interface ReservationData {
   seating_type_id: string | null;
   prepaid_min_charge_cents: number | null;
   prepaid_charge_status: string | null;
+  email?: string | null;
   deferred_status?: string | null;
   deferred_confirmation_deadline?: string | null;
   deferred_payment_mode?: string | null;
@@ -68,6 +69,7 @@ interface ReservationData {
     location: string;
     event_type: string | null;
     cover_image_url: string | null;
+    minimum_age: number | null;
     businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
@@ -268,7 +270,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
-      business_notes, confirmation_code, qr_code_token,
+      business_notes, confirmation_code, qr_code_token, email,
       seating_type_id, prepaid_min_charge_cents, prepaid_charge_status,
       deferred_status, deferred_confirmation_deadline, deferred_payment_mode
     `;
