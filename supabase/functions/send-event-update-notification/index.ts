@@ -177,67 +177,8 @@ Deno.serve(async (req) => {
 
     logStep(`Notified ${notifiedCount} users via in-app and push`);
 
-    // Send emails to ticket holders (they paid, so they need email confirmation)
-    if (resendApiKey && ticketOrders && ticketOrders.length > 0) {
-      const resend = new Resend(resendApiKey);
-      
-      for (const order of ticketOrders) {
-        if (!order.customer_email) continue;
-
-        try {
-          const emailSubject = isCancelled 
-            ? `Ακύρωση Event: ${event.title}` 
-            : `Αλλαγή ώρας Event: ${event.title}`;
-
-          await resend.emails.send({
-            from: "ΦΟΜΟ <support@fomo.com.cy>",
-            to: [order.customer_email],
-            subject: emailSubject,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: ${isCancelled ? '#ef4444' : '#f59e0b'};">
- ${isCancelled ? 'Event Ακυρώθηκε' : 'Αλλαγή Ώρας'}
-                </h1>
-                <p>Γεια σου ${order.customer_name || 'εκεί'},</p>
-                <p>${notifMessage}</p>
-                
-                ${isCancelled ? `
-                  <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
-                    <p style="margin: 0; color: #991b1b;">
-                      Εάν έχετε αγοράσει εισιτήρια, η επιστροφή χρημάτων θα επεξεργαστεί αυτόματα μέσα σε 5-10 εργάσιμες ημέρες.
-                    </p>
-                  </div>
-                ` : `
-                  <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                      <p style="margin: 0; color: #92400e;">
-                      <strong>Νέα ημερομηνία:</strong> ${newStartAt ? new Date(newStartAt).toLocaleDateString('el-GR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                        timeZone: 'Europe/Nicosia',
-                      }) : 'Θα ανακοινωθεί'}
-                    </p>
-                    <p style="margin: 10px 0 0; color: #92400e;">
-                      Το εισιτήριό σας παραμένει έγκυρο για τη νέα ημερομηνία.
-                    </p>
-                  </div>
-                `}
-                
-                <p>Για οποιαδήποτε απορία, επικοινωνήστε με ${businessName}.</p>
-                <p style="margin-top: 30px;">Η ομάδα ΦΟΜΟ</p>
-              </div>
-            `,
-          });
-          emailsSent++;
-        } catch (emailError) {
-          logStep("Email send error (non-fatal)", { email: order.customer_email, error: emailError instanceof Error ? emailError.message : String(emailError) });
-        }
-      }
-    }
+    // Per spec: cancellation/update notifications are in-app + push only (no email)
+    const emailsSent = 0;
 
     logStep("Completed", { notifiedCount, emailsSent });
 

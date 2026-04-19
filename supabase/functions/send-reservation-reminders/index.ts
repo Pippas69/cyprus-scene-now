@@ -241,66 +241,8 @@ Deno.serve(async (req) => {
       const logKey = `${reminder.userId}-${reminder.reservationId}`;
       if (loggedSet.has(logKey)) continue;
 
-      const qrCodeUrl = reminder.qrCodeToken
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`
-        : null;
-
-      const formattedTime = new Date(reminder.reservationTime).toLocaleString('el-GR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Europe/Nicosia',
-      });
-
-      const emailHtml = wrapEmailContent(`
- <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;"> Υπενθύμιση Κράτησης</h2>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Γεια σου <strong>${reminder.userName}</strong>!<br><br>
-          Η κράτησή σου είναι <strong>σε 2 ώρες</strong>!
-        </p>
-        
-        <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          ${reminder.eventTitle ? `
-            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Κράτηση για Εκδήλωση</p>
-            <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px;">${reminder.eventTitle}</h3>
-          ` : `
-            <p style="color: #0d3b66; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Κράτηση Τραπεζιού</p>
-          `}
- <p style="color: #475569; margin: 4px 0;"> ${reminder.businessName}</p>
- <p style="color: #475569; margin: 4px 0;"> ${formattedTime}</p>
- ${reminder.location ? `<p style="color: #475569; margin: 4px 0;"> ${reminder.location}</p>` : ''}
-          <p style="color: #475569; margin: 12px 0 0 0;"><strong>Όνομα:</strong> ${reminder.reservationName}</p>
-          <p style="color: #475569; margin: 4px 0;"><strong>Άτομα:</strong> ${reminder.partySize}</p>
-        </div>
-
-        ${qrCodeUrl ? `
-          <div style="text-align: center; margin: 28px 0;">
-            <p style="color: #102b4a; font-weight: bold; margin: 0 0 12px 0;">Ο Κωδικός σου</p>
-            <div style="background: #ffffff; border: 3px solid #3ec3b7; border-radius: 16px; padding: 20px; display: inline-block;">
-              <img src="${qrCodeUrl}" alt="QR Code" style="width: 200px; height: 200px; display: block;" />
-            </div>
-            <p style="color: #102b4a; font-size: 20px; font-weight: bold; margin: 12px 0 0 0; letter-spacing: 2px;">${reminder.confirmationCode}</p>
-          </div>
-        ` : `
-          <p style="text-align: center; color: #102b4a; font-size: 24px; font-weight: bold; margin: 24px 0; letter-spacing: 2px;">${reminder.confirmationCode}</p>
-        `}
-
-        <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
- Ανυπομονούμε να σε δούμε!
-        </p>
-      `);
-
       try {
-        // Send email
-        await resend.emails.send({
-          from: "ΦΟΜΟ <support@fomo.com.cy>",
-          to: [reminder.userEmail],
- subject: `Σε 2 ώρες: Κράτηση στο ${reminder.businessName}`,
-          html: emailHtml,
-        });
+        // Reminders: in-app + push only (no email per spec)
 
         // Create in-app notification
         await supabase.from('notifications').insert({
