@@ -13,7 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
-import {
+import { LATIN_RESERVATION_NAME_REGEX, LATIN_RESERVATION_NAME_MESSAGE } from '@/lib/reservationValidation';
   GlassWater, TableIcon, Crown, Sofa, Users,
   Phone, User, MessageSquare, CreditCard, Mail,
   ArrowRight, ArrowLeft, Loader2, Info,
