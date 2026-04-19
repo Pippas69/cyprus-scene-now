@@ -15,10 +15,24 @@ import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
 import { LATIN_RESERVATION_NAME_REGEX, LATIN_RESERVATION_NAME_MESSAGE } from '@/lib/reservationValidation';
 import {
-  GlassWater, TableIcon, Crown, Sofa, Users,
-  Phone, User, MessageSquare, CreditCard, Mail,
-  ArrowRight, ArrowLeft, Loader2, Info,
-  AlertCircle, Ticket, ExternalLink, Clock
+  GlassWater,
+  TableIcon,
+  Crown,
+  Sofa,
+  Users,
+  Phone,
+  User,
+  MessageSquare,
+  CreditCard,
+  Mail,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Info,
+  AlertCircle,
+  Ticket,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
