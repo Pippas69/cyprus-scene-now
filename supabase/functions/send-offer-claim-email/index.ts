@@ -11,6 +11,7 @@ import {
   noteBox,
   discountBadge,
   successBadge,
+  transactionCodeBox,
 } from "../_shared/email-templates.ts";
 import { z, parseBody, flexId, safeString, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 
