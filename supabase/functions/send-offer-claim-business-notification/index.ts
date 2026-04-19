@@ -133,10 +133,10 @@ Deno.serve(async (req) => {
 
     // Email subject depends on reservation
     const emailSubject = data.hasReservation
-      ? `📋 Νέα κράτηση με προσφορά: ${data.customerName}`
-      : `🎁 Νέα διεκδίκηση: ${formatPartySizeText(data.partySize)} για "${data.offerTitle}"`;
+      ? `Νέα κράτηση με προσφορά: ${data.customerName}`
+      : `Νέα διεκδίκηση: ${formatPartySizeText(data.partySize)} για "${data.offerTitle}"`;
 
-    const subheader = data.hasReservation ? '📋 Κράτηση & Προσφορά' : '🎁 Νέα Διεκδίκηση';
+    const subheader = data.hasReservation ? 'Κράτηση & Προσφορά' : 'Νέα Διεκδίκηση';
 
     const content = `
       ${!data.hasReservation ? successBadge('Νέα Διεκδίκηση') : ''}
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
         { auth: { persistSession: false } }
       );
 
-      const pushTitle = data.hasReservation ? 'Νέα κράτηση με προσφορά ✓' : 'Νέα διεκδίκηση ✓';
+      const pushTitle = data.hasReservation ? 'Νέα κράτηση με προσφορά' : 'Νέα διεκδίκηση';
       const pushBody = `${data.customerName} · ${data.offerTitle} · ${formatPartySizeText(data.partySize)}`;
       const stableTag = data.purchaseId ? `n:offer_claimed:${data.purchaseId}` : `n:offer_claimed:${data.offerTitle}`.slice(0, 120);
 
