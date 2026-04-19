@@ -29,6 +29,7 @@ import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { isBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { AddGuestsDialog } from './AddGuestsDialog';
+import { ReservationSuccessDialog } from './ReservationSuccessDialog';
 import { Plus } from 'lucide-react';
 
 interface MyReservationsProps {
@@ -114,6 +115,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [seatingBottleInfo, setSeatingBottleInfo] = useState<Record<string, { bottle_type: 'bottle' | 'premium_bottle'; bottle_count: number }>>({});
   const [confirmingDeferredId, setConfirmingDeferredId] = useState<string | null>(null);
   const [addGuestsReservation, setAddGuestsReservation] = useState<ReservationData | null>(null);
+  const [addGuestsSuccessData, setAddGuestsSuccessData] = useState<{
+    confirmation_code: string;
+    qr_code_token: string;
+    reservation_name: string;
+    party_size: number;
+    preferred_time: string;
+    business_name: string;
+    business_logo?: string | null;
+    guests: { guest_name: string; qr_code_token: string }[];
+  } | null>(null);
   const tt = toastTranslations[language];
 
   useEffect(() => {
