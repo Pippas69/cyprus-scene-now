@@ -492,8 +492,11 @@ const handler = async (req: Request): Promise<Response> => {
         })
       : null;
 
-    // Send to user
-    if (userEmailAddr && userHtml && !(await wasAlreadySent(supabase, reservation.user_id, userEmailKey))) {
+    // Per spec: emails ONLY for new reservations (no cancellation/status emails)
+    const isEmailAllowed = type === 'new';
+
+    // Send to user (only for new)
+    if (isEmailAllowed && userEmailAddr && userHtml && !(await wasAlreadySent(supabase, reservation.user_id, userEmailKey))) {
       try {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
@@ -508,8 +511,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send to business
-    if (businessData?.user_id && bizEmailAddr && businessHtml && bizEmailKey && !(await wasAlreadySent(supabase, businessData.user_id, bizEmailKey))) {
+    // Send to business (only for new)
+    if (isEmailAllowed && businessData?.user_id && bizEmailAddr && businessHtml && bizEmailKey && !(await wasAlreadySent(supabase, businessData.user_id, bizEmailKey))) {
       try {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
