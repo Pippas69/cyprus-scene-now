@@ -31,7 +31,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { reservation_id, extra_guests, guest_names } = await req.json();
+    const { reservation_id, extra_guests, guest_names, guest_ages, email } = await req.json();
     if (!reservation_id || !extra_guests || extra_guests < 1) {
       throw new Error("Invalid request");
     }
@@ -42,6 +42,15 @@ serve(async (req) => {
     for (const n of cleanedNames) {
       if (!LATIN.test(n)) throw new Error("Names must be Latin characters only");
     }
+    const cleanedAges: (number | null)[] = Array.isArray(guest_ages)
+      ? guest_ages.map((a: any) => {
+          const n = parseInt(String(a), 10);
+          return isNaN(n) ? null : n;
+        })
+      : new Array(extra_guests).fill(null);
+    const cleanedEmail: string | null = email && typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+      ? email.trim()
+      : null;
 
     // Load reservation
     const { data: res, error: resErr } = await supabase
@@ -90,25 +99,38 @@ serve(async (req) => {
 
     // FREE PATH — apply immediately
     if (extraChargeCents === 0) {
-      // Update party_size first
+      // Update reservation party_size + charge + email (if changed)
+      const updatePayload: any = { party_size: newPartySize, prepaid_min_charge_cents: newCharge };
+      if (cleanedEmail && cleanedEmail !== res.email) updatePayload.email = cleanedEmail;
       const { error: updErr } = await supabase
         .from("reservations")
-        .update({ party_size: newPartySize, prepaid_min_charge_cents: newCharge })
+        .update(updatePayload)
         .eq("id", reservation_id);
       if (updErr) throw updErr;
 
-      // Build guests array (only the new ones)
-      const newGuests = cleanedNames.map((name) => ({ name, age: null }));
+      // Build guests array (only the new ones) with ages
+      const newGuests = cleanedNames.map((name, i) => ({ name, age: cleanedAges[i] ?? null }));
 
-      // Add tickets for new guests
-      await ensureReservationEventGuestTickets({
-        supabaseClient: supabase,
-        reservationId: reservation_id,
-        paymentIntentId: null,
-        session: null,
-        guests: newGuests,
-        customerEmail: res.email || null,
-      });
+      // Add tickets for new guests (event-based) OR reservation_guests (direct)
+      if (res.event_id) {
+        await ensureReservationEventGuestTickets({
+          supabaseClient: supabase,
+          reservationId: reservation_id,
+          paymentIntentId: null,
+          session: null,
+          guests: newGuests,
+          customerEmail: cleanedEmail || res.email || null,
+        });
+      } else {
+        // Direct reservation → insert into reservation_guests
+        const guestInserts = newGuests.map((g) => ({
+          reservation_id,
+          guest_name: g.name,
+          qr_code_token: crypto.randomUUID(),
+          status: "valid" as const,
+        }));
+        await supabase.from("reservation_guests").insert(guestInserts);
+      }
 
       // Forward to processor for emails/notifications
       const baseUrl = `${(Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "")}/functions/v1`;
