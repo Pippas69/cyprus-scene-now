@@ -276,6 +276,8 @@ const handler = async (req: Request): Promise<Response> => {
             Η κράτησή σου στο <strong>${businessName}</strong> είναι επιβεβαιωμένη.
           </p>
 
+          ${transactionCodeBox(reservation.transaction_code)}
+
           ${isDirectReservation ? '' : `
             <p style="color: #0d3b66; font-size: 16px; font-weight: 600; text-align: center; margin: 0 0 16px 0;">
               ${reservationContext}
@@ -307,6 +309,8 @@ const handler = async (req: Request): Promise<Response> => {
             Η κράτησή σου στο <strong>${businessName}</strong> καταχωρήθηκε και περιμένει έγκριση.
           </p>
 
+          ${transactionCodeBox(reservation.transaction_code)}
+
           ${isDirectReservation ? '' : `
             <p style="color: #0d3b66; font-size: 16px; font-weight: 600; text-align: center; margin: 0 0 16px 0;">
               ${reservationContext}
@@ -331,6 +335,8 @@ const handler = async (req: Request): Promise<Response> => {
         <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
           Νέα κράτηση για το <strong>${businessName}</strong>.
         </p>
+
+        ${transactionCodeBox(reservation.transaction_code)}
 
         ${infoCard('Λεπτομέρειες', 
           detailRow('Πελάτης', reservation.reservation_name) +
