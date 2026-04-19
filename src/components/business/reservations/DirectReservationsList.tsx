@@ -2089,6 +2089,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             {reservation.phone_number.replace(/^\+357/, '')}
                               </span>
                           }
+                            {reservation.transaction_code && (
+                              <span className="text-[10px] font-mono text-muted-foreground tracking-wider -ml-1.5">
+                                {reservation.transaction_code}
+                              </span>
+                            )}
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
@@ -2379,6 +2384,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
                         </div>
                       }
+                      {reservation.transaction_code && (
+                        <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-0.5">
+                          {reservation.transaction_code}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
 
