@@ -401,8 +401,17 @@ export const AddGuestsDialog = ({
                 </div>
                 <div className="flex items-center justify-between border-t pt-1.5">
                   <span className="text-sm text-muted-foreground">{tr.extraCharge}</span>
-                  <span className="text-base font-semibold text-primary">
-                    {extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : tr.free}
+                  <span className={cn(
+                    "text-base font-semibold",
+                    extraChargeCents > 0 ? "text-primary" : "text-emerald-500"
+                  )}>
+                    {extraChargeCents > 0
+                      ? `€${(extraChargeCents / 100).toFixed(2)}`
+                      : newTierIsBottles && bottleDelta && bottleDelta.delta > 0
+                        ? `+${formatBottleLabel(bottleDelta.type, bottleDelta.delta, language)} (${tr.atVenue})`
+                        : newTierIsBottles
+                          ? tr.payAtVenue
+                          : tr.free}
                   </span>
                 </div>
               </div>
