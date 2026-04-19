@@ -168,7 +168,12 @@ serve(async (req) => {
       .select("email, name")
       .eq("id", user.id)
       .single();
-    const customerEmail = profile?.email || user.email || res.email || "";
+    const customerEmail = cleanedEmail || profile?.email || user.email || res.email || "";
+
+    // Update email on reservation if user provided a different one (paid path)
+    if (cleanedEmail && cleanedEmail !== res.email) {
+      await supabase.from("reservations").update({ email: cleanedEmail }).eq("id", reservation_id);
+    }
 
     // get/create Stripe customer
     let customerId: string | undefined;
@@ -193,8 +198,8 @@ serve(async (req) => {
       customer_email: customerEmail,
     };
 
-    // Serialize guest names (chunked)
-    const guestsJson = JSON.stringify(cleanedNames.map((name) => ({ name, age: null })));
+    // Serialize guest names + ages (chunked)
+    const guestsJson = JSON.stringify(cleanedNames.map((name, i) => ({ name, age: cleanedAges[i] ?? null })));
     if (guestsJson.length <= 500) {
       metadata.guests = guestsJson;
     } else {
