@@ -3800,7 +3800,6 @@ export type Database = {
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
-          transaction_code: string | null
           updated_at: string | null
           user_id: string
         }
@@ -3830,7 +3829,6 @@ export type Database = {
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          transaction_code?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -3860,7 +3858,6 @@ export type Database = {
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
-          transaction_code?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -5381,7 +5378,6 @@ export type Database = {
           stripe_payment_method_id: string | null
           stripe_setup_intent_id: string | null
           ticket_credit_cents: number | null
-          transaction_code: string | null
           updated_at: string
           user_id: string
         }
@@ -5424,7 +5420,6 @@ export type Database = {
           stripe_payment_method_id?: string | null
           stripe_setup_intent_id?: string | null
           ticket_credit_cents?: number | null
-          transaction_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -5467,7 +5462,6 @@ export type Database = {
           stripe_payment_method_id?: string | null
           stripe_setup_intent_id?: string | null
           ticket_credit_cents?: number | null
-          transaction_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -6330,7 +6324,6 @@ export type Database = {
           stripe_payment_intent_id: string | null
           subtotal_cents: number
           total_cents: number
-          transaction_code: string | null
           updated_at: string
           user_id: string
         }
@@ -6350,7 +6343,6 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           total_cents?: number
-          transaction_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -6370,7 +6362,6 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           total_cents?: number
-          transaction_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -7660,7 +7651,6 @@ export type Database = {
         | { Args: never; Returns: string }
         | { Args: { _promoter_user_id: string }; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
-      generate_transaction_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
         Args: { geom1: unknown; geom2: unknown }

@@ -45,18 +45,13 @@ const Signup = () => {
   const confetti = useConfetti();
   const { isBetaMode, isLoading: betaLoading, betaMessage } = useBetaMode();
 
-  const latinNameMsg = language === 'el'
-    ? 'Παρακαλώ χρησιμοποίησε μόνο λατινικούς χαρακτήρες (A-Z)'
-    : 'Please use Latin characters only (A-Z)';
-  const LATIN_NAME_REGEX = /^[a-zA-Z\s\-\.']+$/;
-
   const signupSchema = z.object({
     firstName: z.string().trim().min(2, {
       message: vt.nameRequired
-    }).regex(LATIN_NAME_REGEX, { message: latinNameMsg }),
+    }),
     lastName: z.string().trim().min(2, {
       message: vt.nameRequired
-    }).regex(LATIN_NAME_REGEX, { message: latinNameMsg }),
+    }),
     age: z.coerce.number().min(15, {
       message: formatValidationMessage(vt.minValue, { min: 15 })
     }).max(100),

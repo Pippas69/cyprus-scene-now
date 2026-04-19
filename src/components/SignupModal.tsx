@@ -31,14 +31,10 @@ interface SignupModalProps {
 
 const createSignupSchema = (language: "el" | "en") => {
   const vt = validationTranslations[language];
-  const latinNameMsg = language === 'el'
-    ? 'Παρακαλώ χρησιμοποίησε μόνο λατινικούς χαρακτήρες (A-Z)'
-    : 'Please use Latin characters only (A-Z)';
-  const LATIN_NAME_REGEX = /^[a-zA-Z\s\-\.']+$/;
-
+  
   return z.object({
-    firstName: z.string().trim().min(2, vt.nameRequired).regex(LATIN_NAME_REGEX, latinNameMsg),
-    lastName: z.string().trim().min(2, vt.nameRequired).regex(LATIN_NAME_REGEX, latinNameMsg),
+    firstName: z.string().trim().min(2, vt.nameRequired),
+    lastName: z.string().trim().min(2, vt.nameRequired),
     age: z.coerce.number().min(15, formatValidationMessage(vt.minValue, { min: 15 })).max(100),
     email: z.string().trim().email(vt.invalidEmail),
     password: z.string().min(8, vt.passwordTooShort),
