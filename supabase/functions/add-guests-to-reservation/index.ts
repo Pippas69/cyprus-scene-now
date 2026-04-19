@@ -58,7 +58,7 @@ serve(async (req) => {
       .select(`
         id, user_id, event_id, business_id, party_size, seating_type_id,
         prepaid_min_charge_cents, status, reservation_name, email,
-        events ( id, title, start_at, businesses ( id, name, stripe_account_id, stripe_onboarding_completed ) )
+        events ( id, title, start_at, event_type, pay_at_door, businesses ( id, name, stripe_account_id, stripe_onboarding_completed ) )
       `)
       .eq("id", reservation_id)
       .single();
@@ -93,9 +93,16 @@ serve(async (req) => {
 
     const currentCharge = res.prepaid_min_charge_cents || 0;
     const newCharge = newTier.prepaid_min_charge_cents || 0;
-    const extraChargeCents = Math.max(0, newCharge - currentCharge);
+    const isBottlesTier = newTier.pricing_mode === "bottles";
+    const isPayAtVenue = !!(res as any).events?.pay_at_door;
+    // Online charge = diff in min_charge UNLESS:
+    //  - tier is bottles → bottles paid at venue (€0 online)
+    //  - event is pay-at-door / pay-at-venue → everything paid at venue (€0 online)
+    const extraChargeCents = (isBottlesTier || isPayAtVenue)
+      ? 0
+      : Math.max(0, newCharge - currentCharge);
 
-    log("Computed", { currentCharge, newCharge, extraChargeCents, newPartySize, maxPeople });
+    log("Computed", { currentCharge, newCharge, extraChargeCents, newPartySize, maxPeople, isBottlesTier, isPayAtVenue });
 
     // FREE PATH — apply immediately
     if (extraChargeCents === 0) {
