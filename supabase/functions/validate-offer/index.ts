@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
       try {
         await supabaseAdmin.from('notifications').insert({
           user_id: businessData.user_id,
-          title: '✅ Εξαργύρωση προσφοράς!',
+          title: 'Εξαργύρωση προσφοράς',
           message: `${customerName} εξαργύρωσε "${discount.title}"`,
           type: 'business',
           event_type: 'offer_redeemed',
@@ -457,7 +457,7 @@ Deno.serve(async (req) => {
       try {
         await supabaseAdmin.from('notifications').insert({
           user_id: purchase.user_id,
-          title: '✅ Προσφορά εξαργυρώθηκε!',
+          title: 'Προσφορά εξαργυρώθηκε',
           message: `"${discount.title}"${businessData?.name ? ` - ${businessData.name}` : ''} εξαργυρώθηκε επιτυχώς`,
           type: 'offer',
           event_type: 'offer_redeemed',
@@ -503,7 +503,7 @@ Deno.serve(async (req) => {
         await sendPushIfEnabled(
           purchase.user_id,
           {
-            title: '✅ Προσφορά εξαργυρώθηκε!',
+            title: 'Προσφορά εξαργυρώθηκε',
             body: `"${discount.title}" εξαργυρώθηκε επιτυχώς`,
             tag: `n:offer_redeemed:${purchase.id}`,
             data: {
@@ -534,7 +534,7 @@ Deno.serve(async (req) => {
         await sendPushIfEnabled(
           businessData.user_id,
           {
-            title: '✅ Εξαργύρωση προσφοράς!',
+            title: 'Εξαργύρωση προσφοράς',
             body: `${customerName} εξαργύρωσε "${discount.title}"`,
             tag: `n:offer_redeemed:${purchase.id}`,
             data: {
