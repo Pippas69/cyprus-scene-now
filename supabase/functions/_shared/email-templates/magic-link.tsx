@@ -33,7 +33,7 @@ export const MagicLinkEmail = ({
           <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>Σύνδεση στο ΦΟΜΟ ✨</Heading>
+        <Heading style={h1}>Σύνδεση στο ΦΟΜΟ</Heading>
         <Text style={text}>
           Πάτησε το παρακάτω κουμπί για να συνδεθείς. Ο σύνδεσμος λήγει σύντομα.
         </Text>

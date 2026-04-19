@@ -36,7 +36,7 @@ export const InviteEmail = ({
           <Text style={logoIcon}>ΦΟΜΟ</Text>
         </Section>
         <Hr style={divider} />
-        <Heading style={h1}>Πρόσκληση 🎊</Heading>
+        <Heading style={h1}>Πρόσκληση</Heading>
         <Text style={text}>
           Σε προσκαλέσαμε στο{' '}
           <Link href={siteUrl} style={link}>
