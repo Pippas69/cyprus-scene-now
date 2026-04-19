@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [businessEmail],
-      subject: `Νέα πώληση: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} για ${eventTitle}`,
+      subject: `Νέα πώληση εισιτηρίων - ${eventTitle}`,
       html,
     });
 
