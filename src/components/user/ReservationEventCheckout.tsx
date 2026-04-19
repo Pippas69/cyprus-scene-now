@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
+import { LATIN_RESERVATION_NAME_REGEX, LATIN_RESERVATION_NAME_MESSAGE } from '@/lib/reservationValidation';
 import { 
   GlassWater, TableIcon, Crown, Sofa, Users, 
   Clock, Phone, User, MessageSquare, CreditCard, Mail,
@@ -477,7 +478,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
     const trimmedName = reservationName.trim();
     const hasReservationName = trimmedName.length >= 2;
-    const isLatinName = /^[a-zA-Z\s\-\.']+$/.test(trimmedName);
+    const isLatinName = LATIN_RESERVATION_NAME_REGEX.test(trimmedName);
     const isPhoneValidNow = isValidPhone(phoneNumber.trim());
     const isEmailValidNow = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
 
@@ -486,7 +487,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       return;
     }
     if (!isLatinName) {
-      toast.error(language === 'el' ? 'Παρακαλώ χρησιμοποίησε λατινικούς χαρακτήρες (π.χ. John Doe)' : 'Please use Latin characters only (e.g. John Doe)');
+      toast.error(language === 'el' ? 'Παρακαλώ χρησιμοποιήστε λατινικούς χαρακτήρες (π.χ. John Doe)' : LATIN_RESERVATION_NAME_MESSAGE);
       return;
     }
     if (!allGuestsFilled) {
@@ -628,7 +629,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const canProceedToStep2 = selectedSeating !== null;
   const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = customerEmail.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const isReservationNameLatin = /^[a-zA-Z\s\-\.']+$/.test(reservationName.trim());
+  const isReservationNameLatin = LATIN_RESERVATION_NAME_REGEX.test(reservationName.trim());
   const canProceedToStep3 = allGuestsFilled && reservationName.trim().length >= 2 && isReservationNameLatin && partySize > 0 && price !== null && isPhoneValid && isEmailValid;
 
   // Format price
@@ -785,14 +786,14 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 placeholder="John Doe"
                 className={cn(
                   "h-9 text-sm",
-                  reservationName.length > 0 && !/^[a-zA-Z\s\-.']+$/.test(reservationName) && "border-destructive focus-visible:ring-destructive"
+                  reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
                 )}
               />
-              {reservationName.length > 0 && !/^[a-zA-Z\s\-.']+$/.test(reservationName) && (
+              {reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && (
                 <p className="text-xs text-destructive">
                   {language === 'el'
-                    ? 'Παρακαλώ χρησιμοποίησε λατινικούς χαρακτήρες (π.χ. John Doe)'
-                    : 'Please use Latin characters only (e.g. John Doe)'}
+                    ? 'Παρακαλώ χρησιμοποιήστε λατινικούς χαρακτήρες (π.χ. John Doe)'
+                    : LATIN_RESERVATION_NAME_MESSAGE}
                 </p>
               )}
             </div>
