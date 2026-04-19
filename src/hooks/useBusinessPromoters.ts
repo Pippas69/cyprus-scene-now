@@ -215,7 +215,7 @@ export const useUpdatePromoterApplicationStatus = (businessId: string | undefine
         if (promoterUserId && business) {
           const isAccepted = variables.status === 'accepted';
           const title = isAccepted
-            ? 'Η αίτησή σου εγκρίθηκε! 🎉'
+ ? 'Η αίτησή σου εγκρίθηκε!'
             : variables.status === 'declined'
               ? 'Η αίτησή σου απορρίφθηκε'
               : 'Η συνεργασία τερματίστηκε';

@@ -507,7 +507,7 @@ Deno.serve(async (req) => {
 
         if (!(await wasAlreadySent(supabaseClient, businessUserId, bizPushKey))) {
           const businessPushPayload: PushPayload = {
-            title: '🎟️ Νέα Πώληση Εισιτηρίων!',
+ title: '️ Νέα Πώληση Εισιτηρίων!',
             body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
             icon: '/fomo-logo-new.png',
             badge: '/fomo-logo-new.png',

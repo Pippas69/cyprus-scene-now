@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
     switch (data.type) {
       case 'TICKET_SALE':
-        emoji = "🎟️";
+ emoji = "️";
         title = `Πώληση εισιτηρίων ${emoji}`;
         message = `${data.objectTitle} • ${data.quantity} εισιτήρια${formattedAmount ? ` • ${formattedAmount}` : ''}`;
         deepLink = "/dashboard-business/tickets";
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         break;
 
       case 'OFFER_REDEEMED':
-        emoji = "✅";
+ emoji = "";
         title = `Εξαργύρωση προσφοράς ${emoji}`;
         message = `${data.objectTitle} • ${data.quantity} χρήση`;
         deepLink = "/dashboard-business/offers";
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         <h3 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 18px; 
                    border-bottom: 2px solid ${data.type === 'TICKET_SALE' ? '#8b5cf6' : '#10b981'}; 
                    padding-bottom: 8px;">
-          📋 Λεπτομέρειες ${data.type === 'TICKET_SALE' ? 'Πώλησης' : 'Εξαργύρωσης'}
+ Λεπτομέρειες ${data.type === 'TICKET_SALE' ? 'Πώλησης' : 'Εξαργύρωσης'}
         </h3>
         
         <table style="width: 100%; color: #475569; font-size: 14px;">
@@ -164,10 +164,10 @@ Deno.serve(async (req) => {
           <p style="color: ${data.remainingRedemptions === 0 ? '#dc2626' : data.remainingRedemptions < 5 ? '#d97706' : '#16a34a'}; 
                     margin: 0; font-size: 14px;">
             ${data.remainingRedemptions === 0 
-              ? '🔴 Η προσφορά εξαντλήθηκε!' 
+ ? 'Η προσφορά εξαντλήθηκε!' 
               : data.remainingRedemptions < 5 
-                ? `⚠️ Απομένουν ${data.remainingRedemptions} εξαργυρώσεις` 
-                : `✅ Απομένουν ${data.remainingRedemptions} εξαργυρώσεις`}
+ ? `️ Απομένουν ${data.remainingRedemptions} εξαργυρώσεις` 
+ : `Απομένουν ${data.remainingRedemptions} εξαργυρώσεις`}
           </p>
         </div>
       ` : ''}

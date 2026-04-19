@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
           <div style="background: linear-gradient(180deg, #0d3b66 0%, #4ecdc4 100%); padding: 48px 24px 36px 24px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 42px; font-weight: bold; letter-spacing: 4px;">ΦΟΜΟ</h1>
             <p style="color: rgba(255,255,255,0.85); margin: 10px 0 20px 0; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Cyprus Events</p>
-            <p style="color: #ffffff; margin: 0; font-size: 16px; font-weight: 500;">Your offer is ready! 🎁</p>
+ <p style="color: #ffffff; margin: 0; font-size: 16px; font-weight: 500;">Your offer is ready! </p>
           </div>
           
           <div style="background-color: #ffffff; padding: 32px 24px;">
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
             <!-- Offer Details Card -->
             <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f7f5 100%); border-radius: 16px; padding: 24px; margin-bottom: 28px; border-left: 4px solid #3ec3b7;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <span style="font-size: 24px;">🎁</span>
+ <span style="font-size: 24px;"></span>
                 <h2 style="margin: 0; color: #102b4a; font-size: 20px; font-weight: bold;">${offerTitle}</h2>
               </div>
               <p style="margin: 0 0 16px 0; color: #64748b; font-size: 14px;">From <strong style="color: #102b4a;">${businessName}</strong></p>
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
             <!-- Validity Info -->
             <div style="background: #fffbeb; border-radius: 12px; padding: 16px; margin-bottom: 28px; border: 1px solid #fcd34d;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 18px;">⏰</span>
+ <span style="font-size: 18px;"></span>
                 <div>
                   <p style="margin: 0; color: #92400e; font-size: 14px; font-weight: 600;">Valid until</p>
                   <p style="margin: 4px 0 0 0; color: #b45309; font-size: 14px;">${formattedExpiry}</p>
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [userEmail],
-      subject: `🎁 Your offer from ${businessName} is ready!`,
+ subject: `Your offer from ${businessName} is ready!`,
       html: emailHtml,
     });
 

@@ -65,14 +65,14 @@ Deno.serve(async (req) => {
 
     if (data.remaining === 0) {
       alertType = 'SOLD_OUT';
-      title = "Εξαντλήθηκε 🔴";
+ title = "Εξαντλήθηκε";
       message = `${data.objectTitle} • sold out`;
-      emoji = "🔴";
+ emoji = "";
     } else if (data.remaining === 2) {
       alertType = 'LOW_INVENTORY';
-      title = "Απομένουν 2 ⚠️";
+ title = "Απομένουν 2 ️";
       message = `${data.objectTitle} • σχεδόν sold out`;
-      emoji = "⚠️";
+ emoji = "️";
     } else {
       // No alert needed for other remaining values
       logStep("No alert needed", { remaining: data.remaining });

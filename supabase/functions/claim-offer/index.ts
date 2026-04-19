@@ -416,7 +416,7 @@ Deno.serve(async (req) => {
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: user.id,
-        title: '🎁 Προσφορά διεκδικήθηκε!',
+ title: 'Προσφορά διεκδικήθηκε!',
         message: `"${discount.title}" από ${discount.businesses.name} - έτοιμη για εξαργύρωση`,
         type: 'offer',
         event_type: 'offer_claimed',
@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
     // Send push notification to user
     try {
       const pushResult = await sendPushIfEnabled(user.id, {
-        title: '🎁 Προσφορά διεκδικήθηκε!',
+ title: 'Προσφορά διεκδικήθηκε!',
         body: `"${discount.title}" από ${discount.businesses.name}`,
         tag: `offer-claim-${purchase.id}`,
         data: {
@@ -484,7 +484,7 @@ Deno.serve(async (req) => {
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: discount.businesses.user_id,
-        title: '🎁 Νέα διεκδίκηση προσφοράς!',
+ title: 'Νέα διεκδίκηση προσφοράς!',
         message: `${userName} διεκδίκησε "${discount.title}" για ${partySize} ${partySize === 1 ? 'άτομο' : 'άτομα'}`,
         type: 'business',
         event_type: 'offer_claimed',

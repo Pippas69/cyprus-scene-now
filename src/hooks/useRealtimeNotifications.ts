@@ -11,18 +11,18 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
 
   const t = {
     el: {
-      newReservation: 'Νέα Κράτηση! 🎉',
+ newReservation: 'Νέα Κράτηση!',
       reservedFor: 'κράτηση για',
       people: 'άτομα',
       newRsvp: 'Νέο RSVP',
       willAttend: 'θα παρευρεθεί στο',
       interested: 'ενδιαφέρεται για το',
       someone: 'Κάποιος',
-      newTicketSale: 'Νέα Πώληση Εισιτηρίου! 🎫',
+ newTicketSale: 'Νέα Πώληση Εισιτηρίου!',
       ticketsSold: 'εισιτήρια πωλήθηκαν',
       ticketSold: 'εισιτήριο πωλήθηκε',
       forEvent: 'για την εκδήλωση',
-      newOfferPurchase: 'Νέα Αγορά Προσφοράς! 💳',
+ newOfferPurchase: 'Νέα Αγορά Προσφοράς!',
       offerPurchased: 'Η προσφορά αγοράστηκε',
       qrScanned: 'QR Σαρώθηκε',
       viewed: 'προβλήθηκε',
@@ -31,18 +31,18 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
       directReservation: 'Κράτηση Τραπεζιού',
     },
     en: {
-      newReservation: 'New Reservation! 🎉',
+ newReservation: 'New Reservation!',
       reservedFor: 'reserved for',
       people: 'people',
       newRsvp: 'New RSVP',
       willAttend: 'will attend',
       interested: 'is interested in',
       someone: 'Someone',
-      newTicketSale: 'New Ticket Sale! 🎫',
+ newTicketSale: 'New Ticket Sale!',
       ticketsSold: 'tickets sold',
       ticketSold: 'ticket sold',
       forEvent: 'for event',
-      newOfferPurchase: 'New Offer Purchase! 💳',
+ newOfferPurchase: 'New Offer Purchase!',
       offerPurchased: 'Offer purchased',
       qrScanned: 'QR Scanned',
       viewed: 'viewed',
@@ -127,7 +127,7 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
             notificationShownRef.current.add(payload.new.id);
             
             const status = payload.new.status === 'going' ? labels.willAttend : labels.interested;
-            toast(`${labels.newRsvp} - ${event.title}! 👥`, {
+ toast(`${labels.newRsvp} - ${event.title}!`, {
               description: `${labels.someone} ${status} ${event.title}`,
             });
 
@@ -249,7 +249,7 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
             };
             
             const scanAction = scanTypeMap[payload.new.scan_type as keyof typeof scanTypeMap] || labels.viewed;
-            const icon = payload.new.scan_type === 'redeem' ? '✅' : payload.new.scan_type === 'verify' ? '🔍' : '👁️';
+ const icon = payload.new.scan_type === 'redeem' ? '' : payload.new.scan_type === 'verify' ? '' : '️';
             
             toast(`${labels.qrScanned}! ${icon}`, {
               description: `${discount.title} - ${scanAction}`,

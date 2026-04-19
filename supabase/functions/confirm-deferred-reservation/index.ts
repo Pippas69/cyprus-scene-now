@@ -291,7 +291,7 @@ serve(async (req) => {
       if (bizOwner) {
         await supabaseService.from("notifications").insert({
           user_id: bizOwner.user_id,
-          title: `🎉 Επιβεβαίωση Κράτησης`,
+ title: `Επιβεβαίωση Κράτησης`,
           message: `Ο/Η ${reservation.reservation_name} επιβεβαίωσε την παρουσία για ${event.title}.`,
           type: "personal",
           event_type: "reservation_confirmed",
@@ -302,7 +302,7 @@ serve(async (req) => {
           delivered_at: new Date().toISOString(),
         });
         await sendPushIfEnabled(bizOwner.user_id, {
-          title: "🎉 Επιβεβαίωση Κράτησης",
+ title: "Επιβεβαίωση Κράτησης",
           body: `Ο/Η ${reservation.reservation_name} επιβεβαίωσε για ${event.title}.`,
           icon: "/fomo-logo-new.png",
           badge: "/fomo-logo-new.png",

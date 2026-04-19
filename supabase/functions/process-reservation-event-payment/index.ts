@@ -491,12 +491,12 @@ serve(async (req) => {
             ${ctaButton('Οι κρατήσεις μου', 'https://fomo.com.cy/dashboard-user?tab=reservations&subtab=event')}
           `;
 
-          const userEmailHtml = wrapPremiumEmail(userContent, '✓ Κράτηση Εκδήλωσης');
+ const userEmailHtml = wrapPremiumEmail(userContent, 'Κράτηση Εκδήλωσης');
 
           await resend.emails.send({
             from: "ΦΟΜΟ <support@fomo.com.cy>",
             to: [userEmail],
-            subject: `✓ Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
+ subject: `Κράτηση επιβεβαιώθηκε - ${eventTitle}`,
             html: userEmailHtml,
           });
           logStep("User email sent", { email: userEmail });
@@ -512,7 +512,7 @@ serve(async (req) => {
         try {
           await supabaseClient.from('notifications').insert({
             user_id: businessUserId,
-            title: '🎉 Νέα πληρωμένη κράτηση!',
+ title: 'Νέα πληρωμένη κράτηση!',
             message: `${reservation.reservation_name} - ${reservation.party_size} άτομα • ${reservation.events?.title}`,
             type: 'business',
             event_type: 'new_reservation_event',
@@ -527,7 +527,7 @@ serve(async (req) => {
 
         try {
           const bizPushPayload: PushPayload = {
-            title: '🎉 Νέα πληρωμένη κράτηση!',
+ title: 'Νέα πληρωμένη κράτηση!',
             body: `${reservation.reservation_name} - ${reservation.party_size} άτομα • ${reservation.events?.title}`,
             icon: '/fomo-logo-new.png',
             badge: '/fomo-logo-new.png',
@@ -582,12 +582,12 @@ serve(async (req) => {
               ${ctaButton('Διαχείριση Κρατήσεων', 'https://fomo.com.cy/dashboard-business/reservations')}
             `;
 
-            const bizEmailHtml = wrapBusinessEmail(bizContent, '🎟️ Κράτηση Εκδήλωσης');
+ const bizEmailHtml = wrapBusinessEmail(bizContent, '️ Κράτηση Εκδήλωσης');
 
             await resend.emails.send({
               from: "ΦΟΜΟ <support@fomo.com.cy>",
               to: [bizProfile.email],
-              subject: `🎟️ Νέα Κράτηση Εκδήλωσης: ${reservation.reservation_name}`,
+ subject: `️ Νέα Κράτηση Εκδήλωσης: ${reservation.reservation_name}`,
               html: bizEmailHtml,
             });
             logStep("Business email sent", { email: bizProfile.email });
