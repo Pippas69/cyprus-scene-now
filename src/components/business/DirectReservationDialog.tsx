@@ -24,6 +24,7 @@ import { useClosedDates } from '@/hooks/useClosedDates';
 import { useSlotAvailability } from '@/hooks/useSlotAvailability';
 import { useProfileData } from '@/hooks/useProfileData';
 import { isValidPhone } from '@/lib/phoneValidation';
+import { isValidLatinName } from '@/lib/nameValidation';
 
 interface DirectReservationDialogProps {
   open: boolean;
