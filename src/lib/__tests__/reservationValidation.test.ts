@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { reservationSchema } from "../reservationValidation";
 
 const validData = {
-  reservation_name: "Γιώργος",
+  reservation_name: "John Doe",
   party_size: 4,
   phone_number: "+357 99 123456",
   special_requests: "",
