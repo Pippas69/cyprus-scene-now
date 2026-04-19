@@ -304,45 +304,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
 
       const pref = prefMap.get(notification.user_id);
-      const emailEnabled = pref?.email_notifications_enabled !== false;
       const pushEnabled = pref?.notification_push_enabled !== false;
 
       try {
-        // Send email if enabled
-        if (emailEnabled) {
-          const emailHtml = wrapEmailContent(`
-            <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">
- ${notification.reminder_type === '1_day' ? 'Υπενθύμιση - Αύριο!' : 'Υπενθύμιση - Σε 2 ώρες!'}
-            </h2>
-            <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-              Γεια σου <strong>${notification.user_name}</strong>!<br><br>
-              Η εκδήλωση ${interactionText} ξεκινάει <strong>${timeText}</strong>!
-            </p>
-            
-            <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
-              <h3 style="color: #0d3b66; margin: 0 0 12px 0; font-size: 20px;">${notification.event_title}</h3>
- <p style="color: #475569; margin: 4px 0;"> ${notification.event_location}</p>
- <p style="color: #475569; margin: 4px 0;"> ${formattedDate}</p>
-            </div>
-
-            <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
- Μην αργήσεις!
-            </p>
-
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="https://fomo.com.cy/event/${notification.event_id}" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
-                Δες την Εκδήλωση
-              </a>
-            </div>
-          `);
-
-          await resend.emails.send({
-            from: "ΦΟΜΟ <support@fomo.com.cy>",
-            to: [notification.user_email],
- subject: `${notification.reminder_type === '1_day' ? '' : ''} ${notification.event_title} - ${timeText}!`,
-            html: emailHtml,
-          });
-        }
+        // Reminders: in-app + push only (no email per spec)
 
         // Create in-app notification
         await supabase.from('notifications').insert({

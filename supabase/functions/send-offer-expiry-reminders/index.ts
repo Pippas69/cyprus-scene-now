@@ -172,53 +172,8 @@ Deno.serve(async (req) => {
       const logKey = `${reminder.userId}-${reminder.purchaseId}`;
       if (loggedSet.has(logKey)) continue;
 
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=M&data=${encodeURIComponent(reminder.qrCodeToken)}&bgcolor=ffffff&color=000000`;
-
-      const emailHtml = wrapEmailContent(`
- <h2 style="color: #f59e0b; margin: 0 0 16px 0; font-size: 24px;">️ Η προσφορά σου λήγει σε 2 ώρες!</h2>
-        <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
-          Γεια σου <strong>${reminder.userName}</strong>!<br><br>
-          Μην ξεχάσεις! Η προσφορά σου λήγει <strong>σε 2 ώρες</strong>!
-        </p>
-        
-        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 24px 0;">
-          <h3 style="color: #92400e; margin: 0 0 8px 0; font-size: 20px;">${reminder.offerTitle}</h3>
- <p style="color: #92400e; margin: 4px 0;"> ${reminder.businessName}</p>
-          ${reminder.percentOff ? `
-            <div style="margin-top: 12px;">
-              <span style="display: inline-block; background: #dc2626; color: white; padding: 6px 16px; border-radius: 6px; font-size: 18px; font-weight: bold;">
-                -${reminder.percentOff}%
-              </span>
-            </div>
-          ` : ''}
-        </div>
-
-        <div style="text-align: center; margin: 28px 0;">
-          <p style="color: #102b4a; font-weight: bold; margin: 0 0 12px 0;">Ο Κωδικός σου</p>
-          <div style="background: #ffffff; border: 3px solid #f59e0b; border-radius: 16px; padding: 20px; display: inline-block;">
-            <img src="${qrCodeUrl}" alt="QR Code" style="width: 200px; height: 200px; display: block;" />
-          </div>
-        </div>
-
-        <p style="color: #dc2626; font-weight: 600; text-align: center; font-size: 16px;">
- Εξαργύρωσε την προσφορά πριν λήξει!
-        </p>
-
-        <div style="text-align: center; margin: 24px 0;">
-          <a href="https://fomo.com.cy/dashboard-user/offers" style="display: inline-block; background: linear-gradient(135deg, #0d3b66 0%, #4ecdc4 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
-            Δες τις Προσφορές μου
-          </a>
-        </div>
-      `);
-
       try {
-        // Send email
-        await resend.emails.send({
-          from: "ΦΟΜΟ <support@fomo.com.cy>",
-          to: [reminder.userEmail],
- subject: `️ Η προσφορά σου λήγει σε 2 ώρες! - ${reminder.offerTitle}`,
-          html: emailHtml,
-        });
+        // Reminders: in-app + push only (no email per spec)
 
         // Create in-app notification
         await supabase.from('notifications').insert({
