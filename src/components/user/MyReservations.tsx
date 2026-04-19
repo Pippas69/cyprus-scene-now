@@ -293,7 +293,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age, pay_at_door,
             businesses(id, name, logo_url)
           )
         `)
@@ -306,7 +306,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age, pay_at_door,
             businesses(id, name, logo_url)
           )
         `)
@@ -342,7 +342,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           total_cents,
           created_at,
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age, pay_at_door,
             businesses(id, name, logo_url)
           )
         `)
@@ -1529,6 +1529,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             reservation_name: addGuestsReservation.reservation_name,
             email: addGuestsReservation.email,
             event_minimum_age: addGuestsReservation.events?.minimum_age,
+            event_type: addGuestsReservation.events?.event_type ?? null,
+            pay_at_door: (addGuestsReservation.events as any)?.pay_at_door ?? false,
+            prepaid_min_charge_cents: addGuestsReservation.prepaid_min_charge_cents,
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
