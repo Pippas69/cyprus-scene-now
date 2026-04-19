@@ -200,12 +200,12 @@ Deno.serve(async (req) => {
       </p>
     `;
 
-    const emailHtml = wrapPremiumEmail(content, isHybrid ? '📋 Κράτηση' : '🎟️ Εισιτήρια Έτοιμα');
+    const emailHtml = wrapPremiumEmail(content, isHybrid ? 'Κράτηση' : 'Εισιτήρια Έτοιμα');
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [userEmail],
-      subject: isHybrid ? `📋 Η κράτησή σου για ${eventTitle}` : `🎟️ Τα εισιτήριά σου για ${eventTitle}`,
+      subject: isHybrid ? `Η κράτησή σου για ${eventTitle}` : `Τα εισιτήριά σου για ${eventTitle}`,
       html: emailHtml,
     });
 
