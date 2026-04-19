@@ -337,13 +337,13 @@ serve(async (req) => {
       }
 
       const detailRows = [
-        detailRow("📅 Ημερομηνία", eventDate),
-        detailRow("📍 Τοποθεσία", venueName),
-        partySize > 1 ? detailRow("👥 Άτομα", `${partySize}`) : "",
+ detailRow("Ημερομηνία", eventDate),
+ detailRow("Τοποθεσία", venueName),
+ partySize > 1 ? detailRow("Άτομα", `${partySize}`) : "",
       ].filter(Boolean).join("");
 
       const emailHtml = wrapPremiumEmail(`
-        ${successBadge("🎉 Είστε Καλεσμένος!")}
+ ${successBadge("Είστε Καλεσμένος!")}
         
         <p style="font-size: 15px; color: #334155; margin: 0 0 4px 0; text-align: center;">
           Το <strong>${business.name}</strong> σας προσκαλεί στην εκδήλωση:
@@ -368,7 +368,7 @@ serve(async (req) => {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [guest_email],
-          subject: `🎉 Πρόσκληση: ${event.title} — ${business.name}`,
+ subject: `Πρόσκληση: ${event.title} — ${business.name}`,
           html: emailHtml,
         });
         console.log("[send-invitation] Email sent to", guest_email);

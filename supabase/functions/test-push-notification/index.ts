@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const { data, error } = await serviceClient.functions.invoke("send-push-notification", {
       body: {
         userId: user.id,
-        title: "🔔 Test Notification",
+ title: "Test Notification",
         body: "Push notifications are working! / Οι push ειδοποιήσεις λειτουργούν!",
         data: {
           url: "/settings",

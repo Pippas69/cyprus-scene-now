@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
           // Notify user
           await supabase.from("notifications").insert({
             user_id: reservation.user_id,
-            title: `⚠️ Χρέωση Ακύρωσης`,
+ title: `️ Χρέωση Ακύρωσης`,
             message: `Η κράτησή σας για ${event.title} δεν επιβεβαιώθηκε εγκαίρως. Χρεώθηκε τέλος ακύρωσης ${feeFormatted}.`,
             type: "personal",
             event_type: "reservation_auto_charged",
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
           });
 
           await sendPushIfEnabled(reservation.user_id, {
-            title: "⚠️ Χρέωση Ακύρωσης",
+ title: "️ Χρέωση Ακύρωσης",
             body: `Η κράτησή σας για ${event.title} δεν επιβεβαιώθηκε. Χρεώθηκε ${feeFormatted}.`,
             icon: "/fomo-logo-new.png",
             badge: "/fomo-logo-new.png",
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
           if (business?.user_id) {
             await supabase.from("notifications").insert({
               user_id: business.user_id,
-              title: `❌ Μη Επιβεβαιωμένη Κράτηση`,
+ title: `Μη Επιβεβαιωμένη Κράτηση`,
               message: `Ο/Η ${reservation.reservation_name} δεν επιβεβαίωσε για ${event.title}. Χρεώθηκε τέλος ακύρωσης ${feeFormatted}.`,
               type: "personal",
               event_type: "reservation_auto_charged",
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
 
           // Notify user their card was declined
           await sendPushIfEnabled(reservation.user_id, {
-            title: "❌ Αποτυχία Χρέωσης",
+ title: "Αποτυχία Χρέωσης",
             body: `Η κάρτα σας απορρίφθηκε για το τέλος ακύρωσης (${feeFormatted}). Θα γίνει νέα προσπάθεια.`,
             icon: "/fomo-logo-new.png",
             badge: "/fomo-logo-new.png",
@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
 
           await supabase.from("notifications").insert({
             user_id: reservation.user_id,
-            title: `⚠️ Χρέωση Ακύρωσης`,
+ title: `️ Χρέωση Ακύρωσης`,
             message: `Χρεώθηκε τέλος ακύρωσης ${feeFormatted} για ${event.title}.`,
             type: "personal",
             event_type: "reservation_auto_charged",
@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
             if (business?.user_id) {
               await supabase.from("notifications").insert({
                 user_id: business.user_id,
-                title: `⚠️ Αποτυχία Είσπραξης`,
+ title: `️ Αποτυχία Είσπραξης`,
                 message: `Δεν ήταν δυνατή η είσπραξη τέλους ακύρωσης από ${reservation.reservation_name} για ${event.title}. Επικοινωνήστε απευθείας.`,
                 type: "personal",
                 event_type: "payment_collection_failed",
@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
         const timeLabel = minutesLeft > 60 ? `${Math.round(minutesLeft / 60)} ώρες` : `${minutesLeft} λεπτά`;
 
         await sendPushIfEnabled(res.user_id, {
-          title: "⏰ Υπενθύμιση Επιβεβαίωσης",
+ title: "Υπενθύμιση Επιβεβαίωσης",
           body: `Απομένουν ${timeLabel} για να επιβεβαιώσετε την κράτησή σας για ${res.events?.title || "εκδήλωση"}.`,
           icon: "/fomo-logo-new.png",
           badge: "/fomo-logo-new.png",

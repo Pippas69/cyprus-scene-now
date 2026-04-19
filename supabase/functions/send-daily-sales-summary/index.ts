@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
 
         const html = wrapEmailContent(`
           <h2 style="color: #0d3b66; margin: 0 0 8px 0; font-size: 24px; text-align: center;">
-            📊 Ημερήσια Αναφορά Πωλήσεων
+ Ημερήσια Αναφορά Πωλήσεων
           </h2>
           <p style="color: #64748b; margin: 0 0 24px 0; text-align: center; font-size: 14px;">
             ${yesterdayFormatted}
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [profile.email],
-          subject: `📊 Ημερήσια Αναφορά: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} - ${formattedRevenue}`,
+ subject: `Ημερήσια Αναφορά: ${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} - ${formattedRevenue}`,
           html,
         });
 
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
 
         // Send push notification to business owner
         const pushResult = await sendPushIfEnabled(business.user_id, {
-          title: '📊 Ημερήσια Αναφορά Πωλήσεων',
+ title: 'Ημερήσια Αναφορά Πωλήσεων',
           body: `${ticketCount} εισιτήρι${ticketCount > 1 ? 'α' : 'ο'} - ${formattedRevenue}`,
           tag: `daily-sales-${business.id}`,
           data: {

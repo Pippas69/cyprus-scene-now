@@ -120,8 +120,8 @@ Deno.serve(async (req) => {
 
     // Prepare notification content
     const notifTitle = isCancelled 
-      ? '❌ Event ακυρώθηκε' 
-      : '📅 Event αλλαγή ώρας';
+ ? 'Event ακυρώθηκε' 
+ : 'Event αλλαγή ώρας';
     
     let notifMessage = isCancelled
       ? `Το "${event.title}" ακυρώθηκε από ${businessName}.`
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h1 style="color: ${isCancelled ? '#ef4444' : '#f59e0b'};">
-                  ${isCancelled ? '❌ Event Ακυρώθηκε' : '📅 Αλλαγή Ώρας'}
+ ${isCancelled ? 'Event Ακυρώθηκε' : 'Αλλαγή Ώρας'}
                 </h1>
                 <p>Γεια σου ${order.customer_name || 'εκεί'},</p>
                 <p>${notifMessage}</p>

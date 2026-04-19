@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         // Create notification for each admin
         const notifications = admins.map(admin => ({
           user_id: admin.id,
-          title: '⚠️ Database Alert',
+ title: '️ Database Alert',
           message: `Connection pool usage is high (${connectionPoolUsage.toFixed(1)}%). Check the Database Monitoring page.`,
           type: 'system',
           entity_type: 'database',

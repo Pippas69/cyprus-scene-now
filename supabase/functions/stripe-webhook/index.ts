@@ -615,7 +615,7 @@ Deno.serve(async (req) => {
           if ((eventData?.businesses as any)?.user_id) {
             await supabaseClient.from("notifications").insert({
               user_id: (eventData.businesses as any).user_id,
-              title: "⚠️ Επιστροφή χρημάτων εισιτηρίου",
+ title: "️ Επιστροφή χρημάτων εισιτηρίου",
               message: `Επιστροφή €${(charge.amount_refunded / 100).toFixed(2)} για "${eventData.title}"`,
               type: "business",
               event_type: "ticket_refunded",
@@ -699,7 +699,7 @@ Deno.serve(async (req) => {
             if ((eventData?.businesses as any)?.user_id) {
               await supabaseClient.from("notifications").insert({
                 user_id: (eventData.businesses as any).user_id,
-                title: "🚨 Chargeback / Dispute!",
+ title: "Chargeback / Dispute!",
                 message: `Dispute €${(dispute.amount / 100).toFixed(2)} για "${eventData.title}". Τα εισιτήρια ακυρώθηκαν αυτόματα.`,
                 type: "business",
                 event_type: "ticket_disputed",

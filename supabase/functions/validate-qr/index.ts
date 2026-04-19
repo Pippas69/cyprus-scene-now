@@ -785,7 +785,7 @@ async function handleOfferQR(
       await sendPushIfEnabled(
         businessData.user_id,
         {
-          title: '✅ Εξαργύρωση προσφοράς!',
+ title: 'Εξαργύρωση προσφοράς!',
           body: `${customerName} εξαργύρωσε "${discount.title}"`,
           tag: `n:offer_redeemed:${purchase.id}`,
           data: {
@@ -938,7 +938,7 @@ async function handleReservationQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: businessOwnerData.user_id,
-        title: '✅ Check-in κράτησης!',
+ title: 'Check-in κράτησης!',
         message: `${reservation.reservation_name} • ${reservation.party_size} άτομα`,
         type: 'business',
         event_type: 'reservation_checked_in',
@@ -958,7 +958,7 @@ async function handleReservationQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: reservation.user_id,
-        title: '✅ Check-in επιτυχές!',
+ title: 'Check-in επιτυχές!',
         message: `Κράτηση για ${reservation.reservation_name}${locationName ? ` - ${locationName}` : ''} - Καλωσήρθατε!`,
         type: 'reservation',
         event_type: 'reservation_checked_in',
@@ -977,7 +977,7 @@ async function handleReservationQR(
   if (reservation.user_id) {
     try {
       await sendPushIfEnabled(reservation.user_id, {
-        title: '✅ Check-in επιτυχές!',
+ title: 'Check-in επιτυχές!',
         body: language === "el" 
           ? `Κράτηση για ${reservation.reservation_name} - Καλωσήρθατε!` 
           : `Reservation for ${reservation.reservation_name} - Welcome!`,
@@ -1196,7 +1196,7 @@ async function handleReservationGuestQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: businessOwnerData.user_id,
-        title: '✅ Guest Check-in!',
+ title: 'Guest Check-in!',
         message: `${guest.guest_name} • ${reservation.reservation_name} (${checkedInCount}/${reservation.party_size})`,
         type: 'business',
         event_type: 'reservation_checked_in',
@@ -1446,7 +1446,7 @@ async function handleStudentQR(
   try {
     await supabaseAdmin.from('notifications').insert({
       user_id: business.user_id,
-      title: '🎓 Φοιτητική έκπτωση!',
+ title: 'Φοιτητική έκπτωση!',
       message: `${profile?.name || 'Φοιτητής'} χρησιμοποίησε φοιτητική έκπτωση${businessName ? ` - ${business.student_discount_percent}%` : ''}`,
       type: 'business',
       event_type: 'student_discount_redeemed',
@@ -1465,7 +1465,7 @@ async function handleStudentQR(
     try {
       await supabaseAdmin.from('notifications').insert({
         user_id: verification.user_id,
-        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+ title: 'Φοιτητική έκπτωση εφαρμόστηκε!',
         message: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
         type: 'student',
         event_type: 'student_discount_redeemed',
@@ -1482,7 +1482,7 @@ async function handleStudentQR(
     // Send push notification to student
     try {
       await sendPushIfEnabled(verification.user_id, {
-        title: '🎓 Φοιτητική έκπτωση εφαρμόστηκε!',
+ title: 'Φοιτητική έκπτωση εφαρμόστηκε!',
         body: `${business.student_discount_percent}% έκπτωση${businessName ? ` στο ${businessName}` : ''}`,
         tag: `student-discount-${redemptionRow.id}`,
         data: {
@@ -1513,8 +1513,8 @@ async function handleStudentQR(
     const businessNameSafe = (business as any)?.name || businessName || 'Η επιχείρησή σου';
     const studentNameSafe = (profile as any)?.name || 'Φοιτητής';
 
-    const subjectUser = `🎓 Φοιτητική έκπτωση εφαρμόστηκε στο ${businessNameSafe}`;
-    const subjectBusiness = `🎓 Φοιτητική έκπτωση χρησιμοποιήθηκε`;
+ const subjectUser = `Φοιτητική έκπτωση εφαρμόστηκε στο ${businessNameSafe}`;
+ const subjectBusiness = `Φοιτητική έκπτωση χρησιμοποιήθηκε`;
     
     // Format timestamp in Cyprus timezone
     const checkInTime = new Date().toLocaleTimeString('el-GR', { 

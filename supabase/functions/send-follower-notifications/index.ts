@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
           if (existingNotif) continue;
 
           const businessName = (event.businesses as any)?.name || 'A business';
-          const notifTitle = '🎉 Νέο event!';
+ const notifTitle = 'Νέο event!';
           const notifMessage = `${businessName} δημιούργησε νέο event: "${event.title}"`;
 
           // Create in-app notification
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
           if (existingNotif) continue;
 
           const businessName = (offer.businesses as any)?.name || 'A business';
-          const notifTitle = '🏷️ Νέα προσφορά!';
+ const notifTitle = '️ Νέα προσφορά!';
           const notifMessage = `${businessName} δημοσίευσε νέα προσφορά: "${offer.title}"`;
 
           await supabase.from('notifications').insert({
@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
           if (existingNotif) continue;
 
           const businessName = (offer.businesses as any)?.name || 'A business';
-          const notifTitle = '⏰ Προσφορά λήγει!';
+ const notifTitle = 'Προσφορά λήγει!';
           const notifMessage = `"${offer.title}" από ${businessName} λήγει σε ${hoursUntilExpiry} ώρες`;
 
           await supabase.from('notifications').insert({
@@ -348,7 +348,7 @@ Deno.serve(async (req) => {
           if (existingNotif) continue;
 
           const businessName = (event.businesses as any)?.name || 'A business';
-          const notifTitle = '🔥 Τα εισιτήρια τελειώνουν!';
+ const notifTitle = 'Τα εισιτήρια τελειώνουν!';
           const notifMessage = remaining === 0 
             ? `Τα εισιτήρια για "${event.title}" εξαντλήθηκαν!` 
             : `Μόνο ${remaining} εισιτήρια για "${event.title}" από ${businessName}!`;

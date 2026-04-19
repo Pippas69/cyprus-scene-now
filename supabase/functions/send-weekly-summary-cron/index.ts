@@ -56,7 +56,7 @@ const buildWeeklySummaryEmail = (
     
     <!-- Content -->
     <div style="padding: 32px 24px;">
-      <h2 style="color: #0d3b66; margin: 0 0 8px 0; font-size: 22px;">Εβδομαδιαία Σύνοψη 📊</h2>
+ <h2 style="color: #0d3b66; margin: 0 0 8px 0; font-size: 22px;">Εβδομαδιαία Σύνοψη </h2>
       <p style="color: #64748b; margin: 0 0 24px 0; font-size: 14px;">
         ${stats.weekStart} - ${stats.weekEnd}
       </p>
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: "ΦΟΜΟ <support@fomo.com.cy>",
           to: [email],
-          subject: `📊 Εβδομαδιαία Σύνοψη - ${business.name}`,
+ subject: `Εβδομαδιαία Σύνοψη - ${business.name}`,
           html: emailHtml,
         });
 

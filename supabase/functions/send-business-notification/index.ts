@@ -99,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
     } else if (type === "registration") {
       subject = "\u0395\u03C0\u03B9\u03B2\u03B5\u03B2\u03B1\u03AF\u03C9\u03C3\u03B7 \u0395\u03B3\u03B3\u03C1\u03B1\u03C6\u03AE\u03C2 \u03C3\u03C4\u03BF \u03A6\u039F\u039C\u039F";
       html = wrapEmailContent(`
-        <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Καλώς ήρθατε στο ΦΟΜΟ! 🎉</h2>
+ <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">Καλώς ήρθατε στο ΦΟΜΟ! </h2>
         <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
           Αγαπητέ/ή <strong>${businessName}</strong>,<br><br>
           Η επιχείρησή σας καταχωρήθηκε επιτυχώς στο ΦΟΜΟ και εκκρεμεί προς επαλήθευση.

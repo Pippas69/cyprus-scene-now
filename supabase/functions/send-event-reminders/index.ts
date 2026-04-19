@@ -312,7 +312,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         if (emailEnabled) {
           const emailHtml = wrapEmailContent(`
             <h2 style="color: #0d3b66; margin: 0 0 16px 0; font-size: 24px;">
-              ${notification.reminder_type === '1_day' ? '📅 Υπενθύμιση - Αύριο!' : '⏰ Υπενθύμιση - Σε 2 ώρες!'}
+ ${notification.reminder_type === '1_day' ? 'Υπενθύμιση - Αύριο!' : 'Υπενθύμιση - Σε 2 ώρες!'}
             </h2>
             <p style="color: #475569; margin: 0 0 24px 0; line-height: 1.6;">
               Γεια σου <strong>${notification.user_name}</strong>!<br><br>
@@ -321,12 +321,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
             
             <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-left: 4px solid #4ecdc4; padding: 20px; border-radius: 8px; margin: 24px 0;">
               <h3 style="color: #0d3b66; margin: 0 0 12px 0; font-size: 20px;">${notification.event_title}</h3>
-              <p style="color: #475569; margin: 4px 0;">📍 ${notification.event_location}</p>
-              <p style="color: #475569; margin: 4px 0;">🕐 ${formattedDate}</p>
+ <p style="color: #475569; margin: 4px 0;"> ${notification.event_location}</p>
+ <p style="color: #475569; margin: 4px 0;"> ${formattedDate}</p>
             </div>
 
             <p style="color: #059669; font-weight: 600; text-align: center; font-size: 16px;">
-              🎉 Μην αργήσεις!
+ Μην αργήσεις!
             </p>
 
             <div style="text-align: center; margin: 24px 0;">
@@ -339,7 +339,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           await resend.emails.send({
             from: "ΦΟΜΟ <support@fomo.com.cy>",
             to: [notification.user_email],
-            subject: `${notification.reminder_type === '1_day' ? '📅' : '⏰'} ${notification.event_title} - ${timeText}!`,
+ subject: `${notification.reminder_type === '1_day' ? '' : ''} ${notification.event_title} - ${timeText}!`,
             html: emailHtml,
           });
         }
@@ -347,7 +347,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Create in-app notification
         await supabase.from('notifications').insert({
           user_id: notification.user_id,
-          title: notification.reminder_type === '1_day' ? '📅 Υπενθύμιση - Αύριο!' : '⏰ Υπενθύμιση - Σε 2 ώρες!',
+ title: notification.reminder_type === '1_day' ? 'Υπενθύμιση - Αύριο!' : 'Υπενθύμιση - Σε 2 ώρες!',
           message: `Η εκδήλωση "${notification.event_title}" ${interactionText} ξεκινάει ${timeText}!`,
           type: 'info',
           event_type: 'event_reminder',
@@ -360,7 +360,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Send push notification if enabled (using encrypted push for iOS/Safari)
         if (pushEnabled) {
           const pushResult = await sendEncryptedPush(notification.user_id, {
-            title: notification.reminder_type === '1_day' ? '📅 Υπενθύμιση Εκδήλωσης' : '⏰ Η εκδήλωση ξεκινάει σύντομα!',
+ title: notification.reminder_type === '1_day' ? 'Υπενθύμιση Εκδήλωσης' : 'Η εκδήλωση ξεκινάει σύντομα!',
             body: `${notification.event_title} - ${timeText}!`,
             tag: `event-reminder-${notification.event_id}`,
             data: { url: `/event/${notification.event_id}` },

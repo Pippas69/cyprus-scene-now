@@ -87,25 +87,25 @@ Deno.serve(async (req) => {
 
     switch (data.type) {
       case 'EVENT_CREATED':
-        title = "Εκδήλωση δημιουργήθηκε ✅";
+ title = "Εκδήλωση δημιουργήθηκε";
         message = `${data.objectTitle || 'Νέα εκδήλωση'} δημιουργήθηκε επιτυχώς`;
         deepLink = "/dashboard-business/events";
         break;
 
       case 'OFFER_CREATED':
-        title = "Προσφορά δημιουργήθηκε ✅";
+ title = "Προσφορά δημιουργήθηκε";
         message = `${data.objectTitle || 'Νέα προσφορά'} δημιουργήθηκε επιτυχώς`;
         deepLink = "/dashboard-business/offers";
         break;
 
       case 'BOOST_ACTIVATED':
-        title = "Boost ενεργοποιήθηκε 🚀";
+ title = "Boost ενεργοποιήθηκε";
         message = `${data.boostTier || 'Boost'} για ${data.objectTitle || 'το περιεχόμενό σας'}`;
         deepLink = "/dashboard-business/boost";
         break;
 
       case 'BOOST_STARTED':
-        title = "Boost ξεκίνησε 🔥";
+ title = "Boost ξεκίνησε";
         message = `Το boost για ${data.objectTitle || 'το περιεχόμενό σας'} είναι τώρα ενεργό`;
         deepLink = "/dashboard-business/boost";
         break;
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
           : 'Το πλάνο σας άλλαξε';
         deepLink = "/dashboard-business/settings";
         skipEmail = false;
-        emailSubject = `📋 Αλλαγή πλάνου - ${data.businessName}`;
+ emailSubject = `Αλλαγή πλάνου - ${data.businessName}`;
         emailContent = wrapBusinessEmailContent(`
           <p style="color: #334155; font-size: 14px; margin: 0 0 16px 0; line-height: 1.6;">
             Το πλάνο συνδρομής σας ενημερώθηκε.
@@ -135,11 +135,11 @@ Deno.serve(async (req) => {
           )}
 
           ${ctaButton('Ρυθμίσεις', 'https://fomo.com.cy/dashboard-business/settings')}
-        `, '📋 Αλλαγή Πλάνου');
+ `, 'Αλλαγή Πλάνου');
         break;
 
       case 'NEW_FOLLOWER':
-        title = "Νέος ακόλουθος 👋";
+ title = "Νέος ακόλουθος";
         message = data.followerName 
           ? `${data.followerName} σας ακολούθησε` 
           : `Έχετε νέο ακόλουθο!`;

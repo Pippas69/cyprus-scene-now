@@ -120,12 +120,12 @@ Deno.serve(async (req) => {
       </p>
     `;
 
-    const emailHtml = wrapPremiumEmail(content, '🎓 Επαλήθευση Φοιτητή');
+ const emailHtml = wrapPremiumEmail(content, 'Επαλήθευση Φοιτητή');
 
     const emailResponse = await resend.emails.send({
       from: "ΦΟΜΟ <support@fomo.com.cy>",
       to: [universityEmail],
-      subject: "🎓 Επαλήθευση Φοιτητικής Ιδιότητας - ΦΟΜΟ",
+ subject: "Επαλήθευση Φοιτητικής Ιδιότητας - ΦΟΜΟ",
       html: emailHtml,
     });
 
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
 
     if (verification?.user_id) {
       const pushResult = await sendPushIfEnabled(verification.user_id, {
-        title: '🎓 Επαλήθευση Email',
+ title: 'Επαλήθευση Email',
         body: `Έλεγξε το ${universityEmail} για τον σύνδεσμο επαλήθευσης`,
         tag: `student-verification-${verificationId}`,
         data: {

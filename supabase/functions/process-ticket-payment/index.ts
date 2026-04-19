@@ -357,8 +357,8 @@ Deno.serve(async (req) => {
     try {
       await supabaseClient.from('notifications').insert({
         user_id: order.user_id,
-        title: 'Εισιτήρια επιβεβαιώθηκαν',
-        message: `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+          title: 'Νέα αγορά εισιτηρίων',
+          message: `Αγόρασες ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'} για ${eventTitle}`,
         type: 'ticket',
         event_type: 'ticket_purchased',
         entity_type: 'ticket_order',
@@ -384,10 +384,12 @@ Deno.serve(async (req) => {
       if (!(await wasAlreadySent(supabaseClient, order.user_id, userPushKey))) {
         const isHybridPurchase = !!(usesLinkedReservations && seatingTypeId);
         const userPushPayload: PushPayload = {
-          title: isHybridPurchase ? 'Κράτηση επιβεβαιώθηκε' : 'Εισιτήρια επιβεβαιώθηκαν',
+          title: isHybridPurchase
+            ? `Η αγορά εισιτηρίων + κράτηση τραπεζιού επιβεβαιώθηκαν`
+            : `Η αγορά σου ολοκληρώθηκε - ${eventTitle}`,
           body: isHybridPurchase
             ? `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'άτομο' : 'άτομα'}`
-            : `${eventTitle} - ${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
+            : `${ticketCount} ${ticketCount === 1 ? 'εισιτήριο' : 'εισιτήρια'}`,
           icon: '/fomo-logo-new.png',
           badge: '/fomo-logo-new.png',
           tag: `n:ticket_purchased:${orderId}`,
@@ -481,8 +483,8 @@ Deno.serve(async (req) => {
       try {
         await supabaseClient.from('notifications').insert({
           user_id: businessUserId,
-          title: 'Νέα Πώληση Εισιτηρίων',
-          message: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
+          title: 'Νέα πώληση εισιτηρίων',
+          message: `${customerName || 'Πελάτης'} - ${ticketCount} εισιτήρια - ${eventTitle}`,
           type: 'business',
           event_type: 'ticket_sale',
           entity_type: 'ticket_order',
@@ -507,8 +509,8 @@ Deno.serve(async (req) => {
 
         if (!(await wasAlreadySent(supabaseClient, businessUserId, bizPushKey))) {
           const businessPushPayload: PushPayload = {
-            title: '🎟️ Νέα Πώληση Εισιτηρίων!',
-            body: `${customerName || 'Πελάτης'} αγόρασε ${ticketCount} εισιτήρια για "${eventTitle}" (${totalAmountFormatted})`,
+            title: `Νέα πώληση: ${ticketCount} εισιτήρια - ${eventTitle}`,
+            body: `${customerName || 'Πελάτης'} - ${totalAmountFormatted}`,
             icon: '/fomo-logo-new.png',
             badge: '/fomo-logo-new.png',
             tag: `n:ticket_sale:${orderId}`,
