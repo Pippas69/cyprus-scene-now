@@ -15,7 +15,7 @@ interface Props {
 const PromoterAcceptedEmail = ({ name, businessName }: Props) => (
   <Html lang="el" dir="ltr">
     <Head><meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" /></Head>
-    <Preview>{`Έγινες Promoter${businessName ? ` στην ${businessName}` : ''}! 🎉`}</Preview>
+    <Preview>{`Έγινες Promoter${businessName ? ` στην ${businessName}` : ''}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
@@ -24,7 +24,7 @@ const PromoterAcceptedEmail = ({ name, businessName }: Props) => (
 
         <Section style={contentSection}>
           <Heading style={h1}>
-            {name ? `Συγχαρητήρια, ${name}! 🎉` : 'Συγχαρητήρια! 🎉'}
+            {name ? `Συγχαρητήρια, ${name}` : 'Συγχαρητήρια'}
           </Heading>
           <Text style={text}>
             Η αίτησή σου ως <strong>Promoter</strong>
@@ -43,7 +43,7 @@ const PromoterAcceptedEmail = ({ name, businessName }: Props) => (
           </Section>
 
           <Text style={textSmall}>
-            💡 Tip: Κάθε link σου είναι μοναδικό. Όσοι αγοράζουν μέσω του link σου καταγράφονται
+            Tip: Κάθε link σου είναι μοναδικό. Όσοι αγοράζουν μέσω του link σου καταγράφονται
             αυτόματα και βλέπεις την αμοιβή σου άμεσα.
           </Text>
         </Section>
@@ -61,8 +61,8 @@ export const template = {
   component: PromoterAcceptedEmail,
   subject: (data: Record<string, any>) =>
     data?.businessName
-      ? `Έγινες Promoter στην ${data.businessName}! 🎉`
-      : 'Η αίτησή σου ως Promoter εγκρίθηκε! 🎉',
+      ? `Έγινες Promoter στην ${data.businessName}`
+      : 'Η αίτησή σου ως Promoter εγκρίθηκε',
   displayName: 'Promoter — Έγκριση αίτησης',
   previewData: { name: 'Γιώργος', businessName: 'Amor Club' },
 } satisfies TemplateEntry
