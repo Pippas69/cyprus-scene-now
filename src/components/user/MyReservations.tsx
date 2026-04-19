@@ -57,6 +57,7 @@ interface ReservationData {
   seating_type_id: string | null;
   prepaid_min_charge_cents: number | null;
   prepaid_charge_status: string | null;
+  email?: string | null;
   deferred_status?: string | null;
   deferred_confirmation_deadline?: string | null;
   deferred_payment_mode?: string | null;
@@ -68,6 +69,7 @@ interface ReservationData {
     location: string;
     event_type: string | null;
     cover_image_url: string | null;
+    minimum_age?: number | null;
     businesses: {id: string;name: string;logo_url: string | null;};
   } | null;
   businesses?: {
@@ -203,7 +205,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       const { data: orders } = await (supabase as any)
         .from('ticket_orders')
         .select('id')
-        .eq('reservation_id', reservationId);
+        .eq('linked_reservation_id', reservationId);
       const orderIds = (orders || []).map((o: any) => o.id);
       if (orderIds.length > 0) {
         const { data: tks } = await (supabase as any)
@@ -268,7 +270,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
       created_at, checked_in_at, phone_number, preferred_time, seating_preference, special_requests,
-      business_notes, confirmation_code, qr_code_token,
+      business_notes, confirmation_code, qr_code_token, email,
       seating_type_id, prepaid_min_charge_cents, prepaid_charge_status,
       deferred_status, deferred_confirmation_deadline, deferred_payment_mode
     `;
@@ -291,7 +293,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
             businesses(id, name, logo_url)
           )
         `)
@@ -304,7 +306,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .select(`
           ${reservationFields},
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
             businesses(id, name, logo_url)
           )
         `)
@@ -340,7 +342,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           total_cents,
           created_at,
           events!inner(
-            id, title, start_at, end_at, location, event_type, cover_image_url,
+            id, title, start_at, end_at, location, event_type, cover_image_url, minimum_age,
             businesses(id, name, logo_url)
           )
         `)
@@ -1525,6 +1527,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             party_size: addGuestsReservation.party_size,
             seating_type_id: addGuestsReservation.seating_type_id,
             reservation_name: addGuestsReservation.reservation_name,
+            email: addGuestsReservation.email,
+            event_minimum_age: addGuestsReservation.events?.minimum_age,
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
