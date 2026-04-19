@@ -4,7 +4,7 @@ import { sendPushIfEnabled } from "../_shared/web-push-crypto.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_shared/security-headers.ts";
 import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
-import { z, parseBody, flexId, safeString, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { z, parseBody, flexId, safeString, reservationName, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
 
 const TicketItemSchema = z.object({
@@ -20,7 +20,7 @@ const CheckoutBodySchema = z.object({
   customerPhone: optionalString(20),
   specialRequests: optionalString(1000),
   seatingTypeId: flexId.optional(),
-  reservationName: safeString(200).optional(),
+  reservationName: reservationName(200).optional(),
   guests: z.array(z.object({ name: safeString(200) }).passthrough()).optional(),
   seatIds: z.array(flexId).optional(),
   showInstanceId: flexId.optional(),

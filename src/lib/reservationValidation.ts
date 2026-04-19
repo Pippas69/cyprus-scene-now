@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import { phoneRegex, getDigitCount } from './phoneValidation';
 
+export const LATIN_RESERVATION_NAME_REGEX = /^[a-zA-Z\s\-\.']+$/;
+export const LATIN_RESERVATION_NAME_MESSAGE = 'Please use Latin characters only (e.g. John Doe)';
+
 export const reservationSchema = z.object({
   reservation_name: z
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must not exceed 100 characters')
-    .regex(/^[a-zA-Z\s\-\.']+$/, 'Please use Latin characters only (e.g. John Doe)'),
+    .regex(LATIN_RESERVATION_NAME_REGEX, LATIN_RESERVATION_NAME_MESSAGE),
   
   party_size: z
     .number()

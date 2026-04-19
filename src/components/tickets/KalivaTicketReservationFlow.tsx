@@ -13,11 +13,26 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidPhone } from "@/lib/phoneValidation";
+import { LATIN_RESERVATION_NAME_REGEX, LATIN_RESERVATION_NAME_MESSAGE } from '@/lib/reservationValidation';
 import {
-  GlassWater, TableIcon, Crown, Sofa, Users,
-  Phone, User, MessageSquare, CreditCard, Mail,
-  ArrowRight, ArrowLeft, Loader2, Info,
-  AlertCircle, Ticket, ExternalLink, Clock
+  GlassWater,
+  TableIcon,
+  Crown,
+  Sofa,
+  Users,
+  Phone,
+  User,
+  MessageSquare,
+  CreditCard,
+  Mail,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Info,
+  AlertCircle,
+  Ticket,
+  ExternalLink,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -506,9 +521,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const minAge = getMinAge(eventId, eventMinimumAge);
   const allGuestsFilled = guests.every(g => g.name.trim() && g.age.trim() && !isNaN(Number(g.age)) && Number(g.age) >= minAge);
   const hasReservationName = reservationName.trim().length >= 2;
+  const isReservationNameLatin = LATIN_RESERVATION_NAME_REGEX.test(reservationName.trim());
   const isPhoneValid = isValidPhone(phoneNumber.trim());
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim());
-  const canProceedToStep3 = hasReservationName && allGuestsFilled && partySize > 0 && isPhoneValid && isEmailValid;
+  const canProceedToStep3 = hasReservationName && isReservationNameLatin && allGuestsFilled && partySize > 0 && isPhoneValid && isEmailValid;
 
   // Dynamic step: auth/profile gate between step 1 and step 2
   const getEffectiveStep = (): number | 'auth' | 'profile' => {
@@ -521,6 +537,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   const handleCheckout = async () => {
     if (!hasReservationName) {
       toast.error(language === 'el' ? 'Συμπληρώστε όνομα κράτησης' : 'Please enter reservation name');
+      return;
+    }
+    if (!isReservationNameLatin) {
+      toast.error(language === 'el' ? 'Παρακαλώ χρησιμοποιήστε λατινικούς χαρακτήρες (π.χ. John Doe)' : LATIN_RESERVATION_NAME_MESSAGE);
       return;
     }
     if (!allGuestsFilled) {
@@ -690,9 +710,17 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         <Input
           value={reservationName}
           onChange={(e) => setReservationName(e.target.value)}
-          placeholder={language === 'el' ? "π.χ. Γιάννης Παπαδόπουλος" : "e.g. John Doe"}
-          className="h-9 text-sm"
+          placeholder="John Doe"
+          className={cn(
+            "h-9 text-sm",
+            reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
+          )}
         />
+        {reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && (
+          <p className="text-xs text-destructive">
+            {language === 'el' ? 'Παρακαλώ χρησιμοποιήστε λατινικούς χαρακτήρες (π.χ. John Doe)' : LATIN_RESERVATION_NAME_MESSAGE}
+          </p>
+        )}
       </div>
 
       {/* Party Size + Ticket Price / Min Consumption - Same Row */}

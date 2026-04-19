@@ -61,6 +61,12 @@ export const urlString = z.string().trim().url().max(2048);
 /** Optional URL */
 export const optionalUrl = urlString.optional().or(z.literal(""));
 
+/** Reservation name must use Latin characters only */
+export const latinReservationNameRegex = /^[a-zA-Z\s\-.']+$/;
+export const latinReservationNameMessage = "Please use Latin characters only (e.g. John Doe)";
+export const reservationName = (max = 200) =>
+  safeString(max).refine((value) => latinReservationNameRegex.test(value), latinReservationNameMessage);
+
 /** Boolean with default false */
 export const boolDefault = (def = false) => z.boolean().default(def);
 
