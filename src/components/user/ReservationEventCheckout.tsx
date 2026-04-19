@@ -787,8 +787,14 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   "h-9 text-sm",
                   reservationName.length > 0 && !/^[a-zA-Z\s\-.']+$/.test(reservationName) && "border-destructive focus-visible:ring-destructive"
                 )}
-                className="h-9 text-sm"
               />
+              {reservationName.length > 0 && !/^[a-zA-Z\s\-.']+$/.test(reservationName) && (
+                <p className="text-xs text-destructive">
+                  {language === 'el'
+                    ? 'Παρακαλώ χρησιμοποίησε λατινικούς χαρακτήρες (π.χ. John Doe)'
+                    : 'Please use Latin characters only (e.g. John Doe)'}
+                </p>
+              )}
             </div>
 
             {/* Phone - show always for existing users, hide for fresh signup */}
