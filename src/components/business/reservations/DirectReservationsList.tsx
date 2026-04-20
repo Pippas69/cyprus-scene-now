@@ -1951,7 +1951,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     <TableCell>
                       <div className="flex flex-col items-start">
                         {ticket.source === 'invitation' ? (
-                          <Badge variant="secondary" className="whitespace-nowrap">
+                          <Badge className="whitespace-nowrap bg-green-600 text-white">
                             {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
                           </Badge>
                         ) : ticket.tier_name ? (
