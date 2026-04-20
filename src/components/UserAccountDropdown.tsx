@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bell, Building2, LogOut, Megaphone, Shield, User } from 'lucide-react';
 import { useBusinessOwner } from '@/hooks/useBusinessOwner';
 import { useIsActivePromoter, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
@@ -80,9 +81,18 @@ export const UserAccountDropdown = ({
 
   const t = translations[language];
 
+  const queryClient = useQueryClient();
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    try {
+      queryClient.cancelQueries();
+      queryClient.clear();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out error:', err);
+    } finally {
+      navigate('/', { replace: true });
+    }
   };
 
   const handleMyAccount = () => {

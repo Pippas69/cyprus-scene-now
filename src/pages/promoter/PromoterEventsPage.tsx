@@ -3,29 +3,15 @@
  * Λίστα όλων των ενεργών events με στατιστικά + κουμπί Αντιγραφή Link.
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays } from 'lucide-react';
 import { usePromoterEvents } from '@/hooks/usePromoterLinks';
 import { PromoterEventCard } from '@/components/promoter/PromoterEventCard';
+import { usePromoterContext } from '@/components/layouts/PromoterLayout';
 
 const PromoterEventsPage = () => {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | undefined>();
-
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-      setUserId(user.id);
-    })();
-  }, [navigate]);
+  const { userId } = usePromoterContext();
 
   const { data: events = [], isLoading } = usePromoterEvents(userId);
 

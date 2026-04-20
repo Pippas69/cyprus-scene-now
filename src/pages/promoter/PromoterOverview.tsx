@@ -4,30 +4,16 @@
  * - Λίστα ενεργών συνεργασιών με όρους αμοιβής
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Building2, MousePointerClick, Ticket, Wallet } from 'lucide-react';
 import { usePromoterApplications, usePromoterApplicationsRealtime } from '@/hooks/usePromoter';
 import { usePromoterTotals } from '@/hooks/usePromoterEarnings';
+import { usePromoterContext } from '@/components/layouts/PromoterLayout';
 
 const PromoterOverview = () => {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | undefined>();
-
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-      setUserId(user.id);
-    })();
-  }, [navigate]);
+  const { userId } = usePromoterContext();
 
   const { data: applications = [], isLoading } = usePromoterApplications(userId);
   usePromoterApplicationsRealtime(userId);

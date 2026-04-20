@@ -3,9 +3,6 @@
  * Πίνακας: Όνομα Πελάτη · Event · Ημερομηνία · Ποσό Αγοράς · Δικό σου Κέρδος
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,21 +15,10 @@ import {
 } from '@/components/ui/table';
 import { Wallet } from 'lucide-react';
 import { usePromoterAttributions } from '@/hooks/usePromoterEarnings';
+import { usePromoterContext } from '@/components/layouts/PromoterLayout';
 
 const PromoterEarningsPage = () => {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState<string | undefined>();
-
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-      setUserId(user.id);
-    })();
-  }, [navigate]);
+  const { userId } = usePromoterContext();
 
   const { data: rows = [], isLoading } = usePromoterAttributions(userId);
 
