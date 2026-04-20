@@ -130,7 +130,9 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         };
       });
 
-      // --- Ticket stats (ALL tickets including reservation-linked) ---
+      // --- Ticket stats (ALL app-paid orders, including reservation-linked ones) ---
+      // For hybrid events, total revenue must include only amounts actually paid in-app.
+      // Venue charges such as minimum spend / bottles are not app revenue and must not be added here.
       const ticketRevenue = allOrders?.reduce((sum, o) => sum + (o.subtotal_cents || 0), 0) || 0;
       const ticketsSold = allTicketsArr.length;
       const ticketCheckedIn = allTicketsArr.filter((t) => t.status === "used").length;
@@ -176,16 +178,14 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
           acceptedBooked,
           booked: bookedForAvailability,
           available: Math.max(0, st.available_slots - bookedForAvailability),
-          revenue: stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0)
         };
       });
 
       const sortedSeatingStats = sortSeatingTypes(seatingStats, (st: any) => st.seating_type);
-      const reservationRevenue = sortedSeatingStats.reduce((sum, st) => sum + st.revenue, 0);
       const totalReservations = sortedSeatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
 
       // --- Combined ---
-      const totalRevenue = ticketRevenue + reservationRevenue;
+      const totalRevenue = ticketRevenue;
       // All check-ins happen through tickets (each guest gets a ticket/QR), so count all used tickets
       const totalCheckedIn = ticketCheckedIn;
       
