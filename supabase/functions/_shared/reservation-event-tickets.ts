@@ -159,7 +159,13 @@ export const ensureReservationEventGuestTickets = async ({
   }
 
   const guests = Array.isArray(providedGuests) && providedGuests.length > 0
-    ? normalizeReservationGuests(providedGuests, reservation.reservation_name || "Guest", reservation.party_size || providedGuests.length)
+    ? normalizeReservationGuests(
+        providedGuests,
+        reservation.reservation_name || "Guest",
+        // For add-guests batches we want EXACTLY the provided names —
+        // never pad to the reservation's total party_size.
+        forceNewOrder ? providedGuests.length : (reservation.party_size || providedGuests.length),
+      )
     : buildReservationGuestsFromMetadata(
         session?.metadata,
         reservation.reservation_name || "Guest",
