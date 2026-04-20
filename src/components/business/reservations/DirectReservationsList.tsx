@@ -2117,7 +2117,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               </span>
                             }
                             {reservation.transaction_code &&
-                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5">
+                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5 mx-0 my-0 px-[2px] py-0">
                             {reservation.transaction_code}
                               </span>
                           }
