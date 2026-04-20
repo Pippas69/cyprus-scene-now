@@ -397,7 +397,6 @@ export const AddGuestsDialog = ({
   // Validation
   const allGuestsFilled = guests.every((g) => {
     if (!g.name.trim()) return false;
-    if (!LATIN_RESERVATION_NAME_REGEX.test(g.name.trim())) return false;
     if (isEvent) {
       const n = Number(g.age);
       if (!g.age.trim() || isNaN(n) || n < minAge) return false;
