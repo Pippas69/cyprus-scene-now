@@ -301,40 +301,53 @@ export const AddGuestsDialog = ({
         setCurrentTier(null);
       }
 
-      // For HYBRID events: fetch the ticket tier price used in the original order
+      // For HYBRID events: fetch the exact ticket tier price used in the original order
       if (isHybrid && reservation.event_id) {
+        let resolvedHybridTicketPriceCents = 0;
+
         const { data: order } = await supabase
           .from('ticket_orders')
           .select('id')
           .eq('linked_reservation_id', reservation.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
+
         if (order?.id) {
           const { data: ticketRow } = await supabase
             .from('tickets')
             .select('tier_id')
             .eq('order_id', order.id)
+            .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
+
           if (ticketRow?.tier_id) {
             const { data: tier } = await supabase
               .from('ticket_tiers')
               .select('price_cents')
               .eq('id', ticketRow.tier_id)
               .maybeSingle();
-            setHybridTicketPriceCents(tier?.price_cents || 0);
+
+            resolvedHybridTicketPriceCents = tier?.price_cents || 0;
           }
         }
-        // Fallback: use the cheapest active tier's price
-        if (hybridTicketPriceCents === 0) {
+
+        // Fallback only if we truly couldn't resolve the original tier price
+        if (resolvedHybridTicketPriceCents === 0) {
           const { data: tiersList } = await supabase
             .from('ticket_tiers')
             .select('price_cents')
             .eq('event_id', reservation.event_id)
             .eq('active', true)
+            .gt('price_cents', 0)
             .order('price_cents', { ascending: true })
             .limit(1);
-          if (tiersList && tiersList[0]) setHybridTicketPriceCents(tiersList[0].price_cents || 0);
+
+          resolvedHybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
         }
+
+        setHybridTicketPriceCents(resolvedHybridTicketPriceCents);
       } else {
         setHybridTicketPriceCents(0);
       }
