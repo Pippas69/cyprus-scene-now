@@ -103,10 +103,10 @@ serve(async (req) => {
     //   - only-reservation amount tier → max(0, newCharge - currentCharge)
     const reservationDeltaCents = (isHybrid || isBottlesTier) ? 0 : Math.max(0, newCharge - currentCharge);
 
-    // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra),
-    // unless the event is pay-at-door (then everything is paid at venue).
+    // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra).
+    // pay_at_door only affects reservation/min-spend amounts, not extra ticket purchases.
     let hybridTicketPriceCents = 0;
-    if (isHybrid && !isPayAtVenue) {
+    if (isHybrid) {
       // Find tier_id from existing tickets linked to this reservation
       const { data: existingOrder } = await supabase
         .from("ticket_orders")
@@ -145,7 +145,7 @@ serve(async (req) => {
     const ticketsExtraCents = hybridTicketPriceCents * extra_guests;
 
     // Total online charge
-    const extraChargeCents = isPayAtVenue ? 0 : (ticketsExtraCents + reservationDeltaCents);
+    const extraChargeCents = ticketsExtraCents + (!isPayAtVenue ? reservationDeltaCents : 0);
 
     log("Computed", {
       currentCharge, newCharge, reservationDeltaCents, hybridTicketPriceCents,
