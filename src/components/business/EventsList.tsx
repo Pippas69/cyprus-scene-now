@@ -23,6 +23,7 @@ import {
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
 import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 
 interface EventsListProps {

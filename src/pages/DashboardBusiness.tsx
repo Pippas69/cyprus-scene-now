@@ -18,6 +18,7 @@ import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingTour } from "@/components/business/OnboardingTour";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";

@@ -8,6 +8,7 @@ import { isClubOrEventBusiness } from "@/lib/isClubOrEventBusiness";
 import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
 
 import { useLanguage } from "@/hooks/useLanguage";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 interface CombinedTicketReservationOverviewProps {
   eventId: string;
@@ -48,6 +49,9 @@ const t = {
 export const CombinedTicketReservationOverview = ({ eventId, businessId }: CombinedTicketReservationOverviewProps) => {
   const { language } = useLanguage();
   const text = t[language];
+
+  // Live updates: refresh whenever tickets/reservations/scans change
+  useRealtimeEventCheckins(businessId, eventId);
 
   const { data: overview, isLoading } = useQuery({
     queryKey: ["combined-overview", eventId],
