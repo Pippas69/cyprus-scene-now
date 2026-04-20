@@ -135,23 +135,30 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
 
   try {
-    // Rate limiting
-    const clientIP = getClientIP(req);
-    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
-    const rateCheck = await checkRateLimit(rateLimitId, "validate_qr", 60, 5);
-    if (!rateCheck.allowed) {
-      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-        status: 429,
-        headers: { ...securityHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const authHeader = req.headers.get("Authorization");
+
+    // Rate limit ONLY unauthenticated requests (anonymous spam protection).
+    // Authenticated business owners are protected by the business ownership check below.
+    const applyAnonymousRateLimit = async () => {
+      const clientIP = getClientIP(req);
+      const rateLimitId = (authHeader || clientIP).substring(0, 40) + ":" + clientIP;
+      const rateCheck = await checkRateLimit(rateLimitId, "validate_qr", 60, 5);
+      if (!rateCheck.allowed) {
+        return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+          status: 429,
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return null;
+    };
+
     if (!authHeader) {
+      const rl = await applyAnonymousRateLimit();
+      if (rl) return rl;
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
         headers: { ...securityHeaders, "Content-Type": "application/json" },
@@ -165,6 +172,8 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
+      const rl = await applyAnonymousRateLimit();
+      if (rl) return rl;
       return new Response(JSON.stringify({ success: false, message: msg("en").unauthorized }), {
         status: 401,
         headers: { ...securityHeaders, "Content-Type": "application/json" },

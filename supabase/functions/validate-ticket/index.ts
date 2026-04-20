@@ -28,17 +28,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Rate limiting
-    const clientIP = getClientIP(req);
-    const rateLimitId = (req.headers.get("Authorization") || clientIP).substring(0, 40) + ":" + clientIP;
-    const rateCheck = await checkRateLimit(rateLimitId, "validate_ticket", 60, 5);
-    if (!rateCheck.allowed) {
-      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-        status: 429,
-        headers: { ...securityHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     logStep("Function started");
 
     const supabaseClient = createClient(
@@ -49,11 +38,36 @@ Deno.serve(async (req) => {
 
     // Get authenticated user (business owner)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+
+    // Rate limit ONLY unauthenticated requests (anonymous spam protection).
+    // Authenticated business owners are protected by the authorization check
+    // (business.user_id === staffUserId) below, which is stronger than rate limiting.
+    const applyAnonymousRateLimit = async () => {
+      const clientIP = getClientIP(req);
+      const rateLimitId = (authHeader || clientIP).substring(0, 40) + ":" + clientIP;
+      const rateCheck = await checkRateLimit(rateLimitId, "validate_ticket", 60, 5);
+      if (!rateCheck.allowed) {
+        return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
+          status: 429,
+          headers: { ...securityHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return null;
+    };
+
+    if (!authHeader) {
+      const rl = await applyAnonymousRateLimit();
+      if (rl) return rl;
+      throw new Error("No authorization header");
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("User not authenticated");
+    if (userError || !userData.user) {
+      const rl = await applyAnonymousRateLimit();
+      if (rl) return rl;
+      throw new Error("User not authenticated");
+    }
     
     const staffUserId = userData.user.id;
     logStep("Staff authenticated", { userId: staffUserId });
