@@ -2050,17 +2050,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[1050px] table-fixed">
+            <Table className="w-full min-w-[980px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[14%] pr-6 whitespace-nowrap">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[12%] text-center">{t.seating}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
-                  {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
-                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[16%] pr-4 whitespace-nowrap">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[11%] text-center">{t.seating}</TableHead>
+                  <TableHead className="text-xs w-[11%]">{t.status}</TableHead>
+                  {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Ποσό' : 'Amount'}</TableHead>}
+                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
