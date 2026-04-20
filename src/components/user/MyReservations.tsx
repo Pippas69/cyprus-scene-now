@@ -970,7 +970,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Payment info — each on single line */}
-          {(isBottle || minCharge >= 0 || ticketTotal > 0) && (
+          {(isBottle || minCharge > 0 || ticketTotal > 0) && (
             <div className="space-y-0.5">
               {isBottle ? (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -978,7 +978,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   <span>
                     {t.minCharge}: {formatBottleLabel(bottleInfo.bottle_type, bottleInfo.bottle_count, language)}
                     {' '}({language === 'el' ? 'στο κατάστημα' : 'at venue'}
-                    {isHybrid && ticketTotal > 0 && (
+                    {ticketTotal > 0 && (
                       <>
                         {language === 'el' ? ' — ' : ' — '}
                         €{(ticketTotal / 100).toFixed(2)}{' '}
@@ -990,13 +990,13 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </div>
               ) : (
                 <>
-                  {minCharge >= 0 && (
+                  {minCharge > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
                     </div>
                   )}
-                  {isHybrid && (
+                  {ticketTotal > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>
