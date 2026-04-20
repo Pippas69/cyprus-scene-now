@@ -222,6 +222,8 @@ export const UnifiedEventCard = ({
               <img
                 src={getOptimizedImageUrl(event.cover_image_url, 800)}
                 alt={event.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover [@media(hover:hover)]:group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
