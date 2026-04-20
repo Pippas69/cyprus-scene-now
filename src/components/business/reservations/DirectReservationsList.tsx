@@ -2158,7 +2158,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   rawValue={peopleText}
                                   inputClassName="h-7 text-sm w-36" />
                                 {ageText && (
-                                  <span className="text-sm text-muted-foreground whitespace-nowrap -ml-2 px-px">
+                                  <span className="whitespace-nowrap -ml-2 px-px text-xs text-primary-foreground">
                                     {ageText}
                                   </span>
                                 )}
