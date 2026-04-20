@@ -2236,7 +2236,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                     displayValue={mainDisplay}
                                     rawValue={rawVal}
                                     inputClassName="h-7 text-sm w-36" />
-                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap mx-0 px-0 my-[5px]">
                                     {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
                                   </span>
                                   <span className="text-xs text-muted-foreground whitespace-nowrap">
