@@ -690,7 +690,7 @@ export const AddGuestsDialog = ({
 
           {newTierIsBottles ? (
             <>
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between items-center gap-2 text-[11px] whitespace-nowrap">
                 <span className="text-muted-foreground">{tr.minSpendNew}</span>
                 <span className="font-semibold text-foreground">
                   {formatBottleLabel(
@@ -701,7 +701,7 @@ export const AddGuestsDialog = ({
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground pt-0.5">
-                {tr.bottlesAtVenue}.{isHybrid ? ` ${tr.deductedNote}` : ''}
+                {tr.deductedNote}
               </p>
             </>
           ) : isPayAtVenue ? (
