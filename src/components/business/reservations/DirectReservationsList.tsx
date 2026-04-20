@@ -376,7 +376,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const reservationIds = data?.map((r) => r.id) || [];
 
       // Run all enrichment queries in parallel
-      const [offerResult, emailResult, invitationResult] = await Promise.all([
+      const [offerResult, emailResult, invitationResult, linkedOrderTotalsResult] = await Promise.all([
         // 1. Offer purchases (only for non-linked)
         !linked && reservationIds.length > 0
           ? supabase
@@ -399,6 +399,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               .select('reservation_id')
               .in('reservation_id', reservationIds)
           : Promise.resolve({ data: null }),
+        // 4. Aggregate prepaid credits from all linked ticket orders
+        linked && reservationIds.length > 0
+          ? supabase
+              .from('ticket_orders')
+              .select('linked_reservation_id, subtotal_cents, total_cents')
+              .in('linked_reservation_id', reservationIds)
+              .eq('status', 'completed')
+          : Promise.resolve({ data: null }),
       ]);
 
       const offerLinkedIds = new Set<string>();
@@ -416,10 +424,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         if (row.reservation_id) invitationReservationIds.add(row.reservation_id);
       });
 
+      const reservationPaidMap = new Map<string, number>();
+      (linkedOrderTotalsResult.data || []).forEach((order: any) => {
+        if (!order.linked_reservation_id) return;
+        const paidCents = typeof order.subtotal_cents === 'number'
+          ? order.subtotal_cents
+          : (order.total_cents || 0);
+        reservationPaidMap.set(
+          order.linked_reservation_id,
+          (reservationPaidMap.get(order.linked_reservation_id) || 0) + paidCents,
+        );
+      });
+
       const enrichedData = (data || []).map((r) => ({
         ...r,
         source: invitationReservationIds.has(r.id) ? 'invitation' : r.source,
         email: emailMap.get(r.id) ?? r.email ?? null,
+        ticket_credit_cents: reservationPaidMap.has(r.id)
+          ? reservationPaidMap.get(r.id)
+          : r.ticket_credit_cents,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
       const sortedByName = sortReservationsByName(enrichedData);
