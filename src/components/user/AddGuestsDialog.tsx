@@ -487,7 +487,7 @@ export const AddGuestsDialog = ({
           <div className="space-y-1">
             <Label className="flex items-center gap-1.5 text-xs">
               <Users className="h-3 w-3" />
-              {tr.extraPeople}
+              {subtotal > 0 ? tr.extraPeopleCount : tr.extraPeople}
             </Label>
             <div className="rounded-lg border border-border bg-card px-2.5 py-2">
               <div className="flex items-center justify-between gap-3">
@@ -516,7 +516,10 @@ export const AddGuestsDialog = ({
                 </span>
                 </div>
                 {!isFreeFlow && (
-                  <span className="text-base font-bold text-foreground shrink-0">{formatPrice(total)}</span>
+                  <div className="flex flex-col items-end shrink-0 leading-none">
+                    <span className="text-[10px] text-muted-foreground">{tr.amountToPayNow}</span>
+                    <span className="text-base font-bold text-foreground">{formatPrice(total)}</span>
+                  </div>
                 )}
               </div>
             </div>
