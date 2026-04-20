@@ -23,6 +23,7 @@ import {
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
 import { EventReservationOverview } from "./EventReservationOverview";
 import { CombinedTicketReservationOverview } from "./CombinedTicketReservationOverview";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 
 interface EventsListProps {
@@ -77,6 +78,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [invitationEvent, setInvitationEvent] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
+
+  // Live updates: any ticket/reservation/scan change refreshes the list instantly
+  useRealtimeEventCheckins(businessId);
 
   // Check if business is a performance type
   const { data: businessCatData } = useQuery({

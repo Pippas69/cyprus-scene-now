@@ -18,6 +18,7 @@ import { QuickStats } from "@/components/business/QuickStats";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingTour } from "@/components/business/OnboardingTour";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
@@ -166,6 +167,9 @@ const DashboardBusiness = () => {
   
   // Enable real-time notifications
   useRealtimeNotifications(businessId, userId);
+
+  // Live updates: dashboard KPIs refresh instantly on any ticket/reservation/scan change
+  useRealtimeEventCheckins(businessId);
 
   // Onboarding tour
   const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);

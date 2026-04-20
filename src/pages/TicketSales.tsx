@@ -13,6 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Link } from "react-router-dom";
 import { TicketScanner } from "@/components/tickets/TicketScanner";
 import { TicketSalesOverview } from "@/components/tickets/TicketSalesOverview";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 interface TicketSalesProps {
   businessId: string;
@@ -52,6 +53,9 @@ export const TicketSales = ({ businessId }: TicketSalesProps) => {
   const text = t[language];
   const dateLocale = language === 'el' ? el : enUS;
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  // Live updates: KPIs refresh instantly on any ticket/reservation change
+  useRealtimeEventCheckins(businessId, selectedEventId);
 
   // Fetch events with ticket tiers and actual ticket counts
   const { data: eventsWithTickets, isLoading } = useQuery({
