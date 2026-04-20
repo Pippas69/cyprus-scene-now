@@ -2194,7 +2194,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               );
                             }
-                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" — read-only
+                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" + prepayment if any
                             if (isBottleRow && matchedTier) {
                               const bottle = formatBottleLabel(
                                 matchedTier.bottle_type as 'bottle' | 'premium_bottle',
@@ -2205,25 +2205,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 <div className="flex flex-col items-start">
                                   <span className="text-sm font-medium text-foreground whitespace-nowrap">{bottle}</span>
                                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {language === 'el' ? 'στο κατάστημα' : 'at venue'}
+                                    {language === 'el' ? 'Πληρωμή στο κατάστημα' : 'Pay at venue'}
                                   </span>
+                                  {ticketPaidCents > 0 && (
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                      {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
-                              // Hybrid: show "€100.00 (€20.00)" as one editable field
-                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
-                              const ticketDisplay = ticketPaidCents > 0 ? `(€${(ticketPaidCents / 100).toFixed(2)})` : '(—)';
-                              const combinedDisplay = `${mainDisplay} ${ticketDisplay}`;
+                              // Hybrid (amount-based minimum): line1 minimum, line2 prepayment, line3 remainder
+                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)} minimum` : '-';
                               const rawVal = `${(minChargeCents / 100).toFixed(2)} (${(ticketPaidCents / 100).toFixed(2)})`;
                               return (
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="min_charge_combined"
-                                  displayValue={combinedDisplay}
-                                  rawValue={rawVal}
-                                  inputClassName="h-7 text-sm w-36" />
+                                <div className="flex flex-col items-start">
+                                  <EditableCell
+                                    reservationId={reservation.id}
+                                    field="min_charge_combined"
+                                    displayValue={mainDisplay}
+                                    rawValue={rawVal}
+                                    inputClassName="h-7 text-sm w-36" />
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'Υπόλοιπο' : 'Remaining'}: €{(remainderCents / 100).toFixed(2)}
+                                  </span>
+                                </div>
                               );
                             } else {
                               // Reservation-only: just min charge
@@ -2246,9 +2257,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 field="ticket_credit_cents"
                                 displayValue={actualSpendDisplay}
                                 rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                            ) : (
-                              <span className="text-sm text-foreground whitespace-nowrap">{remainderDisplay}</span>
-                            )
+                            ) : null
                           ) : null}
                         </div>
                       </TableCell>
@@ -2284,11 +2293,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      {/* 6. Σημειώσεις */}
-                      <TableCell className="align-top">
-                        {renderStaffMemoCell(reservation)}
-                      </TableCell>
-                      {/* 7. Πραγματικά (hybrid only) */}
+                      {/* 6. Ποσό (hybrid only) — actual amount paid at venue */}
                       {!isReservationOnly && (
                         <TableCell className="align-top">
                           <EditableCell
@@ -2299,14 +2304,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           />
                         </TableCell>
                       )}
-                      {/* 8. Email */}
+                      {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
                       <TableCell className="align-top">
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="email"
-                          displayValue={reservation.email || reservation.profiles?.email || '—'}
-                          rawValue={reservation.email || reservation.profiles?.email || ''}
-                        />
+                        {renderStaffMemoCell(reservation)}
                       </TableCell>
                     </TableRow>);
               })}
