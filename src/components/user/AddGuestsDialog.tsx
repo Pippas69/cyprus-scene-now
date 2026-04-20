@@ -674,10 +674,6 @@ export const AddGuestsDialog = ({
 
         {/* Payment-info box */}
         <div className="rounded-lg border border-border bg-muted p-2.5 space-y-1.5">
-          <p className="font-medium text-foreground flex items-center gap-1.5 text-xs">
-            💡 {tr.paymentInfo}
-          </p>
-
           {/* Hybrid: tickets always shown */}
           {isHybrid && !isPayAtVenue && ticketsExtraCents > 0 && (
             <div className="flex justify-between text-xs">
