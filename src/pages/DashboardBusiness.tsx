@@ -168,6 +168,9 @@ const DashboardBusiness = () => {
   // Enable real-time notifications
   useRealtimeNotifications(businessId, userId);
 
+  // Live updates: dashboard KPIs refresh instantly on any ticket/reservation/scan change
+  useRealtimeEventCheckins(businessId);
+
   // Onboarding tour
   const { onboardingCompleted, completeOnboarding, isLoading: onboardingLoading } = useOnboardingStatus(businessId);
   const { data: subscriptionData } = useSubscriptionPlan(businessId);
