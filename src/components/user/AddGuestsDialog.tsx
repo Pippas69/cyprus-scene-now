@@ -253,6 +253,28 @@ export const AddGuestsDialog = ({
     const loadAll = async () => {
       setLoading(true);
 
+      let fallbackEmail = reservation.email || '';
+
+      if (!fallbackEmail && reservation.id) {
+        const { data: linkedOrder } = await supabase
+          .from('ticket_orders')
+          .select('customer_email')
+          .eq('linked_reservation_id', reservation.id)
+          .not('customer_email', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        fallbackEmail = linkedOrder?.customer_email || fallbackEmail;
+      }
+
+      if (!fallbackEmail && reservation.event_id) {
+        const { data: profileData } = await supabase.auth.getUser();
+        fallbackEmail = profileData.user?.email || '';
+      }
+
+      setResolvedEmail(fallbackEmail);
+
       // Tiers
       if (reservation.seating_type_id) {
         const { data: tierData } = await supabase
@@ -333,6 +355,7 @@ export const AddGuestsDialog = ({
       setExtraCount(1);
       setGuests([{ name: '', age: '' }]);
       setTermsAccepted(false);
+      setResolvedEmail(reservation.email || '');
     }
   }, [open]);
 
