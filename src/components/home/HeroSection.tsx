@@ -44,12 +44,40 @@ const PhoneMockup = () => {
       }
     };
 
-    if (video.readyState >= 2) {
-      playVideo();
+    // Lazy-start: only load + play when the video is near the viewport.
+    // This avoids fetching ~3.4MB during initial page load.
+    const startLoad = () => {
+      if (video.preload !== "auto") {
+        video.preload = "auto";
+        try { video.load(); } catch { /* noop */ }
+      }
+      if (video.readyState >= 2) {
+        playVideo();
+      }
+    };
+
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              startLoad();
+              observer?.disconnect();
+              break;
+            }
+          }
+        },
+        { rootMargin: "200px" }
+      );
+      observer.observe(video);
+    } else {
+      startLoad();
     }
 
     video.addEventListener("loadeddata", playVideo);
     return () => {
+      observer?.disconnect();
       video.removeEventListener("loadeddata", playVideo);
     };
   }, []);
@@ -74,7 +102,7 @@ const PhoneMockup = () => {
             muted
             loop
             playsInline
-            preload="auto"
+            preload="none"
           />
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-transparent to-background/10" />
