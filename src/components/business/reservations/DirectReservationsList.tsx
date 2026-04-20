@@ -2136,7 +2136,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             if (isWalkIn) {
                               const age = (reservation as any).guest_ages || '';
                               peopleText = `1 ${language === 'el' ? 'άτομο' : 'person'}`;
-                              ageText = age ? `${language === 'el' ? 'Ηλικία' : 'Age'} ${age}` : '';
+                              ageText = age ? `${age} ${language === 'el' ? 'ετών' : 'years'}` : '';
                             } else {
                               const ticketAges = agesByReservation[reservation.id];
                               const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
@@ -2147,7 +2147,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               peopleText = hasPeople
                                 ? `${reservation.party_size} ${t.people}`
                                 : '—';
-                              ageText = agesStr ? `${language === 'el' ? 'Ηλικία' : 'Age'} ${agesStr}` : '';
+                              ageText = agesStr ? `${agesStr} ${language === 'el' ? 'ετών' : 'years'}` : '';
                             }
                             return (
                               <>
@@ -2157,6 +2157,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   displayValue={peopleText}
                                   rawValue={peopleText}
                                   inputClassName="h-7 text-sm w-36" />
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="guest_city"
+                                  displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
+                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
                                 {ageText && (
                                   <span className="whitespace-nowrap -ml-2 px-px text-xs text-primary-foreground">
                                     {ageText}
@@ -2165,12 +2170,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               </>
                             );
                           })()}
-                          {/* City: editable */}
-                          <EditableCell
-                            reservationId={reservation.id}
-                            field="guest_city"
-                            displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
-                            rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
                         </div>
                       </TableCell>
 
