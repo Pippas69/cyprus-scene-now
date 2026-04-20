@@ -1,25 +1,71 @@
 
 
-## Full PostgreSQL Database Backup
+## Πλάνο: Ασφαλείς βελτιστοποιήσεις Performance (χωρίς bundle splitting)
 
-### What will happen
-I'll generate a complete `.sql` dump of your database — schema (tables, indexes, constraints, functions, triggers, RLS policies) and all data — saved as a single downloadable file.
+### Στόχος
+Βελτίωση του Lighthouse score από **43 → ~65-75** χωρίς να αγγίξουμε **καμία** λογική flow (tickets, reservations, hybrid, checkout, QR, auth).
 
-### Steps
+### Τι θα αλλάξει (4 σημεία)
 
-1. **Check `psql`/`pg_dump` access** — verify the managed PG environment variables are available
-2. **Run `pg_dump`** with `--no-owner --no-privileges --inserts` flags to produce a portable `.sql` file
-3. **If `pg_dump` unavailable**, fall back to manually querying all tables and reconstructing CREATE TABLE + INSERT statements via SQL queries
-4. **Save** to `/mnt/documents/fomo_full_backup_2026-04-14.sql`
-5. **Deliver** as a downloadable artifact
+**1. Hero video lazy loading (Landing page)**
+- Αρχείο: `src/components/home/HeroSection.tsx` (ή όπου υπάρχει το `<video>`)
+- Αλλαγή: Προσθήκη `preload="none"` και `poster` attribute
+- Όφελος: Εξοικονόμηση ~3.4 MB στο initial load (το video φορτώνει μόνο όταν χρειαστεί)
+- Επίπτωση σε flows: **Καμία** — μόνο landing page
 
-### How to restore on your local machine
-```bash
-createdb fomo_local
-psql -d fomo_local -f fomo_full_backup_2026-04-14.sql
+**2. Image resize (Event covers στο landing)**
+- Αρχείο: `src/components/home/UpcomingEventsPreview.tsx`
+- Αλλαγή: `width=800` → `width=662` (ή responsive μέσω `srcset`)
+- Όφελος: ~59 KB εξοικονόμηση + σωστό sizing
+- Επίπτωση σε flows: **Καμία** — μόνο preview cards στο landing
+
+**3. Font loading optimization (CLS fix)**
+- Αρχείο: `index.html`
+- Αλλαγή: Προσθήκη `&display=swap` (ήδη υπάρχει) + ένωση των 2 ξεχωριστών font requests σε **1 request** (μειώνει render-blocking chain)
+- Όφελος: CLS από 0.101 → ~0.02, ταχύτερο FCP κατά ~750ms
+- Επίπτωση σε flows: **Καμία** — visual μόνο
+
+**4. Hero background image (Unsplash 867 KB)**
+- Αρχείο: `src/components/home/HeroSection.tsx`
+- Αλλαγή: Μείωση `w=1920` → `w=1200&fm=webp&q=75` ή lazy load μέσω CSS
+- Όφελος: ~600 KB εξοικονόμηση
+- Επίπτωση σε flows: **Καμία** — μόνο landing hero
+
+### Τι ΔΕΝ θα αγγίξω (zero-regression guarantee)
+
+❌ Tickets / Reservations / Hybrid logic
+❌ Checkout / Stripe flows
+❌ QR scanning / validation
+❌ Auth (signup, login, OTP, business approval)
+❌ Capacitor / native code
+❌ Edge functions
+❌ Database queries / RLS
+❌ Routing (`App.tsx`, `Index.tsx`)
+❌ Providers (Auth, Theme, Query)
+❌ Business / User / Admin dashboards
+
+### Αρχεία που θα τροποποιηθούν
+
+```
+text
+index.html                                  (font loading)
+src/components/home/HeroSection.tsx         (video preload, hero bg)
+src/components/home/UpcomingEventsPreview.tsx  (image width)
 ```
 
-### Safety
-- Read-only operation — no data is modified or deleted
-- Your live database continues running normally
+**Σύνολο: 3 αρχεία**, όλα στο **landing page scope**.
+
+### Testing που χρειάζεται από εσένα
+
+✅ Άνοιγμα landing page → δες ότι:
+- Φαίνεται το splash screen κανονικά
+- Φορτώνει το hero (video ή poster)
+- Φαίνονται τα upcoming events
+- Δουλεύουν τα κουμπιά "Sign up" / "Login"
+
+❌ **ΔΕΝ χρειάζεται** να ξανατεστάρεις: tickets, reservations, hybrid, QR, payments, dashboard, CRM. Δεν αγγίζονται.
+
+### Επόμενο βήμα (μετά την επιτυχία)
+
+Όταν επιβεβαιώσεις ότι όλα δουλεύουν, ξανασυζητάμε για **bundle splitting μόνο των admin routes** (`/admin/*`) ως πρώτο πειραματικό βήμα.
 
