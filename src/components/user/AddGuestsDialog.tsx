@@ -718,12 +718,6 @@ export const AddGuestsDialog = ({
                 <span className="text-muted-foreground">{tr.minSpendNew} ({newTotal} {tr.people}):</span>
                 <span className="font-semibold text-foreground">{formatPrice(newCharge)}</span>
               </div>
-              {currentCharge > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">{tr.alreadyPaid}:</span>
-                  <span className="font-semibold text-foreground">−{formatPrice(currentCharge)}</span>
-                </div>
-              )}
               {reservationDeltaCents > 0 ? (
                 <div className="flex justify-between text-xs border-t border-border pt-1.5">
                   <span className="font-medium text-foreground">{tr.extraOnline}:</span>
