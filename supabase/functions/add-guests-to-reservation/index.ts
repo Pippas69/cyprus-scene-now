@@ -219,22 +219,70 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://fomo.com.cy";
     const hasConnect = !!(business?.stripe_account_id && business?.stripe_onboarding_completed);
 
+    // Pricing profile to mirror main reservation flow (fees passed to buyer if business so configured)
+    let buyerPaysStripe = true;
+    let buyerPaysPlatformFee = false;
+    let platformFeeReservationCents = 0;
+    try {
+      const { data: pp } = await supabase
+        .from("business_pricing_profiles")
+        .select("stripe_fee_bearer, platform_revenue_enabled, revenue_model, fixed_fee_bearer, fixed_fee_reservation_cents")
+        .eq("business_id", business?.id)
+        .maybeSingle();
+      if (pp) {
+        buyerPaysStripe = pp.stripe_fee_bearer === "buyer";
+        const revenueEnabled = !!pp.platform_revenue_enabled;
+        const isFixedFee = revenueEnabled && pp.revenue_model === "fixed_fee";
+        buyerPaysPlatformFee = isFixedFee && pp.fixed_fee_bearer === "buyer";
+        platformFeeReservationCents = buyerPaysPlatformFee ? (pp.fixed_fee_reservation_cents || 0) : 0;
+      }
+    } catch (e) {
+      log("pricing profile fetch failed (non-fatal)", { error: String(e) });
+    }
+
+    const stripeFeesCents = (extraChargeCents > 0 && buyerPaysStripe)
+      ? Math.ceil(extraChargeCents * 0.029 + 25)
+      : 0;
+    const platformFeeCents = (extraChargeCents > 0 && buyerPaysPlatformFee) ? platformFeeReservationCents : 0;
+
+    const lineItems: any[] = [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `${event?.title || "Reservation"} — Επιπλέον άτομα`,
+            description: `+${extra_guests} άτομα στην κράτηση`,
+          },
+          unit_amount: extraChargeCents,
+        },
+        quantity: 1,
+      },
+    ];
+    if (platformFeeCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          product_data: { name: "Χρέωση υπηρεσίας" },
+          unit_amount: platformFeeCents,
+        },
+        quantity: 1,
+      });
+    }
+    if (stripeFeesCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          product_data: { name: "Έξοδα επεξεργασίας" },
+          unit_amount: stripeFeesCents,
+        },
+        quantity: 1,
+      });
+    }
+
     const baseSession: any = {
       customer: customerId,
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `${event?.title || "Reservation"} — Επιπλέον άτομα`,
-              description: `+${extra_guests} άτομα στην κράτηση`,
-            },
-            unit_amount: extraChargeCents,
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: "payment",
       success_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=success&reservation_id=${reservation_id}`,
       cancel_url: `${origin}/dashboard-user?tab=reservations&subtab=event&add_guests=cancelled`,
