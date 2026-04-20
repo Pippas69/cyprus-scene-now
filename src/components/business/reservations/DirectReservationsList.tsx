@@ -1553,7 +1553,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground text-right my-0 mx-[45px]">
+          <span className="cursor-pointer rounded transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground text-right my-0 px-0 py-[3px] mx-[39px]">
             {seatingTypeName || '—'}
             <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
           </span>
@@ -2271,7 +2271,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
                       <TableCell className="align-top pl-2 my-0 mx-0">
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-0.5 text-center mx-0 my-0 py-0 px-px">
                           <EventSeatingTypeEditCell
                             reservationId={reservation.id}
                             currentSeatingTypeId={reservation.seating_type_id || null}
