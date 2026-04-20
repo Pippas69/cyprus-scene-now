@@ -204,17 +204,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       let guests: { guest_name: string; qr_code_token: string }[] = [];
       const { data: orders } = await (supabase as any)
         .from('ticket_orders')
-        .select('id')
-        .eq('linked_reservation_id', reservationId);
-      const orderIds = (orders || []).map((o: any) => o.id);
+        .select('id, created_at')
+        .eq('linked_reservation_id', reservationId)
+        .order('created_at', { ascending: true });
+      const orderRows = (orders || []) as { id: string; created_at: string }[];
+      const orderIds = orderRows.map((o) => o.id);
       if (orderIds.length > 0) {
         const { data: tks } = await (supabase as any)
           .from('tickets')
-          .select('guest_name, qr_code_token')
-          .in('order_id', orderIds);
-        guests = (tks || [])
-          .filter((t: any) => t.qr_code_token)
-          .map((t: any) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+          .select('guest_name, qr_code_token, order_id, created_at')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: true });
+        const allTickets = (tks || []) as { guest_name: string; qr_code_token: string; order_id: string; created_at: string }[];
+
+        // Success dialog ordering: NEW first, then OLD.
+        // The latest order is the most-recent add-guests batch (the "new" one).
+        // Anything older is the original reservation + earlier batches ("old").
+        if (orderRows.length > 1) {
+          const latestOrderId = orderRows[orderRows.length - 1].id;
+          const newOnes = allTickets.filter((t) => t.order_id === latestOrderId && t.qr_code_token);
+          const oldOnes = allTickets.filter((t) => t.order_id !== latestOrderId && t.qr_code_token);
+          guests = [...newOnes, ...oldOnes].map((t) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+        } else {
+          guests = allTickets
+            .filter((t) => t.qr_code_token)
+            .map((t) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+        }
       }
       if (guests.length === 0) {
         const { data: dg } = await supabase
