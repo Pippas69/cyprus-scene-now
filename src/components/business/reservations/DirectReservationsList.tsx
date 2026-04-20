@@ -1553,7 +1553,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <span className="cursor-pointer rounded transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground text-right my-0 px-0 py-[3px] mx-[39px]">
+          <span className="cursor-pointer rounded transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm text-foreground text-right my-0 px-0 py-[3px] mx-[33px]">
             {seatingTypeName || '—'}
             <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
           </span>
