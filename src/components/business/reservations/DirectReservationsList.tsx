@@ -2296,7 +2296,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 5. Κατάσταση */}
-                      <TableCell className="align-top">
+                      <TableCell className="align-top px-[20px]">
                         <div className="flex items-center gap-1.5">
                           {getStatusBadge(reservation)}
                         </div>
