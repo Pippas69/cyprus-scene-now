@@ -467,6 +467,33 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
 
+    const realReservationIds = [...new Set([...allUpcoming, ...allPast].filter((r) => !r.id.startsWith('order-')).map((r) => r.id))];
+    if (realReservationIds.length > 0) {
+      const { data: linkedOrderEmails } = await supabase
+        .from('ticket_orders')
+        .select('linked_reservation_id, customer_email, created_at')
+        .in('linked_reservation_id', realReservationIds)
+        .not('customer_email', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (linkedOrderEmails?.length) {
+        const emailByReservationId = new Map<string, string>();
+        linkedOrderEmails.forEach((order) => {
+          if (order.linked_reservation_id && order.customer_email && !emailByReservationId.has(order.linked_reservation_id)) {
+            emailByReservationId.set(order.linked_reservation_id, order.customer_email);
+          }
+        });
+
+        const mergeReservationEmail = (reservation: ReservationData): ReservationData => ({
+          ...reservation,
+          email: reservation.email || emailByReservationId.get(reservation.id) || reservation.email,
+        });
+
+        for (let i = 0; i < allUpcoming.length; i += 1) allUpcoming[i] = mergeReservationEmail(allUpcoming[i]);
+        for (let i = 0; i < allPast.length; i += 1) allPast[i] = mergeReservationEmail(allPast[i]);
+      }
+    }
+
     // Preview-only seeding
     try {
       const hasAnyEventReservations =
