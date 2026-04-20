@@ -2130,14 +2130,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <div className="flex flex-col gap-0.5">
                           {(() => {
                             const isWalkIn = reservation.source === 'walk_in' && !reservation.seating_type_id;
-                            let displayText: string;
-                            let rawText: string;
+                            let peopleText: string;
+                            let ageText: string = '';
 
                             if (isWalkIn) {
-                              // Walk-in: always "1 άτομο (age)" with exact age, no "+"
                               const age = (reservation as any).guest_ages || '';
-                              displayText = age ? `1 ${language === 'el' ? 'άτομο' : 'person'} (${age})` : `1 ${language === 'el' ? 'άτομο' : 'person'}`;
-                              rawText = displayText;
+                              peopleText = `1 ${language === 'el' ? 'άτομο' : 'person'}`;
+                              ageText = age ? `${language === 'el' ? 'Ηλικία' : 'Age'} ${age}` : '';
                             } else {
                               const ticketAges = agesByReservation[reservation.id];
                               const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
@@ -2145,21 +2144,25 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 : '';
                               const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
                               const hasPeople = !!reservation.party_size;
-                              const hasAges = !!agesStr;
-                              displayText = hasPeople
-                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                                : hasAges ? `(${agesStr})` : '—';
-                              rawText = hasPeople
-                                ? `${reservation.party_size} ${t.people}${hasAges ? ` (${agesStr})` : ''}`
-                                : hasAges ? agesStr : '';
+                              peopleText = hasPeople
+                                ? `${reservation.party_size} ${t.people}`
+                                : '—';
+                              ageText = agesStr ? `${language === 'el' ? 'Ηλικία' : 'Age'} ${agesStr}` : '';
                             }
                             return (
-                              <EditableCell
-                                reservationId={reservation.id}
-                                field="details_combined"
-                                displayValue={displayText}
-                                rawValue={rawText}
-                                inputClassName="h-7 text-sm w-36" />
+                              <>
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="details_combined"
+                                  displayValue={peopleText}
+                                  rawValue={peopleText}
+                                  inputClassName="h-7 text-sm w-36" />
+                                {ageText && (
+                                  <span className="text-sm text-muted-foreground whitespace-nowrap -ml-2 px-px">
+                                    {ageText}
+                                  </span>
+                                )}
+                              </>
                             );
                           })()}
                           {/* City: editable */}
@@ -2170,6 +2173,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
                         </div>
                       </TableCell>
+
                       {/* 3. Ελάχιστη Χρέωση - single combined editable */}
                       <TableCell className="align-top pr-6">
                         <div className="flex flex-col items-start gap-1">
