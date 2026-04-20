@@ -180,6 +180,9 @@ serve(async (req) => {
           session: null,
           guests: newGuests,
           customerEmail: cleanedEmail || res.email || null,
+          forceNewOrder: true,
+          orderSubtotalCents: 0,
+          orderTotalCents: 0,
         });
       } else {
         // Direct reservation → insert into reservation_guests

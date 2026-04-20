@@ -87,26 +87,23 @@ serve(async (req) => {
 
     // PAID PATH — apply update + tickets
     if (session) {
-      // Idempotency: have we already added these tickets via this PI?
-      // simple check: count existing tickets vs expected
-      const { data: orders } = await supabase
+      // Idempotency: have we already added this batch's tickets?
+      // Look for an existing add-guests order with this exact session_id.
+      const { data: dupOrder } = await supabase
         .from("ticket_orders")
         .select("id")
-        .eq("linked_reservation_id", reservationId);
-      const orderIds = (orders || []).map((o: any) => o.id);
-      const { data: existingTickets } = await supabase
-        .from("tickets")
-        .select("id")
-        .in("order_id", orderIds.length > 0 ? orderIds : ["00000000-0000-0000-0000-000000000000"]);
-      const existingCount = existingTickets?.length || 0;
-      const targetCount = (newPartySize || (reservation.party_size + extraGuests));
+        .eq("linked_reservation_id", reservationId)
+        .eq("stripe_checkout_session_id", session.id)
+        .maybeSingle();
 
-      if (existingCount >= targetCount) {
-        log("Already processed (tickets exist)", { existingCount, targetCount });
+      if (dupOrder?.id) {
+        log("Already processed (order exists for this session)", { sessionId: session.id });
         return new Response(JSON.stringify({ already_processed: true }), {
           headers: { ...securityHeaders, "Content-Type": "application/json" },
         });
       }
+
+      const targetCount = (newPartySize || (reservation.party_size + extraGuests));
 
       // Update reservation party_size + charge
       const { error: updErr } = await supabase
@@ -118,7 +115,8 @@ serve(async (req) => {
         .eq("id", reservationId);
       if (updErr) throw updErr;
 
-      // Add new guest tickets from session metadata
+      // Add new guest tickets from session metadata in a NEW dedicated order,
+      // so totals sum properly across all add-guests batches.
       const newGuests = buildReservationGuestsFromMetadata(
         session.metadata as any,
         reservation.reservation_name || "Guest",
@@ -132,6 +130,9 @@ serve(async (req) => {
         session: { id: session.id, metadata: session.metadata as any },
         guests: newGuests,
         customerEmail: reservation.email || (session.metadata as any)?.customer_email || null,
+        forceNewOrder: true,
+        orderSubtotalCents: extraChargeCents,
+        orderTotalCents: extraChargeCents,
       });
     }
 
