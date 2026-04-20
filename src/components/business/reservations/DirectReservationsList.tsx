@@ -1514,7 +1514,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     if (!currentLabel) return null;
 
     return (
-      <span className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-xs text-primary-foreground">
+      <span className="cursor-pointer rounded py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-xs text-primary-foreground px-[41px]">
         {currentLabel}
         <X
           className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0 hover:text-red-500"
