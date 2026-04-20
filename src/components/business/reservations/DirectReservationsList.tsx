@@ -2303,7 +2303,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
                       {/* 6. Ποσό (hybrid only) — actual amount paid at venue */}
                       {!isReservationOnly && (
-                        <TableCell className="align-top">
+                        <TableCell className="align-top px-[49px]">
                           <EditableCell
                             reservationId={reservation.id}
                             field="ticket_credit_cents"
