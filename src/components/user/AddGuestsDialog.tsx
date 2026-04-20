@@ -66,6 +66,7 @@ const t = {
     subtitle: (n: number) => `Πρόσθεσε ${n > 0 ? `+${n}` : ''} άτομα στην κράτησή σου`,
     extraPeople: 'Επιπλέον άτομα',
     extraPeopleCount: 'Αριθμός ατόμων',
+    ticketPrice: 'Τιμή εισιτηρίων',
     people: 'άτομα',
     person: 'άτομο',
     max: 'Μέγιστο',
@@ -119,6 +120,7 @@ const t = {
     subtitle: (n: number) => `Add ${n > 0 ? `+${n}` : ''} guests to your reservation`,
     extraPeople: 'Extra guests',
     extraPeopleCount: 'Guest count',
+    ticketPrice: 'Ticket price',
     people: 'guests',
     person: 'guest',
     max: 'Max',
@@ -247,6 +249,7 @@ export const AddGuestsDialog = ({
   const platformFeeCents = subtotal > 0 && buyerPaysPlatformFee ? (pricingDisplay?.fixedFeeReservationCents || 0) : 0;
   const total = subtotal + stripeFeesCents + platformFeeCents;
   const isFreeFlow = subtotal === 0;
+  const step1RightAmountCents = isHybrid ? ticketsExtraCents : total;
 
   const minAge = isEvent ? getMinAge(reservation.event_id || '', reservation.event_minimum_age) : 0;
 
@@ -485,10 +488,15 @@ export const AddGuestsDialog = ({
 
           {/* Extra people counter */}
           <div className="space-y-1">
-            <Label className="flex items-center gap-1.5 text-xs">
-              <Users className="h-3 w-3" />
-              {subtotal > 0 ? tr.extraPeopleCount : tr.extraPeople}
-            </Label>
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <Label className="flex items-center gap-1.5 text-xs">
+                <Users className="h-3 w-3" />
+                {subtotal > 0 ? tr.extraPeopleCount : tr.extraPeople}
+              </Label>
+              {isHybrid && ticketsExtraCents > 0 && (
+                <span className="font-medium text-foreground">{tr.ticketPrice}</span>
+              )}
+            </div>
             <div className="rounded-lg border border-border bg-card px-2.5 py-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
@@ -515,10 +523,10 @@ export const AddGuestsDialog = ({
                   {extraCount === 1 ? tr.person : tr.people} ({tr.max} {maxPeople})
                 </span>
                 </div>
-                {!isFreeFlow && (
+                {!isFreeFlow && step1RightAmountCents > 0 && (
                   <div className="flex flex-col items-end shrink-0 leading-none">
-                    <span className="text-[10px] text-muted-foreground">{tr.amountToPayNow}</span>
-                    <span className="text-base font-bold text-foreground">{formatPrice(total)}</span>
+                    {!isHybrid && <span className="text-[10px] text-muted-foreground">{tr.amountToPayNow}</span>}
+                    <span className="text-base font-bold text-foreground">{formatPrice(step1RightAmountCents)}</span>
                   </div>
                 )}
               </div>
