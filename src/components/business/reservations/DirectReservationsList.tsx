@@ -347,7 +347,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, staff_memo, confirmation_code, qr_code_token, checked_in_at,
+          business_notes, staff_memo, confirmation_code, qr_code_token, transaction_code, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
           cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
@@ -1745,21 +1745,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingMemo(reservation.id);
           setMemoValue((reservation as any).staff_memo || '');
         }}
       >
         {(reservation as any).staff_memo ? (
-          <span className="text-xs text-foreground max-w-[120px] truncate">{(reservation as any).staff_memo}</span>
+          <span
+            className="text-[11px] leading-snug text-foreground/80 break-words flex-1 overflow-hidden"
+            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+          >
+            {(reservation as any).staff_memo}
+          </span>
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
       </button>
     );
   };
@@ -2050,17 +2055,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[1050px] table-fixed">
+            <Table className="w-full min-w-[980px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[16%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[14%] pr-6 whitespace-nowrap">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[12%] text-center">{t.seating}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[10%]">{t.staffMemo}</TableHead>
-                  {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Πραγματικά' : 'Actual'}</TableHead>}
-                  <TableHead className="text-xs w-[14%]">{t.email}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[12%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[16%] pr-4 whitespace-nowrap">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[11%] text-center">{t.seating}</TableHead>
+                  <TableHead className="text-xs w-[11%]">{t.status}</TableHead>
+                  {!isReservationOnly && <TableHead className="text-xs w-[10%]">{language === 'el' ? 'Ποσό' : 'Amount'}</TableHead>}
+                  <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2098,7 +2102,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
-                      {/* 1. Στοιχεία: Name + Phone + Customer Note */}
+                      {/* 1. Στοιχεία: Name + Phone + Reservation Code + Customer Note */}
                       <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-1">
                           <div className="flex flex-col gap-0.5 min-w-0">
@@ -2110,6 +2114,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             {reservation.phone_number &&
                           <span className="text-sm text-muted-foreground -ml-1.5">
                             {reservation.phone_number.replace(/^\+357/, '')}
+                              </span>
+                          }
+                            {reservation.transaction_code &&
+                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5">
+                            {reservation.transaction_code}
                               </span>
                           }
                           </div>
@@ -2190,7 +2199,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               );
                             }
-                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" — read-only
+                            // Bottle-mode tier: show "1 Premium Bottle (στο κατάστημα)" + prepayment if any
                             if (isBottleRow && matchedTier) {
                               const bottle = formatBottleLabel(
                                 matchedTier.bottle_type as 'bottle' | 'premium_bottle',
@@ -2201,25 +2210,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 <div className="flex flex-col items-start">
                                   <span className="text-sm font-medium text-foreground whitespace-nowrap">{bottle}</span>
                                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {language === 'el' ? 'στο κατάστημα' : 'at venue'}
+                                    {language === 'el' ? 'Πληρωμή στο κατάστημα' : 'Pay at venue'}
                                   </span>
+                                  {ticketPaidCents > 0 && (
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                      {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             }
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
-                              // Hybrid: show "€100.00 (€20.00)" as one editable field
-                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)}` : '-';
-                              const ticketDisplay = ticketPaidCents > 0 ? `(€${(ticketPaidCents / 100).toFixed(2)})` : '(—)';
-                              const combinedDisplay = `${mainDisplay} ${ticketDisplay}`;
+                              // Hybrid (amount-based minimum): line1 minimum, line2 prepayment, line3 remainder
+                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)} minimum` : '-';
                               const rawVal = `${(minChargeCents / 100).toFixed(2)} (${(ticketPaidCents / 100).toFixed(2)})`;
                               return (
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="min_charge_combined"
-                                  displayValue={combinedDisplay}
-                                  rawValue={rawVal}
-                                  inputClassName="h-7 text-sm w-36" />
+                                <div className="flex flex-col items-start">
+                                  <EditableCell
+                                    reservationId={reservation.id}
+                                    field="min_charge_combined"
+                                    displayValue={mainDisplay}
+                                    rawValue={rawVal}
+                                    inputClassName="h-7 text-sm w-36" />
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'Υπόλοιπο' : 'Remaining'}: €{(remainderCents / 100).toFixed(2)}
+                                  </span>
+                                </div>
                               );
                             } else {
                               // Reservation-only: just min charge
@@ -2242,9 +2262,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 field="ticket_credit_cents"
                                 displayValue={actualSpendDisplay}
                                 rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'} />
-                            ) : (
-                              <span className="text-sm text-foreground whitespace-nowrap">{remainderDisplay}</span>
-                            )
+                            ) : null
                           ) : null}
                         </div>
                       </TableCell>
@@ -2280,11 +2298,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      {/* 6. Σημειώσεις */}
-                      <TableCell className="align-top">
-                        {renderStaffMemoCell(reservation)}
-                      </TableCell>
-                      {/* 7. Πραγματικά (hybrid only) */}
+                      {/* 6. Ποσό (hybrid only) — actual amount paid at venue */}
                       {!isReservationOnly && (
                         <TableCell className="align-top">
                           <EditableCell
@@ -2295,14 +2309,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           />
                         </TableCell>
                       )}
-                      {/* 8. Email */}
+                      {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
                       <TableCell className="align-top">
-                        <EditableCell
-                          reservationId={reservation.id}
-                          field="email"
-                          displayValue={reservation.email || reservation.profiles?.email || '—'}
-                          rawValue={reservation.email || reservation.profiles?.email || ''}
-                        />
+                        {renderStaffMemoCell(reservation)}
                       </TableCell>
                     </TableRow>);
               })}
