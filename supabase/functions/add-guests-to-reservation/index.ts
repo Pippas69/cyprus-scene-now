@@ -95,14 +95,62 @@ serve(async (req) => {
     const newCharge = newTier.prepaid_min_charge_cents || 0;
     const isBottlesTier = newTier.pricing_mode === "bottles";
     const isPayAtVenue = !!(res as any).events?.pay_at_door;
-    // Online charge = diff in min_charge UNLESS:
-    //  - tier is bottles → bottles paid at venue (€0 online)
-    //  - event is pay-at-door / pay-at-venue → everything paid at venue (€0 online)
-    const extraChargeCents = (isBottlesTier || isPayAtVenue)
-      ? 0
-      : Math.max(0, newCharge - currentCharge);
+    const isHybrid = (res as any).events?.event_type === "ticket_and_reservation";
 
-    log("Computed", { currentCharge, newCharge, extraChargeCents, newPartySize, maxPeople, isBottlesTier, isPayAtVenue });
+    // Reservation delta:
+    //   - bottles tier → 0 (bottles paid at venue)
+    //   - amount tier  → max(0, newCharge - currentCharge)
+    const reservationDeltaCents = isBottlesTier ? 0 : Math.max(0, newCharge - currentCharge);
+
+    // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra),
+    // unless the event is pay-at-door (then everything is paid at venue).
+    let hybridTicketPriceCents = 0;
+    if (isHybrid && !isPayAtVenue) {
+      // Find tier_id from existing tickets linked to this reservation
+      const { data: existingOrder } = await supabase
+        .from("ticket_orders")
+        .select("id")
+        .eq("linked_reservation_id", reservation_id)
+        .maybeSingle();
+      let tierId: string | null = null;
+      if (existingOrder?.id) {
+        const { data: ticketRow } = await supabase
+          .from("tickets")
+          .select("tier_id")
+          .eq("order_id", existingOrder.id)
+          .limit(1)
+          .maybeSingle();
+        tierId = ticketRow?.tier_id ?? null;
+      }
+      if (tierId) {
+        const { data: tierRow } = await supabase
+          .from("ticket_tiers")
+          .select("price_cents")
+          .eq("id", tierId)
+          .maybeSingle();
+        hybridTicketPriceCents = tierRow?.price_cents || 0;
+      } else {
+        // Fallback: cheapest active tier
+        const { data: tiersList } = await supabase
+          .from("ticket_tiers")
+          .select("price_cents")
+          .eq("event_id", res.event_id)
+          .eq("active", true)
+          .order("price_cents", { ascending: true })
+          .limit(1);
+        hybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
+      }
+    }
+    const ticketsExtraCents = hybridTicketPriceCents * extra_guests;
+
+    // Total online charge
+    const extraChargeCents = isPayAtVenue ? 0 : (ticketsExtraCents + reservationDeltaCents);
+
+    log("Computed", {
+      currentCharge, newCharge, reservationDeltaCents, hybridTicketPriceCents,
+      ticketsExtraCents, extraChargeCents, newPartySize, maxPeople,
+      isBottlesTier, isPayAtVenue, isHybrid,
+    });
 
     // FREE PATH — apply immediately
     if (extraChargeCents === 0) {
