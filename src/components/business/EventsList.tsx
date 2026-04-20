@@ -79,6 +79,9 @@ const EventsList = ({ businessId }: EventsListProps) => {
   const [activeFilter, setActiveFilter] = useState<EventFilter>('all');
   const [showExpired, setShowExpired] = useState(false);
 
+  // Live updates: any ticket/reservation/scan change refreshes the list instantly
+  useRealtimeEventCheckins(businessId);
+
   // Check if business is a performance type
   const { data: businessCatData } = useQuery({
     queryKey: ["business-categories", businessId],
