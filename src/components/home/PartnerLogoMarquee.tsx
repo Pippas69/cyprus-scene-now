@@ -37,10 +37,14 @@ const PartnerLogoMarquee = () => {
 
   const marqueeItems = [...partners, ...partners];
 
-  if (partners.length === 0) return null;
+  // Reserve vertical space even before data loads to prevent CLS (layout shift).
+  // Approx height: title (~24px) + mb-8 (32px) + avatar row (~96px incl. label) + py.
+  if (partners.length === 0) {
+    return <section aria-hidden="true" className="relative py-8 sm:py-12 min-h-[200px] sm:min-h-[220px] bg-transparent" />;
+  }
 
   return (
-    <section className="relative py-8 sm:py-12 overflow-visible bg-transparent">
+    <section className="relative py-8 sm:py-12 overflow-visible bg-transparent min-h-[200px] sm:min-h-[220px]">
       <div className="relative z-10">
         <p className="text-center text-white font-bold text-base sm:text-lg md:text-xl tracking-wider uppercase mb-6 sm:mb-8">
           TRUSTED BY TOP
