@@ -98,9 +98,10 @@ serve(async (req) => {
     const isHybrid = (res as any).events?.event_type === "ticket_and_reservation";
 
     // Reservation delta:
-    //   - bottles tier → 0 (bottles paid at venue)
-    //   - amount tier  → max(0, newCharge - currentCharge)
-    const reservationDeltaCents = isBottlesTier ? 0 : Math.max(0, newCharge - currentCharge);
+    //   - hybrid events → 0 (only new tickets are charged online, reservation/bottles at venue)
+    //   - bottles tier  → 0 (bottles paid at venue)
+    //   - only-reservation amount tier → max(0, newCharge - currentCharge)
+    const reservationDeltaCents = (isHybrid || isBottlesTier) ? 0 : Math.max(0, newCharge - currentCharge);
 
     // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra),
     // unless the event is pay-at-door (then everything is paid at venue).

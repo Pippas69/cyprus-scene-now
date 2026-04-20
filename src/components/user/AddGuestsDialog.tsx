@@ -65,6 +65,7 @@ const t = {
     title: 'Προσθήκη ατόμων',
     subtitle: (n: number) => `Πρόσθεσε ${n > 0 ? `+${n}` : ''} άτομα στην κράτησή σου`,
     extraPeople: 'Επιπλέον άτομα',
+    extraPeopleCount: 'Αριθμός ατόμων',
     people: 'άτομα',
     person: 'άτομο',
     max: 'Μέγιστο',
@@ -96,6 +97,7 @@ const t = {
     alreadyPaid: 'Ήδη προπληρωμένο',
     extraOnline: 'Επιπλέον προπληρωμή (online)',
     ticketsExtra: 'Εισιτήρια νέων ατόμων',
+    amountToPayNow: 'Πληρωμή τώρα',
     remainingVenue: 'Υπόλοιπο στο venue',
     bottlesAtVenue: 'Μπουκάλι στο κατάστημα',
     payAtVenueAll: 'Όλα στο κατάστημα',
@@ -116,6 +118,7 @@ const t = {
     title: 'Add guests',
     subtitle: (n: number) => `Add ${n > 0 ? `+${n}` : ''} guests to your reservation`,
     extraPeople: 'Extra guests',
+    extraPeopleCount: 'Guest count',
     people: 'guests',
     person: 'guest',
     max: 'Max',
@@ -147,6 +150,7 @@ const t = {
     alreadyPaid: 'Already prepaid',
     extraOnline: 'Extra prepayment (online)',
     ticketsExtra: 'New guests tickets',
+    amountToPayNow: 'Pay now',
     remainingVenue: 'Remaining at venue',
     bottlesAtVenue: 'Bottle paid at venue',
     payAtVenueAll: 'All at venue',
@@ -195,12 +199,13 @@ export const AddGuestsDialog = ({
   const [tiers, setTiers] = useState<TierInfo[]>([]);
   const [currentTier, setCurrentTier] = useState<TierInfo | null>(null);
   const [hybridTicketPriceCents, setHybridTicketPriceCents] = useState(0);
+  const [resolvedEmail, setResolvedEmail] = useState(reservation.email || '');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Email is the immutable reservation email
-  const lockedEmail = reservation.email || '';
+  const lockedEmail = resolvedEmail;
 
   const maxPeople = useMemo(
     () => (tiers.length > 0 ? Math.max(...tiers.map((tt) => tt.max_people)) : reservation.party_size + 10),
@@ -224,7 +229,7 @@ export const AddGuestsDialog = ({
   //  - Reservation-only:
   //      * amount-tier → reservation diff
   //      * bottles → €0 online
-  const reservationDeltaCents = newTierIsBottles
+  const reservationDeltaCents = (isHybrid || newTierIsBottles)
     ? 0
     : Math.max(0, newCharge - currentCharge);
 
@@ -251,6 +256,28 @@ export const AddGuestsDialog = ({
 
     const loadAll = async () => {
       setLoading(true);
+
+      let fallbackEmail = reservation.email || '';
+
+      if (!fallbackEmail && reservation.id) {
+        const { data: linkedOrder } = await supabase
+          .from('ticket_orders')
+          .select('customer_email')
+          .eq('linked_reservation_id', reservation.id)
+          .not('customer_email', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        fallbackEmail = linkedOrder?.customer_email || fallbackEmail;
+      }
+
+      if (!fallbackEmail && reservation.event_id) {
+        const { data: profileData } = await supabase.auth.getUser();
+        fallbackEmail = profileData.user?.email || '';
+      }
+
+      setResolvedEmail(fallbackEmail);
 
       // Tiers
       if (reservation.seating_type_id) {
@@ -332,6 +359,7 @@ export const AddGuestsDialog = ({
       setExtraCount(1);
       setGuests([{ name: '', age: '' }]);
       setTermsAccepted(false);
+      setResolvedEmail(reservation.email || '');
     }
   }, [open]);
 
@@ -459,10 +487,11 @@ export const AddGuestsDialog = ({
           <div className="space-y-1">
             <Label className="flex items-center gap-1.5 text-xs">
               <Users className="h-3 w-3" />
-              {tr.extraPeople}
+              {subtotal > 0 ? tr.extraPeopleCount : tr.extraPeople}
             </Label>
             <div className="rounded-lg border border-border bg-card px-2.5 py-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
                 <Button
                   variant="outline"
                   size="icon"
@@ -485,6 +514,13 @@ export const AddGuestsDialog = ({
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {extraCount === 1 ? tr.person : tr.people} ({tr.max} {maxPeople})
                 </span>
+                </div>
+                {!isFreeFlow && (
+                  <div className="flex flex-col items-end shrink-0 leading-none">
+                    <span className="text-[10px] text-muted-foreground">{tr.amountToPayNow}</span>
+                    <span className="text-base font-bold text-foreground">{formatPrice(total)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
