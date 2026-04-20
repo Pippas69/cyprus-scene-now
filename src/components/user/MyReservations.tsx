@@ -614,8 +614,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     if (realEventResIds.length > 0) {
       const { data: linkedOrders } = await supabase
         .from('ticket_orders')
-        .select('id, linked_reservation_id, subtotal_cents')
-        .in('linked_reservation_id', realEventResIds);
+        .select('id, linked_reservation_id, subtotal_cents, created_at')
+        .in('linked_reservation_id', realEventResIds)
+        .order('created_at', { ascending: true });
 
       (linkedOrders || []).forEach((order) => {
         if (!order.linked_reservation_id) return;
@@ -641,17 +642,29 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const orderToReservation: Record<string, string> = {};
     const reservationTotals: Record<string, number> = {};
 
+    // SUM totals across ALL linked orders (initial reservation + all add-guests batches)
     mergedOrderMappings.forEach((mapping) => {
       orderToReservation[mapping.orderId] = mapping.reservationId;
-      reservationTotals[mapping.reservationId] = mapping.totalCents;
+      reservationTotals[mapping.reservationId] =
+        (reservationTotals[mapping.reservationId] || 0) + mapping.totalCents;
     });
 
     setTicketOrderTotals(reservationTotals);
 
+    // Track creation order per order so we can sort tickets old → new in the card view
+    const orderCreatedAt: Record<string, string> = {};
+    if (realEventResIds.length > 0) {
+      mergedOrderMappings.forEach((m, idx) => {
+        // index is already in created_at ASC order from the query above
+        orderCreatedAt[m.orderId] = String(idx).padStart(6, '0');
+      });
+    }
+
     const { data: tickets } = await supabase
       .from('tickets')
-      .select('id, order_id, guest_name, guest_age, qr_code_token, status')
-      .in('order_id', orderIds);
+      .select('id, order_id, guest_name, guest_age, qr_code_token, status, created_at')
+      .in('order_id', orderIds)
+      .order('created_at', { ascending: true });
 
     if (!tickets) return;
 
