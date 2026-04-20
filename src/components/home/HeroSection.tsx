@@ -102,7 +102,7 @@ const PhoneMockup = () => {
             muted
             loop
             playsInline
-            preload="auto"
+            preload="none"
           />
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-transparent to-background/10" />
