@@ -486,7 +486,8 @@ export const AddGuestsDialog = ({
               {tr.extraPeople}
             </Label>
             <div className="rounded-lg border border-border bg-card px-2.5 py-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
                 <Button
                   variant="outline"
                   size="icon"
@@ -509,6 +510,10 @@ export const AddGuestsDialog = ({
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {extraCount === 1 ? tr.person : tr.people} ({tr.max} {maxPeople})
                 </span>
+                </div>
+                {!isFreeFlow && (
+                  <span className="text-base font-bold text-foreground shrink-0">{formatPrice(total)}</span>
+                )}
               </div>
             </div>
           </div>
