@@ -56,6 +56,8 @@ export const usePromoterAttributions = (userId: string | undefined) => {
       }));
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
@@ -91,5 +93,7 @@ export const usePromoterTotals = (userId: string | undefined) => {
       return { totalClicks, totalSales, totalEarningsCents };
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };

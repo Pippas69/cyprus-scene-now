@@ -99,6 +99,8 @@ export const usePromoterEvents = (userId: string | undefined) => {
       });
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
