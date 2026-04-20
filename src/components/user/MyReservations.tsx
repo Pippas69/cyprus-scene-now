@@ -1528,10 +1528,15 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             seating_type_id: addGuestsReservation.seating_type_id,
             reservation_name: addGuestsReservation.reservation_name,
             email: addGuestsReservation.email,
+            phone_number: (addGuestsReservation as any).phone_number ?? null,
             event_minimum_age: addGuestsReservation.events?.minimum_age,
             event_type: addGuestsReservation.events?.event_type ?? null,
             pay_at_door: (addGuestsReservation.events as any)?.pay_at_door ?? false,
             prepaid_min_charge_cents: addGuestsReservation.prepaid_min_charge_cents,
+            event_title: addGuestsReservation.events?.title ?? null,
+            business_id: addGuestsReservation.events?.businesses?.id || addGuestsReservation.businesses?.id || null,
+            business_name: addGuestsReservation.events?.businesses?.name || addGuestsReservation.businesses?.name || null,
+            seating_type: (addGuestsReservation as any).seating_preference || null,
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}
