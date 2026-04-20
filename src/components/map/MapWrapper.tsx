@@ -1,8 +1,4 @@
-import { Suspense, lazy } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useLanguage } from '@/hooks/useLanguage';
-
-const RealMap = lazy(() => import('./RealMap'));
+import RealMap from './RealMap';
 
 interface MapWrapperProps {
   city: string;
@@ -12,32 +8,12 @@ interface MapWrapperProps {
 }
 
 export default function MapWrapper({ city, neighborhood, selectedCategories, focusBusinessId }: MapWrapperProps) {
-  const { language } = useLanguage();
-  
-  const translations = {
-    el: { loading: 'Φόρτωση χάρτη...' },
-    en: { loading: 'Loading map...' }
-  };
-  
-  const t = translations[language];
-  
   return (
-    <Suspense
-      fallback={
-        <div className="h-full min-h-[50vh] w-full flex items-center justify-center bg-muted/30 rounded-2xl animate-pulse">
-          <div className="text-center space-y-3">
-            <Loader2 className="animate-spin h-8 w-8 text-primary mx-auto" />
-            <p className="text-sm text-muted-foreground">{t.loading}</p>
-          </div>
-        </div>
-      }
-    >
-      <RealMap 
-        city={city} 
-        neighborhood={neighborhood} 
-        selectedCategories={selectedCategories}
-        focusBusinessId={focusBusinessId}
-      />
-    </Suspense>
+    <RealMap
+      city={city}
+      neighborhood={neighborhood}
+      selectedCategories={selectedCategories}
+      focusBusinessId={focusBusinessId}
+    />
   );
 }
