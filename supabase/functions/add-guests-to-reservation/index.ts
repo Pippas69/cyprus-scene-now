@@ -112,6 +112,8 @@ serve(async (req) => {
         .from("ticket_orders")
         .select("id")
         .eq("linked_reservation_id", reservation_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       let tierId: string | null = null;
       if (existingOrder?.id) {
@@ -119,6 +121,7 @@ serve(async (req) => {
           .from("tickets")
           .select("tier_id")
           .eq("order_id", existingOrder.id)
+          .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         tierId = ticketRow?.tier_id ?? null;
@@ -137,6 +140,7 @@ serve(async (req) => {
           .select("price_cents")
           .eq("event_id", res.event_id)
           .eq("active", true)
+          .gt("price_cents", 0)
           .order("price_cents", { ascending: true })
           .limit(1);
         hybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
