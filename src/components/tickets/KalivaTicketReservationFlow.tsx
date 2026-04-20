@@ -969,7 +969,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">
-                {t.minimumCharge} ({partySize} {t.people}):
+                {t.minimumCharge}
               </span>
               <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
             </div>
