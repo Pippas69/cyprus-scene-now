@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import {
   Plus, Minus, Loader2, Users, AlertCircle, Mail, Info,
-  GlassWater, TableIcon, Crown, Sofa, User, Phone, Clock,
+  GlassWater, TableIcon, Crown, Sofa, User, Phone,
   CreditCard, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -210,7 +210,7 @@ export const AddGuestsDialog = ({
 
   const newTier = tiers.find((tt) => newTotal >= tt.min_people && newTotal <= tt.max_people) || null;
   const newTierIsBottles = isBottleTierFn(newTier as any);
-  const currentTierIsBottles = isBottleTierFn(currentTier as any);
+  // currentTierIsBottles intentionally not used in delta logic; backend handles bottle delta semantics
   const currentCharge = reservation.prepaid_min_charge_cents ?? currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
   const isPayAtVenue = !!reservation.pay_at_door;
@@ -624,7 +624,7 @@ export const AddGuestsDialog = ({
               ) : (
                 <div className="flex justify-between text-sm border-t border-border pt-1.5">
                   <span className="font-medium text-foreground">{tr.extraOnline}:</span>
-                  <span className="font-bold text-emerald-500">{tr.free}</span>
+                  <span className="font-bold text-foreground">{tr.free}</span>
                 </div>
               )}
               {isHybrid && (
