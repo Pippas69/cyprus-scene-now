@@ -36,6 +36,11 @@ export const ReservationSuccessDialog = ({
   const guests = reservation.guests || [];
   const hasGuests = guests.length > 0;
 
+  const dashboardPath =
+    reservation.guests && reservation.guests.length > 0
+      ? '/dashboard-user?tab=reservations&subtab=event'
+      : '/dashboard-user?tab=reservations&subtab=direct';
+
   const content = hasGuests ? (
     <div className="space-y-4">
       <SuccessQRCard
@@ -49,7 +54,7 @@ export const ReservationSuccessDialog = ({
         partySize={reservation.party_size}
         guestName={guests[currentGuestIndex]?.guest_name}
         showSuccessMessage={currentGuestIndex === 0}
-        onViewDashboard={() => { navigate('/dashboard-user?tab=reservations&subtab=direct'); onOpenChange(false); }}
+        onViewDashboard={() => { navigate(dashboardPath); onOpenChange(false); }}
         viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
         onClose={() => onOpenChange(false)}
       />
@@ -88,7 +93,7 @@ export const ReservationSuccessDialog = ({
       confirmationCode={reservation.confirmation_code}
       partySize={reservation.party_size}
       showSuccessMessage={true}
-      onViewDashboard={() => { navigate('/dashboard-user?tab=reservations&subtab=direct'); onOpenChange(false); }}
+      onViewDashboard={() => { navigate(dashboardPath); onOpenChange(false); }}
       viewDashboardLabel={language === 'el' ? 'Οι Κρατήσεις Μου' : 'My Reservations'}
       onClose={() => onOpenChange(false)}
     />

@@ -204,17 +204,32 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       let guests: { guest_name: string; qr_code_token: string }[] = [];
       const { data: orders } = await (supabase as any)
         .from('ticket_orders')
-        .select('id')
-        .eq('linked_reservation_id', reservationId);
-      const orderIds = (orders || []).map((o: any) => o.id);
+        .select('id, created_at')
+        .eq('linked_reservation_id', reservationId)
+        .order('created_at', { ascending: true });
+      const orderRows = (orders || []) as { id: string; created_at: string }[];
+      const orderIds = orderRows.map((o) => o.id);
       if (orderIds.length > 0) {
         const { data: tks } = await (supabase as any)
           .from('tickets')
-          .select('guest_name, qr_code_token')
-          .in('order_id', orderIds);
-        guests = (tks || [])
-          .filter((t: any) => t.qr_code_token)
-          .map((t: any) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+          .select('guest_name, qr_code_token, order_id, created_at')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: true });
+        const allTickets = (tks || []) as { guest_name: string; qr_code_token: string; order_id: string; created_at: string }[];
+
+        // Success dialog ordering: NEW first, then OLD.
+        // The latest order is the most-recent add-guests batch (the "new" one).
+        // Anything older is the original reservation + earlier batches ("old").
+        if (orderRows.length > 1) {
+          const latestOrderId = orderRows[orderRows.length - 1].id;
+          const newOnes = allTickets.filter((t) => t.order_id === latestOrderId && t.qr_code_token);
+          const oldOnes = allTickets.filter((t) => t.order_id !== latestOrderId && t.qr_code_token);
+          guests = [...newOnes, ...oldOnes].map((t) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+        } else {
+          guests = allTickets
+            .filter((t) => t.qr_code_token)
+            .map((t) => ({ guest_name: t.guest_name || '', qr_code_token: t.qr_code_token }));
+        }
       }
       if (guests.length === 0) {
         const { data: dg } = await supabase
@@ -614,8 +629,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     if (realEventResIds.length > 0) {
       const { data: linkedOrders } = await supabase
         .from('ticket_orders')
-        .select('id, linked_reservation_id, subtotal_cents')
-        .in('linked_reservation_id', realEventResIds);
+        .select('id, linked_reservation_id, subtotal_cents, created_at')
+        .in('linked_reservation_id', realEventResIds)
+        .order('created_at', { ascending: true });
 
       (linkedOrders || []).forEach((order) => {
         if (!order.linked_reservation_id) return;
@@ -641,17 +657,29 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const orderToReservation: Record<string, string> = {};
     const reservationTotals: Record<string, number> = {};
 
+    // SUM totals across ALL linked orders (initial reservation + all add-guests batches)
     mergedOrderMappings.forEach((mapping) => {
       orderToReservation[mapping.orderId] = mapping.reservationId;
-      reservationTotals[mapping.reservationId] = mapping.totalCents;
+      reservationTotals[mapping.reservationId] =
+        (reservationTotals[mapping.reservationId] || 0) + mapping.totalCents;
     });
 
     setTicketOrderTotals(reservationTotals);
 
+    // Track creation order per order so we can sort tickets old → new in the card view
+    const orderCreatedAt: Record<string, string> = {};
+    if (realEventResIds.length > 0) {
+      mergedOrderMappings.forEach((m, idx) => {
+        // index is already in created_at ASC order from the query above
+        orderCreatedAt[m.orderId] = String(idx).padStart(6, '0');
+      });
+    }
+
     const { data: tickets } = await supabase
       .from('tickets')
-      .select('id, order_id, guest_name, guest_age, qr_code_token, status')
-      .in('order_id', orderIds);
+      .select('id, order_id, guest_name, guest_age, qr_code_token, status, created_at')
+      .in('order_id', orderIds)
+      .order('created_at', { ascending: true });
 
     if (!tickets) return;
 
@@ -957,7 +985,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           )}
 
           {/* Payment info — each on single line */}
-          {(isBottle || minCharge >= 0 || ticketTotal > 0) && (
+          {(isBottle || minCharge > 0 || ticketTotal > 0) && (
             <div className="space-y-0.5">
               {isBottle ? (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -965,7 +993,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                   <span>
                     {t.minCharge}: {formatBottleLabel(bottleInfo.bottle_type, bottleInfo.bottle_count, language)}
                     {' '}({language === 'el' ? 'στο κατάστημα' : 'at venue'}
-                    {isHybrid && ticketTotal > 0 && (
+                    {ticketTotal > 0 && (
                       <>
                         {language === 'el' ? ' — ' : ' — '}
                         €{(ticketTotal / 100).toFixed(2)}{' '}
@@ -977,13 +1005,13 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
                 </div>
               ) : (
                 <>
-                  {minCharge >= 0 && (
+                  {minCharge > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>{t.minCharge}: €{(minCharge / 100).toFixed(2)}</span>
                     </div>
                   )}
-                  {isHybrid && (
+                  {ticketTotal > 0 && (
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>

@@ -127,6 +127,9 @@ export const ensureReservationEventGuestTickets = async ({
   session,
   guests: providedGuests,
   customerEmail,
+  forceNewOrder = false,
+  orderSubtotalCents = 0,
+  orderTotalCents = 0,
 }: {
   supabaseClient: SupabaseClientLike;
   reservationId: string;
@@ -134,6 +137,16 @@ export const ensureReservationEventGuestTickets = async ({
   session?: { id?: string | null; metadata?: Record<string, string | undefined> | null; customer_details?: { email?: string | null } | null } | null;
   guests?: ReservationGuestInput[];
   customerEmail?: string | null;
+  /**
+   * When true, always create a NEW ticket_orders row (used by add-guests so
+   * each batch of additional guests is its own order with its own subtotal).
+   * When false (default), reuses the existing linked order if any.
+   */
+  forceNewOrder?: boolean;
+  /** Subtotal (excl. fees) for the new order, used only when forceNewOrder=true. */
+  orderSubtotalCents?: number;
+  /** Total (incl. fees) for the new order, used only when forceNewOrder=true. */
+  orderTotalCents?: number;
 }): Promise<number> => {
   const { data: reservation, error: reservationError } = await supabaseClient
     .from("reservations")
@@ -146,7 +159,13 @@ export const ensureReservationEventGuestTickets = async ({
   }
 
   const guests = Array.isArray(providedGuests) && providedGuests.length > 0
-    ? normalizeReservationGuests(providedGuests, reservation.reservation_name || "Guest", reservation.party_size || providedGuests.length)
+    ? normalizeReservationGuests(
+        providedGuests,
+        reservation.reservation_name || "Guest",
+        // For add-guests batches we want EXACTLY the provided names —
+        // never pad to the reservation's total party_size.
+        forceNewOrder ? providedGuests.length : (reservation.party_size || providedGuests.length),
+      )
     : buildReservationGuestsFromMetadata(
         session?.metadata,
         reservation.reservation_name || "Guest",
@@ -162,13 +181,18 @@ export const ensureReservationEventGuestTickets = async ({
     eventId: reservation.event_id,
   });
 
-  const { data: existingOrder } = await supabaseClient
-    .from("ticket_orders")
-    .select("id")
-    .eq("linked_reservation_id", reservationId)
-    .maybeSingle();
+  let orderId: string | null = null;
 
-  let orderId = existingOrder?.id ?? null;
+  if (!forceNewOrder) {
+    const { data: existingOrder } = await supabaseClient
+      .from("ticket_orders")
+      .select("id")
+      .eq("linked_reservation_id", reservationId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    orderId = existingOrder?.id ?? null;
+  }
 
   if (!orderId) {
     const { data: eventData, error: eventError } = await supabaseClient
@@ -191,10 +215,10 @@ export const ensureReservationEventGuestTickets = async ({
         customer_email:
           (customerEmail || session?.metadata?.customer_email || session?.customer_details?.email || "").trim() || "unknown@fomo.local",
         status: "completed",
-        subtotal_cents: 0,
+        subtotal_cents: orderSubtotalCents,
         commission_cents: 0,
         commission_percent: 0,
-        total_cents: 0,
+        total_cents: orderTotalCents || orderSubtotalCents,
         stripe_payment_intent_id: paymentIntentId || null,
         stripe_checkout_session_id: session?.id || null,
         linked_reservation_id: reservationId,
@@ -209,23 +233,28 @@ export const ensureReservationEventGuestTickets = async ({
     orderId = createdOrder.id;
   }
 
-  const { data: existingTickets, error: existingTicketsError } = await supabaseClient
-    .from("tickets")
-    .select("id")
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: true });
+  // When forceNewOrder=true the order has no tickets yet → insert all `guests`.
+  // When false (legacy webhook path), only fill the gap up to expected count.
+  let guestsToInsert = guests;
+  if (!forceNewOrder) {
+    const { data: existingTickets, error: existingTicketsError } = await supabaseClient
+      .from("tickets")
+      .select("id")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true });
 
-  if (existingTicketsError) {
-    throw existingTicketsError;
-  }
+    if (existingTicketsError) {
+      throw existingTicketsError;
+    }
 
-  const missingGuests = guests.slice(existingTickets?.length || 0);
-  if (missingGuests.length === 0) {
-    return 0;
+    guestsToInsert = guests.slice(existingTickets?.length || 0);
+    if (guestsToInsert.length === 0) {
+      return 0;
+    }
   }
 
   const { error: ticketsError } = await supabaseClient.from("tickets").insert(
-    missingGuests.map((guest) => ({
+    guestsToInsert.map((guest) => ({
       order_id: orderId,
       tier_id: tierId,
       event_id: reservation.event_id,
@@ -240,5 +269,5 @@ export const ensureReservationEventGuestTickets = async ({
     throw ticketsError;
   }
 
-  return missingGuests.length;
+  return guestsToInsert.length;
 };
