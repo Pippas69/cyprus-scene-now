@@ -195,12 +195,13 @@ export const AddGuestsDialog = ({
   const [tiers, setTiers] = useState<TierInfo[]>([]);
   const [currentTier, setCurrentTier] = useState<TierInfo | null>(null);
   const [hybridTicketPriceCents, setHybridTicketPriceCents] = useState(0);
+  const [resolvedEmail, setResolvedEmail] = useState(reservation.email || '');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Email is the immutable reservation email
-  const lockedEmail = reservation.email || '';
+  const lockedEmail = resolvedEmail;
 
   const maxPeople = useMemo(
     () => (tiers.length > 0 ? Math.max(...tiers.map((tt) => tt.max_people)) : reservation.party_size + 10),
@@ -224,7 +225,7 @@ export const AddGuestsDialog = ({
   //  - Reservation-only:
   //      * amount-tier → reservation diff
   //      * bottles → €0 online
-  const reservationDeltaCents = newTierIsBottles
+  const reservationDeltaCents = (isHybrid || newTierIsBottles)
     ? 0
     : Math.max(0, newCharge - currentCharge);
 
