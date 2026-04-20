@@ -296,19 +296,33 @@ serve(async (req) => {
       : 0;
     const platformFeeCents = (extraChargeCents > 0 && buyerPaysPlatformFee) ? platformFeeReservationCents : 0;
 
-    const lineItems: any[] = [
-      {
+    const lineItems: any[] = [];
+    if (ticketsExtraCents > 0) {
+      lineItems.push({
         price_data: {
           currency: "eur",
           product_data: {
-            name: `${event?.title || "Reservation"} — Επιπλέον άτομα`,
-            description: `+${extra_guests} άτομα στην κράτηση`,
+            name: `${event?.title || "Event"} — Εισιτήρια νέων ατόμων`,
+            description: `${extra_guests} × εισιτήριο`,
           },
-          unit_amount: extraChargeCents,
+          unit_amount: hybridTicketPriceCents,
+        },
+        quantity: extra_guests,
+      });
+    }
+    if (reservationDeltaCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `${event?.title || "Reservation"} — Επιπλέον προπληρωμή κράτησης`,
+            description: `+${extra_guests} άτομα`,
+          },
+          unit_amount: reservationDeltaCents,
         },
         quantity: 1,
-      },
-    ];
+      });
+    }
     if (platformFeeCents > 0) {
       lineItems.push({
         price_data: {
