@@ -95,14 +95,62 @@ serve(async (req) => {
     const newCharge = newTier.prepaid_min_charge_cents || 0;
     const isBottlesTier = newTier.pricing_mode === "bottles";
     const isPayAtVenue = !!(res as any).events?.pay_at_door;
-    // Online charge = diff in min_charge UNLESS:
-    //  - tier is bottles → bottles paid at venue (€0 online)
-    //  - event is pay-at-door / pay-at-venue → everything paid at venue (€0 online)
-    const extraChargeCents = (isBottlesTier || isPayAtVenue)
-      ? 0
-      : Math.max(0, newCharge - currentCharge);
+    const isHybrid = (res as any).events?.event_type === "ticket_and_reservation";
 
-    log("Computed", { currentCharge, newCharge, extraChargeCents, newPartySize, maxPeople, isBottlesTier, isPayAtVenue });
+    // Reservation delta:
+    //   - bottles tier → 0 (bottles paid at venue)
+    //   - amount tier  → max(0, newCharge - currentCharge)
+    const reservationDeltaCents = isBottlesTier ? 0 : Math.max(0, newCharge - currentCharge);
+
+    // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra),
+    // unless the event is pay-at-door (then everything is paid at venue).
+    let hybridTicketPriceCents = 0;
+    if (isHybrid && !isPayAtVenue) {
+      // Find tier_id from existing tickets linked to this reservation
+      const { data: existingOrder } = await supabase
+        .from("ticket_orders")
+        .select("id")
+        .eq("linked_reservation_id", reservation_id)
+        .maybeSingle();
+      let tierId: string | null = null;
+      if (existingOrder?.id) {
+        const { data: ticketRow } = await supabase
+          .from("tickets")
+          .select("tier_id")
+          .eq("order_id", existingOrder.id)
+          .limit(1)
+          .maybeSingle();
+        tierId = ticketRow?.tier_id ?? null;
+      }
+      if (tierId) {
+        const { data: tierRow } = await supabase
+          .from("ticket_tiers")
+          .select("price_cents")
+          .eq("id", tierId)
+          .maybeSingle();
+        hybridTicketPriceCents = tierRow?.price_cents || 0;
+      } else {
+        // Fallback: cheapest active tier
+        const { data: tiersList } = await supabase
+          .from("ticket_tiers")
+          .select("price_cents")
+          .eq("event_id", res.event_id)
+          .eq("active", true)
+          .order("price_cents", { ascending: true })
+          .limit(1);
+        hybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
+      }
+    }
+    const ticketsExtraCents = hybridTicketPriceCents * extra_guests;
+
+    // Total online charge
+    const extraChargeCents = isPayAtVenue ? 0 : (ticketsExtraCents + reservationDeltaCents);
+
+    log("Computed", {
+      currentCharge, newCharge, reservationDeltaCents, hybridTicketPriceCents,
+      ticketsExtraCents, extraChargeCents, newPartySize, maxPeople,
+      isBottlesTier, isPayAtVenue, isHybrid,
+    });
 
     // FREE PATH — apply immediately
     if (extraChargeCents === 0) {
@@ -200,6 +248,9 @@ serve(async (req) => {
       new_party_size: String(newPartySize),
       new_prepaid_charge_cents: String(newCharge),
       extra_charge_cents: String(extraChargeCents),
+      reservation_delta_cents: String(reservationDeltaCents),
+      tickets_extra_cents: String(ticketsExtraCents),
+      hybrid_ticket_price_cents: String(hybridTicketPriceCents),
       user_id: user.id,
       business_id: business?.id || "",
       customer_email: customerEmail,
@@ -245,19 +296,33 @@ serve(async (req) => {
       : 0;
     const platformFeeCents = (extraChargeCents > 0 && buyerPaysPlatformFee) ? platformFeeReservationCents : 0;
 
-    const lineItems: any[] = [
-      {
+    const lineItems: any[] = [];
+    if (ticketsExtraCents > 0) {
+      lineItems.push({
         price_data: {
           currency: "eur",
           product_data: {
-            name: `${event?.title || "Reservation"} — Επιπλέον άτομα`,
-            description: `+${extra_guests} άτομα στην κράτηση`,
+            name: `${event?.title || "Event"} — Εισιτήρια νέων ατόμων`,
+            description: `${extra_guests} × εισιτήριο`,
           },
-          unit_amount: extraChargeCents,
+          unit_amount: hybridTicketPriceCents,
+        },
+        quantity: extra_guests,
+      });
+    }
+    if (reservationDeltaCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `${event?.title || "Reservation"} — Επιπλέον προπληρωμή κράτησης`,
+            description: `+${extra_guests} άτομα`,
+          },
+          unit_amount: reservationDeltaCents,
         },
         quantity: 1,
-      },
-    ];
+      });
+    }
     if (platformFeeCents > 0) {
       lineItems.push({
         price_data: {

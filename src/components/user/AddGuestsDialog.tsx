@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Plus, Minus, Loader2, Users, AlertCircle, Mail, Info,
   GlassWater, TableIcon, Crown, Sofa, User, Phone,
-  CreditCard, ArrowRight, ArrowLeft,
+  CreditCard, ArrowRight, ArrowLeft, Ticket,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -73,11 +73,9 @@ const t = {
     guestName: 'Όνομα',
     guestAge: 'Ηλικία',
     email: 'Email',
-    emailPlaceholder: 'example@email.com',
     phone: 'Τηλέφωνο',
     namesError: 'Όλα τα ονόματα πρέπει να είναι σε λατινικούς χαρακτήρες.',
     fillAllNames: 'Συμπλήρωσε όλα τα ονόματα.',
-    fillEmail: 'Συμπλήρωσε ένα έγκυρο email.',
     minAgeError: (n: number) => `Ελάχιστο όριο: ${n} ετών`,
     back: 'Πίσω',
     next: 'Επόμενο',
@@ -97,8 +95,9 @@ const t = {
     minSpendNew: 'Ελάχιστη κατανάλωση τραπεζιού (νέο σύνολο)',
     alreadyPaid: 'Ήδη προπληρωμένο',
     extraOnline: 'Επιπλέον προπληρωμή (online)',
+    ticketsExtra: 'Εισιτήρια νέων ατόμων',
     remainingVenue: 'Υπόλοιπο στο venue',
-    bottlesAtVenue: 'Πληρώνονται στο κατάστημα',
+    bottlesAtVenue: 'Μπουκάλι στο κατάστημα',
     payAtVenueAll: 'Όλα στο κατάστημα',
     free: 'Δωρεάν',
     processingFee: 'Έξοδα επεξεργασίας',
@@ -109,7 +108,7 @@ const t = {
     andThe: 'και την',
     privacyLink: 'Πολιτική Απορρήτου',
     termsRequired: 'Πρέπει να αποδεχτείτε τους όρους χρήσης',
-    emailNote: 'Θα σταλεί νέο email επιβεβαίωσης με όλα τα QR codes (παλιά + νέα).',
+    emailNote: 'Το email επιβεβαίωσης θα σταλεί στο email της αρχικής κράτησης.',
     maxReached: 'Έχεις φτάσει το μέγιστο όριο ατόμων για αυτή την κράτηση.',
     deductedNote: 'Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.',
   },
@@ -125,11 +124,9 @@ const t = {
     guestName: 'Name',
     guestAge: 'Age',
     email: 'Email',
-    emailPlaceholder: 'example@email.com',
     phone: 'Phone',
     namesError: 'All names must be in Latin characters.',
     fillAllNames: 'Fill in all names.',
-    fillEmail: 'Enter a valid email.',
     minAgeError: (n: number) => `Minimum age: ${n}`,
     back: 'Back',
     next: 'Next',
@@ -149,8 +146,9 @@ const t = {
     minSpendNew: 'Table minimum (new total)',
     alreadyPaid: 'Already prepaid',
     extraOnline: 'Extra prepayment (online)',
+    ticketsExtra: 'New guests tickets',
     remainingVenue: 'Remaining at venue',
-    bottlesAtVenue: 'Paid at venue',
+    bottlesAtVenue: 'Bottle paid at venue',
     payAtVenueAll: 'All at venue',
     free: 'Free',
     processingFee: 'Processing fee',
@@ -161,7 +159,7 @@ const t = {
     andThe: 'and the',
     privacyLink: 'Privacy Policy',
     termsRequired: 'You must accept the terms of service',
-    emailNote: 'A new confirmation email will be sent with all QR codes (old + new).',
+    emailNote: 'A new confirmation email will be sent to the original reservation email.',
     maxReached: 'You have reached the maximum number of guests.',
     deductedNote: 'The prepayment is automatically deducted from your final bill.',
   },
@@ -188,18 +186,21 @@ export const AddGuestsDialog = ({
   const isHybrid = reservation.event_type === 'ticket_and_reservation';
   const { data: pricingDisplay } = useEventPricingProfile(reservation.business_id || undefined);
 
-  // Wizard state
+  // Wizard state — 2 STEPS: 1=Details (name+counter+guests+email+phone) 2=Summary/Payment
   const [step, setStep] = useState(1);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const [extraCount, setExtraCount] = useState(1);
   const [guests, setGuests] = useState<{ name: string; age: string }[]>([{ name: '', age: '' }]);
-  const [email, setEmail] = useState('');
   const [tiers, setTiers] = useState<TierInfo[]>([]);
   const [currentTier, setCurrentTier] = useState<TierInfo | null>(null);
+  const [hybridTicketPriceCents, setHybridTicketPriceCents] = useState(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Email is the immutable reservation email
+  const lockedEmail = reservation.email || '';
 
   const maxPeople = useMemo(
     () => (tiers.length > 0 ? Math.max(...tiers.map((tt) => tt.max_people)) : reservation.party_size + 10),
@@ -210,15 +211,31 @@ export const AddGuestsDialog = ({
 
   const newTier = tiers.find((tt) => newTotal >= tt.min_people && newTotal <= tt.max_people) || null;
   const newTierIsBottles = isBottleTierFn(newTier as any);
-  // currentTierIsBottles intentionally not used in delta logic; backend handles bottle delta semantics
   const currentCharge = reservation.prepaid_min_charge_cents ?? currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
   const isPayAtVenue = !!reservation.pay_at_door;
 
-  // Online charge mirrors normal flow:
-  //  - bottles tier OR pay-at-venue → €0 online
-  //  - otherwise → diff between new tier min charge and what was already prepaid
-  const subtotal = (newTierIsBottles || isPayAtVenue) ? 0 : Math.max(0, newCharge - currentCharge);
+  // ─────────── ONLINE CHARGE COMPUTATION ───────────
+  // Mirror the original reservation flow exactly:
+  //  - Pay-at-venue everywhere → €0 online (always)
+  //  - Hybrid (ticket+reservation):
+  //      * tickets ALWAYS charged online for new guests (ticketPrice × extra)
+  //      * + reservation diff (only if amount-tier; bottles → 0)
+  //  - Reservation-only:
+  //      * amount-tier → reservation diff
+  //      * bottles → €0 online
+  const reservationDeltaCents = newTierIsBottles
+    ? 0
+    : Math.max(0, newCharge - currentCharge);
+
+  const ticketsExtraCents = (isHybrid && !isPayAtVenue)
+    ? hybridTicketPriceCents * extraCount
+    : 0;
+
+  const subtotal = isPayAtVenue
+    ? 0
+    : ticketsExtraCents + reservationDeltaCents;
+
   const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
   const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
   const buyerPaysPlatformFee = pricingDisplay?.showPlatformFee === true;
@@ -228,37 +245,76 @@ export const AddGuestsDialog = ({
 
   const minAge = isEvent ? getMinAge(reservation.event_id || '', reservation.event_minimum_age) : 0;
 
-  // Load tiers + prefill email
+  // Load tiers + (for hybrid) ticket price from existing ticket_orders
   useEffect(() => {
     if (!open) return;
-    setEmail(reservation.email || '');
-    if (!reservation.email) {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data.user?.email && !reservation.email) setEmail(data.user.email);
-      });
-    }
-    if (!reservation.seating_type_id) {
-      setTiers([]);
-      setCurrentTier(null);
-      return;
-    }
-    setLoading(true);
-    supabase
-      .from('seating_type_tiers')
-      .select('min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count')
-      .eq('seating_type_id', reservation.seating_type_id)
-      .order('min_people', { ascending: true })
-      .then(({ data }) => {
-        const list = (data || []) as TierInfo[];
+
+    const loadAll = async () => {
+      setLoading(true);
+
+      // Tiers
+      if (reservation.seating_type_id) {
+        const { data: tierData } = await supabase
+          .from('seating_type_tiers')
+          .select('min_people, max_people, prepaid_min_charge_cents, pricing_mode, bottle_type, bottle_count')
+          .eq('seating_type_id', reservation.seating_type_id)
+          .order('min_people', { ascending: true });
+        const list = (tierData || []) as TierInfo[];
         setTiers(list);
         const cur =
           list.find((tt) => reservation.party_size >= tt.min_people && reservation.party_size <= tt.max_people) ||
           list[0] ||
           null;
         setCurrentTier(cur);
-        setLoading(false);
-      });
-  }, [open, reservation.seating_type_id, reservation.party_size, reservation.email]);
+      } else {
+        setTiers([]);
+        setCurrentTier(null);
+      }
+
+      // For HYBRID events: fetch the ticket tier price used in the original order
+      if (isHybrid && reservation.event_id) {
+        const { data: order } = await supabase
+          .from('ticket_orders')
+          .select('id')
+          .eq('linked_reservation_id', reservation.id)
+          .maybeSingle();
+        if (order?.id) {
+          const { data: ticketRow } = await supabase
+            .from('tickets')
+            .select('tier_id')
+            .eq('order_id', order.id)
+            .limit(1)
+            .maybeSingle();
+          if (ticketRow?.tier_id) {
+            const { data: tier } = await supabase
+              .from('ticket_tiers')
+              .select('price_cents')
+              .eq('id', ticketRow.tier_id)
+              .maybeSingle();
+            setHybridTicketPriceCents(tier?.price_cents || 0);
+          }
+        }
+        // Fallback: use the cheapest active tier's price
+        if (hybridTicketPriceCents === 0) {
+          const { data: tiersList } = await supabase
+            .from('ticket_tiers')
+            .select('price_cents')
+            .eq('event_id', reservation.event_id)
+            .eq('active', true)
+            .order('price_cents', { ascending: true })
+            .limit(1);
+          if (tiersList && tiersList[0]) setHybridTicketPriceCents(tiersList[0].price_cents || 0);
+        }
+      } else {
+        setHybridTicketPriceCents(0);
+      }
+
+      setLoading(false);
+    };
+
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, reservation.seating_type_id, reservation.party_size, reservation.event_id, isHybrid, reservation.id]);
 
   // Resize guests array
   useEffect(() => {
@@ -294,7 +350,7 @@ export const AddGuestsDialog = ({
 
   const formatPrice = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
-  // Validation per step
+  // Validation
   const allGuestsFilled = guests.every((g) => {
     if (!g.name.trim()) return false;
     if (!LATIN_RESERVATION_NAME_REGEX.test(g.name.trim())) return false;
@@ -304,9 +360,7 @@ export const AddGuestsDialog = ({
     }
     return true;
   });
-  const isEmailValid = !!email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const canProceedToStep2 = canAdd && allGuestsFilled;
-  const canProceedToStep3 = canProceedToStep2 && isEmailValid;
 
   const handleSubmit = async () => {
     if (!termsAccepted) {
@@ -322,7 +376,7 @@ export const AddGuestsDialog = ({
           extra_guests: extraCount,
           guest_names: cleaned.map((g) => g.name),
           guest_ages: cleaned.map((g) => (g.age ? parseInt(g.age, 10) : null)),
-          email: email.trim(),
+          email: lockedEmail,
         },
       });
       if (error) throw error;
@@ -345,10 +399,10 @@ export const AddGuestsDialog = ({
     }
   };
 
-  // ─────────── Step indicator (matching ReservationEventCheckout) ───────────
+  // ─────────── Step indicator (2 dots) ───────────
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-2 pb-4">
-      {[1, 2, 3].map((s) => (
+      {[1, 2].map((s) => (
         <div
           key={s}
           className={cn(
@@ -360,7 +414,7 @@ export const AddGuestsDialog = ({
     </div>
   );
 
-  // ─────────── Min spend display for current new tier ───────────
+  // ─────────── Min spend display ───────────
   const minSpendDisplay = (() => {
     if (!newTier) return null;
     if (newTierIsBottles) {
@@ -388,14 +442,14 @@ export const AddGuestsDialog = ({
       );
     }
 
-    // STEP 1 — Όνομα (read-only) + counter + λίστα guests + min spend
+    // ━━━━━━━━━━━━━━━━━━━━ STEP 1 ━━━━━━━━━━━━━━━━━━━━
     if (step === 1) {
       return (
         <div className="space-y-3">
           {/* Reservation name (read-only) */}
           <div className="space-y-1">
-            <Label className="flex items-center gap-2 text-sm">
-              <User className="h-3.5 w-3.5" />
+            <Label className="flex items-center gap-1.5 text-xs">
+              <User className="h-3 w-3" />
               {tr.nameLabel}
             </Label>
             <Input value={reservation.reservation_name} readOnly className="h-9 text-sm bg-muted cursor-not-allowed" />
@@ -403,8 +457,8 @@ export const AddGuestsDialog = ({
 
           {/* Extra people counter */}
           <div className="space-y-1">
-            <Label className="flex items-center gap-2 text-sm">
-              <Users className="h-3.5 w-3.5" />
+            <Label className="flex items-center gap-1.5 text-xs">
+              <Users className="h-3 w-3" />
               {tr.extraPeople}
             </Label>
             <div className="rounded-lg border border-border bg-card px-2.5 py-2">
@@ -418,7 +472,7 @@ export const AddGuestsDialog = ({
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </Button>
-                <span className="text-base font-semibold min-w-[2ch] text-center">+{extraCount}</span>
+                <span className="text-sm font-semibold min-w-[2ch] text-center">+{extraCount}</span>
                 <Button
                   variant="outline"
                   size="icon"
@@ -442,23 +496,23 @@ export const AddGuestsDialog = ({
             </div>
           )}
 
-          {/* Min spend (info banner) */}
+          {/* Min spend */}
           {minSpendDisplay && (
             <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-2.5">
-              <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <Info className="h-3 w-3 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground">
                 {tr.minSpend}: <span className="font-semibold text-foreground">{minSpendDisplay}</span>
               </span>
             </div>
           )}
 
-          {/* Guest details (only NEW guests) */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5" />
+          {/* Guest details */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium flex items-center gap-1.5">
+              <Users className="h-3 w-3" />
               {tr.guestDetails} ({extraCount} {extraCount === 1 ? tr.person : tr.people})
             </Label>
-            <div className="space-y-1.5 max-h-52 overflow-y-auto">
+            <div className="space-y-1.5 max-h-44 overflow-y-auto">
               {guests.map((g, idx) => {
                 const ageVal = g.age;
                 const ageNum = Number(ageVal);
@@ -496,11 +550,24 @@ export const AddGuestsDialog = ({
             </div>
           </div>
 
-          {/* Phone (read-only display) */}
+          {/* Email (read-only, locked from original reservation) */}
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1.5 text-xs">
+              <Mail className="h-3 w-3" />
+              {tr.email}
+            </Label>
+            <Input value={lockedEmail} readOnly className="h-9 text-sm bg-muted cursor-not-allowed" />
+            <p className="text-[10px] text-muted-foreground flex items-start gap-1 pt-0.5">
+              <Info className="h-2.5 w-2.5 mt-0.5 shrink-0" />
+              {tr.emailNote}
+            </p>
+          </div>
+
+          {/* Phone (read-only) */}
           {reservation.phone_number && (
             <div className="space-y-1">
-              <Label className="flex items-center gap-2 text-sm">
-                <Phone className="h-3.5 w-3.5" />
+              <Label className="flex items-center gap-1.5 text-xs">
+                <Phone className="h-3 w-3" />
                 {tr.phone}
               </Label>
               <Input value={reservation.phone_number} readOnly className="h-9 text-sm bg-muted cursor-not-allowed" />
@@ -510,47 +577,21 @@ export const AddGuestsDialog = ({
       );
     }
 
-    // STEP 2 — Email
-    if (step === 2) {
-      return (
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="add-guests-email" className="flex items-center gap-2 text-sm">
-              <Mail className="h-3.5 w-3.5" />
-              {tr.email}
-            </Label>
-            <Input
-              id="add-guests-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={tr.emailPlaceholder}
-              className="h-9 text-sm"
-            />
-            <p className="text-[11px] text-muted-foreground flex items-start gap-1 pt-0.5">
-              <Info className="h-3 w-3 mt-0.5 shrink-0" />
-              {tr.emailNote}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    // STEP 3 — Σύνοψη + payment box + total + terms
+    // ━━━━━━━━━━━━━━━━━━━━ STEP 2 — Summary / Payment ━━━━━━━━━━━━━━━━━━━━
     const seatingKey = (reservation.seating_type || '').toLowerCase();
     const seatingLabel = seatingTypeLabels[seatingKey]?.[language] || reservation.seating_type || '';
     const seatingIcon = seatingTypeIcons[seatingKey];
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="font-semibold text-sm">{tr.summary}</h3>
 
         {/* Summary lines */}
-        <div className="space-y-2 text-sm">
+        <div className="space-y-1.5 text-xs">
           {seatingLabel && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">{tr.seatingType}</span>
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-foreground">
                 {seatingIcon}
                 {seatingLabel}
               </span>
@@ -558,31 +599,42 @@ export const AddGuestsDialog = ({
           )}
           <div className="flex justify-between">
             <span className="text-muted-foreground">{tr.extraGuests}</span>
-            <span>+{extraCount} {extraCount === 1 ? tr.person : tr.people}</span>
+            <span className="text-foreground">+{extraCount} {extraCount === 1 ? tr.person : tr.people}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{tr.newTotal}</span>
-            <span className="font-semibold">{newTotal} {tr.people}</span>
+            <span className="font-semibold text-foreground">{newTotal} {tr.people}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{tr.nameLabel}</span>
-            <span>{reservation.reservation_name}</span>
+            <span className="text-foreground">{reservation.reservation_name}</span>
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground">{tr.qrNote}</p>
+        <p className="text-[10px] text-muted-foreground">{tr.qrNote}</p>
 
         <Separator />
 
         {/* Payment-info box */}
-        <div className="rounded-lg border border-border bg-muted p-3 space-y-1.5">
-          <p className="font-medium text-foreground flex items-center gap-1.5 text-sm">
+        <div className="rounded-lg border border-border bg-muted p-2.5 space-y-1.5">
+          <p className="font-medium text-foreground flex items-center gap-1.5 text-xs">
             💡 {tr.paymentInfo}
           </p>
 
+          {/* Hybrid: tickets always shown */}
+          {isHybrid && !isPayAtVenue && ticketsExtraCents > 0 && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Ticket className="h-3 w-3" />
+                {tr.ticketsExtra} (×{extraCount})
+              </span>
+              <span className="font-semibold text-foreground">{formatPrice(ticketsExtraCents)}</span>
+            </div>
+          )}
+
           {newTierIsBottles ? (
             <>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{tr.minSpendNew}</span>
                 <span className="font-semibold text-foreground">
                   {formatBottleLabel(
@@ -592,68 +644,70 @@ export const AddGuestsDialog = ({
                   )}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground pt-1">
+              <p className="text-[11px] text-muted-foreground pt-0.5">
                 {tr.bottlesAtVenue}.{isHybrid ? ` ${tr.deductedNote}` : ''}
               </p>
             </>
           ) : isPayAtVenue ? (
             <>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{tr.minSpendNew}</span>
                 <span className="font-semibold text-foreground">{formatPrice(newCharge)}</span>
               </div>
-              <p className="text-xs text-muted-foreground pt-1">{tr.payAtVenueAll}</p>
+              <p className="text-[11px] text-muted-foreground pt-0.5">{tr.payAtVenueAll}</p>
             </>
           ) : (
             <>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{tr.minSpendNew} ({newTotal} {tr.people}):</span>
                 <span className="font-semibold text-foreground">{formatPrice(newCharge)}</span>
               </div>
               {currentCharge > 0 && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">{tr.alreadyPaid}:</span>
                   <span className="font-semibold text-foreground">−{formatPrice(currentCharge)}</span>
                 </div>
               )}
-              {subtotal > 0 ? (
-                <div className="flex justify-between text-sm border-t border-border pt-1.5">
+              {reservationDeltaCents > 0 ? (
+                <div className="flex justify-between text-xs border-t border-border pt-1.5">
                   <span className="font-medium text-foreground">{tr.extraOnline}:</span>
-                  <span className="font-bold text-primary">{formatPrice(subtotal)}</span>
+                  <span className="font-bold text-primary">{formatPrice(reservationDeltaCents)}</span>
                 </div>
               ) : (
-                <div className="flex justify-between text-sm border-t border-border pt-1.5">
-                  <span className="font-medium text-foreground">{tr.extraOnline}:</span>
-                  <span className="font-bold text-foreground">{tr.free}</span>
-                </div>
+                !isHybrid && (
+                  <div className="flex justify-between text-xs border-t border-border pt-1.5">
+                    <span className="font-medium text-foreground">{tr.extraOnline}:</span>
+                    <span className="font-bold text-foreground">{tr.free}</span>
+                  </div>
+                )
               )}
               {isHybrid && (
-                <p className="text-xs text-muted-foreground pt-1">{tr.deductedNote}</p>
+                <p className="text-[11px] text-muted-foreground pt-0.5">{tr.deductedNote}</p>
               )}
             </>
           )}
         </div>
 
-        {/* Fees & total (only when there is an online charge) */}
+        {/* Fees + total — only if there is an online charge */}
         {subtotal > 0 && (
-          <>
+          <div className="space-y-1">
             {platformFeeCents > 0 && (
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{tr.serviceFee}</span>
-                <span>{formatPrice(platformFeeCents)}</span>
+                <span className="text-foreground">{formatPrice(platformFeeCents)}</span>
               </div>
             )}
             {stripeFeesCents > 0 && (
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{tr.processingFee}</span>
-                <span>{formatPrice(stripeFeesCents)}</span>
+                <span className="text-foreground">{formatPrice(stripeFeesCents)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg pt-1">
+            <div className="flex justify-between font-bold text-base pt-1 border-t border-border">
               <span>{tr.total}</span>
               <span className="text-foreground">{formatPrice(total)}</span>
             </div>
-          </>
+          </div>
         )}
 
         {/* Terms */}
@@ -677,7 +731,7 @@ export const AddGuestsDialog = ({
 
   // ─────────── Navigation ───────────
   const renderNavigation = () => (
-    <div className="flex justify-between pt-4 gap-2">
+    <div className="flex justify-between pt-3 gap-2">
       {step > 1 ? (
         <Button variant="outline" size="sm" className="text-xs px-3 h-9" onClick={() => setStep(step - 1)}>
           <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
@@ -689,15 +743,12 @@ export const AddGuestsDialog = ({
         </Button>
       )}
 
-      {step < 3 ? (
+      {step < 2 ? (
         <Button
           size="sm"
           className="text-xs px-3 h-9"
           onClick={() => setStep(step + 1)}
-          disabled={
-            (step === 1 && !canProceedToStep2) ||
-            (step === 2 && !canProceedToStep3)
-          }
+          disabled={!canProceedToStep2}
         >
           {tr.next}
           <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -731,7 +782,7 @@ export const AddGuestsDialog = ({
   );
 
   const content = (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {renderStepIndicator()}
       {renderStepContent()}
       {!loading && renderNavigation()}
@@ -748,7 +799,7 @@ export const AddGuestsDialog = ({
               {reservation.event_title || reservation.business_name || ''}
             </DialogDescription>
           </DialogHeader>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide [&_input]:!text-[16px] [&_textarea]:!text-[16px] md:[&_input]:!text-xs md:[&_textarea]:!text-xs">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 scrollbar-hide [&_input]:!text-[16px] [&_textarea]:!text-[16px] md:[&_input]:!text-xs md:[&_textarea]:!text-xs">
             {content}
           </div>
         </DialogContent>
