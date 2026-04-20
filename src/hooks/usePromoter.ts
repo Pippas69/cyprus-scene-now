@@ -95,6 +95,8 @@ export const usePromoterApplications = (userId: string | undefined) => {
       return (data || []) as unknown as PromoterApplication[];
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
@@ -115,6 +117,8 @@ export const useIsActivePromoter = (userId: string | undefined) => {
       return (count ?? 0) > 0;
     },
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };
 
