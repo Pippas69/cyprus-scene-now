@@ -2097,7 +2097,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
                 return (
                   <TableRow key={reservation.id} className="group hover:bg-transparent">
-                      {/* 1. Στοιχεία: Name + Phone + Customer Note */}
+                      {/* 1. Στοιχεία: Name + Phone + Reservation Code + Customer Note */}
                       <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-1">
                           <div className="flex flex-col gap-0.5 min-w-0">
@@ -2109,6 +2109,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             {reservation.phone_number &&
                           <span className="text-sm text-muted-foreground -ml-1.5">
                             {reservation.phone_number.replace(/^\+357/, '')}
+                              </span>
+                          }
+                            {reservation.transaction_code &&
+                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5">
+                            {reservation.transaction_code}
                               </span>
                           }
                           </div>
