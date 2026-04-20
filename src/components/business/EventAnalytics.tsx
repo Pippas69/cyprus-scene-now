@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, TrendingUp, Calendar, Heart } from 'lucide-react';
+import { Users, TrendingUp, Calendar, Heart, Loader2 } from 'lucide-react';
+
+const EventAnalyticsChart = lazy(() => import('./EventAnalyticsChart'));
 
 interface EventAnalyticsProps {
   businessId: string;
@@ -145,16 +146,13 @@ export const EventAnalytics = ({ businessId, language }: EventAnalyticsProps) =>
           <CardTitle>{t.eventPerformance}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stats.eventBreakdown}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="interested" fill="hsl(var(--primary))" name={t.interested} />
-              <Bar dataKey="going" fill="hsl(var(--secondary))" name={t.going} />
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="h-[300px] flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+            <EventAnalyticsChart
+              data={stats.eventBreakdown}
+              interestedLabel={t.interested}
+              goingLabel={t.going}
+            />
+          </Suspense>
         </CardContent>
       </Card>
     </div>
