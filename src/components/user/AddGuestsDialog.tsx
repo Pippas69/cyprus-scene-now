@@ -222,6 +222,7 @@ export const AddGuestsDialog = ({
   const currentCharge = reservation.prepaid_min_charge_cents ?? currentTier?.prepaid_min_charge_cents ?? 0;
   const newCharge = newTier?.prepaid_min_charge_cents ?? currentCharge;
   const isPayAtVenue = !!reservation.pay_at_door;
+  const shouldChargeHybridTicketsOnline = isHybrid && hybridTicketPriceCents > 0;
 
   // ─────────── ONLINE CHARGE COMPUTATION ───────────
   // Mirror the original reservation flow exactly:
@@ -236,13 +237,11 @@ export const AddGuestsDialog = ({
     ? 0
     : Math.max(0, newCharge - currentCharge);
 
-  const ticketsExtraCents = (isHybrid && !isPayAtVenue)
+  const ticketsExtraCents = shouldChargeHybridTicketsOnline
     ? hybridTicketPriceCents * extraCount
     : 0;
 
-  const subtotal = isPayAtVenue
-    ? 0
-    : ticketsExtraCents + reservationDeltaCents;
+  const subtotal = ticketsExtraCents + (!isPayAtVenue ? reservationDeltaCents : 0);
 
   const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
   const stripeFeesCents = subtotal > 0 && buyerPaysStripe ? Math.ceil(subtotal * 0.029 + 25) : 0;
