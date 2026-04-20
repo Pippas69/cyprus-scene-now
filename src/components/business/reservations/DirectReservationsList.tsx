@@ -1745,21 +1745,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingMemo(reservation.id);
           setMemoValue((reservation as any).staff_memo || '');
         }}
       >
         {(reservation as any).staff_memo ? (
-          <span className="text-xs text-foreground max-w-[120px] truncate">{(reservation as any).staff_memo}</span>
+          <span
+            className="text-[11px] leading-snug text-foreground/80 break-words flex-1 overflow-hidden"
+            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+          >
+            {(reservation as any).staff_memo}
+          </span>
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
       </button>
     );
   };
