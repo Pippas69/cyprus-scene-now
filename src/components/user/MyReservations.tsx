@@ -1564,6 +1564,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             business_id: addGuestsReservation.events?.businesses?.id || addGuestsReservation.businesses?.id || null,
             business_name: addGuestsReservation.events?.businesses?.name || addGuestsReservation.businesses?.name || null,
             seating_type: (addGuestsReservation as any).seating_preference || null,
+            initial_ticket_total_cents: ticketOrderTotals[addGuestsReservation.id] || 0,
           }}
           language={language}
           onSuccess={() => { setAddGuestsReservation(null); fetchReservations(); }}

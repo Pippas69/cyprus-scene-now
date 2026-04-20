@@ -38,6 +38,7 @@ interface AddGuestsDialogProps {
     business_id?: string | null;
     business_name?: string | null;
     seating_type?: string | null;
+    initial_ticket_total_cents?: number | null;
   };
   language: 'el' | 'en';
   onSuccess?: () => void;
@@ -189,7 +190,7 @@ export const AddGuestsDialog = ({
   const tr = t[language];
   const isMobile = useIsMobile();
   const isEvent = !!reservation.event_id;
-  const isHybrid = reservation.event_type === 'ticket_and_reservation';
+  const isHybrid = (reservation.initial_ticket_total_cents ?? 0) > 0 || reservation.event_type === 'ticket_and_reservation';
   const { data: pricingDisplay } = useEventPricingProfile(reservation.business_id || undefined);
 
   // Wizard state — 2 STEPS: 1=Details (name+counter+guests+email+phone) 2=Summary/Payment
