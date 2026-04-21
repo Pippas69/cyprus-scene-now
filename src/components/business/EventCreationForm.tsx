@@ -744,15 +744,18 @@ const EventCreationForm = ({
               const config = formData.seatingConfigs[seatingType];
               const maxPartySize = Math.max(...config.tiers.map((tier) => tier.maxPeople), 1);
               const autoName = seatingType === 'bar' ? 'Bar' : seatingType === 'table' ? 'Table' : seatingType === 'vip' ? 'VIP' : 'Sofa';
+              // NEW SEMANTICS: Τιμή (entry) και Πίστωση Τραπεζιού είναι ανεξάρτητα ποσά.
+              // - Πελάτης πληρώνει: entry + prepaid (το αποθηκεύουμε ως price_cents = συνολικό)
+              // - Πίστωση στο τραπέζι: μόνο prepaid_amount_cents
+              const entryCents = Math.max(0, config.ticketPriceCents);
+              const prepaidCents = Math.max(0, config.ticketPrepaidCents ?? 0);
+              const totalChargeCents = entryCents + prepaidCents;
               return {
                 event_id: createdEvent.id,
                 name: autoName,
                 description: null,
-                price_cents: config.ticketPriceCents,
-                prepaid_amount_cents:
-                  config.ticketPrepaidCents == null
-                    ? null
-                    : Math.max(0, Math.min(config.ticketPriceCents, config.ticketPrepaidCents)),
+                price_cents: totalChargeCents,
+                prepaid_amount_cents: config.ticketPrepaidCents == null ? null : prepaidCents,
                 currency: 'EUR',
                 quantity_total: 999999,
                 max_per_order: maxPartySize,
@@ -1098,12 +1101,8 @@ const EventCreationForm = ({
                                       const [euros, decimals = ''] = cleaned.split('.');
                                       const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
                                       const newPrice = Math.round(parseFloat(normalized || '0') * 100);
-                                      // Clamp prepaid if it exceeds new price
-                                      const updates: Partial<SeatingConfig> = { ticketPriceCents: newPrice };
-                                      if (config.ticketPrepaidCents != null && config.ticketPrepaidCents > newPrice) {
-                                        updates.ticketPrepaidCents = newPrice;
-                                      }
-                                      updateSeatingConfig(type, updates);
+                                      // Τιμή & Πίστωση είναι ανεξάρτητα — κανένα clamp.
+                                      updateSeatingConfig(type, { ticketPriceCents: Math.max(0, newPrice) });
                                     }}
                                     className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                                   />
@@ -1113,18 +1112,14 @@ const EventCreationForm = ({
                                   <Input
                                     type="text"
                                     inputMode="decimal"
-                                    value={
-                                      config.ticketPrepaidCents == null
-                                        ? config.ticketPriceCents / 100
-                                        : config.ticketPrepaidCents / 100
-                                    }
+                                    value={(config.ticketPrepaidCents ?? 0) / 100}
                                     onChange={(e) => {
                                       const cleaned = e.target.value.replace(/[^0-9.]/g, '');
                                       const [euros, decimals = ''] = cleaned.split('.');
                                       const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
                                       const parsed = Math.round(parseFloat(normalized || '0') * 100);
-                                      const clamped = Math.max(0, Math.min(config.ticketPriceCents, parsed));
-                                      updateSeatingConfig(type, { ticketPrepaidCents: clamped });
+                                      // Τιμή & Πίστωση είναι ανεξάρτητα — κανένα clamp.
+                                      updateSeatingConfig(type, { ticketPrepaidCents: Math.max(0, parsed) });
                                     }}
                                     className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                                   />
