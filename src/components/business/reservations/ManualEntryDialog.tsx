@@ -346,8 +346,19 @@ export const ManualEntryDialog = ({
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        if (!isWalkIn && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        // Hybrid: min charge ALWAYS saved (required regardless of walk-in)
+        // Reservation: min charge saved ONLY when walk-in is OFF (covered by ticket otherwise)
+        const shouldSaveMinCharge = entryType === 'hybrid' || (entryType === 'reservation' && !isWalkIn) || (entryType === 'direct' && !isWalkIn);
+        if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
+        // Save selected ticket tier for walk-in reservation/hybrid (ticket category linkage)
+        if (isWalkIn && (entryType === 'reservation' || entryType === 'hybrid') && ticketTierId) {
+          insertData.ticket_tier_id = ticketTierId;
+        }
+        // City for ticket / reservation / hybrid (saved as guest_city if column exists, else stored in notes if not)
+        if (city.trim() && entryType !== 'direct') {
+          insertData.guest_city = city.trim();
+        }
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
