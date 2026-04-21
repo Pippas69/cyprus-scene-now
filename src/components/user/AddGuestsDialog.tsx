@@ -202,6 +202,8 @@ export const AddGuestsDialog = ({
   const [tiers, setTiers] = useState<TierInfo[]>([]);
   const [currentTier, setCurrentTier] = useState<TierInfo | null>(null);
   const [hybridTicketPriceCents, setHybridTicketPriceCents] = useState(0);
+  // null = legacy (full price acts as table credit). number = explicit prepaid portion.
+  const [hybridTicketPrepaidCents, setHybridTicketPrepaidCents] = useState<number | null>(null);
   const [resolvedEmail, setResolvedEmail] = useState(reservation.email || '');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
