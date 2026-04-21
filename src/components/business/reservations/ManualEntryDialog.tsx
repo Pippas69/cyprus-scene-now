@@ -110,6 +110,12 @@ export const ManualEntryDialog = ({
       table: 'Τραπέζι',
       walkInToggle: 'Walk-in',
       selectOption: 'Επιλέξτε...',
+      cityRequired: 'Η πόλη είναι υποχρεωτική',
+      ageRequired: 'Η ηλικία είναι υποχρεωτική',
+      minAgeRequired: 'Η ελάχιστη ηλικία είναι υποχρεωτική',
+      partySizeRequired: 'Ο αριθμός ατόμων είναι υποχρεωτικός',
+      minChargeRequired: 'Η ελάχιστη χρέωση είναι υποχρεωτική',
+      ticketTypeRequired: 'Ο τύπος εισιτηρίου είναι υποχρεωτικός',
     },
     en: {
       titleDirect: 'Add reservation',
@@ -146,6 +152,12 @@ export const ManualEntryDialog = ({
       table: 'Table',
       walkInToggle: 'Walk-in',
       selectOption: 'Select...',
+      cityRequired: 'City is required',
+      ageRequired: 'Age is required',
+      minAgeRequired: 'Minimum age is required',
+      partySizeRequired: 'Party size is required',
+      minChargeRequired: 'Minimum charge is required',
+      ticketTypeRequired: 'Ticket type is required',
     },
   };
 
@@ -237,6 +249,46 @@ export const ManualEntryDialog = ({
       return;
     }
 
+    // === New required-field validations per entryType ===
+    // Skip for legacy 'direct' flow to preserve zero-regression behavior.
+    if (entryType !== 'direct') {
+      // City required for ticket / reservation / hybrid
+      if (!city.trim()) {
+        toast.error(txt.cityRequired);
+        return;
+      }
+      // Age required (ticket = real age, reservation/hybrid = min age of party)
+      if (!minAge.trim()) {
+        toast.error(entryType === 'ticket' ? txt.ageRequired : txt.minAgeRequired);
+        return;
+      }
+    }
+
+    if (entryType === 'reservation' || entryType === 'hybrid') {
+      // Party size required
+      if (!partySize.trim()) {
+        toast.error(txt.partySizeRequired);
+        return;
+      }
+      // Min charge: hybrid = always required; reservation = required only when walk-in is OFF
+      const minChargeRequired = entryType === 'hybrid' || !isWalkIn;
+      if (minChargeRequired && !minCharge.trim()) {
+        toast.error(txt.minChargeRequired);
+        return;
+      }
+      // Ticket tier required when walk-in is ON and tiers exist
+      if (isWalkIn && ticketTiers.length > 0 && !ticketTierId) {
+        toast.error(txt.ticketTypeRequired);
+        return;
+      }
+    }
+
+    // Ticket entry: tier required when tiers are configured for the event
+    if (entryType === 'ticket' && ticketTiers.length > 0 && !ticketTierId) {
+      toast.error(txt.ticketTypeRequired);
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -294,8 +346,18 @@ export const ManualEntryDialog = ({
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        if (!isWalkIn && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
+        // Hybrid: min charge ALWAYS saved (required regardless of walk-in)
+        // Reservation: min charge saved ONLY when walk-in is OFF (covered by ticket otherwise)
+        const shouldSaveMinCharge = entryType === 'hybrid' || (entryType === 'reservation' && !isWalkIn) || (entryType === 'direct' && !isWalkIn);
+        if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
+        // Note: ticket tier selection for walk-in reservation/hybrid is validated in the form
+        // but not persisted on `reservations` (no `ticket_tier_id` column). Future enhancement
+        // can store it via a migration if needed for analytics.
+        // City for ticket / reservation / hybrid (saved as guest_city if column exists, else stored in notes if not)
+        if (city.trim() && entryType !== 'direct') {
+          insertData.guest_city = city.trim();
+        }
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
@@ -392,7 +454,7 @@ export const ManualEntryDialog = ({
           {/* === TICKET: City === */}
           {entryType === 'ticket' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'} *</Label>
               <Select value={city} onValueChange={setCity}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
@@ -435,7 +497,10 @@ export const ManualEntryDialog = ({
           {/* 5. Party size (not ticket) */}
           {entryType !== 'ticket' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.partySize}</Label>
+              <Label className={labelClass}>
+                {txt.partySize}
+                {(entryType === 'reservation' || entryType === 'hybrid') && ' *'}
+              </Label>
               <Input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
@@ -483,7 +548,7 @@ export const ManualEntryDialog = ({
           {/* === TICKET: Min age === */}
           {(entryType === 'ticket' || entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{entryType === 'ticket' ? txt.age : txt.minAge}</Label>
+              <Label className={labelClass}>{entryType === 'ticket' ? txt.age : txt.minAge} *</Label>
               <Input
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}
@@ -500,7 +565,7 @@ export const ManualEntryDialog = ({
           {/* === RESERVATION/HYBRID: City === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'} *</Label>
               <Select value={city} onValueChange={setCity}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
@@ -522,10 +587,10 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET / Walk-in hybrid: Ticket tier selector === */}
+          {/* === TICKET / Walk-in hybrid/reservation: Ticket tier selector === */}
           {((entryType === 'ticket') || (isWalkIn && (entryType === 'hybrid' || entryType === 'reservation') && ticketTiers.length > 0)) && ticketTiers.length > 0 && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.ticketType}</Label>
+              <Label className={labelClass}>{txt.ticketType} *</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={txt.selectOption} />
@@ -541,10 +606,10 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === RESERVATION/HYBRID: Min charge (hidden for walk-ins) === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && (
+          {/* === HYBRID: Min charge (always shown, always required) === */}
+          {entryType === 'hybrid' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.minCharge}</Label>
+              <Label className={labelClass}>{txt.minCharge} *</Label>
               <Input
                 value={minCharge}
                 onChange={(e) => setMinCharge(e.target.value)}
@@ -557,6 +622,25 @@ export const ManualEntryDialog = ({
               />
             </div>
           )}
+
+          {/* === RESERVATION: Min charge (hidden when walk-in is ON) === */}
+          {entryType === 'reservation' && !isWalkIn && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.minCharge} *</Label>
+              <Input
+                value={minCharge}
+                onChange={(e) => setMinCharge(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+
 
           {/* === RESERVATION/HYBRID: Seating type === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && eventSeatingTypes.length > 0 && (
