@@ -425,6 +425,12 @@ export const ManualEntryDialog = ({
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
+        if (isWalkIn && ticketTierId) {
+          const selectedWalkInTier = ticketTiers.find((tier) => tier.id === ticketTierId);
+          if (selectedWalkInTier) {
+            insertData.ticket_credit_cents = selectedWalkInTier.price_cents;
+          }
+        }
         const shouldSaveMinCharge = !isWalkIn && (entryType === 'hybrid' || entryType === 'reservation' || entryType === 'direct');
         if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;

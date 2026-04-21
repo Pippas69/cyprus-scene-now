@@ -2218,7 +2218,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             let ageText: string = '';
 
                             if (isWalkIn) {
-                              const age = (reservation as any).guest_ages || '';
+                              const age = (reservation as any).guest_ages || (typeof reservation.min_age === 'number' && reservation.min_age > 0 ? `${reservation.min_age}+` : '');
                               peopleText = `1 ${language === 'el' ? 'άτομο' : 'person'}`;
                               ageText = age ? `${age} ${language === 'el' ? 'ετών' : 'years'}` : '';
                             } else {
