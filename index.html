@@ -46,8 +46,7 @@
     <link rel="preconnect" href="https://iasahlgurfxufrtdigcr.supabase.co" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preload main JS module to start fetching ASAP (improves LCP by reducing render delay) -->
-    <link rel="modulepreload" href="/src/main.tsx">
+    <!-- Note: do NOT modulepreload /src/main.tsx — in production the entry is bundled to /assets/index-*.js and Vite injects the correct preload tags automatically. Preloading the source path causes a MIME type error and breaks the app on the live site. -->
     <!-- Hero background image: low priority, lazy via CSS-loaded image; do not preload (saves ~870KB on critical path) -->
     <!-- Fonts async (avoid render-blocking white screen before splash). Combined into a single request to reduce critical chain length. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@500;600;700&family=Urbanist:wght@900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
