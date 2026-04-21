@@ -19,6 +19,11 @@ const Index = () => {
   useEffect(() => {
     let isMounted = true;
 
+    // Safety net: if auth check hangs for any reason, show landing after 3s
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) setIsLandingReady(true);
+    }, 3000);
+
     const checkAuthAndRedirect = async () => {
       try {
         const {
@@ -54,6 +59,7 @@ const Index = () => {
 
     return () => {
       isMounted = false;
+      clearTimeout(fallbackTimer);
     };
   }, [navigate]);
 

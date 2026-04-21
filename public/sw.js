@@ -110,11 +110,33 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Serve offline page when navigation fails
+// Network-first for navigation: always try fresh, fallback to offline page
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
+  const req = event.request;
+
+  if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_PAGE))
+      fetch(req, { cache: 'no-store' }).catch(() => caches.match(OFFLINE_PAGE))
     );
+    return;
+  }
+
+  // For JS/CSS chunks: network-first to avoid serving stale assets after a new deploy
+  const url = new URL(req.url);
+  if (
+    req.method === 'GET' &&
+    url.origin === self.location.origin &&
+    /\.(js|css)$/.test(url.pathname)
+  ) {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
+  }
+});
+
+// Allow the page to trigger an immediate SW update + activation
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
