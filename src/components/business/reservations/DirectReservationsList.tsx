@@ -1709,44 +1709,74 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
-        <div className="flex items-center gap-1 min-w-[140px]">
-          <Input
+        <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
+          <Textarea
             value={ticketMemoValue}
-            onChange={(e) => setTicketMemoValue(e.target.value)}
+            onChange={(e) => setTicketMemoValue(e.target.value.slice(0, 150))}
             placeholder={t.staffMemoPlaceholder}
-            className="h-7 text-xs"
+            className="text-xs min-h-[56px] resize-none"
+            maxLength={150}
             autoFocus
+            rows={3}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveTicketMemo(ticket.ticket_id);
-              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); }
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveTicketMemo(ticket.ticket_id);
+              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); setTicketMemoHighlighted(false); }
             }}
           />
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
-            <Save className="h-3 w-3 text-primary" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); }}>
-            <X className="h-3 w-3 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={() => setTicketMemoHighlighted(v => !v)}
+              className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                ticketMemoHighlighted
+                  ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Star className={`h-2.5 w-2.5 ${ticketMemoHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
+            </button>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-muted-foreground">{ticketMemoValue.length}/150</span>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
+                <Save className="h-3 w-3 text-primary" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); setTicketMemoHighlighted(false); }}>
+                <X className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
+    const memo = ticket.staff_memo;
+    const highlighted = !!ticket.staff_memo_highlighted;
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[200px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingTicketMemo(ticket.ticket_id);
-          setTicketMemoValue(ticket.staff_memo || '');
+          setTicketMemoValue(memo || '');
+          setTicketMemoHighlighted(highlighted);
         }}
       >
-        {ticket.staff_memo ? (
-          <span className="text-xs text-foreground max-w-[120px] truncate">{ticket.staff_memo}</span>
+        {memo ? (
+          highlighted ? (
+            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          ) : (
+            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          )
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
       </button>
     );
   };
