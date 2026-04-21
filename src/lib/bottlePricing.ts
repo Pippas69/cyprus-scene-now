@@ -24,8 +24,8 @@ export const isBottleTier = (tier?: BottleTierFields | null): boolean =>
 
 const labels = {
   el: {
-    bottle: 'Μπουκάλι',
-    bottlePlural: 'Μπουκάλια',
+    bottle: 'Bottle',
+    bottlePlural: 'Bottles',
     premium: 'Premium Bottle',
     premiumPlural: 'Premium Bottles',
     minSpend: 'Ελάχιστη κατανάλωση',
