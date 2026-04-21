@@ -28,13 +28,25 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
+          // IMPORTANT: React core must be in ONE chunk and resolved BEFORE
+          // any vendor that depends on it (recharts, radix, etc.), otherwise
+          // we hit "Cannot access 'S' before initialization" in production.
+          if (
+            id.includes('/react-dom/') ||
+            id.includes('/react/') ||
+            id.includes('react-router') ||
+            id.includes('/scheduler/') ||
+            id.includes('/react-is/') ||
+            id.includes('/use-sync-external-store/')
+          ) {
+            return 'react-vendor';
+          }
           if (id.includes('mapbox-gl')) return 'mapbox-vendor';
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts-vendor';
+          if (id.includes('recharts') || id.includes('/d3-') || id.includes('victory-vendor')) return 'charts-vendor';
           if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('xlsx') || id.includes('@ffmpeg')) return 'pdf-vendor';
           if (id.includes('@supabase')) return 'supabase-vendor';
           if (id.includes('@radix-ui')) return 'ui-vendor';
           if (id.includes('@tanstack')) return 'query-vendor';
-          if (id.includes('react-router') || id.includes('/react-dom/') || id.includes('/react/') || id.includes('scheduler')) return 'react-vendor';
           return undefined;
         },
       },
