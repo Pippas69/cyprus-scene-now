@@ -4,6 +4,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { safeLocalStorage } from '@/lib/browserStorage';
 
 const COOKIE_CONSENT_KEY = 'fomo-cookie-consent';
 
@@ -27,13 +28,13 @@ export const CookieConsentBanner = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!localStorage.getItem(COOKIE_CONSENT_KEY)) setVisible(true);
+      if (!safeLocalStorage.getItem(COOKIE_CONSENT_KEY)) setVisible(true);
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+    safeLocalStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
     setVisible(false);
   };
 
