@@ -10,9 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Star } from 'lucide-react';
-
-const NOTES_MAX_LENGTH = 150;
 import { getDigitCount } from '@/lib/phoneValidation';
+import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
 const CYPRUS_CITIES = ['Λευκωσία', 'Λεμεσός', 'Λάρνακα', 'Πάφος', 'Παραλίμνι', 'Αγία Νάπα', 'Αμμόχωστος'];
 
@@ -816,14 +815,13 @@ export const ManualEntryDialog = ({
             </div>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX_LENGTH))}
+              onChange={(e) => setNotes(limitWords(e.target.value, NOTES_MAX_WORDS))}
               placeholder={txt.notes}
               rows={3}
-              maxLength={NOTES_MAX_LENGTH}
               className="resize-none text-xs sm:text-sm"
             />
             <div className="text-[10px] text-muted-foreground text-right">
-              {notes.length}/{NOTES_MAX_LENGTH}
+              {countWords(notes)}/{NOTES_MAX_WORDS} {language === 'el' ? 'λέξεις' : 'words'}
             </div>
           </div>
         </div>

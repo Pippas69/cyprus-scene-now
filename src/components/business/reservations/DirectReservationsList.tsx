@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
+import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
 
 interface DirectReservation {
@@ -1713,10 +1714,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
           <Textarea
             value={ticketMemoValue}
-            onChange={(e) => setTicketMemoValue(e.target.value.slice(0, 150))}
+            onChange={(e) => setTicketMemoValue(limitWords(e.target.value, NOTES_MAX_WORDS))}
             placeholder={t.staffMemoPlaceholder}
             className="text-xs min-h-[56px] resize-none"
-            maxLength={150}
             autoFocus
             rows={3}
             onKeyDown={(e) => {
@@ -1738,7 +1738,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
             </button>
             <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-muted-foreground">{ticketMemoValue.length}/150</span>
+              <span className="text-[10px] text-muted-foreground">{countWords(ticketMemoValue)}/{NOTES_MAX_WORDS}</span>
               <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
                 <Save className="h-3 w-3 text-primary" />
               </Button>
@@ -1754,7 +1754,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const highlighted = !!ticket.staff_memo_highlighted;
     return (
       <button
-        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[200px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-center gap-1.5 text-left group/memo w-full max-w-[200px] min-h-[44px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingTicketMemo(ticket.ticket_id);
           setTicketMemoValue(memo || '');
@@ -1762,22 +1762,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         }}
       >
         {memo ? (
-          highlighted ? (
-            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
-              {memo}
-            </span>
-          ) : (
-            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
-              {memo}
-            </span>
-          )
+          <span
+            className={`text-[11px] leading-snug break-words whitespace-normal flex-1 ${
+              highlighted ? 'text-yellow-400 font-medium' : 'text-foreground/80'
+            }`}
+          >
+            {memo}
+          </span>
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0" />
       </button>
     );
   };
@@ -1789,10 +1787,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
           <Textarea
             value={memoValue}
-            onChange={(e) => setMemoValue(e.target.value.slice(0, 150))}
+            onChange={(e) => setMemoValue(limitWords(e.target.value, NOTES_MAX_WORDS))}
             placeholder={t.staffMemoPlaceholder}
             className="text-xs min-h-[56px] resize-none"
-            maxLength={150}
             autoFocus
             rows={3}
             onKeyDown={(e) => {
@@ -1814,7 +1811,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
             </button>
             <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-muted-foreground">{memoValue.length}/150</span>
+              <span className="text-[10px] text-muted-foreground">{countWords(memoValue)}/{NOTES_MAX_WORDS}</span>
               <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
                 <Save className="h-3 w-3 text-primary" />
               </Button>
@@ -1830,7 +1827,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const highlighted = !!(reservation as any).staff_memo_highlighted;
     return (
       <button
-        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[220px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-center gap-1.5 text-left group/memo w-full max-w-[220px] min-h-[44px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingMemo(reservation.id);
           setMemoValue(memo || '');
@@ -1838,22 +1835,20 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         }}
       >
         {memo ? (
-          highlighted ? (
-            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
-              {memo}
-            </span>
-          ) : (
-            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
-              {memo}
-            </span>
-          )
+          <span
+            className={`text-[11px] leading-snug break-words whitespace-normal flex-1 ${
+              highlighted ? 'text-yellow-400 font-medium' : 'text-foreground/80'
+            }`}
+          >
+            {memo}
+          </span>
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0" />
       </button>
     );
   };
