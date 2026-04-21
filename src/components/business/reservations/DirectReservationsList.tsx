@@ -1973,7 +1973,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </div>
                         ) : (
                           <span
-                            className="cursor-pointer rounded px-1 py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-1 group/edit"
+                            className="cursor-pointer rounded py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-1 group/edit px-0"
                             onClick={() => { setEditingTicketName(ticket.ticket_id); setTicketNameValue(ticket.guest_name); }}
                           >
                             {ticket.guest_name}
