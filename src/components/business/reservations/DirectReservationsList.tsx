@@ -10,7 +10,7 @@ import {
   Calendar,
   Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
 'lucide-react';
-import { ManualEntryDialog } from './ManualEntryDialog';
+import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
