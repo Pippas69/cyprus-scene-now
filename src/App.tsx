@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
+import SEOManager from "@/components/seo/SEOManager";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import BottomNav from "@/components/BottomNav";
@@ -110,6 +111,7 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
+      <SEOManager />
       <div className={`min-h-[100dvh] ${hideBottomNav ? '' : 'mobile-bottom-nav-offset'} md:pb-0`}>
         <Suspense fallback={null}>
         <AnimatePresence mode="wait">
