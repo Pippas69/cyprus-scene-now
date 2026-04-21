@@ -1980,9 +1980,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
                           </span>
                         )}
-                        {ticket.buyer_phone && (
-                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone.replace(/^\+357/, '')}</span>
-                        )}
+                        <PhoneCodePopover phone={ticket.buyer_phone} code={ticket.ticket_code} />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -2215,23 +2213,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             field="reservation_name"
                             displayValue={reservation.reservation_name}
                             rawValue={reservation.reservation_name} />
-                            {reservation.phone_number &&
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (reservation.transaction_code) {
-                                    setTransactionCodeDialog({
-                                      code: reservation.transaction_code,
-                                      name: reservation.reservation_name,
-                                    });
-                                  }
-                                }}
-                                className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground hover:text-primary hover:underline cursor-pointer text-left transition-colors"
-                                title={language === 'el' ? 'Κλικ για κωδικό συναλλαγής' : 'Click for transaction code'}
-                              >
-                                {reservation.phone_number.replace(/^\+357/, '')}
-                              </button>
-                            }
+                            <PhoneCodePopover phone={reservation.phone_number} code={reservation.transaction_code} />
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
