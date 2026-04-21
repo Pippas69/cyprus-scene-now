@@ -370,7 +370,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, staff_memo, confirmation_code, qr_code_token, transaction_code, checked_in_at,
+          business_notes, staff_memo, staff_memo_highlighted, confirmation_code, qr_code_token, transaction_code, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
           cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
@@ -832,7 +832,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, user_id, is_manual_entry, manual_status')
+        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, staff_memo_highlighted, user_id, is_manual_entry, manual_status')
         .eq('event_id', eventId)
         .order('guest_name', { ascending: true });
 
@@ -968,6 +968,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
+          staff_memo_highlighted: !!(t as any).staff_memo_highlighted,
           source: ticketOnlyInvitationOrderIds.has(t.order_id) ? 'invitation' : 'purchase',
         };
       });
