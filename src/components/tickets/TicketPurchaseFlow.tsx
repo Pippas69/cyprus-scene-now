@@ -117,6 +117,8 @@ const translations = {
     cancel: "Ακύρωση",
     summary: "Σύνοψη",
     ticketCost: "Κόστος εισιτηρίων",
+    ticketEntryFee: "Τιμή εισόδου",
+    ticketTableCredit: "Πίστωση τραπεζιού",
     processingFee: "Έξοδα επεξεργασίας",
     serviceFee: "Χρέωση υπηρεσίας",
     accountContact: "Στοιχεία λογαριασμού",
@@ -172,6 +174,8 @@ const translations = {
     cancel: "Cancel",
     summary: "Summary",
     ticketCost: "Ticket cost",
+    ticketEntryFee: "Entry fee",
+    ticketTableCredit: "Table credit",
     processingFee: "Processing fee",
     serviceFee: "Service fee",
     accountContact: "Account details",
@@ -914,10 +918,32 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           ticketTiers.map(tier => {
             const qty = quantities[tier.id] || 0;
             if (qty === 0) return null;
+            // Hybrid split: αν το tier έχει prepaid_amount_cents, δείχνουμε breakdown
+            const tierPrepaid = tier.prepaid_amount_cents ?? null;
+            const hasSplit =
+              tierPrepaid != null &&
+              tierPrepaid > 0 &&
+              tierPrepaid < tier.price_cents;
+            const entryPerTicket = hasSplit ? tier.price_cents - (tierPrepaid as number) : 0;
+            const creditPerTicket = hasSplit ? (tierPrepaid as number) : 0;
             return (
-              <div key={tier.id} className="flex justify-between">
-                <span className="text-muted-foreground">{tier.name} × {qty}</span>
-                <span className="font-medium">{formatPrice(tier.price_cents * qty)}</span>
+              <div key={tier.id} className="space-y-0.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{tier.name} × {qty}</span>
+                  <span className="font-medium">{formatPrice(tier.price_cents * qty)}</span>
+                </div>
+                {hasSplit && (
+                  <div className="ml-3 space-y-0.5 border-l border-border/60 pl-2">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">↳ {t.ticketEntryFee} (×{qty})</span>
+                      <span className="text-foreground">{formatPrice(entryPerTicket * qty)}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">↳ {t.ticketTableCredit} (×{qty})</span>
+                      <span className="text-foreground">{formatPrice(creditPerTicket * qty)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
