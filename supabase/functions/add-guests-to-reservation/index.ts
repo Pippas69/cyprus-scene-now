@@ -321,12 +321,15 @@ serve(async (req) => {
 
     const lineItems: any[] = [];
     if (ticketsExtraCents > 0) {
+      const splitDesc = (hybridTicketPrepaidCents != null && hybridTicketPrepaidCents !== hybridTicketPriceCents)
+        ? `${extra_guests} × (€${((hybridTicketPriceCents - perTicketCreditCents) / 100).toFixed(2)} είσοδος + €${(perTicketCreditCents / 100).toFixed(2)} πίστωση τραπεζιού)`
+        : `${extra_guests} × εισιτήριο`;
       lineItems.push({
         price_data: {
           currency: "eur",
           product_data: {
             name: `${event?.title || "Event"} — Εισιτήρια νέων ατόμων`,
-            description: `${extra_guests} × εισιτήριο`,
+            description: splitDesc,
           },
           unit_amount: hybridTicketPriceCents,
         },
