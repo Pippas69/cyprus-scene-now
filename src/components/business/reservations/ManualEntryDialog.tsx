@@ -798,14 +798,33 @@ export const ManualEntryDialog = ({
 
           {/* Notes - all types */}
           <div className={fieldClass}>
-            <Label className={labelClass}>{txt.notes}</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className={labelClass}>{txt.notes}</Label>
+              <button
+                type="button"
+                onClick={() => setNotesHighlighted((v) => !v)}
+                className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                  notesHighlighted
+                    ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                }`}
+                aria-pressed={notesHighlighted}
+              >
+                <Star className={`h-3 w-3 ${notesHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                <span>{notesHighlighted ? txt.highlightedOn : txt.highlightNote}</span>
+              </button>
+            </div>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX_LENGTH))}
               placeholder={txt.notes}
-              rows={2}
+              rows={3}
+              maxLength={NOTES_MAX_LENGTH}
               className="resize-none text-xs sm:text-sm"
             />
+            <div className="text-[10px] text-muted-foreground text-right">
+              {notes.length}/{NOTES_MAX_LENGTH}
+            </div>
           </div>
         </div>
 
