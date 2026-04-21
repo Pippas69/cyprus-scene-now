@@ -976,7 +976,28 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         const entryTotal = entryPerTicket * partySize;
         const hasCredit = creditTotal > 0;
         const hasEntry = entryTotal > 0;
-        // Case Α (only entry, no credit): hide the block entirely — there is nothing to credit
+        // Case Α (only entry, no credit): show entry-only breakdown
+        if (!hasCredit && hasEntry) {
+          return (
+            <>
+              <Separator />
+              <div className="border border-border/40 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-foreground">
+                    💡 {t.howPaymentWorks}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.entryFeeLine} ({partySize} × {formatPrice(entryPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(entryTotal)}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground mt-1">{t.onlyEntryNote}</p>
+              </div>
+            </>
+          );
+        }
         if (!hasCredit) return null;
 
         // Case Γ (split: both entry + credit): new transparent breakdown
