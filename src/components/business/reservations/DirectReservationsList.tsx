@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
@@ -115,8 +114,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
-  // Transaction code dialog (opens when user clicks on phone number)
-  const [transactionCodeDialog, setTransactionCodeDialog] = useState<{ code: string; name: string } | null>(null);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
@@ -248,6 +245,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const t = text[language];
+
+  const PhoneCodePopover = ({ phone, code }: { phone: string | null; code?: string | null }) => {
+    if (!phone) return null;
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="inline-block cursor-pointer border-0 bg-transparent p-0 text-left text-sm font-normal leading-tight text-foreground hover:text-foreground focus:text-foreground active:text-foreground focus:outline-none"
+          >
+            {phone.replace(/^\+357/, '')}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" side="top" sideOffset={6} className="w-auto min-w-0 px-2 py-1">
+          <span className="font-mono text-sm font-semibold tracking-wide text-foreground">{code || '—'}</span>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   const isGreek = (str: string) => /[\u0370-\u03FF\u1F00-\u1FFF]/.test(str);
 
