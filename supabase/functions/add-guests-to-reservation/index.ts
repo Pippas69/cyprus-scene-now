@@ -164,6 +164,7 @@ serve(async (req) => {
 
     log("Computed", {
       currentCharge, newCharge, reservationDeltaCents, hybridTicketPriceCents,
+      hybridTicketPrepaidCents, perTicketCreditCents, ticketsExtraCreditCents,
       ticketsExtraCents, extraChargeCents, newPartySize, maxPeople,
       isBottlesTier, isPayAtVenue, isHybrid,
     });
