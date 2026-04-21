@@ -99,6 +99,9 @@ const t = {
     alreadyPaid: 'Ήδη προπληρωμένο',
     extraOnline: 'Επιπλέον προπληρωμή (online)',
     ticketsExtra: 'Εισιτήρια νέων ατόμων',
+    ticketEntryFee: 'Τιμή εισόδου',
+    ticketTableCredit: 'Πίστωση τραπεζιού',
+    ticketSplitNote: 'Η πίστωση τραπεζιού προστίθεται αυτόματα στο τραπέζι σας.',
     amountToPayNow: 'Πληρωμή τώρα',
     remainingVenue: 'Υπόλοιπο στο venue',
     bottlesAtVenue: 'Μπουκάλι στο κατάστημα',
@@ -153,6 +156,9 @@ const t = {
     alreadyPaid: 'Already prepaid',
     extraOnline: 'Extra prepayment (online)',
     ticketsExtra: 'New guests tickets',
+    ticketEntryFee: 'Entry fee',
+    ticketTableCredit: 'Table credit',
+    ticketSplitNote: 'The table credit is automatically added to your table.',
     amountToPayNow: 'Pay now',
     remainingVenue: 'Remaining at venue',
     bottlesAtVenue: 'Bottle paid at venue',
@@ -202,6 +208,8 @@ export const AddGuestsDialog = ({
   const [tiers, setTiers] = useState<TierInfo[]>([]);
   const [currentTier, setCurrentTier] = useState<TierInfo | null>(null);
   const [hybridTicketPriceCents, setHybridTicketPriceCents] = useState(0);
+  // null = legacy (full price acts as table credit). number = explicit prepaid portion.
+  const [hybridTicketPrepaidCents, setHybridTicketPrepaidCents] = useState<number | null>(null);
   const [resolvedEmail, setResolvedEmail] = useState(reservation.email || '');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -240,6 +248,16 @@ export const AddGuestsDialog = ({
   const ticketsExtraCents = shouldChargeHybridTicketsOnline
     ? hybridTicketPriceCents * extraCount
     : 0;
+
+  // Per-ticket split: how much of each ticket goes toward the table credit (rest is entry fee)
+  const perTicketCreditCents =
+    hybridTicketPrepaidCents == null
+      ? hybridTicketPriceCents
+      : Math.max(0, Math.min(hybridTicketPriceCents, hybridTicketPrepaidCents));
+  const perTicketEntryFeeCents = Math.max(0, hybridTicketPriceCents - perTicketCreditCents);
+  const ticketsEntryFeeTotalCents = perTicketEntryFeeCents * extraCount;
+  const ticketsCreditTotalCents = perTicketCreditCents * extraCount;
+  const hasTicketSplit = isHybrid && hybridTicketPriceCents > 0 && perTicketEntryFeeCents > 0;
 
   const subtotal = ticketsExtraCents + (!isPayAtVenue ? reservationDeltaCents : 0);
 
@@ -301,9 +319,10 @@ export const AddGuestsDialog = ({
         setCurrentTier(null);
       }
 
-      // For HYBRID events: fetch the exact ticket tier price used in the original order
+      // For HYBRID events: fetch the exact ticket tier price + prepaid split used in the original order
       if (isHybrid && reservation.event_id) {
         let resolvedHybridTicketPriceCents = 0;
+        let resolvedHybridTicketPrepaidCents: number | null = null;
 
         const { data: order } = await supabase
           .from('ticket_orders')
@@ -325,11 +344,12 @@ export const AddGuestsDialog = ({
           if (ticketRow?.tier_id) {
             const { data: tier } = await supabase
               .from('ticket_tiers')
-              .select('price_cents')
+              .select('price_cents, prepaid_amount_cents')
               .eq('id', ticketRow.tier_id)
               .maybeSingle();
 
             resolvedHybridTicketPriceCents = tier?.price_cents || 0;
+            resolvedHybridTicketPrepaidCents = (tier as any)?.prepaid_amount_cents ?? null;
           }
         }
 
@@ -337,7 +357,7 @@ export const AddGuestsDialog = ({
         if (resolvedHybridTicketPriceCents === 0) {
           const { data: tiersList } = await supabase
             .from('ticket_tiers')
-            .select('price_cents')
+            .select('price_cents, prepaid_amount_cents')
             .eq('event_id', reservation.event_id)
             .eq('active', true)
             .gt('price_cents', 0)
@@ -345,11 +365,14 @@ export const AddGuestsDialog = ({
             .limit(1);
 
           resolvedHybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
+          resolvedHybridTicketPrepaidCents = (tiersList?.[0] as any)?.prepaid_amount_cents ?? null;
         }
 
         setHybridTicketPriceCents(resolvedHybridTicketPriceCents);
+        setHybridTicketPrepaidCents(resolvedHybridTicketPrepaidCents);
       } else {
         setHybridTicketPriceCents(0);
+        setHybridTicketPrepaidCents(null);
       }
 
       setLoading(false);
@@ -677,15 +700,30 @@ export const AddGuestsDialog = ({
             💡 {tr.paymentInfo}
           </p>
 
-          {/* Hybrid: tickets always shown */}
+          {/* Hybrid: tickets always shown — with split breakdown when configured */}
           {isHybrid && !isPayAtVenue && ticketsExtraCents > 0 && (
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Ticket className="h-3 w-3" />
-                {tr.ticketsExtra} (×{extraCount})
-              </span>
-              <span className="font-semibold text-foreground">{formatPrice(ticketsExtraCents)}</span>
-            </div>
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Ticket className="h-3 w-3" />
+                  {tr.ticketsExtra} (×{extraCount})
+                </span>
+                <span className="font-semibold text-foreground">{formatPrice(ticketsExtraCents)}</span>
+              </div>
+              {hasTicketSplit && (
+                <div className="ml-4 space-y-0.5 border-l border-border/60 pl-2">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">↳ {tr.ticketEntryFee} (×{extraCount})</span>
+                    <span className="text-foreground">{formatPrice(ticketsEntryFeeTotalCents)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">↳ {tr.ticketTableCredit} (×{extraCount})</span>
+                    <span className="text-foreground">{formatPrice(ticketsCreditTotalCents)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-0.5">{tr.ticketSplitNote}</p>
+                </div>
+              )}
+            </>
           )}
 
           {newTierIsBottles ? (

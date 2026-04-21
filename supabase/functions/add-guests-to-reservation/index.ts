@@ -105,7 +105,10 @@ serve(async (req) => {
 
     // Hybrid: tickets ALWAYS charged for new guests (ticketPrice × extra).
     // pay_at_door only affects reservation/min-spend amounts, not extra ticket purchases.
+    // We also resolve prepaid_amount_cents → portion that becomes table credit.
     let hybridTicketPriceCents = 0;
+    let hybridTicketPrepaidCents: number | null = null; // null = full price acts as credit (legacy)
+    let hybridTierId: string | null = null;
     if (isHybrid) {
       // Find tier_id from existing tickets linked to this reservation
       const { data: existingOrder } = await supabase
@@ -115,7 +118,6 @@ serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      let tierId: string | null = null;
       if (existingOrder?.id) {
         const { data: ticketRow } = await supabase
           .from("tickets")
@@ -124,35 +126,45 @@ serve(async (req) => {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        tierId = ticketRow?.tier_id ?? null;
+        hybridTierId = ticketRow?.tier_id ?? null;
       }
-      if (tierId) {
+      if (hybridTierId) {
         const { data: tierRow } = await supabase
           .from("ticket_tiers")
-          .select("price_cents")
-          .eq("id", tierId)
+          .select("price_cents, prepaid_amount_cents")
+          .eq("id", hybridTierId)
           .maybeSingle();
         hybridTicketPriceCents = tierRow?.price_cents || 0;
+        hybridTicketPrepaidCents = (tierRow as any)?.prepaid_amount_cents ?? null;
       } else {
         // Fallback: cheapest active tier
         const { data: tiersList } = await supabase
           .from("ticket_tiers")
-          .select("price_cents")
+          .select("id, price_cents, prepaid_amount_cents")
           .eq("event_id", res.event_id)
           .eq("active", true)
           .gt("price_cents", 0)
           .order("price_cents", { ascending: true })
           .limit(1);
         hybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
+        hybridTicketPrepaidCents = (tiersList?.[0] as any)?.prepaid_amount_cents ?? null;
+        hybridTierId = tiersList?.[0]?.id ?? null;
       }
     }
     const ticketsExtraCents = hybridTicketPriceCents * extra_guests;
+    // Per-ticket credit toward table minimum (NULL → full price for backward compat)
+    const perTicketCreditCents =
+      hybridTicketPrepaidCents == null
+        ? hybridTicketPriceCents
+        : Math.max(0, Math.min(hybridTicketPriceCents, hybridTicketPrepaidCents));
+    const ticketsExtraCreditCents = perTicketCreditCents * extra_guests;
 
     // Total online charge
     const extraChargeCents = ticketsExtraCents + (!isPayAtVenue ? reservationDeltaCents : 0);
 
     log("Computed", {
       currentCharge, newCharge, reservationDeltaCents, hybridTicketPriceCents,
+      hybridTicketPrepaidCents, perTicketCreditCents, ticketsExtraCreditCents,
       ticketsExtraCents, extraChargeCents, newPartySize, maxPeople,
       isBottlesTier, isPayAtVenue, isHybrid,
     });
@@ -258,7 +270,10 @@ serve(async (req) => {
       extra_charge_cents: String(extraChargeCents),
       reservation_delta_cents: String(reservationDeltaCents),
       tickets_extra_cents: String(ticketsExtraCents),
+      tickets_extra_credit_cents: String(ticketsExtraCreditCents),
       hybrid_ticket_price_cents: String(hybridTicketPriceCents),
+      hybrid_ticket_prepaid_cents: String(hybridTicketPrepaidCents ?? ""),
+      per_ticket_credit_cents: String(perTicketCreditCents),
       user_id: user.id,
       business_id: business?.id || "",
       customer_email: customerEmail,
@@ -306,12 +321,15 @@ serve(async (req) => {
 
     const lineItems: any[] = [];
     if (ticketsExtraCents > 0) {
+      const splitDesc = (hybridTicketPrepaidCents != null && hybridTicketPrepaidCents !== hybridTicketPriceCents)
+        ? `${extra_guests} × (€${((hybridTicketPriceCents - perTicketCreditCents) / 100).toFixed(2)} είσοδος + €${(perTicketCreditCents / 100).toFixed(2)} πίστωση τραπεζιού)`
+        : `${extra_guests} × εισιτήριο`;
       lineItems.push({
         price_data: {
           currency: "eur",
           product_data: {
             name: `${event?.title || "Event"} — Εισιτήρια νέων ατόμων`,
-            description: `${extra_guests} × εισιτήριο`,
+            description: splitDesc,
           },
           unit_amount: hybridTicketPriceCents,
         },

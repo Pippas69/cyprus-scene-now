@@ -41,6 +41,7 @@ serve(async (req) => {
     let reservationId: string | null = null;
     let extraGuests = 0;
     let extraChargeCents = 0;
+    let ticketsExtraCreditCents = 0;
     let newPartySize: number | null = null;
     let newCharge: number | null = null;
     let session: Stripe.Checkout.Session | null = null;
@@ -56,6 +57,7 @@ serve(async (req) => {
       reservationId = md.reservation_id || null;
       extraGuests = parseInt(md.extra_guests || "0", 10);
       extraChargeCents = parseInt(md.extra_charge_cents || "0", 10);
+      ticketsExtraCreditCents = parseInt(md.tickets_extra_credit_cents || "0", 10);
       newPartySize = parseInt(md.new_party_size || "0", 10) || null;
       newCharge = parseInt(md.new_prepaid_charge_cents || "0", 10) || null;
     } else {
@@ -63,6 +65,7 @@ serve(async (req) => {
       reservationId = body.reservation_id;
       extraGuests = body.extra_guests || 0;
       extraChargeCents = body.extra_charge_cents || 0;
+      ticketsExtraCreditCents = body.tickets_extra_credit_cents || 0;
     }
 
     if (!reservationId) throw new Error("Missing reservation_id");
@@ -77,7 +80,7 @@ serve(async (req) => {
       .from("reservations")
       .select(`
         id, user_id, event_id, business_id, party_size, seating_type_id,
-        prepaid_min_charge_cents, reservation_name, phone_number, special_requests,
+        prepaid_min_charge_cents, ticket_credit_cents, reservation_name, phone_number, special_requests,
         confirmation_code, email,
         events ( id, title, start_at, location, venue_name, businesses ( id, name, user_id ) )
       `)
@@ -105,15 +108,28 @@ serve(async (req) => {
 
       const targetCount = (newPartySize || (reservation.party_size + extraGuests));
 
-      // Update reservation party_size + charge
+      // Compute new ticket_credit_cents (only the prepaid portion of new tickets adds to credit).
+      // Backward-compat: if metadata didn't carry it, fall back to extraChargeCents (legacy behavior).
+      const creditDelta = ticketsExtraCreditCents > 0
+        ? ticketsExtraCreditCents
+        : (extraChargeCents > 0 ? extraChargeCents : 0);
+      const newTicketCreditCents = (reservation.ticket_credit_cents || 0) + creditDelta;
+
+      // Update reservation party_size + min charge + ticket_credit_cents
       const { error: updErr } = await supabase
         .from("reservations")
         .update({
           party_size: targetCount,
           prepaid_min_charge_cents: newCharge ?? reservation.prepaid_min_charge_cents,
+          ticket_credit_cents: newTicketCreditCents,
         })
         .eq("id", reservationId);
       if (updErr) throw updErr;
+
+      log("Updated reservation totals", {
+        targetCount, newCharge, creditDelta, newTicketCreditCents,
+        prevCredit: reservation.ticket_credit_cents,
+      });
 
       // Add new guest tickets from session metadata in a NEW dedicated order,
       // so totals sum properly across all add-guests batches.
@@ -208,6 +224,10 @@ serve(async (req) => {
           .join("");
 
         const paidLabel = extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : "Χωρίς επιπλέον online χρέωση";
+        // Optional split: only show when meaningful (paid online + has table credit portion)
+        const creditLabel = (extraChargeCents > 0 && ticketsExtraCreditCents > 0 && ticketsExtraCreditCents < extraChargeCents)
+          ? `€${(ticketsExtraCreditCents / 100).toFixed(2)} (από τα €${(extraChargeCents / 100).toFixed(2)})`
+          : null;
 
         const userContent = `
           ${successBadge("Άτομα Προστέθηκαν")}
@@ -224,7 +244,8 @@ serve(async (req) => {
             detailRow("Ώρα", formattedTime) +
             detailRow("Όνομα", full.reservation_name) +
             detailRow("Σύνολο ατόμων", `${full.party_size}`) +
-            detailRow("Επιπλέον χρέωση", paidLabel, true)
+            detailRow("Επιπλέον χρέωση", paidLabel, true) +
+            (creditLabel ? detailRow("Πίστωση τραπεζιού", creditLabel) : "")
           )}
 
           ${allGuestQrSections}
