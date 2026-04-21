@@ -5,22 +5,22 @@ import { installSafeBrowserStorage, safeSessionStorage } from "@/lib/browserStor
 
 // Initialize Sentry error monitoring (production only)
 if (!window.location.hostname.includes("localhost")) {
-  Sentry.init({
-    dsn: "https://37587bc14a1cd62502d394583ecca155@o4511171955982336.ingest.de.sentry.io/4511172429152336",
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
-    // Performance monitoring: capture 20% of transactions
-    tracesSampleRate: 0.2,
-    // Session replay: capture 5% normally, 100% on error
-    replaysSessionSampleRate: 0.05,
-    replaysOnErrorSampleRate: 1.0,
-    // Don't send PII by default
-    sendDefaultPii: false,
-    // Environment tag
-    environment: window.location.hostname.includes("preview--") ? "preview" : "production",
-  });
+  try {
+    Sentry.init({
+      dsn: "https://37587bc14a1cd62502d394583ecca155@o4511171955982336.ingest.de.sentry.io/4511172429152336",
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration(),
+      ],
+      tracesSampleRate: 0.2,
+      replaysSessionSampleRate: 0.05,
+      replaysOnErrorSampleRate: 1.0,
+      sendDefaultPii: false,
+      environment: window.location.hostname.includes("preview--") ? "preview" : "production",
+    });
+  } catch (error) {
+    console.warn("[bootstrap] Sentry init skipped:", error);
+  }
 }
 
 const PREVIEW_HOST_PATTERNS = ["lovableproject.com", "preview--"];
@@ -165,6 +165,7 @@ setupChunkRecovery();
 
 const bootstrap = async () => {
   installSafeBrowserStorage();
+  (window as Window & { __fomoBootstrapStarted?: boolean }).__fomoBootstrapStarted = true;
 
   try {
     const { default: App } = await import("./App.tsx");
@@ -174,6 +175,10 @@ const bootstrap = async () => {
         <App />
       </Sentry.ErrorBoundary>
     );
+
+    window.requestAnimationFrame(() => {
+      (window as Window & { __fomoAppBootstrapped?: boolean }).__fomoAppBootstrapped = true;
+    });
   } catch (error) {
     console.error("[bootstrap] Failed to start app:", error);
     removeInlineSplash();
