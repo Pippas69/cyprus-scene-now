@@ -268,6 +268,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     [compareNames]
   );
 
+  // Instant optimistic insert after manual entry save — UI updates without waiting on refetch.
+  const handleManualEntrySuccess = useCallback((optimistic?: OptimisticEntry) => {
+    if (optimistic) {
+      if (optimistic.kind === 'ticket') {
+        setTicketOnlyOrders((prev) => {
+          if (prev.some((t) => t.ticket_id === optimistic.row.ticket_id)) return prev;
+          return sortTicketOrdersByName([optimistic.row as TicketOnlyOrder, ...prev]);
+        });
+      } else if (optimistic.kind === 'reservation') {
+        setReservations((prev) => {
+          if (prev.some((r) => r.id === optimistic.row.id)) return prev;
+          return sortReservationsByName([optimistic.row as DirectReservation, ...prev]);
+        });
+      }
+    }
+    // Background reconciliation
+    fetchReservations(true);
+    queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId, sortReservationsByName, sortTicketOrdersByName]);
+
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
     // Check if business has floor plan enabled AND has zones
