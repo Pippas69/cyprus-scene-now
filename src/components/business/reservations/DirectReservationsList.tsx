@@ -35,6 +35,7 @@ interface DirectReservation {
   seating_preference: string | null;
   special_requests: string | null;
   staff_memo: string | null;
+  staff_memo_highlighted?: boolean;
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
@@ -103,6 +104,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   ticket_code: string | null;
   staff_memo: string | null;
+  staff_memo_highlighted?: boolean;
   source: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
