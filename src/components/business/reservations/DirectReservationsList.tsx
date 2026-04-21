@@ -1754,7 +1754,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const highlighted = !!ticket.staff_memo_highlighted;
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo w-full max-w-[200px] min-h-[44px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-center gap-1.5 text-left group/memo w-full min-w-[260px] max-w-[320px] min-h-[44px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingTicketMemo(ticket.ticket_id);
           setTicketMemoValue(memo || '');
@@ -1763,7 +1763,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       >
         {memo ? (
           <span
-            className={`text-[11px] leading-snug break-words whitespace-normal flex-1 ${
+            className={`text-[11px] leading-snug break-words whitespace-normal flex-1 line-clamp-3 ${
               highlighted ? 'text-yellow-400 font-medium' : 'text-foreground/80'
             }`}
           >
