@@ -2199,15 +2199,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             displayValue={reservation.reservation_name}
                             rawValue={reservation.reservation_name} />
                             {reservation.phone_number &&
-                              <span className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (reservation.transaction_code) {
+                                    setTransactionCodeDialog({
+                                      code: reservation.transaction_code,
+                                      name: reservation.reservation_name,
+                                    });
+                                  }
+                                }}
+                                className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground hover:text-primary hover:underline cursor-pointer text-left transition-colors"
+                                title={language === 'el' ? 'Κλικ για κωδικό συναλλαγής' : 'Click for transaction code'}
+                              >
                                 {reservation.phone_number.replace(/^\+357/, '')}
-                              </span>
+                              </button>
                             }
-                            {reservation.transaction_code &&
-                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5 mx-0 my-0 px-[2px] py-0">
-                            {reservation.transaction_code}
-                              </span>
-                          }
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
