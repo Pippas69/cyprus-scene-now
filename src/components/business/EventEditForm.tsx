@@ -510,8 +510,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
               .eq('seating_type_id', st.id)
               .order('min_people');
 
-            // Match reservation-linked ticket tier by sort_order index
-            const linkedTier = reservationLinkedTiers[i];
+            // Match reservation-linked ticket tier by seating-type name (Bar/Table/Sofa/VIP)
+            // Index-based matching was unreliable when seating_types and tiers had different orderings.
+            const expectedTierName = type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa';
+            const linkedTier = reservationLinkedTiers.find((rt: any) => rt?.name === expectedTierName) || reservationLinkedTiers[i];
 
             seatingConfigs[type] = {
               type,
