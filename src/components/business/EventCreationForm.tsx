@@ -117,6 +117,9 @@ interface SeatingConfig {
   availableSlots: number;
   ticketCategoryName: string;
   ticketPriceCents: number;
+  // Hybrid only: how much of ticketPriceCents counts as deposit toward minimum charge.
+  // null/undefined = full ticket price counts (backward compatible behavior).
+  ticketPrepaidCents?: number | null;
   tiers: PersonTier[];
 }
 interface FormData {
@@ -352,6 +355,7 @@ const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   availableSlots: 10,
   ticketCategoryName: type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa',
   ticketPriceCents: 0,
+  ticketPrepaidCents: null,
   tiers: [{
     minPeople: 2,
     maxPeople: 6,
