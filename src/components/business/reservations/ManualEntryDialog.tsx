@@ -351,10 +351,9 @@ export const ManualEntryDialog = ({
         const shouldSaveMinCharge = entryType === 'hybrid' || (entryType === 'reservation' && !isWalkIn) || (entryType === 'direct' && !isWalkIn);
         if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
-        // Save selected ticket tier for walk-in reservation/hybrid (ticket category linkage)
-        if (isWalkIn && (entryType === 'reservation' || entryType === 'hybrid') && ticketTierId) {
-          insertData.ticket_tier_id = ticketTierId;
-        }
+        // Note: ticket tier selection for walk-in reservation/hybrid is validated in the form
+        // but not persisted on `reservations` (no `ticket_tier_id` column). Future enhancement
+        // can store it via a migration if needed for analytics.
         // City for ticket / reservation / hybrid (saved as guest_city if column exists, else stored in notes if not)
         if (city.trim() && entryType !== 'direct') {
           insertData.guest_city = city.trim();
