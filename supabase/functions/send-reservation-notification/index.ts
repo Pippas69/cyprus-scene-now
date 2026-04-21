@@ -273,14 +273,14 @@ const handler = async (req: Request): Promise<Response> => {
     } else if (isPayAtDoor) {
       if (tierIsBottles) {
         flavorLabel = '';
-        flavorBusinessLabel = ' - Πληρωμή στο Μαγαζί (Μπουκάλι)';
+        flavorBusinessLabel = ' - Πληρωμή στο Μαγαζί (Bottle)';
       } else {
         flavorLabel = ' - Πληρωμή στο Μαγαζί';
         flavorBusinessLabel = ' - Πληρωμή στο Μαγαζί';
       }
     } else if (tierIsBottles) {
       flavorLabel = '';
-      flavorBusinessLabel = ' - Απαιτούμενα Μπουκάλια';
+      flavorBusinessLabel = ' - Απαιτούμενα Bottles';
     }
 
     if (type === 'new') {

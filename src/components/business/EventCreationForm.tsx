@@ -1214,7 +1214,7 @@ const EventCreationForm = ({
                                     aria-label={language === 'el' ? 'Τύπος τιμής' : 'Pricing type'}
                                   >
                                     <option value="amount">€</option>
-                                    <option value="bottles">{language === 'el' ? 'Μπουκάλι' : 'Bottle'}</option>
+                                    <option value="bottles">Bottle</option>
                                   </select>
 
                                   {tierMode === 'amount' ? (
@@ -1239,7 +1239,7 @@ const EventCreationForm = ({
                                         onChange={(e) => updateTier(type, index, { bottleType: e.target.value as BottleType })}
                                         className="h-6 sm:h-10 text-[10px] sm:text-sm bg-background border border-input rounded px-1 sm:px-2"
                                       >
-                                        <option value="bottle">{language === 'el' ? 'Μπουκάλι' : 'Bottle'}</option>
+                                        <option value="bottle">Bottle</option>
                                         <option value="premium_bottle">{language === 'el' ? 'Premium' : 'Premium'}</option>
                                       </select>
                                     </div>

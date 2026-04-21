@@ -35,10 +35,10 @@ export const formatBottleLabel = (
       : (isPremium ? "Premium Bottles" : "Bottles");
     return `${count} ${word}`;
   }
-  // Greek
+  // Greek locale uses English bottle terminology by design
   const word = count === 1
-    ? (isPremium ? "Premium Μπουκάλι" : "Μπουκάλι")
-    : (isPremium ? "Premium Μπουκάλια" : "Μπουκάλια");
+    ? (isPremium ? "Premium Bottle" : "Bottle")
+    : (isPremium ? "Premium Bottles" : "Bottles");
   return `${count} ${word}`;
 };
 

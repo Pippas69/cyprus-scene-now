@@ -446,8 +446,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     const isPremium = type === 'premium_bottle';
     if (language === 'el') {
       const word = count === 1
-        ? (isPremium ? 'Premium Μπουκάλι' : 'Μπουκάλι')
-        : (isPremium ? 'Premium Μπουκάλια' : 'Μπουκάλια');
+        ? (isPremium ? 'Premium Bottle' : 'Bottle')
+        : (isPremium ? 'Premium Bottles' : 'Bottles');
       return `${count} ${word}`;
     }
     const word = count === 1
