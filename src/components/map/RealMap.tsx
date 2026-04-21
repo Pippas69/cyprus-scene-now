@@ -556,7 +556,7 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-xl ring-1 ring-aegean/20 transition-all duration-300 ${
-    isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[50vh]'}`
+    isExpanded ? 'h-[85vh] md:h-[90vh]' : 'h-full min-h-[60vh] md:min-h-[70vh]'}`
     }>
       {/* Search bar - top left */}
       <div className="absolute top-2 left-2 z-10">
