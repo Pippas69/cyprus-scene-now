@@ -321,7 +321,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .not('event_id', 'is', null)
         .neq('status', 'cancelled')
-        .gte('events.end_at', nowIso),
+        .gte('events.start_at', cutoffIso),
       supabase
         .from('reservations')
         .select(`
@@ -333,7 +333,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         `)
         .eq('user_id', userId)
         .not('event_id', 'is', null)
-        .lt('events.end_at', nowIso)
+        .lt('events.start_at', cutoffIso)
         .limit(100),
       supabase
         .from('reservations')
@@ -342,14 +342,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .is('event_id', null)
         .not('business_id', 'is', null)
         .neq('status', 'cancelled')
-        .gte('preferred_time', nowIso),
+        .gte('preferred_time', cutoffIso),
       supabase
         .from('reservations')
         .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
-        .lt('preferred_time', nowIso)
+        .lt('preferred_time', cutoffIso)
         .limit(100),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
