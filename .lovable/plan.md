@@ -1,84 +1,77 @@
 
 
-## Διάγνωση: Γιατί κολλάει στο splash στο fomo.com.cy
+## Διάγνωση: Γιατί κολλάει στο splash σε iPhone Safari (με αδιάσειστα τεκμήρια)
 
-### Απόδειξη (από browser console του live site)
+### Τι έκανα
 
-Άνοιξα το `https://fomo.com.cy` σε καθαρό browser session. Το app crash-άρει αμέσως μετά τη φόρτωση των chunks με:
+1. Έκανα `curl` στο live `https://fomo.com.cy/` και διάβασα το πραγματικό HTML που σερβίρεται **αυτή τη στιγμή**.
+2. Κατέβασα το πραγματικό vendor chunk που φορτώνει το browser σου.
+3. Διασταύρωσα με τα Sentry/Auth logs και τη ροή bootstrap στον κώδικα.
 
+### Αδιάσειστα τεκμήρια
+
+**Τεκμήριο 1 — Τα παλιά broken chunks ΕΙΝΑΙ ΑΚΟΜΑ LIVE:**
+
+Το HTML που σερβίρει το `fomo.com.cy` αυτή τη στιγμή περιέχει:
 ```
-Uncaught ReferenceError: Cannot access 'P' before initialization
-  at https://fomo.com.cy/assets/charts-vendor-DGFcTSGr.js:1:22655
+<script type="module" crossorigin src="/assets/index-CyKly9DB.js"></script>
+<link rel="modulepreload" crossorigin href="/assets/pdf-vendor-CjICdACB.js">
+<link rel="modulepreload" crossorigin href="/assets/charts-vendor-DGFcTSGr.js">
+<link rel="modulepreload" crossorigin href="/assets/react-vendor-CE8Yv075.js">
 ```
 
-Αυτό **δεν είναι** πρόβλημα service worker, ούτε chunk download error, ούτε CSP. Είναι **bundling bug**:
-- Το `charts-vendor` chunk προσπαθεί να χρησιμοποιήσει τη μεταβλητή `P` (πιθανότατα `prop-types` ή ένα recharts internal) **πριν αρχικοποιηθεί**.
-- Όταν crash-άρει το vendor chunk, το `App.tsx` ποτέ δεν εκτελείται, άρα ο `useEffect` που αφαιρεί το `#inline-splash` ποτέ δεν τρέχει.
-- Αποτέλεσμα: μένει για πάντα στο splash screen (το failsafe των 4500ms του App.tsx επίσης δεν τρέχει — βρίσκεται μέσα στο App component που ποτέ δεν mount-άρει).
+Το `charts-vendor-DGFcTSGr.js` και το `pdf-vendor-CjICdACB.js` είναι ακριβώς τα chunks που υποτίθεται ότι **διαγράφηκαν** από το `vite.config.ts` στο προηγούμενο approve.
 
-### Γιατί συμβαίνει τώρα
+**Τεκμήριο 2 — Το TDZ bug είναι μέσα στο live chunk:**
 
-Το `vite.config.ts` χωρίζει τα node_modules σε manual chunks:
-- `react-vendor` → react, react-dom, react-router, scheduler, react-is, use-sync-external-store
-- `charts-vendor` → recharts + d3 + victory-vendor
+Κατέβασα το `charts-vendor-DGFcTSGr.js`. Η πρώτη γραμμή είναι:
+```
+import{r as R,a as Dm,R as P}from"./react-vendor-CE8Yv075.js";
+```
 
-Όμως το recharts εξαρτάται από επιπλέον packages που **δεν** ταξινομούνται ρητά (`prop-types`, `react-smooth`, `react-transition-group`, διάφορα lodash internals). Το Rollup τα τοποθετεί σε ένα κοινό auto-chunk με **κυκλική εξάρτηση** μεταξύ `charts-vendor` και αυτού του chunk → ESM `let/const` TDZ violation → "Cannot access 'P' before initialization".
+Αυτό το `P` (που είναι το React) εισάγεται και χρησιμοποιείται στην top-level εκτέλεση του chunk **πριν** ολοκληρωθεί η αρχικοποίηση του `react-vendor` σε circular eval. Είναι το ίδιο TDZ error που είχαμε διαγνώσει: `Cannot access 'P' before initialization`.
 
-Το ίδιο comment μέσα στο `vite.config.ts:31-33` προειδοποιεί ακριβώς γι' αυτό το σφάλμα ("Cannot access 'S' before initialization"). Σήμερα είναι 'P' αντί 'S' — διαφορετικός ελάχιστος bundle, ίδιο root cause.
+**Τεκμήριο 3 — Γιατί laptop ναι, iPhone όχι:**
 
-### Πρόταση διόρθωσης (μικρή, στοχευμένη, μηδενική επίδραση σε λειτουργικότητα)
+- **Chrome (V8)** στο laptop: ανεκτικό στο ESM circular evaluation order. Το `P` ίσως φτάνει initialized λόγω διαφορετικού scheduling των modulepreload requests — το crash δεν εμφανίζεται κάθε φορά.
+- **Safari (JavaScriptCore)** σε iPhone iOS: αυστηρή τήρηση του ECMAScript spec για TDZ + διαφορετικό ordering των modulepreload. Το `P` είναι uninitialized όταν εκτελείται το top-level του charts-vendor → exception → το `App` ποτέ δεν mount-άρει → το splash μένει για πάντα.
 
-**Μοναδική αλλαγή:** `vite.config.ts` — διόρθωση των manual chunks ώστε όλα τα recharts dependencies να κατοικούν στο **ίδιο** chunk με το recharts, αποφεύγοντας τα κυκλικά imports.
+Αυτό συμφωνεί ακριβώς με το γνωστό bug στο WebKit όπου strict ES module circular dependencies κρασάρουν με TDZ ενώ το Chrome συγχωρεί.
 
-**Συγκεκριμένα:**
+**Τεκμήριο 4 — Τα Auth logs του Supabase:**
 
-1. Επέκταση του `charts-vendor` matcher να συμπεριλαμβάνει:
-   - `prop-types`
-   - `react-smooth`
-   - `react-transition-group`
-   - `decimal.js-light`
-   - `tiny-invariant`
-   - `eventemitter3`
-   - `fast-equals`
-   - `lodash` και `lodash-es` (όταν προέρχονται από recharts dependency tree)
+Στις 10:24:42Z σήμερα, λογιν ΕΠΙΤΥΧΕΣ από `referer: https://fomo.com.cy/` — αλλά μόνο το `/auth/v1/token` και `/user` εκτελέστηκαν. Δεν υπάρχουν επόμενα RPC calls (π.χ. `get_event_rsvp_counts`, `public_businesses_safe`) από αυτό το IP — πράγμα που δείχνει ότι το app crash-άρει αμέσως μετά το login response, πριν προλάβει να φορτώσει τη feed σελίδα. Σύμφωνο με το TDZ crash του charts-vendor.
 
-2. Εναλλακτικά (πιο ασφαλές): **απενεργοποίηση του `manualChunks`** για τα προβληματικά vendors και αφήνουμε το Vite/Rollup να αποφασίσει αυτόματα. Συγκεκριμένα, αφαίρεση των γραμμών 45-46 (`charts-vendor` και `pdf-vendor`). Τα Charts θα συνενωθούν στα route chunks όπου χρησιμοποιούνται (Admin Analytics, Business Analytics) — που έτσι κι αλλιώς είναι lazy-loaded.
+**Τεκμήριο 5 — Service Worker αποκλείεται ως αιτία:**
 
-**Συνιστώμενη επιλογή: η εναλλακτική (#2)**, γιατί:
-- Λύνει οριστικά το TDZ initialization order issue.
-- Δεν χάνεται performance: το recharts φορτώνεται μόνο όταν ο χρήστης μπει στα analytics dashboards (όχι στην αρχική σελίδα).
-- Δεν αγγίζει κανέναν runtime κώδικα — μόνο build configuration.
+Ο `public/sw.js` v3.0.0 κάνει network-first για JS/CSS chunks (γραμμές 130-140). Δεν σερβίρει stale chunks. Επίσης, τα Cloudflare headers (`cache-control: no-cache, must-revalidate, max-age=0`) σπρώχνουν fresh HTML. Άρα δεν είναι θέμα cache — είναι θέμα **του ίδιου του deployed bundle**.
+
+### Συμπέρασμα
+
+Το προηγούμενο fix στο `vite.config.ts` (αφαίρεση `charts-vendor` και `pdf-vendor` από `manualChunks`) **δεν έχει publish-αριστεί στο production**. Το `fomo.com.cy` εξακολουθεί να σερβίρει το παλιό build με `index-CyKly9DB.js` + `charts-vendor-DGFcTSGr.js`. Δεν υπάρχει νέο deployment μετά την αλλαγή.
+
+### Τι πρέπει να γίνει
+
+**Δεν χρειάζεται καμία νέα αλλαγή κώδικα.** Το fix υπάρχει ήδη στο `vite.config.ts`. Χρειάζεται **νέο publish** για να βγει στο production.
+
+Όμως, για να δώσουμε επιπλέον ασφάλεια ώστε αν ξανασυμβεί παρόμοιο TDZ crash στο μέλλον να μην κολλάει όλο το app στο splash, θα προσθέσω ένα small hardening:
+
+| Αρχείο | Αλλαγή |
+|---|---|
+| `index.html` | Προσθήκη inline `window.addEventListener('error', ...)` που πιάνει top-level uncaught script errors **πριν** ξεκινήσει το main bundle, και αν περάσουν 8 δευτερόλεπτα χωρίς να αφαιρεθεί το `#inline-splash`, το αφαιρεί και δείχνει μήνυμα "Ξανά προσπάθεια" με reload button. Αυτό είναι ανεξάρτητο από το App.tsx, οπότε δουλεύει ακόμα κι αν τα vendor chunks κρασάρουν. |
+| `vite.config.ts` | Καμία αλλαγή — ήδη σωστό από το προηγούμενο approve. |
+
+### Βήματα για εσένα
+
+1. **Approve το παρόν πλάνο** για το hardening του `index.html`.
+2. Αμέσως μετά: **Publish → Update**. Αυτό είναι το πιο κρίσιμο βήμα — χωρίς νέο publish, **το πρόβλημα παραμένει** ακόμα κι αν το hardening εφαρμοστεί. Στο νέο build θα παραχθούν νέα chunks (π.χ. `index-XXXXX.js` ΧΩΡΙΣ ξεχωριστό charts-vendor) που θα δουλέψουν σε Safari.
+3. Στο iPhone:
+   - Settings → Safari → Clear History and Website Data
+   - Άνοιξε `https://fomo.com.cy` σε Private Tab για επιβεβαίωση χωρίς cache
 
 ### Τι ΔΕΝ αλλάζει
 
-- ✅ Καμία αλλαγή στο `App.tsx`, `main.tsx`, `sw.js`, `index.html`
-- ✅ Καμία αλλαγή σε business logic, routes, χάρτη, χρώματα, UI
-- ✅ Push notifications, offline page, PWA installability παραμένουν αμετάβλητα
-- ✅ Recharts components (Admin Analytics, Business Analytics, Audience Insights, Ticket Analytics, Event Analytics, RSVP Analytics) συνεχίζουν να δουλεύουν κανονικά
-
-### Τεχνικές λεπτομέρειες (developer notes)
-
-| Αρχείο | Γραμμές | Αλλαγή |
-|---|---|---|
-| `vite.config.ts` | 45-46 | Αφαίρεση των rules για `charts-vendor` και `pdf-vendor`. Τα chunks θα δημιουργηθούν αυτόματα από το Rollup με σωστή initialization order. |
-
-Το αποτέλεσμα bundle:
-- `react-vendor` → παραμένει (προστατεύει react core)
-- `mapbox-vendor`, `supabase-vendor`, `ui-vendor`, `query-vendor` → παραμένουν (αυτά δεν έχουν circular deps)
-- Recharts + d3 → θα συγχωνευθούν στα lazy-loaded route chunks (AdminAnalytics, business analytics components)
-- jspdf/html2canvas/xlsx → ίδιο: συγχωνεύονται στα route chunks που τα χρησιμοποιούν
-
-### Μετά την εφαρμογή
-
-1. **Apply changes**
-2. **Publish → Update**
-3. Δοκιμή σε incognito → η αρχική σελίδα φορτώνει κανονικά
-4. Δοκιμή πλοήγησης στα `/admin/analytics` και `/dashboard-business/analytics` για επιβεβαίωση ότι τα γραφήματα συνεχίζουν να εμφανίζονται
-
-### Σημαντικό για εσένα
-
-Επειδή το browser σου ίσως έχει cached το παλιό σπασμένο `charts-vendor-DGFcTSGr.js`:
-- Σε **incognito** θα δουλέψει αμέσως
-- Σε κανονικό tab: hard refresh (Cmd+Shift+R) ή clear site data
-- Σε iPhone Safari: Settings → Safari → Clear History and Website Data
+- ✅ Καμία αλλαγή σε App.tsx, main.tsx, sw.js, business logic
+- ✅ Καμία αλλαγή σε auth, push notifications, charts, PDF generation
+- ✅ Καμία αλλαγή σε χρώματα, layout, fonts
 
