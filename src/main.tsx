@@ -124,34 +124,8 @@ const setupServiceWorkerHandling = () => {
     return;
   }
 
-  navigator.serviceWorker.getRegistration("/sw.js").then((registration) => {
-    if (!registration) return;
-
-    registration.update().catch((error) => console.warn("[SW] Update check failed:", error));
-
-    // When a new SW takes control, reload once so the page uses fresh assets
-    let hasReloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (hasReloaded) return;
-      hasReloaded = true;
-      window.location.reload();
-    });
-
-    // If a new SW is waiting, tell it to activate immediately
-    const promoteWaiting = (reg: ServiceWorkerRegistration) => {
-      if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
-    };
-    promoteWaiting(registration);
-    registration.addEventListener("updatefound", () => {
-      const newWorker = registration.installing;
-      if (!newWorker) return;
-      newWorker.addEventListener("statechange", () => {
-        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-          registration.waiting?.postMessage("SKIP_WAITING");
-        }
-      });
-    });
-  });
+  // Production SW registration is handled by index.html.
+  // Intentionally NO controllerchange reload listener here — it caused reload loops with the SW registered in index.html.
 };
 
 const setupChunkRecovery = () => {
