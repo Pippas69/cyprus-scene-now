@@ -129,9 +129,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [editValue, setEditValue] = useState<string>('');
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
+  const [memoHighlighted, setMemoHighlighted] = useState(false);
   // Ticket memo editing (for ticket-only mode)
   const [editingTicketMemo, setEditingTicketMemo] = useState<string | null>(null);
   const [ticketMemoValue, setTicketMemoValue] = useState('');
+  const [ticketMemoHighlighted, setTicketMemoHighlighted] = useState(false);
   // Ticket name editing (for ticket-only mode)
   const [editingTicketName, setEditingTicketName] = useState<string | null>(null);
   const [ticketNameValue, setTicketNameValue] = useState('');
