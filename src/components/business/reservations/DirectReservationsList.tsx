@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
@@ -115,8 +114,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
-  // Transaction code dialog (opens when user clicks on phone number)
-  const [transactionCodeDialog, setTransactionCodeDialog] = useState<{ code: string; name: string } | null>(null);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
@@ -248,6 +245,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const t = text[language];
+
+  const PhoneCodePopover = ({ phone, code }: { phone: string | null; code?: string | null }) => {
+    if (!phone) return null;
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="inline-block cursor-pointer border-0 bg-transparent p-0 text-left text-sm font-normal leading-tight text-foreground hover:text-foreground focus:text-foreground active:text-foreground focus:outline-none"
+          >
+            {phone.replace(/^\+357/, '')}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" side="top" sideOffset={6} className="w-auto min-w-0 px-2 py-1">
+          <span className="font-mono text-sm font-semibold tracking-wide text-foreground">{code || '—'}</span>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   const isGreek = (str: string) => /[\u0370-\u03FF\u1F00-\u1FFF]/.test(str);
 
@@ -1963,9 +1980,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
                           </span>
                         )}
-                        {ticket.buyer_phone && (
-                          <span className="text-sm text-muted-foreground">{ticket.buyer_phone.replace(/^\+357/, '')}</span>
-                        )}
+                        <PhoneCodePopover phone={ticket.buyer_phone} code={ticket.ticket_code} />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -2198,23 +2213,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             field="reservation_name"
                             displayValue={reservation.reservation_name}
                             rawValue={reservation.reservation_name} />
-                            {reservation.phone_number &&
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (reservation.transaction_code) {
-                                    setTransactionCodeDialog({
-                                      code: reservation.transaction_code,
-                                      name: reservation.reservation_name,
-                                    });
-                                  }
-                                }}
-                                className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground hover:text-primary hover:underline cursor-pointer text-left transition-colors"
-                                title={language === 'el' ? 'Κλικ για κωδικό συναλλαγής' : 'Click for transaction code'}
-                              >
-                                {reservation.phone_number.replace(/^\+357/, '')}
-                              </button>
-                            }
+                            <PhoneCodePopover phone={reservation.phone_number} code={reservation.transaction_code} />
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
@@ -2504,11 +2503,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         />
                         {renderCustomerNoteBubble(reservation)}
                       </div>
-                      {reservation.phone_number &&
-                        <div className="text-sm text-muted-foreground mt-0.5 min-w-0">
-                          <span className="whitespace-nowrap">{reservation.phone_number.replace(/^\+357/, '')}</span>
-                        </div>
-                      }
+                      <div className="mt-0.5 min-w-0">
+                        <PhoneCodePopover phone={reservation.phone_number} code={reservation.transaction_code} />
+                      </div>
                     </div>
                   </TableCell>
 
@@ -2611,30 +2608,5 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         eventId={selectedEventId}
         onSuccess={handleManualEntrySuccess}
       />
-      <Dialog open={!!transactionCodeDialog} onOpenChange={(open) => { if (!open) setTransactionCodeDialog(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{language === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction Code'}</DialogTitle>
-            <DialogDescription>
-              {language === 'el'
-                ? `Μοναδικός κωδικός για ${transactionCodeDialog?.name ?? ''}. Είναι ο ίδιος κωδικός που στάλθηκε στο email του πελάτη.`
-                : `Unique code for ${transactionCodeDialog?.name ?? ''}. This is the same code sent to the customer's email.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="my-4 rounded-xl border-2 border-primary/30 bg-primary/5 px-6 py-6 text-center">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">
-              {language === 'el' ? 'ΚΩΔΙΚΟΣ ΣΥΝΑΛΛΑΓΗΣ' : 'TRANSACTION CODE'}
-            </p>
-            <p className="text-3xl font-bold font-mono tracking-[0.2em] text-primary">
-              {transactionCodeDialog?.code}
-            </p>
-            <p className="text-xs text-muted-foreground mt-3">
-              {language === 'el'
-                ? 'Χρησιμοποίησε αυτόν τον κωδικό όταν επικοινωνείς με τον πελάτη'
-                : 'Use this code when communicating with the customer'}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>);
 };
