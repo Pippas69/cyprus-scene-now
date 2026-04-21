@@ -269,7 +269,38 @@ Deno.serve(async (req) => {
         if (usesLinkedReservations && seatingTypeId) {
           logStep("Creating linked reservation for ticket+reservation purchase", { seatingTypeId });
 
-          const totalTicketCreditCents = order.subtotal_cents || 0;
+          // Compute ticket_credit_cents from per-tier prepaid_amount_cents.
+          // For each ticket, only the prepaid portion of its tier counts toward the table minimum.
+          // If a tier has prepaid_amount_cents = NULL, the full price_cents is used (backward compatible).
+          let totalTicketCreditCents = 0;
+          try {
+            const ticketTierIds = Array.from(
+              new Set(ticketsToCreate.map((t) => t.tier_id).filter((id) => !!id))
+            );
+            const tierCreditMap = new Map<string, number>();
+            if (ticketTierIds.length > 0) {
+              const { data: tierRows } = await supabaseClient
+                .from("ticket_tiers")
+                .select("id, price_cents, prepaid_amount_cents")
+                .in("id", ticketTierIds);
+              for (const row of tierRows || []) {
+                const credit =
+                  (row as any).prepaid_amount_cents == null
+                    ? (row.price_cents || 0)
+                    : Math.max(0, Math.min(row.price_cents || 0, (row as any).prepaid_amount_cents));
+                tierCreditMap.set(row.id, credit);
+              }
+            }
+            for (const t of ticketsToCreate) {
+              totalTicketCreditCents += tierCreditMap.get(t.tier_id) ?? 0;
+            }
+          } catch (creditErr) {
+            logStep("Failed to compute split ticket credit, falling back to subtotal", {
+              error: creditErr instanceof Error ? creditErr.message : String(creditErr),
+            });
+            totalTicketCreditCents = order.subtotal_cents || 0;
+          }
+
           const partySize = ticketsToCreate.length;
           const reservationNameFromMeta = session.metadata?.reservation_name?.trim() || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
