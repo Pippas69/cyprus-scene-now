@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
