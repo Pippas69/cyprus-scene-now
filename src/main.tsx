@@ -165,7 +165,6 @@ setupChunkRecovery();
 
 const bootstrap = async () => {
   installSafeBrowserStorage();
-  (window as Window & { __fomoBootstrapStarted?: boolean }).__fomoBootstrapStarted = true;
 
   try {
     const { default: App } = await import("./App.tsx");
@@ -175,10 +174,6 @@ const bootstrap = async () => {
         <App />
       </Sentry.ErrorBoundary>
     );
-
-    window.requestAnimationFrame(() => {
-      (window as Window & { __fomoAppBootstrapped?: boolean }).__fomoAppBootstrapped = true;
-    });
   } catch (error) {
     console.error("[bootstrap] Failed to start app:", error);
     removeInlineSplash();
