@@ -630,22 +630,7 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === RESERVATION/HYBRID: Min charge (hidden for walk-ins) === */}
-          {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && (
-            <div className={fieldClass}>
-              <Label className={labelClass}>{txt.minCharge}</Label>
-              <Input
-                value={minCharge}
-                onChange={(e) => setMinCharge(e.target.value)}
-                onWheel={(e) => e.currentTarget.blur()}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                className={inputClass}
-              />
-            </div>
-          )}
+
 
           {/* === RESERVATION/HYBRID: Seating type === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && !isWalkIn && eventSeatingTypes.length > 0 && (
