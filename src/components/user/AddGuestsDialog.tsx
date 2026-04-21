@@ -104,7 +104,7 @@ const t = {
     ticketSplitNote: 'Η πίστωση τραπεζιού προστίθεται αυτόματα στο τραπέζι σας.',
     amountToPayNow: 'Πληρωμή τώρα',
     remainingVenue: 'Υπόλοιπο στο venue',
-    bottlesAtVenue: 'Μπουκάλι στο κατάστημα',
+    bottlesAtVenue: 'Bottle στο κατάστημα',
     payAtVenueAll: 'Όλα στο κατάστημα',
     free: 'Δωρεάν',
     processingFee: 'Έξοδα επεξεργασίας',
