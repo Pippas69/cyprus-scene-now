@@ -6423,6 +6423,7 @@ export type Database = {
           id: string
           max_per_order: number
           name: string
+          prepaid_amount_cents: number | null
           price_cents: number
           quantity_sold: number
           quantity_total: number
@@ -6441,6 +6442,7 @@ export type Database = {
           id?: string
           max_per_order?: number
           name: string
+          prepaid_amount_cents?: number | null
           price_cents?: number
           quantity_sold?: number
           quantity_total: number
@@ -6459,6 +6461,7 @@ export type Database = {
           id?: string
           max_per_order?: number
           name?: string
+          prepaid_amount_cents?: number | null
           price_cents?: number
           quantity_sold?: number
           quantity_total?: number
