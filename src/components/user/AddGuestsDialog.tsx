@@ -313,9 +313,10 @@ export const AddGuestsDialog = ({
         setCurrentTier(null);
       }
 
-      // For HYBRID events: fetch the exact ticket tier price used in the original order
+      // For HYBRID events: fetch the exact ticket tier price + prepaid split used in the original order
       if (isHybrid && reservation.event_id) {
         let resolvedHybridTicketPriceCents = 0;
+        let resolvedHybridTicketPrepaidCents: number | null = null;
 
         const { data: order } = await supabase
           .from('ticket_orders')
@@ -337,11 +338,12 @@ export const AddGuestsDialog = ({
           if (ticketRow?.tier_id) {
             const { data: tier } = await supabase
               .from('ticket_tiers')
-              .select('price_cents')
+              .select('price_cents, prepaid_amount_cents')
               .eq('id', ticketRow.tier_id)
               .maybeSingle();
 
             resolvedHybridTicketPriceCents = tier?.price_cents || 0;
+            resolvedHybridTicketPrepaidCents = (tier as any)?.prepaid_amount_cents ?? null;
           }
         }
 
@@ -349,7 +351,7 @@ export const AddGuestsDialog = ({
         if (resolvedHybridTicketPriceCents === 0) {
           const { data: tiersList } = await supabase
             .from('ticket_tiers')
-            .select('price_cents')
+            .select('price_cents, prepaid_amount_cents')
             .eq('event_id', reservation.event_id)
             .eq('active', true)
             .gt('price_cents', 0)
@@ -357,11 +359,14 @@ export const AddGuestsDialog = ({
             .limit(1);
 
           resolvedHybridTicketPriceCents = tiersList?.[0]?.price_cents || 0;
+          resolvedHybridTicketPrepaidCents = (tiersList?.[0] as any)?.prepaid_amount_cents ?? null;
         }
 
         setHybridTicketPriceCents(resolvedHybridTicketPriceCents);
+        setHybridTicketPrepaidCents(resolvedHybridTicketPrepaidCents);
       } else {
         setHybridTicketPriceCents(0);
+        setHybridTicketPrepaidCents(null);
       }
 
       setLoading(false);
