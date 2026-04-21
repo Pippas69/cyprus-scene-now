@@ -2317,7 +2317,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             const hasTicketCredit = !isReservationOnly;
                             if (hasTicketCredit) {
                               // Hybrid (amount-based minimum): line1 minimum, line2 prepayment, line3 remainder
-                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)} minimum` : '-';
+                              const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)} Minimum` : '-';
                               const rawVal = `${(minChargeCents / 100).toFixed(2)} (${(ticketPaidCents / 100).toFixed(2)})`;
                               return (
                                 <div className="flex flex-col items-start">
