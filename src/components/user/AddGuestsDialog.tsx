@@ -243,6 +243,16 @@ export const AddGuestsDialog = ({
     ? hybridTicketPriceCents * extraCount
     : 0;
 
+  // Per-ticket split: how much of each ticket goes toward the table credit (rest is entry fee)
+  const perTicketCreditCents =
+    hybridTicketPrepaidCents == null
+      ? hybridTicketPriceCents
+      : Math.max(0, Math.min(hybridTicketPriceCents, hybridTicketPrepaidCents));
+  const perTicketEntryFeeCents = Math.max(0, hybridTicketPriceCents - perTicketCreditCents);
+  const ticketsEntryFeeTotalCents = perTicketEntryFeeCents * extraCount;
+  const ticketsCreditTotalCents = perTicketCreditCents * extraCount;
+  const hasTicketSplit = isHybrid && hybridTicketPriceCents > 0 && perTicketEntryFeeCents > 0;
+
   const subtotal = ticketsExtraCents + (!isPayAtVenue ? reservationDeltaCents : 0);
 
   const buyerPaysStripe = pricingDisplay?.showProcessingFee !== false;
