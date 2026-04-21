@@ -459,10 +459,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       });
 
     const syntheticUpcoming = syntheticEventReservations.filter(
-      (r) => r.events && new Date(r.events.end_at) >= new Date(nowIso)
+      (r) => r.events && new Date(r.events.start_at) >= new Date(cutoffIso)
     );
     const syntheticPast = syntheticEventReservations.filter(
-      (r) => !r.events || new Date(r.events.end_at) < new Date(nowIso)
+      (r) => !r.events || new Date(r.events.start_at) < new Date(cutoffIso)
     );
 
     const filterOutOffers = (reservations: ReservationData[]) =>
