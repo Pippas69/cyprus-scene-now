@@ -1,0 +1,2 @@
+ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS staff_memo_highlighted boolean NOT NULL DEFAULT false;
+ALTER TABLE public.tickets ADD COLUMN IF NOT EXISTS staff_memo_highlighted boolean NOT NULL DEFAULT false;

@@ -9,7 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Star } from 'lucide-react';
+
+const NOTES_MAX_LENGTH = 150;
 import { getDigitCount } from '@/lib/phoneValidation';
 
 const CYPRUS_CITIES = ['Λευκωσία', 'Λεμεσός', 'Λάρνακα', 'Πάφος', 'Παραλίμνι', 'Αγία Νάπα', 'Αμμόχωστος'];
@@ -60,6 +62,7 @@ export type OptimisticEntry =
         subtotal_cents: number;
         ticket_code: string | null;
         staff_memo: string | null;
+        staff_memo_highlighted: boolean;
         is_manual_entry: true;
         manual_status: null;
         checked_in: false;
@@ -95,6 +98,7 @@ export const ManualEntryDialog = ({
   const [seatingPreference, setSeatingPreference] = useState('');
   const [sourceType, setSourceType] = useState<'profile' | 'offer' | 'walk_in' | 'walk_in_offer' | ''>('');
   const [notes, setNotes] = useState('');
+  const [notesHighlighted, setNotesHighlighted] = useState(false);
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
   const [seatingTypeId, setSeatingTypeId] = useState('');
@@ -148,6 +152,8 @@ export const ManualEntryDialog = ({
       partySizeRequired: 'Ο αριθμός ατόμων είναι υποχρεωτικός',
       minChargeRequired: 'Η ελάχιστη χρέωση είναι υποχρεωτική',
       ticketTypeRequired: 'Ο τύπος εισιτηρίου είναι υποχρεωτικός',
+      highlightNote: 'Επισήμανση ως σημαντική',
+      highlightedOn: 'Σημαντική',
     },
     en: {
       titleDirect: 'Add reservation',
@@ -190,6 +196,8 @@ export const ManualEntryDialog = ({
       partySizeRequired: 'Party size is required',
       minChargeRequired: 'Minimum charge is required',
       ticketTypeRequired: 'Ticket type is required',
+      highlightNote: 'Mark as important',
+      highlightedOn: 'Important',
     },
   };
 
@@ -257,6 +265,7 @@ export const ManualEntryDialog = ({
     setSeatingPreference('');
     setSourceType('');
     setNotes('');
+    setNotesHighlighted(false);
     setMinAge('');
     setMinCharge('');
     setSeatingTypeId('');
@@ -363,6 +372,7 @@ export const ManualEntryDialog = ({
           order_id: orderId,
           tier_id: resolvedTierId,
           staff_memo: notes.trim() || null,
+          staff_memo_highlighted: notesHighlighted && !!notes.trim(),
         } as any);
         if (error) throw error;
 
@@ -382,6 +392,7 @@ export const ManualEntryDialog = ({
             subtotal_cents: priceCents,
             ticket_code: null,
             staff_memo: notes.trim() || null,
+            staff_memo_highlighted: notesHighlighted && !!notes.trim(),
             is_manual_entry: true,
             manual_status: null,
             checked_in: false,
@@ -408,6 +419,8 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
+          staff_memo: notes.trim() || null,
+          staff_memo_highlighted: notesHighlighted && !!notes.trim(),
           source: isWalkIn ? 'walk_in' : (sourceType || null),
           email: email.trim() || null,
         };
@@ -785,14 +798,33 @@ export const ManualEntryDialog = ({
 
           {/* Notes - all types */}
           <div className={fieldClass}>
-            <Label className={labelClass}>{txt.notes}</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className={labelClass}>{txt.notes}</Label>
+              <button
+                type="button"
+                onClick={() => setNotesHighlighted((v) => !v)}
+                className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                  notesHighlighted
+                    ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                }`}
+                aria-pressed={notesHighlighted}
+              >
+                <Star className={`h-3 w-3 ${notesHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                <span>{notesHighlighted ? txt.highlightedOn : txt.highlightNote}</span>
+              </button>
+            </div>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX_LENGTH))}
               placeholder={txt.notes}
-              rows={2}
+              rows={3}
+              maxLength={NOTES_MAX_LENGTH}
               className="resize-none text-xs sm:text-sm"
             />
+            <div className="text-[10px] text-muted-foreground text-right">
+              {notes.length}/{NOTES_MAX_LENGTH}
+            </div>
           </div>
         </div>
 

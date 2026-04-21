@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Calendar,
-  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
+  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star } from
 'lucide-react';
 import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
@@ -35,6 +36,7 @@ interface DirectReservation {
   seating_preference: string | null;
   special_requests: string | null;
   staff_memo: string | null;
+  staff_memo_highlighted?: boolean;
   business_notes: string | null;
   confirmation_code: string | null;
   qr_code_token: string | null;
@@ -103,6 +105,7 @@ interface TicketOnlyOrder {
   tier_name: string;
   ticket_code: string | null;
   staff_memo: string | null;
+  staff_memo_highlighted?: boolean;
   source: string;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
@@ -127,9 +130,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [editValue, setEditValue] = useState<string>('');
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoValue, setMemoValue] = useState('');
+  const [memoHighlighted, setMemoHighlighted] = useState(false);
   // Ticket memo editing (for ticket-only mode)
   const [editingTicketMemo, setEditingTicketMemo] = useState<string | null>(null);
   const [ticketMemoValue, setTicketMemoValue] = useState('');
+  const [ticketMemoHighlighted, setTicketMemoHighlighted] = useState(false);
   // Ticket name editing (for ticket-only mode)
   const [editingTicketName, setEditingTicketName] = useState<string | null>(null);
   const [ticketNameValue, setTicketNameValue] = useState('');
@@ -368,7 +373,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       select(`
           id, business_id, user_id, reservation_name, party_size, status,
           created_at, phone_number, preferred_time, seating_preference, special_requests,
-          business_notes, staff_memo, confirmation_code, qr_code_token, transaction_code, checked_in_at,
+          business_notes, staff_memo, staff_memo_highlighted, confirmation_code, qr_code_token, transaction_code, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
           cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
@@ -830,7 +835,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       // Fetch individual tickets directly — one row per guest
       const { data: tickets } = await supabase
         .from('tickets')
-        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, user_id, is_manual_entry, manual_status')
+        .select('id, guest_name, guest_age, guest_city, status, checked_in_at, tier_id, order_id, ticket_code, created_at, staff_memo, staff_memo_highlighted, user_id, is_manual_entry, manual_status')
         .eq('event_id', eventId)
         .order('guest_name', { ascending: true });
 
@@ -966,6 +971,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           tier_name: tierInfo[t.tier_id]?.name || '',
           ticket_code: t.ticket_code || null,
           staff_memo: (t as any).staff_memo || null,
+          staff_memo_highlighted: !!(t as any).staff_memo_highlighted,
           source: ticketOnlyInvitationOrderIds.has(t.order_id) ? 'invitation' : 'purchase',
         };
       });
@@ -1605,14 +1611,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const handleSaveMemo = async (reservationId: string) => {
     try {
+      const trimmed = memoValue.slice(0, 150);
+      const highlight = !!trimmed && memoHighlighted;
       const { error } = await supabase
         .from('reservations')
-        .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
+        .update({ staff_memo: trimmed || null, staff_memo_highlighted: highlight, updated_at: new Date().toISOString() } as any)
         .eq('id', reservationId);
       if (error) throw error;
       toast.success(t.saved);
       setEditingMemo(null);
       setMemoValue('');
+      setMemoHighlighted(false);
+      setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, staff_memo: trimmed || null, staff_memo_highlighted: highlight } : r));
       fetchReservations(true);
     } catch (error) {
       console.error('Error saving memo:', error);
@@ -1623,15 +1633,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Save ticket memo
   const handleSaveTicketMemo = async (ticketId: string) => {
     try {
+      const trimmed = ticketMemoValue.slice(0, 150);
+      const highlight = !!trimmed && ticketMemoHighlighted;
       const { error } = await supabase
         .from('tickets')
-        .update({ staff_memo: ticketMemoValue || null } as any)
+        .update({ staff_memo: trimmed || null, staff_memo_highlighted: highlight } as any)
         .eq('id', ticketId);
       if (error) throw error;
       toast.success(t.saved);
       setEditingTicketMemo(null);
       setTicketMemoValue('');
-      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: ticketMemoValue || null } : t));
+      setTicketMemoHighlighted(false);
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: trimmed || null, staff_memo_highlighted: highlight } : t));
     } catch (error) {
       console.error('Error saving ticket memo:', error);
       toast.error(t.errorSaving);
@@ -1697,44 +1710,74 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
-        <div className="flex items-center gap-1 min-w-[140px]">
-          <Input
+        <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
+          <Textarea
             value={ticketMemoValue}
-            onChange={(e) => setTicketMemoValue(e.target.value)}
+            onChange={(e) => setTicketMemoValue(e.target.value.slice(0, 150))}
             placeholder={t.staffMemoPlaceholder}
-            className="h-7 text-xs"
+            className="text-xs min-h-[56px] resize-none"
+            maxLength={150}
             autoFocus
+            rows={3}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveTicketMemo(ticket.ticket_id);
-              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); }
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveTicketMemo(ticket.ticket_id);
+              if (e.key === 'Escape') { setEditingTicketMemo(null); setTicketMemoValue(''); setTicketMemoHighlighted(false); }
             }}
           />
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
-            <Save className="h-3 w-3 text-primary" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); }}>
-            <X className="h-3 w-3 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={() => setTicketMemoHighlighted(v => !v)}
+              className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                ticketMemoHighlighted
+                  ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Star className={`h-2.5 w-2.5 ${ticketMemoHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
+            </button>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-muted-foreground">{ticketMemoValue.length}/150</span>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveTicketMemo(ticket.ticket_id)}>
+                <Save className="h-3 w-3 text-primary" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingTicketMemo(null); setTicketMemoValue(''); setTicketMemoHighlighted(false); }}>
+                <X className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
+    const memo = ticket.staff_memo;
+    const highlighted = !!ticket.staff_memo_highlighted;
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo min-w-[80px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[200px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingTicketMemo(ticket.ticket_id);
-          setTicketMemoValue(ticket.staff_memo || '');
+          setTicketMemoValue(memo || '');
+          setTicketMemoHighlighted(highlighted);
         }}
       >
-        {ticket.staff_memo ? (
-          <span className="text-xs text-foreground max-w-[120px] truncate">{ticket.staff_memo}</span>
+        {memo ? (
+          highlighted ? (
+            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          ) : (
+            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          )
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
             <span className="text-xs text-muted-foreground/40 group-hover/memo:text-muted-foreground transition-colors">—</span>
           </>
         )}
-        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto" />
+        <Pencil className="h-2.5 w-2.5 text-transparent group-hover/memo:text-muted-foreground transition-colors ml-auto flex-shrink-0 mt-0.5" />
       </button>
     );
   };
@@ -1743,42 +1786,67 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const renderStaffMemoCell = (reservation: DirectReservation) => {
     if (editingMemo === reservation.id) {
       return (
-        <div className="flex items-center gap-1 min-w-[140px]">
-          <Input
+        <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
+          <Textarea
             value={memoValue}
-            onChange={(e) => setMemoValue(e.target.value)}
+            onChange={(e) => setMemoValue(e.target.value.slice(0, 150))}
             placeholder={t.staffMemoPlaceholder}
-            className="h-7 text-xs"
+            className="text-xs min-h-[56px] resize-none"
+            maxLength={150}
             autoFocus
+            rows={3}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveMemo(reservation.id);
-              if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); }
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveMemo(reservation.id);
+              if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); setMemoHighlighted(false); }
             }}
           />
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
-            <Save className="h-3 w-3 text-primary" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); }}>
-            <X className="h-3 w-3 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={() => setMemoHighlighted(v => !v)}
+              className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                memoHighlighted
+                  ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Star className={`h-2.5 w-2.5 ${memoHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
+            </button>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-muted-foreground">{memoValue.length}/150</span>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
+                <Save className="h-3 w-3 text-primary" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); setMemoHighlighted(false); }}>
+                <X className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
+    const memo = (reservation as any).staff_memo as string | null;
+    const highlighted = !!(reservation as any).staff_memo_highlighted;
     return (
       <button
-        className="flex items-start gap-1.5 text-left group/memo w-full hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[220px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingMemo(reservation.id);
-          setMemoValue((reservation as any).staff_memo || '');
+          setMemoValue(memo || '');
+          setMemoHighlighted(highlighted);
         }}
       >
-        {(reservation as any).staff_memo ? (
-          <span
-            className="text-[11px] leading-snug text-foreground/80 break-words flex-1 overflow-hidden"
-            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
-          >
-            {(reservation as any).staff_memo}
-          </span>
+        {memo ? (
+          highlighted ? (
+            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          ) : (
+            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          )
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />

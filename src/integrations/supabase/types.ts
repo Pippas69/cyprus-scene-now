@@ -5376,6 +5376,7 @@ export type Database = {
           source: string | null
           special_requests: string | null
           staff_memo: string | null
+          staff_memo_highlighted: boolean
           status: string
           stripe_payment_intent_id: string | null
           stripe_payment_method_id: string | null
@@ -5419,6 +5420,7 @@ export type Database = {
           source?: string | null
           special_requests?: string | null
           staff_memo?: string | null
+          staff_memo_highlighted?: boolean
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
@@ -5462,6 +5464,7 @@ export type Database = {
           source?: string | null
           special_requests?: string | null
           staff_memo?: string | null
+          staff_memo_highlighted?: boolean
           status?: string
           stripe_payment_intent_id?: string | null
           stripe_payment_method_id?: string | null
@@ -6498,6 +6501,7 @@ export type Database = {
           seat_row: string | null
           seat_zone: string | null
           staff_memo: string | null
+          staff_memo_highlighted: boolean
           status: Database["public"]["Enums"]["ticket_status"]
           ticket_code: string | null
           tier_id: string | null
@@ -6521,6 +6525,7 @@ export type Database = {
           seat_row?: string | null
           seat_zone?: string | null
           staff_memo?: string | null
+          staff_memo_highlighted?: boolean
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
           tier_id?: string | null
@@ -6544,6 +6549,7 @@ export type Database = {
           seat_row?: string | null
           seat_zone?: string | null
           staff_memo?: string | null
+          staff_memo_highlighted?: boolean
           status?: Database["public"]["Enums"]["ticket_status"]
           ticket_code?: string | null
           tier_id?: string | null
