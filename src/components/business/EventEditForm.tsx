@@ -109,6 +109,9 @@ interface SeatingConfig {
   availableSlots: number;
   ticketCategoryName: string;
   ticketPriceCents: number;
+  // Hybrid only: how much of ticketPriceCents counts as deposit toward minimum charge.
+  // null/undefined = full ticket price counts (backward compatible behavior).
+  ticketPrepaidCents?: number | null;
   tiers: PersonTier[];
 }
 
@@ -183,6 +186,8 @@ const translations = {
     upgradeHint: "Αναβαθμίστε το πλάνο σας για μικρότερη προμήθεια.",
     ticketNameLabel: "Όνομα κατηγορίας",
     priceLabel: "Τιμή (€)",
+    creditLabel: "Πίστωση Τραπεζιού (€)",
+    creditHint: "Πόσα από την τιμή πιστώνονται στο minimum του τραπεζιού. Τα υπόλοιπα είναι χρέωση εισόδου.",
     reservationHours: "Ώρες αποδοχής κρατήσεων",
     from: "Από",
     to: "Έως",
@@ -255,6 +260,8 @@ const translations = {
     upgradeHint: "Upgrade your plan for reduced commission.",
     ticketNameLabel: "Category name",
     priceLabel: "Price (€)",
+    creditLabel: "Table Credit (€)",
+    creditHint: "How much of the price counts toward the table minimum. The rest is an entry fee.",
     reservationHours: "Reservation acceptance hours",
     from: "From",
     to: "To",
@@ -303,6 +310,7 @@ const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   availableSlots: 10,
   ticketCategoryName: type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa',
   ticketPriceCents: 0,
+  ticketPrepaidCents: null,
   tiers: [{ minPeople: 2, maxPeople: 6, prepaidChargeCents: 10000 }],
 });
 
@@ -510,6 +518,7 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
               availableSlots: st.available_slots,
               ticketCategoryName: linkedTier?.name || getDefaultSeatingConfig(type).ticketCategoryName,
               ticketPriceCents: linkedTier?.price_cents || 0,
+              ticketPrepaidCents: (linkedTier as any)?.prepaid_amount_cents ?? null,
               tiers: tiers?.map(tier => ({
                 minPeople: tier.min_people,
                 maxPeople: tier.max_people,
@@ -833,6 +842,10 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
               name: autoName,
               description: null,
               price_cents: config.ticketPriceCents,
+              prepaid_amount_cents:
+                config.ticketPrepaidCents == null
+                  ? null
+                  : Math.max(0, Math.min(config.ticketPriceCents, config.ticketPrepaidCents)),
               currency: 'EUR',
               quantity_total: 999999,
               max_per_order: maxPartySize,
