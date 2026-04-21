@@ -1002,11 +1002,15 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                   </span>
                   <span className="font-semibold text-foreground">{formatPrice(creditTotal)}</span>
                 </div>
-                <div className="border-t border-border/30 my-1" />
-                <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-foreground">{t.balanceAtVenue}:</span>
-                  <span className="font-bold text-foreground">{formatPrice(creditTotal)}</span>
-                </div>
+                {minChargeCents != null && minChargeCents > 0 && (
+                  <>
+                    <div className="border-t border-border/30 my-1" />
+                    <div className="flex justify-between text-xs">
+                      <span className="font-semibold text-foreground">{t.minimumCharge}:</span>
+                      <span className="font-bold text-foreground">{formatPrice(minChargeCents)}</span>
+                    </div>
+                  </>
+                )}
                 <p className="text-[9px] text-muted-foreground mt-1">{t.notRefundedNote}</p>
               </div>
             </>
