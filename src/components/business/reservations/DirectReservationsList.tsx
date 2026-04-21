@@ -1827,7 +1827,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const highlighted = !!(reservation as any).staff_memo_highlighted;
     return (
       <button
-        className="flex items-center gap-1.5 text-left group/memo w-full min-w-[260px] max-w-[320px] min-h-[44px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-center gap-1.5 text-left group/memo w-full min-w-[260px] max-w-[320px] min-h-[44px] hover:bg-muted/50 rounded transition-colors px-[35px] py-[4px] mx-0 my-0"
         onClick={() => {
           setEditingMemo(reservation.id);
           setMemoValue(memo || '');
