@@ -1786,42 +1786,67 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const renderStaffMemoCell = (reservation: DirectReservation) => {
     if (editingMemo === reservation.id) {
       return (
-        <div className="flex items-center gap-1 min-w-[140px]">
-          <Input
+        <div className="flex flex-col gap-1 min-w-[180px] max-w-[240px]">
+          <Textarea
             value={memoValue}
-            onChange={(e) => setMemoValue(e.target.value)}
+            onChange={(e) => setMemoValue(e.target.value.slice(0, 150))}
             placeholder={t.staffMemoPlaceholder}
-            className="h-7 text-xs"
+            className="text-xs min-h-[56px] resize-none"
+            maxLength={150}
             autoFocus
+            rows={3}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveMemo(reservation.id);
-              if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); }
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveMemo(reservation.id);
+              if (e.key === 'Escape') { setEditingMemo(null); setMemoValue(''); setMemoHighlighted(false); }
             }}
           />
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
-            <Save className="h-3 w-3 text-primary" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); }}>
-            <X className="h-3 w-3 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={() => setMemoHighlighted(v => !v)}
+              className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                memoHighlighted
+                  ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Star className={`h-2.5 w-2.5 ${memoHighlighted ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <span>{language === 'el' ? 'Σημαντική' : 'Important'}</span>
+            </button>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-muted-foreground">{memoValue.length}/150</span>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleSaveMemo(reservation.id)}>
+                <Save className="h-3 w-3 text-primary" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { setEditingMemo(null); setMemoValue(''); setMemoHighlighted(false); }}>
+                <X className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
+    const memo = (reservation as any).staff_memo as string | null;
+    const highlighted = !!(reservation as any).staff_memo_highlighted;
     return (
       <button
-        className="flex items-start gap-1.5 text-left group/memo w-full hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+        className="flex items-start gap-1.5 text-left group/memo w-full max-w-[220px] hover:bg-muted/50 rounded px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
         onClick={() => {
           setEditingMemo(reservation.id);
-          setMemoValue((reservation as any).staff_memo || '');
+          setMemoValue(memo || '');
+          setMemoHighlighted(highlighted);
         }}
       >
-        {(reservation as any).staff_memo ? (
-          <span
-            className="text-[11px] leading-snug text-foreground/80 break-words flex-1 overflow-hidden"
-            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
-          >
-            {(reservation as any).staff_memo}
-          </span>
+        {memo ? (
+          highlighted ? (
+            <span className="inline-block text-[11px] leading-snug px-1.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/40 text-yellow-200 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          ) : (
+            <span className="text-[11px] leading-snug text-foreground/80 break-words whitespace-normal flex-1">
+              {memo}
+            </span>
+          )
         ) : (
           <>
             <StickyNote className="h-3 w-3 text-muted-foreground/40 group-hover/memo:text-primary transition-colors" />
