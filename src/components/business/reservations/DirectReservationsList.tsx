@@ -2035,7 +2035,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+            onSuccess={handleManualEntrySuccess}
           />
         </div>
       );
@@ -2058,7 +2058,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+            onSuccess={handleManualEntrySuccess}
           />
         </div>
       );
@@ -2367,7 +2367,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           language={language}
           entryType={getEntryType()}
           eventId={selectedEventId}
-          onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+          onSuccess={handleManualEntrySuccess}
         />
       </div>);
 
@@ -2535,7 +2535,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         language={language}
         entryType={getEntryType()}
         eventId={selectedEventId}
-        onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+        onSuccess={handleManualEntrySuccess}
       />
     </div>);
 };
