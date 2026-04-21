@@ -280,7 +280,6 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const fetchReservations = async () => {
     setLoading(true);
-    const nowIso = new Date().toISOString();
     // Reservations stay in "active" tab for 10 hours after the event start
     // (or after the requested arrival time for direct reservations).
     // This prevents reservations from disappearing while the user may still
