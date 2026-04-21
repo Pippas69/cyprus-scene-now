@@ -444,7 +444,7 @@ export const ManualEntryDialog = ({
           {/* === TICKET: City === */}
           {entryType === 'ticket' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'} *</Label>
               <Select value={city} onValueChange={setCity}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
@@ -487,7 +487,10 @@ export const ManualEntryDialog = ({
           {/* 5. Party size (not ticket) */}
           {entryType !== 'ticket' && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.partySize}</Label>
+              <Label className={labelClass}>
+                {txt.partySize}
+                {(entryType === 'reservation' || entryType === 'hybrid') && ' *'}
+              </Label>
               <Input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
@@ -535,7 +538,7 @@ export const ManualEntryDialog = ({
           {/* === TICKET: Min age === */}
           {(entryType === 'ticket' || entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{entryType === 'ticket' ? txt.age : txt.minAge}</Label>
+              <Label className={labelClass}>{entryType === 'ticket' ? txt.age : txt.minAge} *</Label>
               <Input
                 value={minAge}
                 onChange={(e) => setMinAge(e.target.value)}
@@ -552,7 +555,7 @@ export const ManualEntryDialog = ({
           {/* === RESERVATION/HYBRID: City === */}
           {(entryType === 'reservation' || entryType === 'hybrid') && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'}</Label>
+              <Label className={labelClass}>{language === 'el' ? 'Πόλη' : 'City'} *</Label>
               <Select value={city} onValueChange={setCity}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={language === 'el' ? 'Επιλέξτε πόλη...' : 'Select city...'} />
@@ -574,10 +577,10 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === TICKET / Walk-in hybrid: Ticket tier selector === */}
+          {/* === TICKET / Walk-in hybrid/reservation: Ticket tier selector === */}
           {((entryType === 'ticket') || (isWalkIn && (entryType === 'hybrid' || entryType === 'reservation') && ticketTiers.length > 0)) && ticketTiers.length > 0 && (
             <div className={fieldClass}>
-              <Label className={labelClass}>{txt.ticketType}</Label>
+              <Label className={labelClass}>{txt.ticketType} *</Label>
               <Select value={ticketTierId} onValueChange={setTicketTierId}>
                 <SelectTrigger className={inputClass}>
                   <SelectValue placeholder={txt.selectOption} />
@@ -590,6 +593,40 @@ export const ManualEntryDialog = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* === HYBRID: Min charge (always shown, always required) === */}
+          {entryType === 'hybrid' && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.minCharge} *</Label>
+              <Input
+                value={minCharge}
+                onChange={(e) => setMinCharge(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {/* === RESERVATION: Min charge (hidden when walk-in is ON) === */}
+          {entryType === 'reservation' && !isWalkIn && (
+            <div className={fieldClass}>
+              <Label className={labelClass}>{txt.minCharge} *</Label>
+              <Input
+                value={minCharge}
+                onChange={(e) => setMinCharge(e.target.value)}
+                onWheel={(e) => e.currentTarget.blur()}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className={inputClass}
+              />
             </div>
           )}
 
