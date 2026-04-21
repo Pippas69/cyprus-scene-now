@@ -140,6 +140,90 @@
     </div>
 
     <div id="root"></div>
+
+    <!-- Failsafe: catch top-level script errors and force-remove splash if app doesn't mount in 8s -->
+    <script>
+      (function() {
+        var splash = document.getElementById('inline-splash');
+        var mounted = false;
+        var failed = false;
+
+        function showRetry(reason) {
+          if (!splash || mounted) return;
+          try {
+            splash.innerHTML = '<div style="text-align:center;padding:1.5rem;max-width:340px;font-family:Georgia,serif;color:#FEFAF6;">' +
+              '<h2 style="font-size:1.5rem;margin:0 0 0.75rem 0;">ΦΟΜΟ</h2>' +
+              '<p style="font-size:0.95rem;line-height:1.5;margin:0 0 1.25rem 0;opacity:0.9;">Η εφαρμογή δεν φόρτωσε σωστά. Δοκιμάστε ξανά.</p>' +
+              '<button id="fomo-retry-btn" style="background:#FEFAF6;color:#0C4A6E;border:none;padding:0.75rem 1.5rem;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;">Ξανά προσπάθεια</button>' +
+              '<p style="font-size:0.7rem;margin-top:1rem;opacity:0.5;">' + (reason || '') + '</p>' +
+              '</div>';
+            var btn = document.getElementById('fomo-retry-btn');
+            if (btn) {
+              btn.addEventListener('click', function() {
+                if (navigator.serviceWorker) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    regs.forEach(function(r) { r.unregister(); });
+                    if (window.caches) {
+                      caches.keys().then(function(keys) {
+                        Promise.all(keys.map(function(k) { return caches.delete(k); })).then(function() {
+                          window.location.reload();
+                        });
+                      });
+                    } else {
+                      window.location.reload();
+                    }
+                  });
+                } else {
+                  window.location.reload();
+                }
+              });
+            }
+          } catch (e) {}
+        }
+
+        // Detect when React has mounted (splash gets fade-out class or root has children)
+        var observer = new MutationObserver(function() {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            mounted = true;
+            observer.disconnect();
+          }
+        });
+        if (document.getElementById('root')) {
+          observer.observe(document.getElementById('root'), { childList: true });
+        }
+
+        // Catch uncaught errors during bundle init
+        window.addEventListener('error', function(e) {
+          if (mounted) return;
+          var msg = (e && e.message) || '';
+          if (msg.indexOf('before initialization') !== -1 ||
+              msg.indexOf('Importing a module script failed') !== -1 ||
+              msg.indexOf('Failed to fetch dynamically imported module') !== -1) {
+            failed = true;
+            setTimeout(function() { showRetry(msg.substring(0, 120)); }, 500);
+          }
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+          if (mounted) return;
+          var msg = (e && e.reason && (e.reason.message || String(e.reason))) || '';
+          if (msg.indexOf('before initialization') !== -1 ||
+              msg.indexOf('dynamically imported module') !== -1) {
+            failed = true;
+            setTimeout(function() { showRetry(msg.substring(0, 120)); }, 500);
+          }
+        });
+
+        // Failsafe timer: if splash still visible after 8s, show retry
+        setTimeout(function() {
+          if (!mounted && splash && document.body.contains(splash)) {
+            showRetry('Timeout');
+          }
+        }, 8000);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
     <script>
       (function() {
