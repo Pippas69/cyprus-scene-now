@@ -40,8 +40,40 @@ interface ManualEntryDialogProps {
   entryType: EntryType;
   eventId?: string | null;
   seatingOptions?: string[];
-  onSuccess: () => void;
+  onSuccess: (optimistic?: OptimisticEntry) => void;
 }
+
+export type OptimisticEntry =
+  | {
+      kind: 'ticket';
+      row: {
+        id: string;
+        order_id: string;
+        ticket_id: string;
+        guest_name: string;
+        guest_age: number | null;
+        guest_city: string | null;
+        buyer_phone: string | null;
+        tier_id: string | null;
+        tier_name: string;
+        tier_price_cents: number;
+        subtotal_cents: number;
+        ticket_code: string | null;
+        staff_memo: string | null;
+        is_manual_entry: true;
+        manual_status: null;
+        checked_in: false;
+        status: 'completed';
+        created_at: string;
+        source: 'purchase';
+        is_account_user: false;
+        account_city: null;
+      };
+    }
+  | {
+      kind: 'reservation';
+      row: Record<string, any>;
+    };
 
 export const ManualEntryDialog = ({
   open,
