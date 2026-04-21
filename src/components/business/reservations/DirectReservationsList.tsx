@@ -254,7 +254,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="inline-block cursor-pointer border-0 bg-transparent p-0 text-left text-sm font-normal leading-tight text-foreground hover:text-foreground focus:text-foreground active:text-foreground focus:outline-none"
+            className="cursor-pointer border-0 bg-transparent p-0 m-0 text-left text-sm text-muted-foreground hover:text-muted-foreground focus:text-muted-foreground active:text-muted-foreground focus:outline-none whitespace-nowrap"
           >
             {phone.replace(/^\+357/, '')}
           </button>
