@@ -700,15 +700,30 @@ export const AddGuestsDialog = ({
             💡 {tr.paymentInfo}
           </p>
 
-          {/* Hybrid: tickets always shown */}
+          {/* Hybrid: tickets always shown — with split breakdown when configured */}
           {isHybrid && !isPayAtVenue && ticketsExtraCents > 0 && (
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Ticket className="h-3 w-3" />
-                {tr.ticketsExtra} (×{extraCount})
-              </span>
-              <span className="font-semibold text-foreground">{formatPrice(ticketsExtraCents)}</span>
-            </div>
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Ticket className="h-3 w-3" />
+                  {tr.ticketsExtra} (×{extraCount})
+                </span>
+                <span className="font-semibold text-foreground">{formatPrice(ticketsExtraCents)}</span>
+              </div>
+              {hasTicketSplit && (
+                <div className="ml-4 space-y-0.5 border-l border-border/60 pl-2">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">↳ {tr.ticketEntryFee} (×{extraCount})</span>
+                    <span className="text-foreground">{formatPrice(ticketsEntryFeeTotalCents)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">↳ {tr.ticketTableCredit} (×{extraCount})</span>
+                    <span className="text-foreground">{formatPrice(ticketsCreditTotalCents)}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-0.5">{tr.ticketSplitNote}</p>
+                </div>
+              )}
+            </>
           )}
 
           {newTierIsBottles ? (
