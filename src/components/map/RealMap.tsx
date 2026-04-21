@@ -175,37 +175,33 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAPBOX_CONFIG.mapStyle,
-      // Center adjusted to show ALL of Cyprus (center of island)
       center: [33.4, 35.1] as [number, number],
-      // Zoom level to show entire island from Paphos to Karpasia
       zoom: 7,
       pitch: 0,
+      projection: 'mercator',
       maxBounds: MAPBOX_CONFIG.maxBounds,
       minZoom: MAPBOX_CONFIG.minZoom
     });
 
-    // On load, fit bounds to show ALL of Cyprus with comfortable sea margins
+    // Keep startup as simple and stable as possible.
+    // Recent visual theming on style.load could leave some browsers showing only a flat color/ocean layer.
     map.current.on('load', () => {
-      map.current?.resize();
-      // Use configured max bounds (slightly larger than the island) so mobile/tablet always sees the whole island.
-      map.current?.fitBounds(
-        MAPBOX_CONFIG.maxBounds,
-        { padding: getCyprusFitPadding(), duration: 0 }
-      );
-    });
+      if (!map.current) return;
 
-    map.current.on('style.load', () => {
-      map.current?.setFog({
-        color: MAPBOX_CONFIG.fog.color,
-        'high-color': MAPBOX_CONFIG.fog.highColor,
-        'horizon-blend': MAPBOX_CONFIG.fog.horizonBlend,
-        'space-color': MAPBOX_CONFIG.fog.spaceColor,
-        'star-intensity': MAPBOX_CONFIG.fog.starIntensity
+      try {
+        map.current.setProjection('mercator');
+      } catch {
+        // ignore
+      }
+
+      map.current.resize();
+      map.current.fitBounds(MAPBOX_CONFIG.maxBounds, {
+        padding: getCyprusFitPadding(),
+        duration: 0
       });
 
-      if (map.current) {
-        applyOceanMapTheme(map.current);
-      }
+      requestAnimationFrame(() => map.current?.resize());
+      setTimeout(() => map.current?.resize(), 150);
     });
 
     // Add navigation control with smaller buttons on mobile
