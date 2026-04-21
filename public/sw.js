@@ -106,17 +106,23 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== OFFLINE_CACHE).map((k) => caches.delete(k)))
-    ).then(() => clients.claim())
+    )
+    // Note: no clients.claim() — new SW takes control on next visit only, avoiding immediate controllerchange reloads.
   );
 });
 
-// Network-first for navigation: always try fresh, fallback to offline page
+// Network-first for navigation: fallback to offline page only when actually offline
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req, { cache: 'no-store' }).catch(() => caches.match(OFFLINE_PAGE))
+      fetch(req).catch(() => {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          return caches.match(OFFLINE_PAGE);
+        }
+        return Response.error();
+      })
     );
     return;
   }
