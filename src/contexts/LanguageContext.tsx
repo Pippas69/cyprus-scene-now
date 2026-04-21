@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
+import { safeLocalStorage } from '@/lib/browserStorage';
 
 type Language = 'el' | 'en';
 
@@ -15,8 +16,7 @@ interface LanguageProviderProps {
 
 export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    // Try to get language from localStorage first
-    const savedLanguage = localStorage.getItem('language') as Language;
+    const savedLanguage = safeLocalStorage.getItem('language') as Language;
     if (savedLanguage === 'el' || savedLanguage === 'en') {
       return savedLanguage;
     }
@@ -33,12 +33,11 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    safeLocalStorage.setItem('language', lang);
   };
 
   useEffect(() => {
-    // Save to localStorage whenever language changes
-    localStorage.setItem('language', language);
+    safeLocalStorage.setItem('language', language);
   }, [language]);
 
   return (
