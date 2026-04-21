@@ -9,7 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Star } from 'lucide-react';
+
+const NOTES_MAX_LENGTH = 150;
 import { getDigitCount } from '@/lib/phoneValidation';
 
 const CYPRUS_CITIES = ['Λευκωσία', 'Λεμεσός', 'Λάρνακα', 'Πάφος', 'Παραλίμνι', 'Αγία Νάπα', 'Αμμόχωστος'];
@@ -95,6 +97,7 @@ export const ManualEntryDialog = ({
   const [seatingPreference, setSeatingPreference] = useState('');
   const [sourceType, setSourceType] = useState<'profile' | 'offer' | 'walk_in' | 'walk_in_offer' | ''>('');
   const [notes, setNotes] = useState('');
+  const [notesHighlighted, setNotesHighlighted] = useState(false);
   const [minAge, setMinAge] = useState('');
   const [minCharge, setMinCharge] = useState('');
   const [seatingTypeId, setSeatingTypeId] = useState('');
@@ -148,6 +151,8 @@ export const ManualEntryDialog = ({
       partySizeRequired: 'Ο αριθμός ατόμων είναι υποχρεωτικός',
       minChargeRequired: 'Η ελάχιστη χρέωση είναι υποχρεωτική',
       ticketTypeRequired: 'Ο τύπος εισιτηρίου είναι υποχρεωτικός',
+      highlightNote: 'Επισήμανση ως σημαντική',
+      highlightedOn: 'Σημαντική',
     },
     en: {
       titleDirect: 'Add reservation',
@@ -190,6 +195,8 @@ export const ManualEntryDialog = ({
       partySizeRequired: 'Party size is required',
       minChargeRequired: 'Minimum charge is required',
       ticketTypeRequired: 'Ticket type is required',
+      highlightNote: 'Mark as important',
+      highlightedOn: 'Important',
     },
   };
 
@@ -257,6 +264,7 @@ export const ManualEntryDialog = ({
     setSeatingPreference('');
     setSourceType('');
     setNotes('');
+    setNotesHighlighted(false);
     setMinAge('');
     setMinCharge('');
     setSeatingTypeId('');
