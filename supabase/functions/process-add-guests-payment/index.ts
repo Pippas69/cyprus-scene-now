@@ -224,6 +224,10 @@ serve(async (req) => {
           .join("");
 
         const paidLabel = extraChargeCents > 0 ? `€${(extraChargeCents / 100).toFixed(2)}` : "Χωρίς επιπλέον online χρέωση";
+        // Optional split: only show when meaningful (paid online + has table credit portion)
+        const creditLabel = (extraChargeCents > 0 && ticketsExtraCreditCents > 0 && ticketsExtraCreditCents < extraChargeCents)
+          ? `€${(ticketsExtraCreditCents / 100).toFixed(2)} (από τα €${(extraChargeCents / 100).toFixed(2)})`
+          : null;
 
         const userContent = `
           ${successBadge("Άτομα Προστέθηκαν")}
@@ -240,7 +244,8 @@ serve(async (req) => {
             detailRow("Ώρα", formattedTime) +
             detailRow("Όνομα", full.reservation_name) +
             detailRow("Σύνολο ατόμων", `${full.party_size}`) +
-            detailRow("Επιπλέον χρέωση", paidLabel, true)
+            detailRow("Επιπλέον χρέωση", paidLabel, true) +
+            (creditLabel ? detailRow("Πίστωση τραπεζιού", creditLabel) : "")
           )}
 
           ${allGuestQrSections}
