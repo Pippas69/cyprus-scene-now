@@ -12,3 +12,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard-user
+Disallow: /dashboard-business
+Disallow: /dashboard-promoter
+Disallow: /reset-password
+Disallow: /ticket-view
+Disallow: /reservation-view
+Disallow: /offer-view
+
+Sitemap: https://fomo.com.cy/sitemap.xml
