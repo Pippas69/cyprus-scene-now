@@ -62,6 +62,7 @@ export type OptimisticEntry =
         subtotal_cents: number;
         ticket_code: string | null;
         staff_memo: string | null;
+        staff_memo_highlighted: boolean;
         is_manual_entry: true;
         manual_status: null;
         checked_in: false;
