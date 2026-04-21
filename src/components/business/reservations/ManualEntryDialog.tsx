@@ -249,6 +249,46 @@ export const ManualEntryDialog = ({
       return;
     }
 
+    // === New required-field validations per entryType ===
+    // Skip for legacy 'direct' flow to preserve zero-regression behavior.
+    if (entryType !== 'direct') {
+      // City required for ticket / reservation / hybrid
+      if (!city.trim()) {
+        toast.error(txt.cityRequired);
+        return;
+      }
+      // Age required (ticket = real age, reservation/hybrid = min age of party)
+      if (!minAge.trim()) {
+        toast.error(entryType === 'ticket' ? txt.ageRequired : txt.minAgeRequired);
+        return;
+      }
+    }
+
+    if (entryType === 'reservation' || entryType === 'hybrid') {
+      // Party size required
+      if (!partySize.trim()) {
+        toast.error(txt.partySizeRequired);
+        return;
+      }
+      // Min charge: hybrid = always required; reservation = required only when walk-in is OFF
+      const minChargeRequired = entryType === 'hybrid' || !isWalkIn;
+      if (minChargeRequired && !minCharge.trim()) {
+        toast.error(txt.minChargeRequired);
+        return;
+      }
+      // Ticket tier required when walk-in is ON and tiers exist
+      if (isWalkIn && ticketTiers.length > 0 && !ticketTierId) {
+        toast.error(txt.ticketTypeRequired);
+        return;
+      }
+    }
+
+    // Ticket entry: tier required when tiers are configured for the event
+    if (entryType === 'ticket' && ticketTiers.length > 0 && !ticketTierId) {
+      toast.error(txt.ticketTypeRequired);
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
