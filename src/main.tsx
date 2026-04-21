@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
-import App from "./App.tsx";
 import "./index.css";
+import { installSafeBrowserStorage, safeSessionStorage } from "@/lib/browserStorage";
 
 // Initialize Sentry error monitoring (production only)
 if (!window.location.hostname.includes("localhost")) {
@@ -26,6 +26,25 @@ if (!window.location.hostname.includes("localhost")) {
 const PREVIEW_HOST_PATTERNS = ["lovableproject.com", "preview--"];
 const CHUNK_RECOVERY_KEY = "__fomo_chunk_recovery__";
 const CHUNK_RECOVERY_QUERY_PARAM = "__reload";
+
+const removeInlineSplash = () => {
+  const splash = document.getElementById("inline-splash");
+  if (!splash) return;
+
+  splash.classList.add("fade-out");
+  window.setTimeout(() => splash.remove(), 400);
+};
+
+const renderBootstrapError = () => {
+  const root = document.getElementById("root");
+  if (!root) return;
+
+  root.innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#091E30;color:#FEFAF6;font-family:Inter,system-ui,sans-serif;text-align:center;">
+      Η εφαρμογή δεν φόρτωσε. Κάνε ανανέωση της σελίδας.
+    </div>
+  `;
+};
 
 const getErrorMessage = (value: unknown) => {
   if (typeof value === "string") return value;
@@ -52,7 +71,7 @@ const isChunkLoadError = (value: unknown) => {
 };
 
 const cleanupRecoveryState = () => {
-  sessionStorage.removeItem(CHUNK_RECOVERY_KEY);
+  safeSessionStorage.removeItem(CHUNK_RECOVERY_KEY);
 
   const url = new URL(window.location.href);
   if (!url.searchParams.has(CHUNK_RECOVERY_QUERY_PARAM)) return;
@@ -62,8 +81,8 @@ const cleanupRecoveryState = () => {
 };
 
 const recoverFromChunkLoadError = async () => {
-  if (sessionStorage.getItem(CHUNK_RECOVERY_KEY)) return;
-  sessionStorage.setItem(CHUNK_RECOVERY_KEY, "1");
+  if (safeSessionStorage.getItem(CHUNK_RECOVERY_KEY)) return;
+  safeSessionStorage.setItem(CHUNK_RECOVERY_KEY, "1");
 
   try {
     if ("serviceWorker" in navigator) {
@@ -144,8 +163,22 @@ cleanupRecoveryState();
 setupServiceWorkerHandling();
 setupChunkRecovery();
 
-createRoot(document.getElementById("root")!).render(
-  <Sentry.ErrorBoundary fallback={<p>Something went wrong. Please refresh the page.</p>}>
-    <App />
-  </Sentry.ErrorBoundary>
-);
+const bootstrap = async () => {
+  installSafeBrowserStorage();
+
+  try {
+    const { default: App } = await import("./App.tsx");
+
+    createRoot(document.getElementById("root")!).render(
+      <Sentry.ErrorBoundary fallback={<p>Something went wrong. Please refresh the page.</p>}>
+        <App />
+      </Sentry.ErrorBoundary>
+    );
+  } catch (error) {
+    console.error("[bootstrap] Failed to start app:", error);
+    removeInlineSplash();
+    renderBootstrapError();
+  }
+};
+
+void bootstrap();
