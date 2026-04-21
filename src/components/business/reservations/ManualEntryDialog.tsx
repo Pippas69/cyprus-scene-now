@@ -371,6 +371,7 @@ export const ManualEntryDialog = ({
           order_id: orderId,
           tier_id: resolvedTierId,
           staff_memo: notes.trim() || null,
+          staff_memo_highlighted: notesHighlighted && !!notes.trim(),
         } as any);
         if (error) throw error;
 
@@ -390,6 +391,7 @@ export const ManualEntryDialog = ({
             subtotal_cents: priceCents,
             ticket_code: null,
             staff_memo: notes.trim() || null,
+            staff_memo_highlighted: notesHighlighted && !!notes.trim(),
             is_manual_entry: true,
             manual_status: null,
             checked_in: false,
@@ -416,6 +418,8 @@ export const ManualEntryDialog = ({
           manual_status: null,
           phone_number: phone.trim() || null,
           special_requests: notes.trim() || null,
+          staff_memo: notes.trim() || null,
+          staff_memo_highlighted: notesHighlighted && !!notes.trim(),
           source: isWalkIn ? 'walk_in' : (sourceType || null),
           email: email.trim() || null,
         };
