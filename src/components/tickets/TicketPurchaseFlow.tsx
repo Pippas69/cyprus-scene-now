@@ -39,6 +39,7 @@ interface TicketTier {
   name: string;
   description: string | null;
   price_cents: number;
+  prepaid_amount_cents?: number | null;
   currency: string;
   quantity_total: number;
   quantity_sold: number;
