@@ -117,6 +117,9 @@ interface SeatingConfig {
   availableSlots: number;
   ticketCategoryName: string;
   ticketPriceCents: number;
+  // Hybrid only: how much of ticketPriceCents counts as deposit toward minimum charge.
+  // null/undefined = full ticket price counts (backward compatible behavior).
+  ticketPrepaidCents?: number | null;
   tiers: PersonTier[];
 }
 interface FormData {
@@ -203,6 +206,8 @@ const translations = {
     ticketNameLabel: "Όνομα εισιτηρίου",
     ticketDescLabel: "Σύντομη περιγραφή (προαιρετικό)",
     priceLabel: "Τιμή (€)",
+    creditLabel: "Πίστωση Τραπεζιού (€)",
+    creditHint: "Πόσα από την τιμή πιστώνονται στο minimum του τραπεζιού. Τα υπόλοιπα είναι χρέωση εισόδου.",
     ticketsAvailable: "Διαθέσιμα εισιτήρια",
     maxPerOrder: "Μέγιστο ανά παραγγελία",
     dressCode: "Dress Code (προαιρετικό)",
@@ -290,6 +295,8 @@ const translations = {
     ticketNameLabel: "Ticket name",
     ticketDescLabel: "Short description (optional)",
     priceLabel: "Price (€)",
+    creditLabel: "Table Credit (€)",
+    creditHint: "How much of the price counts toward the table minimum. The rest is an entry fee.",
     ticketsAvailable: "Tickets available",
     maxPerOrder: "Max per order",
     dressCode: "Dress Code (optional)",
@@ -352,6 +359,7 @@ const getDefaultSeatingConfig = (type: SeatingType): SeatingConfig => ({
   availableSlots: 10,
   ticketCategoryName: type === 'bar' ? 'Bar' : type === 'table' ? 'Table' : type === 'vip' ? 'VIP' : 'Sofa',
   ticketPriceCents: 0,
+  ticketPrepaidCents: null,
   tiers: [{
     minPeople: 2,
     maxPeople: 6,
@@ -741,6 +749,10 @@ const EventCreationForm = ({
                 name: autoName,
                 description: null,
                 price_cents: config.ticketPriceCents,
+                prepaid_amount_cents:
+                  config.ticketPrepaidCents == null
+                    ? null
+                    : Math.max(0, Math.min(config.ticketPriceCents, config.ticketPrepaidCents)),
                 currency: 'EUR',
                 quantity_total: 999999,
                 max_per_order: maxPartySize,
@@ -1073,34 +1085,64 @@ const EventCreationForm = ({
                           </div>
                           
                           {isTicketSelected && isReservationSelected && (
-                            <div className="flex items-end gap-3 sm:gap-4">
-                              <div className="space-y-1.5 sm:space-y-2 shrink-0">
-                                <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={config.ticketPriceCents / 100}
-                                  onChange={(e) => {
-                                    const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                                    const [euros, decimals = ''] = cleaned.split('.');
-                                    const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
-                                    updateSeatingConfig(type, {
-                                      ticketPriceCents: Math.round(parseFloat(normalized || '0') * 100)
-                                    });
-                                  }}
-                                  className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
-                                />
+                            <div className="space-y-3">
+                              <div className="flex items-end gap-3 sm:gap-4 flex-wrap">
+                                <div className="space-y-1.5 sm:space-y-2 shrink-0">
+                                  <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={config.ticketPriceCents / 100}
+                                    onChange={(e) => {
+                                      const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                                      const [euros, decimals = ''] = cleaned.split('.');
+                                      const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
+                                      const newPrice = Math.round(parseFloat(normalized || '0') * 100);
+                                      // Clamp prepaid if it exceeds new price
+                                      const updates: Partial<SeatingConfig> = { ticketPriceCents: newPrice };
+                                      if (config.ticketPrepaidCents != null && config.ticketPrepaidCents > newPrice) {
+                                        updates.ticketPrepaidCents = newPrice;
+                                      }
+                                      updateSeatingConfig(type, updates);
+                                    }}
+                                    className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                                  />
+                                </div>
+                                <div className="space-y-1.5 sm:space-y-2 shrink-0">
+                                  <Label className="text-xs sm:text-sm whitespace-nowrap">{t.creditLabel}</Label>
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={
+                                      config.ticketPrepaidCents == null
+                                        ? config.ticketPriceCents / 100
+                                        : config.ticketPrepaidCents / 100
+                                    }
+                                    onChange={(e) => {
+                                      const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                                      const [euros, decimals = ''] = cleaned.split('.');
+                                      const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
+                                      const parsed = Math.round(parseFloat(normalized || '0') * 100);
+                                      const clamped = Math.max(0, Math.min(config.ticketPriceCents, parsed));
+                                      updateSeatingConfig(type, { ticketPrepaidCents: clamped });
+                                    }}
+                                    className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                                  />
+                                </div>
+                                <div className="space-y-1.5 sm:space-y-2">
+                                  <Label className="text-xs sm:text-sm whitespace-nowrap">{t.availableBookings}</Label>
+                                  <NumberInput
+                                    value={config.availableSlots}
+                                    onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
+                                    min={1}
+                                    max={999}
+                                    className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
+                                  />
+                                </div>
                               </div>
-                              <div className="space-y-1.5 sm:space-y-2">
-                                <Label className="text-xs sm:text-sm whitespace-nowrap">{t.availableBookings}</Label>
-                                <NumberInput
-                                  value={config.availableSlots}
-                                  onChange={(value) => updateSeatingConfig(type, { availableSlots: value })}
-                                  min={1}
-                                  max={999}
-                                  className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
-                                />
-                              </div>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground leading-snug">
+                                {t.creditHint}
+                              </p>
                             </div>
                           )}
 
