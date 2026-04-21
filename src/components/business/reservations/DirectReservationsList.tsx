@@ -1632,15 +1632,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Save ticket memo
   const handleSaveTicketMemo = async (ticketId: string) => {
     try {
+      const trimmed = ticketMemoValue.slice(0, 150);
+      const highlight = !!trimmed && ticketMemoHighlighted;
       const { error } = await supabase
         .from('tickets')
-        .update({ staff_memo: ticketMemoValue || null } as any)
+        .update({ staff_memo: trimmed || null, staff_memo_highlighted: highlight } as any)
         .eq('id', ticketId);
       if (error) throw error;
       toast.success(t.saved);
       setEditingTicketMemo(null);
       setTicketMemoValue('');
-      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: ticketMemoValue || null } : t));
+      setTicketMemoHighlighted(false);
+      setTicketOnlyOrders(prev => prev.map(t => t.ticket_id === ticketId ? { ...t, staff_memo: trimmed || null, staff_memo_highlighted: highlight } : t));
     } catch (error) {
       console.error('Error saving ticket memo:', error);
       toast.error(t.errorSaving);
