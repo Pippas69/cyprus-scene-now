@@ -281,6 +281,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const fetchReservations = async () => {
     setLoading(true);
     const nowIso = new Date().toISOString();
+    // Reservations stay in "active" tab for 10 hours after the event start
+    // (or after the requested arrival time for direct reservations).
+    // This prevents reservations from disappearing while the user may still
+    // be at the venue (late arrivals, late-night clubs, etc.).
+    const ACTIVE_GRACE_HOURS = 10;
+    const cutoffIso = new Date(Date.now() - ACTIVE_GRACE_HOURS * 60 * 60 * 1000).toISOString();
 
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
