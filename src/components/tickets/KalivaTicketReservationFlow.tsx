@@ -968,37 +968,81 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         </>
       )}
 
-      {/* Amount mode: classic prepaid breakdown */}
-      {!isCurrentBottleTier && minChargeCents != null && minChargeCents > 0 && (
-        <>
-          <Separator />
-          <div className="border border-border/40 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs font-semibold text-foreground">
-                💡 {t.howPaymentWorks}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">
-                {t.minimumCharge}
-              </span>
-              <span className="font-semibold text-foreground">{formatPrice(minChargeCents)}</span>
-            </div>
-            {ticketTotal > 0 && (
+      {/* Amount mode: payment breakdown — handles 3 scenarios */}
+      {!isCurrentBottleTier && (() => {
+        const creditPerTicket = ticketTier?.prepaid_amount_cents ?? 0;
+        const entryPerTicket = Math.max(0, (ticketTier?.price_cents ?? 0) - creditPerTicket);
+        const creditTotal = creditPerTicket * partySize;
+        const entryTotal = entryPerTicket * partySize;
+        const hasCredit = creditTotal > 0;
+        const hasEntry = entryTotal > 0;
+        // Case Α (only entry, no credit): hide the block entirely — there is nothing to credit
+        if (!hasCredit) return null;
+
+        // Case Γ (split: both entry + credit): new transparent breakdown
+        if (hasEntry && hasCredit) {
+          return (
+            <>
+              <Separator />
+              <div className="border border-border/40 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-foreground">
+                    💡 {t.howPaymentWorks}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.entryFeeLine} ({partySize} × {formatPrice(entryPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(entryTotal)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.tableCreditLine} ({partySize} × {formatPrice(creditPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(creditTotal)}</span>
+                </div>
+                <div className="border-t border-border/30 my-1" />
+                <div className="flex justify-between text-xs">
+                  <span className="font-semibold text-foreground">{t.balanceAtVenue}:</span>
+                  <span className="font-bold text-foreground">{formatPrice(creditTotal)}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground mt-1">{t.notRefundedNote}</p>
+              </div>
+            </>
+          );
+        }
+
+        // Case Β (only credit, no entry): keep the classic minimum-spend style
+        // Use minChargeCents if configured, otherwise fall back to creditTotal
+        const minSpend = (minChargeCents != null && minChargeCents > 0) ? minChargeCents : creditTotal;
+        return (
+          <>
+            <Separator />
+            <div className="border border-border/40 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold text-foreground">
+                  💡 {t.howPaymentWorks}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{t.minimumCharge}</span>
+                <span className="font-semibold text-foreground">{formatPrice(minSpend)}</span>
+              </div>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{t.prepaidOnline}:</span>
-                <span className="font-semibold text-foreground">-{formatPrice(ticketTotal)}</span>
+                <span className="font-semibold text-foreground">-{formatPrice(creditTotal)}</span>
               </div>
-            )}
-            <div className="border-t border-border/30 my-1" />
-            <div className="flex justify-between text-xs">
-              <span className="font-semibold text-foreground">{t.balanceAtVenue}:</span>
-              <span className="font-bold text-foreground">{formatPrice(Math.max(0, minChargeCents - ticketTotal))}</span>
+              <div className="border-t border-border/30 my-1" />
+              <div className="flex justify-between text-xs">
+                <span className="font-semibold text-foreground">{t.balanceAtVenue}:</span>
+                <span className="font-bold text-foreground">{formatPrice(Math.max(0, minSpend - creditTotal))}</span>
+              </div>
+              <p className="text-[9px] text-muted-foreground mt-1">{t.prepaidDeductedNote}</p>
             </div>
-            <p className="text-[9px] text-muted-foreground mt-1">{t.prepaidDeductedNote}</p>
-          </div>
-        </>
-      )}
+          </>
+        );
+      })()}
 
       <Separator />
 
