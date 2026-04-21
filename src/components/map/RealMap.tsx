@@ -254,8 +254,21 @@ const RealMap = ({ city, neighborhood, selectedCategories, focusBusinessId }: Re
     setTimeout(applyZoomControlStyles, 100);
     window.addEventListener('resize', applyZoomControlStyles);
 
+    // Observe container size changes and resize map accordingly.
+    // Without this, if the parent flex container resolves its height AFTER
+    // the map is initialized (common with flex-1 + dynamic viewport heights),
+    // the map canvas stays at 0x0 and only the ocean/background color shows.
+    let resizeObserver: ResizeObserver | null = null;
+    if (mapContainer.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        map.current?.resize();
+      });
+      resizeObserver.observe(mapContainer.current);
+    }
+
     return () => {
       window.removeEventListener('resize', applyZoomControlStyles);
+      resizeObserver?.disconnect();
       map.current?.remove();
       map.current = null;
     };
