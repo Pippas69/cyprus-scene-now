@@ -1,94 +1,84 @@
 
 
-## Διάγνωση: Γιατί μένει στο loading screen στο fomo.com.cy
+## Διάγνωση: Γιατί κολλάει στο splash στο fomo.com.cy
 
-### Τι βρήκα με τεκμήρια (όχι εικασίες)
+### Απόδειξη (από browser console του live site)
 
-**1. Console error στο preview (επιβεβαιωμένο):**
+Άνοιξα το `https://fomo.com.cy` σε καθαρό browser session. Το app crash-άρει αμέσως μετά τη φόρτωση των chunks με:
+
 ```
-[bootstrap] Failed to start app: TypeError: Importing a module script failed.
-```
-Επαναλαμβάνεται 4 φορές μέσα σε 30 δευτερόλεπτα. Αυτό προέρχεται από το `src/main.tsx` γραμμή 178 (`catch` του `bootstrap()`).
-
-**2. Πού γεννιέται το σφάλμα:**
-Στο `src/main.tsx:170`: `const { default: App } = await import("./App.tsx");` — το dynamic import του App αποτυγχάνει με `TypeError: Importing a module script failed`.
-
-**3. Τι κάνει ο handler που έχουμε σήμερα (αυτό είναι το πραγματικό πρόβλημα):**
-Στο `src/main.tsx:148-160`, υπάρχει `setupChunkRecovery()` που πιάνει αυτά τα errors και καλεί `recoverFromChunkLoadError()` (γραμμές 83-104). Αυτό:
-- Κάνει `unregister` όλα τα service workers
-- Καθαρίζει όλα τα browser caches (`caches.delete`)
-- Κάνει `window.location.replace()` με `?__reload=<timestamp>` query param
-
-**4. Διπλό registration του service worker (επιβεβαιωμένο σύγκρουση):**
-- `index.html` γραμμές 144-165: **εγγράφει** το `/sw.js` σε production
-- `src/main.tsx` γραμμές 106-146 (`setupServiceWorkerHandling`): **παρακολουθεί** το ίδιο `/sw.js`, στέλνει `SKIP_WAITING`, και **κάνει `window.location.reload()` σε `controllerchange`** (γραμμή 128)
-
-**5. Service worker (`public/sw.js`):**
-- Στο `fetch` handler γραμμή 117-122: Για navigation requests κάνει `fetch(req, { cache: 'no-store' }).catch(() => caches.match(OFFLINE_PAGE))`. Αν το δίκτυο αποτύχει στιγμιαία, σερβίρει το `/offline.html`.
-- Στο `install` event κάνει `skipWaiting()` και στο `activate` κάνει `clients.claim()` — δηλαδή κάθε deploy που εγκαθιστά νέο SW παίρνει αμέσως control και προκαλεί `controllerchange` → reload.
-
-### Ποια είναι η πιθανή ακολουθία που σε κρατάει στο splash
-
-```text
-1. Επισκέπτεσαι fomo.com.cy
-2. Ο παλιός service worker (από προηγούμενο deploy) έχει cached references σε παλιά chunks
-3. Το main.tsx ξεκινά, καλεί import("./App.tsx") που resolveάρει σε ένα νέο hash chunk (/assets/index-XXXX.js)
-4. Ο SW ή το browser cache δίνει 404 / mismatched chunk → "Importing a module script failed"
-5. Ο χειριστής χτυπάει → unregister SW + clear caches + window.location.replace με ?__reload=
-6. Νέα φόρτωση → ο SW ξανα-εγκαθίσταται μέσω index.html
-7. Το controllerchange listener στο main.tsx → άλλο reload
-8. Loop / άπειρο splash screen
+Uncaught ReferenceError: Cannot access 'P' before initialization
+  at https://fomo.com.cy/assets/charts-vendor-DGFcTSGr.js:1:22655
 ```
 
-Ο χρόνος που "κολλάει" συμβαδίζει με αυτό το loop unregister → reload → re-register → reload.
+Αυτό **δεν είναι** πρόβλημα service worker, ούτε chunk download error, ούτε CSP. Είναι **bundling bug**:
+- Το `charts-vendor` chunk προσπαθεί να χρησιμοποιήσει τη μεταβλητή `P` (πιθανότατα `prop-types` ή ένα recharts internal) **πριν αρχικοποιηθεί**.
+- Όταν crash-άρει το vendor chunk, το `App.tsx` ποτέ δεν εκτελείται, άρα ο `useEffect` που αφαιρεί το `#inline-splash` ποτέ δεν τρέχει.
+- Αποτέλεσμα: μένει για πάντα στο splash screen (το failsafe των 4500ms του App.tsx επίσης δεν τρέχει — βρίσκεται μέσα στο App component που ποτέ δεν mount-άρει).
 
-### Πρόταση διόρθωσης (zero functional regression)
+### Γιατί συμβαίνει τώρα
 
-**Σκοπός:** Σπάσιμο του reload loop χωρίς αφαίρεση λειτουργικότητας (push notifications, offline page, chunk recovery).
+Το `vite.config.ts` χωρίζει τα node_modules σε manual chunks:
+- `react-vendor` → react, react-dom, react-router, scheduler, react-is, use-sync-external-store
+- `charts-vendor` → recharts + d3 + victory-vendor
 
-**Αλλαγές:**
+Όμως το recharts εξαρτάται από επιπλέον packages που **δεν** ταξινομούνται ρητά (`prop-types`, `react-smooth`, `react-transition-group`, διάφορα lodash internals). Το Rollup τα τοποθετεί σε ένα κοινό auto-chunk με **κυκλική εξάρτηση** μεταξύ `charts-vendor` και αυτού του chunk → ESM `let/const` TDZ violation → "Cannot access 'P' before initialization".
 
-**A. `src/main.tsx`** — να μην κάνει dual-control του SW:
-- **Διαγραφή** της `setupServiceWorkerHandling()` (γραμμές 106-146 + κλήση 163). Το registration γίνεται ήδη στο `index.html`. Δεν χρειαζόμαστε ξεχωριστό `controllerchange → reload` listener — αυτός είναι ο βασικός λόγος για τα reload loops.
-- **Διατήρηση** του `setupChunkRecovery`, αλλά με **stronger guard**: όχι μόνο sessionStorage flag, αλλά και έλεγχος του `?__reload=` query param. Αν υπάρχει ήδη, **μην ξανατρέξεις recovery** — αντί αυτού, εμφάνισε `renderBootstrapError()` ώστε ο χρήστης να βλέπει μήνυμα αντί για άπειρο splash.
+Το ίδιο comment μέσα στο `vite.config.ts:31-33` προειδοποιεί ακριβώς γι' αυτό το σφάλμα ("Cannot access 'S' before initialization"). Σήμερα είναι 'P' αντί 'S' — διαφορετικός ελάχιστος bundle, ίδιο root cause.
 
-**B. `index.html`** — async SW registration χωρίς να μπλοκάρει το LCP:
-- Καμία αλλαγή στο registration logic, παραμένει ως έχει. Είναι ήδη μέσα σε `window.addEventListener('load', ...)`.
+### Πρόταση διόρθωσης (μικρή, στοχευμένη, μηδενική επίδραση σε λειτουργικότητα)
 
-**C. `public/sw.js`** — milder navigation strategy:
-- Αλλαγή του navigation fetch handler από `cache: 'no-store'` σε κανονικό `fetch(req)`. Διατήρηση του fallback σε offline page **μόνο** όταν είμαστε offline (έλεγχος `navigator.onLine === false`). Έτσι αποφεύγουμε μη απαραίτητα OFFLINE_PAGE responses σε στιγμιαία network glitches που "παραπληροφορούν" τον browser ότι το app εκκινεί κανονικά.
-- Αφαίρεση `clients.claim()` από το activate → ο νέος SW θα πάρει control μόνο σε επόμενη επίσκεψη, σπάζοντας τα immediate `controllerchange` reloads.
+**Μοναδική αλλαγή:** `vite.config.ts` — διόρθωση των manual chunks ώστε όλα τα recharts dependencies να κατοικούν στο **ίδιο** chunk με το recharts, αποφεύγοντας τα κυκλικά imports.
 
-**D. App.tsx splash removal** — προαιρετικό safety:
-- Διατήρηση του υπάρχοντος splash logic ως έχει. Όχι αλλαγές στη λειτουργικότητα του App.
+**Συγκεκριμένα:**
+
+1. Επέκταση του `charts-vendor` matcher να συμπεριλαμβάνει:
+   - `prop-types`
+   - `react-smooth`
+   - `react-transition-group`
+   - `decimal.js-light`
+   - `tiny-invariant`
+   - `eventemitter3`
+   - `fast-equals`
+   - `lodash` και `lodash-es` (όταν προέρχονται από recharts dependency tree)
+
+2. Εναλλακτικά (πιο ασφαλές): **απενεργοποίηση του `manualChunks`** για τα προβληματικά vendors και αφήνουμε το Vite/Rollup να αποφασίσει αυτόματα. Συγκεκριμένα, αφαίρεση των γραμμών 45-46 (`charts-vendor` και `pdf-vendor`). Τα Charts θα συνενωθούν στα route chunks όπου χρησιμοποιούνται (Admin Analytics, Business Analytics) — που έτσι κι αλλιώς είναι lazy-loaded.
+
+**Συνιστώμενη επιλογή: η εναλλακτική (#2)**, γιατί:
+- Λύνει οριστικά το TDZ initialization order issue.
+- Δεν χάνεται performance: το recharts φορτώνεται μόνο όταν ο χρήστης μπει στα analytics dashboards (όχι στην αρχική σελίδα).
+- Δεν αγγίζει κανέναν runtime κώδικα — μόνο build configuration.
+
+### Τι ΔΕΝ αλλάζει
+
+- ✅ Καμία αλλαγή στο `App.tsx`, `main.tsx`, `sw.js`, `index.html`
+- ✅ Καμία αλλαγή σε business logic, routes, χάρτη, χρώματα, UI
+- ✅ Push notifications, offline page, PWA installability παραμένουν αμετάβλητα
+- ✅ Recharts components (Admin Analytics, Business Analytics, Audience Insights, Ticket Analytics, Event Analytics, RSVP Analytics) συνεχίζουν να δουλεύουν κανονικά
 
 ### Τεχνικές λεπτομέρειες (developer notes)
 
 | Αρχείο | Γραμμές | Αλλαγή |
 |---|---|---|
-| `src/main.tsx` | 106-146, 163 | Διαγραφή `setupServiceWorkerHandling` + call site |
-| `src/main.tsx` | 83-104 | Προσθήκη early-return όταν `?__reload=` ήδη υπάρχει στο URL → καλείται `renderBootstrapError()` αντί για άλλο reload |
-| `public/sw.js` | 109 | Αφαίρεση `.then(() => clients.claim())` |
-| `public/sw.js` | 117-122 | Fallback στο offline page μόνο αν `!navigator.onLine` |
+| `vite.config.ts` | 45-46 | Αφαίρεση των rules για `charts-vendor` και `pdf-vendor`. Τα chunks θα δημιουργηθούν αυτόματα από το Rollup με σωστή initialization order. |
 
-### Μηδενική επίδραση σε λειτουργικότητα
+Το αποτέλεσμα bundle:
+- `react-vendor` → παραμένει (προστατεύει react core)
+- `mapbox-vendor`, `supabase-vendor`, `ui-vendor`, `query-vendor` → παραμένουν (αυτά δεν έχουν circular deps)
+- Recharts + d3 → θα συγχωνευθούν στα lazy-loaded route chunks (AdminAnalytics, business analytics components)
+- jspdf/html2canvas/xlsx → ίδιο: συγχωνεύονται στα route chunks που τα χρησιμοποιούν
 
-- ✅ Push notifications: παραμένουν (δεν αγγίζουμε το push handler)
-- ✅ Offline page: παραμένει αλλά πιο συντηρητικό
-- ✅ PWA installability: `manifest.webmanifest` και SW registration στο `index.html` αμετάβλητα
-- ✅ Chunk recovery: παραμένει αλλά δεν loop-άρει
-- ✅ Δεν αλλάζει UI, routes, χάρτης, χρώματα, business logic
+### Μετά την εφαρμογή
 
-### Action μετά την έγκριση
+1. **Apply changes**
+2. **Publish → Update**
+3. Δοκιμή σε incognito → η αρχική σελίδα φορτώνει κανονικά
+4. Δοκιμή πλοήγησης στα `/admin/analytics` και `/dashboard-business/analytics` για επιβεβαίωση ότι τα γραφήματα συνεχίζουν να εμφανίζονται
 
-1. Εφαρμογή των 3 αλλαγών στα `src/main.tsx` και `public/sw.js`
-2. **Apply changes & Publish → Update**
-3. Δοκιμή: άνοιγμα fomo.com.cy σε **incognito** (για να αποφευχθούν cached SW από προηγούμενες επισκέψεις) και επιβεβαίωση πως φορτώνει η αρχική σελίδα
+### Σημαντικό για εσένα
 
-### Σημαντικό για εσένα ως χρήστη
-
-Επειδή έχεις ήδη κολλημένο SW στον browser σου από προηγούμενο deploy:
-- Μετά το publish, την **πρώτη φορά** που θα ανοίξεις fomo.com.cy ίσως ξαναδείς το splash για 1-2 ανανεώσεις (όσο unregister-άρει ο παλιός SW)
-- Σε incognito θα δουλέψει αμέσως
-- Σε iPhone Safari: Settings → Safari → Clear History and Website Data → δοκιμή ξανά
+Επειδή το browser σου ίσως έχει cached το παλιό σπασμένο `charts-vendor-DGFcTSGr.js`:
+- Σε **incognito** θα δουλέψει αμέσως
+- Σε κανονικό tab: hard refresh (Cmd+Shift+R) ή clear site data
+- Σε iPhone Safari: Settings → Safari → Clear History and Website Data
 
