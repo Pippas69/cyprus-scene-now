@@ -1371,7 +1371,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   // Editable cell component
-  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType, inputClassName }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;inputClassName?: string;}) => {
+  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType, inputClassName, className }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;inputClassName?: string;className?: string;}) => {
     const isEditing = editingField?.id === reservationId && editingField?.field === field;
 
     if (isEditing) {
@@ -1400,7 +1400,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
     return (
       <span
-        className="cursor-pointer rounded transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-2 group/edit text-sm my-0 py-0 px-[2px] mx-0"
+        className={`cursor-pointer rounded transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-2 group/edit text-sm my-0 py-0 px-[2px] mx-0 ${className || ''}`}
         onClick={() => startEdit(reservationId, field, rawValue)}>
         {displayValue}
         <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
@@ -2248,7 +2248,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   reservationId={reservation.id}
                                   field="guest_city"
                                   displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
-                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
+                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''}
+                                  className="text-muted-foreground" />
                                 {ageText && (
                                   <span className="whitespace-nowrap -ml-2 px-px text-xs text-primary-foreground">
                                     {ageText}
