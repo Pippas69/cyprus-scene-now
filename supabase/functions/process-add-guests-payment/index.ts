@@ -41,6 +41,7 @@ serve(async (req) => {
     let reservationId: string | null = null;
     let extraGuests = 0;
     let extraChargeCents = 0;
+    let ticketsExtraCreditCents = 0;
     let newPartySize: number | null = null;
     let newCharge: number | null = null;
     let session: Stripe.Checkout.Session | null = null;
@@ -56,6 +57,7 @@ serve(async (req) => {
       reservationId = md.reservation_id || null;
       extraGuests = parseInt(md.extra_guests || "0", 10);
       extraChargeCents = parseInt(md.extra_charge_cents || "0", 10);
+      ticketsExtraCreditCents = parseInt(md.tickets_extra_credit_cents || "0", 10);
       newPartySize = parseInt(md.new_party_size || "0", 10) || null;
       newCharge = parseInt(md.new_prepaid_charge_cents || "0", 10) || null;
     } else {
@@ -63,6 +65,7 @@ serve(async (req) => {
       reservationId = body.reservation_id;
       extraGuests = body.extra_guests || 0;
       extraChargeCents = body.extra_charge_cents || 0;
+      ticketsExtraCreditCents = body.tickets_extra_credit_cents || 0;
     }
 
     if (!reservationId) throw new Error("Missing reservation_id");
