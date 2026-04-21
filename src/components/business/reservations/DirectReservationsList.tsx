@@ -2248,7 +2248,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   reservationId={reservation.id}
                                   field="guest_city"
                                   displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
-                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''} />
+                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''}
+                                  className="text-muted-foreground" />
                                 {ageText && (
                                   <span className="whitespace-nowrap -ml-2 px-px text-xs text-primary-foreground">
                                     {ageText}
