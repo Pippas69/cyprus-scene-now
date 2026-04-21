@@ -1371,7 +1371,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   // Editable cell component
-  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType, inputClassName }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;inputClassName?: string;}) => {
+  const EditableCell = ({ reservationId, field, displayValue, rawValue, inputType, inputClassName, className }: {reservationId: string;field: string;displayValue: string;rawValue: string;inputType?: string;inputClassName?: string;className?: string;}) => {
     const isEditing = editingField?.id === reservationId && editingField?.field === field;
 
     if (isEditing) {
