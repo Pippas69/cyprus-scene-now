@@ -450,7 +450,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         linked && reservationIds.length > 0
           ? supabase
               .from('ticket_orders')
-              .select('linked_reservation_id, subtotal_cents, total_cents')
+              .select('linked_reservation_id, subtotal_cents, total_cents, transaction_code, created_at')
               .in('linked_reservation_id', reservationIds)
               .eq('status', 'completed')
           : Promise.resolve({ data: null }),
