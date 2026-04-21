@@ -40,8 +40,40 @@ interface ManualEntryDialogProps {
   entryType: EntryType;
   eventId?: string | null;
   seatingOptions?: string[];
-  onSuccess: () => void;
+  onSuccess: (optimistic?: OptimisticEntry) => void;
 }
+
+export type OptimisticEntry =
+  | {
+      kind: 'ticket';
+      row: {
+        id: string;
+        order_id: string;
+        ticket_id: string;
+        guest_name: string;
+        guest_age: number | null;
+        guest_city: string | null;
+        buyer_phone: string | null;
+        tier_id: string | null;
+        tier_name: string;
+        tier_price_cents: number;
+        subtotal_cents: number;
+        ticket_code: string | null;
+        staff_memo: string | null;
+        is_manual_entry: true;
+        manual_status: null;
+        checked_in: false;
+        status: 'completed';
+        created_at: string;
+        source: 'purchase';
+        is_account_user: false;
+        account_city: null;
+      };
+    }
+  | {
+      kind: 'reservation';
+      row: Record<string, any>;
+    };
 
 export const ManualEntryDialog = ({
   open,
@@ -297,6 +329,7 @@ export const ManualEntryDialog = ({
       if (entryType === 'ticket' && eventId) {
         // Create ticket_order first (tickets.order_id FK)
         const orderId = crypto.randomUUID();
+        const ticketId = crypto.randomUUID();
         const resolvedTierId = ticketTierId || null;
 
         const selectedTier = resolvedTierId ? ticketTiers.find(t => t.id === resolvedTierId) : null;
@@ -318,6 +351,7 @@ export const ManualEntryDialog = ({
         if (orderError) throw orderError;
 
         const { error } = await supabase.from('tickets').insert({
+          id: ticketId,
           event_id: eventId,
           user_id: user.id,
           guest_name: trimmedName,
@@ -331,6 +365,39 @@ export const ManualEntryDialog = ({
           staff_memo: notes.trim() || null,
         } as any);
         if (error) throw error;
+
+        const optimistic: OptimisticEntry = {
+          kind: 'ticket',
+          row: {
+            id: orderId,
+            order_id: orderId,
+            ticket_id: ticketId,
+            guest_name: trimmedName,
+            guest_age: minAge ? parseInt(minAge) : null,
+            guest_city: city.trim() || null,
+            buyer_phone: phone.trim() || null,
+            tier_id: resolvedTierId,
+            tier_name: selectedTier?.name || '',
+            tier_price_cents: selectedTier?.price_cents || 0,
+            subtotal_cents: priceCents,
+            ticket_code: null,
+            staff_memo: notes.trim() || null,
+            is_manual_entry: true,
+            manual_status: null,
+            checked_in: false,
+            status: 'completed',
+            created_at: new Date().toISOString(),
+            source: 'purchase',
+            is_account_user: false,
+            account_city: null,
+          },
+        };
+
+        toast.success(txt.saved);
+        resetForm();
+        onOpenChange(false);
+        onSuccess(optimistic);
+        return;
       } else {
         const insertData: Record<string, any> = {
           user_id: user.id,
@@ -346,22 +413,15 @@ export const ManualEntryDialog = ({
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        // Hybrid: min charge ALWAYS saved (required regardless of walk-in)
-        // Reservation: min charge saved ONLY when walk-in is OFF (covered by ticket otherwise)
         const shouldSaveMinCharge = entryType === 'hybrid' || (entryType === 'reservation' && !isWalkIn) || (entryType === 'direct' && !isWalkIn);
         if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
-        // Note: ticket tier selection for walk-in reservation/hybrid is validated in the form
-        // but not persisted on `reservations` (no `ticket_tier_id` column). Future enhancement
-        // can store it via a migration if needed for analytics.
-        // City for ticket / reservation / hybrid (saved as guest_city if column exists, else stored in notes if not)
         if (city.trim() && entryType !== 'direct') {
           insertData.guest_city = city.trim();
         }
 
         if (entryType === 'direct') {
           insertData.business_id = businessId;
-          // Combine date + time into preferred_time
           if (date.trim()) {
             const dateStr = date.trim();
             const timeStr = time.trim() || '00:00';
@@ -380,23 +440,23 @@ export const ManualEntryDialog = ({
         const { data: reservationData, error } = await supabase
           .from('reservations')
           .insert(insertData as any)
-          .select('id')
+          .select('id, business_id, user_id, reservation_name, party_size, status, created_at, phone_number, preferred_time, seating_preference, special_requests, business_notes, staff_memo, confirmation_code, qr_code_token, transaction_code, checked_in_at, auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id, prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source, cancellation_reason, email, guest_ages, guest_city')
           .single();
         if (error) throw error;
 
-        // Assign table if selected
         if (tableId && reservationData?.id) {
           await supabase.from('reservation_table_assignments').insert({
             reservation_id: reservationData.id,
             table_id: tableId,
           } as any);
         }
-      }
 
-      toast.success(txt.saved);
-      resetForm();
-      onOpenChange(false);
-      onSuccess();
+        toast.success(txt.saved);
+        resetForm();
+        onOpenChange(false);
+        onSuccess({ kind: 'reservation', row: { ...reservationData, profiles: null, offer_purchase: null } });
+        return;
+      }
     } catch (err) {
       console.error('Error saving manual entry:', err);
       toast.error(txt.error);

@@ -10,7 +10,7 @@ import {
   Calendar,
   Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
 'lucide-react';
-import { ManualEntryDialog } from './ManualEntryDialog';
+import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
@@ -267,6 +267,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       [...items].sort((a, b) => compareNames(a.guest_name || '', b.guest_name || '')),
     [compareNames]
   );
+
+  // Instant optimistic insert after manual entry save — UI updates without waiting on refetch.
+  const handleManualEntrySuccess = useCallback((optimistic?: OptimisticEntry) => {
+    if (optimistic) {
+      if (optimistic.kind === 'ticket') {
+        setTicketOnlyOrders((prev) => {
+          if (prev.some((t) => t.ticket_id === optimistic.row.ticket_id)) return prev;
+          return sortTicketOrdersByName([optimistic.row as TicketOnlyOrder, ...prev]);
+        });
+      } else if (optimistic.kind === 'reservation') {
+        setReservations((prev) => {
+          if (prev.some((r) => r.id === optimistic.row.id)) return prev;
+          return sortReservationsByName([optimistic.row as DirectReservation, ...prev]);
+        });
+      }
+    }
+    // Background reconciliation
+    fetchReservations(true);
+    queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId, sortReservationsByName, sortTicketOrdersByName]);
 
   useEffect(() => {
     checkBusinessFlags().then(() => fetchReservations());
@@ -2014,7 +2035,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+            onSuccess={handleManualEntrySuccess}
           />
         </div>
       );
@@ -2037,7 +2058,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             language={language}
             entryType={getEntryType()}
             eventId={selectedEventId}
-            onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+            onSuccess={handleManualEntrySuccess}
           />
         </div>
       );
@@ -2346,7 +2367,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           language={language}
           entryType={getEntryType()}
           eventId={selectedEventId}
-          onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+          onSuccess={handleManualEntrySuccess}
         />
       </div>);
 
@@ -2514,7 +2535,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         language={language}
         entryType={getEntryType()}
         eventId={selectedEventId}
-        onSuccess={() => { fetchReservations(true); queryClient.invalidateQueries({ queryKey: ['audience-metrics', businessId] }); }}
+        onSuccess={handleManualEntrySuccess}
       />
     </div>);
 };
