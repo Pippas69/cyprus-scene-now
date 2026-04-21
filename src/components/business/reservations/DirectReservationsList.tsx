@@ -472,6 +472,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       });
 
       const reservationPaidMap = new Map<string, number>();
+      // Track earliest linked ticket order's transaction_code per reservation
+      const reservationTicketTxCodeMap = new Map<string, { code: string; createdAt: string }>();
       (linkedOrderTotalsResult.data || []).forEach((order: any) => {
         if (!order.linked_reservation_id) return;
         const paidCents = typeof order.subtotal_cents === 'number'
@@ -481,6 +483,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           order.linked_reservation_id,
           (reservationPaidMap.get(order.linked_reservation_id) || 0) + paidCents,
         );
+        if (order.transaction_code) {
+          const prev = reservationTicketTxCodeMap.get(order.linked_reservation_id);
+          if (!prev || (order.created_at && order.created_at < prev.createdAt)) {
+            reservationTicketTxCodeMap.set(order.linked_reservation_id, {
+              code: order.transaction_code,
+              createdAt: order.created_at || '',
+            });
+          }
+        }
       });
 
       const enrichedData = (data || []).map((r) => ({
@@ -490,6 +501,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         ticket_credit_cents: reservationPaidMap.has(r.id)
           ? reservationPaidMap.get(r.id)
           : r.ticket_credit_cents,
+        // For auto-created reservations from ticket purchases, show the ticket order's
+        // transaction code instead of the reservation's own — gives one unified code per
+        // customer transaction in the business dashboard view.
+        transaction_code: reservationTicketTxCodeMap.has(r.id)
+          ? reservationTicketTxCodeMap.get(r.id)!.code
+          : r.transaction_code,
         offer_purchase: offerLinkedIds.has(r.id) ? { id: r.id, discount: { title: 'Offer' } } : null
       })) as DirectReservation[];
       const sortedByName = sortReservationsByName(enrichedData);
