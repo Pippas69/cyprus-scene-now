@@ -280,7 +280,12 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   const fetchReservations = async () => {
     setLoading(true);
-    const nowIso = new Date().toISOString();
+    // Reservations stay in "active" tab for 10 hours after the event start
+    // (or after the requested arrival time for direct reservations).
+    // This prevents reservations from disappearing while the user may still
+    // be at the venue (late arrivals, late-night clubs, etc.).
+    const ACTIVE_GRACE_HOURS = 10;
+    const cutoffIso = new Date(Date.now() - ACTIVE_GRACE_HOURS * 60 * 60 * 1000).toISOString();
 
     const reservationFields = `
       id, event_id, business_id, user_id, reservation_name, party_size, status,
@@ -315,7 +320,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .not('event_id', 'is', null)
         .neq('status', 'cancelled')
-        .gte('events.end_at', nowIso),
+        .gte('events.start_at', cutoffIso),
       supabase
         .from('reservations')
         .select(`
@@ -327,7 +332,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         `)
         .eq('user_id', userId)
         .not('event_id', 'is', null)
-        .lt('events.end_at', nowIso)
+        .lt('events.start_at', cutoffIso)
         .limit(100),
       supabase
         .from('reservations')
@@ -336,14 +341,14 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .is('event_id', null)
         .not('business_id', 'is', null)
         .neq('status', 'cancelled')
-        .gte('preferred_time', nowIso),
+        .gte('preferred_time', cutoffIso),
       supabase
         .from('reservations')
         .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
         .eq('user_id', userId)
         .is('event_id', null)
         .not('business_id', 'is', null)
-        .lt('preferred_time', nowIso)
+        .lt('preferred_time', cutoffIso)
         .limit(100),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
@@ -453,10 +458,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       });
 
     const syntheticUpcoming = syntheticEventReservations.filter(
-      (r) => r.events && new Date(r.events.end_at) >= new Date(nowIso)
+      (r) => r.events && new Date(r.events.start_at) >= new Date(cutoffIso)
     );
     const syntheticPast = syntheticEventReservations.filter(
-      (r) => !r.events || new Date(r.events.end_at) < new Date(nowIso)
+      (r) => !r.events || new Date(r.events.start_at) < new Date(cutoffIso)
     );
 
     const filterOutOffers = (reservations: ReservationData[]) =>
