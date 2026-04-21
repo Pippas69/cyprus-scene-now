@@ -80,7 +80,7 @@ serve(async (req) => {
       .from("reservations")
       .select(`
         id, user_id, event_id, business_id, party_size, seating_type_id,
-        prepaid_min_charge_cents, reservation_name, phone_number, special_requests,
+        prepaid_min_charge_cents, ticket_credit_cents, reservation_name, phone_number, special_requests,
         confirmation_code, email,
         events ( id, title, start_at, location, venue_name, businesses ( id, name, user_id ) )
       `)
@@ -108,15 +108,28 @@ serve(async (req) => {
 
       const targetCount = (newPartySize || (reservation.party_size + extraGuests));
 
-      // Update reservation party_size + charge
+      // Compute new ticket_credit_cents (only the prepaid portion of new tickets adds to credit).
+      // Backward-compat: if metadata didn't carry it, fall back to extraChargeCents (legacy behavior).
+      const creditDelta = ticketsExtraCreditCents > 0
+        ? ticketsExtraCreditCents
+        : (extraChargeCents > 0 ? extraChargeCents : 0);
+      const newTicketCreditCents = (reservation.ticket_credit_cents || 0) + creditDelta;
+
+      // Update reservation party_size + min charge + ticket_credit_cents
       const { error: updErr } = await supabase
         .from("reservations")
         .update({
           party_size: targetCount,
           prepaid_min_charge_cents: newCharge ?? reservation.prepaid_min_charge_cents,
+          ticket_credit_cents: newTicketCreditCents,
         })
         .eq("id", reservationId);
       if (updErr) throw updErr;
+
+      log("Updated reservation totals", {
+        targetCount, newCharge, creditDelta, newTicketCreditCents,
+        prevCredit: reservation.ticket_credit_cents,
+      });
 
       // Add new guest tickets from session metadata in a NEW dedicated order,
       // so totals sum properly across all add-guests batches.
