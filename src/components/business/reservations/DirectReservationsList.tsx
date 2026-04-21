@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/FloorPlanAssignmentDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 
@@ -114,6 +115,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
+  // Transaction code dialog (opens when user clicks on phone number)
+  const [transactionCodeDialog, setTransactionCodeDialog] = useState<{ code: string; name: string } | null>(null);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
@@ -2196,15 +2199,22 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             displayValue={reservation.reservation_name}
                             rawValue={reservation.reservation_name} />
                             {reservation.phone_number &&
-                              <span className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (reservation.transaction_code) {
+                                    setTransactionCodeDialog({
+                                      code: reservation.transaction_code,
+                                      name: reservation.reservation_name,
+                                    });
+                                  }
+                                }}
+                                className="-ml-1.5 mx-0 my-0 px-0 py-0 text-sm text-muted-foreground hover:text-primary hover:underline cursor-pointer text-left transition-colors"
+                                title={language === 'el' ? 'Κλικ για κωδικό συναλλαγής' : 'Click for transaction code'}
+                              >
                                 {reservation.phone_number.replace(/^\+357/, '')}
-                              </span>
+                              </button>
                             }
-                            {reservation.transaction_code &&
-                          <span className="text-[10px] font-mono tracking-wider text-muted-foreground/70 -ml-1.5 mx-0 my-0 px-[2px] py-0">
-                            {reservation.transaction_code}
-                              </span>
-                          }
                           </div>
                           {renderCustomerNoteBubble(reservation)}
                         </div>
@@ -2601,5 +2611,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         eventId={selectedEventId}
         onSuccess={handleManualEntrySuccess}
       />
+      <Dialog open={!!transactionCodeDialog} onOpenChange={(open) => { if (!open) setTransactionCodeDialog(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction Code'}</DialogTitle>
+            <DialogDescription>
+              {language === 'el'
+                ? `Μοναδικός κωδικός για ${transactionCodeDialog?.name ?? ''}. Είναι ο ίδιος κωδικός που στάλθηκε στο email του πελάτη.`
+                : `Unique code for ${transactionCodeDialog?.name ?? ''}. This is the same code sent to the customer's email.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4 rounded-xl border-2 border-primary/30 bg-primary/5 px-6 py-6 text-center">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">
+              {language === 'el' ? 'ΚΩΔΙΚΟΣ ΣΥΝΑΛΛΑΓΗΣ' : 'TRANSACTION CODE'}
+            </p>
+            <p className="text-3xl font-bold font-mono tracking-[0.2em] text-primary">
+              {transactionCodeDialog?.code}
+            </p>
+            <p className="text-xs text-muted-foreground mt-3">
+              {language === 'el'
+                ? 'Χρησιμοποίησε αυτόν τον κωδικό όταν επικοινωνείς με τον πελάτη'
+                : 'Use this code when communicating with the customer'}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>);
 };
