@@ -310,8 +310,8 @@ export const ManualEntryDialog = ({
         toast.error(txt.partySizeRequired);
         return;
       }
-      // Min charge: hybrid = always required; reservation = required only when walk-in is OFF
-      const minChargeRequired = entryType === 'hybrid' || !isWalkIn;
+      // Min charge: required only when walk-in is OFF (both hybrid & reservation hide it on walk-in)
+      const minChargeRequired = !isWalkIn;
       if (minChargeRequired && !minCharge.trim()) {
         toast.error(txt.minChargeRequired);
         return;
@@ -425,7 +425,7 @@ export const ManualEntryDialog = ({
         };
 
         if (minAge) insertData.min_age = parseInt(minAge);
-        const shouldSaveMinCharge = entryType === 'hybrid' || (entryType === 'reservation' && !isWalkIn) || (entryType === 'direct' && !isWalkIn);
+        const shouldSaveMinCharge = !isWalkIn && (entryType === 'hybrid' || entryType === 'reservation' || entryType === 'direct');
         if (shouldSaveMinCharge && minCharge) insertData.prepaid_min_charge_cents = Math.round(parseFloat(minCharge) * 100);
         if (!isWalkIn && seatingTypeId) insertData.seating_type_id = seatingTypeId;
         if (city.trim() && entryType !== 'direct') {
@@ -678,8 +678,8 @@ export const ManualEntryDialog = ({
             </div>
           )}
 
-          {/* === HYBRID: Min charge (always shown, always required) === */}
-          {entryType === 'hybrid' && (
+          {/* === HYBRID: Min charge (hidden when walk-in is ON) === */}
+          {entryType === 'hybrid' && !isWalkIn && (
             <div className={fieldClass}>
               <Label className={labelClass}>{txt.minCharge} *</Label>
               <Input

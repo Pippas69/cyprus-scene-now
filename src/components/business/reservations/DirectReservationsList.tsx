@@ -2222,11 +2222,14 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               peopleText = `1 ${language === 'el' ? 'άτομο' : 'person'}`;
                               ageText = age ? `${age} ${language === 'el' ? 'ετών' : 'years'}` : '';
                             } else {
-                              const ticketAges = agesByReservation[reservation.id];
+              const ticketAges = agesByReservation[reservation.id];
                               const normalizedTicketMinAge = ticketAges && ticketAges.length > 0
                                 ? `${Math.min(...ticketAges)}+`
                                 : '';
-                              const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || '';
+                              const manualMinAge = typeof reservation.min_age === 'number' && reservation.min_age > 0
+                                ? `${reservation.min_age}+`
+                                : '';
+                              const agesStr = normalizedTicketMinAge || (reservation as any).guest_ages || manualMinAge || '';
                               const hasPeople = !!reservation.party_size;
                               peopleText = hasPeople
                                 ? `${reservation.party_size} ${t.people}`
