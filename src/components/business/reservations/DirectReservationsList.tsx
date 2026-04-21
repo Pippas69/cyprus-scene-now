@@ -2611,5 +2611,30 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         eventId={selectedEventId}
         onSuccess={handleManualEntrySuccess}
       />
+      <Dialog open={!!transactionCodeDialog} onOpenChange={(open) => { if (!open) setTransactionCodeDialog(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{language === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction Code'}</DialogTitle>
+            <DialogDescription>
+              {language === 'el'
+                ? `Μοναδικός κωδικός για ${transactionCodeDialog?.name ?? ''}. Είναι ο ίδιος κωδικός που στάλθηκε στο email του πελάτη.`
+                : `Unique code for ${transactionCodeDialog?.name ?? ''}. This is the same code sent to the customer's email.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-4 rounded-xl border-2 border-primary/30 bg-primary/5 px-6 py-6 text-center">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">
+              {language === 'el' ? 'ΚΩΔΙΚΟΣ ΣΥΝΑΛΛΑΓΗΣ' : 'TRANSACTION CODE'}
+            </p>
+            <p className="text-3xl font-bold font-mono tracking-[0.2em] text-primary">
+              {transactionCodeDialog?.code}
+            </p>
+            <p className="text-xs text-muted-foreground mt-3">
+              {language === 'el'
+                ? 'Χρησιμοποίησε αυτόν τον κωδικό όταν επικοινωνείς με τον πελάτη'
+                : 'Use this code when communicating with the customer'}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>);
 };
