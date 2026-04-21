@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Calendar,
-  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save } from
+  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star } from
 'lucide-react';
 import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
@@ -1610,14 +1610,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const handleSaveMemo = async (reservationId: string) => {
     try {
+      const trimmed = memoValue.slice(0, 150);
+      const highlight = !!trimmed && memoHighlighted;
       const { error } = await supabase
         .from('reservations')
-        .update({ staff_memo: memoValue || null, updated_at: new Date().toISOString() } as any)
+        .update({ staff_memo: trimmed || null, staff_memo_highlighted: highlight, updated_at: new Date().toISOString() } as any)
         .eq('id', reservationId);
       if (error) throw error;
       toast.success(t.saved);
       setEditingMemo(null);
       setMemoValue('');
+      setMemoHighlighted(false);
+      setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, staff_memo: trimmed || null, staff_memo_highlighted: highlight } : r));
       fetchReservations(true);
     } catch (error) {
       console.error('Error saving memo:', error);
