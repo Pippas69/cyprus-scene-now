@@ -841,7 +841,6 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
             const config = formData.seatingConfigs[seatingType];
             const maxPartySize = Math.max(...config.tiers.map(t => t.maxPeople), 1);
             const autoName = seatingType === 'bar' ? 'Bar' : seatingType === 'table' ? 'Table' : seatingType === 'vip' ? 'VIP' : 'Sofa';
-            return {
             // NEW SEMANTICS: price_cents = entry + prepaid (συνολική χρέωση πελάτη)
             const entryCents = Math.max(0, config.ticketPriceCents);
             const prepaidCents = Math.max(0, config.ticketPrepaidCents ?? 0);
