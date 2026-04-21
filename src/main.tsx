@@ -81,7 +81,16 @@ const cleanupRecoveryState = () => {
 };
 
 const recoverFromChunkLoadError = async () => {
-  if (safeSessionStorage.getItem(CHUNK_RECOVERY_KEY)) return;
+  // If a recovery already happened in this tab/URL, do not loop — show error UI instead.
+  const url = new URL(window.location.href);
+  if (
+    safeSessionStorage.getItem(CHUNK_RECOVERY_KEY) ||
+    url.searchParams.has(CHUNK_RECOVERY_QUERY_PARAM)
+  ) {
+    removeInlineSplash();
+    renderBootstrapError();
+    return;
+  }
   safeSessionStorage.setItem(CHUNK_RECOVERY_KEY, "1");
 
   try {
