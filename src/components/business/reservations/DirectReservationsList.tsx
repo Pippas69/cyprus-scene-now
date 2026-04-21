@@ -2268,7 +2268,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
 
                       {/* 3. Ελάχιστη Χρέωση - single combined editable */}
-                      <TableCell className="align-top pr-6 px-[24px]">
+                      <TableCell className="align-top pr-6 px-[38px]">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
                             // Invitation source: show "Πρόσκληση" badge only
