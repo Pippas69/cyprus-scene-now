@@ -42,8 +42,11 @@ export default defineConfig(({ mode }) => ({
             return 'react-vendor';
           }
           if (id.includes('mapbox-gl')) return 'mapbox-vendor';
-          if (id.includes('recharts') || id.includes('/d3-') || id.includes('victory-vendor')) return 'charts-vendor';
-          if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('xlsx') || id.includes('@ffmpeg')) return 'pdf-vendor';
+          // NOTE: charts (recharts/d3) and pdf (jspdf/html2canvas/xlsx) are
+          // intentionally NOT in manualChunks — splitting them caused
+          // "Cannot access 'P' before initialization" TDZ crashes due to
+          // circular deps with prop-types/react-smooth/lodash. Let Rollup
+          // merge them into the lazy route chunks that import them.
           if (id.includes('@supabase')) return 'supabase-vendor';
           if (id.includes('@radix-ui')) return 'ui-vendor';
           if (id.includes('@tanstack')) return 'query-vendor';
