@@ -2304,7 +2304,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                     {language === 'el' ? 'Πληρωμή στο κατάστημα' : 'Pay at venue'}
                                   </span>
                                   {ticketPaidCents > 0 && (
-                                    <span className="text-xs whitespace-nowrap text-primary-foreground">
+                                    <span className="text-xs whitespace-nowrap text-muted-foreground">
                                       {language === 'el' ? 'Προπληρωμή' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
                                     </span>
                                   )}
