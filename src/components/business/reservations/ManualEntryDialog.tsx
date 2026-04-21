@@ -110,6 +110,12 @@ export const ManualEntryDialog = ({
       table: 'Τραπέζι',
       walkInToggle: 'Walk-in',
       selectOption: 'Επιλέξτε...',
+      cityRequired: 'Η πόλη είναι υποχρεωτική',
+      ageRequired: 'Η ηλικία είναι υποχρεωτική',
+      minAgeRequired: 'Η ελάχιστη ηλικία είναι υποχρεωτική',
+      partySizeRequired: 'Ο αριθμός ατόμων είναι υποχρεωτικός',
+      minChargeRequired: 'Η ελάχιστη χρέωση είναι υποχρεωτική',
+      ticketTypeRequired: 'Ο τύπος εισιτηρίου είναι υποχρεωτικός',
     },
     en: {
       titleDirect: 'Add reservation',
@@ -146,6 +152,12 @@ export const ManualEntryDialog = ({
       table: 'Table',
       walkInToggle: 'Walk-in',
       selectOption: 'Select...',
+      cityRequired: 'City is required',
+      ageRequired: 'Age is required',
+      minAgeRequired: 'Minimum age is required',
+      partySizeRequired: 'Party size is required',
+      minChargeRequired: 'Minimum charge is required',
+      ticketTypeRequired: 'Ticket type is required',
     },
   };
 
