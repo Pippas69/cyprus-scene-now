@@ -115,6 +115,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
   const [loading, setLoading] = useState(true);
+  // Transaction code dialog (opens when user clicks on phone number)
+  const [transactionCodeDialog, setTransactionCodeDialog] = useState<{ code: string; name: string } | null>(null);
   const [isTicketLinked, setIsTicketLinked] = useState(false);
   const fetchReservationsRequestRef = useRef(0);
   // Kaliva: age data per reservation
