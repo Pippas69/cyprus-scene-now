@@ -26,8 +26,8 @@ const labels = {
   el: {
     bottle: 'Μπουκάλι',
     bottlePlural: 'Μπουκάλια',
-    premium: 'Premium Μπουκάλι',
-    premiumPlural: 'Premium Μπουκάλια',
+    premium: 'Premium Bottle',
+    premiumPlural: 'Premium Bottles',
     minSpend: 'Ελάχιστη κατανάλωση',
     atVenue: 'στο κατάστημα',
   },
