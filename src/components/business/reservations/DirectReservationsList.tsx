@@ -2300,7 +2300,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               return (
                                 <div className="flex flex-col items-start">
                                   <span className="text-sm font-medium text-foreground whitespace-nowrap">{bottle}</span>
-                                  <span className="text-xs whitespace-nowrap px-0 my-[5px] text-primary-foreground">
+                                  <span className="whitespace-nowrap px-0 my-[5px] text-sm text-muted-foreground">
                                     {language === 'el' ? 'Πληρωμή στο κατάστημα' : 'Pay at venue'}
                                   </span>
                                   {ticketPaidCents > 0 && (
