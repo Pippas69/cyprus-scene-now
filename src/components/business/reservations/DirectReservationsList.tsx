@@ -347,9 +347,19 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     ).
     subscribe();
 
+    const reservationGuestsChannel = supabase.
+    channel('direct_reservation_guests_changes').
+    on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'reservation_guests' },
+      () => fetchReservations(true)
+    ).
+    subscribe();
+
     return () => {
       supabase.removeChannel(reservationsChannel);
       supabase.removeChannel(ticketsChannel);
+      supabase.removeChannel(reservationGuestsChannel);
     };
   }, [businessId, selectedEventId, selectedEventType, forceEventMode]);
 
@@ -714,7 +724,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           // Fire ALL enrichment queries in parallel
           const enrichmentPromises: Promise<any>[] = [
             fetchAgesForReservations(allIds),
-            fetchCheckInCounts(allIds),
+            fetchCheckInCounts(allReservations.filter((r) => !r.id.startsWith('walkin-')).map((r) => ({
+              id: r.id,
+              party_size: r.party_size,
+            }))),
             fetchCitiesForReservations(allReservations.filter(r => !r.id.startsWith('walkin-'))),
             fetchTableAssignments(allIds, selectedEventId),
           ];
@@ -867,7 +880,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
-  const fetchCheckInCounts = async (reservationIds: string[]) => {
+  const fetchCheckInCounts = async (reservationRows: Array<Pick<DirectReservation, 'id' | 'party_size'>>) => {
+    const reservationIds = reservationRows.map((reservation) => reservation.id).filter(Boolean);
     if (reservationIds.length === 0) return;
 
     const [ordersResult, guestQrsResult, compReservationsResult] = await Promise.all([
@@ -891,8 +905,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     const compReservations = compReservationsResult.data || [];
 
     const countsMap: Record<string, { used: number; total: number }> = {};
+    const expectedTotals = new Map(
+      reservationRows.map((reservation) => [reservation.id, Math.max(0, Number(reservation.party_size) || 0)])
+    );
     const ensure = (reservationId: string) => {
-      if (!countsMap[reservationId]) countsMap[reservationId] = { used: 0, total: 0 };
+      if (!countsMap[reservationId]) {
+        countsMap[reservationId] = {
+          used: 0,
+          total: expectedTotals.get(reservationId) || 0,
+        };
+      }
     };
 
     reservationIds.forEach(ensure);
@@ -913,7 +935,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         const resId = orderToReservation[ticket.order_id];
         if (!resId) return;
         ensure(resId);
-        countsMap[resId].total++;
         if (ticket.status === 'used') {
           countsMap[resId].used++;
         }
@@ -923,7 +944,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     guestQrs.forEach((guest) => {
       if (!guest.reservation_id) return;
       ensure(guest.reservation_id);
-      countsMap[guest.reservation_id].total++;
       if (guest.checked_in_at) {
         countsMap[guest.reservation_id].used++;
       }
@@ -932,10 +952,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     compReservations.forEach((comp) => {
       if (!comp.parent_reservation_id) return;
       ensure(comp.parent_reservation_id);
-      countsMap[comp.parent_reservation_id].total++;
       if (comp.checked_in_at) {
         countsMap[comp.parent_reservation_id].used++;
       }
+    });
+
+    Object.values(countsMap).forEach((counts) => {
+      counts.total = Math.max(counts.total, counts.used);
     });
 
     setCheckInCounts(countsMap);
