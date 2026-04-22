@@ -932,41 +932,107 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
         )}
       </div>
 
-      {/* Bottle mode: show consumption breakdown (no online deduction) */}
-      {isCurrentBottleTier && currentBottleLabel && (
-        <>
-          <Separator />
-          <div className="border border-border/40 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs font-semibold text-foreground">
-                💡 {t.howPaymentWorks}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">
-                {t.minimumConsumption}{' '}
-              </span>
-              <span className="font-semibold text-foreground">{currentBottleLabel}</span>
-            </div>
-            {ticketTotal > 0 && (
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{t.ticketCostOnline}:</span>
-                <span className="font-semibold text-foreground">{formatPrice(ticketTotal)}</span>
-              </div>
-            )}
+      {/* Bottle mode: show consumption breakdown — 3 cases mirroring amount mode */}
+      {isCurrentBottleTier && currentBottleLabel && (() => {
+        const creditPerTicket = ticketTier?.prepaid_amount_cents ?? 0;
+        const entryPerTicket = Math.max(0, (ticketTier?.price_cents ?? 0) - creditPerTicket);
+        const creditTotal = creditPerTicket * partySize;
+        const entryTotal = entryPerTicket * partySize;
+        const hasCredit = creditTotal > 0;
+        const hasEntry = entryTotal > 0;
+
+        const minConsumptionRow = (
+          <>
             <div className="border-t border-border/30 my-1" />
             <div className="flex justify-between text-xs">
-              <span className="font-semibold text-foreground">{t.bottleAtVenue}:</span>
+              <span className="font-semibold text-foreground">{t.minimumConsumption}:</span>
               <span className="font-bold text-foreground">{currentBottleLabel}</span>
             </div>
-            <p className="text-[9px] text-muted-foreground mt-1">
-              {language === 'el'
-                ? 'Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.'
-                : 'The prepayment is automatically deducted from your final bill.'}
-            </p>
-          </div>
-        </>
-      )}
+          </>
+        );
+
+        // Case A: only entry, no credit
+        if (hasEntry && !hasCredit) {
+          return (
+            <>
+              <Separator />
+              <div className="border border-border/40 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-foreground">
+                    💡 {t.howPaymentWorks}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.entryFeeLine} ({partySize} × {formatPrice(entryPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(entryTotal)}</span>
+                </div>
+                {minConsumptionRow}
+                <p className="text-[9px] text-muted-foreground mt-1">{t.onlyEntryNote}</p>
+              </div>
+            </>
+          );
+        }
+
+        // Case B: entry + credit
+        if (hasEntry && hasCredit) {
+          return (
+            <>
+              <Separator />
+              <div className="border border-border/40 rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-foreground">
+                    💡 {t.howPaymentWorks}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.entryFeeLine} ({partySize} × {formatPrice(entryPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(entryTotal)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.tableCreditLine} ({partySize} × {formatPrice(creditPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(creditTotal)}</span>
+                </div>
+                {minConsumptionRow}
+                <p className="text-[9px] text-muted-foreground mt-1">{t.notRefundedNote}</p>
+              </div>
+            </>
+          );
+        }
+
+        // Case C: only credit (or neither — pure bottle ticket)
+        return (
+          <>
+            <Separator />
+            <div className="border border-border/40 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold text-foreground">
+                  💡 {t.howPaymentWorks}
+                </span>
+              </div>
+              {hasCredit && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {t.tableCreditLine} ({partySize} × {formatPrice(creditPerTicket)}):
+                  </span>
+                  <span className="font-semibold text-foreground">{formatPrice(creditTotal)}</span>
+                </div>
+              )}
+              {minConsumptionRow}
+              <p className="text-[9px] text-muted-foreground mt-1">
+                {language === 'el'
+                  ? 'Η προπληρωμή αφαιρείται αυτόματα από τον τελικό λογαριασμό σας.'
+                  : 'The prepayment is automatically deducted from your final bill.'}
+              </p>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Amount mode: payment breakdown — handles 3 scenarios */}
       {!isCurrentBottleTier && (() => {
