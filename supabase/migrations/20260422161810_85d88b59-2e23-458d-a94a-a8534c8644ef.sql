@@ -1,0 +1,2 @@
+DROP FUNCTION IF EXISTS public.book_slot_atomically(uuid, date, text, integer, text, text, text, text, boolean);
+DROP FUNCTION IF EXISTS public.sync_crm_guest_from_ticket_data(uuid, uuid, text, uuid, text);
