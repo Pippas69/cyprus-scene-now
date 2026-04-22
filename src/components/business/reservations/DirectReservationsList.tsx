@@ -413,6 +413,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           query = query.eq('event_id', selectedEventId);
         }
         query = query.or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+        // Hide comp guest rows from the main list — they are shown as a sub-line under the parent reservation
+        query = query.or('is_comp.is.null,is_comp.eq.false');
       } else {
         query = query.eq('business_id', businessId).is('event_id', null);
       }
@@ -2270,6 +2272,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               ageBadge = agesStr ? `${agesStr}` : '';
                             }
                             const combinedPeople = ageBadge ? `${peopleText}(${ageBadge})` : peopleText;
+                            const compCount = compCountByParent[reservation.id] || 0;
+                            const paidCount = Math.max(0, (reservation.party_size || 0) - compCount);
                             return (
                               <>
                                 <EditableCell
@@ -2278,6 +2282,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   displayValue={combinedPeople}
                                   rawValue={combinedPeople}
                                   inputClassName="h-7 text-sm w-36" />
+                                {compCount > 0 && (
+                                  <span className="text-[11px] font-medium text-primary">
+                                    {paidCount} paid + {compCount} comp
+                                  </span>
+                                )}
                                 <EditableCell
                                   reservationId={reservation.id}
                                   field="guest_city"
