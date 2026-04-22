@@ -956,6 +956,33 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         <StudentDiscountSettings businessId={businessId} />
       )}
 
+      {/* Promoters section toggle */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+            {language === 'el' ? 'Ενότητα Promoters' : 'Promoters Section'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {language === 'el'
+                  ? 'Ενεργοποίησε για να εμφανίζεται η ενότητα Promoters στο sidebar του dashboard σου.'
+                  : 'Enable to show the Promoters section in your dashboard sidebar.'}
+              </p>
+            </div>
+            <Switch
+              checked={promotersEnabled}
+              onCheckedChange={togglePromoters}
+              disabled={promotersLoading}
+              className="shrink-0"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Password Management */}
       <Card>
         <CardHeader className="p-4 sm:p-6">
