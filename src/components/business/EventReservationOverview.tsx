@@ -193,7 +193,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
         );
-        const acceptedCount = stReservations.length;
+        const acceptedCount = stReservations.reduce((sum, r) => sum + (r.party_size || 1), 0);
         const bookedCountForAvailability = liveBookedMap[st.id] ?? 0;
         const revenue = stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
         // Detect if all tiers for this seating type are bottle mode
