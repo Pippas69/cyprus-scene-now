@@ -84,6 +84,18 @@ const DashboardBusiness = () => {
     checkVerificationStatus();
   }, []);
 
+  // Listen for instant promoters_enabled toggle from settings page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ enabled: boolean }>).detail;
+      if (detail && typeof detail.enabled === 'boolean') {
+        setPromotersEnabled(detail.enabled);
+      }
+    };
+    window.addEventListener('fomo:promoters-enabled-changed', handler as EventListener);
+    return () => window.removeEventListener('fomo:promoters-enabled-changed', handler as EventListener);
+  }, []);
+
   // Prevent double page scrollbars in business dashboard (keep only internal main scroll)
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
