@@ -66,7 +66,11 @@ const PartnerLogoMarquee = () => {
                   className="flex flex-col items-center gap-2 flex-shrink-0 group"
                 >
                   <Avatar className="w-14 h-14 sm:w-16 sm:h-16 md:w-[72px] md:h-[72px] ring-2 ring-white/10 group-hover:ring-white/25 transition-all duration-500 shadow-lg shadow-black/20">
-                    <AvatarImage src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 144) : undefined} alt={partner.name} />
+                    <AvatarImage
+                      src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 144) : undefined}
+                      alt={partner.name}
+                      className="object-contain"
+                    />
                     <AvatarFallback className="bg-muted text-white font-semibold text-xs sm:text-sm tracking-wide">
                       {partner.initials}
                     </AvatarFallback>
