@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Calendar,
-  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star } from
+  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star, Plus, Gift } from
 'lucide-react';
 import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
+import { AddCompGuestsDialog } from './AddCompGuestsDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
@@ -157,6 +158,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
   const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
   const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
+  // Comp guests (free invitations attached to a parent reservation)
+  const [compCountByParent, setCompCountByParent] = useState<Record<string, number>>({});
+  const [eventMinAge, setEventMinAge] = useState<number | null>(null);
+  const [eventTitle, setEventTitle] = useState<string | null>(null);
+  const [addCompFor, setAddCompFor] = useState<DirectReservation | null>(null);
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
