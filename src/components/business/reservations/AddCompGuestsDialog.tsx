@@ -173,38 +173,40 @@ export const AddCompGuestsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-primary" />
-            {t.title}
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md sm:max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 gap-3 sm:gap-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+            <span className="truncate">{t.title}</span>
           </DialogTitle>
-          <DialogDescription>{t.subtitle(reservation.reservation_name)}</DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
+            {t.subtitle(reservation.reservation_name)}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {/* Counter */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">{t.countLabel}</Label>
+            <Label className="text-xs sm:text-sm font-medium">{t.countLabel}</Label>
             <div className="flex items-center gap-3">
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full shrink-0"
                 onClick={() => setCount((c) => Math.max(1, c - 1))}
                 disabled={count <= 1 || submitting}
               >
                 <Minus className="h-4 w-4" />
               </Button>
               <div className="flex-1 text-center">
-                <div className="text-2xl font-bold tabular-nums">{count}</div>
+                <div className="text-xl sm:text-2xl font-bold tabular-nums">{count}</div>
               </div>
               <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full shrink-0"
                 onClick={() => setCount((c) => c + 1)}
                 disabled={submitting}
               >
@@ -214,19 +216,19 @@ export const AddCompGuestsDialog = ({
           </div>
 
           {/* Guest fields */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">{t.guestsHeader}</Label>
-            <div className="space-y-2.5">
+          <div className="space-y-2 sm:space-y-3">
+            <Label className="text-xs sm:text-sm font-medium">{t.guestsHeader}</Label>
+            <div className="space-y-2">
               {guests.map((g, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                <div key={i} className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] sm:text-xs font-semibold text-muted-foreground">
                     {i + 1}
                   </div>
                   <Input
                     value={g.name}
                     onChange={(e) => updateGuest(i, 'name', e.target.value)}
                     placeholder={t.namePlaceholder}
-                    className="flex-1 min-w-0"
+                    className="flex-1 min-w-0 h-9 sm:h-10 text-xs sm:text-sm px-2.5 sm:px-3"
                     disabled={submitting}
                     aria-label={`${t.name} ${i + 1}`}
                   />
@@ -236,7 +238,7 @@ export const AddCompGuestsDialog = ({
                     value={g.age}
                     onChange={(e) => updateGuest(i, 'age', e.target.value)}
                     placeholder={t.age}
-                    className="w-20 shrink-0"
+                    className="w-14 sm:w-20 shrink-0 h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3 text-center"
                     min={minAge || 1}
                     max={120}
                     disabled={submitting}
@@ -246,14 +248,14 @@ export const AddCompGuestsDialog = ({
               ))}
             </div>
             {minAge > 0 && (
-              <p className="text-xs text-muted-foreground">{t.minAgeError(minAge)}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">{t.minAgeError(minAge)}</p>
             )}
           </div>
 
           {/* Single email */}
-          <div className="space-y-2">
-            <Label htmlFor="comp-email" className="text-sm font-medium flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5" />
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="comp-email" className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+              <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               {t.emailLabel}
             </Label>
             <Input
@@ -263,13 +265,14 @@ export const AddCompGuestsDialog = ({
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t.emailPlaceholder}
               disabled={submitting}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
-            <p className="text-xs text-muted-foreground">{t.emailHint}</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground">{t.emailHint}</p>
           </div>
 
           {/* Note */}
-          <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5">
-            <p className="text-xs text-muted-foreground leading-relaxed">{t.note}</p>
+          <div className="rounded-md border border-primary/20 bg-primary/5 px-2.5 sm:px-3 py-2 sm:py-2.5">
+            <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{t.note}</p>
           </div>
 
           {/* Actions */}
@@ -277,25 +280,28 @@ export const AddCompGuestsDialog = ({
             <Button
               type="button"
               variant="ghost"
+              size="sm"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             >
               {t.cancel}
             </Button>
             <Button
               type="button"
+              size="sm"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="min-w-[170px]"
+              className="h-9 sm:h-10 text-xs sm:text-sm px-3 sm:px-4"
             >
               {submitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
                   {t.sending}
                 </>
               ) : (
                 <>
-                  <User className="h-4 w-4 mr-2" />
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   {t.submit}
                 </>
               )}
