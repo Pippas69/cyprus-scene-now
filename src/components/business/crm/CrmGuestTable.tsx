@@ -1,5 +1,6 @@
 import { type CrmGuest } from "@/hooks/useCrmGuests";
 import { useLanguage } from "@/hooks/useLanguage";
+import { translateCity } from "@/lib/cityTranslations";
 import {
   Table,
   TableBody,
@@ -316,7 +317,7 @@ export function CrmGuestTable({ guests, onSelectGuest, floorPlanEnabled, selecte
 
               <TableCell className="py-2.5">
                 {guest.guest_city ? (
-                  <span className="text-sm text-foreground">{guest.guest_city}</span>
+                  <span className="text-sm text-foreground">{translateCity(guest.guest_city, language)}</span>
                 ) : (
                   <span className="text-xs text-muted-foreground/40">—</span>
                 )}

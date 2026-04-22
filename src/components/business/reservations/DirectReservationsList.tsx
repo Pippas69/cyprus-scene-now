@@ -23,6 +23,8 @@ import { FloorPlanAssignmentDialog } from '@/components/business/floorplan/Floor
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
+import { translateCity } from '@/lib/cityTranslations';
+import { translateSeatingType } from '@/lib/seatingTranslations';
 
 
 interface DirectReservation {
@@ -1676,8 +1678,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Editable cell for event seating type (Bar/Table/VIP/Sofa)
   const EventSeatingTypeEditCell = ({ reservationId, currentSeatingTypeId, seatingTypeName }: { reservationId: string; currentSeatingTypeId: string | null; seatingTypeName: string | null }) => {
     const allTypes = Object.entries(seatingTypeNames).map(([id, name]) => {
-      const lower = name.toLowerCase();
-      const label = lower === 'table' ? 'Τραπέζι' : lower === 'sofa' ? 'Καναπές' : lower === 'vip' ? 'VIP' : lower === 'bar' ? 'Bar' : name;
+      const label = translateSeatingType(name, language);
       return { id, label };
     });
 
@@ -2130,7 +2131,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city whitespace-nowrap"
                                   onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
                                 >
-                                  {ticket.guest_city || ticket.account_city}
+                                  {translateCity(ticket.guest_city || ticket.account_city, language)}
                                   <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/city:opacity-100 transition-opacity flex-shrink-0" />
                                 </span>
                               ) : (
@@ -2293,15 +2294,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
                 // Seating type name for this reservation
                 const seatingTypeName = reservation.seating_type_id && seatingTypeNames[reservation.seating_type_id]
-                  ? (() => {
-                      const raw = seatingTypeNames[reservation.seating_type_id!];
-                      const lower = raw.toLowerCase();
-                      if (lower === 'table') return 'Τραπέζι';
-                      if (lower === 'sofa') return 'Καναπές';
-                      if (lower === 'vip') return 'VIP';
-                      if (lower === 'bar') return 'Bar';
-                      return raw;
-                    })()
+                  ? translateSeatingType(seatingTypeNames[reservation.seating_type_id!], language)
                   : null;
 
                 return (
@@ -2368,7 +2361,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 <EditableCell
                                   reservationId={reservation.id}
                                   field="guest_city"
-                                  displayValue={(reservation as any).guest_city || cityByReservation[reservation.id] || '—'}
+                                  displayValue={translateCity((reservation as any).guest_city || cityByReservation[reservation.id], language) || '—'}
                                   rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''}
                                   className="text-muted-foreground" />
                               </>
