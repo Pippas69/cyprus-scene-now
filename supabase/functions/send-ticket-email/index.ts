@@ -36,6 +36,7 @@ const BodySchema = z.object({
   userId: flexId.optional(),
   eventId: flexId.optional(),
   isHybrid: z.boolean().optional(),
+  reservationName: optionalString(200),
 });
 
 Deno.serve(async (req) => {
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage, userId, eventId, isHybrid } = await parseBody(req, BodySchema);
+    const { orderId, userEmail, eventTitle, tickets, eventDate, eventLocation, businessName, customerName, eventCoverImage, userId, eventId, isHybrid, reservationName } = await parseBody(req, BodySchema);
     logStep("Request data", { orderId, userEmail, eventTitle, ticketCount: tickets?.length, businessName, hasEventCover: !!eventCoverImage, isHybrid });
 
     if (!orderId || !userEmail || !tickets || tickets.length === 0) {
@@ -162,6 +163,9 @@ Deno.serve(async (req) => {
     }
     if (formattedTime) {
       infoRows += detailRow('Ώρα', formattedTime);
+    }
+    if (reservationName) {
+      infoRows += detailRow('Όνομα Κράτησης', reservationName);
     }
     if (eventLocation) {
       infoRows += detailRow('Τοποθεσία', eventLocation);

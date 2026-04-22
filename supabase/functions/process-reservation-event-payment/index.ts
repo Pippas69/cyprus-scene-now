@@ -564,7 +564,7 @@ serve(async (req) => {
               </p>
 
               ${infoCard('Λεπτομέρειες Κράτησης',
-                detailRow('Πελάτης', reservation.reservation_name) +
+                detailRow('Όνομα Κράτησης', reservation.reservation_name) +
                 detailRow('Ημερομηνία', formattedDate) +
                 detailRow('Ώρα', formattedTime) +
                 detailRow('Άτομα', `${reservation.party_size}`) +
