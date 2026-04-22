@@ -2284,8 +2284,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 : '—';
                               ageBadge = agesStr ? `${agesStr}` : '';
                             }
-                            const compCount = compCountByParent[reservation.id] || 0;
-                            const paidCount = Math.max(0, (reservation.party_size || 0) - compCount);
                             const combinedPeople = ageBadge ? `${peopleText}(${ageBadge})` : peopleText;
                             const compCount = compCountByParent[reservation.id] || 0;
                             const paidCount = Math.max(0, (reservation.party_size || 0) - compCount);
