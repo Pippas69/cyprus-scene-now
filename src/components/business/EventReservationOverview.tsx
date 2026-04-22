@@ -8,6 +8,7 @@ import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
 import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 interface EventReservationOverviewProps {
   eventId: string;
@@ -67,13 +68,17 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
   const { language } = useLanguage();
   const text = t[language];
 
+  // Live updates: refresh whenever tickets/reservations/scans change (instant check-in updates)
+  useRealtimeEventCheckins(businessId, eventId);
+
   const { data: overview, isLoading } = useQuery({
     queryKey: ["event-reservation-overview", eventId],
     queryFn: async () => {
       // Parallel fetch all independent queries
+      // Reservations: exclude comp guest rows (they only inflate the parent's party_size)
       const [seatingResult, reservationsResult, liveBookedResult, ticketTiersResult, allOrdersResult, allTicketsResult] = await Promise.all([
         supabase.from("reservation_seating_types").select("*").eq("event_id", eventId),
-        supabase.from("reservations").select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at").eq("event_id", eventId).eq("status", "accepted"),
+        supabase.from("reservations").select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at, is_comp, parent_reservation_id").eq("event_id", eventId).eq("status", "accepted").or("is_comp.is.null,is_comp.eq.false").is("parent_reservation_id", null),
         supabase.rpc("get_event_seating_booked_counts", { p_event_id: eventId }),
         supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
         supabase.from("ticket_orders").select("id, subtotal_cents, linked_reservation_id").eq("event_id", eventId).eq("status", "completed"),
@@ -149,7 +154,12 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
 
-      const checkedIn = (allTickets || []).filter(t => t.status === 'used').length;
+      // Check-ins: tickets used + reservations with checked_in_at (sum party_size)
+      const ticketCheckIns = (allTickets || []).filter(t => t.status === 'used').length;
+      const reservationCheckIns = reservations
+        .filter(r => !!r.checked_in_at)
+        .reduce((sum, r) => sum + (r.party_size || 1), 0);
+      const checkedIn = ticketCheckIns + reservationCheckIns;
 
       const tierSoldCount = new Map<string, number>();
       walkInTickets.forEach(t => {
@@ -183,7 +193,7 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
         const stReservations = reservations.filter(
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type,
         );
-        const acceptedCount = stReservations.length;
+        const acceptedCount = stReservations.reduce((sum, r) => sum + (r.party_size || 1), 0);
         const bookedCountForAvailability = liveBookedMap[st.id] ?? 0;
         const revenue = stReservations.reduce((sum, r) => sum + (r.prepaid_min_charge_cents || 0), 0);
         // Detect if all tiers for this seating type are bottle mode

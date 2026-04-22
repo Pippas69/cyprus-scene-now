@@ -62,7 +62,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
         supabase.from("ticket_orders").select("id, subtotal_cents, commission_cents, linked_reservation_id").eq("event_id", eventId).eq("status", "completed"),
         supabase.from("tickets").select("status, tier_id, order_id").eq("event_id", eventId).in("status", ["valid", "used"]),
         supabase.from("reservation_seating_types").select("*").eq("event_id", eventId),
-        supabase.from("reservations").select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents").eq("event_id", eventId).eq("status", "accepted").or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null"),
+        supabase.from("reservations").select("id, party_size, checked_in_at, seating_type_id, seating_preference, prepaid_min_charge_cents, is_comp, parent_reservation_id").eq("event_id", eventId).eq("status", "accepted").or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null").or("is_comp.is.null,is_comp.eq.false").is("parent_reservation_id", null),
         supabase.rpc('get_event_seating_booked_counts', { p_event_id: eventId }),
       ]);
 
@@ -174,7 +174,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type
         );
 
-        const acceptedBooked = stReservations.length;
+        const acceptedBooked = stReservations.reduce((sum, r) => sum + (r.party_size || 1), 0);
         const bookedForAvailability = liveBookedMap[st.id] ?? acceptedBooked;
 
         return {

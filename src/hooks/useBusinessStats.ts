@@ -50,7 +50,7 @@ export const useBusinessStats = (businessId: string | null) => {
       const { data: reservationRows } = eventIds.length > 0
         ? await supabase
             .from('reservations')
-            .select('id, status, auto_created_from_tickets, seating_type_id, is_comp, parent_reservation_id')
+            .select('id, status, party_size, auto_created_from_tickets, seating_type_id, is_comp, parent_reservation_id')
             .in('event_id', eventIds)
         : { data: [] as any[] };
 
@@ -60,8 +60,11 @@ export const useBusinessStats = (businessId: string | null) => {
         return isEligibleReservation && !isCompGuest;
       });
 
-      const totalReservations = countedReservations.length;
-      const pendingReservations = countedReservations.filter((reservation: any) => reservation.status === 'pending').length;
+      // Count by party_size so comp guests added to a parent reservation are reflected in the totals
+      const totalReservations = countedReservations.reduce((sum: number, r: any) => sum + (Number(r.party_size) || 1), 0);
+      const pendingReservations = countedReservations
+        .filter((reservation: any) => reservation.status === 'pending')
+        .reduce((sum: number, r: any) => sum + (Number(r.party_size) || 1), 0);
 
       // Get total RSVPs
       const { count: totalRSVPs } = await supabase
