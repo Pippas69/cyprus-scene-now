@@ -174,7 +174,7 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
           (r) => r.seating_type_id === st.id || r.seating_preference === st.seating_type
         );
 
-        const acceptedBooked = stReservations.length;
+        const acceptedBooked = stReservations.reduce((sum, r) => sum + (r.party_size || 1), 0);
         const bookedForAvailability = liveBookedMap[st.id] ?? acceptedBooked;
 
         return {
