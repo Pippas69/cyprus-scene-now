@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { isBottleTier as checkIsBottleTier, formatBottleLabel } from '@/lib/bottlePricing';
 import { NOTES_MAX_WORDS, countWords, limitWords } from '@/lib/wordLimit';
 import { translateCity } from '@/lib/cityTranslations';
-import { translateSeatingType } from '@/lib/seatingTranslations';
+import { translateSeatingType, translateTierName } from '@/lib/seatingTranslations';
 
 
 interface DirectReservation {
@@ -2169,7 +2169,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   : (language === 'el' ? 'Δωρεάν' : 'Free')}
                             </span>
                             <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
-                              {ticket.tier_name}
+                              {translateTierName(ticket.tier_name, language)}
                             </span>
                           </>
                         ) : (

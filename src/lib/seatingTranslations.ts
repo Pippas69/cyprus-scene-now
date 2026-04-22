@@ -45,3 +45,29 @@ export const translateSeatingType = (
   if (entry) return entry[language];
   return trimmed; // unknown / custom label — show as-is
 };
+
+/**
+ * Translates common default ticket tier names between Greek and English.
+ * Falls back to the raw value for custom tier names set by the business.
+ */
+const TIER_NAME_MAP: Record<string, { el: string; en: string }> = {
+  'γενική είσοδος': { el: 'Γενική Είσοδος', en: 'General Admission' },
+  'general admission': { el: 'Γενική Είσοδος', en: 'General Admission' },
+  'είσοδος': { el: 'Είσοδος', en: 'Admission' },
+  'admission': { el: 'Είσοδος', en: 'Admission' },
+  'early bird': { el: 'Early Bird', en: 'Early Bird' },
+  'προπώληση': { el: 'Προπώληση', en: 'Presale' },
+  'presale': { el: 'Προπώληση', en: 'Presale' },
+};
+
+export const translateTierName = (
+  raw: string | null | undefined,
+  language: Language
+): string => {
+  if (!raw) return '';
+  const trimmed = String(raw).trim();
+  if (!trimmed) return '';
+  const entry = TIER_NAME_MAP[trimmed.toLowerCase()];
+  if (entry) return entry[language];
+  return trimmed;
+};
