@@ -2373,15 +2373,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             if (hasTicketCredit) {
                               // Hybrid (amount-based minimum): line1 minimum, line2 prepayment, line3 remainder
                               const mainDisplay = minChargeCents > 0 ? `€${(minChargeCents / 100).toFixed(2)} Minimum` : '-';
-                              const rawVal = `${(minChargeCents / 100).toFixed(2)} (${(ticketPaidCents / 100).toFixed(2)})`;
+                              const rawVal = (minChargeCents / 100).toFixed(2);
                               return (
                                 <div className="flex flex-col items-start">
                                   <EditableCell
                                     reservationId={reservation.id}
-                                    field="min_charge_combined"
+                                    field="prepaid_min_charge_cents"
                                     displayValue={mainDisplay}
                                     rawValue={rawVal}
-                                    inputClassName="h-7 text-sm w-36" />
+                                    inputType="number"
+                                    inputClassName="h-7 text-sm w-24" />
                                   <span className="whitespace-nowrap mx-0 px-0 my-[5px] text-sm text-muted-foreground">
                                     {language === 'el' ? 'Prepaid' : 'Prepaid'}: €{(ticketPaidCents / 100).toFixed(2)}
                                   </span>
