@@ -1291,16 +1291,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const isTicketOnlyMode = selectedEventType === 'ticket';
-  const effectiveTotal = isTicketOnlyMode ? ticketOnlyOrders.length : reservations.length;
+  // Count by sum(party_size) so comp guests added to parent reservations are reflected
+  const sumParty = (rows: any[]) => rows.reduce((sum, r) => sum + (Number(r.party_size) || 1), 0);
+  const effectiveTotal = isTicketOnlyMode ? ticketOnlyOrders.length : sumParty(reservations);
 
   const stats = {
     total: effectiveTotal,
     today: isTicketOnlyMode
       ? ticketOnlyOrders.filter((o) => isSameDay(o.created_at)).length
-      : reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled').length,
+      : sumParty(reservations.filter((r) => isSameDay(r.created_at) && r.status !== 'cancelled')),
     checkedIn: isTicketOnlyMode
       ? ticketOnlyOrders.filter((o) => o.checked_in).length
-      : reservations.filter((r) => Boolean(r.checked_in_at)).length
+      : sumParty(reservations.filter((r) => Boolean(r.checked_in_at)))
   };
 
   // Report count to parent for Kaliva header
