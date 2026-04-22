@@ -1,54 +1,64 @@
 
 
-## Σχέδιο: Όνομα Κράτησης στα emails πώλησης εισιτηρίων (hybrid)
+## Σχέδιο: Σωστή μετάφραση Καναπέ / Τραπεζιού / VIP / Bar και Πόλεων παντού
 
-### Τι εντόπισα
+### Με απλά λόγια — τι συμβαίνει τώρα
 
-**Φωτογραφία 1** — Business email πώλησης εισιτηρίων (`send-ticket-sale-notification`):
-- Γραμμή `Πελάτης: Marinos Koumi` δείχνει το **profile name** του αγοραστή (`ticket_orders.customer_name`), όχι το `reservation_name` που πληκτρολόγησε στο dialog ("Agamemnonas Paraskevas").
+Όταν αλλάζεις τη γλώσσα της εφαρμογής σε **Αγγλικά**, σε κάποια σημεία της διαχείρισης οι λέξεις **"Καναπές"**, **"Τραπέζι"**, **"VIP"**, **"Bar"** καθώς και τα ονόματα των πόλεων (π.χ. **"Αμμόχωστος"**, **"Λεμεσός"**) μένουν στα ελληνικά αντί να γίνονται **"Sofa"**, **"Table"**, **"Famagusta"**, **"Limassol"** κλπ.
 
-**Φωτογραφία 2/3** — Στα hybrid events ο πελάτης πληκτρολογεί ένα `reservation_name` στο dialog. Αυτό σώζεται στο `reservations.reservation_name` της linked κράτησης (μέσω `process-ticket-payment`, line 305/315), αλλά **δεν περνιέται** στα emails.
+Αυτό συμβαίνει γιατί σε αυτά τα σημεία η εφαρμογή δείχνει την τιμή ακριβώς όπως είναι αποθηκευμένη στη βάση δεδομένων (πάντα στα ελληνικά), χωρίς να την περνάει από το «μεταφραστικό φίλτρο».
 
-**Customer email** (`send-ticket-email`): Η κάρτα "Λεπτομέρειες" δείχνει Ημερομηνία / Ώρα / Τοποθεσία / Άτομα — **λείπει** το "Όνομα Κράτησης" πάνω από την Τοποθεσία.
+### Τι θα κάνω
 
-**Ώρα/Timezone**: Όλα τα email functions ήδη χρησιμοποιούν `hour12: false` + `timeZone: 'Europe/Nicosia'` (24h, Κύπρος). **Δεν χρειάζεται καμία αλλαγή** εδώ.
+Θα φτιάξω **ένα κεντρικό μεταφραστικό εργαλείο** για τους τύπους θέσης (όπως υπάρχει ήδη για τις πόλεις) και θα το εφαρμόσω **παντού** στη διαχείριση όπου εμφανίζονται:
 
-### Αλλαγές
+1. **Τύποι θέσης** (Καναπές → Sofa, Τραπέζι → Table, VIP → VIP, Bar → Bar)
+2. **Πόλεις** (Λεμεσός → Limassol, Αμμόχωστος → Famagusta κλπ.)
 
-**1. `supabase/functions/process-ticket-payment/index.ts`**
-- Διαβάζω το `reservation_name` από το `session.metadata` (ήδη υπάρχει — line 305) ως `reservationName`.
-- Όταν είναι hybrid (`usesLinkedReservations && seatingTypeId`):
-  - Περνάω επιπλέον πεδίο `reservationName` στα body του `send-ticket-email` (customer) και `send-ticket-sale-notification` (business).
-- Στο business push/in-app notification (lines 518, 544): αλλάζω `customerName || 'Πελάτης'` → `reservationName || customerName || 'Πελάτης'` ώστε να εμφανίζει το όνομα κράτησης σε hybrid πωλήσεις.
+### Πού θα γίνουν οι αλλαγές
 
-**2. `supabase/functions/send-ticket-sale-notification/index.ts`**
-- Προσθέτω optional πεδίο `reservationName` στο schema.
-- Στην κάρτα "Λεπτομέρειες" (line 117):
-  - Αν υπάρχει `reservationName`: γραμμή `detailRow('Όνομα Κράτησης', reservationName)` αντί για `detailRow('Πελάτης', customerName)`.
-  - Αν δεν υπάρχει (pure ticket χωρίς reservation): παραμένει η υπάρχουσα γραμμή `Πελάτης` (zero regression για non-hybrid).
+Θα ψάξω και θα διορθώσω **όλες** τις σελίδες διαχείρισης και όχι μόνο τη μία που είδες. Συγκεκριμένα:
 
-**3. `supabase/functions/send-ticket-email/index.ts`** (customer email)
-- Προσθέτω optional `reservationName` στο schema.
-- Στο block `infoRows` (lines 158-169), όταν υπάρχει `reservationName`:
-  - Προσθέτω `detailRow('Όνομα Κράτησης', reservationName)` **πάνω από** την Τοποθεσία (πριν το `eventLocation`).
+**Λίστα κρατήσεων & εκδηλώσεων στη διαχείριση:**
+- Λίστα κρατήσεων για events με κράτηση (reservation-only)
+- Λίστα κρατήσεων για hybrid events (κράτηση + εισιτήριο)
+- Λίστα κρατήσεων για ticket-only events
+- Διάλογοι επεξεργασίας / προσθήκης κράτησης
+- Διάλογοι λεπτομερειών κράτησης
 
-**4. `supabase/functions/process-reservation-event-payment/index.ts`** (pure reservation events — το business email ήδη δείχνει `reservation.reservation_name`)
-- Αλλάζω μόνο το label στη γραμμή 567: `detailRow('Πελάτης', ...)` → `detailRow('Όνομα Κράτησης', ...)` για ομοιομορφία.
+**CRM & πελάτες:**
+- Καρτέλες πελατών (CRM profiles)
+- Activity timeline (ιστορικό κρατήσεων)
+- Αναλυτική λίστα guests
 
-### Zero-Regression εγγυήσεις
+**Άλλα σημεία:**
+- Floorplan / διαχείριση τραπεζιών (όπου εμφανίζονται labels τύπου θέσης)
+- Analytics dashboards (όπου σπάνε κρατήσεις ανά τύπο θέσης ή πόλη)
+- Εξαγωγές CSV (τα labels θα είναι στη γλώσσα που έχει επιλέξει ο επιχειρηματίας)
 
-- **Pure ticket events (όχι hybrid)**: `reservationName` είναι `undefined`, οπότε η συμπεριφορά παραμένει 100% ίδια — εμφανίζει `Πελάτης: <profile name>`.
-- **Pure reservation events**: Customer email ήδη έχει "Όνομα" — δεν αλλάζει. Business email αλλάζει μόνο το label string από "Πελάτης" σε "Όνομα Κράτησης".
-- **Καμία DB αλλαγή**, καμία schema migration.
-- **Καμία αλλαγή σε Stripe/checkout flow** — το `reservation_name` ήδη βρίσκεται στο `session.metadata`.
-- **Ώρα/timezone**: ήδη σωστά παντού (24h, Europe/Nicosia) — επιβεβαιώθηκε σε 13 αρχεία.
+### Πώς θα δουλέψει το νέο εργαλείο
 
-### Επιβεβαίωση κατανόησης
+Θα δημιουργήσω ένα μικρό αρχείο που λέει:
 
-Σε hybrid event ο πελάτης γράφει "Agamemnonas Paraskevas" στο dialog κράτησης. Μετά την αγορά:
-- **Email πελάτη**: στις "Λεπτομέρειες" θα φαίνεται `Όνομα Κράτησης: Agamemnonas Paraskevas` πάνω από την Τοποθεσία.
-- **Email επιχειρηματία**: αντί για `Πελάτης: Marinos Koumi` (profile) θα φαίνεται `Όνομα Κράτησης: Agamemnonas Paraskevas` (reservation_name).
-- **Push/in-app επιχείρησης**: "Agamemnonas Paraskevas - 3 εισιτήρια".
+> «Όποτε δεις την τιμή `Καναπές` ή `sofa` ή `Sofa` και η γλώσσα είναι Αγγλικά → δείξε **Sofa**. Αν είναι Ελληνικά → δείξε **Καναπές**.»
 
-Ώρες παραμένουν 24h Κύπρου (π.χ. `22:00`, όχι `10:00 PM`) — όπως ήδη είναι.
+Το ίδιο για Τραπέζι, VIP, Bar. Έτσι ακόμη κι αν στη βάση η τιμή είναι γραμμένη με διαφορετικό τρόπο (π.χ. `table`, `Table`, `Τραπέζι`), θα μεταφράζεται πάντα σωστά.
+
+Για τις πόλεις θα χρησιμοποιήσω το ήδη υπάρχον εργαλείο `translateCity()` που έχει ήδη όλες τις πόλεις της Κύπρου σωστά μεταφρασμένες.
+
+### Εγγυήσεις (Zero Regression)
+
+- **Η βάση δεδομένων δεν αλλάζει.** Οι τιμές παραμένουν αποθηκευμένες όπως είναι σήμερα (ελληνικά).
+- **Η μετάφραση γίνεται μόνο στην οθόνη**, την ώρα που εμφανίζεται η τιμή.
+- **Στα Ελληνικά** όλα παραμένουν ακριβώς όπως τα βλέπεις σήμερα.
+- **Η επεξεργασία** (όταν γράφεις/αλλάζεις τιμή) δεν επηρεάζεται — γράφει πάντα τη σωστή τιμή στη βάση.
+- **Τα emails, τα QR codes, τα notifications** δεν αγγίζονται.
+
+### Νέος κανόνας για το μέλλον
+
+Θα προσθέσω μνήμη στο project ώστε **οποιαδήποτε** μελλοντική σελίδα δείχνει τύπο θέσης ή πόλη να περνάει υποχρεωτικά από το κεντρικό μεταφραστικό εργαλείο, για να μην ξανασυμβεί ποτέ αυτό το πρόβλημα.
+
+### Τι θα δεις μετά
+
+Όταν αλλάζεις τη γλώσσα σε Αγγλικά, **παντού** στη διαχείριση (κρατήσεις, CRM, λεπτομέρειες, λίστες) θα βλέπεις: **Sofa, Table, VIP, Bar, Limassol, Nicosia, Larnaca, Paphos, Famagusta, Paralimni, Ayia Napa**. Στα Ελληνικά θα συνεχίσεις να βλέπεις: **Καναπές, Τραπέζι, VIP, Bar, Λεμεσός, Λευκωσία** κ.ο.κ.
 
