@@ -869,37 +869,72 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
 
   const fetchCheckInCounts = async (reservationIds: string[]) => {
     if (reservationIds.length === 0) return;
-    // Get ticket orders linked to these reservations
-    const { data: orders } = await supabase.
-    from('ticket_orders').
-    select('id, linked_reservation_id').
-    in('linked_reservation_id', reservationIds);
 
-    if (!orders || orders.length === 0) return;
+    const [ordersResult, guestQrsResult, compReservationsResult] = await Promise.all([
+      supabase
+        .from('ticket_orders')
+        .select('id, linked_reservation_id')
+        .in('linked_reservation_id', reservationIds),
+      supabase
+        .from('reservation_guests')
+        .select('reservation_id, checked_in_at')
+        .in('reservation_id', reservationIds),
+      supabase
+        .from('reservations')
+        .select('parent_reservation_id, checked_in_at')
+        .in('parent_reservation_id', reservationIds)
+        .eq('is_comp', true),
+    ]);
 
-    const orderIds = orders.map((o) => o.id);
-    const orderToReservation: Record<string, string> = {};
-    orders.forEach((o) => {
-      if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
-    });
+    const orders = ordersResult.data || [];
+    const guestQrs = guestQrsResult.data || [];
+    const compReservations = compReservationsResult.data || [];
 
-    // Get all tickets for these orders
-    const { data: tickets } = await supabase.
-    from('tickets').
-    select('order_id, status').
-    in('order_id', orderIds);
+    const countsMap: Record<string, { used: number; total: number }> = {};
+    const ensure = (reservationId: string) => {
+      if (!countsMap[reservationId]) countsMap[reservationId] = { used: 0, total: 0 };
+    };
 
-    if (!tickets) return;
+    reservationIds.forEach(ensure);
 
-    const countsMap: Record<string, {used: number;total: number;}> = {};
-    tickets.forEach((ticket) => {
-      const resId = orderToReservation[ticket.order_id];
-      if (resId) {
-        if (!countsMap[resId]) countsMap[resId] = { used: 0, total: 0 };
+    if (orders.length > 0) {
+      const orderIds = orders.map((o) => o.id);
+      const orderToReservation: Record<string, string> = {};
+      orders.forEach((o) => {
+        if (o.linked_reservation_id) orderToReservation[o.id] = o.linked_reservation_id;
+      });
+
+      const { data: tickets } = await supabase
+        .from('tickets')
+        .select('order_id, status')
+        .in('order_id', orderIds);
+
+      (tickets || []).forEach((ticket) => {
+        const resId = orderToReservation[ticket.order_id];
+        if (!resId) return;
+        ensure(resId);
         countsMap[resId].total++;
         if (ticket.status === 'used') {
           countsMap[resId].used++;
         }
+      });
+    }
+
+    guestQrs.forEach((guest) => {
+      if (!guest.reservation_id) return;
+      ensure(guest.reservation_id);
+      countsMap[guest.reservation_id].total++;
+      if (guest.checked_in_at) {
+        countsMap[guest.reservation_id].used++;
+      }
+    });
+
+    compReservations.forEach((comp) => {
+      if (!comp.parent_reservation_id) return;
+      ensure(comp.parent_reservation_id);
+      countsMap[comp.parent_reservation_id].total++;
+      if (comp.checked_in_at) {
+        countsMap[comp.parent_reservation_id].used++;
       }
     });
 
