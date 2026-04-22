@@ -8,6 +8,7 @@ import { Users, Euro, Ticket, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { isBottleTier, formatBottleLabel } from "@/lib/bottlePricing";
 import { sortSeatingTypes } from "@/lib/seatingTypeOrder";
+import { useRealtimeEventCheckins } from "@/hooks/useRealtimeEventCheckins";
 
 interface EventReservationOverviewProps {
   eventId: string;
