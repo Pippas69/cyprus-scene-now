@@ -2284,17 +2284,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 : '—';
                               ageBadge = agesStr ? `${agesStr}` : '';
                             }
-                            const combinedPeople = ageBadge ? `${peopleText}(${ageBadge})` : peopleText;
                             const compCount = compCountByParent[reservation.id] || 0;
                             const paidCount = Math.max(0, (reservation.party_size || 0) - compCount);
                             return (
                               <>
-                                <EditableCell
-                                  reservationId={reservation.id}
-                                  field="details_combined"
-                                  displayValue={combinedPeople}
-                                  rawValue={combinedPeople}
-                                  inputClassName="h-7 text-sm w-36" />
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <EditableCell
+                                    reservationId={reservation.id}
+                                    field="details_combined"
+                                    displayValue={peopleText}
+                                    rawValue={reservation.party_size ? String(reservation.party_size) : ''}
+                                    inputClassName="h-7 text-sm w-16" />
+                                  {(ageBadge || !isWalkIn) && (
+                                    <EditableCell
+                                      reservationId={reservation.id}
+                                      field="guest_ages_only"
+                                      displayValue={ageBadge ? `(${ageBadge})` : '(—)'}
+                                      rawValue={ageBadge.replace(/[()]/g, '')}
+                                      inputClassName="h-7 text-sm w-20"
+                                      className="text-muted-foreground" />
+                                  )}
+                                </div>
                                 {compCount > 0 && (
                                   <span className="text-[11px] font-medium text-primary">
                                     {paidCount} paid + {compCount} comp
