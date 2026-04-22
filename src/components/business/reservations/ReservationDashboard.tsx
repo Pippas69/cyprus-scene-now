@@ -251,9 +251,8 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       // 1. Reservations for all events
       supabase
         .from('reservations')
-        .select('event_id')
-        .in('event_id', eventIds)
-        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null'),
+        .select('event_id, auto_created_from_tickets, seating_type_id, is_comp, parent_reservation_id')
+        .in('event_id', eventIds),
       // 2. Tickets for ticket-only events
       ticketOnlyEventIds.length > 0
         ? supabase
@@ -278,8 +277,12 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     if (requestId !== requestRef.current) return null;
 
     // Process reservations
-    (reservationsResult.data || []).forEach((reservation) => {
-      if (reservation.event_id) counts[reservation.event_id] = (counts[reservation.event_id] || 0) + 1;
+    (reservationsResult.data || []).forEach((reservation: any) => {
+      const isEligibleReservation = reservation.auto_created_from_tickets == null || reservation.auto_created_from_tickets === false || reservation.seating_type_id != null;
+      const isCompGuest = reservation.is_comp === true || Boolean(reservation.parent_reservation_id);
+      if (isEligibleReservation && !isCompGuest && reservation.event_id) {
+        counts[reservation.event_id] = (counts[reservation.event_id] || 0) + 1;
+      }
     });
 
     // Process ticket-only tickets
