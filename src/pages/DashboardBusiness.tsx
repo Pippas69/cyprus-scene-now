@@ -57,6 +57,7 @@ const DashboardBusiness = () => {
   const [businessCoverUrl, setBusinessCoverUrl] = useState<string | null>(null);
   const [businessCategories, setBusinessCategories] = useState<string[]>([]);
   const [floorPlanEnabled, setFloorPlanEnabled] = useState(false);
+  const [promotersEnabled, setPromotersEnabled] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
 
@@ -81,6 +82,18 @@ const DashboardBusiness = () => {
 
   useEffect(() => {
     checkVerificationStatus();
+  }, []);
+
+  // Listen for instant promoters_enabled toggle from settings page
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ enabled: boolean }>).detail;
+      if (detail && typeof detail.enabled === 'boolean') {
+        setPromotersEnabled(detail.enabled);
+      }
+    };
+    window.addEventListener('fomo:promoters-enabled-changed', handler as EventListener);
+    return () => window.removeEventListener('fomo:promoters-enabled-changed', handler as EventListener);
   }, []);
 
   // Prevent double page scrollbars in business dashboard (keep only internal main scroll)
@@ -303,7 +316,7 @@ const DashboardBusiness = () => {
       const [businessResult, profileResult] = await Promise.all([
         supabase
           .from("businesses")
-          .select("id, verified, name, logo_url, cover_url, category, floor_plan_enabled")
+          .select("id, verified, name, logo_url, cover_url, category, floor_plan_enabled, promoters_enabled")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -327,6 +340,7 @@ const DashboardBusiness = () => {
       setBusinessCoverUrl(businessResult.data.cover_url ?? null);
       setBusinessCategories(businessResult.data.category || []);
       setFloorPlanEnabled(!!businessResult.data.floor_plan_enabled);
+      setPromotersEnabled(!!(businessResult.data as any).promoters_enabled);
 
       // Set user profile data with defensive defaults
       setUserName(profileResult.data?.name || user.email?.split('@')[0] || 'User');
@@ -403,7 +417,7 @@ const DashboardBusiness = () => {
       <SidebarProvider>
       <SidebarMobileClose />
       <div className="h-screen w-full flex overflow-hidden">
-        <BusinessSidebar businessCategories={businessCategories} floorPlanEnabled={floorPlanEnabled} planSlug={subscriptionData?.plan} />
+        <BusinessSidebar businessCategories={businessCategories} floorPlanEnabled={floorPlanEnabled} promotersEnabled={promotersEnabled} planSlug={subscriptionData?.plan} />
         
         <div className="flex-1 flex flex-col min-h-0 min-w-0 max-w-full">
           {/* Header - Mobile optimized */}
@@ -481,7 +495,7 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
                 })()
               } />
               <Route path="analytics" element={businessId ? <AnalyticsDashboard businessId={businessId} /> : null} />
-              <Route path="promoters" element={businessId ? <PromotersDashboard businessId={businessId} /> : null} />
+              <Route path="promoters" element={businessId && promotersEnabled ? <PromotersDashboard businessId={businessId} /> : <Navigate to="/dashboard-business/settings" replace />} />
               {/* Posts feature hidden but kept in code
               <Route path="posts" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostsList businessId={businessId} language={language} /></div> : null} />
               <Route path="posts/new" element={businessId ? <div className="px-3 sm:px-0"><BusinessPostForm businessId={businessId} businessName={businessName} businessCategory={[]} language={language} /></div> : null} />

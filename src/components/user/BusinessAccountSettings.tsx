@@ -85,6 +85,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const [isDeleting, setIsDeleting] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [is2FALoading, setIs2FALoading] = useState(false);
+  const [promotersEnabled, setPromotersEnabled] = useState(false);
+  const [promotersLoading, setPromotersLoading] = useState(false);
 
   // Business profile form state
   const [profileLoading, setProfileLoading] = useState(false);
@@ -273,6 +275,43 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
     }
   };
 
+  const togglePromoters = async (enabled: boolean) => {
+    // Optimistic update — instant UI feedback
+    const prev = promotersEnabled;
+    setPromotersEnabled(enabled);
+    setPromotersLoading(true);
+    // Notify the dashboard layout immediately so the sidebar updates without refetch
+    window.dispatchEvent(
+      new CustomEvent('fomo:promoters-enabled-changed', { detail: { enabled } })
+    );
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ promoters_enabled: enabled } as any)
+        .eq('id', businessId);
+      if (error) throw error;
+      toast({
+        title: toastT.success,
+        description: language === 'el'
+          ? (enabled ? 'Η ενότητα Promoters ενεργοποιήθηκε' : 'Η ενότητα Promoters απενεργοποιήθηκε')
+          : (enabled ? 'Promoters section enabled' : 'Promoters section disabled'),
+      });
+    } catch {
+      // Roll back on failure
+      setPromotersEnabled(prev);
+      window.dispatchEvent(
+        new CustomEvent('fomo:promoters-enabled-changed', { detail: { enabled: prev } })
+      );
+      toast({
+        title: toastT.error,
+        description: language === 'el' ? 'Σφάλμα ενημέρωσης ρύθμισης' : 'Error updating setting',
+        variant: 'destructive',
+      });
+    } finally {
+      setPromotersLoading(false);
+    }
+  };
+
   // Auto-geocode when address or city changes
   useEffect(() => {
     const geocodeAddress = async () => {
@@ -326,6 +365,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         });
         setCurrentLogoUrl(data.logo_url);
         setCurrentCoverUrl(data.cover_url);
+        setPromotersEnabled(!!(data as any).promoters_enabled);
       }
     } catch (error) {
       console.error('Error fetching business:', error);
@@ -915,6 +955,33 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
       {!selectedCategories.some(c => ['clubs', 'events', 'theatre', 'music', 'dance', 'kids'].includes(c.toLowerCase())) && (
         <StudentDiscountSettings businessId={businessId} />
       )}
+
+      {/* Promoters section toggle */}
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+            {language === 'el' ? 'Ενότητα Promoters' : 'Promoters Section'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {language === 'el'
+                  ? 'Ενεργοποίησε για να εμφανίζεται η ενότητα Promoters στο sidebar του dashboard σου.'
+                  : 'Enable to show the Promoters section in your dashboard sidebar.'}
+              </p>
+            </div>
+            <Switch
+              checked={promotersEnabled}
+              onCheckedChange={togglePromoters}
+              disabled={promotersLoading}
+              className="shrink-0"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Password Management */}
       <Card>

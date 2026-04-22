@@ -60,9 +60,10 @@ interface BusinessSidebarProps {
   businessCategories: string[];
   floorPlanEnabled?: boolean;
   planSlug?: string;
+  promotersEnabled?: boolean;
 }
 
-export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug }: BusinessSidebarProps) {
+export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug, promotersEnabled }: BusinessSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { language } = useLanguage();
@@ -94,6 +95,10 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
   // CRM is now integrated into the Insights & CRM page (analytics tab)
   const crmItem: { title: string; url: string; icon: React.ElementType }[] = [];
 
+  const promotersItem = promotersEnabled
+    ? [{ title: t.promoters, url: "/dashboard-business/promoters", icon: Megaphone }]
+    : [];
+
   const contentItems = showOffers
     ? [
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: Users },
@@ -101,7 +106,7 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
         { title: t.offers, url: "/dashboard-business/offers", icon: Percent },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
-        { title: t.promoters, url: "/dashboard-business/promoters", icon: Megaphone },
+        ...promotersItem,
         ...crmItem,
       ]
     : [
@@ -109,7 +114,7 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
         { title: reservationLabel, url: "/dashboard-business/reservations", icon: isPerformance ? Ticket : Users },
         ...(floorPlanEnabled ? [{ title: t.floorPlan, url: "/dashboard-business/floor-plan", icon: LayoutGrid }] : []),
         { title: t.analytics, url: "/dashboard-business/analytics", icon: TrendingUp },
-        { title: t.promoters, url: "/dashboard-business/promoters", icon: Megaphone },
+        ...promotersItem,
         ...crmItem,
       ];
 
