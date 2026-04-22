@@ -68,13 +68,17 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
   const { language } = useLanguage();
   const text = t[language];
 
+  // Live updates: refresh whenever tickets/reservations/scans change (instant check-in updates)
+  useRealtimeEventCheckins(businessId, eventId);
+
   const { data: overview, isLoading } = useQuery({
     queryKey: ["event-reservation-overview", eventId],
     queryFn: async () => {
       // Parallel fetch all independent queries
+      // Reservations: exclude comp guest rows (they only inflate the parent's party_size)
       const [seatingResult, reservationsResult, liveBookedResult, ticketTiersResult, allOrdersResult, allTicketsResult] = await Promise.all([
         supabase.from("reservation_seating_types").select("*").eq("event_id", eventId),
-        supabase.from("reservations").select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at").eq("event_id", eventId).eq("status", "accepted"),
+        supabase.from("reservations").select("id, party_size, checked_in_at, seating_preference, seating_type_id, prepaid_min_charge_cents, created_at, is_comp, parent_reservation_id").eq("event_id", eventId).eq("status", "accepted").or("is_comp.is.null,is_comp.eq.false").is("parent_reservation_id", null),
         supabase.rpc("get_event_seating_booked_counts", { p_event_id: eventId }),
         supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
         supabase.from("ticket_orders").select("id, subtotal_cents, linked_reservation_id").eq("event_id", eventId).eq("status", "completed"),
