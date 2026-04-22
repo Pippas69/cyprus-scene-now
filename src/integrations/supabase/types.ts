@@ -884,6 +884,7 @@ export type Database = {
           onboarding_completed: boolean | null
           opens_at: string | null
           phone: string | null
+          promoters_enabled: boolean
           reservation_capacity_type: string | null
           reservation_closes_at: string | null
           reservation_days: string[] | null
@@ -930,6 +931,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          promoters_enabled?: boolean
           reservation_capacity_type?: string | null
           reservation_closes_at?: string | null
           reservation_days?: string[] | null
@@ -976,6 +978,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           opens_at?: string | null
           phone?: string | null
+          promoters_enabled?: boolean
           reservation_capacity_type?: string | null
           reservation_closes_at?: string | null
           reservation_days?: string[] | null
