@@ -34,6 +34,7 @@ export function useRealtimeEventCheckins(
         'ticket-sales',
         'event-checkins',
         'combined-overview',
+        'event-reservation-overview',
         'events-with-tickets',
         'event-tickets',
         'event-reservations',
