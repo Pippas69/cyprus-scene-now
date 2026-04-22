@@ -275,6 +275,43 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
     }
   };
 
+  const togglePromoters = async (enabled: boolean) => {
+    // Optimistic update — instant UI feedback
+    const prev = promotersEnabled;
+    setPromotersEnabled(enabled);
+    setPromotersLoading(true);
+    // Notify the dashboard layout immediately so the sidebar updates without refetch
+    window.dispatchEvent(
+      new CustomEvent('fomo:promoters-enabled-changed', { detail: { enabled } })
+    );
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ promoters_enabled: enabled } as any)
+        .eq('id', businessId);
+      if (error) throw error;
+      toast({
+        title: toastT.success,
+        description: language === 'el'
+          ? (enabled ? 'Η ενότητα Promoters ενεργοποιήθηκε' : 'Η ενότητα Promoters απενεργοποιήθηκε')
+          : (enabled ? 'Promoters section enabled' : 'Promoters section disabled'),
+      });
+    } catch {
+      // Roll back on failure
+      setPromotersEnabled(prev);
+      window.dispatchEvent(
+        new CustomEvent('fomo:promoters-enabled-changed', { detail: { enabled: prev } })
+      );
+      toast({
+        title: toastT.error,
+        description: language === 'el' ? 'Σφάλμα ενημέρωσης ρύθμισης' : 'Error updating setting',
+        variant: 'destructive',
+      });
+    } finally {
+      setPromotersLoading(false);
+    }
+  };
+
   // Auto-geocode when address or city changes
   useEffect(() => {
     const geocodeAddress = async () => {
