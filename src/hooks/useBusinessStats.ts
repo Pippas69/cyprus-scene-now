@@ -47,18 +47,21 @@ export const useBusinessStats = (businessId: string | null) => {
 
       const eventIds = events?.map(e => e.id) || [];
 
-      const { count: totalReservations } = await supabase
-        .from('reservations')
-        .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds)
-        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+      const { data: reservationRows } = eventIds.length > 0
+        ? await supabase
+            .from('reservations')
+            .select('id, status, auto_created_from_tickets, seating_type_id, is_comp, parent_reservation_id')
+            .in('event_id', eventIds)
+        : { data: [] as any[] };
 
-      const { count: pendingReservations } = await supabase
-        .from('reservations')
-        .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds)
-        .eq('status', 'pending')
-        .or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+      const countedReservations = (reservationRows || []).filter((reservation: any) => {
+        const isEligibleReservation = reservation.auto_created_from_tickets == null || reservation.auto_created_from_tickets === false || reservation.seating_type_id != null;
+        const isCompGuest = reservation.is_comp === true || Boolean(reservation.parent_reservation_id);
+        return isEligibleReservation && !isCompGuest;
+      });
+
+      const totalReservations = countedReservations.length;
+      const pendingReservations = countedReservations.filter((reservation: any) => reservation.status === 'pending').length;
 
       // Get total RSVPs
       const { count: totalRSVPs } = await supabase

@@ -416,7 +416,10 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         // Hide comp guest rows from the main list — they are shown as a sub-line under the parent reservation
         query = query.or('is_comp.is.null,is_comp.eq.false');
       } else {
-        query = query.eq('business_id', businessId).is('event_id', null);
+        query = query
+          .eq('business_id', businessId)
+          .is('event_id', null)
+          .or('is_comp.is.null,is_comp.eq.false');
       }
 
       query = query.order('reservation_name', { ascending: true }).limit(500);

@@ -68,6 +68,10 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
           table: 'reservations'
         },
         async (payload) => {
+          if (payload.new.is_comp === true || payload.new.parent_reservation_id) {
+            return;
+          }
+
           // Check if this reservation is for this business
           let isForThisBusiness = false;
           let eventTitle = '';
@@ -92,7 +96,7 @@ export const useRealtimeNotifications = (businessId: string | null, userId: stri
 
           if (isForThisBusiness && !notificationShownRef.current.has(payload.new.id)) {
             notificationShownRef.current.add(payload.new.id);
-            
+
             toast(labels.newReservation, {
               description: `${payload.new.reservation_name} ${labels.reservedFor} ${payload.new.party_size} ${labels.people}${eventTitle ? ` - ${eventTitle}` : ''}`,
             });
