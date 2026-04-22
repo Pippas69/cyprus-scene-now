@@ -464,6 +464,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           : Promise.resolve({ data: null }),
       ]);
 
+      // Fetch comp counts grouped by parent_reservation_id
+      if (reservationIds.length > 0) {
+        const { data: compRows } = await supabase
+          .from('reservations')
+          .select('parent_reservation_id')
+          .in('parent_reservation_id', reservationIds)
+          .eq('is_comp', true);
+        const counts: Record<string, number> = {};
+        (compRows || []).forEach((c: any) => {
+          if (c.parent_reservation_id) {
+            counts[c.parent_reservation_id] = (counts[c.parent_reservation_id] || 0) + 1;
+          }
+        });
+        setCompCountByParent(counts);
+      }
+
+      // Fetch event metadata (min age + title) for the comp dialog
+      if (selectedEventId) {
+        const { data: ev } = await supabase
+          .from('events')
+          .select('title, minimum_age')
+          .eq('id', selectedEventId)
+          .maybeSingle();
+        if (ev) {
+          setEventTitle(ev.title || null);
+          setEventMinAge((ev as any).minimum_age ?? null);
+        }
+      }
+
       const offerLinkedIds = new Set<string>();
       (offerResult.data || []).forEach((p: any) => {
         if (p.reservation_id) offerLinkedIds.add(p.reservation_id);
@@ -2437,7 +2466,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       )}
                       {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
                       <TableCell className="align-top">
-                        {renderStaffMemoCell(reservation)}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            {renderStaffMemoCell(reservation)}
+                          </div>
+                          {/* Add comp guests button — only for reservation/hybrid event rows */}
+                          {selectedEventType !== 'ticket' &&
+                           reservation.source !== 'walk_in' &&
+                           reservation.status !== 'cancelled' &&
+                           reservation.status !== 'declined' && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 rounded-full shrink-0 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                              onClick={() => setAddCompFor(reservation)}
+                              title={language === 'el' ? 'Πρόσθεσε δωρεάν καλεσμένους' : 'Add free guests'}
+                              aria-label={language === 'el' ? 'Πρόσθεσε δωρεάν καλεσμένους' : 'Add free guests'}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>);
               })}
