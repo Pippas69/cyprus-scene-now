@@ -40,6 +40,7 @@ const BodySchema = z.object({
   businessEmail: email.optional(),
   businessName: safeString(200).optional(),
   businessUserId: flexId.optional(),
+  reservationName: safeString(200).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -79,6 +80,7 @@ Deno.serve(async (req) => {
       businessEmail,
       businessName,
       businessUserId,
+      reservationName,
     } = await parseBody(req, BodySchema);
 
     logStep("Request data", { orderId, eventTitle, ticketCount, businessEmail });
@@ -114,7 +116,9 @@ Deno.serve(async (req) => {
 
       ${infoCard('Λεπτομέρειες', 
         detailRow('Εκδήλωση', eventTitle) +
-        detailRow('Πελάτης', customerName || 'Anonymous') +
+        (reservationName
+          ? detailRow('Όνομα Κράτησης', reservationName)
+          : detailRow('Πελάτης', customerName || 'Anonymous')) +
         detailRow('Τύπος', tierName) +
         detailRow('Εισιτήρια', `${ticketCount}`) +
         detailRow('Ποσό', formattedAmount, true)

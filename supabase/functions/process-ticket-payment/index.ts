@@ -381,6 +381,9 @@ Deno.serve(async (req) => {
     const businessUserId = event?.businesses?.user_id;
     const customerName = orderDetails?.customer_name || "";
     const ticketCount = ticketsToCreate.length;
+    const reservationName = session.metadata?.reservation_name?.trim() || null;
+    const isHybridForEmail = !!(usesLinkedReservations && seatingTypeId);
+    const displayNameForBusiness = (isHybridForEmail && reservationName) ? reservationName : (customerName || 'Πελάτης');
 
     // ==================== USER NOTIFICATIONS ====================
     
@@ -476,7 +479,8 @@ Deno.serve(async (req) => {
             businessName,
             customerName,
             tickets,
-            isHybrid: !!(usesLinkedReservations && seatingTypeId),
+            isHybrid: isHybridForEmail,
+            reservationName: isHybridForEmail ? reservationName : undefined,
           }),
         });
 
@@ -515,7 +519,7 @@ Deno.serve(async (req) => {
         await supabaseClient.from('notifications').insert({
           user_id: businessUserId,
           title: 'Νέα πώληση εισιτηρίων',
-          message: `${customerName || 'Πελάτης'} - ${ticketCount} εισιτήρια - ${eventTitle}`,
+          message: `${displayNameForBusiness} - ${ticketCount} εισιτήρια - ${eventTitle}`,
           type: 'business',
           event_type: 'ticket_sale',
           entity_type: 'ticket_order',
@@ -541,7 +545,7 @@ Deno.serve(async (req) => {
         if (!(await wasAlreadySent(supabaseClient, businessUserId, bizPushKey))) {
           const businessPushPayload: PushPayload = {
             title: `Νέα πώληση: ${ticketCount} εισιτήρια - ${eventTitle}`,
-            body: `${customerName || 'Πελάτης'} - ${totalAmountFormatted}`,
+            body: `${displayNameForBusiness} - ${totalAmountFormatted}`,
             icon: '/fomo-logo-new.png',
             badge: '/fomo-logo-new.png',
             tag: `n:ticket_sale:${orderId}`,
@@ -589,6 +593,7 @@ Deno.serve(async (req) => {
               businessEmail: profile.email,
               businessName,
               businessUserId,
+              reservationName: isHybridForEmail ? reservationName : undefined,
             }),
           });
 
