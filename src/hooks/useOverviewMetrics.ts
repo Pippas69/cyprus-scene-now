@@ -92,23 +92,27 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
               .gte("created_at", startISO)
               .lte("created_at", endISO)
           : Promise.resolve({ data: [], error: null }),
-        // Direct reservations
+        // Direct reservations (exclude comp child rows)
         supabase
           .from("reservations")
           .select("id, user_id, party_size")
           .eq("business_id", businessId)
           .is("event_id", null)
           .eq("status", "accepted")
+          .is("parent_reservation_id", null)
+          .or("is_comp.is.null,is_comp.eq.false")
           .gte("created_at", startISO)
           .lte("created_at", endISO),
-        // Event reservations
+        // Event reservations (exclude comp child rows)
         eventIds.length > 0
           ? supabase
               .from("reservations")
               .select("id, user_id, party_size")
               .in("event_id", eventIds)
               .eq("status", "accepted")
-              .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false")
+              .is("parent_reservation_id", null)
+              .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null")
+              .or("is_comp.is.null,is_comp.eq.false")
               .gte("created_at", startISO)
               .lte("created_at", endISO)
           : Promise.resolve({ data: [], error: null }),
@@ -127,13 +131,15 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .eq("business_id", businessId)
           .gte("created_at", startISO)
           .lte("created_at", endISO),
-        // Direct bookings count
+        // Direct bookings count (exclude comp child rows)
         supabase
           .from("reservations")
           .select("*", { count: "exact", head: true })
           .eq("business_id", businessId)
           .is("event_id", null)
           .eq("status", "accepted")
+          .is("parent_reservation_id", null)
+          .or("is_comp.is.null,is_comp.eq.false")
           .gte("created_at", startISO)
           .lte("created_at", endISO),
         // Events with reservations enabled
@@ -250,7 +256,9 @@ export const useOverviewMetrics = (businessId: string, dateRange?: { from: Date;
           .select("*", { count: "exact", head: true })
           .in("event_id", eventIdsWithReservations)
           .eq("status", "accepted")
+          .is("parent_reservation_id", null)
           .or("auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null")
+          .or("is_comp.is.null,is_comp.eq.false")
           .gte("created_at", startISO)
           .lte("created_at", endISO);
         eventBookings = count || 0;
