@@ -1,77 +1,54 @@
 
 
-## Διάγνωση: Γιατί κολλάει στο splash σε iPhone Safari (με αδιάσειστα τεκμήρια)
+## Σχέδιο: Bottle mode — διαφανές breakdown "Είσοδος / Πίστωση / Ελάχιστη κατανάλωση"
 
-### Τι έκανα
+### Τι παρατήρησα (επιβεβαίωση κατανόησης)
 
-1. Έκανα `curl` στο live `https://fomo.com.cy/` και διάβασα το πραγματικό HTML που σερβίρεται **αυτή τη στιγμή**.
-2. Κατέβασα το πραγματικό vendor chunk που φορτώνει το browser σου.
-3. Διασταύρωσα με τα Sentry/Auth logs και τη ροή bootstrap στον κώδικα.
+Στο checkout των hybrid events (`KalivaTicketReservationFlow.tsx`, βήμα 3 "Σύνοψη"), το block **"💡 Πώς λειτουργεί η πληρωμή"**:
 
-### Αδιάσειστα τεκμήρια
+- **Amount mode (τιμή σε €):** Ήδη χειρίζεται σωστά **3 σενάρια**:
+  1. Μόνο Είσοδος → δείχνει μόνο "Είσοδος"
+  2. Μόνο Πίστωση → δείχνει "Ελάχιστη κατανάλωση + Προπληρωμή + Υπόλοιπο στο venue"
+  3. Είσοδος + Πίστωση → δείχνει "Είσοδος + Πίστωση τραπεζιού + Ελάχιστη κατανάλωση" (αυτό που φαίνεται στην 1η φωτογραφία σου)
 
-**Τεκμήριο 1 — Τα παλιά broken chunks ΕΙΝΑΙ ΑΚΟΜΑ LIVE:**
+- **Bottle mode (μπουκάλι):** Δείχνει μόνο μια συμπιεσμένη εκδοχή ("Ελάχιστη κατανάλωση: 1 Bottle / Κόστος εισιτηρίων online / Στο venue: 1 Bottle") — **ΧΩΡΙΣ** να σπάει σε Είσοδο και Πίστωση όταν το ticket tier έχει και τα δύο. Αυτό είναι το πρόβλημα της 2ης φωτογραφίας.
 
-Το HTML που σερβίρει το `fomo.com.cy` αυτή τη στιγμή περιέχει:
-```
-<script type="module" crossorigin src="/assets/index-CyKly9DB.js"></script>
-<link rel="modulepreload" crossorigin href="/assets/pdf-vendor-CjICdACB.js">
-<link rel="modulepreload" crossorigin href="/assets/charts-vendor-DGFcTSGr.js">
-<link rel="modulepreload" crossorigin href="/assets/react-vendor-CE8Yv075.js">
-```
+### Στόχος
 
-Το `charts-vendor-DGFcTSGr.js` και το `pdf-vendor-CjICdACB.js` είναι ακριβώς τα chunks που υποτίθεται ότι **διαγράφηκαν** από το `vite.config.ts` στο προηγούμενο approve.
+Το bottle mode να ακολουθεί **την ίδια 3-case λογική** με το amount mode στο "Πώς λειτουργεί η πληρωμή", αλλάζοντας μόνο τη γραμμή της "Ελάχιστης κατανάλωσης τραπεζιού" από ποσό σε **bottles label** (π.χ. "1 Bottle", "2 Premium Bottles").
 
-**Τεκμήριο 2 — Το TDZ bug είναι μέσα στο live chunk:**
+### Τα 3 σενάρια σε bottle mode
 
-Κατέβασα το `charts-vendor-DGFcTSGr.js`. Η πρώτη γραμμή είναι:
-```
-import{r as R,a as Dm,R as P}from"./react-vendor-CE8Yv075.js";
-```
-
-Αυτό το `P` (που είναι το React) εισάγεται και χρησιμοποιείται στην top-level εκτέλεση του chunk **πριν** ολοκληρωθεί η αρχικοποίηση του `react-vendor` σε circular eval. Είναι το ίδιο TDZ error που είχαμε διαγνώσει: `Cannot access 'P' before initialization`.
-
-**Τεκμήριο 3 — Γιατί laptop ναι, iPhone όχι:**
-
-- **Chrome (V8)** στο laptop: ανεκτικό στο ESM circular evaluation order. Το `P` ίσως φτάνει initialized λόγω διαφορετικού scheduling των modulepreload requests — το crash δεν εμφανίζεται κάθε φορά.
-- **Safari (JavaScriptCore)** σε iPhone iOS: αυστηρή τήρηση του ECMAScript spec για TDZ + διαφορετικό ordering των modulepreload. Το `P` είναι uninitialized όταν εκτελείται το top-level του charts-vendor → exception → το `App` ποτέ δεν mount-άρει → το splash μένει για πάντα.
-
-Αυτό συμφωνεί ακριβώς με το γνωστό bug στο WebKit όπου strict ES module circular dependencies κρασάρουν με TDZ ενώ το Chrome συγχωρεί.
-
-**Τεκμήριο 4 — Τα Auth logs του Supabase:**
-
-Στις 10:24:42Z σήμερα, λογιν ΕΠΙΤΥΧΕΣ από `referer: https://fomo.com.cy/` — αλλά μόνο το `/auth/v1/token` και `/user` εκτελέστηκαν. Δεν υπάρχουν επόμενα RPC calls (π.χ. `get_event_rsvp_counts`, `public_businesses_safe`) από αυτό το IP — πράγμα που δείχνει ότι το app crash-άρει αμέσως μετά το login response, πριν προλάβει να φορτώσει τη feed σελίδα. Σύμφωνο με το TDZ crash του charts-vendor.
-
-**Τεκμήριο 5 — Service Worker αποκλείεται ως αιτία:**
-
-Ο `public/sw.js` v3.0.0 κάνει network-first για JS/CSS chunks (γραμμές 130-140). Δεν σερβίρει stale chunks. Επίσης, τα Cloudflare headers (`cache-control: no-cache, must-revalidate, max-age=0`) σπρώχνουν fresh HTML. Άρα δεν είναι θέμα cache — είναι θέμα **του ίδιου του deployed bundle**.
-
-### Συμπέρασμα
-
-Το προηγούμενο fix στο `vite.config.ts` (αφαίρεση `charts-vendor` και `pdf-vendor` από `manualChunks`) **δεν έχει publish-αριστεί στο production**. Το `fomo.com.cy` εξακολουθεί να σερβίρει το παλιό build με `index-CyKly9DB.js` + `charts-vendor-DGFcTSGr.js`. Δεν υπάρχει νέο deployment μετά την αλλαγή.
-
-### Τι πρέπει να γίνει
-
-**Δεν χρειάζεται καμία νέα αλλαγή κώδικα.** Το fix υπάρχει ήδη στο `vite.config.ts`. Χρειάζεται **νέο publish** για να βγει στο production.
-
-Όμως, για να δώσουμε επιπλέον ασφάλεια ώστε αν ξανασυμβεί παρόμοιο TDZ crash στο μέλλον να μην κολλάει όλο το app στο splash, θα προσθέσω ένα small hardening:
-
-| Αρχείο | Αλλαγή |
+| Περίπτωση | Εμφάνιση |
 |---|---|
-| `index.html` | Προσθήκη inline `window.addEventListener('error', ...)` που πιάνει top-level uncaught script errors **πριν** ξεκινήσει το main bundle, και αν περάσουν 8 δευτερόλεπτα χωρίς να αφαιρεθεί το `#inline-splash`, το αφαιρεί και δείχνει μήνυμα "Ξανά προσπάθεια" με reload button. Αυτό είναι ανεξάρτητο από το App.tsx, οπότε δουλεύει ακόμα κι αν τα vendor chunks κρασάρουν. |
-| `vite.config.ts` | Καμία αλλαγή — ήδη σωστό από το προηγούμενο approve. |
+| **A.** Μόνο Είσοδος (ticket = pure entry, χωρίς πίστωση) | `Είσοδος (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
+| **B.** Είσοδος + Πίστωση (split ticket) | `Είσοδος (N × €X.XX): €Y.YY` + `Πίστωση τραπεζιού (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
+| **C.** Μόνο Πίστωση (όλο το ticket πιστώνεται) | `Πίστωση τραπεζιού (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
 
-### Βήματα για εσένα
+Η bottle ποσότητα εμφανίζεται **πάντα** ως "Ελάχιστη κατανάλωση τραπεζιού" (όχι "Στο venue") για ομοιομορφία με την 1η φωτογραφία. Παραμένει η σημείωση ότι η προπληρωμή/πίστωση πιστώνεται στον λογαριασμό στο venue.
 
-1. **Approve το παρόν πλάνο** για το hardening του `index.html`.
-2. Αμέσως μετά: **Publish → Update**. Αυτό είναι το πιο κρίσιμο βήμα — χωρίς νέο publish, **το πρόβλημα παραμένει** ακόμα κι αν το hardening εφαρμοστεί. Στο νέο build θα παραχθούν νέα chunks (π.χ. `index-XXXXX.js` ΧΩΡΙΣ ξεχωριστό charts-vendor) που θα δουλέψουν σε Safari.
-3. Στο iPhone:
-   - Settings → Safari → Clear History and Website Data
-   - Άνοιξε `https://fomo.com.cy` σε Private Tab για επιβεβαίωση χωρίς cache
+### Σημεία που πρέπει να αλλάξουν
 
-### Τι ΔΕΝ αλλάζει
+**1. `src/components/tickets/KalivaTicketReservationFlow.tsx`** (κύρια αλλαγή — γραμμές ~935-969)
+- Αντικατάσταση του υπάρχοντος bottle block με νέο που:
+  - Υπολογίζει `entryPerTicket`, `creditPerTicket`, `entryTotal`, `creditTotal` (όπως ήδη γίνεται για amount mode)
+  - Επιλέγει case A/B/C με βάση `hasEntry` και `hasCredit`
+  - Πάντα κλείνει με γραμμή "Ελάχιστη κατανάλωση τραπεζιού: {bottleLabel}" σε bold, μετά από διαχωριστική γραμμή
+  - Διατηρεί τη note "Η είσοδος δεν επιστρέφεται· πιστώνεται στο τραπέζι μόνο η πίστωση τραπεζιού" για case B, και αντίστοιχες notes για A/C
 
-- ✅ Καμία αλλαγή σε App.tsx, main.tsx, sw.js, business logic
-- ✅ Καμία αλλαγή σε auth, push notifications, charts, PDF generation
-- ✅ Καμία αλλαγή σε χρώματα, layout, fonts
+**2. Έλεγχος για ομοιομορφία (όχι κατ' ανάγκην αλλαγή — θα επαληθευτεί κατά την υλοποίηση):**
+- `src/components/user/ReservationEventCheckout.tsx` (pure reservation events, όχι hybrid — εκεί δεν υπάρχουν tickets, άρα δεν επηρεάζεται)
+- `src/components/user/AddGuestsDialog.tsx` (προσθήκη ατόμων σε υπάρχουσα κράτηση — έχει ήδη bottle handling, θα ελεγχθεί αν χρειάζεται ίδιος διαχωρισμός entry/credit)
+- `src/components/ui/SuccessQRCard.tsx` (κάρτα επιτυχίας μετά την αγορά — αν δείχνει breakdown, θα γίνει η ίδια προσαρμογή)
+
+### Ζero-Regression εγγύηση
+
+- **Amount mode (τιμή):** Δεν αγγίζεται καθόλου το υπάρχον block — μένει 100% ίδιο.
+- **Bottle mode όταν δεν υπάρχει είσοδος ούτε πίστωση:** Πέφτει σε case C (μόνο "Ελάχιστη κατανάλωση: 1 Bottle"), που ταιριάζει με την τρέχουσα συμπεριφορά για pure-bottle tickets.
+- Όλη η λογική Stripe / webhook / πληρωμής (`prepaid_min_charge_cents`, `prepaid_amount_cents`, `price_cents`) μένει αμετάβλητη — αλλάζει μόνο το **display**.
+- Καμία αλλαγή σε translations εκτός από πιθανή προσθήκη μιας σημείωσης για bottle case A.
+
+### Επόμενο βήμα
+
+Με την έγκρισή σου, θα περάσω σε default mode και θα κάνω την αλλαγή στο `KalivaTicketReservationFlow.tsx`, και θα ελέγξω/προσαρμόσω αν χρειάζεται και τα `AddGuestsDialog.tsx` και `SuccessQRCard.tsx` για ομοιομορφία.
 
