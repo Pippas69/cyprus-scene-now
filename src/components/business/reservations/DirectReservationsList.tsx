@@ -2520,6 +2520,24 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           eventId={selectedEventId}
           onSuccess={handleManualEntrySuccess}
         />
+        {addCompFor && (
+          <AddCompGuestsDialog
+            open={!!addCompFor}
+            onOpenChange={(o) => { if (!o) setAddCompFor(null); }}
+            reservation={{
+              id: addCompFor.id,
+              reservation_name: addCompFor.reservation_name,
+              party_size: addCompFor.party_size,
+              event_minimum_age: eventMinAge,
+              event_title: eventTitle,
+            }}
+            language={language}
+            onSuccess={() => {
+              setAddCompFor(null);
+              fetchReservations(true);
+            }}
+          />
+        )}
       </div>);
 
   }
