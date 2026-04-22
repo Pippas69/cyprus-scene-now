@@ -154,7 +154,12 @@ export const EventReservationOverview = ({ eventId, businessId }: EventReservati
       const walkInTickets = (allTickets || []).filter(t => walkInOrderIds.has(t.order_id));
       const walkInTicketCount = walkInTickets.length;
 
-      const checkedIn = (allTickets || []).filter(t => t.status === 'used').length;
+      // Check-ins: tickets used + reservations with checked_in_at (sum party_size)
+      const ticketCheckIns = (allTickets || []).filter(t => t.status === 'used').length;
+      const reservationCheckIns = reservations
+        .filter(r => !!r.checked_in_at)
+        .reduce((sum, r) => sum + (r.party_size || 1), 0);
+      const checkedIn = ticketCheckIns + reservationCheckIns;
 
       const tierSoldCount = new Map<string, number>();
       walkInTickets.forEach(t => {
