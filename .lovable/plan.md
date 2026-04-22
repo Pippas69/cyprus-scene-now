@@ -1,54 +1,54 @@
 
 
-## Σχέδιο: Bottle mode — διαφανές breakdown "Είσοδος / Πίστωση / Ελάχιστη κατανάλωση"
+## Σχέδιο: Όνομα Κράτησης στα emails πώλησης εισιτηρίων (hybrid)
 
-### Τι παρατήρησα (επιβεβαίωση κατανόησης)
+### Τι εντόπισα
 
-Στο checkout των hybrid events (`KalivaTicketReservationFlow.tsx`, βήμα 3 "Σύνοψη"), το block **"💡 Πώς λειτουργεί η πληρωμή"**:
+**Φωτογραφία 1** — Business email πώλησης εισιτηρίων (`send-ticket-sale-notification`):
+- Γραμμή `Πελάτης: Marinos Koumi` δείχνει το **profile name** του αγοραστή (`ticket_orders.customer_name`), όχι το `reservation_name` που πληκτρολόγησε στο dialog ("Agamemnonas Paraskevas").
 
-- **Amount mode (τιμή σε €):** Ήδη χειρίζεται σωστά **3 σενάρια**:
-  1. Μόνο Είσοδος → δείχνει μόνο "Είσοδος"
-  2. Μόνο Πίστωση → δείχνει "Ελάχιστη κατανάλωση + Προπληρωμή + Υπόλοιπο στο venue"
-  3. Είσοδος + Πίστωση → δείχνει "Είσοδος + Πίστωση τραπεζιού + Ελάχιστη κατανάλωση" (αυτό που φαίνεται στην 1η φωτογραφία σου)
+**Φωτογραφία 2/3** — Στα hybrid events ο πελάτης πληκτρολογεί ένα `reservation_name` στο dialog. Αυτό σώζεται στο `reservations.reservation_name` της linked κράτησης (μέσω `process-ticket-payment`, line 305/315), αλλά **δεν περνιέται** στα emails.
 
-- **Bottle mode (μπουκάλι):** Δείχνει μόνο μια συμπιεσμένη εκδοχή ("Ελάχιστη κατανάλωση: 1 Bottle / Κόστος εισιτηρίων online / Στο venue: 1 Bottle") — **ΧΩΡΙΣ** να σπάει σε Είσοδο και Πίστωση όταν το ticket tier έχει και τα δύο. Αυτό είναι το πρόβλημα της 2ης φωτογραφίας.
+**Customer email** (`send-ticket-email`): Η κάρτα "Λεπτομέρειες" δείχνει Ημερομηνία / Ώρα / Τοποθεσία / Άτομα — **λείπει** το "Όνομα Κράτησης" πάνω από την Τοποθεσία.
 
-### Στόχος
+**Ώρα/Timezone**: Όλα τα email functions ήδη χρησιμοποιούν `hour12: false` + `timeZone: 'Europe/Nicosia'` (24h, Κύπρος). **Δεν χρειάζεται καμία αλλαγή** εδώ.
 
-Το bottle mode να ακολουθεί **την ίδια 3-case λογική** με το amount mode στο "Πώς λειτουργεί η πληρωμή", αλλάζοντας μόνο τη γραμμή της "Ελάχιστης κατανάλωσης τραπεζιού" από ποσό σε **bottles label** (π.χ. "1 Bottle", "2 Premium Bottles").
+### Αλλαγές
 
-### Τα 3 σενάρια σε bottle mode
+**1. `supabase/functions/process-ticket-payment/index.ts`**
+- Διαβάζω το `reservation_name` από το `session.metadata` (ήδη υπάρχει — line 305) ως `reservationName`.
+- Όταν είναι hybrid (`usesLinkedReservations && seatingTypeId`):
+  - Περνάω επιπλέον πεδίο `reservationName` στα body του `send-ticket-email` (customer) και `send-ticket-sale-notification` (business).
+- Στο business push/in-app notification (lines 518, 544): αλλάζω `customerName || 'Πελάτης'` → `reservationName || customerName || 'Πελάτης'` ώστε να εμφανίζει το όνομα κράτησης σε hybrid πωλήσεις.
 
-| Περίπτωση | Εμφάνιση |
-|---|---|
-| **A.** Μόνο Είσοδος (ticket = pure entry, χωρίς πίστωση) | `Είσοδος (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
-| **B.** Είσοδος + Πίστωση (split ticket) | `Είσοδος (N × €X.XX): €Y.YY` + `Πίστωση τραπεζιού (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
-| **C.** Μόνο Πίστωση (όλο το ticket πιστώνεται) | `Πίστωση τραπεζιού (N × €X.XX): €Y.YY` + `Ελάχιστη κατανάλωση τραπεζιού: 1 Bottle` |
+**2. `supabase/functions/send-ticket-sale-notification/index.ts`**
+- Προσθέτω optional πεδίο `reservationName` στο schema.
+- Στην κάρτα "Λεπτομέρειες" (line 117):
+  - Αν υπάρχει `reservationName`: γραμμή `detailRow('Όνομα Κράτησης', reservationName)` αντί για `detailRow('Πελάτης', customerName)`.
+  - Αν δεν υπάρχει (pure ticket χωρίς reservation): παραμένει η υπάρχουσα γραμμή `Πελάτης` (zero regression για non-hybrid).
 
-Η bottle ποσότητα εμφανίζεται **πάντα** ως "Ελάχιστη κατανάλωση τραπεζιού" (όχι "Στο venue") για ομοιομορφία με την 1η φωτογραφία. Παραμένει η σημείωση ότι η προπληρωμή/πίστωση πιστώνεται στον λογαριασμό στο venue.
+**3. `supabase/functions/send-ticket-email/index.ts`** (customer email)
+- Προσθέτω optional `reservationName` στο schema.
+- Στο block `infoRows` (lines 158-169), όταν υπάρχει `reservationName`:
+  - Προσθέτω `detailRow('Όνομα Κράτησης', reservationName)` **πάνω από** την Τοποθεσία (πριν το `eventLocation`).
 
-### Σημεία που πρέπει να αλλάξουν
+**4. `supabase/functions/process-reservation-event-payment/index.ts`** (pure reservation events — το business email ήδη δείχνει `reservation.reservation_name`)
+- Αλλάζω μόνο το label στη γραμμή 567: `detailRow('Πελάτης', ...)` → `detailRow('Όνομα Κράτησης', ...)` για ομοιομορφία.
 
-**1. `src/components/tickets/KalivaTicketReservationFlow.tsx`** (κύρια αλλαγή — γραμμές ~935-969)
-- Αντικατάσταση του υπάρχοντος bottle block με νέο που:
-  - Υπολογίζει `entryPerTicket`, `creditPerTicket`, `entryTotal`, `creditTotal` (όπως ήδη γίνεται για amount mode)
-  - Επιλέγει case A/B/C με βάση `hasEntry` και `hasCredit`
-  - Πάντα κλείνει με γραμμή "Ελάχιστη κατανάλωση τραπεζιού: {bottleLabel}" σε bold, μετά από διαχωριστική γραμμή
-  - Διατηρεί τη note "Η είσοδος δεν επιστρέφεται· πιστώνεται στο τραπέζι μόνο η πίστωση τραπεζιού" για case B, και αντίστοιχες notes για A/C
+### Zero-Regression εγγυήσεις
 
-**2. Έλεγχος για ομοιομορφία (όχι κατ' ανάγκην αλλαγή — θα επαληθευτεί κατά την υλοποίηση):**
-- `src/components/user/ReservationEventCheckout.tsx` (pure reservation events, όχι hybrid — εκεί δεν υπάρχουν tickets, άρα δεν επηρεάζεται)
-- `src/components/user/AddGuestsDialog.tsx` (προσθήκη ατόμων σε υπάρχουσα κράτηση — έχει ήδη bottle handling, θα ελεγχθεί αν χρειάζεται ίδιος διαχωρισμός entry/credit)
-- `src/components/ui/SuccessQRCard.tsx` (κάρτα επιτυχίας μετά την αγορά — αν δείχνει breakdown, θα γίνει η ίδια προσαρμογή)
+- **Pure ticket events (όχι hybrid)**: `reservationName` είναι `undefined`, οπότε η συμπεριφορά παραμένει 100% ίδια — εμφανίζει `Πελάτης: <profile name>`.
+- **Pure reservation events**: Customer email ήδη έχει "Όνομα" — δεν αλλάζει. Business email αλλάζει μόνο το label string από "Πελάτης" σε "Όνομα Κράτησης".
+- **Καμία DB αλλαγή**, καμία schema migration.
+- **Καμία αλλαγή σε Stripe/checkout flow** — το `reservation_name` ήδη βρίσκεται στο `session.metadata`.
+- **Ώρα/timezone**: ήδη σωστά παντού (24h, Europe/Nicosia) — επιβεβαιώθηκε σε 13 αρχεία.
 
-### Ζero-Regression εγγύηση
+### Επιβεβαίωση κατανόησης
 
-- **Amount mode (τιμή):** Δεν αγγίζεται καθόλου το υπάρχον block — μένει 100% ίδιο.
-- **Bottle mode όταν δεν υπάρχει είσοδος ούτε πίστωση:** Πέφτει σε case C (μόνο "Ελάχιστη κατανάλωση: 1 Bottle"), που ταιριάζει με την τρέχουσα συμπεριφορά για pure-bottle tickets.
-- Όλη η λογική Stripe / webhook / πληρωμής (`prepaid_min_charge_cents`, `prepaid_amount_cents`, `price_cents`) μένει αμετάβλητη — αλλάζει μόνο το **display**.
-- Καμία αλλαγή σε translations εκτός από πιθανή προσθήκη μιας σημείωσης για bottle case A.
+Σε hybrid event ο πελάτης γράφει "Agamemnonas Paraskevas" στο dialog κράτησης. Μετά την αγορά:
+- **Email πελάτη**: στις "Λεπτομέρειες" θα φαίνεται `Όνομα Κράτησης: Agamemnonas Paraskevas` πάνω από την Τοποθεσία.
+- **Email επιχειρηματία**: αντί για `Πελάτης: Marinos Koumi` (profile) θα φαίνεται `Όνομα Κράτησης: Agamemnonas Paraskevas` (reservation_name).
+- **Push/in-app επιχείρησης**: "Agamemnonas Paraskevas - 3 εισιτήρια".
 
-### Επόμενο βήμα
-
-Με την έγκρισή σου, θα περάσω σε default mode και θα κάνω την αλλαγή στο `KalivaTicketReservationFlow.tsx`, και θα ελέγξω/προσαρμόσω αν χρειάζεται και τα `AddGuestsDialog.tsx` και `SuccessQRCard.tsx` για ομοιομορφία.
+Ώρες παραμένουν 24h Κύπρου (π.χ. `22:00`, όχι `10:00 PM`) — όπως ήδη είναι.
 
