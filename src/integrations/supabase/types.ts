@@ -5364,9 +5364,11 @@ export type Database = {
           guest_ages: string | null
           guest_city: string | null
           id: string
+          is_comp: boolean
           is_manual_entry: boolean
           manual_status: string | null
           min_age: number | null
+          parent_reservation_id: string | null
           party_size: number | null
           phone_number: string | null
           preferred_time: string | null
@@ -5408,9 +5410,11 @@ export type Database = {
           guest_ages?: string | null
           guest_city?: string | null
           id?: string
+          is_comp?: boolean
           is_manual_entry?: boolean
           manual_status?: string | null
           min_age?: number | null
+          parent_reservation_id?: string | null
           party_size?: number | null
           phone_number?: string | null
           preferred_time?: string | null
@@ -5452,9 +5456,11 @@ export type Database = {
           guest_ages?: string | null
           guest_city?: string | null
           id?: string
+          is_comp?: boolean
           is_manual_entry?: boolean
           manual_status?: string | null
           min_age?: number | null
+          parent_reservation_id?: string | null
           party_size?: number | null
           phone_number?: string | null
           preferred_time?: string | null
@@ -5518,6 +5524,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_parent_reservation_id_fkey"
+            columns: ["parent_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
           {

@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Calendar,
-  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star } from
+  Loader2, Ticket, Edit2, Check, X, MessageSquare, StickyNote, Pencil, Save, Star, Plus, Gift } from
 'lucide-react';
 import { ManualEntryDialog, type OptimisticEntry } from './ManualEntryDialog';
+import { AddCompGuestsDialog } from './AddCompGuestsDialog';
 import { ManualStatusToggle } from './ManualStatusToggle';
 import { format, isAfter, addMinutes } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
@@ -157,6 +158,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   const [internalManualEntryOpen, setInternalManualEntryOpen] = useState(false);
   const manualEntryOpen = externalManualEntryOpen ?? internalManualEntryOpen;
   const setManualEntryOpen = onManualEntryOpenChange ?? setInternalManualEntryOpen;
+  // Comp guests (free invitations attached to a parent reservation)
+  const [compCountByParent, setCompCountByParent] = useState<Record<string, number>>({});
+  const [eventMinAge, setEventMinAge] = useState<number | null>(null);
+  const [eventTitle, setEventTitle] = useState<string | null>(null);
+  const [addCompFor, setAddCompFor] = useState<DirectReservation | null>(null);
   const text = {
     el: {
       title: 'Κρατήσεις Προφίλ & Προσφορών',
@@ -407,6 +413,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           query = query.eq('event_id', selectedEventId);
         }
         query = query.or('auto_created_from_tickets.is.null,auto_created_from_tickets.eq.false,seating_type_id.not.is.null');
+        // Hide comp guest rows from the main list — they are shown as a sub-line under the parent reservation
+        query = query.or('is_comp.is.null,is_comp.eq.false');
       } else {
         query = query.eq('business_id', businessId).is('event_id', null);
       }
@@ -455,6 +463,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               .eq('status', 'completed')
           : Promise.resolve({ data: null }),
       ]);
+
+      // Fetch comp counts grouped by parent_reservation_id
+      if (reservationIds.length > 0) {
+        const { data: compRows } = await supabase
+          .from('reservations')
+          .select('parent_reservation_id')
+          .in('parent_reservation_id', reservationIds)
+          .eq('is_comp', true);
+        const counts: Record<string, number> = {};
+        (compRows || []).forEach((c: any) => {
+          if (c.parent_reservation_id) {
+            counts[c.parent_reservation_id] = (counts[c.parent_reservation_id] || 0) + 1;
+          }
+        });
+        setCompCountByParent(counts);
+      }
+
+      // Fetch event metadata (min age + title) for the comp dialog
+      if (selectedEventId) {
+        const { data: ev } = await supabase
+          .from('events')
+          .select('title, minimum_age')
+          .eq('id', selectedEventId)
+          .maybeSingle();
+        if (ev) {
+          setEventTitle(ev.title || null);
+          setEventMinAge((ev as any).minimum_age ?? null);
+        }
+      }
 
       const offerLinkedIds = new Set<string>();
       (offerResult.data || []).forEach((p: any) => {
@@ -2264,6 +2301,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                               ageBadge = agesStr ? `${agesStr}` : '';
                             }
                             const combinedPeople = ageBadge ? `${peopleText}(${ageBadge})` : peopleText;
+                            const compCount = compCountByParent[reservation.id] || 0;
+                            const paidCount = Math.max(0, (reservation.party_size || 0) - compCount);
                             return (
                               <>
                                 <EditableCell
@@ -2272,6 +2311,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   displayValue={combinedPeople}
                                   rawValue={combinedPeople}
                                   inputClassName="h-7 text-sm w-36" />
+                                {compCount > 0 && (
+                                  <span className="text-[11px] font-medium text-primary">
+                                    {paidCount} paid + {compCount} comp
+                                  </span>
+                                )}
                                 <EditableCell
                                   reservationId={reservation.id}
                                   field="guest_city"
@@ -2422,7 +2466,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       )}
                       {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
                       <TableCell className="align-top">
-                        {renderStaffMemoCell(reservation)}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            {renderStaffMemoCell(reservation)}
+                          </div>
+                          {/* Add comp guests button — only for reservation/hybrid event rows */}
+                          {selectedEventType !== 'ticket' &&
+                           reservation.source !== 'walk_in' &&
+                           reservation.status !== 'cancelled' &&
+                           reservation.status !== 'declined' && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 rounded-full shrink-0 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+                              onClick={() => setAddCompFor(reservation)}
+                              title={language === 'el' ? 'Πρόσθεσε δωρεάν καλεσμένους' : 'Add free guests'}
+                              aria-label={language === 'el' ? 'Πρόσθεσε δωρεάν καλεσμένους' : 'Add free guests'}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>);
               })}
