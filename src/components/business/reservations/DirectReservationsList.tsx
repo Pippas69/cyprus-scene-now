@@ -2300,8 +2300,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   inputType="number"
                                   inputClassName="h-7 text-sm w-20" />
                                 {compCount > 0 && (
-                                  <span className="text-[11px] font-medium text-primary">
-                                    {paidCount} paid + {compCount} comp
+                                  <span className="font-medium text-muted-foreground text-xs">
+                                    {paidCount} paid + {compCount} 
                                   </span>
                                 )}
                                 <EditableCell
