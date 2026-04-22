@@ -126,7 +126,7 @@ serve(async (req) => {
       user_id: user.id, // owner is the actor; comps don't belong to a real customer
       reservation_name: name,
       party_size: 1,
-      status: "confirmed" as const,
+      status: "accepted" as const,
       preferred_time: null,
       special_requests: null,
       qr_code_token: crypto.randomUUID(),
