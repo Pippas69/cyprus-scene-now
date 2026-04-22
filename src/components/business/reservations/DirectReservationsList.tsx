@@ -1291,7 +1291,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   };
 
   const isTicketOnlyMode = selectedEventType === 'ticket';
-  // Count by sum(party_size) so comp guests added to parent reservations are reflected
+  const reservationRowCount = reservations.length;
+  // Cards in the list keep guest totals, but the event dropdown badge must show reservation count.
   const sumParty = (rows: any[]) => rows.reduce((sum, r) => sum + (Number(r.party_size) || 1), 0);
   const effectiveTotal = isTicketOnlyMode ? ticketOnlyOrders.length : sumParty(reservations);
 
@@ -1305,12 +1306,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       : sumParty(reservations.filter((r) => Boolean(r.checked_in_at)))
   };
 
-  // Report count to parent for Kaliva header
+  // Report reservation/order count to parent event dropdown badge
   useEffect(() => {
     if (onReservationCountChange && !loading) {
-      onReservationCountChange(stats.total);
+      onReservationCountChange(isTicketOnlyMode ? ticketOnlyOrders.length : reservationRowCount);
     }
-  }, [stats.total, onReservationCountChange, loading]);
+  }, [isTicketOnlyMode, ticketOnlyOrders.length, reservationRowCount, onReservationCountChange, loading]);
 
   const getStatusBadge = (reservation: DirectReservation) => {
     // Manual entries use the ManualStatusToggle
