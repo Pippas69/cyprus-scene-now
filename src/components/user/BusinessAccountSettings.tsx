@@ -85,6 +85,8 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
   const [isDeleting, setIsDeleting] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [is2FALoading, setIs2FALoading] = useState(false);
+  const [promotersEnabled, setPromotersEnabled] = useState(false);
+  const [promotersLoading, setPromotersLoading] = useState(false);
 
   // Business profile form state
   const [profileLoading, setProfileLoading] = useState(false);
@@ -326,6 +328,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
         });
         setCurrentLogoUrl(data.logo_url);
         setCurrentCoverUrl(data.cover_url);
+        setPromotersEnabled(!!(data as any).promoters_enabled);
       }
     } catch (error) {
       console.error('Error fetching business:', error);
