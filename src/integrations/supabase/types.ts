@@ -7579,36 +7579,21 @@ export type Database = {
         Args: { p_business_id?: string }
         Returns: undefined
       }
-      book_slot_atomically:
-        | {
-            Args: {
-              p_business_id: string
-              p_date: string
-              p_is_offer_based?: boolean
-              p_party_size: number
-              p_phone_number?: string
-              p_reservation_name: string
-              p_seating_preference?: string
-              p_slot_time: string
-              p_special_requests?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_business_id: string
-              p_date: string
-              p_is_offer_based?: boolean
-              p_party_size: number
-              p_phone_number?: string
-              p_reservation_name: string
-              p_seating_preference?: string
-              p_slot_time: string
-              p_source?: string
-              p_special_requests?: string
-            }
-            Returns: Json
-          }
+      book_slot_atomically: {
+        Args: {
+          p_business_id: string
+          p_date: string
+          p_is_offer_based?: boolean
+          p_party_size: number
+          p_phone_number?: string
+          p_reservation_name: string
+          p_seating_preference?: string
+          p_slot_time: string
+          p_source?: string
+          p_special_requests?: string
+        }
+        Returns: Json
+      }
       calculate_user_similarity: {
         Args: { user1_id: string; user2_id: string }
         Returns: number
@@ -8904,27 +8889,16 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
-      sync_crm_guest_from_ticket_data:
-        | {
-            Args: {
-              p_business_id: string
-              p_guest_name: string
-              p_order_id: string
-              p_ticket_status?: string
-              p_user_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_business_id: string
-              p_guest_name: string
-              p_order_id: string
-              p_ticket_status: string
-              p_user_id: string
-            }
-            Returns: undefined
-          }
+      sync_crm_guest_from_ticket_data: {
+        Args: {
+          p_business_id: string
+          p_guest_name: string
+          p_order_id: string
+          p_ticket_status: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       sync_crm_guest_from_ticket_data_core: {
         Args: {
           p_business_id: string
