@@ -133,7 +133,6 @@ serve(async (req) => {
       confirmation_code: null,
       seating_type_id: parent.seating_type_id,
       prepaid_min_charge_cents: 0,
-      payment_status: "completed" as const,
       parent_reservation_id: parent.id,
       is_comp: true,
       min_age: cleanedAges[i] || null,
