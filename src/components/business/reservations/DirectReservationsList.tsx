@@ -1243,6 +1243,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         // editValue is "YYYY-MM-DDTHH:mm" from datetime-local input
         if (!editValue) return;
         updateData.preferred_time = new Date(editValue).toISOString();
+      } else if (field === 'care_of') {
+        updateData.care_of = editValue.trim() || null;
       } else if (field === 'email') {
         const reservation = reservations.find(r => r.id === id);
         if (reservation?.is_manual_entry) {
