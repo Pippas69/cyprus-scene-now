@@ -71,6 +71,8 @@ serve(async (req) => {
       guests,
       promoter_session_id,
       promoter_tracking_code,
+      pending_booking_id,
+      pending_booking_token,
     } = await parseBody(req, BodySchema);
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
