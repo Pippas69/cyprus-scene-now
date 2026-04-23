@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PriceInput } from "@/components/ui/price-input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -281,16 +282,9 @@ export const TicketTierEditor = ({
                         <Euro className="h-3 w-3" />
                         {text.price}
                       </Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={tier.price_cents / 100}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^0-9.]/g, '');
-                          updateTier(index, { 
-                            price_cents: Math.round(parseFloat(val || "0") * 100) 
-                          });
-                        }}
+                      <PriceInput
+                        valueCents={tier.price_cents}
+                        onChangeCents={(cents) => updateTier(index, { price_cents: cents })}
                         className="h-8 sm:h-10 text-xs sm:text-sm"
                       />
                       {tier.price_cents > 0 && commissionPercent > 0 && (
