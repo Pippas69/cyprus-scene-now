@@ -7,7 +7,7 @@ import { KalivaStaffControls } from './KalivaStaffControls';
 import { DirectReservationsList } from './DirectReservationsList';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Archive, ArchiveRestore, Search, X, ChevronLeft, ChevronRight, CalendarDays, Download } from 'lucide-react';
+import { Loader2, Plus, Archive, ArchiveRestore, Search, X, ChevronLeft, ChevronRight, CalendarDays, Download, Link2 } from 'lucide-react';
 import { exportEventManagementToXlsx } from '@/lib/eventExportXlsx';
 import type { DirectReservationsExportSnapshot } from './DirectReservationsList';
 import { isClubOrEventBusiness, isPerformanceBusiness } from '@/lib/isClubOrEventBusiness';
@@ -18,6 +18,8 @@ import { format, addDays, subDays } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { AddViaLinkModal } from './AddViaLinkModal';
+import { PendingBookingsList } from './PendingBookingsList';
 
 interface ReservationDashboardProps {
   businessId: string;
@@ -59,6 +61,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [exportSnapshot, setExportSnapshot] = useState<DirectReservationsExportSnapshot | null>(null);
+  const [addViaLinkOpen, setAddViaLinkOpen] = useState(false);
 
   // Reset snapshot when the selected event/context changes so we don't leak data across events
   useEffect(() => {
