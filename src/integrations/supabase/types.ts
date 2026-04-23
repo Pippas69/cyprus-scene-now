@@ -4083,6 +4083,7 @@ export type Database = {
         Row: {
           booking_type: Database["public"]["Enums"]["pending_booking_type"]
           business_id: string
+          care_of: string | null
           completed_at: string | null
           completed_reservation_id: string | null
           completed_ticket_order_id: string | null
@@ -4105,6 +4106,7 @@ export type Database = {
         Insert: {
           booking_type: Database["public"]["Enums"]["pending_booking_type"]
           business_id: string
+          care_of?: string | null
           completed_at?: string | null
           completed_reservation_id?: string | null
           completed_ticket_order_id?: string | null
@@ -4127,6 +4129,7 @@ export type Database = {
         Update: {
           booking_type?: Database["public"]["Enums"]["pending_booking_type"]
           business_id?: string
+          care_of?: string | null
           completed_at?: string | null
           completed_reservation_id?: string | null
           completed_ticket_order_id?: string | null
@@ -7809,6 +7812,7 @@ export type Database = {
         Returns: {
           booking_type: Database["public"]["Enums"]["pending_booking_type"]
           business_id: string
+          care_of: string | null
           completed_at: string | null
           completed_reservation_id: string | null
           completed_ticket_order_id: string | null
@@ -9243,7 +9247,11 @@ export type Database = {
       entity_type: "event" | "business" | "discount"
       fee_bearer: "buyer" | "business"
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
-      pending_booking_status: "pending" | "completed" | "expired" | "cancelled"
+      pending_booking_status:
+        | "pending"
+        | "completed"
+        | "link_expired"
+        | "cancelled"
       pending_booking_type: "reservation" | "ticket" | "walk_in"
       post_visibility: "public" | "followers" | "private"
       price_tier: "free" | "low" | "medium" | "high"
@@ -9431,7 +9439,12 @@ export const Constants = {
       entity_type: ["event", "business", "discount"],
       fee_bearer: ["buyer", "business"],
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
-      pending_booking_status: ["pending", "completed", "expired", "cancelled"],
+      pending_booking_status: [
+        "pending",
+        "completed",
+        "link_expired",
+        "cancelled",
+      ],
       pending_booking_type: ["reservation", "ticket", "walk_in"],
       post_visibility: ["public", "followers", "private"],
       price_tier: ["free", "low", "medium", "high"],
