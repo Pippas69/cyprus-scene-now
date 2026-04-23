@@ -726,6 +726,55 @@ export type Database = {
           },
         ]
       }
+      business_sms_daily_quota: {
+        Row: {
+          admin_notified_at_threshold: string | null
+          business_id: string
+          created_at: string
+          quota_date: string
+          sms_count: number
+          updated_at: string
+        }
+        Insert: {
+          admin_notified_at_threshold?: string | null
+          business_id: string
+          created_at?: string
+          quota_date?: string
+          sms_count?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_notified_at_threshold?: string | null
+          business_id?: string
+          created_at?: string
+          quota_date?: string
+          sms_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_sms_daily_quota_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_sms_daily_quota_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_sms_daily_quota_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_stripe_details: {
         Row: {
           business_id: string
@@ -936,6 +985,9 @@ export type Database = {
           reservation_seating_options: string[] | null
           reservation_time_slots: Json | null
           reservations_globally_paused: boolean | null
+          sms_paused_at: string | null
+          sms_paused_reason: string | null
+          sms_sending_paused: boolean
           stripe_account_id: string | null
           stripe_onboarding_completed: boolean | null
           stripe_payouts_enabled: boolean | null
@@ -983,6 +1035,9 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
+          sms_paused_at?: string | null
+          sms_paused_reason?: string | null
+          sms_sending_paused?: boolean
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -1030,6 +1085,9 @@ export type Database = {
           reservation_seating_options?: string[] | null
           reservation_time_slots?: Json | null
           reservations_globally_paused?: boolean | null
+          sms_paused_at?: string | null
+          sms_paused_reason?: string | null
+          sms_sending_paused?: boolean
           stripe_account_id?: string | null
           stripe_onboarding_completed?: boolean | null
           stripe_payouts_enabled?: boolean | null
@@ -4078,6 +4136,65 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_booking_audit_log: {
+        Row: {
+          action: Database["public"]["Enums"]["pending_booking_audit_action"]
+          actor_user_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          pending_booking_id: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["pending_booking_audit_action"]
+          actor_user_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          pending_booking_id?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["pending_booking_audit_action"]
+          actor_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          pending_booking_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_booking_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_booking_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_booking_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_booking_audit_log_pending_booking_id_fkey"
+            columns: ["pending_booking_id"]
+            isOneToOne: false
+            referencedRelation: "pending_bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -7877,6 +7994,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      detect_pending_booking_no_shows: { Args: never; Returns: Json }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -7915,6 +8033,7 @@ export type Database = {
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       expire_old_pending_bookings: { Args: never; Returns: number }
+      expire_pending_booking_links: { Args: never; Returns: Json }
       generate_booking_token: { Args: never; Returns: string }
       generate_confirmation_code: { Args: never; Returns: string }
       generate_promoter_tracking_code:
@@ -8394,6 +8513,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_sms_daily_quota: {
+        Args: { _business_id: string }
+        Returns: Json
+      }
       is_active_promoter: { Args: { _user_id: string }; Returns: boolean }
       is_business_owner: { Args: { p_business_id: string }; Returns: boolean }
       is_performance_business: {
@@ -8403,6 +8526,16 @@ export type Database = {
       is_promoter_for_business: {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_pending_booking_audit: {
+        Args: {
+          _action: Database["public"]["Enums"]["pending_booking_audit_action"]
+          _actor_user_id?: string
+          _business_id: string
+          _metadata?: Json
+          _pending_booking_id: string
+        }
+        Returns: string
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mask_phone: { Args: { phone_number: string }; Returns: string }
@@ -9264,6 +9397,16 @@ export type Database = {
       entity_type: "event" | "business" | "discount"
       fee_bearer: "buyer" | "business"
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
+      pending_booking_audit_action:
+        | "created"
+        | "sms_sent"
+        | "sms_resent"
+        | "sms_delivered"
+        | "sms_failed"
+        | "deleted"
+        | "converted"
+        | "link_expired"
+        | "no_show"
       pending_booking_status:
         | "pending"
         | "completed"
@@ -9456,6 +9599,17 @@ export const Constants = {
       entity_type: ["event", "business", "discount"],
       fee_bearer: ["buyer", "business"],
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
+      pending_booking_audit_action: [
+        "created",
+        "sms_sent",
+        "sms_resent",
+        "sms_delivered",
+        "sms_failed",
+        "deleted",
+        "converted",
+        "link_expired",
+        "no_show",
+      ],
       pending_booking_status: [
         "pending",
         "completed",
