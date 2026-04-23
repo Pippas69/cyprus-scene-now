@@ -78,6 +78,7 @@ const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
 const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
+const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
