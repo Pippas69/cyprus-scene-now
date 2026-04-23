@@ -57,7 +57,7 @@ const t = {
     confirmed: 'Επιβεβαιώθηκε',
     expired: 'Έληξε',
     cancelled: 'Ακυρώθηκε',
-    none: 'Δεν υπάρχουν εκκρεμή links',
+    none: '',
     resend: 'Επαναποστολή SMS',
     delete: 'Διαγραφή',
     confirmDelete: 'Διαγραφή link;',
@@ -84,7 +84,7 @@ const t = {
     confirmed: 'Confirmed',
     expired: 'Expired',
     cancelled: 'Cancelled',
-    none: 'No pending links',
+    none: '',
     resend: 'Resend SMS',
     delete: 'Delete',
     confirmDelete: 'Delete link?',
@@ -242,19 +242,19 @@ export const PendingBookingsList = ({
   const renderType = (b: PendingBookingRow['booking_type']) =>
     b === 'reservation' ? tr.typeRes : b === 'walk_in' ? tr.typeWi : tr.typeTk;
 
-  if (loading) {
-    return <p className="text-sm text-muted-foreground py-4">…</p>;
-  }
+  // Only count actionable rows (pending or expired). Hide section entirely when none.
+  const visibleRows = rows.filter(
+    (r) => r.status === 'pending' || r.status === 'link_expired',
+  );
 
-  if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">{tr.none}</p>;
-  }
+  if (loading) return null;
+  if (visibleRows.length === 0) return null;
 
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold flex items-center gap-2">
         <Clock className="h-4 w-4" />
-        {tr.title} ({rows.length})
+        {tr.title} ({visibleRows.length})
       </h3>
       <div className="rounded-md border">
         <Table>
@@ -271,7 +271,7 @@ export const PendingBookingsList = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r) => {
+            {visibleRows.map((r) => {
               const canAct = r.status === 'pending' || r.status === 'link_expired' || r.status === 'cancelled';
               return (
                 <TableRow key={r.id}>
