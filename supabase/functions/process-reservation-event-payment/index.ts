@@ -176,6 +176,21 @@ serve(async (req) => {
         const confirmationCode = `RES-${Date.now().toString(36).toUpperCase()}`;
         const qrCodeToken = crypto.randomUUID();
 
+        // Φάση 4: If linked to a pending_booking, fetch its care_of so we can persist it on the reservation
+        let pbCareOf: string | null = null;
+        if (metadata?.pending_booking_id || metadata?.pending_booking_token) {
+          const { data: pbRow } = await supabaseClient
+            .from("pending_bookings")
+            .select("care_of")
+            .or(
+              metadata?.pending_booking_id
+                ? `id.eq.${metadata.pending_booking_id}`
+                : `token.eq.${metadata.pending_booking_token}`,
+            )
+            .maybeSingle();
+          pbCareOf = (pbRow as { care_of?: string | null } | null)?.care_of ?? null;
+        }
+
         const { data: newRes, error: insertError } = await supabaseClient
           .from("reservations")
           .insert({
@@ -193,6 +208,7 @@ serve(async (req) => {
             confirmation_code: confirmationCode,
             qr_code_token: qrCodeToken,
             stripe_payment_intent_id: paymentIntentId,
+            care_of: pbCareOf,
           })
           .select(`
             *,
