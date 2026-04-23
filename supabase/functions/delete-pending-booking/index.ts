@@ -89,6 +89,19 @@ Deno.serve(async (req: Request) => {
     if (bizErr || !biz) return jsonResponse({ error: "Business not found" }, 404);
     if (biz.user_id !== user.id) return jsonResponse({ error: "Forbidden" }, 403);
 
+    // Audit log BEFORE delete (so we have a record even after row removal — pending_booking_id will become null due to ON DELETE CASCADE)
+    try {
+      await admin.rpc("log_pending_booking_audit", {
+        _pending_booking_id: pendingId,
+        _business_id: pending.business_id,
+        _action: "deleted",
+        _actor_user_id: user.id,
+        _metadata: { previous_status: pending.status },
+      });
+    } catch (e) {
+      console.error("[delete-pending-booking] audit log error", e);
+    }
+
     const { error: delErr } = await admin
       .from("pending_bookings")
       .delete()
