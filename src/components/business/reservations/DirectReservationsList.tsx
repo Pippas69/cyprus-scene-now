@@ -1385,6 +1385,31 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   }, [isTicketOnlyMode, ticketOnlyOrders.length, reservationRowCount, onReservationCountChange, loading]);
 
+  // Emit a data snapshot for parent-side features (e.g. Excel export)
+  useEffect(() => {
+    if (!onExportDataChange) return;
+    onExportDataChange({
+      reservations,
+      ticketOnlyOrders,
+      seatingTypeNames,
+      tableAssignmentLabels,
+      agesByReservation,
+      cityByReservation,
+      checkInCounts,
+      compCountByParent,
+    });
+  }, [
+    onExportDataChange,
+    reservations,
+    ticketOnlyOrders,
+    seatingTypeNames,
+    tableAssignmentLabels,
+    agesByReservation,
+    cityByReservation,
+    checkInCounts,
+    compCountByParent,
+  ]);
+
   const getStatusBadge = (reservation: DirectReservation) => {
     // Manual entries use the ManualStatusToggle
     if (reservation.is_manual_entry) {
