@@ -949,7 +949,29 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
           )}
         </TabsList>
 
-        <TabsContent value="list" className="mt-4">
+        <TabsContent value="list" className="mt-4 space-y-4">
+          {/* Pending bookings via SMS link — shown above main list */}
+          {(() => {
+            const ctxEventId = isDiningEventMode
+              ? diningSelectedEventId
+              : isTicketLinked
+                ? selectedEventId
+                : null;
+            return (
+              <PendingBookingsList
+                businessId={businessId}
+                eventId={ctxEventId}
+                language={language}
+                onConfirmed={() => {
+                  queryClient.invalidateQueries({ queryKey: ['direct-reservations'] });
+                  queryClient.invalidateQueries({ queryKey: ['ticket-orders'] });
+                  if (isTicketLinked) fetchEvents();
+                  if (isDiningBar) fetchDiningEvents();
+                }}
+              />
+            );
+          })()}
+
           {isDiningEventMode ? (
             <DirectReservationsList
               businessId={businessId}
