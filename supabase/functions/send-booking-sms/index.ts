@@ -268,15 +268,12 @@ Deno.serve(async (req: Request) => {
             const rows = admins.map((a: { user_id: string }) => ({
               user_id: a.user_id,
               type: "admin_alert",
+              event_type: "sms_quota_threshold",
               title: "⚠️ SMS Quota Alert",
               message: `${biz.name} έχει στείλει ${quotaInfo.sms_count}/200 SMS σήμερα.`,
-              data: {
-                business_id,
-                business_name: biz.name,
-                sms_count: quotaInfo.sms_count,
-                limit: 200,
-              },
-              is_read: false,
+              entity_type: "business",
+              entity_id: business_id,
+              read: false,
             }));
             const { error: notifErr } = await admin.from("notifications").insert(rows);
             if (notifErr) {
