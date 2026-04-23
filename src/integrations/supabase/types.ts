@@ -7804,51 +7804,37 @@ export type Database = {
         Returns: Json
       }
       cleanup_rate_limit_entries: { Args: never; Returns: undefined }
-      consume_pending_booking:
-        | {
-            Args: { _token: string }
-            Returns: {
-              booking_type: Database["public"]["Enums"]["pending_booking_type"]
-              business_id: string
-              completed_at: string | null
-              completed_reservation_id: string | null
-              completed_ticket_order_id: string | null
-              created_at: string
-              created_by_user_id: string
-              customer_name: string | null
-              customer_phone: string
-              event_id: string | null
-              expires_at: string
-              id: string
-              notes: string | null
-              party_size: number | null
-              preferred_time: string | null
-              seating_preference: string | null
-              status: Database["public"]["Enums"]["pending_booking_status"]
-              tier_data: Json | null
-              token: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "pending_bookings"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              p_reservation_id?: string
-              p_ticket_order_id?: string
-              p_token: string
-            }
-            Returns: {
-              business_id: string
-              pending_booking_id: string
-              reason: string
-              success: boolean
-            }[]
-          }
+      consume_pending_booking: {
+        Args: { _token: string }
+        Returns: {
+          booking_type: Database["public"]["Enums"]["pending_booking_type"]
+          business_id: string
+          completed_at: string | null
+          completed_reservation_id: string | null
+          completed_ticket_order_id: string | null
+          created_at: string
+          created_by_user_id: string
+          customer_name: string | null
+          customer_phone: string
+          event_id: string | null
+          expires_at: string
+          id: string
+          notes: string | null
+          party_size: number | null
+          preferred_time: string | null
+          seating_preference: string | null
+          status: Database["public"]["Enums"]["pending_booking_status"]
+          tier_data: Json | null
+          token: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pending_bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_business_with_geo: {
         Args: {
           p_address: string
