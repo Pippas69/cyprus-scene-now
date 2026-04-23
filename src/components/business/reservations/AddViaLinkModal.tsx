@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Loader2, Send, Copy, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -340,11 +341,13 @@ export const AddViaLinkModal = ({
 
             <div className="space-y-1.5">
               <Label htmlFor="cust-phone" className="text-xs font-medium">{tr.phone}</Label>
-              <Input
+              <PhoneInput
                 id="cust-phone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="h-9 text-xs"
+                onChange={setPhone}
+                language={language}
+                inputClassName="h-9 text-xs"
+                selectClassName="h-9 text-xs"
               />
             </div>
 
