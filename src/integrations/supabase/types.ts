@@ -375,6 +375,48 @@ export type Database = {
           },
         ]
       }
+      business_payment_methods: {
+        Row: {
+          business_id: string
+          card_brand: string | null
+          card_exp_month: number | null
+          card_exp_year: number | null
+          card_last4: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          card_brand?: string | null
+          card_exp_month?: number | null
+          card_exp_year?: number | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_post_likes: {
         Row: {
           created_at: string
@@ -4037,6 +4079,75 @@ export type Database = {
           },
         ]
       }
+      pending_bookings: {
+        Row: {
+          booking_type: Database["public"]["Enums"]["pending_booking_type"]
+          business_id: string
+          completed_at: string | null
+          completed_reservation_id: string | null
+          completed_ticket_order_id: string | null
+          created_at: string
+          created_by_user_id: string
+          customer_name: string | null
+          customer_phone: string
+          event_id: string | null
+          expires_at: string
+          id: string
+          notes: string | null
+          party_size: number | null
+          preferred_time: string | null
+          seating_preference: string | null
+          status: Database["public"]["Enums"]["pending_booking_status"]
+          tier_data: Json | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          booking_type: Database["public"]["Enums"]["pending_booking_type"]
+          business_id: string
+          completed_at?: string | null
+          completed_reservation_id?: string | null
+          completed_ticket_order_id?: string | null
+          created_at?: string
+          created_by_user_id: string
+          customer_name?: string | null
+          customer_phone: string
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          party_size?: number | null
+          preferred_time?: string | null
+          seating_preference?: string | null
+          status?: Database["public"]["Enums"]["pending_booking_status"]
+          tier_data?: Json | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          booking_type?: Database["public"]["Enums"]["pending_booking_type"]
+          business_id?: string
+          completed_at?: string | null
+          completed_reservation_id?: string | null
+          completed_ticket_order_id?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          customer_name?: string | null
+          customer_phone?: string
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          party_size?: number | null
+          preferred_time?: string | null
+          seating_preference?: string | null
+          status?: Database["public"]["Enums"]["pending_booking_status"]
+          tier_data?: Json | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
@@ -5842,6 +5953,92 @@ export type Database = {
           },
         ]
       }
+      sms_charges: {
+        Row: {
+          business_id: string
+          charged_at: string | null
+          cost_cents: number
+          cost_currency: string
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          is_billable: boolean
+          message_body: string
+          pending_booking_id: string | null
+          status: Database["public"]["Enums"]["sms_charge_status"]
+          stripe_charge_id: string | null
+          to_phone: string
+          twilio_message_sid: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          charged_at?: string | null
+          cost_cents?: number
+          cost_currency?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          is_billable?: boolean
+          message_body: string
+          pending_booking_id?: string | null
+          status?: Database["public"]["Enums"]["sms_charge_status"]
+          stripe_charge_id?: string | null
+          to_phone: string
+          twilio_message_sid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          charged_at?: string | null
+          cost_cents?: number
+          cost_currency?: string
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          is_billable?: boolean
+          message_body?: string
+          pending_booking_id?: string | null
+          status?: Database["public"]["Enums"]["sms_charge_status"]
+          stripe_charge_id?: string | null
+          to_phone?: string
+          twilio_message_sid?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_charges_pending_booking_id_fkey"
+            columns: ["pending_booking_id"]
+            isOneToOne: false
+            referencedRelation: "pending_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_rate_limits: {
+        Row: {
+          business_id: string
+          id: string
+          phone_number: string
+          sent_at: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          phone_number: string
+          sent_at?: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          phone_number?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
@@ -7598,11 +7795,34 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: number
       }
+      check_sms_rate_limit: {
+        Args: { p_business_id: string; p_phone: string }
+        Returns: {
+          allowed: boolean
+          business_day_count: number
+          day_count: number
+          hour_count: number
+          reason: string
+        }[]
+      }
       claim_offer_spots_atomically: {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: Json
       }
       cleanup_rate_limit_entries: { Args: never; Returns: undefined }
+      consume_pending_booking: {
+        Args: {
+          p_reservation_id?: string
+          p_ticket_order_id?: string
+          p_token: string
+        }
+        Returns: {
+          business_id: string
+          pending_booking_id: string
+          reason: string
+          success: boolean
+        }[]
+      }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -7665,6 +7885,14 @@ export type Database = {
         Returns: number
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      expire_old_pending_bookings: {
+        Args: never
+        Returns: {
+          expired_count: number
+          pruned_rate_limits: number
+        }[]
+      }
+      generate_booking_token: { Args: never; Returns: string }
       generate_confirmation_code: { Args: never; Returns: string }
       generate_promoter_tracking_code:
         | { Args: never; Returns: string }
@@ -7972,6 +8200,27 @@ export type Database = {
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      get_pending_booking_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          booking_type: Database["public"]["Enums"]["pending_booking_type"]
+          business_id: string
+          business_name: string
+          customer_name: string
+          customer_phone: string
+          event_id: string
+          event_start_at: string
+          event_title: string
+          expires_at: string
+          id: string
+          notes: string
+          party_size: number
+          preferred_time: string
+          seating_preference: string
+          status: Database["public"]["Enums"]["pending_booking_status"]
+          tier_data: Json
+        }[]
       }
       get_promoter_applicants_for_business: {
         Args: { _business_id: string }
@@ -8987,6 +9236,8 @@ export type Database = {
       entity_type: "event" | "business" | "discount"
       fee_bearer: "buyer" | "business"
       invoice_status: "draft" | "pending" | "paid" | "overdue" | "canceled"
+      pending_booking_status: "pending" | "completed" | "expired" | "cancelled"
+      pending_booking_type: "reservation" | "ticket" | "walk_in"
       post_visibility: "public" | "followers" | "private"
       price_tier: "free" | "low" | "medium" | "high"
       promoter_application_status:
@@ -8999,6 +9250,12 @@ export type Database = {
       rsvp_status: "interested" | "going"
       seating_tier_bottle_type: "bottle" | "premium_bottle"
       seating_tier_pricing_mode: "amount" | "bottles"
+      sms_charge_status:
+        | "queued"
+        | "sent"
+        | "delivered"
+        | "failed"
+        | "undelivered"
       subscription_status:
         | "active"
         | "past_due"
@@ -9167,6 +9424,8 @@ export const Constants = {
       entity_type: ["event", "business", "discount"],
       fee_bearer: ["buyer", "business"],
       invoice_status: ["draft", "pending", "paid", "overdue", "canceled"],
+      pending_booking_status: ["pending", "completed", "expired", "cancelled"],
+      pending_booking_type: ["reservation", "ticket", "walk_in"],
       post_visibility: ["public", "followers", "private"],
       price_tier: ["free", "low", "medium", "high"],
       promoter_application_status: [
@@ -9180,6 +9439,13 @@ export const Constants = {
       rsvp_status: ["interested", "going"],
       seating_tier_bottle_type: ["bottle", "premium_bottle"],
       seating_tier_pricing_mode: ["amount", "bottles"],
+      sms_charge_status: [
+        "queued",
+        "sent",
+        "delivered",
+        "failed",
+        "undelivered",
+      ],
       subscription_status: [
         "active",
         "past_due",
