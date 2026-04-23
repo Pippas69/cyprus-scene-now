@@ -1103,6 +1103,30 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       </div>
       </>
       )}
+
+      {/* + Add via Link modal */}
+      {(() => {
+        const ctxEventId = isDiningEventMode
+          ? diningSelectedEventId
+          : isTicketLinked
+            ? selectedEventId
+            : null;
+        const ctxEvent = isDiningEventMode ? diningSelectedEvent : selectedEvent;
+        return (
+          <AddViaLinkModal
+            open={addViaLinkOpen}
+            onOpenChange={setAddViaLinkOpen}
+            businessId={businessId}
+            eventId={ctxEventId}
+            eventType={(ctxEvent?.event_type ?? null) as any}
+            language={language}
+            onCreated={() => {
+              if (isTicketLinked) fetchEvents();
+              if (isDiningBar) fetchDiningEvents();
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };
