@@ -153,8 +153,8 @@ export const PendingBookingsList = ({
           // Refresh and notify parent if a row became confirmed
           if (
             payload.eventType === 'UPDATE' &&
-            newRow?.status === 'confirmed' &&
-            oldRow?.status !== 'confirmed'
+            newRow?.status === 'completed' &&
+            oldRow?.status !== 'completed'
           ) {
             onConfirmed?.();
           }
@@ -218,7 +218,7 @@ export const PendingBookingsList = ({
         </Badge>
       );
     }
-    if (s === 'confirmed') {
+    if (s === 'completed') {
       return (
         <Badge className="gap-1 bg-green-600 text-white hover:bg-green-700">
           <CheckCircle2 className="h-3 w-3" /> {tr.confirmed}
@@ -286,7 +286,7 @@ export const PendingBookingsList = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
-                      {canAct && r.status !== 'confirmed' && (
+                      {canAct && r.status !== 'completed' && (
                         <Button
                           size="sm"
                           variant="ghost"
