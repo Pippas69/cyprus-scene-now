@@ -366,6 +366,28 @@ serve(async (req) => {
       session = await stripe.checkout.sessions.create(baseSessionParams);
     }
 
+    // Φάση 4 — Layer 1 idempotency: persist Stripe session id on the pending_booking
+    // so the customer-facing page can later verify payment if the webhook is delayed.
+    if (pending_booking_id || pending_booking_token) {
+      try {
+        const supabaseService = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        );
+        let q = supabaseService
+          .from("pending_bookings")
+          .update({ stripe_checkout_session_id: session.id });
+        if (pending_booking_id) {
+          q = q.eq("id", pending_booking_id);
+        } else if (pending_booking_token) {
+          q = q.eq("token", pending_booking_token);
+        }
+        await q;
+      } catch (e) {
+        console.warn("[CHECKOUT] Failed to persist stripe_checkout_session_id on pending_booking", e);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         url: session.url,

@@ -4102,6 +4102,7 @@ export type Database = {
           preferred_time: string | null
           seating_preference: string | null
           status: Database["public"]["Enums"]["pending_booking_status"]
+          stripe_checkout_session_id: string | null
           tier_data: Json | null
           token: string
           updated_at: string
@@ -4125,6 +4126,7 @@ export type Database = {
           preferred_time?: string | null
           seating_preference?: string | null
           status?: Database["public"]["Enums"]["pending_booking_status"]
+          stripe_checkout_session_id?: string | null
           tier_data?: Json | null
           token: string
           updated_at?: string
@@ -4148,6 +4150,7 @@ export type Database = {
           preferred_time?: string | null
           seating_preference?: string | null
           status?: Database["public"]["Enums"]["pending_booking_status"]
+          stripe_checkout_session_id?: string | null
           tier_data?: Json | null
           token?: string
           updated_at?: string
@@ -7837,6 +7840,7 @@ export type Database = {
           preferred_time: string | null
           seating_preference: string | null
           status: Database["public"]["Enums"]["pending_booking_status"]
+          stripe_checkout_session_id: string | null
           tier_data: Json | null
           token: string
           updated_at: string

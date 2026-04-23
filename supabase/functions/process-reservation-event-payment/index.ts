@@ -176,6 +176,21 @@ serve(async (req) => {
         const confirmationCode = `RES-${Date.now().toString(36).toUpperCase()}`;
         const qrCodeToken = crypto.randomUUID();
 
+        // Φάση 4: If linked to a pending_booking, fetch its care_of so we can persist it on the reservation
+        let pbCareOf: string | null = null;
+        if (metadata?.pending_booking_id || metadata?.pending_booking_token) {
+          const { data: pbRow } = await supabaseClient
+            .from("pending_bookings")
+            .select("care_of")
+            .or(
+              metadata?.pending_booking_id
+                ? `id.eq.${metadata.pending_booking_id}`
+                : `token.eq.${metadata.pending_booking_token}`,
+            )
+            .maybeSingle();
+          pbCareOf = (pbRow as { care_of?: string | null } | null)?.care_of ?? null;
+        }
+
         const { data: newRes, error: insertError } = await supabaseClient
           .from("reservations")
           .insert({
@@ -193,6 +208,7 @@ serve(async (req) => {
             confirmation_code: confirmationCode,
             qr_code_token: qrCodeToken,
             stripe_payment_intent_id: paymentIntentId,
+            care_of: pbCareOf,
           })
           .select(`
             *,
@@ -219,20 +235,25 @@ serve(async (req) => {
       const pendingBookingToken = metadata?.pending_booking_token;
       if (pendingBookingId || pendingBookingToken) {
         try {
-          const updatePayload: Record<string, unknown> = {
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            completed_reservation_id: reservationId,
-          };
-          let q = supabaseClient.from('pending_bookings').update(updatePayload);
+          // Idempotency: only convert if still in 'pending' status
+          let scopeQuery = supabaseClient
+            .from('pending_bookings')
+            .update({
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              completed_reservation_id: reservationId,
+            })
+            .eq('status', 'pending');
           if (pendingBookingId) {
-            q = q.eq('id', pendingBookingId);
+            scopeQuery = scopeQuery.eq('id', pendingBookingId);
           } else if (pendingBookingToken) {
-            q = q.eq('token', pendingBookingToken);
+            scopeQuery = scopeQuery.eq('token', pendingBookingToken);
           }
-          const { error: pbErr } = await q;
+          const { error: pbErr, count: pbCount } = await scopeQuery.select('id', { count: 'exact', head: true });
           if (pbErr) {
             logStep("Pending booking conversion error", { error: pbErr.message });
+          } else if (pbCount === 0) {
+            logStep("Pending booking already completed (idempotent skip)", { pendingBookingId, pendingBookingToken });
           } else {
             logStep("Pending booking marked completed", { pendingBookingId, pendingBookingToken, reservationId });
           }
