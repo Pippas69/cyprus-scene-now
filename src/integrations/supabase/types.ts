@@ -2847,6 +2847,7 @@ export type Database = {
           reservation_hours_from: string | null
           reservation_hours_to: string | null
           seating_options: string[] | null
+          sold_out_pending_notified_at: string | null
           start_at: string
           tags: string[] | null
           terms_and_conditions: string | null
@@ -2893,6 +2894,7 @@ export type Database = {
           reservation_hours_from?: string | null
           reservation_hours_to?: string | null
           seating_options?: string[] | null
+          sold_out_pending_notified_at?: string | null
           start_at: string
           tags?: string[] | null
           terms_and_conditions?: string | null
@@ -2939,6 +2941,7 @@ export type Database = {
           reservation_hours_from?: string | null
           reservation_hours_to?: string | null
           seating_options?: string[] | null
+          sold_out_pending_notified_at?: string | null
           start_at?: string
           tags?: string[] | null
           terms_and_conditions?: string | null
@@ -5465,6 +5468,7 @@ export type Database = {
           business_id: string | null
           business_notes: string | null
           cancellation_reason: string | null
+          care_of: string | null
           checked_in_at: string | null
           checked_in_by: string | null
           confirmation_code: string | null
@@ -5511,6 +5515,7 @@ export type Database = {
           business_id?: string | null
           business_notes?: string | null
           cancellation_reason?: string | null
+          care_of?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           confirmation_code?: string | null
@@ -5557,6 +5562,7 @@ export type Database = {
           business_id?: string | null
           business_notes?: string | null
           cancellation_reason?: string | null
+          care_of?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           confirmation_code?: string | null
@@ -6535,6 +6541,7 @@ export type Database = {
       ticket_orders: {
         Row: {
           business_id: string
+          care_of: string | null
           commission_cents: number
           commission_percent: number
           created_at: string
@@ -6555,6 +6562,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          care_of?: string | null
           commission_cents?: number
           commission_percent?: number
           created_at?: string
@@ -6575,6 +6583,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          care_of?: string | null
           commission_cents?: number
           commission_percent?: number
           created_at?: string
@@ -8411,6 +8420,10 @@ export type Database = {
         Returns: number
       }
       normalize_guest_identity: { Args: { p_value: string }; Returns: string }
+      notify_sold_out_with_pending: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
