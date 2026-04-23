@@ -256,6 +256,10 @@ serve(async (req) => {
       commission_percent: pricingProfile.commission_percent.toString(),
     };
 
+    // Φάση 4: link to pending_booking so webhook can convert it
+    if (pending_booking_id) sessionMetadata.pending_booking_id = String(pending_booking_id);
+    if (pending_booking_token) sessionMetadata.pending_booking_token = String(pending_booking_token);
+
     // PR Attribution: forward promoter tracking via Stripe metadata so the webhook can attribute the sale
     if (promoter_session_id) {
       sessionMetadata.promoter_session_id = String(promoter_session_id);
