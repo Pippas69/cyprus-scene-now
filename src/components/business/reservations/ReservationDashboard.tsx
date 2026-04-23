@@ -58,6 +58,12 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [exportSnapshot, setExportSnapshot] = useState<DirectReservationsExportSnapshot | null>(null);
+
+  // Reset snapshot when the selected event/context changes so we don't leak data across events
+  useEffect(() => {
+    setExportSnapshot(null);
+  }, [selectedEventId, diningSelectedEventId]);
 
   const fetchArchivedEvents = useCallback(async (eventTypes?: string[] | null) => {
     let query = supabase
