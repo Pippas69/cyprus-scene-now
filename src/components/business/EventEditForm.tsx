@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PriceInput } from "@/components/ui/price-input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1363,35 +1364,23 @@ const EventEditForm = ({ event, open, onOpenChange, onSuccess }: EventEditFormPr
                                 <div className="flex items-end gap-3 sm:gap-4 flex-wrap">
                                   <div className="space-y-1.5 sm:space-y-2 shrink-0">
                                     <Label className="text-xs sm:text-sm">{t.priceLabel}</Label>
-                                    <Input
-                                      type="text"
-                                      inputMode="decimal"
-                                      value={config.ticketPriceCents / 100}
-                                      onChange={(e) => {
-                                        const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                                        const [euros, decimals = ''] = cleaned.split('.');
-                                        const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
-                                        const newPrice = Math.round(parseFloat(normalized || '0') * 100);
+                                    <PriceInput
+                                      valueCents={config.ticketPriceCents}
+                                      onChangeCents={(cents) =>
                                         // Τιμή & Πίστωση είναι ανεξάρτητα — κανένα clamp.
-                                        updateSeatingConfig(type, { ticketPriceCents: Math.max(0, newPrice) });
-                                      }}
+                                        updateSeatingConfig(type, { ticketPriceCents: cents })
+                                      }
                                       className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                                     />
                                   </div>
                                   <div className="space-y-1.5 sm:space-y-2 shrink-0">
                                     <Label className="text-xs sm:text-sm whitespace-nowrap">{t.creditLabel}</Label>
-                                    <Input
-                                      type="text"
-                                      inputMode="decimal"
-                                      value={(config.ticketPrepaidCents ?? 0) / 100}
-                                      onChange={(e) => {
-                                        const cleaned = e.target.value.replace(/[^0-9.]/g, '');
-                                        const [euros, decimals = ''] = cleaned.split('.');
-                                        const normalized = decimals ? `${euros}.${decimals.slice(0, 2)}` : euros;
-                                        const parsed = Math.round(parseFloat(normalized || '0') * 100);
+                                    <PriceInput
+                                      valueCents={config.ticketPrepaidCents ?? 0}
+                                      onChangeCents={(cents) =>
                                         // Τιμή & Πίστωση είναι ανεξάρτητα — κανένα clamp.
-                                        updateSeatingConfig(type, { ticketPrepaidCents: Math.max(0, parsed) });
-                                      }}
+                                        updateSeatingConfig(type, { ticketPrepaidCents: cents })
+                                      }
                                       className="w-20 sm:w-24 h-8 sm:h-10 text-xs sm:text-sm"
                                     />
                                   </div>
