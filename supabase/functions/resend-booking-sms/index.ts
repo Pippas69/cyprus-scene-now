@@ -116,6 +116,19 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Failed to update booking" }, 500);
     }
 
+    // Audit log: 'sms_resent' (recorded BEFORE actual SMS dispatch — sms_sent will follow)
+    try {
+      await admin.rpc("log_pending_booking_audit", {
+        _pending_booking_id: pendingId,
+        _business_id: pending.business_id,
+        _action: "sms_resent",
+        _actor_user_id: user.id,
+        _metadata: { new_token_generated: true, new_expires_at: newExpires },
+      });
+    } catch (e) {
+      console.error("[resend-booking-sms] audit log error", e);
+    }
+
     const bookingUrl = `${PUBLIC_BOOKING_BASE_URL}/${newToken}`;
     const messageBody = `ΦΟΜΟ: Complete your booking at ${biz.name}: ${bookingUrl}`;
 
