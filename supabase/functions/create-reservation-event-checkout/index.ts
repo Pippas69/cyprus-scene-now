@@ -22,6 +22,8 @@ const BodySchema = z.object({
   guests: z.array(GuestSchema).optional(),
   promoter_session_id: optionalString(120),
   promoter_tracking_code: optionalString(60),
+  pending_booking_id: flexId.optional(),
+  pending_booking_token: optionalString(64),
 });
 
 serve(async (req) => {
