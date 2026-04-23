@@ -28,7 +28,7 @@ interface PendingBookingRow {
   party_size: number | null;
   care_of: string | null;
   notes: string | null;
-  status: 'pending' | 'confirmed' | 'link_expired' | 'cancelled';
+  status: 'pending' | 'completed' | 'link_expired' | 'cancelled';
   expires_at: string;
   created_at: string;
   token: string;
