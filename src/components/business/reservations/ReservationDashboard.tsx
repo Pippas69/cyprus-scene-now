@@ -985,22 +985,58 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         )}
       </Tabs>
 
-      {/* Archive button for ended events — only shows 12h after end_at */}
+      {/* Bottom action row: Archive event (only after end) + Export Excel — always available when an event is selected */}
       {(() => {
-        const eventToArchive = isTicketLinked ? selectedEvent : (isDiningEventMode ? diningSelectedEvent : null);
-        if (!eventToArchive) return null;
-        const twelveHoursAfterEnd = new Date(new Date(eventToArchive.end_at).getTime() + 12 * 60 * 60 * 1000);
-        if (new Date() < twelveHoursAfterEnd) return null;
+        const activeEvent = isTicketLinked ? selectedEvent : (isDiningEventMode ? diningSelectedEvent : null);
+        if (!activeEvent) return null;
+        const twelveHoursAfterEnd = new Date(new Date(activeEvent.end_at).getTime() + 12 * 60 * 60 * 1000);
+        const showArchive = new Date() >= twelveHoursAfterEnd;
+
+        const handleExport = () => {
+          if (!exportSnapshot) return;
+          exportEventManagementToXlsx({
+            language,
+            eventTitle: activeEvent.title,
+            eventStartAt: activeEvent.start_at,
+            eventType: activeEvent.event_type,
+            reservations: exportSnapshot.reservations,
+            ticketOnlyOrders: exportSnapshot.ticketOnlyOrders,
+            seatingTypeNames: exportSnapshot.seatingTypeNames,
+            tableAssignmentLabels: exportSnapshot.tableAssignmentLabels,
+            agesByReservation: exportSnapshot.agesByReservation,
+            cityByReservation: exportSnapshot.cityByReservation,
+            checkInCounts: exportSnapshot.checkInCounts,
+            compCountByParent: exportSnapshot.compCountByParent,
+          });
+        };
+
+        const hasData =
+          !!exportSnapshot &&
+          (exportSnapshot.reservations.length > 0 || exportSnapshot.ticketOnlyOrders.length > 0);
+
         return (
-          <div className="flex justify-center pt-2">
+          <div className="flex justify-center gap-2 pt-2 flex-wrap">
+            {showArchive && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5 text-muted-foreground"
+                onClick={() => archiveEvent(activeEvent.id)}
+              >
+                <Archive className="h-3.5 w-3.5" />
+                {language === 'el' ? 'Αρχειοθέτηση εκδήλωσης' : 'Archive event'}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
               className="text-xs gap-1.5 text-muted-foreground"
-              onClick={() => archiveEvent(eventToArchive.id)}
+              onClick={handleExport}
+              disabled={!hasData}
+              title={!hasData ? (language === 'el' ? 'Δεν υπάρχουν δεδομένα προς εξαγωγή' : 'No data to export') : undefined}
             >
-              <Archive className="h-3.5 w-3.5" />
-              {language === 'el' ? 'Αρχειοθέτηση εκδήλωσης' : 'Archive event'}
+              <Download className="h-3.5 w-3.5" />
+              {language === 'el' ? 'Export Excel' : 'Export Excel'}
             </Button>
           </div>
         );
