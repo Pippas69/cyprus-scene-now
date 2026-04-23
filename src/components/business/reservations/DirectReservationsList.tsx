@@ -61,6 +61,7 @@ interface DirectReservation {
   email?: string | null;
   guest_ages?: string | null;
   guest_city?: string | null;
+  care_of?: string | null;
 }
 
 export interface DirectReservationsExportSnapshot {
@@ -427,7 +428,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           business_notes, staff_memo, staff_memo_highlighted, confirmation_code, qr_code_token, transaction_code, checked_in_at,
           auto_created_from_tickets, ticket_credit_cents, actual_spend_cents, seating_type_id,
           prepaid_min_charge_cents, event_id, is_manual_entry, manual_status, min_age, source,
-          cancellation_reason, email, guest_ages, guest_city, profiles(name, email)
+          cancellation_reason, email, guest_ages, guest_city, care_of, profiles(name, email)
         `);
 
       if (linked) {
@@ -2305,7 +2306,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableHead className="text-xs w-[16%] pr-4 whitespace-nowrap px-[29px]">{priceColumnLabel}</TableHead>
                   <TableHead className="text-xs w-[11%] px-0 text-center">{t.seating}</TableHead>
                   <TableHead className="text-xs w-[11%] px-[40px]">{t.status}</TableHead>
-                  {!isReservationOnly && <TableHead className="text-xs w-[10%] px-[64px]">{language === 'el' ? 'Ποσό' : 'Amount'}</TableHead>}
+                  <TableHead className="text-xs w-[10%] px-[64px]">{language === 'el' ? 'Care of' : 'Care of'}</TableHead>
                   <TableHead className="text-xs w-[22%] px-[50px]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -2533,17 +2534,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      {/* 6. Ποσό (hybrid only) — actual amount paid at venue */}
-                      {!isReservationOnly && (
-                        <TableCell className="align-top px-[60px]">
-                          <EditableCell
-                            reservationId={reservation.id}
-                            field="ticket_credit_cents"
-                            displayValue={actualSpendCents > 0 ? `€${(actualSpendCents / 100).toFixed(2)}` : '—'}
-                            rawValue={actualSpendCents > 0 ? (actualSpendCents / 100).toFixed(2) : '0'}
-                          />
-                        </TableCell>
-                      )}
+                      {/* 6. Care of — staff member who handled the booking */}
+                      <TableCell className="align-top px-[60px]">
+                        <EditableCell
+                          reservationId={reservation.id}
+                          field="care_of"
+                          displayValue={(reservation as any).care_of || '—'}
+                          rawValue={(reservation as any).care_of || ''}
+                        />
+                      </TableCell>
                       {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
                       <TableCell className="align-top">
                         <div className="flex items-start justify-between gap-2">
