@@ -63,6 +63,17 @@ interface DirectReservation {
   guest_city?: string | null;
 }
 
+export interface DirectReservationsExportSnapshot {
+  reservations: any[];
+  ticketOnlyOrders: any[];
+  seatingTypeNames: Record<string, string>;
+  tableAssignmentLabels: Record<string, string>;
+  agesByReservation: Record<string, number[]>;
+  cityByReservation: Record<string, string>;
+  checkInCounts: Record<string, { used: number; total: number }>;
+  compCountByParent: Record<string, number>;
+}
+
 interface DirectReservationsListProps {
   businessId: string;
   language: 'el' | 'en';
@@ -76,6 +87,7 @@ interface DirectReservationsListProps {
   onManualEntryOpenChange?: (open: boolean) => void;
   searchQuery?: string;
   selectedDate?: Date | null;
+  onExportDataChange?: (snapshot: DirectReservationsExportSnapshot) => void;
 }
 
 // Cache for seating tiers
