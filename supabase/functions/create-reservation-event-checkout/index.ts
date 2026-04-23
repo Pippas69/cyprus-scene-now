@@ -22,6 +22,8 @@ const BodySchema = z.object({
   guests: z.array(GuestSchema).optional(),
   promoter_session_id: optionalString(120),
   promoter_tracking_code: optionalString(60),
+  pending_booking_id: flexId.optional(),
+  pending_booking_token: optionalString(64),
 });
 
 serve(async (req) => {
@@ -69,6 +71,8 @@ serve(async (req) => {
       guests,
       promoter_session_id,
       promoter_tracking_code,
+      pending_booking_id,
+      pending_booking_token,
     } = await parseBody(req, BodySchema);
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
@@ -251,6 +255,10 @@ serve(async (req) => {
       revenue_model: pricingProfile.revenue_model,
       commission_percent: pricingProfile.commission_percent.toString(),
     };
+
+    // Φάση 4: link to pending_booking so webhook can convert it
+    if (pending_booking_id) sessionMetadata.pending_booking_id = String(pending_booking_id);
+    if (pending_booking_token) sessionMetadata.pending_booking_token = String(pending_booking_token);
 
     // PR Attribution: forward promoter tracking via Stripe metadata so the webhook can attribute the sale
     if (promoter_session_id) {

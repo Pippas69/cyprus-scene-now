@@ -214,6 +214,33 @@ serve(async (req) => {
 
       logStep("Reservation confirmed", { reservationId });
 
+      // Φάση 4: Convert pending_booking → completed (if this checkout originated from an SMS link)
+      const pendingBookingId = metadata?.pending_booking_id;
+      const pendingBookingToken = metadata?.pending_booking_token;
+      if (pendingBookingId || pendingBookingToken) {
+        try {
+          const updatePayload: Record<string, unknown> = {
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            completed_reservation_id: reservationId,
+          };
+          let q = supabaseClient.from('pending_bookings').update(updatePayload);
+          if (pendingBookingId) {
+            q = q.eq('id', pendingBookingId);
+          } else if (pendingBookingToken) {
+            q = q.eq('token', pendingBookingToken);
+          }
+          const { error: pbErr } = await q;
+          if (pbErr) {
+            logStep("Pending booking conversion error", { error: pbErr.message });
+          } else {
+            logStep("Pending booking marked completed", { pendingBookingId, pendingBookingToken, reservationId });
+          }
+        } catch (pbCatch) {
+          logStep("Pending booking conversion exception", { error: pbCatch instanceof Error ? pbCatch.message : String(pbCatch) });
+        }
+      }
+
       // Record platform revenue in commission_ledger using pricing profile data from checkout metadata
       const fomoRevenueCents = parseInt(metadata?.fomo_revenue_cents || "0", 10);
       if (fomoRevenueCents > 0 && reservation.events?.businesses?.id) {

@@ -78,6 +78,7 @@ const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
 const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
+const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -175,6 +176,7 @@ function AppContent() {
           
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
+          <Route path="/r/:token" element={<PublicBookingPage />} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
         </AnimatePresence>
