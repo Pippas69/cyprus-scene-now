@@ -186,7 +186,9 @@ export const CombinedTicketReservationOverview = ({ eventId, businessId }: Combi
       });
 
       const sortedSeatingStats = sortSeatingTypes(seatingStats, (st: any) => st.seating_type);
-      const totalReservations = sortedSeatingStats.reduce((sum, st) => sum + st.acceptedBooked, 0);
+      // "Κρατήσεις" = αριθμός κρατήσεων (rows), όχι άθροισμα party_size (που είναι άτομα).
+      // Τα comps & children έχουν ήδη φιλτραριστεί έξω στο reservationsResult query.
+      const totalReservations = (reservations || []).length;
 
       // --- Combined ---
       const totalRevenue = ticketRevenue;
