@@ -235,20 +235,25 @@ serve(async (req) => {
       const pendingBookingToken = metadata?.pending_booking_token;
       if (pendingBookingId || pendingBookingToken) {
         try {
-          const updatePayload: Record<string, unknown> = {
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            completed_reservation_id: reservationId,
-          };
-          let q = supabaseClient.from('pending_bookings').update(updatePayload);
+          // Idempotency: only convert if still in 'pending' status
+          let scopeQuery = supabaseClient
+            .from('pending_bookings')
+            .update({
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              completed_reservation_id: reservationId,
+            })
+            .eq('status', 'pending');
           if (pendingBookingId) {
-            q = q.eq('id', pendingBookingId);
+            scopeQuery = scopeQuery.eq('id', pendingBookingId);
           } else if (pendingBookingToken) {
-            q = q.eq('token', pendingBookingToken);
+            scopeQuery = scopeQuery.eq('token', pendingBookingToken);
           }
-          const { error: pbErr } = await q;
+          const { error: pbErr, count: pbCount } = await scopeQuery.select('id', { count: 'exact', head: true });
           if (pbErr) {
             logStep("Pending booking conversion error", { error: pbErr.message });
+          } else if (pbCount === 0) {
+            logStep("Pending booking already completed (idempotent skip)", { pendingBookingId, pendingBookingToken });
           } else {
             logStep("Pending booking marked completed", { pendingBookingId, pendingBookingToken, reservationId });
           }
