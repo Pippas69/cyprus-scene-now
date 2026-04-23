@@ -124,7 +124,7 @@ interface TicketOnlyOrder {
   staff_memo_highlighted?: boolean;
   source: string;
 }
-export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate }: DirectReservationsListProps) => {
+export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate, onExportDataChange }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [reservations, setReservations] = useState<DirectReservation[]>([]);
