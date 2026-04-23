@@ -762,6 +762,16 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               >
                 <Plus className="h-4 w-4" />
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 flex-shrink-0"
+                onClick={() => setAddViaLinkOpen(true)}
+                disabled={!selectedEventId}
+                title={language === 'el' ? 'Προσθήκη μέσω Link' : 'Add via Link'}
+              >
+                <Link2 className="h-4 w-4" />
+              </Button>
             </div>
 
             {searchOpen && (
@@ -856,6 +866,15 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 title={language === 'el' ? 'Προσθήκη' : 'Add'}
               >
                 <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 w-8 sm:h-9 sm:w-9 p-0 border-border/50 flex-shrink-0"
+                onClick={() => setAddViaLinkOpen(true)}
+                title={language === 'el' ? 'Προσθήκη μέσω Link' : 'Add via Link'}
+              >
+                <Link2 className="h-4 w-4" />
               </Button>
               {/* Date picker for filtering reservations */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
