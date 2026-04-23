@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, Link as LinkIcon, Copy } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Send, Link as LinkIcon, Copy, Ticket } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEventSupportsWalkIn } from '@/hooks/useEventSupportsWalkIn';
+import { translateSeatingType } from '@/lib/seatingTranslations';
 
 export type AddViaLinkEventType =
   | 'ticket' // only-ticket
@@ -26,7 +28,10 @@ interface AddViaLinkModalProps {
   onCreated?: () => void;
 }
 
-type FlowChoice = 'ticket' | 'reservation' | 'walk_in';
+interface SeatingOption {
+  id: string;
+  seating_type: string;
+}
 
 const t = {
   el: {
@@ -37,18 +42,16 @@ const t = {
     phone: 'Τηλέφωνο (E.164)',
     phonePh: '+35799123456',
     careOf: 'Care of (υπάλληλος)',
-    careOfPh: 'π.χ. Μαρία',
+    careOfPh: 'π.χ. Μαρία (προαιρετικό)',
     notes: 'Σημείωση (προαιρετικό)',
     notesPh: 'Π.χ. γενέθλια, αλλεργία...',
-    choose: 'Τύπος προσθήκης',
-    ticketChoice: 'Εισιτήριο',
-    reservationChoice: 'Κράτηση τραπεζιού',
-    walkInChoice: 'Walk-in (στην είσοδο)',
+    walkInToggle: 'Αποστολή ως Walk-in εισιτήριο',
+    walkInHint: 'Ο πελάτης θα λάβει SMS για αγορά walk-in εισιτηρίου αντί για κράτηση τραπεζιού.',
     tickets: 'Αριθμός εισιτηρίων',
     party: 'Άτομα',
-    seating: 'Τύπος καθίσματος (προαιρετικό)',
-    seatingPh: 'Table / Sofa / VIP / Bar',
-    preferred: 'Προτιμώμενη ώρα (προαιρετικό)',
+    seating: 'Τύπος καθίσματος',
+    seatingPh: 'Επιλέξτε τύπο καθίσματος',
+    noSeating: 'Δεν υπάρχουν διαθέσιμοι τύποι καθίσματος για αυτή την εκδήλωση.',
     cancel: 'Ακύρωση',
     submit: 'Αποστολή SMS',
     sending: 'Αποστολή...',
@@ -62,6 +65,7 @@ const t = {
     requiredPhone: 'Έγκυρο τηλέφωνο E.164 υποχρεωτικό',
     requiredParty: 'Άτομα υποχρεωτικά (≥1)',
     requiredTickets: 'Εισιτήρια υποχρεωτικά (≥1)',
+    requiredSeating: 'Τύπος καθίσματος υποχρεωτικός',
   },
   en: {
     title: 'Add via Link',
@@ -71,18 +75,16 @@ const t = {
     phone: 'Phone (E.164)',
     phonePh: '+35799123456',
     careOf: 'Care of (staff)',
-    careOfPh: 'e.g. Maria',
+    careOfPh: 'e.g. Maria (optional)',
     notes: 'Note (optional)',
     notesPh: 'e.g. birthday, allergy...',
-    choose: 'Type',
-    ticketChoice: 'Ticket',
-    reservationChoice: 'Table reservation',
-    walkInChoice: 'Walk-in (at door)',
+    walkInToggle: 'Send as Walk-in ticket',
+    walkInHint: 'Customer will receive an SMS to purchase a walk-in ticket instead of a table reservation.',
     tickets: 'Number of tickets',
     party: 'Party size',
-    seating: 'Seating preference (optional)',
-    seatingPh: 'Table / Sofa / VIP / Bar',
-    preferred: 'Preferred time (optional)',
+    seating: 'Seating type',
+    seatingPh: 'Select a seating type',
+    noSeating: 'No seating types available for this event.',
     cancel: 'Cancel',
     submit: 'Send SMS',
     sending: 'Sending...',
@@ -96,6 +98,7 @@ const t = {
     requiredPhone: 'Valid E.164 phone required',
     requiredParty: 'Party size required (≥1)',
     requiredTickets: 'Tickets required (≥1)',
+    requiredSeating: 'Seating type required',
   },
 };
 
@@ -113,54 +116,100 @@ export const AddViaLinkModal = ({
   const tr = t[language];
   const { supports: supportsWalkIn } = useEventSupportsWalkIn(eventId);
 
-  // Detect kind of event
+  // Detect kind of event (auto — no user choice)
   const isOnlyTicket = eventType === 'ticket';
   const isOnlyReservation = eventType === 'reservation';
   const isHybrid = eventType === 'ticket_and_reservation' || eventType === 'ticket_reservation';
+  const isReservationContext = isOnlyReservation || isHybrid || (!eventId && !isOnlyTicket);
 
-  // Available choices per event type
-  const choices = useMemo<FlowChoice[]>(() => {
-    if (isOnlyTicket) return ['ticket'];
-    if (isOnlyReservation) {
-      return supportsWalkIn ? ['reservation', 'walk_in'] : ['reservation'];
-    }
-    if (isHybrid) {
-      return supportsWalkIn ? ['ticket', 'reservation', 'walk_in'] : ['ticket', 'reservation'];
-    }
-    // direct (no event) → only reservation
-    return ['reservation'];
-  }, [isOnlyTicket, isOnlyReservation, isHybrid, supportsWalkIn]);
+  // Walk-in toggle (only available on reservation/hybrid events that support it)
+  const canShowWalkInToggle = (isOnlyReservation || isHybrid) && supportsWalkIn;
+  const [walkInMode, setWalkInMode] = useState(false);
 
-  const [flow, setFlow] = useState<FlowChoice>(choices[0]);
+  // Effective flow:
+  //  - only-ticket → ticket
+  //  - reservation/hybrid + walk-in toggle ON → walk_in
+  //  - reservation/hybrid + walk-in toggle OFF → reservation
+  const effectiveFlow: 'ticket' | 'reservation' | 'walk_in' = useMemo(() => {
+    if (isOnlyTicket) return 'ticket';
+    if (canShowWalkInToggle && walkInMode) return 'walk_in';
+    return 'reservation';
+  }, [isOnlyTicket, canShowWalkInToggle, walkInMode]);
+
+  // Form state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [careOf, setCareOf] = useState('');
   const [notes, setNotes] = useState('');
   const [partySize, setPartySize] = useState<number>(2);
   const [ticketCount, setTicketCount] = useState<number>(1);
-  const [seating, setSeating] = useState('');
-  const [preferred, setPreferred] = useState('');
+  const [seatingTypeId, setSeatingTypeId] = useState<string>('');
 
   const [submitting, setSubmitting] = useState(false);
   const [createdLink, setCreatedLink] = useState<string | null>(null);
 
-  // Reset when opened / choices change
+  // Load seating types for reservation/hybrid events
+  const [seatingOptions, setSeatingOptions] = useState<SeatingOption[]>([]);
+  const [loadingSeating, setLoadingSeating] = useState(false);
+
+  useEffect(() => {
+    if (!open || !eventId || !isReservationContext) {
+      setSeatingOptions([]);
+      return;
+    }
+    let cancelled = false;
+    const loadSeating = async () => {
+      setLoadingSeating(true);
+      try {
+        const { data, error } = await supabase
+          .from('reservation_seating_types')
+          .select('id, seating_type, paused')
+          .eq('event_id', eventId);
+        if (error) throw error;
+        if (cancelled) return;
+        const opts = (data || [])
+          .filter((s: any) => !s.paused)
+          .map((s: any) => ({ id: s.id, seating_type: s.seating_type }));
+        setSeatingOptions(opts);
+      } catch (e) {
+        console.error('Error loading seating types:', e);
+        if (!cancelled) setSeatingOptions([]);
+      } finally {
+        if (!cancelled) setLoadingSeating(false);
+      }
+    };
+    loadSeating();
+    return () => { cancelled = true; };
+  }, [open, eventId, isReservationContext]);
+
+  // Reset when opened
   useEffect(() => {
     if (!open) return;
-    setFlow(choices[0]);
+    setWalkInMode(false);
     setName('');
     setPhone('');
     setCareOf('');
     setNotes('');
     setPartySize(2);
     setTicketCount(1);
-    setSeating('');
-    setPreferred('');
+    setSeatingTypeId('');
     setCreatedLink(null);
-  }, [open, choices]);
+  }, [open]);
+
+  // When toggling walk-in, we clear seating selection (not relevant)
+  useEffect(() => {
+    if (walkInMode) setSeatingTypeId('');
+  }, [walkInMode]);
+
+  // Show seating dropdown only in reservation flow (not ticket-only and not walk-in)
+  const showSeatingField = effectiveFlow === 'reservation';
+  // Show party size only in reservation flow
+  const showPartyField = effectiveFlow === 'reservation';
+  // Show ticket count in ticket OR walk_in flows
+  const showTicketField = effectiveFlow === 'ticket' || effectiveFlow === 'walk_in';
 
   const handleSubmit = async () => {
-    // validation
+    // Validation
     if (!name.trim()) {
       toast.error(tr.requiredName);
       return;
@@ -169,30 +218,42 @@ export const AddViaLinkModal = ({
       toast.error(tr.requiredPhone);
       return;
     }
-    if (flow === 'reservation' && (!partySize || partySize < 1)) {
-      toast.error(tr.requiredParty);
-      return;
+    if (effectiveFlow === 'reservation') {
+      if (!partySize || partySize < 1) {
+        toast.error(tr.requiredParty);
+        return;
+      }
+      if (!seatingTypeId) {
+        toast.error(tr.requiredSeating);
+        return;
+      }
     }
-    if ((flow === 'ticket' || flow === 'walk_in') && (!ticketCount || ticketCount < 1)) {
+    if ((effectiveFlow === 'ticket' || effectiveFlow === 'walk_in') && (!ticketCount || ticketCount < 1)) {
       toast.error(tr.requiredTickets);
       return;
     }
 
     setSubmitting(true);
     try {
-      const bookingType = flow; // matches enum values reservation|ticket|walk_in
-      const partyForTicket = flow === 'reservation' ? partySize : ticketCount;
+      const partyForBackend = effectiveFlow === 'reservation' ? partySize : ticketCount;
+
+      // Resolve seating_preference label from selected seating type (for reservation flow)
+      let seatingPreferenceLabel: string | null = null;
+      if (effectiveFlow === 'reservation' && seatingTypeId) {
+        const opt = seatingOptions.find((s) => s.id === seatingTypeId);
+        seatingPreferenceLabel = opt?.seating_type ?? null;
+      }
 
       const { data, error } = await supabase.functions.invoke('create-pending-booking', {
         body: {
           business_id: businessId,
           event_id: eventId ?? null,
-          booking_type: bookingType,
+          booking_type: effectiveFlow,
           customer_phone: phone.trim(),
           customer_name: name.trim(),
-          party_size: partyForTicket,
-          seating_preference: seating.trim() || null,
-          preferred_time: preferred.trim() || null,
+          party_size: partyForBackend,
+          seating_preference: seatingPreferenceLabel,
+          seating_type_id: effectiveFlow === 'reservation' ? seatingTypeId || null : null,
           notes: notes.trim() || null,
         },
       });
@@ -268,25 +329,21 @@ export const AddViaLinkModal = ({
           </div>
         ) : (
           <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-            {choices.length > 1 && (
-              <div className="space-y-2">
-                <Label>{tr.choose}</Label>
-                <RadioGroup value={flow} onValueChange={(v) => setFlow(v as FlowChoice)} className="grid gap-2">
-                  {choices.map((c) => (
-                    <label
-                      key={c}
-                      htmlFor={`flow-${c}`}
-                      className="flex items-center gap-2 rounded-md border border-border/50 px-3 py-2 cursor-pointer hover:bg-muted/40"
-                    >
-                      <RadioGroupItem id={`flow-${c}`} value={c} />
-                      <span className="text-sm">
-                        {c === 'ticket' && tr.ticketChoice}
-                        {c === 'reservation' && tr.reservationChoice}
-                        {c === 'walk_in' && tr.walkInChoice}
-                      </span>
-                    </label>
-                  ))}
-                </RadioGroup>
+            {/* Walk-in toggle (only when event supports it) */}
+            {canShowWalkInToggle && (
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border/50 px-3 py-2.5 bg-muted/30">
+                <div className="space-y-0.5 flex-1">
+                  <Label htmlFor="walkin-toggle" className="flex items-center gap-1.5 cursor-pointer">
+                    <Ticket className="h-4 w-4 text-primary" />
+                    {tr.walkInToggle}
+                  </Label>
+                  <p className="text-xs text-muted-foreground leading-snug">{tr.walkInHint}</p>
+                </div>
+                <Switch
+                  id="walkin-toggle"
+                  checked={walkInMode}
+                  onCheckedChange={setWalkInMode}
+                />
               </div>
             )}
 
@@ -300,29 +357,49 @@ export const AddViaLinkModal = ({
               <Input id="cust-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={tr.phonePh} />
             </div>
 
-            {flow === 'reservation' ? (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="party">{tr.party}</Label>
-                  <Input
-                    id="party"
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={partySize}
-                    onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value || '1', 10)))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="seating">{tr.seating}</Label>
-                  <Input id="seating" value={seating} onChange={(e) => setSeating(e.target.value)} placeholder={tr.seatingPh} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="preferred">{tr.preferred}</Label>
-                  <Input id="preferred" value={preferred} onChange={(e) => setPreferred(e.target.value)} placeholder="20:30" />
-                </div>
-              </>
-            ) : (
+            {showPartyField && (
+              <div className="space-y-2">
+                <Label htmlFor="party">{tr.party}</Label>
+                <Input
+                  id="party"
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={partySize}
+                  onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                />
+              </div>
+            )}
+
+            {showSeatingField && (
+              <div className="space-y-2">
+                <Label htmlFor="seating">{tr.seating}</Label>
+                {loadingSeating ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> ...
+                  </div>
+                ) : seatingOptions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground rounded-md border border-border/50 bg-muted/30 px-3 py-2">
+                    {tr.noSeating}
+                  </p>
+                ) : (
+                  <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
+                    <SelectTrigger id="seating">
+                      <SelectValue placeholder={tr.seatingPh} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seatingOptions.map((opt) => (
+                        <SelectItem key={opt.id} value={opt.id}>
+                          {translateSeatingType(opt.seating_type, language)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
+            {showTicketField && (
               <div className="space-y-2">
                 <Label htmlFor="tickets">{tr.tickets}</Label>
                 <Input
