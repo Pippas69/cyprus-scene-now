@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, Link as LinkIcon, Copy, Ticket } from 'lucide-react';
+import { Loader2, Send, Copy, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useEventSupportsWalkIn } from '@/hooks/useEventSupportsWalkIn';
@@ -35,18 +35,13 @@ interface SeatingOption {
 
 const t = {
   el: {
-    title: 'Προσθήκη μέσω Link',
+    title: 'Αποστολή Link',
     desc: 'Συμπληρώστε τα στοιχεία και θα σταλεί SMS με σύνδεσμο πληρωμής (ισχύει 48 ώρες).',
     name: 'Όνομα πελάτη',
-    namePh: 'π.χ. Γιώργος Παπαδόπουλος',
-    phone: 'Τηλέφωνο (E.164)',
-    phonePh: '+35799123456',
-    careOf: 'Care of (υπάλληλος)',
-    careOfPh: 'π.χ. Μαρία (προαιρετικό)',
+    phone: 'Τηλέφωνο',
+    careOf: 'Care of',
     notes: 'Σημείωση (προαιρετικό)',
-    notesPh: 'Π.χ. γενέθλια, αλλεργία...',
-    walkInToggle: 'Αποστολή ως Walk-in εισιτήριο',
-    walkInHint: 'Ο πελάτης θα λάβει SMS για αγορά walk-in εισιτηρίου αντί για κράτηση τραπεζιού.',
+    walkInLabel: 'Walk-in',
     tickets: 'Αριθμός εισιτηρίων',
     party: 'Άτομα',
     seating: 'Τύπος καθίσματος',
@@ -62,24 +57,19 @@ const t = {
     close: 'Κλείσιμο',
     bookingLink: 'Σύνδεσμος κράτησης',
     requiredName: 'Όνομα υποχρεωτικό',
-    requiredPhone: 'Έγκυρο τηλέφωνο E.164 υποχρεωτικό',
+    requiredPhone: 'Έγκυρο τηλέφωνο υποχρεωτικό (+357...)',
     requiredParty: 'Άτομα υποχρεωτικά (≥1)',
     requiredTickets: 'Εισιτήρια υποχρεωτικά (≥1)',
     requiredSeating: 'Τύπος καθίσματος υποχρεωτικός',
   },
   en: {
-    title: 'Add via Link',
+    title: 'Send Link',
     desc: 'Fill in the details and an SMS with a payment link will be sent (valid for 48 hours).',
     name: 'Customer name',
-    namePh: 'e.g. George Papadopoulos',
-    phone: 'Phone (E.164)',
-    phonePh: '+35799123456',
-    careOf: 'Care of (staff)',
-    careOfPh: 'e.g. Maria (optional)',
+    phone: 'Phone',
+    careOf: 'Care of',
     notes: 'Note (optional)',
-    notesPh: 'e.g. birthday, allergy...',
-    walkInToggle: 'Send as Walk-in ticket',
-    walkInHint: 'Customer will receive an SMS to purchase a walk-in ticket instead of a table reservation.',
+    walkInLabel: 'Walk-in',
     tickets: 'Number of tickets',
     party: 'Party size',
     seating: 'Seating type',
@@ -95,7 +85,7 @@ const t = {
     close: 'Close',
     bookingLink: 'Booking link',
     requiredName: 'Name required',
-    requiredPhone: 'Valid E.164 phone required',
+    requiredPhone: 'Valid phone required (+357...)',
     requiredParty: 'Party size required (≥1)',
     requiredTickets: 'Tickets required (≥1)',
     requiredSeating: 'Seating type required',
@@ -116,27 +106,20 @@ export const AddViaLinkModal = ({
   const tr = t[language];
   const { supports: supportsWalkIn } = useEventSupportsWalkIn(eventId);
 
-  // Detect kind of event (auto — no user choice)
   const isOnlyTicket = eventType === 'ticket';
   const isOnlyReservation = eventType === 'reservation';
   const isHybrid = eventType === 'ticket_and_reservation' || eventType === 'ticket_reservation';
   const isReservationContext = isOnlyReservation || isHybrid || (!eventId && !isOnlyTicket);
 
-  // Walk-in toggle (only available on reservation/hybrid events that support it)
   const canShowWalkInToggle = (isOnlyReservation || isHybrid) && supportsWalkIn;
   const [walkInMode, setWalkInMode] = useState(false);
 
-  // Effective flow:
-  //  - only-ticket → ticket
-  //  - reservation/hybrid + walk-in toggle ON → walk_in
-  //  - reservation/hybrid + walk-in toggle OFF → reservation
   const effectiveFlow: 'ticket' | 'reservation' | 'walk_in' = useMemo(() => {
     if (isOnlyTicket) return 'ticket';
     if (canShowWalkInToggle && walkInMode) return 'walk_in';
     return 'reservation';
   }, [isOnlyTicket, canShowWalkInToggle, walkInMode]);
 
-  // Form state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [careOf, setCareOf] = useState('');
@@ -148,7 +131,6 @@ export const AddViaLinkModal = ({
   const [submitting, setSubmitting] = useState(false);
   const [createdLink, setCreatedLink] = useState<string | null>(null);
 
-  // Load seating types for reservation/hybrid events
   const [seatingOptions, setSeatingOptions] = useState<SeatingOption[]>([]);
   const [loadingSeating, setLoadingSeating] = useState(false);
 
@@ -182,7 +164,6 @@ export const AddViaLinkModal = ({
     return () => { cancelled = true; };
   }, [open, eventId, isReservationContext]);
 
-  // Reset when opened
   useEffect(() => {
     if (!open) return;
     setWalkInMode(false);
@@ -196,20 +177,15 @@ export const AddViaLinkModal = ({
     setCreatedLink(null);
   }, [open]);
 
-  // When toggling walk-in, we clear seating selection (not relevant)
   useEffect(() => {
     if (walkInMode) setSeatingTypeId('');
   }, [walkInMode]);
 
-  // Show seating dropdown only in reservation flow (not ticket-only and not walk-in)
   const showSeatingField = effectiveFlow === 'reservation';
-  // Show party size only in reservation flow
   const showPartyField = effectiveFlow === 'reservation';
-  // Show ticket count in ticket OR walk_in flows
   const showTicketField = effectiveFlow === 'ticket' || effectiveFlow === 'walk_in';
 
   const handleSubmit = async () => {
-    // Validation
     if (!name.trim()) {
       toast.error(tr.requiredName);
       return;
@@ -237,7 +213,6 @@ export const AddViaLinkModal = ({
     try {
       const partyForBackend = effectiveFlow === 'reservation' ? partySize : ticketCount;
 
-      // Resolve seating_preference label from selected seating type (for reservation flow)
       let seatingPreferenceLabel: string | null = null;
       if (effectiveFlow === 'reservation' && seatingTypeId) {
         const opt = seatingOptions.find((s) => s.id === seatingTypeId);
@@ -270,7 +245,6 @@ export const AddViaLinkModal = ({
         return;
       }
 
-      // Persist care_of separately (column exists on pending_bookings)
       if (careOf.trim()) {
         const { data: pb } = await supabase
           .from('pending_bookings')
@@ -305,61 +279,78 @@ export const AddViaLinkModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <LinkIcon className="h-5 w-5" />
-            {tr.title}
-          </DialogTitle>
-          <DialogDescription>{tr.desc}</DialogDescription>
+      <DialogContent
+        className="max-w-md p-0 gap-0 [&>button]:hidden"
+      >
+        {/* Custom header — title left, walk-in toggle middle, close right */}
+        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border/40 space-y-0">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold leading-none">{tr.title}</h2>
+
+            <div className="flex items-center gap-3">
+              {canShowWalkInToggle && (
+                <label htmlFor="walkin-toggle" className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <span className="text-xs font-medium text-muted-foreground">{tr.walkInLabel}</span>
+                  <Switch
+                    id="walkin-toggle"
+                    checked={walkInMode}
+                    onCheckedChange={setWalkInMode}
+                    className="scale-75 origin-center"
+                  />
+                </label>
+              )}
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="rounded-sm opacity-70 hover:opacity-100 transition-opacity focus:outline-none"
+                aria-label={tr.close}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-snug pt-2">{tr.desc}</p>
         </DialogHeader>
 
         {createdLink ? (
-          <div className="space-y-4 py-2">
-            <div className="rounded-lg border border-border/50 bg-muted/40 p-3 space-y-2">
-              <Label className="text-xs text-muted-foreground">{tr.bookingLink}</Label>
+          <div className="space-y-3 px-4 py-4">
+            <div className="rounded-lg border border-border/50 bg-muted/40 p-3 space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">{tr.bookingLink}</Label>
               <p className="font-mono text-xs break-all">{createdLink}</p>
             </div>
-            <Button onClick={handleCopy} variant="outline" className="w-full gap-2">
-              <Copy className="h-4 w-4" /> {tr.copy}
+            <Button onClick={handleCopy} variant="outline" size="sm" className="w-full gap-2 text-xs">
+              <Copy className="h-3.5 w-3.5" /> {tr.copy}
             </Button>
             <DialogFooter>
-              <Button onClick={() => onOpenChange(false)}>{tr.close}</Button>
+              <Button size="sm" onClick={() => onOpenChange(false)} className="text-xs">{tr.close}</Button>
             </DialogFooter>
           </div>
         ) : (
-          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-            {/* Walk-in toggle (only when event supports it) */}
-            {canShowWalkInToggle && (
-              <div className="flex items-start justify-between gap-3 rounded-md border border-border/50 px-3 py-2.5 bg-muted/30">
-                <div className="space-y-0.5 flex-1">
-                  <Label htmlFor="walkin-toggle" className="flex items-center gap-1.5 cursor-pointer">
-                    <Ticket className="h-4 w-4 text-primary" />
-                    {tr.walkInToggle}
-                  </Label>
-                  <p className="text-xs text-muted-foreground leading-snug">{tr.walkInHint}</p>
-                </div>
-                <Switch
-                  id="walkin-toggle"
-                  checked={walkInMode}
-                  onCheckedChange={setWalkInMode}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="cust-name">{tr.name}</Label>
-              <Input id="cust-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr.namePh} maxLength={200} />
+          <div className="space-y-3 px-4 py-4 max-h-[65vh] overflow-y-auto text-xs">
+            <div className="space-y-1.5">
+              <Label htmlFor="cust-name" className="text-xs font-medium">{tr.name}</Label>
+              <Input
+                id="cust-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={200}
+                className="h-9 text-xs"
+              />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cust-phone">{tr.phone}</Label>
-              <Input id="cust-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={tr.phonePh} />
+            <div className="space-y-1.5">
+              <Label htmlFor="cust-phone" className="text-xs font-medium">{tr.phone}</Label>
+              <Input
+                id="cust-phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-9 text-xs"
+              />
             </div>
 
             {showPartyField && (
-              <div className="space-y-2">
-                <Label htmlFor="party">{tr.party}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="party" className="text-xs font-medium">{tr.party}</Label>
                 <Input
                   id="party"
                   type="number"
@@ -367,15 +358,16 @@ export const AddViaLinkModal = ({
                   max={50}
                   value={partySize}
                   onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  className="h-9 text-xs"
                 />
               </div>
             )}
 
             {showSeatingField && (
-              <div className="space-y-2">
-                <Label htmlFor="seating">{tr.seating}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="seating" className="text-xs font-medium">{tr.seating}</Label>
                 {loadingSeating ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> ...
                   </div>
                 ) : seatingOptions.length === 0 ? (
@@ -384,12 +376,12 @@ export const AddViaLinkModal = ({
                   </p>
                 ) : (
                   <Select value={seatingTypeId} onValueChange={setSeatingTypeId}>
-                    <SelectTrigger id="seating">
+                    <SelectTrigger id="seating" className="h-9 text-xs">
                       <SelectValue placeholder={tr.seatingPh} />
                     </SelectTrigger>
                     <SelectContent>
                       {seatingOptions.map((opt) => (
-                        <SelectItem key={opt.id} value={opt.id}>
+                        <SelectItem key={opt.id} value={opt.id} className="text-xs">
                           {translateSeatingType(opt.seating_type, language)}
                         </SelectItem>
                       ))}
@@ -400,8 +392,8 @@ export const AddViaLinkModal = ({
             )}
 
             {showTicketField && (
-              <div className="space-y-2">
-                <Label htmlFor="tickets">{tr.tickets}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="tickets" className="text-xs font-medium">{tr.tickets}</Label>
                 <Input
                   id="tickets"
                   type="number"
@@ -409,26 +401,40 @@ export const AddViaLinkModal = ({
                   max={50}
                   value={ticketCount}
                   onChange={(e) => setTicketCount(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  className="h-9 text-xs"
                 />
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="careof">{tr.careOf}</Label>
-              <Input id="careof" value={careOf} onChange={(e) => setCareOf(e.target.value)} placeholder={tr.careOfPh} maxLength={100} />
+            <div className="space-y-1.5">
+              <Label htmlFor="careof" className="text-xs font-medium">{tr.careOf}</Label>
+              <Input
+                id="careof"
+                value={careOf}
+                onChange={(e) => setCareOf(e.target.value)}
+                maxLength={100}
+                className="h-9 text-xs"
+              />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">{tr.notes}</Label>
-              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} maxLength={500} rows={2} />
+            <div className="space-y-1.5">
+              <Label htmlFor="notes" className="text-xs font-medium">{tr.notes}</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                maxLength={500}
+                rows={2}
+                className="text-xs min-h-[60px]"
+              />
             </div>
 
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            <DialogFooter className="gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting} className="text-xs">
                 {tr.cancel}
               </Button>
-              <Button onClick={handleSubmit} disabled={submitting} className="gap-2">
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <Button size="sm" onClick={handleSubmit} disabled={submitting} className="gap-2 text-xs">
+                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 {submitting ? tr.sending : tr.submit}
               </Button>
             </DialogFooter>
