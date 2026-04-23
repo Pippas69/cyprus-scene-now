@@ -941,6 +941,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onManualEntryOpenChange={setManualEntryOpen}
               searchQuery={searchQuery}
               selectedDate={selectedDate}
+              onExportDataChange={setExportSnapshot}
             />
           ) : (
             <DirectReservationsList
@@ -954,6 +955,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
               onManualEntryOpenChange={setManualEntryOpen}
               searchQuery={searchQuery}
               selectedDate={!isTicketLinked ? selectedDate : null}
+              onExportDataChange={isTicketLinked ? setExportSnapshot : undefined}
             />
           )}
         </TabsContent>
