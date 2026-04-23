@@ -1,0 +1,1 @@
+DELETE FROM public.pending_bookings WHERE customer_name = 'TRIGGER TEST — DELETE ME';
