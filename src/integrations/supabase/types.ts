@@ -7796,33 +7796,59 @@ export type Database = {
         Returns: number
       }
       check_sms_rate_limit: {
-        Args: { p_business_id: string; p_phone: string }
-        Returns: {
-          allowed: boolean
-          business_day_count: number
-          day_count: number
-          hour_count: number
-          reason: string
-        }[]
+        Args: { _business_id: string; _phone: string }
+        Returns: Json
       }
       claim_offer_spots_atomically: {
         Args: { p_discount_id: string; p_party_size: number }
         Returns: Json
       }
       cleanup_rate_limit_entries: { Args: never; Returns: undefined }
-      consume_pending_booking: {
-        Args: {
-          p_reservation_id?: string
-          p_ticket_order_id?: string
-          p_token: string
-        }
-        Returns: {
-          business_id: string
-          pending_booking_id: string
-          reason: string
-          success: boolean
-        }[]
-      }
+      consume_pending_booking:
+        | {
+            Args: { _token: string }
+            Returns: {
+              booking_type: Database["public"]["Enums"]["pending_booking_type"]
+              business_id: string
+              completed_at: string | null
+              completed_reservation_id: string | null
+              completed_ticket_order_id: string | null
+              created_at: string
+              created_by_user_id: string
+              customer_name: string | null
+              customer_phone: string
+              event_id: string | null
+              expires_at: string
+              id: string
+              notes: string | null
+              party_size: number | null
+              preferred_time: string | null
+              seating_preference: string | null
+              status: Database["public"]["Enums"]["pending_booking_status"]
+              tier_data: Json | null
+              token: string
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "pending_bookings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_reservation_id?: string
+              p_ticket_order_id?: string
+              p_token: string
+            }
+            Returns: {
+              business_id: string
+              pending_booking_id: string
+              reason: string
+              success: boolean
+            }[]
+          }
       create_business_with_geo: {
         Args: {
           p_address: string
@@ -7885,13 +7911,7 @@ export type Database = {
         Returns: number
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      expire_old_pending_bookings: {
-        Args: never
-        Returns: {
-          expired_count: number
-          pruned_rate_limits: number
-        }[]
-      }
+      expire_old_pending_bookings: { Args: never; Returns: number }
       generate_booking_token: { Args: never; Returns: string }
       generate_confirmation_code: { Args: never; Returns: string }
       generate_promoter_tracking_code:
@@ -8202,7 +8222,7 @@ export type Database = {
         Returns: string
       }
       get_pending_booking_by_token: {
-        Args: { p_token: string }
+        Args: { _token: string }
         Returns: {
           booking_type: Database["public"]["Enums"]["pending_booking_type"]
           business_id: string
@@ -8210,6 +8230,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           event_id: string
+          event_location: string
           event_start_at: string
           event_title: string
           expires_at: string
