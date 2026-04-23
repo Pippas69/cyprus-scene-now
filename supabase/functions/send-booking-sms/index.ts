@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
   // ---- Verify business ownership ----
   const { data: biz, error: bizErr } = await admin
     .from("businesses")
-    .select("id, user_id, name")
+    .select("id, user_id, name, sms_sending_paused, sms_paused_reason")
     .eq("id", business_id)
     .maybeSingle();
 
@@ -109,6 +109,19 @@ Deno.serve(async (req: Request) => {
   if (!biz) return json({ error: "Business not found" }, 404);
   if (biz.user_id !== userId) {
     return json({ error: "You do not own this business" }, 403);
+  }
+
+  // ---- SMS sending paused check (Φάση 6: 3 failed card charges) ----
+  if (biz.sms_sending_paused) {
+    return json(
+      {
+        error: "sms_sending_paused",
+        reason: biz.sms_paused_reason ?? "payment_failed",
+        message:
+          "SMS sending has been paused for this business. Please update your payment method.",
+      },
+      402, // Payment Required
+    );
   }
 
   // ---- Rate-limit check ----
