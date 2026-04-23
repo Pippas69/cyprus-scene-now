@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
   // ---- Verify business ownership ----
   const { data: biz, error: bizErr } = await admin
     .from("businesses")
-    .select("id, user_id, name")
+    .select("id, user_id, name, sms_sending_paused, sms_paused_reason")
     .eq("id", business_id)
     .maybeSingle();
 
@@ -109,6 +109,19 @@ Deno.serve(async (req: Request) => {
   if (!biz) return json({ error: "Business not found" }, 404);
   if (biz.user_id !== userId) {
     return json({ error: "You do not own this business" }, 403);
+  }
+
+  // ---- SMS sending paused check (Φάση 6: 3 failed card charges) ----
+  if (biz.sms_sending_paused) {
+    return json(
+      {
+        error: "sms_sending_paused",
+        reason: biz.sms_paused_reason ?? "payment_failed",
+        message:
+          "SMS sending has been paused for this business. Please update your payment method.",
+      },
+      402, // Payment Required
+    );
   }
 
   // ---- Rate-limit check ----
@@ -232,10 +245,72 @@ Deno.serve(async (req: Request) => {
     console.error("Failed to insert sms_rate_limit:", rateInsertErr);
   }
 
+  // ---- Increment daily SMS quota + check 160/200 admin alert threshold ----
+  let quotaInfo: { sms_count?: number; threshold_crossed?: boolean } = {};
+  try {
+    const { data: q, error: qErr } = await admin.rpc("increment_sms_daily_quota", {
+      _business_id: business_id,
+    });
+    if (qErr) {
+      console.error("increment_sms_daily_quota failed:", qErr);
+    } else if (q && typeof q === "object") {
+      quotaInfo = q as { sms_count: number; threshold_crossed: boolean };
+
+      // Notify all admins when business crosses 160/200 daily threshold
+      if (quotaInfo.threshold_crossed) {
+        try {
+          const { data: admins } = await admin
+            .from("user_roles")
+            .select("user_id")
+            .eq("role", "admin");
+
+          if (admins && admins.length > 0) {
+            const rows = admins.map((a: { user_id: string }) => ({
+              user_id: a.user_id,
+              type: "admin_alert",
+              event_type: "sms_quota_threshold",
+              title: "⚠️ SMS Quota Alert",
+              message: `${biz.name} έχει στείλει ${quotaInfo.sms_count}/200 SMS σήμερα.`,
+              entity_type: "business",
+              entity_id: business_id,
+              read: false,
+            }));
+            const { error: notifErr } = await admin.from("notifications").insert(rows);
+            if (notifErr) {
+              console.error("Failed to insert admin notifications:", notifErr);
+            }
+          }
+        } catch (e) {
+          console.error("Admin notification error:", e);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Quota tracking error:", e);
+  }
+
+  // ---- Audit log entry ----
+  try {
+    await admin.rpc("log_pending_booking_audit", {
+      _pending_booking_id: pending_booking_id ?? null,
+      _business_id: business_id,
+      _action: "sms_sent",
+      _actor_user_id: userId,
+      _metadata: {
+        twilio_message_sid: twilioSid,
+        twilio_status: twilioStatus,
+        sms_charge_id: charge?.id ?? null,
+      },
+    });
+  } catch (e) {
+    console.error("Audit log error:", e);
+  }
+
   return json({
     success: true,
     twilio_message_sid: twilioSid,
     status: twilioStatus,
     sms_charge_id: charge?.id ?? null,
+    daily_sms_count: quotaInfo.sms_count,
   });
 });

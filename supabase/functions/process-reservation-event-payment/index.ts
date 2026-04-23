@@ -256,6 +256,37 @@ serve(async (req) => {
             logStep("Pending booking already completed (idempotent skip)", { pendingBookingId, pendingBookingToken });
           } else {
             logStep("Pending booking marked completed", { pendingBookingId, pendingBookingToken, reservationId });
+
+            // Audit log: 'converted' (Φάση 5)
+            try {
+              // Resolve actual id when only token was passed
+              let auditPbId = pendingBookingId;
+              let auditBusinessId = reservation.events?.businesses?.id;
+              if (!auditPbId && pendingBookingToken) {
+                const { data: pbRow } = await supabaseClient
+                  .from('pending_bookings')
+                  .select('id, business_id')
+                  .eq('token', pendingBookingToken)
+                  .maybeSingle();
+                auditPbId = pbRow?.id;
+                auditBusinessId = pbRow?.business_id ?? auditBusinessId;
+              }
+              if (auditPbId && auditBusinessId) {
+                await supabaseClient.rpc('log_pending_booking_audit', {
+                  _pending_booking_id: auditPbId,
+                  _business_id: auditBusinessId,
+                  _action: 'converted',
+                  _actor_user_id: null,
+                  _metadata: {
+                    reservation_id: reservationId,
+                    paid_amount_cents: paidAmountCents,
+                    source: 'stripe_webhook',
+                  },
+                });
+              }
+            } catch (auditE) {
+              logStep("Audit log (converted) error", { error: auditE instanceof Error ? auditE.message : String(auditE) });
+            }
           }
         } catch (pbCatch) {
           logStep("Pending booking conversion exception", { error: pbCatch instanceof Error ? pbCatch.message : String(pbCatch) });

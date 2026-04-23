@@ -188,6 +188,23 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Failed to create pending booking" }, 500);
     }
 
+    // Audit log: 'created'
+    try {
+      await adminClient.rpc("log_pending_booking_audit", {
+        _pending_booking_id: pending.id,
+        _business_id: body.business_id,
+        _action: "created",
+        _actor_user_id: user.id,
+        _metadata: {
+          booking_type: body.booking_type,
+          event_id: body.event_id ?? null,
+          customer_phone: body.customer_phone,
+        },
+      });
+    } catch (e) {
+      console.error("[create-pending-booking] Audit log error:", e);
+    }
+
     const bookingUrl = `${PUBLIC_BOOKING_BASE_URL}/${pending.token}`;
     const messageBody = `ΦΟΜΟ: Complete your booking at ${business.name}: ${bookingUrl}`;
 
