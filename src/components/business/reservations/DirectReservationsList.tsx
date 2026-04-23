@@ -2537,12 +2537,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 6. Care of — staff member who handled the booking */}
-                      <TableCell className="align-top px-[60px]">
+                      <TableCell className="align-top px-[60px] whitespace-nowrap">
                         <EditableCell
                           reservationId={reservation.id}
                           field="care_of"
                           displayValue={(reservation as any).care_of || '—'}
                           rawValue={(reservation as any).care_of || ''}
+                          inputClassName="h-7 text-sm w-32"
                         />
                       </TableCell>
                       {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
