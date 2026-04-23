@@ -341,11 +341,13 @@ export const AddViaLinkModal = ({
 
             <div className="space-y-1.5">
               <Label htmlFor="cust-phone" className="text-xs font-medium">{tr.phone}</Label>
-              <Input
+              <PhoneInput
                 id="cust-phone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="h-9 text-xs"
+                onChange={setPhone}
+                language={language}
+                inputClassName="h-9 text-xs"
+                selectClassName="h-9 text-xs"
               />
             </div>
 
