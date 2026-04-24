@@ -2497,7 +2497,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                             if (reservation.source === 'invitation') {
                               return (
                                 <div className="flex flex-col">
-                                  <span className="text-sm font-medium whitespace-nowrap text-primary-foreground">
+                                  <span className="text-sm text-foreground whitespace-nowrap">
                                     {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
                                   </span>
                                 </div>
