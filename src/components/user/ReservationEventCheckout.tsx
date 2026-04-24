@@ -71,6 +71,8 @@ interface ReservationEventCheckoutProps {
     customerPhone?: string;
     seatingPreference?: string | null;
   } | null;
+  /** Φάση 4 — when present, server-side overrides reservation_name & phone_number from DB. */
+  pendingBookingToken?: string | null;
 }
 
 const translations = {
