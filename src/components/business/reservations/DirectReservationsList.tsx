@@ -2571,8 +2571,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
-                      <TableCell className="align-top pl-2 my-0 mx-0 px-px">
-                        <div className="flex flex-col gap-0.5 text-center mx-0 my-0 py-0 px-[15px]">
+                      <TableCell className="align-top whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
                           <EventSeatingTypeEditCell
                             reservationId={reservation.id}
                             currentSeatingTypeId={reservation.seating_type_id || null}
