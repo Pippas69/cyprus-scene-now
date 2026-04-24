@@ -2170,7 +2170,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <PhoneCodePopover phone={ticket.buyer_phone} code={ticket.ticket_code} />
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="align-top whitespace-nowrap">
                       <div className="flex flex-col gap-0.5">
                         {(() => {
                           const hasCity = !!(ticket.guest_city || ticket.account_city);
@@ -2179,7 +2179,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           if (!hasCity && !hasAge && editingTicketCity !== ticket.ticket_id) {
                             return (
                               <span
-                                className="text-sm text-muted-foreground cursor-pointer group/city"
+                                className="font-medium leading-tight whitespace-nowrap cursor-pointer group/city"
                                 onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
                               >
                                 —
@@ -2212,7 +2212,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </div>
                               ) : hasCity ? (
                                 <span
-                                  className="text-sm text-foreground cursor-pointer inline-flex items-center gap-1 group/city whitespace-nowrap"
+                                  className="font-medium leading-tight whitespace-nowrap cursor-pointer inline-flex items-center gap-1 group/city"
                                   onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(ticket.guest_city || ticket.account_city || ''); }}
                                 >
                                   {translateCity(ticket.guest_city || ticket.account_city, language)}
@@ -2220,7 +2220,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </span>
                               ) : (
                                 <span
-                                  className="text-sm text-muted-foreground cursor-pointer group/city"
+                                  className="font-medium leading-tight whitespace-nowrap cursor-pointer group/city"
                                   onClick={() => { setEditingTicketCity(ticket.ticket_id); setTicketCityValue(''); }}
                                 >
                                   —
@@ -2228,7 +2228,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                 </span>
                               )}
                               {hasAge && (
-                                <span className="text-sm text-muted-foreground">
+                                <span className="text-xs text-muted-foreground leading-tight whitespace-nowrap">
                                   {language === 'el' ? `${ticket.guest_age} ετών` : `Age ${ticket.guest_age}`}
                                 </span>
                               )}
@@ -2237,27 +2237,27 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         })()}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col items-start">
+                    <TableCell className="align-top whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5 items-start">
                         {ticket.source === 'invitation' ? (
                           <Badge className="whitespace-nowrap bg-green-600 text-white">
                             {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
                           </Badge>
                         ) : ticket.tier_name ? (
                           <>
-                            <span className="text-sm font-medium">
+                            <span className="font-medium leading-tight whitespace-nowrap">
                               {ticket.subtotal_cents > 0
                                 ? `€${(ticket.subtotal_cents / 100).toFixed(2)}`
                                 : payAtDoor && ticket.tier_price_cents > 0
                                   ? `€${(ticket.tier_price_cents / 100).toFixed(2)} (${language === 'el' ? 'Είσοδο' : 'Door'})`
                                   : (language === 'el' ? 'Δωρεάν' : 'Free')}
                             </span>
-                            <span className="font-sans text-center my-0 px-0 font-normal text-muted-foreground text-sm">
+                            <span className="text-xs text-muted-foreground leading-tight whitespace-nowrap">
                               {translateTierName(ticket.tier_name, language)}
                             </span>
                           </>
                         ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
+                          <span className="font-medium leading-tight whitespace-nowrap text-muted-foreground">—</span>
                         )}
                       </div>
                     </TableCell>
