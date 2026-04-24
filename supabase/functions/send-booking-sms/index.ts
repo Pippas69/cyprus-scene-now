@@ -148,6 +148,7 @@ Deno.serve(async (req: Request) => {
   // ---- Send SMS via Twilio gateway ----
   let twilioSid: string | null = null;
   let twilioStatus: string = "queued";
+  let twilioNumSegments = 1;
   let errorCode: string | null = null;
   let errorMessage: string | null = null;
 
