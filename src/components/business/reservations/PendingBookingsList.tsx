@@ -84,8 +84,8 @@ const t = {
   en: {
     title: 'Pending Links',
     details: 'Details',
-    type: 'Type',
-    party: 'Party',
+    info: 'Details',
+    people: 'people',
     careOf: 'Care of',
     status: 'Status',
     note: 'Note',
