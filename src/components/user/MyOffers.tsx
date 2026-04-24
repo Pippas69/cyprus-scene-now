@@ -12,6 +12,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { CreditTransactionHistory } from "./CreditTransactionHistory";
 import { OfferQRCard } from "./OfferQRCard";
+import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
 interface MyOffersProps {
   userId: string;
@@ -208,8 +209,8 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   // Fetch purchased offers with expanded data
   const { data: purchases, isLoading } = useQuery({
     queryKey: ["user-offer-purchases", userId],
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 60 * 1000, // 1 min — instant return when navigating back
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.
       from("offer_purchases").
@@ -480,8 +481,10 @@ export function MyOffers({ userId, language }: MyOffersProps) {
         <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-xl">
           {imageUrl ?
           <img
-            src={imageUrl}
+            src={getOptimizedImageUrl(imageUrl, 800)}
             alt={purchase.discounts.businesses.name}
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover" /> :
 
 
@@ -539,8 +542,10 @@ export function MyOffers({ userId, language }: MyOffersProps) {
           <div className="flex items-center gap-1.5 text-muted-foreground">
             {purchase.discounts.businesses.logo_url ?
             <img
-              src={purchase.discounts.businesses.logo_url}
+              src={getOptimizedImageUrl(purchase.discounts.businesses.logo_url, 64)}
               alt={purchase.discounts.businesses.name}
+              loading="lazy"
+              decoding="async"
               className="h-4 w-4 rounded-full object-cover" /> :
 
 

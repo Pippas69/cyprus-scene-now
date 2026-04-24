@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
+import { getOptimizedImageUrl } from '@/lib/imageLoader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,14 +87,19 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const isPreviewOrigin =
   typeof window !== 'undefined' && (
   window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
   const initialReservationsTab = searchParams.get('subtab') === 'direct' ? 'direct' : 'event';
   const [activeReservationsTab, setActiveReservationsTab] = useState<'event' | 'direct'>(initialReservationsTab);
-  const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
-  const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Hydrate from React Query cache for instant render on revisit
+  const SNAPSHOT_KEY = ['my-reservations-snapshot', userId] as const;
+  const cachedSnapshot = queryClient.getQueryData<{ upcoming: ReservationData[]; past: ReservationData[] }>(SNAPSHOT_KEY);
+  const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>(cachedSnapshot?.upcoming || []);
+  const [pastReservations, setPastReservations] = useState<ReservationData[]>(cachedSnapshot?.past || []);
+  const [loading, setLoading] = useState(!cachedSnapshot);
   const [showHistory, setShowHistory] = useState(false);
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;reservationId: string | null;}>({
     open: false,
@@ -333,7 +340,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .not('event_id', 'is', null)
         .lt('events.start_at', cutoffIso)
-        .limit(100),
+        .limit(50),
       supabase
         .from('reservations')
         .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
@@ -349,7 +356,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .is('event_id', null)
         .not('business_id', 'is', null)
         .lt('preferred_time', cutoffIso)
-        .limit(100),
+        .limit(50),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
       supabase
@@ -532,6 +539,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
     setLoading(false);
+
+    // Persist snapshot to React Query cache for instant render on revisit
+    queryClient.setQueryData(SNAPSHOT_KEY, { upcoming: allUpcoming, past: allPast });
 
     // Load secondary data (QR codes, guests, charges) in background — no spinner
     const allRes = [...allUpcoming, ...allPast];
@@ -942,8 +952,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         {coverImage && (
           <div className="relative w-full aspect-[3/2] overflow-hidden">
             <img
-              src={coverImage}
+              src={getOptimizedImageUrl(coverImage, 800)}
               alt={title || ''}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           </div>
@@ -956,7 +968,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {businessInfo && (
             <div className="flex items-center gap-1.5">
               {businessInfo.logo_url && (
-                <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover shrink-0" />
+                <img src={getOptimizedImageUrl(businessInfo.logo_url, 64)} alt="" loading="lazy" decoding="async" className="h-4 w-4 rounded-full object-cover shrink-0" />
               )}
               <p className="text-xs text-muted-foreground truncate">{businessInfo.name}</p>
             </div>
@@ -1135,7 +1147,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {/* Row 2: Business */}
           <div className="flex items-center gap-1.5">
             {businessInfo?.logo_url &&
-            <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
+            <img src={getOptimizedImageUrl(businessInfo.logo_url, 64)} alt="" loading="lazy" decoding="async" className="h-4 w-4 rounded-full object-cover" />
             }
             <span className="text-sm font-medium">{businessInfo?.name}</span>
           </div>
