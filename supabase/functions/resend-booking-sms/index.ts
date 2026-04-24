@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     // Load pending booking + business
     const { data: pending, error: pErr } = await admin
       .from("pending_bookings")
-      .select("id, business_id, customer_phone, status")
+      .select("id, business_id, customer_phone, status, event_id")
       .eq("id", pendingId)
       .maybeSingle();
 
