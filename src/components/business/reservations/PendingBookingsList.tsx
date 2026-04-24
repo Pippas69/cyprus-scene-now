@@ -125,6 +125,42 @@ export const PendingBookingsList = ({
   const [rows, setRows] = useState<PendingBookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Inline note editing state — only one row editable at a time.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState<string>('');
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
+
+  // Strip the leading "+357" (with optional space) for compact display in the merged details cell.
+  const formatPhoneCompact = (phone: string) => phone.replace(/^\+357\s*/, '');
+
+  const startEditNote = (id: string, current: string | null) => {
+    setEditingNoteId(id);
+    setNoteDraft(current ?? '');
+  };
+  const cancelEditNote = () => {
+    setEditingNoteId(null);
+    setNoteDraft('');
+  };
+  const saveNote = async (id: string) => {
+    setSavingNoteId(id);
+    try {
+      const trimmed = noteDraft.trim();
+      const { error } = await supabase
+        .from('pending_bookings')
+        .update({ notes: trimmed.length > 0 ? trimmed : null })
+        .eq('id', id);
+      if (error) throw error;
+      // Optimistic local update so the UI reflects the change immediately.
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, notes: trimmed.length > 0 ? trimmed : null } : r)));
+      toast.success(tr.noteSaved);
+      setEditingNoteId(null);
+      setNoteDraft('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr.noteSaveError);
+    } finally {
+      setSavingNoteId(null);
+    }
+  };
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
