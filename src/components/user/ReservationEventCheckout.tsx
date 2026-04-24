@@ -70,6 +70,7 @@ interface ReservationEventCheckoutProps {
     customerName?: string;
     customerPhone?: string;
     seatingPreference?: string | null;
+    partySize?: number | null;
   } | null;
   /** Φάση 4 — when present, server-side overrides reservation_name & phone_number from DB. */
   pendingBookingToken?: string | null;
@@ -306,17 +307,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [termsAccepted, setTermsAccepted] = useState(false);
   const profileName = useProfileName(currentUserId);
 
-  // Auto-fill ONLY the first guest name with profile name
-  // Reservation name, phone, and email are left empty for the user to fill freely
+  // Auto-fill the first guest name. SMS-link customers get the locked reservation name;
+  // otherwise fall back to the signed-in user's profile name.
   useEffect(() => {
-    if (profileName) {
-      setGuests(prev => {
-        const updated = [...prev];
-        if (updated.length > 0) updated[0] = { ...updated[0], name: profileName };
-        return updated;
-      });
-    }
-  }, [profileName]);
+    const firstName = lockedCustomerData?.customerName || profileName;
+    if (!firstName) return;
+    setGuests(prev => {
+      const updated = [...prev];
+      if (updated.length > 0) updated[0] = { ...updated[0], name: firstName };
+      return updated;
+    });
+  }, [profileName, lockedCustomerData?.customerName]);
 
   // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
@@ -344,6 +345,32 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       setCustomerEmail('');
     }
   }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
+
+  // SMS link: auto-select seating type from locked preference and pre-fill party size,
+  // then skip the seating selection step entirely (business already chose for the customer).
+  const lockedSeatingPref = lockedCustomerData?.seatingPreference ?? null;
+  const lockedPartySize = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedSeatingPref || seatingOptions.length === 0) return;
+    const match = seatingOptions.find(
+      (o) => o.seating_type?.toLowerCase() === String(lockedSeatingPref).toLowerCase()
+    );
+    if (!match) return;
+    setSelectedSeating((prev) => (prev?.id === match.id ? prev : match));
+
+    // Pre-fill party size from the business-entered value, clamped to tier limits.
+    if (lockedPartySize && match.tiers.length > 0) {
+      const minP = Math.min(...match.tiers.map((t) => t.min_people));
+      const maxP = Math.max(...match.tiers.map((t) => t.max_people));
+      const clamped = Math.max(minP, Math.min(maxP, lockedPartySize));
+      setPartySize(clamped);
+    } else if (lockedPartySize) {
+      setPartySize(lockedPartySize);
+    }
+
+    // Skip the seating selection step — business already chose for them.
+    setStep((s) => (s === 1 ? 2 : s));
+  }, [open, lockedSeatingPref, lockedPartySize, seatingOptions]);
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -659,6 +686,9 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   // Dynamic step: after step 1, if not authenticated, show auth gate
   // step values: 1 = seating, 'auth' = auth gate, 'profile' = profile gate, 2 = details, 3 = review
   const getEffectiveStep = (): number | 'auth' | 'profile' => {
+    // SMS-link customers come from a personalized invite — let them check out as a guest
+    // without being forced through auth/profile gates.
+    if (hasLockedCustomer) return step;
     if (step === 2 && !isAuthenticated) return 'auth';
     if (step === 2 && isAuthenticated && !profileComplete) return 'profile';
     return step;
@@ -1159,7 +1189,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     if (effectiveStep === 'auth' || effectiveStep === 'profile') {
       return (
         <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={() => setStep(1)}>
+          <Button variant="outline" onClick={() => setStep(hasLockedCustomer ? 2 : 1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
@@ -1168,9 +1198,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       );
     }
 
+    // For SMS-locked customers, don't let them go back to seating selection (step 1)
+    const minBackStep = hasLockedCustomer ? 2 : 1;
     return (
       <div className="flex justify-between pt-4 gap-2">
-        {step > 1 ? (
+        {step > minBackStep ? (
           <Button variant="outline" size="sm" className="text-xs px-3 h-9" onClick={() => setStep(step - 1)}>
             <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
             {t.back}
