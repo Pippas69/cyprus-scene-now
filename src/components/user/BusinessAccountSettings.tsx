@@ -33,6 +33,7 @@ import { toastTranslations } from "@/translations/toastTranslations";
 import { compressImage } from "@/lib/imageCompression";
 import { StripeConnectOnboarding } from "@/components/business/StripeConnectOnboarding";
 import { StudentDiscountSettings } from "@/components/business/StudentDiscountSettings";
+import BillingSmsPage from "@/pages/BillingSmsPage";
 
 const createBusinessProfileSchema = (language: 'el' | 'en') => {
   const v = validationTranslations[language];
@@ -982,6 +983,9 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           </div>
         </CardContent>
       </Card>
+
+      {/* Billing & SMS (compact, embedded inside settings) */}
+      {businessId && <BillingSmsPage businessId={businessId} compact />}
 
       {/* Password Management */}
       <Card>
