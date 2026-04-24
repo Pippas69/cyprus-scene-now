@@ -66,16 +66,24 @@ export const ReservationManagement = ({ businessId, language }: ReservationManag
 
   useEffect(() => {
     fetchData();
+    // Debounced + business-scoped realtime: only refetch when this business's
+    // reservations change, and coalesce bursts into a single fetch.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchData(), 300);
+    };
     const channel = supabase
-      .channel('reservations_changes')
+      .channel(`reservations_changes-${businessId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations' },
-        () => fetchData()
+        { event: '*', schema: 'public', table: 'reservations', filter: `business_id=eq.${businessId}` },
+        debouncedFetch
       )
       .subscribe();
 
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
   }, [businessId]);
