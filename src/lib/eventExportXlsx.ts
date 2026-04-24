@@ -37,6 +37,7 @@ export interface ExportTicketRow {
   guest_name: string;
   guest_age: number | null;
   guest_city?: string | null;
+  account_city?: string | null;
   buyer_phone: string | null;
   tier_name: string;
   tier_price_cents: number;
@@ -83,6 +84,7 @@ const tx = {
     seating: 'Θέση',
     careOf: 'Care of',
     notes: 'Σημειώσεις',
+    invitation: 'Πρόσκληση',
     person: 'άτομο',
     persons: 'άτομα',
     dash: '—',
@@ -103,6 +105,7 @@ const tx = {
     seating: 'Seating',
     careOf: 'Care of',
     notes: 'Notes',
+    invitation: 'Invitation',
     person: 'person',
     persons: 'people',
     dash: '—',
@@ -112,6 +115,40 @@ const tx = {
 const cents = (v: number | null | undefined): string => {
   if (v == null || v === 0) return '';
   return `€${(Math.round(v) / 100).toFixed(2)}`;
+};
+
+// Normalize a phone for display: ensure international format. If it's a Cyprus 8-digit
+// local number, prefix with +357. If it already starts with +, keep as-is.
+const formatPhone = (raw: string | null | undefined): string => {
+  if (!raw) return '';
+  let v = String(raw).trim();
+  if (!v) return '';
+  // Strip spaces, dashes, parens
+  v = v.replace(/[\s\-()]/g, '');
+  if (v.startsWith('+')) return v;
+  if (v.startsWith('00')) return '+' + v.slice(2);
+  // Already starts with country code 357 without +
+  if (/^357\d{8}$/.test(v)) return '+' + v;
+  // Cyprus 8-digit local number
+  if (/^\d{8}$/.test(v)) return '+357' + v;
+  // Fallback: return original cleaned value
+  return v;
+};
+
+// Price for a ticket row: shows €X.XX, or "Πρόσκληση"/"Invitation" when the row is
+// an invitation/comp with no price.
+const priceOrInvitation = (
+  amountCents: number | null | undefined,
+  source: string | null | undefined,
+  t: typeof tx['el'],
+): string => {
+  const isInvitation = (source || '').toLowerCase() === 'invitation';
+  if (isInvitation && (!amountCents || amountCents === 0)) return t.invitation;
+  if (!amountCents || amountCents === 0) {
+    // Some free tickets may not be tagged as invitation but still have €0
+    return isInvitation ? t.invitation : '';
+  }
+  return `€${(Math.round(amountCents) / 100).toFixed(2)}`;
 };
 
 const sanitizeFileName = (name: string): string =>
@@ -207,15 +244,21 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   // ============================================================
   if (isTicketOnly) {
     const headers = [t.name, t.phone, t.city, t.age, t.price, t.careOf, t.notes];
-    const rows = ctx.ticketOnlyOrders.map((o) => ({
-      [t.name]: o.guest_name || '',
-      [t.phone]: o.buyer_phone || '',
-      [t.city]: translateCity(o.guest_city || '', ctx.language),
-      [t.age]: o.guest_age != null ? String(o.guest_age) : '',
-      [t.price]: cents(o.subtotal_cents ?? o.tier_price_cents),
-      [t.careOf]: careOfDisplay(o.care_of),
-      [t.notes]: o.staff_memo || '',
-    }));
+    const rows = ctx.ticketOnlyOrders.map((o) => {
+      // City: prefer per-ticket guest_city override, else fall back to buyer/account city
+      const rawCity = (o.guest_city && o.guest_city.trim())
+        || (o.account_city && o.account_city.trim())
+        || '';
+      return {
+        [t.name]: o.guest_name || '',
+        [t.phone]: formatPhone(o.buyer_phone),
+        [t.city]: translateCity(rawCity, ctx.language),
+        [t.age]: o.guest_age != null ? String(o.guest_age) : '',
+        [t.price]: priceOrInvitation(o.subtotal_cents ?? o.tier_price_cents, o.source, t),
+        [t.careOf]: careOfDisplay(o.care_of),
+        [t.notes]: o.staff_memo || '',
+      };
+    });
     const ws = buildWorksheet(rows, headers);
     XLSX.utils.book_append_sheet(wb, ws, t.sheetTickets);
   }
@@ -240,7 +283,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     ];
     const resRows = realReservations.map((r) => ({
       [t.name]: r.reservation_name || '',
-      [t.phone]: r.phone_number || '',
+      [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
       [t.minCharge]: cents(r.prepaid_min_charge_cents),
@@ -268,7 +311,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       ];
       const wRows = walkInReservations.map((r) => ({
         [t.name]: r.reservation_name || '',
-        [t.phone]: r.phone_number || '',
+        [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
         [t.walkInPrice]: cents(r.ticket_credit_cents),
@@ -301,7 +344,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     ];
     const resRows = realReservations.map((r) => ({
       [t.name]: r.reservation_name || '',
-      [t.phone]: r.phone_number || '',
+      [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
       [t.minCharge]: cents(r.prepaid_min_charge_cents),
@@ -330,7 +373,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       ];
       const wRows = walkInReservations.map((r) => ({
         [t.name]: r.reservation_name || '',
-        [t.phone]: r.phone_number || '',
+        [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
         [t.walkInPrice]: cents(r.ticket_credit_cents),
