@@ -77,6 +77,13 @@ interface TicketPurchaseFlowProps {
   businessId?: string;
   /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
   pendingBookingToken?: string | null;
+  /** Φάση 4 — locked customer data from SMS link: name + phone are read-only,
+   *  ticket count is pre-filled but editable. Allows guest checkout (no auth). */
+  lockedCustomerData?: {
+    customerName: string;
+    customerPhone: string;
+    partySize: number | null;
+  } | null;
 }
 
 const translations = {
@@ -209,7 +216,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   showInstances,
   businessId,
   pendingBookingToken,
+  lockedCustomerData,
 }) => {
+  const hasLockedCustomer = !!(
+    lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone)
+  );
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
