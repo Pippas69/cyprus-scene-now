@@ -77,6 +77,13 @@ interface TicketPurchaseFlowProps {
   businessId?: string;
   /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
   pendingBookingToken?: string | null;
+  /** Φάση 4 — locked customer data from SMS link: name + phone are read-only,
+   *  ticket count is pre-filled but editable. Allows guest checkout (no auth). */
+  lockedCustomerData?: {
+    customerName: string;
+    customerPhone: string;
+    partySize: number | null;
+  } | null;
 }
 
 const translations = {
@@ -209,7 +216,11 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   showInstances,
   businessId,
   pendingBookingToken,
+  lockedCustomerData,
 }) => {
+  const hasLockedCustomer = !!(
+    lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone)
+  );
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -358,40 +369,65 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     const steps: string[] = [];
     if (hasMultipleShows) steps.push('showSelect');
     if (hasSeating) steps.push('seats');
-    // Auth-first for ticket-only (non-seated) events
-    if (!hasSeating && !isAuthenticated) steps.push('auth');
-    if (!hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
+    // Auth-first for ticket-only (non-seated) events — skip when SMS-locked (guest checkout)
+    if (!hasSeating && !isAuthenticated && !hasLockedCustomer) steps.push('auth');
+    if (!hasSeating && isAuthenticated && !profileComplete && !hasLockedCustomer) steps.push('profile');
     if (!isSeatedWithPricing) steps.push('tickets');
     // Auth after seat selection for seated events
-    if (hasSeating && !isAuthenticated) steps.push('auth');
-    if (hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
+    if (hasSeating && !isAuthenticated && !hasLockedCustomer) steps.push('auth');
+    if (hasSeating && isAuthenticated && !profileComplete && !hasLockedCustomer) steps.push('profile');
     // Skip separate guests step for fresh signup non-seated (merged into tickets)
     if (!(isFreshSignup && !hasSeating)) {
       steps.push('guests');
     }
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete, isFreshSignup]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete, isFreshSignup, hasLockedCustomer]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const currentStep = steps[currentStepIdx] || steps[0];
 
-  // Reset step when opening
+  // Reset step when opening + prefill SMS-locked customer fields
   useEffect(() => {
     if (open) {
       setCurrentStepIdx(0);
       setCheckoutUrl(null);
       setRedirectAttempted(false);
-      setCustomerPhone('');
+      // SMS link: prefill phone + buyer name. Otherwise reset to empty.
+      setCustomerPhone(lockedCustomerData?.customerPhone || '');
       setCustomerEmail('');
+      if (lockedCustomerData?.customerName) {
+        setBuyerFullName(lockedCustomerData.customerName);
+      }
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
 
   // Scroll to top on step change
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStepIdx]);
+
+  // SMS link: prefill quantity on the first available tier with the business-entered count.
+  // Only runs once per open + when tiers load, and only if no quantity is set yet.
+  const lockedTicketCount = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedTicketCount || lockedTicketCount < 1) return;
+    if (!ticketTiers || ticketTiers.length === 0) return;
+    const hasAnyQty = Object.values(quantities).some((q) => q > 0);
+    if (hasAnyQty) return;
+    const firstAvailable = ticketTiers.find(
+      (t) => t.quantity_total - t.quantity_sold > 0,
+    );
+    if (!firstAvailable) return;
+    const available = firstAvailable.quantity_total - firstAvailable.quantity_sold;
+    const clamped = Math.max(
+      1,
+      Math.min(firstAvailable.max_per_order, Math.min(available, lockedTicketCount)),
+    );
+    setQuantities((prev) => ({ ...prev, [firstAvailable.id]: clamped }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lockedTicketCount, ticketTiers]);
 
   // Compute total tickets for seated vs non-seated
   const seatCount = selectedSeats.length;
@@ -469,7 +505,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)) && Number(a) >= minAge);
   const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
-  const lockFirstGuestName = isAuthenticated && profileComplete && (guestNames[0]?.trim().length ?? 0) > 0;
+  const lockFirstGuestName = (isAuthenticated && profileComplete && (guestNames[0]?.trim().length ?? 0) > 0)
+    || (hasLockedCustomer && !!lockedCustomerData?.customerName);
+  const lockCustomerPhone = hasLockedCustomer && !!lockedCustomerData?.customerPhone;
 
   // Phone and email are left empty for the user to fill freely
 
@@ -858,8 +896,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 value={customerPhone}
                 onChange={setCustomerPhone}
                 language={language}
-                selectClassName="h-8 sm:h-9 text-xs sm:text-sm"
-                inputClassName="h-8 sm:h-9 text-xs sm:text-sm"
+                disabled={lockCustomerPhone}
+                selectClassName={cn("h-8 sm:h-9 text-xs sm:text-sm", lockCustomerPhone && "bg-muted cursor-not-allowed")}
+                inputClassName={cn("h-8 sm:h-9 text-xs sm:text-sm", lockCustomerPhone && "bg-muted cursor-not-allowed")}
               />
             </div>
             <div className="space-y-1.5">

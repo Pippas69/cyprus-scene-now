@@ -90,6 +90,14 @@ interface KalivaTicketReservationFlowProps {
   businessId?: string;
   /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
   pendingBookingToken?: string | null;
+  /** Φάση 4 — locked customer data from SMS link: name + phone read-only,
+   *  partySize + seating pre-filled (seating step auto-skipped when matched). */
+  lockedCustomerData?: {
+    customerName: string;
+    customerPhone: string;
+    partySize: number | null;
+    seatingPreference: string | null;
+  } | null;
 }
 
 const translations = {
@@ -266,7 +274,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   onSuccess,
   businessId,
   pendingBookingToken,
+  lockedCustomerData,
 }) => {
+  const hasLockedCustomer = !!(
+    lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone)
+  );
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
@@ -350,15 +362,44 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
-  // Only reset checkout state on reopen, not form data
+  // Only reset checkout state on reopen, not form data — prefill SMS-locked customer fields
   useEffect(() => {
     if (open) {
       setCheckoutUrl(null);
       setRedirectAttempted(false);
-      setPhoneNumber('');
+      setPhoneNumber(lockedCustomerData?.customerPhone || '');
       setCustomerEmail('');
+      if (lockedCustomerData?.customerName) {
+        setReservationName(lockedCustomerData.customerName);
+        setGuests((prev) => {
+          if (prev.length === 0) return prev;
+          const updated = [...prev];
+          updated[0] = { ...updated[0], name: lockedCustomerData.customerName };
+          return updated;
+        });
+      }
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
+
+  // SMS link: auto-select seating from preference + prefill party size, then skip step 1
+  const lockedSeatingPref = lockedCustomerData?.seatingPreference ?? null;
+  const lockedPartySize = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedSeatingPref || seatingOptions.length === 0) return;
+    const match = seatingOptions.find(
+      (o) => o.seating_type?.toLowerCase() === String(lockedSeatingPref).toLowerCase(),
+    );
+    if (!match) return;
+    setSelectedSeating((prev) => (prev?.id === match.id ? prev : match));
+    if (lockedPartySize && match.tiers.length > 0) {
+      const minP = Math.min(...match.tiers.map((t) => t.min_people));
+      const maxP = Math.max(...match.tiers.map((t) => t.max_people));
+      setPartySize(Math.max(minP, Math.min(maxP, lockedPartySize)));
+    } else if (lockedPartySize) {
+      setPartySize(lockedPartySize);
+    }
+    setStep((s) => (s === 1 ? 2 : s));
+  }, [open, lockedSeatingPref, lockedPartySize, seatingOptions]);
 
   // Scroll to top on step change
   useEffect(() => {
@@ -729,9 +770,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           value={reservationName}
           onChange={(e) => setReservationName(e.target.value)}
           placeholder="John Doe"
+          readOnly={hasLockedCustomer && !!lockedCustomerData?.customerName}
+          disabled={hasLockedCustomer && !!lockedCustomerData?.customerName}
           className={cn(
             "h-9 text-sm",
-            reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
+            reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive",
+            hasLockedCustomer && !!lockedCustomerData?.customerName && "bg-muted cursor-not-allowed"
           )}
         />
         {reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && (
@@ -817,12 +861,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 <Input
                   placeholder={t.name}
                   value={guest.name}
-                  readOnly={idx === 0 && !!profileName}
+                  readOnly={idx === 0 && (!!profileName || (hasLockedCustomer && !!lockedCustomerData?.customerName))}
                   onChange={(e) => {
-                    if (idx === 0 && profileName) return;
+                    if (idx === 0 && (profileName || (hasLockedCustomer && lockedCustomerData?.customerName))) return;
                     updateGuest(idx, 'name', e.target.value);
                   }}
-                  className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
+                  className={cn("h-9 text-sm flex-1", idx === 0 && (profileName || (hasLockedCustomer && lockedCustomerData?.customerName)) && "bg-muted cursor-not-allowed")}
                 />
                 <Input
                   placeholder={t.age}
@@ -859,8 +903,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             value={phoneNumber}
             onChange={setPhoneNumber}
             language={language}
-            selectClassName="h-9 text-sm"
-            inputClassName="h-9 text-sm"
+            disabled={hasLockedCustomer && !!lockedCustomerData?.customerPhone}
+            selectClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
+            inputClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
           />
         </div>
       )}
