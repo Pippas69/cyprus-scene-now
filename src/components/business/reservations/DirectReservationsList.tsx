@@ -2397,7 +2397,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                   <TableHead className="whitespace-nowrap text-left px-[34px]">{t.seating}</TableHead>
                   <TableHead className="whitespace-nowrap">{t.status}</TableHead>
                   <TableHead className="whitespace-nowrap">Care of</TableHead>
-                  <TableHead className="whitespace-nowrap">{t.staffMemo}</TableHead>
+                  <TableHead className="whitespace-nowrap text-left px-[65px]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
