@@ -90,6 +90,14 @@ interface KalivaTicketReservationFlowProps {
   businessId?: string;
   /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
   pendingBookingToken?: string | null;
+  /** Φάση 4 — locked customer data from SMS link: name + phone read-only,
+   *  partySize + seating pre-filled (seating step auto-skipped when matched). */
+  lockedCustomerData?: {
+    customerName: string;
+    customerPhone: string;
+    partySize: number | null;
+    seatingPreference: string | null;
+  } | null;
 }
 
 const translations = {
@@ -266,7 +274,11 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   onSuccess,
   businessId,
   pendingBookingToken,
+  lockedCustomerData,
 }) => {
+  const hasLockedCustomer = !!(
+    lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone)
+  );
   const isMobile = useIsMobile();
   const { language } = useLanguage();
   const t = translations[language];
