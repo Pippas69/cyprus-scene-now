@@ -11,6 +11,7 @@ import { el, enUS } from "date-fns/locale";
 import { useLanguage } from "@/hooks/useLanguage";
 import { TicketQRDialog } from "./TicketQRDialog";
 import { Link } from "react-router-dom";
+import { getOptimizedImageUrl } from "@/lib/imageLoader";
 
 const t = {
   el: {
@@ -75,6 +76,8 @@ export const MyTickets = () => {
 
   const { data: tickets, isLoading } = useQuery({
     queryKey: ["my-tickets"],
+    staleTime: 60 * 1000, // 1 min — instant return when navigating back
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -185,8 +188,10 @@ export const MyTickets = () => {
         {ticket.events?.cover_image_url && (
           <div className="relative w-full aspect-[3/2] overflow-hidden">
             <img
-              src={ticket.events.cover_image_url}
+              src={getOptimizedImageUrl(ticket.events.cover_image_url, 800)}
               alt={ticket.events.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           </div>
