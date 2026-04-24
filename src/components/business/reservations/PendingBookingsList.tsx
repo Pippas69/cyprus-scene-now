@@ -336,7 +336,7 @@ export const PendingBookingsList = ({
               <TableHead className="whitespace-nowrap min-w-[160px]">{tr.details}</TableHead>
               <TableHead className="whitespace-nowrap min-w-[110px] px-[10px]">{tr.info}</TableHead>
               <TableHead className="whitespace-nowrap min-w-[100px]">{tr.careOf}</TableHead>
-              <TableHead className="whitespace-nowrap min-w-[150px]">{tr.status}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[150px] text-center">{tr.status}</TableHead>
               <TableHead className="min-w-[260px]">{tr.note}</TableHead>
               <TableHead className="whitespace-nowrap min-w-[110px]">{tr.expires}</TableHead>
               <TableHead />
@@ -369,7 +369,7 @@ export const PendingBookingsList = ({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{r.care_of ?? '—'}</TableCell>
-                  <TableCell className="whitespace-nowrap">{renderStatus(r.status)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-center">{renderStatus(r.status)}</TableCell>
                   {/* Σημείωση — editable inline */}
                   <TableCell className="align-top min-w-[260px]">
                     {isEditingNote ? (
