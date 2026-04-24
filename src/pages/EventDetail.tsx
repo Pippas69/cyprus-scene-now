@@ -41,7 +41,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { translateCity } from '@/lib/cityTranslations';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
-import { SMS_LOCKED_BOOKING_KEY, type SmsLockedBooking } from '@/pages/PublicBookingPage';
+import { type SmsLockedBooking } from '@/pages/PublicBookingPage';
 
 // Staggered animation variants for similar events
 const containerVariants = {
@@ -114,7 +114,9 @@ export default function EventDetail() {
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
   const [lowestMinChargeCents, setLowestMinChargeCents] = useState<number | null>(null);
 
-  // SMS link landing — locked customer data passed via sessionStorage when arriving via /r/:token
+  // SMS link landing — locked customer data fetched from DB when arriving via /r/:token redirect.
+  // We always pull from the DB (via get_pending_booking_by_token) so the link survives
+  // new tabs / browser restarts — nothing is cached in sessionStorage.
   const [smsLocked, setSmsLocked] = useState<SmsLockedBooking | null>(null);
   const [smsAutoOpened, setSmsAutoOpened] = useState(false);
 
@@ -165,55 +167,78 @@ export default function EventDetail() {
     }
   }, [event, user]);
 
-  // SMS link auto-open: if arriving via /r/:token redirect, open the right dialog automatically
+  // SMS link auto-open: if arriving via /r/:token redirect, fetch the locked
+  // customer data fresh from the DB and open the right dialog automatically.
   useEffect(() => {
     if (!event || smsAutoOpened) return;
     const params = new URLSearchParams(location.search);
     const bookingToken = params.get('booking_token');
     if (!bookingToken) return;
 
-    // Read locked customer fields persisted by /r/:token landing page
-    let locked: SmsLockedBooking | null = null;
-    try {
-      const raw = sessionStorage.getItem(SMS_LOCKED_BOOKING_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as SmsLockedBooking;
-        if (parsed?.token === bookingToken) {
-          locked = parsed;
+    let cancelled = false;
+    (async () => {
+      // Always pull locked fields from the DB via the existing RPC — never cache.
+      let locked: SmsLockedBooking | null = null;
+      try {
+        const { data, error } = await supabase.rpc(
+          'get_pending_booking_by_token',
+          { _token: bookingToken },
+        );
+        if (error) {
+          console.warn('SMS booking RPC error', error);
+        } else {
+          const pb = (data as any[] | null)?.[0];
+          if (pb && pb.event_id === event.id) {
+            locked = {
+              token: bookingToken,
+              pendingBookingId: pb.id,
+              bookingType: pb.booking_type,
+              customerName: pb.customer_name || '',
+              customerPhone: pb.customer_phone,
+              seatingPreference: pb.seating_preference,
+              partySize: pb.party_size,
+              notes: pb.notes,
+            };
+          }
         }
+      } catch (e) {
+        console.warn('Failed to load SMS locked booking from DB', e);
       }
-    } catch (e) {
-      console.warn('Failed to read SMS locked booking from sessionStorage', e);
-    }
-    setSmsLocked(locked);
+      if (cancelled) return;
+      setSmsLocked(locked);
 
-    // Decide which dialog to open — mirrors the click handlers in the event cards.
-    const eventType = event.event_type;
-    const bookingType = locked?.bookingType;
+      // Decide which dialog to open — mirrors the click handlers in the event cards.
+      const eventType = event.event_type;
+      const bookingType = locked?.bookingType;
 
-    // Walk-in / ticket purchases — Kaliva flow when business is ticket+reservation linked, else generic ticket flow
-    if (bookingType === 'ticket' || bookingType === 'walk_in') {
-      if (isBusinessTicketLinked && eventType === 'ticket_and_reservation') {
-        setShowKalivaFlow(true);
+      // Walk-in / ticket purchases — Kaliva flow when business is ticket+reservation linked, else generic ticket flow
+      if (bookingType === 'ticket' || bookingType === 'walk_in') {
+        if (isBusinessTicketLinked && eventType === 'ticket_and_reservation') {
+          setShowKalivaFlow(true);
+        } else {
+          setShowTicketFlow(true);
+        }
+        setSmsAutoOpened(true);
+        return;
+      }
+
+      // Reservation flow — choose dialog the same way the event cards do
+      if (eventType === 'reservation' || eventType === 'ticket_and_reservation') {
+        if (isBusinessTicketLinked && eventType === 'ticket_and_reservation') {
+          setShowKalivaFlow(true);
+        } else {
+          setShowReservationCheckout(true);
+        }
       } else {
-        setShowTicketFlow(true);
+        // Legacy reservation request (non-checkout)
+        setShowReservationDialog(true);
       }
       setSmsAutoOpened(true);
-      return;
-    }
+    })();
 
-    // Reservation flow — choose dialog the same way the event cards do
-    if (eventType === 'reservation' || eventType === 'ticket_and_reservation') {
-      if (isBusinessTicketLinked && eventType === 'ticket_and_reservation') {
-        setShowKalivaFlow(true);
-      } else {
-        setShowReservationCheckout(true);
-      }
-    } else {
-      // Legacy reservation request (non-checkout)
-      setShowReservationDialog(true);
-    }
-    setSmsAutoOpened(true);
+    return () => {
+      cancelled = true;
+    };
   }, [event, isBusinessTicketLinked, location.search, smsAutoOpened]);
 
   useEffect(() => {
