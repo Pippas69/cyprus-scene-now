@@ -1143,6 +1143,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           staff_memo: (t as any).staff_memo || null,
           staff_memo_highlighted: !!(t as any).staff_memo_highlighted,
           source: ticketOnlyInvitationOrderIds.has(t.order_id) ? 'invitation' : 'purchase',
+          care_of: order?.care_of ?? null,
         };
       });
 
