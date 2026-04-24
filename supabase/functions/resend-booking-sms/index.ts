@@ -131,7 +131,23 @@ Deno.serve(async (req: Request) => {
     }
 
     const bookingUrl = `${PUBLIC_BOOKING_BASE_URL}/${newToken}`;
-    const messageBody = `ΦΟΜΟ: Complete your booking at ${biz.name}: ${bookingUrl}`;
+
+    // Lookup event title (if any) for GSM-7 SMS template
+    let eventTitle: string | null = null;
+    if (pending.event_id) {
+      const { data: ev } = await admin
+        .from("events")
+        .select("title")
+        .eq("id", pending.event_id)
+        .maybeSingle();
+      eventTitle = ev?.title ?? null;
+    }
+
+    // GSM-7 safe template (1 segment when within 160 chars):
+    // "[Business Name] reserved your spot for [Event Name]. Complete here: [link]"
+    const safeBusinessName = toGsm7Safe(biz.name) || "Business";
+    const safeEventName = toGsm7Safe(eventTitle ?? "") || "your event";
+    const messageBody = `${safeBusinessName} reserved your spot for ${safeEventName}. Complete here: ${bookingUrl}`;
 
     // Dispatch SMS
     const smsResp = await fetch(`${SUPABASE_URL}/functions/v1/send-booking-sms`, {
