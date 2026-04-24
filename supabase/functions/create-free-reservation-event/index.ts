@@ -139,10 +139,10 @@ serve(async (req) => {
       .insert({
         event_id: eventId,
         user_id: user.id,
-        reservation_name: (reservation_name as string | undefined) ?? "Test Reservation",
+        reservation_name: lockedReservationName ?? "Test Reservation",
         email: (customer_email as string | undefined)?.trim() || user.email || null,
         party_size: safePartySize,
-        phone_number: (phone_number as string | undefined) ?? null,
+        phone_number: lockedPhoneNumber ?? null,
         preferred_time: event.start_at,
         special_requests: (special_requests as string | undefined) ?? null,
         seating_type_id: seatingTypeId,
