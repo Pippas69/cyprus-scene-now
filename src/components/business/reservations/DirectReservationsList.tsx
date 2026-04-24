@@ -2288,6 +2288,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>
                       )}
                     </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {editingTicketCareOf === ticket.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={ticketCareOfValue}
+                            onChange={(e) => setTicketCareOfValue(e.target.value)}
+                            className="h-7 text-sm w-24"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveTicketCareOf(ticket.id);
+                              if (e.key === 'Escape') { setEditingTicketCareOf(null); setTicketCareOfValue(''); }
+                            }}
+                          />
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCareOf(ticket.id)}>
+                            <Check className="h-3 w-3 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCareOf(null); setTicketCareOfValue(''); }}>
+                            <X className="h-3 w-3 text-red-500" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span
+                          className="cursor-pointer rounded py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm"
+                          onClick={() => { setEditingTicketCareOf(ticket.id); setTicketCareOfValue(ticket.care_of || ''); }}
+                        >
+                          {ticket.care_of || 'ΦOMO'}
+                          <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {renderTicketMemoCell(ticket)}
                     </TableCell>
