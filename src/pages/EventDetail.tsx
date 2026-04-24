@@ -41,6 +41,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { UnifiedEventCard } from '@/components/feed/UnifiedEventCard';
 import { translateCity } from '@/lib/cityTranslations';
 import { isClubOrEventBusiness } from '@/lib/isClubOrEventBusiness';
+import { SMS_LOCKED_BOOKING_KEY, type SmsLockedBooking } from '@/pages/PublicBookingPage';
 
 // Staggered animation variants for similar events
 const containerVariants = {
