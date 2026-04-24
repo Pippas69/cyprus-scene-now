@@ -830,7 +830,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   onChange={setPhoneNumber}
                   language={language}
                   selectClassName="h-9 text-sm"
-                  inputClassName="h-9 text-sm"
+                  inputClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
+                  disabled={hasLockedCustomer && !!lockedCustomerData?.customerPhone}
                 />
               </div>
             )}
