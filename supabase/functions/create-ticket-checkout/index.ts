@@ -671,6 +671,7 @@ Deno.serve(async (req) => {
         show_instance_id: showInstanceId || undefined,
         promoter_session_id: promoterSessionId || undefined,
         promoter_tracking_code: promoterTrackingCode || undefined,
+        pending_booking_token: pendingBookingToken || undefined,
       },
     };
     

@@ -201,6 +201,48 @@ Deno.serve(async (req) => {
       .eq("id", orderId);
     logStep("Order completed");
 
+    // Φάση 4: Convert pending_booking → completed (if this checkout originated from an SMS link)
+    const pendingBookingToken = session.metadata?.pending_booking_token;
+    if (pendingBookingToken) {
+      try {
+        const { error: pbErr, count: pbCount } = await supabaseClient
+          .from("pending_bookings")
+          .update({ status: "completed", completed_at: new Date().toISOString() })
+          .eq("token", pendingBookingToken)
+          .eq("status", "pending")
+          .select("id", { count: "exact", head: true });
+
+        if (pbErr) {
+          logStep("Pending booking conversion error", { error: pbErr.message });
+        } else if (pbCount === 0) {
+          logStep("Pending booking already completed (idempotent skip)", { pendingBookingToken });
+        } else {
+          logStep("Pending booking marked completed", { pendingBookingToken, orderId });
+
+          // Audit log: 'converted'
+          try {
+            const { data: pbRow } = await supabaseClient
+              .from("pending_bookings")
+              .select("id, business_id")
+              .eq("token", pendingBookingToken)
+              .maybeSingle();
+            if (pbRow) {
+              await supabaseClient.rpc("log_pending_booking_audit", {
+                _pending_booking_id: pbRow.id,
+                _business_id: pbRow.business_id,
+                _action: "converted",
+                _metadata: { ticket_order_id: orderId },
+              });
+            }
+          } catch (auditErr) {
+            logStep("Audit log error (non-fatal)", { error: auditErr instanceof Error ? auditErr.message : String(auditErr) });
+          }
+        }
+      } catch (e) {
+        logStep("Pending booking conversion exception (non-fatal)", { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
     // ==================== AUTO-CREATE RESERVATION FOR ticket_and_reservation EVENTS ====================
     let usesLinkedReservations = false;
     let seatingTypeId: string | null = (session.metadata?.seating_type_id || "").trim() || null;
