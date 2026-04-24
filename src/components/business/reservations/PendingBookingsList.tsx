@@ -39,6 +39,8 @@ interface PendingBookingsListProps {
   businessId: string;
   eventId?: string | null;
   language: 'el' | 'en';
+  /** Optional search query — filters by customer_name OR customer_phone */
+  searchQuery?: string;
   /** Called whenever a booking transitions to confirmed (so parent can refresh main list) */
   onConfirmed?: () => void;
 }
