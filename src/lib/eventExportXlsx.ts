@@ -105,6 +105,7 @@ const tx = {
     seating: 'Seating',
     careOf: 'Care of',
     notes: 'Notes',
+    invitation: 'Invitation',
     person: 'person',
     persons: 'people',
     dash: '—',
