@@ -22,6 +22,7 @@ import {
   ValidationError,
   validationErrorResponse,
 } from "../_shared/validation.ts";
+import { toGsm7Safe } from "../_shared/transliterate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
