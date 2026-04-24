@@ -65,6 +65,12 @@ interface ReservationEventCheckoutProps {
   onSuccess?: () => void;
   businessId?: string;
   eventType?: 'reservation' | 'ticket_and_reservation' | string;
+  /** When provided (e.g. from /r/{token} SMS link), prefills and locks the customer-identifying fields. */
+  lockedCustomerData?: {
+    customerName?: string;
+    customerPhone?: string;
+    seatingPreference?: string | null;
+  } | null;
 }
 
 const translations = {
@@ -234,8 +240,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   onSuccess,
   businessId,
   eventType,
+  lockedCustomerData,
 }) => {
   const isHybridEvent = eventType === 'ticket_and_reservation';
+  const hasLockedCustomer = !!(lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone));
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
@@ -321,10 +329,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   useEffect(() => {
     if (open) {
-      setPhoneNumber('');
+      // When arriving via SMS link, prefill the locked customer fields. Otherwise reset.
+      if (lockedCustomerData?.customerPhone) {
+        setPhoneNumber(lockedCustomerData.customerPhone);
+      } else {
+        setPhoneNumber('');
+      }
+      if (lockedCustomerData?.customerName) {
+        setReservationName(lockedCustomerData.customerName);
+      }
       setCustomerEmail('');
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -784,8 +800,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
+                disabled={hasLockedCustomer && !!lockedCustomerData?.customerName}
+                readOnly={hasLockedCustomer && !!lockedCustomerData?.customerName}
                 className={cn(
                   "h-9 text-sm",
+                  hasLockedCustomer && !!lockedCustomerData?.customerName && "bg-muted cursor-not-allowed",
                   reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
                 )}
               />
@@ -811,7 +830,8 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                   onChange={setPhoneNumber}
                   language={language}
                   selectClassName="h-9 text-sm"
-                  inputClassName="h-9 text-sm"
+                  inputClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
+                  disabled={hasLockedCustomer && !!lockedCustomerData?.customerPhone}
                 />
               </div>
             )}
