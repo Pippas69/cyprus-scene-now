@@ -333,12 +333,12 @@ export const PendingBookingsList = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tr.name}</TableHead>
-              <TableHead>{tr.phone}</TableHead>
+              <TableHead>{tr.details}</TableHead>
               <TableHead>{tr.type}</TableHead>
               <TableHead>{tr.party}</TableHead>
               <TableHead>{tr.careOf}</TableHead>
               <TableHead>{tr.status}</TableHead>
+              <TableHead>{tr.note}</TableHead>
               <TableHead>{tr.expires}</TableHead>
               <TableHead />
             </TableRow>
@@ -346,14 +346,78 @@ export const PendingBookingsList = ({
           <TableBody>
             {visibleRows.map((r) => {
               const canAct = r.status === 'pending' || r.status === 'link_expired' || r.status === 'cancelled';
+              const isEditingNote = editingNoteId === r.id;
               return (
                 <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.customer_name ?? '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{r.customer_phone}</TableCell>
+                  {/* Στοιχεία: name on top, phone below in smaller muted text without +357 */}
+                  <TableCell className="align-top">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-medium leading-tight">{r.customer_name ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground font-mono leading-tight">
+                        {formatPhoneCompact(r.customer_phone)}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>{renderType(r)}</TableCell>
                   <TableCell>{r.party_size ?? '—'}</TableCell>
                   <TableCell>{r.care_of ?? '—'}</TableCell>
                   <TableCell>{renderStatus(r.status)}</TableCell>
+                  {/* Σημείωση — editable inline */}
+                  <TableCell className="align-top max-w-[220px]">
+                    {isEditingNote ? (
+                      <div className="flex items-start gap-1">
+                        <Input
+                          autoFocus
+                          value={noteDraft}
+                          onChange={(e) => setNoteDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveNote(r.id);
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelEditNote();
+                            }
+                          }}
+                          placeholder={tr.notePlaceholder}
+                          className="h-7 text-xs"
+                          disabled={savingNoteId === r.id}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={() => saveNote(r.id)}
+                          disabled={savingNoteId === r.id}
+                          title={tr.save}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={cancelEditNote}
+                          disabled={savingNoteId === r.id}
+                          title={tr.cancelEdit}
+                        >
+                          <XIcon className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => startEditNote(r.id, r.notes)}
+                        className="group flex items-start gap-1 text-left text-xs w-full hover:bg-muted/40 rounded px-1 py-0.5 transition-colors"
+                        title={tr.note}
+                      >
+                        <span className={`flex-1 break-words ${r.notes ? 'text-foreground' : 'text-muted-foreground italic'}`}>
+                          {r.notes && r.notes.length > 0 ? r.notes : tr.notePlaceholder}
+                        </span>
+                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 mt-0.5" />
+                      </button>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs">
                     {format(new Date(r.expires_at), 'dd MMM HH:mm')}
                   </TableCell>
