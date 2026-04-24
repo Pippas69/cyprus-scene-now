@@ -94,6 +94,11 @@ Deno.serve(async (req: Request) => {
     const messageStatus = params["MessageStatus"];
     const errorCode = params["ErrorCode"] || null;
     const errorMessage = params["ErrorMessage"] || null;
+    // Twilio sends NumSegments as a string in the status callback
+    const numSegments = Math.max(
+      1,
+      parseInt(String(params["NumSegments"] ?? "1"), 10) || 1,
+    );
 
     if (!messageSid || !messageStatus) {
       return jsonResponse({ error: "Missing MessageSid or MessageStatus" }, 400);
