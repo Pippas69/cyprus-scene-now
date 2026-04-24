@@ -1264,6 +1264,15 @@ export default function EventDetail() {
           partySize: smsLocked.partySize,
           seatingPreference: smsLocked.seatingPreference,
         } : null}
+        onSuccess={(orderId, isFree) => {
+          setShowKalivaFlow(false);
+          if (isFree) {
+            toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
+          }
+        }} />
+      }
+
+      {/* Ticket Purchase Flow */}
       {hasNativeTickets &&
       <TicketPurchaseFlow
         open={showTicketFlow}
@@ -1274,6 +1283,11 @@ export default function EventDetail() {
         showInstances={showInstances.length > 0 ? showInstances : undefined}
         businessId={event.businesses?.id}
         pendingBookingToken={smsLocked?.token ?? null}
+        lockedCustomerData={smsLocked ? {
+          customerName: smsLocked.customerName,
+          customerPhone: smsLocked.customerPhone,
+          partySize: smsLocked.partySize,
+        } : null}
         onSuccess={(orderId, isFree) => {
           setShowTicketFlow(false);
           if (isFree) {
