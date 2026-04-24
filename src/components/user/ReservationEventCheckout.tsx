@@ -800,8 +800,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
                 value={reservationName}
                 onChange={(e) => setReservationName(e.target.value)}
                 placeholder="John Doe"
+                disabled={hasLockedCustomer && !!lockedCustomerData?.customerName}
+                readOnly={hasLockedCustomer && !!lockedCustomerData?.customerName}
                 className={cn(
                   "h-9 text-sm",
+                  hasLockedCustomer && !!lockedCustomerData?.customerName && "bg-muted cursor-not-allowed",
                   reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
                 )}
               />
