@@ -1894,6 +1894,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
+  // Save ticket order care_of (keyed by order_id)
+  const handleSaveTicketCareOf = async (orderId: string) => {
+    try {
+      const trimmed = ticketCareOfValue.trim();
+      const { error } = await supabase
+        .from('ticket_orders')
+        .update({ care_of: trimmed || null } as any)
+        .eq('id', orderId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketCareOf(null);
+      setTicketCareOfValue('');
+      // All tickets sharing this order get the new care_of
+      setTicketOnlyOrders(prev => prev.map(t => t.id === orderId ? { ...t, care_of: trimmed || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket care_of:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
