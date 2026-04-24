@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
         // Lock unbilled charge IDs first (to make idempotent)
         const { data: charges } = await admin
           .from("sms_charges")
-          .select("id, cost_cents")
+          .select("id, cost_cents, num_segments")
           .eq("business_id", c.business_id)
           .eq("is_billable", true)
           .is("billed_at", null)
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
 
         const chargeIds = (charges ?? []).map((x: any) => x.id);
         const totalCents = (charges ?? []).reduce(
-          (sum: number, x: any) => sum + Number(x.cost_cents ?? 0),
+          (sum: number, x: any) => sum + (Number(x.cost_cents ?? 0) * Math.max(Number(x.num_segments ?? 1), 1)),
           0,
         );
 

@@ -11,6 +11,27 @@ const corsHeaders = {
 };
 
 const TWILIO_GATEWAY = "https://connector-gateway.lovable.dev/twilio";
+const TWILIO_STATUS_CALLBACK_URL = "https://iasahlgurfxufrtdigcr.supabase.co/functions/v1/twilio-status-webhook";
+
+function normalizeInitialTwilioStatus(status: string | null | undefined): "queued" | "sent" | "delivered" | "failed" | "undelivered" {
+  switch ((status ?? "").toLowerCase()) {
+    case "accepted":
+    case "scheduled":
+    case "sending":
+    case "queued":
+      return "queued";
+    case "sent":
+      return "sent";
+    case "delivered":
+      return "delivered";
+    case "failed":
+      return "failed";
+    case "undelivered":
+      return "undelivered";
+    default:
+      return "queued";
+  }
+}
 
 interface RequestBody {
   business_id: string;
@@ -157,6 +178,7 @@ Deno.serve(async (req: Request) => {
       To: to_phone,
       MessagingServiceSid: TWILIO_MESSAGING_SERVICE_SID,
       Body: message_body,
+      StatusCallback: TWILIO_STATUS_CALLBACK_URL,
     });
 
     const twilioResp = await fetch(`${TWILIO_GATEWAY}/Messages.json`, {
@@ -195,7 +217,7 @@ Deno.serve(async (req: Request) => {
     }
 
     twilioSid = twilioJson.sid ?? null;
-    twilioStatus = twilioJson.status ?? "queued";
+    twilioStatus = normalizeInitialTwilioStatus(twilioJson.status);
     // Capture num_segments from initial Twilio response (may also be refined by the
     // status webhook). Twilio returns it as string in `num_segments`.
     twilioNumSegments = Math.max(1, parseInt(String(twilioJson.num_segments ?? "1"), 10) || 1);
@@ -226,12 +248,7 @@ Deno.serve(async (req: Request) => {
       message_body,
       twilio_message_sid: twilioSid,
       num_segments: twilioNumSegments,
-      status: twilioStatus as
-        | "queued"
-        | "sent"
-        | "delivered"
-        | "failed"
-        | "undelivered",
+      status: twilioStatus,
       is_billable: false, // becomes true via Twilio status webhook (Φάση 5)
     })
     .select("id")

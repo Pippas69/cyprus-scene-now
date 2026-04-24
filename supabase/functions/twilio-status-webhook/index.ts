@@ -27,6 +27,34 @@ const corsHeaders = {
 // Twilio billable statuses — we charge for delivered (and sent as fallback if no DLR)
 const BILLABLE_STATUSES = new Set(["sent", "delivered"]);
 const FINAL_STATUSES = new Set(["delivered", "failed", "undelivered"]);
+const TWILIO_GATEWAY = "https://connector-gateway.lovable.dev/twilio";
+
+function normalizeTwilioStatus(status: string): "queued" | "sent" | "delivered" | "failed" | "undelivered" {
+  switch (status.toLowerCase()) {
+    case "accepted":
+    case "scheduled":
+    case "sending":
+    case "queued":
+      return "queued";
+    case "sent":
+      return "sent";
+    case "delivered":
+      return "delivered";
+    case "failed":
+      return "failed";
+    case "undelivered":
+      return "undelivered";
+    default:
+      return "queued";
+  }
+}
+
+function toCentsFromTwilioPrice(price: string | null | undefined): number | null {
+  if (!price) return null;
+  const amount = Number(price);
+  if (!Number.isFinite(amount)) return null;
+  return Math.round(Math.abs(amount) * 100);
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -61,6 +89,8 @@ Deno.serve(async (req: Request) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return jsonResponse({ error: "Server misconfigured" }, 500);
@@ -126,27 +156,51 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ ok: true, message: "no_matching_charge" }, 200);
     }
 
-    // Map Twilio status to our enum
-    const validStatus = ["queued", "sent", "delivered", "failed", "undelivered"].includes(
-      messageStatus,
-    )
-      ? messageStatus
-      : charge.status;
-
-    const becomesBillable = BILLABLE_STATUSES.has(messageStatus) && !charge.is_billable;
-    const isFinal = FINAL_STATUSES.has(messageStatus);
+    const normalizedStatus = normalizeTwilioStatus(messageStatus);
+    const becomesBillable = BILLABLE_STATUSES.has(normalizedStatus) && !charge.is_billable;
+    const isFinal = FINAL_STATUSES.has(normalizedStatus);
 
     const updates: Record<string, unknown> = {
-      status: validStatus,
+      status: normalizedStatus,
       updated_at: new Date().toISOString(),
     };
 
+    let exactCostCents: number | null = null;
+    let exactCurrency: string | null = null;
+
+    if (messageSid && LOVABLE_API_KEY && TWILIO_API_KEY) {
+      try {
+        const twilioResp = await fetch(`${TWILIO_GATEWAY}/Messages/${messageSid}.json`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": TWILIO_API_KEY,
+          },
+        });
+        if (twilioResp.ok) {
+          const twilioJson = await twilioResp.json();
+          exactCostCents = toCentsFromTwilioPrice(twilioJson?.price ?? null);
+          exactCurrency = typeof twilioJson?.price_unit === "string" ? String(twilioJson.price_unit).toUpperCase() : null;
+          const fetchedSegments = Math.max(1, parseInt(String(twilioJson?.num_segments ?? params["NumSegments"] ?? "1"), 10) || 1);
+          updates.num_segments = fetchedSegments;
+          if (exactCostCents !== null) updates.cost_cents = exactCostCents;
+          if (exactCurrency) updates.cost_currency = exactCurrency;
+        } else {
+          console.warn("[twilio-status-webhook] Failed to fetch exact Twilio message pricing", { status: twilioResp.status, messageSid });
+        }
+      } catch (fetchErr) {
+        console.error("[twilio-status-webhook] Exact Twilio pricing fetch error", fetchErr);
+      }
+    }
+
     if (becomesBillable) {
       updates.is_billable = true;
-      // Default cost: 5 cents (€0.05) per segment — Twilio bills per segment, so a long
-      // SMS that gets split into 2 parts costs 10 cents.
-      updates.cost_cents = 5;
-      updates.cost_currency = "EUR";
+      if (exactCostCents === null) {
+        updates.cost_cents = 5;
+      }
+      if (!exactCurrency) {
+        updates.cost_currency = "EUR";
+      }
     }
 
     // Always refresh num_segments from the webhook (initial send may have estimated 1)
@@ -168,7 +222,7 @@ Deno.serve(async (req: Request) => {
     // Audit log entry on delivery / failure
     if (isFinal && charge.pending_booking_id) {
       const action =
-        messageStatus === "delivered" ? "sms_delivered" : "sms_failed";
+        normalizedStatus === "delivered" ? "sms_delivered" : "sms_failed";
       try {
         await admin.rpc("log_pending_booking_audit", {
           _pending_booking_id: charge.pending_booking_id,
@@ -189,11 +243,11 @@ Deno.serve(async (req: Request) => {
 
     console.log("[twilio-status-webhook] Updated charge", {
       sms_charge_id: charge.id,
-      status: messageStatus,
+      status: normalizedStatus,
       becomes_billable: becomesBillable,
     });
 
-    return jsonResponse({ ok: true, sms_charge_id: charge.id, status: messageStatus });
+    return jsonResponse({ ok: true, sms_charge_id: charge.id, status: normalizedStatus, cost_cents: updates.cost_cents ?? null, num_segments: updates.num_segments ?? numSegments });
   } catch (err) {
     console.error("[twilio-status-webhook] Unexpected error", err);
     const msg = err instanceof Error ? err.message : "Unknown error";
