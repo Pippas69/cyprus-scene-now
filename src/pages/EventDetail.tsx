@@ -1258,15 +1258,12 @@ export default function EventDetail() {
         ticketTiers={reservationFlowTicketTiers}
         businessId={event.businesses?.id}
         pendingBookingToken={smsLocked?.token ?? null}
-        onSuccess={(orderId, isFree) => {
-          setShowKalivaFlow(false);
-          if (isFree) {
-            toast.success(language === 'el' ? 'Τα εισιτήριά σας είναι έτοιμα!' : 'Your tickets are ready!');
-          }
-        }} />
-      }
-
-      {/* Ticket Purchase Flow */}
+        lockedCustomerData={smsLocked ? {
+          customerName: smsLocked.customerName,
+          customerPhone: smsLocked.customerPhone,
+          partySize: smsLocked.partySize,
+          seatingPreference: smsLocked.seatingPreference,
+        } : null}
       {hasNativeTickets &&
       <TicketPurchaseFlow
         open={showTicketFlow}
