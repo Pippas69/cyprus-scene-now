@@ -350,18 +350,27 @@ export const PendingBookingsList = ({
               return (
                 <TableRow key={r.id}>
                   {/* Στοιχεία: name on top, phone below in smaller muted text without +357 */}
-                  <TableCell className="align-top">
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="font-medium leading-tight">{r.customer_name ?? '—'}</span>
-                      <span className="text-xs text-muted-foreground font-mono leading-tight">
+                  <TableCell className="align-top whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium leading-tight whitespace-nowrap">{r.customer_name ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground font-mono leading-tight whitespace-nowrap">
                         {formatPhoneCompact(r.customer_phone)}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{renderType(r)}</TableCell>
-                  <TableCell>{r.party_size ?? '—'}</TableCell>
-                  <TableCell>{r.care_of ?? '—'}</TableCell>
-                  <TableCell>{renderStatus(r.status)}</TableCell>
+                  {/* Λεπτομέρειες: party size on top, type below */}
+                  <TableCell className="align-top whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium leading-tight whitespace-nowrap">
+                        {r.party_size ?? '—'} {tr.people}
+                      </span>
+                      <span className="text-xs text-muted-foreground leading-tight whitespace-nowrap">
+                        {renderType(r)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{r.care_of ?? '—'}</TableCell>
+                  <TableCell className="whitespace-nowrap">{renderStatus(r.status)}</TableCell>
                   {/* Σημείωση — editable inline */}
                   <TableCell className="align-top max-w-[220px]">
                     {isEditingNote ? (
