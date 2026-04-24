@@ -107,6 +107,7 @@ export const PendingBookingsList = ({
   businessId,
   eventId,
   language,
+  searchQuery,
   onConfirmed,
 }: PendingBookingsListProps) => {
   const tr = t[language];
