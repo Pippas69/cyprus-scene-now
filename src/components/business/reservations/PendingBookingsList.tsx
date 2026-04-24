@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Trash2, Clock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { RefreshCw, Trash2, Clock, AlertTriangle, CheckCircle2, XCircle, Check, X as XIcon, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { translateSeatingType } from '@/lib/seatingTranslations';
@@ -49,12 +50,12 @@ interface PendingBookingsListProps {
 const t = {
   el: {
     title: 'Εκκρεμή Links',
-    name: 'Όνομα',
-    phone: 'Τηλέφωνο',
+    details: 'Στοιχεία',
     type: 'Τύπος',
     party: 'Άτομα',
     careOf: 'Care of',
     status: 'Κατάσταση',
+    note: 'Σημείωση',
     expires: 'Λήξη',
     actions: '',
     pending: 'Εκκρεμεί πληρωμή',
@@ -73,15 +74,20 @@ const t = {
     typeRes: 'Κράτηση',
     typeTk: 'Εισιτήριο',
     typeWi: 'Walk-in',
+    notePlaceholder: 'Προσθήκη σημείωσης...',
+    save: 'Αποθήκευση',
+    cancelEdit: 'Ακύρωση',
+    noteSaved: 'Η σημείωση αποθηκεύτηκε',
+    noteSaveError: 'Σφάλμα αποθήκευσης σημείωσης',
   },
   en: {
     title: 'Pending Links',
-    name: 'Name',
-    phone: 'Phone',
+    details: 'Details',
     type: 'Type',
     party: 'Party',
     careOf: 'Care of',
     status: 'Status',
+    note: 'Note',
     expires: 'Expires',
     actions: '',
     pending: 'Awaiting payment',
@@ -100,6 +106,11 @@ const t = {
     typeRes: 'Reservation',
     typeTk: 'Ticket',
     typeWi: 'Walk-in',
+    notePlaceholder: 'Add a note...',
+    save: 'Save',
+    cancelEdit: 'Cancel',
+    noteSaved: 'Note saved',
+    noteSaveError: 'Failed to save note',
   },
 };
 
@@ -114,6 +125,42 @@ export const PendingBookingsList = ({
   const [rows, setRows] = useState<PendingBookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Inline note editing state — only one row editable at a time.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState<string>('');
+  const [savingNoteId, setSavingNoteId] = useState<string | null>(null);
+
+  // Strip the leading "+357" (with optional space) for compact display in the merged details cell.
+  const formatPhoneCompact = (phone: string) => phone.replace(/^\+357\s*/, '');
+
+  const startEditNote = (id: string, current: string | null) => {
+    setEditingNoteId(id);
+    setNoteDraft(current ?? '');
+  };
+  const cancelEditNote = () => {
+    setEditingNoteId(null);
+    setNoteDraft('');
+  };
+  const saveNote = async (id: string) => {
+    setSavingNoteId(id);
+    try {
+      const trimmed = noteDraft.trim();
+      const { error } = await supabase
+        .from('pending_bookings')
+        .update({ notes: trimmed.length > 0 ? trimmed : null })
+        .eq('id', id);
+      if (error) throw error;
+      // Optimistic local update so the UI reflects the change immediately.
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, notes: trimmed.length > 0 ? trimmed : null } : r)));
+      toast.success(tr.noteSaved);
+      setEditingNoteId(null);
+      setNoteDraft('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : tr.noteSaveError);
+    } finally {
+      setSavingNoteId(null);
+    }
+  };
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -286,12 +333,12 @@ export const PendingBookingsList = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tr.name}</TableHead>
-              <TableHead>{tr.phone}</TableHead>
+              <TableHead>{tr.details}</TableHead>
               <TableHead>{tr.type}</TableHead>
               <TableHead>{tr.party}</TableHead>
               <TableHead>{tr.careOf}</TableHead>
               <TableHead>{tr.status}</TableHead>
+              <TableHead>{tr.note}</TableHead>
               <TableHead>{tr.expires}</TableHead>
               <TableHead />
             </TableRow>
@@ -299,14 +346,78 @@ export const PendingBookingsList = ({
           <TableBody>
             {visibleRows.map((r) => {
               const canAct = r.status === 'pending' || r.status === 'link_expired' || r.status === 'cancelled';
+              const isEditingNote = editingNoteId === r.id;
               return (
                 <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.customer_name ?? '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{r.customer_phone}</TableCell>
+                  {/* Στοιχεία: name on top, phone below in smaller muted text without +357 */}
+                  <TableCell className="align-top">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-medium leading-tight">{r.customer_name ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground font-mono leading-tight">
+                        {formatPhoneCompact(r.customer_phone)}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>{renderType(r)}</TableCell>
                   <TableCell>{r.party_size ?? '—'}</TableCell>
                   <TableCell>{r.care_of ?? '—'}</TableCell>
                   <TableCell>{renderStatus(r.status)}</TableCell>
+                  {/* Σημείωση — editable inline */}
+                  <TableCell className="align-top max-w-[220px]">
+                    {isEditingNote ? (
+                      <div className="flex items-start gap-1">
+                        <Input
+                          autoFocus
+                          value={noteDraft}
+                          onChange={(e) => setNoteDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveNote(r.id);
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelEditNote();
+                            }
+                          }}
+                          placeholder={tr.notePlaceholder}
+                          className="h-7 text-xs"
+                          disabled={savingNoteId === r.id}
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={() => saveNote(r.id)}
+                          disabled={savingNoteId === r.id}
+                          title={tr.save}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={cancelEditNote}
+                          disabled={savingNoteId === r.id}
+                          title={tr.cancelEdit}
+                        >
+                          <XIcon className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => startEditNote(r.id, r.notes)}
+                        className="group flex items-start gap-1 text-left text-xs w-full hover:bg-muted/40 rounded px-1 py-0.5 transition-colors"
+                        title={tr.note}
+                      >
+                        <span className={`flex-1 break-words ${r.notes ? 'text-foreground' : 'text-muted-foreground italic'}`}>
+                          {r.notes && r.notes.length > 0 ? r.notes : tr.notePlaceholder}
+                        </span>
+                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 mt-0.5" />
+                      </button>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs">
                     {format(new Date(r.expires_at), 'dd MMM HH:mm')}
                   </TableCell>
