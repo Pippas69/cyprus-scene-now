@@ -2477,19 +2477,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   rawValue={reservation.party_size ? String(reservation.party_size) : ''}
                                   inputType="number"
                                   inputClassName="h-7 text-sm w-20" />
-                                <div className="flex items-center gap-2">
-                                  <EditableCell
-                                    reservationId={reservation.id}
-                                    field="guest_city"
-                                    displayValue={translateCity((reservation as any).guest_city || cityByReservation[reservation.id], language) || '—'}
-                                    rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''}
-                                    className="text-muted-foreground" />
-                                  {reservation.source === 'invitation' && (
-                                    <span className="text-muted-foreground whitespace-nowrap">
-                                      {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
-                                    </span>
-                                  )}
-                                </div>
+                                <EditableCell
+                                  reservationId={reservation.id}
+                                  field="guest_city"
+                                  displayValue={translateCity((reservation as any).guest_city || cityByReservation[reservation.id], language) || '—'}
+                                  rawValue={(reservation as any).guest_city || cityByReservation[reservation.id] || ''}
+                                  className="text-muted-foreground" />
                               </>
                             );
                           })()}
@@ -2500,8 +2493,15 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       <TableCell className="align-top whitespace-nowrap">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
+                            // Invitation source: show "Πρόσκληση" badge only
                             if (reservation.source === 'invitation') {
-                              return null;
+                              return (
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-foreground whitespace-nowrap">
+                                    {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
+                                  </span>
+                                </div>
+                              );
                             }
                             const isWalkInSource = reservation.source === 'walk_in' && !reservation.seating_type_id;
                             if (isWalkInSource) {
