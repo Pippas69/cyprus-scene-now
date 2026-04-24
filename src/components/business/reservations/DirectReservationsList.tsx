@@ -2137,7 +2137,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               <TableBody>
                 {filteredTicketOrders.map((ticket) => (
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
-                    <TableCell className="font-medium align-top whitespace-nowrap">
+                    <TableCell className="align-top whitespace-nowrap">
                       <div className="flex flex-col gap-0.5">
                         {editingTicketName === ticket.ticket_id ? (
                           <div className="flex items-center gap-1">
@@ -2160,14 +2160,28 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           </div>
                         ) : (
                           <span
-                            className="cursor-pointer rounded py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap -ml-1 group/edit px-0"
+                            className="font-medium leading-tight whitespace-nowrap cursor-pointer inline-flex items-center gap-1 group/edit"
                             onClick={() => { setEditingTicketName(ticket.ticket_id); setTicketNameValue(ticket.guest_name); }}
                           >
                             {ticket.guest_name}
                             <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
                           </span>
                         )}
-                        <PhoneCodePopover phone={ticket.buyer_phone} code={ticket.ticket_code} />
+                        {ticket.buyer_phone && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="cursor-pointer border-0 bg-transparent p-0 m-0 text-left text-xs text-muted-foreground leading-tight hover:text-muted-foreground focus:text-muted-foreground active:text-muted-foreground focus:outline-none whitespace-nowrap"
+                              >
+                                {ticket.buyer_phone.replace(/^\+357/, '')}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" side="top" sideOffset={6} className="w-auto min-w-0 px-2 py-1">
+                              <span className="font-mono text-sm font-semibold tracking-wide text-foreground">{ticket.ticket_code || '—'}</span>
+                            </PopoverContent>
+                          </Popover>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="align-top whitespace-nowrap">
