@@ -2253,7 +2253,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                     </TableCell>
                     <TableCell className="align-top whitespace-nowrap">
                       <div className="flex flex-col gap-0.5 items-start">
-                        {ticket.source === 'invitation' ? null : ticket.tier_name ? (
+                        {ticket.source === 'invitation' ? (
+                          <span className="font-medium leading-tight whitespace-nowrap text-foreground">
+                            {language === 'el' ? 'Πρόσκληση' : 'Invitation'}
+                          </span>
+                        ) : ticket.tier_name ? (
                           <>
                             <span className="font-medium leading-tight whitespace-nowrap">
                               {ticket.subtotal_cents > 0
