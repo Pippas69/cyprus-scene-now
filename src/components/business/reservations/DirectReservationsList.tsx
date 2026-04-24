@@ -2374,16 +2374,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[980px] table-fixed">
+            <Table className="w-full min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[18%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[16%] pr-4 whitespace-nowrap px-[29px]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[11%] px-0 text-center">{t.seating}</TableHead>
-                  <TableHead className="text-xs w-[11%] px-[40px]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[10%] px-[64px] whitespace-nowrap">{language === 'el' ? 'Care of' : 'Care of'}</TableHead>
-                  <TableHead className="text-xs w-[22%] px-[50px]">{t.staffMemo}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.name}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.details}</TableHead>
+                  <TableHead className="whitespace-nowrap">{priceColumnLabel}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.seating}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.status}</TableHead>
+                  <TableHead className="whitespace-nowrap">Care of</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
