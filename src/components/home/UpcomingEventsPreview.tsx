@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isEventPaused } from "@/lib/eventVisibility";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UnifiedEventCard from "@/components/feed/UnifiedEventCard";
@@ -30,31 +29,33 @@ interface Event {
   } | null;
 }
 
+const fetchUpcomingEvents = async (): Promise<Event[]> => {
+  // Server-side pause filter: paused events have appearance_start_at in year 1970.
+  // Exclude them by requiring appearance_start_at to be NULL or >= 2000-01-01.
+  const { data, error } = await supabase
+    .from("events")
+    .select(`
+      id, title, location, start_at, end_at, cover_image_url, category, business_id,
+      appearance_start_at, appearance_end_at,
+      businesses!inner(id, name, logo_url)
+    `)
+    .gte("start_at", new Date().toISOString())
+    .or("appearance_start_at.is.null,appearance_start_at.gte.2000-01-01")
+    .order("start_at", { ascending: true })
+    .limit(6);
+
+  if (error || !data) return [];
+  return data as unknown as Event[];
+};
+
 const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: events = [], isLoading: loading } = useQuery({
+    queryKey: ["home", "upcoming-events"],
+    queryFn: fetchUpcomingEvents,
+    staleTime: 2 * 60 * 1000, // 2 min cache
+    gcTime: 15 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select(`
-          id, title, location, start_at, end_at, cover_image_url, category, business_id,
-          appearance_start_at, appearance_end_at,
-          businesses!inner(id, name, logo_url)
-        `)
-        .gte("start_at", new Date().toISOString())
-        .order("start_at", { ascending: true })
-        .limit(20);
-
-      if (!error && data) {
-        const visible = (data as unknown as Event[]).filter((e) => !isEventPaused(e)).slice(0, 6);
-        setEvents(visible);
-      }
-      setLoading(false);
-    };
-    fetchEvents();
-  }, []);
 
   const content = {
     en: {

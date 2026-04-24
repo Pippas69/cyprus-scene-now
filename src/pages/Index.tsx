@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Footer from "@/components/Footer";
@@ -14,15 +14,11 @@ import { useLanguage } from "@/hooks/useLanguage";
 const Index = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const [isLandingReady, setIsLandingReady] = useState(false);
 
+  // Non-blocking auth check: render landing immediately, redirect in background
+  // if a session is found. Guests never see a white screen.
   useEffect(() => {
     let isMounted = true;
-
-    // Safety net: if auth check hangs for any reason, show landing after 3s
-    const fallbackTimer = setTimeout(() => {
-      if (isMounted) setIsLandingReady(true);
-    }, 3000);
 
     const checkAuthAndRedirect = async () => {
       try {
@@ -30,28 +26,23 @@ const Index = () => {
           data: { session },
         } = await supabase.auth.getSession();
 
+        if (!isMounted || !session?.user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
         if (!isMounted) return;
 
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session.user.id)
-            .single();
-
-          if (!isMounted) return;
-
-          if (profile?.role === "business") {
-            navigate("/dashboard-business", { replace: true });
-          } else {
-            navigate("/feed", { replace: true });
-          }
-          return;
+        if (profile?.role === "business") {
+          navigate("/dashboard-business", { replace: true });
+        } else {
+          navigate("/feed", { replace: true });
         }
-
-        setIsLandingReady(true);
       } catch {
-        if (isMounted) setIsLandingReady(true);
+        // Silent fail — landing is already visible
       }
     };
 
@@ -59,11 +50,8 @@ const Index = () => {
 
     return () => {
       isMounted = false;
-      clearTimeout(fallbackTimer);
     };
   }, [navigate]);
-
-  if (!isLandingReady) return null;
 
   return (
     <div className="min-h-screen bg-background">

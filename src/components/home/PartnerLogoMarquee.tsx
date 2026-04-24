@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getOptimizedImageUrl } from "@/lib/imageLoader";
@@ -10,41 +11,61 @@ interface PartnerData {
   logo_url: string | null;
 }
 
+const fetchPartners = async (): Promise<PartnerData[]> => {
+  const { data } = await supabase
+    .from("public_businesses_safe")
+    .select("name, logo_url")
+    .not("logo_url", "is", null)
+    .order("created_at", { ascending: true })
+    .limit(18);
+
+  if (!data) return [];
+  return data.map((b) => ({
+    name: b.name.trim(),
+    initials: b.name.trim().split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase(),
+    logo_url: b.logo_url,
+  }));
+};
+
 const PartnerLogoMarquee = () => {
-  const [partners, setPartners] = useState<PartnerData[]>([]);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [shouldFetch, setShouldFetch] = useState(false);
 
+  // Lazy: only fetch when section is near the viewport
   useEffect(() => {
-    const fetchBusinesses = async () => {
-      const { data } = await supabase
-        .from("public_businesses_safe")
-        .select("name, logo_url")
-        .not("logo_url", "is", null)
-        .order("created_at", { ascending: true })
-        .limit(18);
+    const el = sectionRef.current;
+    if (!el || shouldFetch) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldFetch(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shouldFetch]);
 
-      if (data) {
-        setPartners(
-          data.map((b) => ({
-            name: b.name.trim(),
-            initials: b.name.trim().split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
-            logo_url: b.logo_url,
-          }))
-        );
-      }
-    };
-    fetchBusinesses();
-  }, []);
+  const { data: partners = [] } = useQuery({
+    queryKey: ["home", "partner-logos"],
+    queryFn: fetchPartners,
+    enabled: shouldFetch,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
   const marqueeItems = [...partners, ...partners];
 
   // Reserve vertical space even before data loads to prevent CLS (layout shift).
   // Approx height: title (~24px) + mb-8 (32px) + avatar row (~96px incl. label) + py.
   if (partners.length === 0) {
-    return <section aria-hidden="true" className="relative py-8 sm:py-12 min-h-[200px] sm:min-h-[220px] bg-transparent" />;
+    return <section ref={sectionRef} aria-hidden="true" className="relative py-8 sm:py-12 min-h-[200px] sm:min-h-[220px] bg-transparent" />;
   }
 
   return (
-    <section className="relative py-8 sm:py-12 overflow-visible bg-transparent min-h-[200px] sm:min-h-[220px]">
+    <section ref={sectionRef} className="relative py-8 sm:py-12 overflow-visible bg-transparent min-h-[200px] sm:min-h-[220px]">
       <div className="relative z-10">
         <p className="text-center text-white font-bold text-base sm:text-lg md:text-xl tracking-wider uppercase mb-6 sm:mb-8">
           TRUSTED BY TOP
@@ -69,6 +90,8 @@ const PartnerLogoMarquee = () => {
                     <AvatarImage
                       src={partner.logo_url ? getOptimizedImageUrl(partner.logo_url, 144) : undefined}
                       alt={partner.name}
+                      loading="lazy"
+                      decoding="async"
                       className="object-contain"
                     />
                     <AvatarFallback className="bg-muted text-white font-semibold text-xs sm:text-sm tracking-wide">

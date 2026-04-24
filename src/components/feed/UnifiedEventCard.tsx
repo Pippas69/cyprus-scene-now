@@ -342,6 +342,7 @@ export const UnifiedEventCard = ({
                 alt={event.title}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
