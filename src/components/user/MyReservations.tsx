@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
+import { getOptimizedImageUrl } from '@/lib/imageLoader';
 import {
   AlertDialog,
   AlertDialogAction,
