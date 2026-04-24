@@ -1240,6 +1240,7 @@ export default function EventDetail() {
           customerPhone: smsLocked.customerPhone,
           seatingPreference: smsLocked.seatingPreference,
         } : null}
+        pendingBookingToken={smsLocked?.token ?? null}
         onSuccess={() => {
           setShowReservationCheckout(false);
           toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
