@@ -1,7 +1,8 @@
 // Φάση 4 — SMS link landing page (/r/:token)
-// Validates the SMS booking token and redirects the customer DIRECTLY into the
-// event page with the appropriate booking dialog auto-opened and pre-filled.
-// We do NOT show our own UI — the existing event/dialog flow is the source of truth.
+// Minimal redirector: validates the token via RPC and forwards to the event page
+// with ?booking_token=... so EventDetail re-fetches the locked data from the DB.
+// We do NOT cache anything in sessionStorage — the URL + DB are the source of truth,
+// so the link works even after closing the browser or opening a new tab on mobile.
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,36 +12,9 @@ import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 type PendingBookingRow = {
   id: string;
-  business_id: string;
-  business_name: string;
   event_id: string | null;
-  event_title: string | null;
-  event_start_at: string | null;
-  event_location: string | null;
-  booking_type: "reservation" | "ticket" | "walk_in";
-  customer_phone: string;
-  customer_name: string | null;
-  party_size: number | null;
-  seating_preference: string | null;
-  preferred_time: string | null;
-  tier_data: any;
-  notes: string | null;
   status: "pending" | "completed" | "link_expired" | "cancelled";
-  expires_at: string;
 };
-
-export type SmsLockedBooking = {
-  token: string;
-  pendingBookingId: string;
-  bookingType: "reservation" | "ticket" | "walk_in";
-  customerName: string;
-  customerPhone: string;
-  seatingPreference: string | null;
-  partySize: number | null;
-  notes: string | null;
-};
-
-export const SMS_LOCKED_BOOKING_KEY = "fomo:sms_locked_booking";
 
 const PublicBookingPage = () => {
   const { token } = useParams<{ token: string }>();
@@ -68,7 +42,7 @@ const PublicBookingPage = () => {
 
         const pb = (pbData as PendingBookingRow[] | null)?.[0];
         if (!pb) {
-          // Differentiate completed vs expired
+          // RPC returns nothing for completed/expired — disambiguate with a status lookup
           const { data: rawData } = await supabase
             .from("pending_bookings")
             .select("status")
@@ -85,25 +59,9 @@ const PublicBookingPage = () => {
           return;
         }
 
-        // Persist locked fields for the event/dialog flow to consume
-        const locked: SmsLockedBooking = {
-          token,
-          pendingBookingId: pb.id,
-          bookingType: pb.booking_type,
-          customerName: pb.customer_name || "",
-          customerPhone: pb.customer_phone,
-          seatingPreference: pb.seating_preference,
-          partySize: pb.party_size,
-          notes: pb.notes,
-        };
-        try {
-          sessionStorage.setItem(SMS_LOCKED_BOOKING_KEY, JSON.stringify(locked));
-        } catch (e) {
-          console.warn("sessionStorage unavailable, falling back to URL only", e);
-        }
-
         if (cancelled) return;
-        // Redirect to the event page — the existing flow takes over.
+        // Forward to the event page — EventDetail will re-fetch the locked data
+        // from the DB using this same token, so nothing needs to live in storage.
         navigate(
           `/event/${pb.event_id}?booking_token=${encodeURIComponent(token)}`,
           { replace: true },
@@ -186,6 +144,19 @@ const PublicBookingPage = () => {
       </div>
     </div>
   );
+};
+
+// Shape of the locked-customer payload consumed by EventDetail and the dialogs.
+// Fetched fresh from the DB via get_pending_booking_by_token — never cached.
+export type SmsLockedBooking = {
+  token: string;
+  pendingBookingId: string;
+  bookingType: "reservation" | "ticket" | "walk_in";
+  customerName: string;
+  customerPhone: string;
+  seatingPreference: string | null;
+  partySize: number | null;
+  notes: string | null;
 };
 
 export default PublicBookingPage;
