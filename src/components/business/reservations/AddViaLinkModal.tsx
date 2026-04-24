@@ -125,8 +125,9 @@ export const AddViaLinkModal = ({
   const [phone, setPhone] = useState('');
   const [careOf, setCareOf] = useState('');
   const [notes, setNotes] = useState('');
-  const [partySize, setPartySize] = useState<number>(2);
-  const [ticketCount, setTicketCount] = useState<number>(1);
+  // Use string state so the user can clear the field while typing
+  const [partySize, setPartySize] = useState<string>('2');
+  const [ticketCount, setTicketCount] = useState<string>('1');
   const [seatingTypeId, setSeatingTypeId] = useState<string>('');
 
   const [submitting, setSubmitting] = useState(false);
