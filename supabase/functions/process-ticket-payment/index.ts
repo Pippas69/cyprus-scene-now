@@ -205,6 +205,25 @@ Deno.serve(async (req) => {
     const pendingBookingToken = session.metadata?.pending_booking_token;
     if (pendingBookingToken) {
       try {
+        // Sync care_of from pending_booking → ticket_orders (so it shows in the management table)
+        try {
+          const { data: pbCareOfRow } = await supabaseClient
+            .from("pending_bookings")
+            .select("care_of")
+            .eq("token", pendingBookingToken)
+            .maybeSingle();
+          const pbCareOfTo = (pbCareOfRow as { care_of?: string | null } | null)?.care_of ?? null;
+          if (pbCareOfTo) {
+            await supabaseClient
+              .from("ticket_orders")
+              .update({ care_of: pbCareOfTo })
+              .eq("id", orderId);
+            logStep("ticket_orders.care_of synced from pending_booking", { orderId, care_of: pbCareOfTo });
+          }
+        } catch (careErr) {
+          logStep("ticket_orders.care_of sync error (non-fatal)", { error: careErr instanceof Error ? careErr.message : String(careErr) });
+        }
+
         const { error: pbErr, count: pbCount } = await supabaseClient
           .from("pending_bookings")
           .update({ status: "completed", completed_at: new Date().toISOString() })
