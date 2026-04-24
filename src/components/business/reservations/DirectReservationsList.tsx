@@ -1020,16 +1020,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const orderIds = [...new Set(tickets.map(t => t.order_id))];
       const { data: orders } = await supabase
         .from('ticket_orders')
-        .select('id, customer_phone, subtotal_cents, status, user_id')
+        .select('id, customer_phone, subtotal_cents, status, user_id, care_of')
         .in('id', orderIds)
         .eq('status', 'completed');
 
       if (isStaleRequest()) return;
 
       const completedOrderIds = new Set((orders || []).map(o => o.id));
-      const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number; userId: string }> = {};
+      const orderMap: Record<string, { phone: string | null; subtotal: number; ticketCount: number; userId: string; care_of: string | null }> = {};
       (orders || []).forEach(o => {
-        orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0, userId: o.user_id };
+        orderMap[o.id] = { phone: o.customer_phone, subtotal: o.subtotal_cents || 0, ticketCount: 0, userId: o.user_id, care_of: (o as any).care_of ?? null };
       });
 
       // Count tickets per order for per-ticket price calculation
