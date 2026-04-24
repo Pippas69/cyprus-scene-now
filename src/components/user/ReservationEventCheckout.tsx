@@ -346,6 +346,32 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     }
   }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
 
+  // SMS link: auto-select seating type from locked preference and pre-fill party size,
+  // then skip the seating selection step entirely (business already chose for the customer).
+  const lockedSeatingPref = lockedCustomerData?.seatingPreference ?? null;
+  const lockedPartySize = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedSeatingPref || seatingOptions.length === 0) return;
+    const match = seatingOptions.find(
+      (o) => o.seating_type?.toLowerCase() === String(lockedSeatingPref).toLowerCase()
+    );
+    if (!match) return;
+    setSelectedSeating((prev) => (prev?.id === match.id ? prev : match));
+
+    // Pre-fill party size from the business-entered value, clamped to tier limits.
+    if (lockedPartySize && match.tiers.length > 0) {
+      const minP = Math.min(...match.tiers.map((t) => t.min_people));
+      const maxP = Math.max(...match.tiers.map((t) => t.max_people));
+      const clamped = Math.max(minP, Math.min(maxP, lockedPartySize));
+      setPartySize(clamped);
+    } else if (lockedPartySize) {
+      setPartySize(lockedPartySize);
+    }
+
+    // Skip the seating selection step — business already chose for them.
+    setStep((s) => (s === 1 ? 2 : s));
+  }, [open, lockedSeatingPref, lockedPartySize, seatingOptions]);
+
   // Scroll to top when step changes
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
