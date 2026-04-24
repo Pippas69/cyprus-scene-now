@@ -244,15 +244,21 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   // ============================================================
   if (isTicketOnly) {
     const headers = [t.name, t.phone, t.city, t.age, t.price, t.careOf, t.notes];
-    const rows = ctx.ticketOnlyOrders.map((o) => ({
-      [t.name]: o.guest_name || '',
-      [t.phone]: o.buyer_phone || '',
-      [t.city]: translateCity(o.guest_city || '', ctx.language),
-      [t.age]: o.guest_age != null ? String(o.guest_age) : '',
-      [t.price]: cents(o.subtotal_cents ?? o.tier_price_cents),
-      [t.careOf]: careOfDisplay(o.care_of),
-      [t.notes]: o.staff_memo || '',
-    }));
+    const rows = ctx.ticketOnlyOrders.map((o) => {
+      // City: prefer per-ticket guest_city override, else fall back to buyer/account city
+      const rawCity = (o.guest_city && o.guest_city.trim())
+        || (o.account_city && o.account_city.trim())
+        || '';
+      return {
+        [t.name]: o.guest_name || '',
+        [t.phone]: formatPhone(o.buyer_phone),
+        [t.city]: translateCity(rawCity, ctx.language),
+        [t.age]: o.guest_age != null ? String(o.guest_age) : '',
+        [t.price]: priceOrInvitation(o.subtotal_cents ?? o.tier_price_cents, o.source, t),
+        [t.careOf]: careOfDisplay(o.care_of),
+        [t.notes]: o.staff_memo || '',
+      };
+    });
     const ws = buildWorksheet(rows, headers);
     XLSX.utils.book_append_sheet(wb, ws, t.sheetTickets);
   }
