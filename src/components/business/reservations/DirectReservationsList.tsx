@@ -2428,7 +2428,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 2. Λεπτομέρειες: Combined "X άτομα (age)" + City */}
-                      <TableCell className="align-top px-[27px]">
+                      <TableCell className="align-top whitespace-nowrap">
                         <div className="flex flex-col gap-0.5">
                           {(() => {
                             const isWalkIn = reservation.source === 'walk_in' && !reservation.seating_type_id;
