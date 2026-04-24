@@ -159,6 +159,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Ticket city editing (for ghost guests in ticket-only mode)
   const [editingTicketCity, setEditingTicketCity] = useState<string | null>(null);
   const [ticketCityValue, setTicketCityValue] = useState('');
+  // Ticket care_of editing (for ticket-only mode) — keyed by order_id
+  const [editingTicketCareOf, setEditingTicketCareOf] = useState<string | null>(null);
+  const [ticketCareOfValue, setTicketCareOfValue] = useState('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
   // Floor plan assignment dialog
@@ -1891,6 +1894,26 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     }
   };
 
+  // Save ticket order care_of (keyed by order_id)
+  const handleSaveTicketCareOf = async (orderId: string) => {
+    try {
+      const trimmed = ticketCareOfValue.trim();
+      const { error } = await supabase
+        .from('ticket_orders')
+        .update({ care_of: trimmed || null } as any)
+        .eq('id', orderId);
+      if (error) throw error;
+      toast.success(t.saved);
+      setEditingTicketCareOf(null);
+      setTicketCareOfValue('');
+      // All tickets sharing this order get the new care_of
+      setTicketOnlyOrders(prev => prev.map(t => t.id === orderId ? { ...t, care_of: trimmed || null } : t));
+    } catch (error) {
+      console.error('Error saving ticket care_of:', error);
+      toast.error(t.errorSaving);
+    }
+  };
+
   const renderTicketMemoCell = (ticket: TicketOnlyOrder) => {
     if (editingTicketMemo === ticket.ticket_id) {
       return (
@@ -2103,10 +2126,11 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
             <Table className="w-full min-w-[700px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[22%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[16%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[22%]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[18%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[20%]">{t.name}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
+                  <TableHead className="text-xs w-[18%]">{priceColumnLabel}</TableHead>
+                  <TableHead className="text-xs w-[14%]">{t.status}</TableHead>
+                  <TableHead className="text-xs w-[12%] whitespace-nowrap">Care of</TableHead>
                   <TableHead className="text-xs w-[22%]">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -2262,6 +2286,36 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         />
                       ) : (
                         <span className="text-sm text-foreground whitespace-nowrap">{language === 'el' ? 'Επιβεβαιωμένη' : 'Confirmed'}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {editingTicketCareOf === ticket.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={ticketCareOfValue}
+                            onChange={(e) => setTicketCareOfValue(e.target.value)}
+                            className="h-7 text-sm w-24"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveTicketCareOf(ticket.id);
+                              if (e.key === 'Escape') { setEditingTicketCareOf(null); setTicketCareOfValue(''); }
+                            }}
+                          />
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handleSaveTicketCareOf(ticket.id)}>
+                            <Check className="h-3 w-3 text-green-600" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { setEditingTicketCareOf(null); setTicketCareOfValue(''); }}>
+                            <X className="h-3 w-3 text-red-500" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span
+                          className="cursor-pointer rounded py-0.5 transition-colors inline-flex items-center gap-1 whitespace-nowrap group/edit text-sm"
+                          onClick={() => { setEditingTicketCareOf(ticket.id); setTicketCareOfValue(ticket.care_of || ''); }}
+                        >
+                          {ticket.care_of || 'ΦOMO'}
+                          <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover/edit:opacity-100 transition-opacity flex-shrink-0" />
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
