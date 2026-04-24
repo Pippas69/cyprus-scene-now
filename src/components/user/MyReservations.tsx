@@ -286,7 +286,16 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   }, [searchParams]);
 
   const fetchReservations = async () => {
-    setLoading(true);
+    // Background refresh pattern: only show "Loading..." on the very first load
+    // when we have no data anywhere (state or cache). On subsequent refetches,
+    // keep current data visible while we silently update in the background.
+    const hasExistingData =
+      upcomingReservations.length > 0 ||
+      pastReservations.length > 0 ||
+      !!queryClient.getQueryData(SNAPSHOT_KEY);
+    if (!hasExistingData) {
+      setLoading(true);
+    }
     // Reservations stay in "active" tab for 10 hours after the event start
     // (or after the requested arrival time for direct reservations).
     // This prevents reservations from disappearing while the user may still
