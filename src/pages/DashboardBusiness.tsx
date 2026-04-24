@@ -42,6 +42,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { UnifiedQRScanner } from "@/components/business/UnifiedQRScanner";
 import { UserAccountDropdown } from "@/components/UserAccountDropdown";
 import { PromotersDashboard } from "@/components/business/promoters/PromotersDashboard";
+import { SmsPausedBanner } from "@/components/business/SmsPausedBanner";
 
 const DashboardBusiness = () => {
   const navigate = useNavigate();
@@ -476,6 +477,9 @@ const DashboardBusiness = () => {
               </div>
             </div>
           </header>
+
+          {/* Φάση 6: SMS paused banner */}
+          <SmsPausedBanner businessId={businessId} />
 
           {/* Main Content - with proper mobile padding */}
           <main
