@@ -363,7 +363,7 @@ export const AddViaLinkModal = ({
                   min={1}
                   max={50}
                   value={partySize}
-                  onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  onChange={(e) => setPartySize(e.target.value.replace(/[^0-9]/g, ''))}
                   className="h-9 text-xs"
                 />
               </div>
