@@ -255,7 +255,7 @@ serve(async (req) => {
             _ticket_order_id: null,
             _reservation_id: reservation.id,
             _order_amount_cents: 0,
-            _customer_name: (reservation_name as string | undefined) ?? null,
+            _customer_name: lockedReservationName ?? null,
             _customer_email: (customer_email as string | undefined)?.trim() || user.email || null,
           },
         );
