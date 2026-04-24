@@ -184,6 +184,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "beta_invite_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       blog_posts: {
@@ -358,6 +365,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_followers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "business_followers_user_id_fkey"
@@ -648,6 +662,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "business_posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "business_posts_linked_event_id_fkey"
             columns: ["linked_event_id"]
             isOneToOne: false
@@ -724,6 +745,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "business_pricing_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       business_sms_daily_quota: {
@@ -772,6 +800,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_sms_daily_quota_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -824,6 +859,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_stripe_details_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -942,6 +984,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "business_subscriptions_plan_id_fkey"
@@ -1195,6 +1244,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "commission_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "commission_ledger_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -1401,6 +1457,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "credit_transactions_purchase_id_fkey"
             columns: ["purchase_id"]
             isOneToOne: false
@@ -1481,6 +1544,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_communication_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "crm_communication_log_guest_id_fkey"
@@ -1566,6 +1636,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "crm_guest_notes_guest_id_fkey"
@@ -1681,6 +1758,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_guest_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -1809,6 +1893,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_guests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "crm_guests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1900,6 +1991,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_analytics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -2297,6 +2395,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       email_otp_codes: {
@@ -2470,6 +2575,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "engagement_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "engagement_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2575,6 +2687,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "event_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "event_boosts_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
@@ -2635,6 +2754,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_floor_plans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "event_floor_plans_event_id_fkey"
@@ -2737,6 +2863,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invitations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "event_invitations_event_id_fkey"
@@ -3029,6 +3162,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       favorite_discounts: {
@@ -3241,6 +3381,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "floor_plan_rooms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       floor_plan_tables: {
@@ -3336,6 +3483,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "floor_plan_tables_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "floor_plan_tables_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
@@ -3406,6 +3560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -3482,6 +3643,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_zones_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -3816,6 +3984,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offer_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "offer_boosts_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -3993,6 +4168,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offer_purchases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "offer_purchases_discount_id_fkey"
             columns: ["discount_id"]
             isOneToOne: false
@@ -4138,6 +4320,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payment_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       pending_booking_audit_log: {
@@ -4189,6 +4378,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_booking_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "pending_booking_audit_log_pending_booking_id_fkey"
@@ -4364,6 +4560,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       production_cast: {
@@ -4502,6 +4705,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "productions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       profile_boosts: {
@@ -4583,6 +4793,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_boosts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -4759,6 +4976,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "promoter_applications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       promoter_attributions: {
@@ -4867,6 +5091,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_attributions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "promoter_attributions_event_id_fkey"
@@ -5014,6 +5245,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "promoter_links_event_id_fkey"
@@ -5331,6 +5569,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reservation_no_shows_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+          {
             foreignKeyName: "reservation_no_shows_reservation_id_fkey"
             columns: ["reservation_id"]
             isOneToOne: false
@@ -5490,6 +5735,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_slot_closures_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -5744,6 +5996,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "reservations_checked_in_by_fkey"
@@ -6082,8 +6341,87 @@ export type Database = {
           },
         ]
       }
+      sms_billing_attempts: {
+        Row: {
+          amount_cents: number
+          attempt_number: number
+          attempted_at: string
+          business_id: string
+          currency: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          sms_count: number
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_payment_method_id: string | null
+          trigger_type: string
+        }
+        Insert: {
+          amount_cents: number
+          attempt_number?: number
+          attempted_at?: string
+          business_id: string
+          currency?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          sms_count?: number
+          status: string
+          stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
+          trigger_type: string
+        }
+        Update: {
+          amount_cents?: number
+          attempt_number?: number
+          attempted_at?: string
+          business_id?: string
+          currency?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          sms_count?: number
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_payment_method_id?: string | null
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_billing_attempts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_billing_attempts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_billing_attempts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "public_businesses_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_billing_attempts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
+        ]
+      }
       sms_charges: {
         Row: {
+          billed_at: string | null
+          billing_attempt_id: string | null
           business_id: string
           charged_at: string | null
           cost_cents: number
@@ -6102,6 +6440,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billed_at?: string | null
+          billing_attempt_id?: string | null
           business_id: string
           charged_at?: string | null
           cost_cents?: number
@@ -6120,6 +6460,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billed_at?: string | null
+          billing_attempt_id?: string | null
           business_id?: string
           charged_at?: string | null
           cost_cents?: number
@@ -6138,6 +6480,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sms_charges_billing_attempt_id_fkey"
+            columns: ["billing_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "sms_billing_attempts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sms_charges_pending_booking_id_fkey"
             columns: ["pending_booking_id"]
@@ -6245,6 +6594,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_discount_partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       student_discount_redemptions: {
@@ -6302,6 +6658,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_discount_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "student_discount_redemptions_scanned_by_fkey"
@@ -6375,6 +6738,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "student_redemptions_scanned_by_fkey"
@@ -6464,6 +6834,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subsidy_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -6743,6 +7120,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
           {
             foreignKeyName: "ticket_orders_event_id_fkey"
@@ -7366,6 +7750,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       event_rsvp_counts: {
@@ -7454,6 +7845,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -7693,6 +8091,13 @@ export type Database = {
             referencedRelation: "public_businesses_safe"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "v_business_sms_balance"
+            referencedColumns: ["business_id"]
+          },
         ]
       }
       public_profiles: {
@@ -7746,6 +8151,14 @@ export type Database = {
         Update: {
           id?: string | null
           name?: string | null
+        }
+        Relationships: []
+      }
+      v_business_sms_balance: {
+        Row: {
+          business_id: string | null
+          unbilled_cents: number | null
+          unbilled_count: number | null
         }
         Relationships: []
       }
@@ -8287,6 +8700,13 @@ export type Database = {
           event_id: string
           tickets_sold: number
           tier_id: string
+        }[]
+      }
+      get_my_sms_balance: {
+        Args: { p_business_id: string }
+        Returns: {
+          unbilled_cents: number
+          unbilled_count: number
         }[]
       }
       get_offer_by_reservation_guest_token: {

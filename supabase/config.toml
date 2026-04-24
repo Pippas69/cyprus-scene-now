@@ -151,3 +151,17 @@ project_id = "iasahlgurfxufrtdigcr"
     verify_jwt = false
     [functions.expire-pending-booking-links.schedule]
       cron = "0 * * * *"
+  [functions.create-sms-setup-intent]
+    verify_jwt = true
+  [functions.save-sms-payment-method]
+    verify_jwt = true
+  [functions.delete-sms-payment-method]
+    verify_jwt = true
+  [functions.charge-sms-balance]
+    verify_jwt = false
+    [functions.charge-sms-balance.schedule]
+      cron = "0 * * * *"
+  [functions.charge-sms-balance-monthly]
+    verify_jwt = false
+    [functions.charge-sms-balance-monthly.schedule]
+      cron = "0 3 1 * *"
