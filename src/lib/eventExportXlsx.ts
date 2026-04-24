@@ -37,6 +37,7 @@ export interface ExportTicketRow {
   guest_name: string;
   guest_age: number | null;
   guest_city?: string | null;
+  account_city?: string | null;
   buyer_phone: string | null;
   tier_name: string;
   tier_price_cents: number;
