@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { RefreshCw, Trash2, Clock, AlertTriangle, CheckCircle2, XCircle, Check, X as XIcon, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -51,8 +51,8 @@ const t = {
   el: {
     title: 'Εκκρεμή Links',
     details: 'Στοιχεία',
-    type: 'Τύπος',
-    party: 'Άτομα',
+    info: 'Λεπτομέρειες',
+    people: 'άτομα',
     careOf: 'Care of',
     status: 'Κατάσταση',
     note: 'Σημείωση',
@@ -83,8 +83,8 @@ const t = {
   en: {
     title: 'Pending Links',
     details: 'Details',
-    type: 'Type',
-    party: 'Party',
+    info: 'Details',
+    people: 'people',
     careOf: 'Care of',
     status: 'Status',
     note: 'Note',
@@ -265,7 +265,7 @@ export const PendingBookingsList = ({
   const renderStatus = (s: PendingBookingRow['status']) => {
     if (s === 'pending') {
       return (
-        <Badge variant="secondary" className="gap-1 bg-muted text-muted-foreground">
+        <Badge variant="secondary" className="gap-1 bg-muted text-muted-foreground whitespace-nowrap">
           <Clock className="h-3 w-3" /> {tr.pending}
         </Badge>
       );
@@ -333,13 +333,12 @@ export const PendingBookingsList = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{tr.details}</TableHead>
-              <TableHead>{tr.type}</TableHead>
-              <TableHead>{tr.party}</TableHead>
-              <TableHead>{tr.careOf}</TableHead>
-              <TableHead>{tr.status}</TableHead>
-              <TableHead>{tr.note}</TableHead>
-              <TableHead>{tr.expires}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[160px]">{tr.details}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[110px]">{tr.info}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[100px]">{tr.careOf}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[150px]">{tr.status}</TableHead>
+              <TableHead className="min-w-[260px]">{tr.note}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[110px]">{tr.expires}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -350,28 +349,37 @@ export const PendingBookingsList = ({
               return (
                 <TableRow key={r.id}>
                   {/* Στοιχεία: name on top, phone below in smaller muted text without +357 */}
-                  <TableCell className="align-top">
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="font-medium leading-tight">{r.customer_name ?? '—'}</span>
-                      <span className="text-xs text-muted-foreground font-mono leading-tight">
+                  <TableCell className="align-top whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium leading-tight whitespace-nowrap">{r.customer_name ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground font-mono leading-tight whitespace-nowrap">
                         {formatPhoneCompact(r.customer_phone)}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{renderType(r)}</TableCell>
-                  <TableCell>{r.party_size ?? '—'}</TableCell>
-                  <TableCell>{r.care_of ?? '—'}</TableCell>
-                  <TableCell>{renderStatus(r.status)}</TableCell>
+                  {/* Λεπτομέρειες: party size on top, type below */}
+                  <TableCell className="align-top whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium leading-tight whitespace-nowrap">
+                        {r.party_size ?? '—'} {tr.people}
+                      </span>
+                      <span className="text-xs text-muted-foreground leading-tight whitespace-nowrap">
+                        {renderType(r)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">{r.care_of ?? '—'}</TableCell>
+                  <TableCell className="whitespace-nowrap">{renderStatus(r.status)}</TableCell>
                   {/* Σημείωση — editable inline */}
-                  <TableCell className="align-top max-w-[220px]">
+                  <TableCell className="align-top min-w-[260px]">
                     {isEditingNote ? (
                       <div className="flex items-start gap-1">
-                        <Input
+                        <Textarea
                           autoFocus
                           value={noteDraft}
                           onChange={(e) => setNoteDraft(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                               e.preventDefault();
                               saveNote(r.id);
                             } else if (e.key === 'Escape') {
@@ -380,7 +388,8 @@ export const PendingBookingsList = ({
                             }
                           }}
                           placeholder={tr.notePlaceholder}
-                          className="h-7 text-xs"
+                          className="min-h-[60px] text-xs w-full min-w-[200px] resize-y"
+                          rows={2}
                           disabled={savingNoteId === r.id}
                         />
                         <Button
@@ -418,7 +427,7 @@ export const PendingBookingsList = ({
                       </button>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="text-xs whitespace-nowrap">
                     {format(new Date(r.expires_at), 'dd MMM HH:mm')}
                   </TableCell>
                   <TableCell>
