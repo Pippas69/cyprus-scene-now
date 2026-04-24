@@ -505,7 +505,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const allAgesFilled = guestAges.length > 0 && guestAges.every(a => a.trim().length > 0 && !isNaN(Number(a)) && Number(a) >= minAge);
   const isContactValid = isValidCheckoutPhone(customerPhone) && isValidCheckoutEmail(customerEmail);
   const allGuestDetailsFilled = allNamesFilled && allAgesFilled && isContactValid;
-  const lockFirstGuestName = isAuthenticated && profileComplete && (guestNames[0]?.trim().length ?? 0) > 0;
+  const lockFirstGuestName = (isAuthenticated && profileComplete && (guestNames[0]?.trim().length ?? 0) > 0)
+    || (hasLockedCustomer && !!lockedCustomerData?.customerName);
+  const lockCustomerPhone = hasLockedCustomer && !!lockedCustomerData?.customerPhone;
 
   // Phone and email are left empty for the user to fill freely
 
