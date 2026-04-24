@@ -1195,9 +1195,11 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
       );
     }
 
+    // For SMS-locked customers, don't let them go back to seating selection (step 1)
+    const minBackStep = hasLockedCustomer ? 2 : 1;
     return (
       <div className="flex justify-between pt-4 gap-2">
-        {step > 1 ? (
+        {step > minBackStep ? (
           <Button variant="outline" size="sm" className="text-xs px-3 h-9" onClick={() => setStep(step - 1)}>
             <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
             {t.back}
