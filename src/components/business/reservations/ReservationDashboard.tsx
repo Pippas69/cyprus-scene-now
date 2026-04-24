@@ -962,6 +962,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
                 businessId={businessId}
                 eventId={ctxEventId}
                 language={language}
+                searchQuery={searchQuery}
                 onConfirmed={() => {
                   queryClient.invalidateQueries({ queryKey: ['direct-reservations'] });
                   queryClient.invalidateQueries({ queryKey: ['ticket-orders'] });

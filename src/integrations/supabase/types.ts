@@ -6432,6 +6432,7 @@ export type Database = {
           id: string
           is_billable: boolean
           message_body: string
+          num_segments: number
           pending_booking_id: string | null
           status: Database["public"]["Enums"]["sms_charge_status"]
           stripe_charge_id: string | null
@@ -6452,6 +6453,7 @@ export type Database = {
           id?: string
           is_billable?: boolean
           message_body: string
+          num_segments?: number
           pending_booking_id?: string | null
           status?: Database["public"]["Enums"]["sms_charge_status"]
           stripe_charge_id?: string | null
@@ -6472,6 +6474,7 @@ export type Database = {
           id?: string
           is_billable?: boolean
           message_body?: string
+          num_segments?: number
           pending_booking_id?: string | null
           status?: Database["public"]["Enums"]["sms_charge_status"]
           stripe_charge_id?: string | null

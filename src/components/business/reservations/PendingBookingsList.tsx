@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Trash2, Clock, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { translateSeatingType } from '@/lib/seatingTranslations';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ interface PendingBookingRow {
   customer_name: string | null;
   customer_phone: string;
   party_size: number | null;
+  seating_preference: string | null;
   care_of: string | null;
   notes: string | null;
   status: 'pending' | 'completed' | 'link_expired' | 'cancelled';
@@ -38,6 +40,8 @@ interface PendingBookingsListProps {
   businessId: string;
   eventId?: string | null;
   language: 'el' | 'en';
+  /** Optional search query — filters by customer_name OR customer_phone */
+  searchQuery?: string;
   /** Called whenever a booking transitions to confirmed (so parent can refresh main list) */
   onConfirmed?: () => void;
 }
@@ -103,6 +107,7 @@ export const PendingBookingsList = ({
   businessId,
   eventId,
   language,
+  searchQuery,
   onConfirmed,
 }: PendingBookingsListProps) => {
   const tr = t[language];
@@ -239,13 +244,34 @@ export const PendingBookingsList = ({
     );
   };
 
-  const renderType = (b: PendingBookingRow['booking_type']) =>
-    b === 'reservation' ? tr.typeRes : b === 'walk_in' ? tr.typeWi : tr.typeTk;
+  // For reservation bookings, prefer the seating_preference (Table/Sofa/VIP/Bar) the
+  // business owner picked when filling the form. Fall back to the booking-type label
+  // if no seating preference is stored (older rows / ticket / walk-in flows).
+  const renderType = (b: PendingBookingRow) => {
+    if (b.booking_type === 'reservation' && b.seating_preference) {
+      return translateSeatingType(b.seating_preference, language);
+    }
+    return b.booking_type === 'reservation'
+      ? tr.typeRes
+      : b.booking_type === 'walk_in'
+        ? tr.typeWi
+        : tr.typeTk;
+  };
 
   // Only count actionable rows (pending or expired). Hide section entirely when none.
-  const visibleRows = rows.filter(
+  const baseVisible = rows.filter(
     (r) => r.status === 'pending' || r.status === 'link_expired',
   );
+
+  // Apply optional search query — match against customer name OR phone.
+  const visibleRows = useMemo(() => {
+    const q = searchQuery?.trim().toLowerCase();
+    if (!q) return baseVisible;
+    return baseVisible.filter((r) =>
+      (r.customer_name ?? '').toLowerCase().includes(q) ||
+      (r.customer_phone ?? '').toLowerCase().includes(q),
+    );
+  }, [baseVisible, searchQuery]);
 
   if (loading) return null;
   if (visibleRows.length === 0) return null;
@@ -277,7 +303,7 @@ export const PendingBookingsList = ({
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.customer_name ?? '—'}</TableCell>
                   <TableCell className="font-mono text-xs">{r.customer_phone}</TableCell>
-                  <TableCell>{renderType(r.booking_type)}</TableCell>
+                  <TableCell>{renderType(r)}</TableCell>
                   <TableCell>{r.party_size ?? '—'}</TableCell>
                   <TableCell>{r.care_of ?? '—'}</TableCell>
                   <TableCell>{renderStatus(r.status)}</TableCell>

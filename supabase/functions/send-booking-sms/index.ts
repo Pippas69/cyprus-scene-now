@@ -148,6 +148,7 @@ Deno.serve(async (req: Request) => {
   // ---- Send SMS via Twilio gateway ----
   let twilioSid: string | null = null;
   let twilioStatus: string = "queued";
+  let twilioNumSegments = 1;
   let errorCode: string | null = null;
   let errorMessage: string | null = null;
 
@@ -195,6 +196,9 @@ Deno.serve(async (req: Request) => {
 
     twilioSid = twilioJson.sid ?? null;
     twilioStatus = twilioJson.status ?? "queued";
+    // Capture num_segments from initial Twilio response (may also be refined by the
+    // status webhook). Twilio returns it as string in `num_segments`.
+    twilioNumSegments = Math.max(1, parseInt(String(twilioJson.num_segments ?? "1"), 10) || 1);
   } catch (e) {
     console.error("Twilio fetch threw:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -221,6 +225,7 @@ Deno.serve(async (req: Request) => {
       to_phone,
       message_body,
       twilio_message_sid: twilioSid,
+      num_segments: twilioNumSegments,
       status: twilioStatus as
         | "queued"
         | "sent"

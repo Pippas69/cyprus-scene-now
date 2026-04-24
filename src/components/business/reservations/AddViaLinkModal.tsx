@@ -125,8 +125,9 @@ export const AddViaLinkModal = ({
   const [phone, setPhone] = useState('');
   const [careOf, setCareOf] = useState('');
   const [notes, setNotes] = useState('');
-  const [partySize, setPartySize] = useState<number>(2);
-  const [ticketCount, setTicketCount] = useState<number>(1);
+  // Use string state so the user can clear the field while typing
+  const [partySize, setPartySize] = useState<string>('2');
+  const [ticketCount, setTicketCount] = useState<string>('1');
   const [seatingTypeId, setSeatingTypeId] = useState<string>('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -172,8 +173,8 @@ export const AddViaLinkModal = ({
     setPhone('');
     setCareOf('');
     setNotes('');
-    setPartySize(2);
-    setTicketCount(1);
+    setPartySize('2');
+    setTicketCount('1');
     setSeatingTypeId('');
     setCreatedLink(null);
   }, [open]);
@@ -195,8 +196,10 @@ export const AddViaLinkModal = ({
       toast.error(tr.requiredPhone);
       return;
     }
+    const partyNum = parseInt(partySize, 10);
+    const ticketNum = parseInt(ticketCount, 10);
     if (effectiveFlow === 'reservation') {
-      if (!partySize || partySize < 1) {
+      if (!partyNum || partyNum < 1) {
         toast.error(tr.requiredParty);
         return;
       }
@@ -205,14 +208,14 @@ export const AddViaLinkModal = ({
         return;
       }
     }
-    if ((effectiveFlow === 'ticket' || effectiveFlow === 'walk_in') && (!ticketCount || ticketCount < 1)) {
+    if ((effectiveFlow === 'ticket' || effectiveFlow === 'walk_in') && (!ticketNum || ticketNum < 1)) {
       toast.error(tr.requiredTickets);
       return;
     }
 
     setSubmitting(true);
     try {
-      const partyForBackend = effectiveFlow === 'reservation' ? partySize : ticketCount;
+      const partyForBackend = effectiveFlow === 'reservation' ? partyNum : ticketNum;
 
       let seatingPreferenceLabel: string | null = null;
       if (effectiveFlow === 'reservation' && seatingTypeId) {
@@ -360,7 +363,7 @@ export const AddViaLinkModal = ({
                   min={1}
                   max={50}
                   value={partySize}
-                  onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  onChange={(e) => setPartySize(e.target.value.replace(/[^0-9]/g, ''))}
                   className="h-9 text-xs"
                 />
               </div>
@@ -403,7 +406,7 @@ export const AddViaLinkModal = ({
                   min={1}
                   max={50}
                   value={ticketCount}
-                  onChange={(e) => setTicketCount(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                  onChange={(e) => setTicketCount(e.target.value.replace(/[^0-9]/g, ''))}
                   className="h-9 text-xs"
                 />
               </div>
