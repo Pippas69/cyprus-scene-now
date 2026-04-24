@@ -334,7 +334,7 @@ export const PendingBookingsList = ({
           <TableHeader>
             <TableRow>
               <TableHead className="whitespace-nowrap min-w-[160px]">{tr.details}</TableHead>
-              <TableHead className="whitespace-nowrap min-w-[110px]">{tr.info}</TableHead>
+              <TableHead className="whitespace-nowrap min-w-[110px] px-[10px]">{tr.info}</TableHead>
               <TableHead className="whitespace-nowrap min-w-[100px]">{tr.careOf}</TableHead>
               <TableHead className="whitespace-nowrap min-w-[150px]">{tr.status}</TableHead>
               <TableHead className="min-w-[260px]">{tr.note}</TableHead>
