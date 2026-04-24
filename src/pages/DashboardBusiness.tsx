@@ -516,7 +516,7 @@ className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-0 sm:px-2"
               {/* CRM is now integrated into analytics page - redirect for backwards compatibility */}
               <Route path="crm" element={<Navigate to="/dashboard-business/analytics" replace />} />
               <Route path="subscription" element={<div className="px-3 sm:px-0"><SubscriptionPlans embedded /></div>} />
-              <Route path="billing-sms" element={businessId ? <BillingSmsPage businessId={businessId} /> : null} />
+              <Route path="billing-sms" element={<Navigate to="/dashboard-business/settings" replace />} />
               <Route path="boosts" element={businessId ? <div className="px-3 sm:px-0"><BoostManagement businessId={businessId} /></div> : null} />
               <Route path="settings" element={userId && businessId ? <div className="px-3 sm:px-0"><BusinessAccountSettings userId={userId} businessId={businessId} language={language} /></div> : null} />
             </Routes>
