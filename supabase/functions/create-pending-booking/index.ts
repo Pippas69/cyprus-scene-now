@@ -22,6 +22,7 @@ import {
   ValidationError,
   validationErrorResponse,
 } from "../_shared/validation.ts";
+import { toGsm7Safe } from "../_shared/transliterate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,10 +129,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 4. If event_id provided, verify it belongs to this business ──
+    let eventName: string | null = null;
     if (body.event_id) {
       const { data: ev, error: evErr } = await adminClient
         .from("events")
-        .select("id, business_id")
+        .select("id, business_id, title")
         .eq("id", body.event_id)
         .maybeSingle();
 
@@ -142,6 +144,7 @@ Deno.serve(async (req: Request) => {
       if (!ev || ev.business_id !== body.business_id) {
         return jsonResponse({ error: "Event not found or not yours" }, 404);
       }
+      eventName = ev.title ?? null;
     }
 
     // ── 5. Pre-check SMS rate limit (avoid orphan booking) ──
@@ -206,7 +209,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const bookingUrl = `${PUBLIC_BOOKING_BASE_URL}/${pending.token}`;
-    const messageBody = `ΦΟΜΟ: Complete your booking at ${business.name}: ${bookingUrl}`;
+    // GSM-7 safe template (1 segment when within 160 chars):
+    // "[Business Name] reserved your spot for [Event Name]. Complete here: [link]"
+    const safeBusinessName = toGsm7Safe(business.name) || "Business";
+    const safeEventName = toGsm7Safe(eventName ?? "") || "your event";
+    const messageBody = `${safeBusinessName} reserved your spot for ${safeEventName}. Complete here: ${bookingUrl}`;
 
     // ── 7. Dispatch SMS via send-booking-sms (forward caller JWT) ──
     const smsResp = await fetch(

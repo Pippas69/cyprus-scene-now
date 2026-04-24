@@ -71,3 +71,44 @@ export function toStatementDescriptorSuffix(name: string): string {
   // Truncate to 22 chars (Stripe limit for suffix)
   return final.substring(0, 22);
 }
+
+/**
+ * Convert any text to GSM-7-safe Latin characters.
+ * Used for SMS bodies to ensure 1 segment (160 chars) instead of UCS-2 (70 chars).
+ * - Transliterates Greek -> Latin
+ * - Strips remaining non-GSM-7 characters
+ * GSM-7 basic charset: A-Z a-z 0-9 + common punctuation/symbols.
+ */
+export function toGsm7Safe(text: string): string {
+  if (!text) return "";
+
+  const ACCENT_MAP: Record<string, string> = {
+    'ά': 'α', 'έ': 'ε', 'ή': 'η', 'ί': 'ι', 'ό': 'ο', 'ύ': 'υ', 'ώ': 'ω',
+    'Ά': 'Α', 'Έ': 'Ε', 'Ή': 'Η', 'Ί': 'Ι', 'Ό': 'Ο', 'Ύ': 'Υ', 'Ώ': 'Ω',
+    'ΐ': 'ι', 'ΰ': 'υ', 'ϊ': 'ι', 'ϋ': 'υ',
+  };
+
+  let normalized = '';
+  for (const char of text) {
+    normalized += ACCENT_MAP[char] ?? char;
+  }
+
+  let result = normalized;
+  for (const [greek, latin] of GREEK_DIGRAPHS) {
+    result = result.split(greek).join(latin);
+  }
+
+  let out = '';
+  for (const char of result) {
+    out += GREEK_TO_LATIN[char] ?? char;
+  }
+
+  // GSM-7 basic charset (subset, safe). Strip anything else.
+  // Allowed: A-Z a-z 0-9 space and . , ? ! : ; ' " ( ) / + - _ & @ #
+  out = out.replace(/[^A-Za-z0-9 .,?!:;'"()\/+\-_&@#]/g, '');
+
+  // Collapse multiple spaces
+  out = out.replace(/\s+/g, ' ').trim();
+
+  return out;
+}
