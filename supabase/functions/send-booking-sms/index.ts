@@ -225,6 +225,7 @@ Deno.serve(async (req: Request) => {
       to_phone,
       message_body,
       twilio_message_sid: twilioSid,
+      num_segments: twilioNumSegments,
       status: twilioStatus as
         | "queued"
         | "sent"
