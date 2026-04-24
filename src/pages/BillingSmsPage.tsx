@@ -107,6 +107,32 @@ export default function BillingSmsPage({ businessId, compact = false }: Props) {
     refresh();
   }, [businessId]);
 
+  // Realtime: refresh balance + history immediately when an SMS is sent or its status changes
+  useEffect(() => {
+    if (!businessId) return;
+    const channel = supabase
+      .channel(`sms-billing-${businessId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sms_charges", filter: `business_id=eq.${businessId}` },
+        () => {
+          refresh();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sms_billing_attempts", filter: `business_id=eq.${businessId}` },
+        () => {
+          refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId]);
+
   const handleAddCard = async () => {
     try {
       if (!STRIPE_PK) {
