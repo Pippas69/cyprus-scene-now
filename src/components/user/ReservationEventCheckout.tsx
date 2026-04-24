@@ -70,6 +70,7 @@ interface ReservationEventCheckoutProps {
     customerName?: string;
     customerPhone?: string;
     seatingPreference?: string | null;
+    partySize?: number | null;
   } | null;
   /** Φάση 4 — when present, server-side overrides reservation_name & phone_number from DB. */
   pendingBookingToken?: string | null;
