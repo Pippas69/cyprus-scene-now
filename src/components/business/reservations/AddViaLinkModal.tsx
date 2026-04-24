@@ -173,8 +173,8 @@ export const AddViaLinkModal = ({
     setPhone('');
     setCareOf('');
     setNotes('');
-    setPartySize(2);
-    setTicketCount(1);
+    setPartySize('2');
+    setTicketCount('1');
     setSeatingTypeId('');
     setCreatedLink(null);
   }, [open]);
