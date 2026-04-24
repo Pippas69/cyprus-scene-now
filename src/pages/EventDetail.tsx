@@ -1210,6 +1210,11 @@ export default function EventDetail() {
         language={language}
         businessId={event.businesses?.id}
         eventType={event.event_type}
+        lockedCustomerData={smsLocked ? {
+          customerName: smsLocked.customerName,
+          customerPhone: smsLocked.customerPhone,
+          seatingPreference: smsLocked.seatingPreference,
+        } : null}
         onSuccess={() => {
           setShowReservationCheckout(false);
           toast.success(language === 'el' ? 'Η κράτησή σας ολοκληρώθηκε!' : 'Reservation completed!');
