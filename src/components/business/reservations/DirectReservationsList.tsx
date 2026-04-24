@@ -159,6 +159,9 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Ticket city editing (for ghost guests in ticket-only mode)
   const [editingTicketCity, setEditingTicketCity] = useState<string | null>(null);
   const [ticketCityValue, setTicketCityValue] = useState('');
+  // Ticket care_of editing (for ticket-only mode) — keyed by order_id
+  const [editingTicketCareOf, setEditingTicketCareOf] = useState<string | null>(null);
+  const [ticketCareOfValue, setTicketCareOfValue] = useState('');
   // Ticket-only mode: store ticket orders
   const [ticketOnlyOrders, setTicketOnlyOrders] = useState<TicketOnlyOrder[]>([]);
   // Floor plan assignment dialog
