@@ -254,7 +254,11 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
         [t.phone]: formatPhone(o.buyer_phone),
         [t.city]: translateCity(rawCity, ctx.language),
         [t.age]: o.guest_age != null ? String(o.guest_age) : '',
-        [t.price]: priceOrInvitation(o.subtotal_cents ?? o.tier_price_cents, o.source, t),
+        [t.price]: priceOrInvitation(
+          (o.subtotal_cents && o.subtotal_cents > 0) ? o.subtotal_cents : (o.tier_price_cents || 0),
+          o.source,
+          t,
+        ),
         [t.careOf]: careOfDisplay(o.care_of),
         [t.notes]: o.staff_memo || '',
       };
