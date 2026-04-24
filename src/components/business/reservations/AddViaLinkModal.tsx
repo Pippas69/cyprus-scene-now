@@ -196,8 +196,10 @@ export const AddViaLinkModal = ({
       toast.error(tr.requiredPhone);
       return;
     }
+    const partyNum = parseInt(partySize, 10);
+    const ticketNum = parseInt(ticketCount, 10);
     if (effectiveFlow === 'reservation') {
-      if (!partySize || partySize < 1) {
+      if (!partyNum || partyNum < 1) {
         toast.error(tr.requiredParty);
         return;
       }
@@ -206,14 +208,14 @@ export const AddViaLinkModal = ({
         return;
       }
     }
-    if ((effectiveFlow === 'ticket' || effectiveFlow === 'walk_in') && (!ticketCount || ticketCount < 1)) {
+    if ((effectiveFlow === 'ticket' || effectiveFlow === 'walk_in') && (!ticketNum || ticketNum < 1)) {
       toast.error(tr.requiredTickets);
       return;
     }
 
     setSubmitting(true);
     try {
-      const partyForBackend = effectiveFlow === 'reservation' ? partySize : ticketCount;
+      const partyForBackend = effectiveFlow === 'reservation' ? partyNum : ticketNum;
 
       let seatingPreferenceLabel: string | null = null;
       if (effectiveFlow === 'reservation' && seatingTypeId) {
