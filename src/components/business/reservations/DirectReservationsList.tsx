@@ -2627,7 +2627,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         />
                       </TableCell>
                       {/* 7. Σημειώσεις — small text, wraps up to 2 lines */}
-                      <TableCell className="align-top">
+                      <TableCell className="align-top py-[7px] px-[35px]">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             {renderStaffMemoCell(reservation)}
