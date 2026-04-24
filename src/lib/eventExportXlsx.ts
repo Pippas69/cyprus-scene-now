@@ -117,6 +117,40 @@ const cents = (v: number | null | undefined): string => {
   return `€${(Math.round(v) / 100).toFixed(2)}`;
 };
 
+// Normalize a phone for display: ensure international format. If it's a Cyprus 8-digit
+// local number, prefix with +357. If it already starts with +, keep as-is.
+const formatPhone = (raw: string | null | undefined): string => {
+  if (!raw) return '';
+  let v = String(raw).trim();
+  if (!v) return '';
+  // Strip spaces, dashes, parens
+  v = v.replace(/[\s\-()]/g, '');
+  if (v.startsWith('+')) return v;
+  if (v.startsWith('00')) return '+' + v.slice(2);
+  // Already starts with country code 357 without +
+  if (/^357\d{8}$/.test(v)) return '+' + v;
+  // Cyprus 8-digit local number
+  if (/^\d{8}$/.test(v)) return '+357' + v;
+  // Fallback: return original cleaned value
+  return v;
+};
+
+// Price for a ticket row: shows €X.XX, or "Πρόσκληση"/"Invitation" when the row is
+// an invitation/comp with no price.
+const priceOrInvitation = (
+  amountCents: number | null | undefined,
+  source: string | null | undefined,
+  t: typeof tx['el'],
+): string => {
+  const isInvitation = (source || '').toLowerCase() === 'invitation';
+  if (isInvitation && (!amountCents || amountCents === 0)) return t.invitation;
+  if (!amountCents || amountCents === 0) {
+    // Some free tickets may not be tagged as invitation but still have €0
+    return isInvitation ? t.invitation : '';
+  }
+  return `€${(Math.round(amountCents) / 100).toFixed(2)}`;
+};
+
 const sanitizeFileName = (name: string): string =>
   name.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'event';
 
