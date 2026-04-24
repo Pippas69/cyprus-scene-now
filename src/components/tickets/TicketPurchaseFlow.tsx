@@ -369,20 +369,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     const steps: string[] = [];
     if (hasMultipleShows) steps.push('showSelect');
     if (hasSeating) steps.push('seats');
-    // Auth-first for ticket-only (non-seated) events
-    if (!hasSeating && !isAuthenticated) steps.push('auth');
-    if (!hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
+    // Auth-first for ticket-only (non-seated) events — skip when SMS-locked (guest checkout)
+    if (!hasSeating && !isAuthenticated && !hasLockedCustomer) steps.push('auth');
+    if (!hasSeating && isAuthenticated && !profileComplete && !hasLockedCustomer) steps.push('profile');
     if (!isSeatedWithPricing) steps.push('tickets');
     // Auth after seat selection for seated events
-    if (hasSeating && !isAuthenticated) steps.push('auth');
-    if (hasSeating && isAuthenticated && !profileComplete) steps.push('profile');
+    if (hasSeating && !isAuthenticated && !hasLockedCustomer) steps.push('auth');
+    if (hasSeating && isAuthenticated && !profileComplete && !hasLockedCustomer) steps.push('profile');
     // Skip separate guests step for fresh signup non-seated (merged into tickets)
     if (!(isFreshSignup && !hasSeating)) {
       steps.push('guests');
     }
     steps.push('checkout');
     return steps;
-  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete, isFreshSignup]);
+  }, [hasMultipleShows, hasSeating, isSeatedWithPricing, isAuthenticated, profileComplete, isFreshSignup, hasLockedCustomer]);
 
   const steps = getSteps();
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
