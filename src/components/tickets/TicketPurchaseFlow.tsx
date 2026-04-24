@@ -896,8 +896,9 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
                 value={customerPhone}
                 onChange={setCustomerPhone}
                 language={language}
-                selectClassName="h-8 sm:h-9 text-xs sm:text-sm"
-                inputClassName="h-8 sm:h-9 text-xs sm:text-sm"
+                disabled={lockCustomerPhone}
+                selectClassName={cn("h-8 sm:h-9 text-xs sm:text-sm", lockCustomerPhone && "bg-muted cursor-not-allowed")}
+                inputClassName={cn("h-8 sm:h-9 text-xs sm:text-sm", lockCustomerPhone && "bg-muted cursor-not-allowed")}
               />
             </div>
             <div className="space-y-1.5">
