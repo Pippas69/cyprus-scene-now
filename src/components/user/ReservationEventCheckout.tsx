@@ -329,10 +329,18 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
 
   useEffect(() => {
     if (open) {
-      setPhoneNumber('');
+      // When arriving via SMS link, prefill the locked customer fields. Otherwise reset.
+      if (lockedCustomerData?.customerPhone) {
+        setPhoneNumber(lockedCustomerData.customerPhone);
+      } else {
+        setPhoneNumber('');
+      }
+      if (lockedCustomerData?.customerName) {
+        setReservationName(lockedCustomerData.customerName);
+      }
       setCustomerEmail('');
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
 
   // Scroll to top when step changes
   useEffect(() => {
