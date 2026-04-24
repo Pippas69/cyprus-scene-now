@@ -243,6 +243,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   businessId,
   eventType,
   lockedCustomerData,
+  pendingBookingToken,
 }) => {
   const isHybridEvent = eventType === 'ticket_and_reservation';
   const hasLockedCustomer = !!(lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone));
@@ -556,6 +557,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               age: parseInt(g.age) || 0,
             })),
             ...promoterPayload,
+            ...(pendingBookingToken ? { pending_booking_token: pendingBookingToken } : {}),
           },
         });
 
@@ -611,6 +613,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             age: parseInt(g.age) || 0,
           })),
           ...promoterPayload,
+          ...(pendingBookingToken ? { pending_booking_token: pendingBookingToken } : {}),
         },
       });
 
