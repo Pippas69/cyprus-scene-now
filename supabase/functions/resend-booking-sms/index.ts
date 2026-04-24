@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
       booking_url: bookingUrl,
       expires_at: newExpires,
       sms: smsResult,
-    });
+    }, 200);
   } catch (err) {
     console.error("[resend-booking-sms] Unexpected error", err);
     const msg = err instanceof Error ? err.message : "Unknown error";
