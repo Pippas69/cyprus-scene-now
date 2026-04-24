@@ -42,6 +42,12 @@ export const CookieConsentBanner = () => {
     setVisible(false);
   };
 
+  // Stop pointer/mouse/touch events from bubbling out of the banner so that
+  // Radix Dialog/Sheet/Popover do NOT treat clicks on the banner buttons as
+  // "outside clicks" and accidentally close any open dialog (e.g. reservation
+  // or ticket checkout) when the user accepts/closes the cookie notice.
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
   return (
     <AnimatePresence>
       {visible && (
@@ -50,9 +56,16 @@ export const CookieConsentBanner = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-          className="fixed bottom-[5rem] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[200] pointer-events-auto"
+          className="fixed bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[200] pointer-events-auto"
           role="dialog"
           aria-label={t.title}
+          onPointerDown={stop}
+          onPointerDownCapture={stop}
+          onMouseDown={stop}
+          onMouseDownCapture={stop}
+          onTouchStart={stop}
+          onTouchStartCapture={stop}
+          onClick={stop}
         >
           <div className="relative bg-card/95 border border-border/60 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
