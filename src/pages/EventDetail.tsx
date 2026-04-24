@@ -114,6 +114,10 @@ export default function EventDetail() {
   const [reservationsSoldOut, setReservationsSoldOut] = useState(false);
   const [lowestMinChargeCents, setLowestMinChargeCents] = useState<number | null>(null);
 
+  // SMS link landing — locked customer data passed via sessionStorage when arriving via /r/:token
+  const [smsLocked, setSmsLocked] = useState<SmsLockedBooking | null>(null);
+  const [smsAutoOpened, setSmsAutoOpened] = useState(false);
+
   // Show instances for performance/theatre events
   const [showInstances, setShowInstances] = useState<any[]>([]);
   // Cast/crew members for performance events
