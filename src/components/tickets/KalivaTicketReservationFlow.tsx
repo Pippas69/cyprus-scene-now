@@ -362,15 +362,44 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
     return () => window.clearInterval(refreshTimer);
   }, [open, eventId]);
 
-  // Only reset checkout state on reopen, not form data
+  // Only reset checkout state on reopen, not form data — prefill SMS-locked customer fields
   useEffect(() => {
     if (open) {
       setCheckoutUrl(null);
       setRedirectAttempted(false);
-      setPhoneNumber('');
+      setPhoneNumber(lockedCustomerData?.customerPhone || '');
       setCustomerEmail('');
+      if (lockedCustomerData?.customerName) {
+        setReservationName(lockedCustomerData.customerName);
+        setGuests((prev) => {
+          if (prev.length === 0) return prev;
+          const updated = [...prev];
+          updated[0] = { ...updated[0], name: lockedCustomerData.customerName };
+          return updated;
+        });
+      }
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
+
+  // SMS link: auto-select seating from preference + prefill party size, then skip step 1
+  const lockedSeatingPref = lockedCustomerData?.seatingPreference ?? null;
+  const lockedPartySize = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedSeatingPref || seatingOptions.length === 0) return;
+    const match = seatingOptions.find(
+      (o) => o.seating_type?.toLowerCase() === String(lockedSeatingPref).toLowerCase(),
+    );
+    if (!match) return;
+    setSelectedSeating((prev) => (prev?.id === match.id ? prev : match));
+    if (lockedPartySize && match.tiers.length > 0) {
+      const minP = Math.min(...match.tiers.map((t) => t.min_people));
+      const maxP = Math.max(...match.tiers.map((t) => t.max_people));
+      setPartySize(Math.max(minP, Math.min(maxP, lockedPartySize)));
+    } else if (lockedPartySize) {
+      setPartySize(lockedPartySize);
+    }
+    setStep((s) => (s === 1 ? 2 : s));
+  }, [open, lockedSeatingPref, lockedPartySize, seatingOptions]);
 
   // Scroll to top on step change
   useEffect(() => {
