@@ -1186,7 +1186,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
     if (effectiveStep === 'auth' || effectiveStep === 'profile') {
       return (
         <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={() => setStep(1)}>
+          <Button variant="outline" onClick={() => setStep(hasLockedCustomer ? 2 : 1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
