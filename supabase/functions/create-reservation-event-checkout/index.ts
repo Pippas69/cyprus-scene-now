@@ -232,7 +232,7 @@ serve(async (req) => {
       .single();
 
     const customerEmail = profile?.email || user.email;
-    const customerName = profile?.name || reservation_name;
+    const customerName = profile?.name || lockedReservationName;
 
     let customerId: string;
     const existingCustomers = await stripe.customers.list({
@@ -270,8 +270,8 @@ serve(async (req) => {
       used_platform_checkout: hasConnectSetup ? "false" : "true",
       customer_email: customer_email || customerEmail || "",
       user_id: user.id,
-      reservation_name,
-      phone_number: phone_number || "",
+      reservation_name: lockedReservationName,
+      phone_number: lockedPhoneNumber,
       preferred_time: preferred_time || "",
       special_requests: special_requests || "",
       // Pricing profile data for commission ledger
