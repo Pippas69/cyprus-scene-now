@@ -1239,6 +1239,7 @@ export default function EventDetail() {
           customerName: smsLocked.customerName,
           customerPhone: smsLocked.customerPhone,
           seatingPreference: smsLocked.seatingPreference,
+          partySize: smsLocked.partySize,
         } : null}
         pendingBookingToken={smsLocked?.token ?? null}
         onSuccess={() => {
