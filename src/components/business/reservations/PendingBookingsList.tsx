@@ -427,7 +427,7 @@ export const PendingBookingsList = ({
                       </button>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">
+                  <TableCell className="text-xs whitespace-nowrap text-left px-0">
                     {format(new Date(r.expires_at), 'dd MMM HH:mm')}
                   </TableCell>
                   <TableCell>
