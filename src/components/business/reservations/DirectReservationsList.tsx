@@ -231,7 +231,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       cancelled: 'Cancelled',
       checkedIn: 'Checked In',
       noShow: 'No-Show',
-      name: 'Name',
+      name: 'Details',
       contact: 'Contact',
       details: 'Details',
       dateTime: 'Date & Time',
