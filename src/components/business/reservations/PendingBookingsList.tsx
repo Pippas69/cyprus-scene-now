@@ -369,7 +369,7 @@ export const PendingBookingsList = ({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{r.care_of ?? '—'}</TableCell>
-                  <TableCell className="whitespace-nowrap px-0 text-center">{renderStatus(r.status)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-center px-[51px]">{renderStatus(r.status)}</TableCell>
                   {/* Σημείωση — editable inline */}
                   <TableCell className="align-top min-w-[260px]">
                     {isEditingNote ? (
