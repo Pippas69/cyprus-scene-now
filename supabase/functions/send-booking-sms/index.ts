@@ -11,6 +11,34 @@ const corsHeaders = {
 };
 
 const TWILIO_GATEWAY = "https://connector-gateway.lovable.dev/twilio";
+const TWILIO_STATUS_CALLBACK_URL = "https://iasahlgurfxufrtdigcr.supabase.co/functions/v1/twilio-status-webhook";
+
+function normalizeInitialTwilioStatus(status: string | null | undefined): "queued" | "sent" | "delivered" | "failed" | "undelivered" {
+  switch ((status ?? "").toLowerCase()) {
+    case "accepted":
+    case "scheduled":
+    case "sending":
+    case "queued":
+      return "queued";
+    case "sent":
+      return "sent";
+    case "delivered":
+      return "delivered";
+    case "failed":
+      return "failed";
+    case "undelivered":
+      return "undelivered";
+    default:
+      return "queued";
+  }
+}
+
+function toCentsFromTwilioPrice(price: string | null | undefined): number | null {
+  if (!price) return null;
+  const amount = Number(price);
+  if (!Number.isFinite(amount)) return null;
+  return Math.round(Math.abs(amount) * 100);
+}
 
 interface RequestBody {
   business_id: string;
@@ -149,6 +177,8 @@ Deno.serve(async (req: Request) => {
   let twilioSid: string | null = null;
   let twilioStatus: string = "queued";
   let twilioNumSegments = 1;
+  let twilioCostCents = 0;
+  let twilioCostCurrency = "EUR";
   let errorCode: string | null = null;
   let errorMessage: string | null = null;
 
@@ -157,6 +187,7 @@ Deno.serve(async (req: Request) => {
       To: to_phone,
       MessagingServiceSid: TWILIO_MESSAGING_SERVICE_SID,
       Body: message_body,
+      StatusCallback: TWILIO_STATUS_CALLBACK_URL,
     });
 
     const twilioResp = await fetch(`${TWILIO_GATEWAY}/Messages.json`, {
@@ -195,10 +226,30 @@ Deno.serve(async (req: Request) => {
     }
 
     twilioSid = twilioJson.sid ?? null;
-    twilioStatus = twilioJson.status ?? "queued";
+    twilioStatus = normalizeInitialTwilioStatus(twilioJson.status);
     // Capture num_segments from initial Twilio response (may also be refined by the
     // status webhook). Twilio returns it as string in `num_segments`.
     twilioNumSegments = Math.max(1, parseInt(String(twilioJson.num_segments ?? "1"), 10) || 1);
+
+    if (twilioSid) {
+      try {
+        const pricingResp = await fetch(`${TWILIO_GATEWAY}/Messages/${twilioSid}.json`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": TWILIO_API_KEY,
+          },
+        });
+        if (pricingResp.ok) {
+          const pricingJson = await pricingResp.json();
+          twilioNumSegments = Math.max(1, parseInt(String(pricingJson?.num_segments ?? twilioNumSegments), 10) || twilioNumSegments);
+          twilioCostCents = toCentsFromTwilioPrice(pricingJson?.price ?? null) ?? 0;
+          twilioCostCurrency = typeof pricingJson?.price_unit === "string" ? String(pricingJson.price_unit).toUpperCase() : "EUR";
+        }
+      } catch (pricingErr) {
+        console.error("Twilio immediate pricing fetch failed:", pricingErr);
+      }
+    }
   } catch (e) {
     console.error("Twilio fetch threw:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
@@ -226,12 +277,9 @@ Deno.serve(async (req: Request) => {
       message_body,
       twilio_message_sid: twilioSid,
       num_segments: twilioNumSegments,
-      status: twilioStatus as
-        | "queued"
-        | "sent"
-        | "delivered"
-        | "failed"
-        | "undelivered",
+      cost_cents: twilioCostCents,
+      cost_currency: twilioCostCurrency,
+      status: twilioStatus,
       is_billable: false, // becomes true via Twilio status webhook (Φάση 5)
     })
     .select("id")

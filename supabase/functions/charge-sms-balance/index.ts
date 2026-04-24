@@ -73,19 +73,26 @@ Deno.serve(async (req) => {
       resend = new Resend(RESEND_KEY);
     }
 
-    // Find candidate businesses
-    const { data: balances, error: balErr } = await admin
-      .from("v_business_sms_balance")
-      .select("business_id, unbilled_cents, unbilled_count")
-      .gt("unbilled_cents", 0);
+    // Find candidate businesses from actual unbilled charge rows
+    const { data: rawCharges, error: balErr } = await admin
+      .from("sms_charges")
+      .select("id, business_id, cost_cents, status, billed_at")
+      .eq("is_billable", true)
+      .is("billed_at", null)
+      .in("status", ["sent", "delivered"]);
 
     if (balErr) throw balErr;
 
-    let candidates = (balances ?? []) as Array<{
-      business_id: string;
-      unbilled_cents: number;
-      unbilled_count: number;
-    }>;
+    const byBusiness = new Map<string, { business_id: string; unbilled_cents: number; unbilled_count: number }>();
+    for (const row of (rawCharges ?? []) as Array<any>) {
+      const businessId = String(row.business_id);
+      const existing = byBusiness.get(businessId) ?? { business_id: businessId, unbilled_cents: 0, unbilled_count: 0 };
+      existing.unbilled_cents += Number(row.cost_cents ?? 0);
+      existing.unbilled_count += 1;
+      byBusiness.set(businessId, existing);
+    }
+
+    let candidates = Array.from(byBusiness.values());
 
     if (bodyBusinessId) {
       candidates = candidates.filter((c) => c.business_id === bodyBusinessId);
@@ -153,7 +160,7 @@ Deno.serve(async (req) => {
         // Lock unbilled charge IDs first (to make idempotent)
         const { data: charges } = await admin
           .from("sms_charges")
-          .select("id, cost_cents")
+          .select("id, cost_cents, num_segments")
           .eq("business_id", c.business_id)
           .eq("is_billable", true)
           .is("billed_at", null)

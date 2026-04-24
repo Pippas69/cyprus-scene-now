@@ -62,7 +62,7 @@ export default function BillingSmsPage({ businessId, compact = false }: Props) {
   const refresh = async () => {
     setLoading(true);
     try {
-      const [pmRes, balRes, attRes, bizRes] = await Promise.all([
+      const [pmRes, chargesRes, attRes, bizRes] = await Promise.all([
         supabase
           .from("business_payment_methods")
           .select("id, stripe_payment_method_id, stripe_customer_id, card_brand, card_last4, card_exp_month, card_exp_year")
@@ -71,7 +71,12 @@ export default function BillingSmsPage({ businessId, compact = false }: Props) {
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase.rpc("get_my_sms_balance", { p_business_id: businessId }),
+        supabase
+          .from("sms_charges")
+          .select("id, cost_cents, status, is_billable, billed_at")
+          .eq("business_id", businessId)
+          .is("billed_at", null)
+          .in("status", ["queued", "sent", "delivered"]),
         supabase
           .from("sms_billing_attempts")
           .select("id, amount_cents, sms_count, status, trigger_type, error_message, attempted_at")
@@ -85,10 +90,10 @@ export default function BillingSmsPage({ businessId, compact = false }: Props) {
           .maybeSingle(),
       ]);
       setPm((pmRes.data as PaymentMethod | null) ?? null);
-      const b = Array.isArray(balRes.data) ? balRes.data[0] : balRes.data;
+      const charges = (chargesRes.data as Array<{ cost_cents: number | null; is_billable: boolean; status: string }> | null) ?? [];
       setBalance({
-        unbilled_cents: Number(b?.unbilled_cents ?? 0),
-        unbilled_count: Number(b?.unbilled_count ?? 0),
+        unbilled_cents: charges.reduce((sum, row) => sum + Number(row.cost_cents ?? 0), 0),
+        unbilled_count: charges.length,
       });
       setAttempts((attRes.data as BillingAttempt[] | null) ?? []);
       setPaused({
