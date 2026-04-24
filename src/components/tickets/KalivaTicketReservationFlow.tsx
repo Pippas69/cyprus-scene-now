@@ -861,12 +861,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
                 <Input
                   placeholder={t.name}
                   value={guest.name}
-                  readOnly={idx === 0 && !!profileName}
+                  readOnly={idx === 0 && (!!profileName || (hasLockedCustomer && !!lockedCustomerData?.customerName))}
                   onChange={(e) => {
-                    if (idx === 0 && profileName) return;
+                    if (idx === 0 && (profileName || (hasLockedCustomer && lockedCustomerData?.customerName))) return;
                     updateGuest(idx, 'name', e.target.value);
                   }}
-                  className={cn("h-9 text-sm flex-1", idx === 0 && profileName && "bg-muted cursor-not-allowed")}
+                  className={cn("h-9 text-sm flex-1", idx === 0 && (profileName || (hasLockedCustomer && lockedCustomerData?.customerName)) && "bg-muted cursor-not-allowed")}
                 />
                 <Input
                   placeholder={t.age}
@@ -903,8 +903,9 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
             value={phoneNumber}
             onChange={setPhoneNumber}
             language={language}
-            selectClassName="h-9 text-sm"
-            inputClassName="h-9 text-sm"
+            disabled={hasLockedCustomer && !!lockedCustomerData?.customerPhone}
+            selectClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
+            inputClassName={cn("h-9 text-sm", hasLockedCustomer && !!lockedCustomerData?.customerPhone && "bg-muted cursor-not-allowed")}
           />
         </div>
       )}
