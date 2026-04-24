@@ -5,6 +5,7 @@ import { ensureReservationEventGuestTickets } from "../_shared/reservation-event
 import { securityHeaders, corsResponse, errorResponse, jsonResponse } from "../_shared/security-headers.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, safeString, reservationName, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
+import { loadSmsLockedCustomer } from "../_shared/sms-locked-customer.ts";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -24,6 +25,8 @@ const BodySchema = z.object({
   guests: z.array(GuestSchema).optional(),
   promoter_session_id: optionalString(120),
   promoter_tracking_code: optionalString(60),
+  // Φάση 4 — when arriving via SMS link, server overrides reservation_name & phone_number from DB
+  pending_booking_token: optionalString(64),
 }).default({});
 
 serve(async (req) => {
@@ -48,7 +51,7 @@ serve(async (req) => {
 
     if (userError || !user) return json({ error: "User not authenticated" }, 401);
 
-    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests, promoter_session_id, promoter_tracking_code } =
+    const { event_id, seating_type_id, party_size, reservation_name, customer_email, phone_number, special_requests, guests, promoter_session_id, promoter_tracking_code, pending_booking_token } =
       await parseBody(req, BodySchema);
 
     // Service client for privileged DB writes (required for demo/preview flows)
@@ -57,6 +60,21 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // === SMS link enforcement ===
+    // If a pending_booking_token is supplied, server overrides reservation_name & phone_number
+    // from the DB — never trust client-supplied identifying data for SMS-link checkouts.
+    let lockedReservationName = reservation_name as string | undefined;
+    let lockedPhoneNumber = phone_number as string | undefined;
+    if (pending_booking_token) {
+      const locked = await loadSmsLockedCustomer(supabaseService, pending_booking_token as string);
+      if (!locked) {
+        return json({ error: "This SMS booking link has expired or is no longer valid." }, 410);
+      }
+      if (locked.customerName) lockedReservationName = locked.customerName;
+      lockedPhoneNumber = locked.customerPhone;
+      console.log("[free-reservation] SMS booking server-side override applied", { pending_booking_id: locked.pendingBookingId });
+    }
 
     // If event_id not provided, pick the next upcoming reservation event.
     let eventId = (event_id as string | undefined) ?? null;
@@ -121,10 +139,10 @@ serve(async (req) => {
       .insert({
         event_id: eventId,
         user_id: user.id,
-        reservation_name: (reservation_name as string | undefined) ?? "Test Reservation",
+        reservation_name: lockedReservationName ?? "Test Reservation",
         email: (customer_email as string | undefined)?.trim() || user.email || null,
         party_size: safePartySize,
-        phone_number: (phone_number as string | undefined) ?? null,
+        phone_number: lockedPhoneNumber ?? null,
         preferred_time: event.start_at,
         special_requests: (special_requests as string | undefined) ?? null,
         seating_type_id: seatingTypeId,
@@ -237,7 +255,7 @@ serve(async (req) => {
             _ticket_order_id: null,
             _reservation_id: reservation.id,
             _order_amount_cents: 0,
-            _customer_name: (reservation_name as string | undefined) ?? null,
+            _customer_name: lockedReservationName ?? null,
             _customer_email: (customer_email as string | undefined)?.trim() || user.email || null,
           },
         );

@@ -71,6 +71,8 @@ interface ReservationEventCheckoutProps {
     customerPhone?: string;
     seatingPreference?: string | null;
   } | null;
+  /** Φάση 4 — when present, server-side overrides reservation_name & phone_number from DB. */
+  pendingBookingToken?: string | null;
 }
 
 const translations = {
@@ -241,6 +243,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   businessId,
   eventType,
   lockedCustomerData,
+  pendingBookingToken,
 }) => {
   const isHybridEvent = eventType === 'ticket_and_reservation';
   const hasLockedCustomer = !!(lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone));
@@ -554,6 +557,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
               age: parseInt(g.age) || 0,
             })),
             ...promoterPayload,
+            ...(pendingBookingToken ? { pending_booking_token: pendingBookingToken } : {}),
           },
         });
 
@@ -609,6 +613,7 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
             age: parseInt(g.age) || 0,
           })),
           ...promoterPayload,
+          ...(pendingBookingToken ? { pending_booking_token: pendingBookingToken } : {}),
         },
       });
 

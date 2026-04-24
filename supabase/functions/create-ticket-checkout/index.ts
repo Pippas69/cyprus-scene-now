@@ -6,6 +6,7 @@ import { securityHeaders, jsonHeaders, corsResponse, errorResponse } from "../_s
 import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
 import { z, parseBody, flexId, safeString, reservationName, optionalString, email, positiveInt, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
+import { loadSmsLockedCustomer } from "../_shared/sms-locked-customer.ts";
 
 const TicketItemSchema = z.object({
   tierId: flexId,
@@ -26,6 +27,9 @@ const CheckoutBodySchema = z.object({
   showInstanceId: flexId.optional(),
   promoterSessionId: optionalString(100),
   promoterTrackingCode: optionalString(100),
+  // Φάση 4 — when arriving via SMS link, the server overrides customerName/customerPhone
+  // with values from the pending_bookings row.
+  pendingBookingToken: optionalString(64),
 });
 
 interface TicketItem {
@@ -93,7 +97,23 @@ Deno.serve(async (req) => {
     const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { eventId, items, customerName, customerEmail, customerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId, promoterSessionId, promoterTrackingCode } = await parseBody(req, CheckoutBodySchema);
+    const { eventId, items, customerName: rawCustomerName, customerEmail, customerPhone: rawCustomerPhone, specialRequests, seatingTypeId, reservationName, guests, seatIds, showInstanceId, promoterSessionId, promoterTrackingCode, pendingBookingToken } = await parseBody(req, CheckoutBodySchema);
+
+    // === SMS link enforcement ===
+    // If a pendingBookingToken is supplied, override name & phone from the DB —
+    // we never trust client-supplied identifying data for SMS-link checkouts.
+    let customerName = rawCustomerName;
+    let customerPhone = rawCustomerPhone as string | null | undefined;
+    if (pendingBookingToken) {
+      const locked = await loadSmsLockedCustomer(supabaseClient, pendingBookingToken);
+      if (!locked) {
+        return errorResponse("This SMS booking link has expired or is no longer valid.", 410);
+      }
+      if (locked.customerName) customerName = locked.customerName;
+      customerPhone = locked.customerPhone;
+      logStep("SMS booking server-side override applied", { pendingBookingId: locked.pendingBookingId });
+    }
+
     logStep("Request data", { eventId, items, customerName, reservationName, customerEmail, guestsCount: guests?.length, seatingTypeId, seatIds: seatIds?.length, showInstanceId });
 
     // Fetch event and business info (including Stripe Connect status)
