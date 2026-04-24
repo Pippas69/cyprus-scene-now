@@ -388,16 +388,20 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const currentStep = steps[currentStepIdx] || steps[0];
 
-  // Reset step when opening
+  // Reset step when opening + prefill SMS-locked customer fields
   useEffect(() => {
     if (open) {
       setCurrentStepIdx(0);
       setCheckoutUrl(null);
       setRedirectAttempted(false);
-      setCustomerPhone('');
+      // SMS link: prefill phone + buyer name. Otherwise reset to empty.
+      setCustomerPhone(lockedCustomerData?.customerPhone || '');
       setCustomerEmail('');
+      if (lockedCustomerData?.customerName) {
+        setBuyerFullName(lockedCustomerData.customerName);
+      }
     }
-  }, [open]);
+  }, [open, lockedCustomerData?.customerPhone, lockedCustomerData?.customerName]);
 
   // Scroll to top on step change
   useEffect(() => {
