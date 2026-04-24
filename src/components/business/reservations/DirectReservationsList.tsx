@@ -124,6 +124,7 @@ interface TicketOnlyOrder {
   staff_memo: string | null;
   staff_memo_highlighted?: boolean;
   source: string;
+  care_of: string | null;
 }
 export const DirectReservationsList = ({ businessId, language, refreshNonce, onReservationCountChange, selectedEventId, selectedEventType, payAtDoor, forceEventMode, manualEntryOpen: externalManualEntryOpen, onManualEntryOpenChange, searchQuery, selectedDate, onExportDataChange }: DirectReservationsListProps) => {
   const isMobile = useIsMobile();
