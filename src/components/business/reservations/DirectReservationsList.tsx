@@ -2137,7 +2137,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
               <TableBody>
                 {filteredTicketOrders.map((ticket) => (
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium align-top whitespace-nowrap">
                       <div className="flex flex-col gap-0.5">
                         {editingTicketName === ticket.ticket_id ? (
                           <div className="flex items-center gap-1">
