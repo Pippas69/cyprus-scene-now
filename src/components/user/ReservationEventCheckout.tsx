@@ -65,6 +65,12 @@ interface ReservationEventCheckoutProps {
   onSuccess?: () => void;
   businessId?: string;
   eventType?: 'reservation' | 'ticket_and_reservation' | string;
+  /** When provided (e.g. from /r/{token} SMS link), prefills and locks the customer-identifying fields. */
+  lockedCustomerData?: {
+    customerName?: string;
+    customerPhone?: string;
+    seatingPreference?: string | null;
+  } | null;
 }
 
 const translations = {
