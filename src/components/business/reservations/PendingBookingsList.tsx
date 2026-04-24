@@ -266,7 +266,7 @@ export const PendingBookingsList = ({
   const renderStatus = (s: PendingBookingRow['status']) => {
     if (s === 'pending') {
       return (
-        <Badge variant="secondary" className="gap-1 bg-muted text-muted-foreground">
+        <Badge variant="secondary" className="gap-1 bg-muted text-muted-foreground whitespace-nowrap">
           <Clock className="h-3 w-3" /> {tr.pending}
         </Badge>
       );
