@@ -16,6 +16,7 @@ const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null;
 
 interface Props {
   businessId: string;
+  compact?: boolean;
 }
 
 interface PaymentMethod {
@@ -38,7 +39,7 @@ interface BillingAttempt {
   attempted_at: string;
 }
 
-export default function BillingSmsPage({ businessId }: Props) {
+export default function BillingSmsPage({ businessId, compact = false }: Props) {
   const { language } = useLanguage();
   const t = useMemo(() => translations[language], [language]);
   const [loading, setLoading] = useState(true);
