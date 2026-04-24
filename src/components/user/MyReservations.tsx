@@ -87,14 +87,19 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const isPreviewOrigin =
   typeof window !== 'undefined' && (
   window.location.origin.includes('lovable.app') || window.location.origin.includes('localhost'));
   const initialReservationsTab = searchParams.get('subtab') === 'direct' ? 'direct' : 'event';
   const [activeReservationsTab, setActiveReservationsTab] = useState<'event' | 'direct'>(initialReservationsTab);
-  const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>([]);
-  const [pastReservations, setPastReservations] = useState<ReservationData[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Hydrate from React Query cache for instant render on revisit
+  const SNAPSHOT_KEY = ['my-reservations-snapshot', userId] as const;
+  const cachedSnapshot = queryClient.getQueryData<{ upcoming: ReservationData[]; past: ReservationData[] }>(SNAPSHOT_KEY);
+  const [upcomingReservations, setUpcomingReservations] = useState<ReservationData[]>(cachedSnapshot?.upcoming || []);
+  const [pastReservations, setPastReservations] = useState<ReservationData[]>(cachedSnapshot?.past || []);
+  const [loading, setLoading] = useState(!cachedSnapshot);
   const [showHistory, setShowHistory] = useState(false);
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;reservationId: string | null;}>({
     open: false,
