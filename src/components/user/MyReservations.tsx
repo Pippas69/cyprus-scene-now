@@ -340,7 +340,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .eq('user_id', userId)
         .not('event_id', 'is', null)
         .lt('events.start_at', cutoffIso)
-        .limit(100),
+        .limit(50),
       supabase
         .from('reservations')
         .select(`${reservationFields}, businesses(id, name, logo_url, address)`)
@@ -356,7 +356,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         .is('event_id', null)
         .not('business_id', 'is', null)
         .lt('preferred_time', cutoffIso)
-        .limit(100),
+        .limit(50),
       // Fallback for legacy/missing linkage:
       // completed ticket orders for reservation-enabled events without linked_reservation_id.
       supabase
@@ -539,6 +539,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     setUpcomingReservations(allUpcoming);
     setPastReservations(allPast);
     setLoading(false);
+
+    // Persist snapshot to React Query cache for instant render on revisit
+    queryClient.setQueryData(SNAPSHOT_KEY, { upcoming: allUpcoming, past: allPast });
 
     // Load secondary data (QR codes, guests, charges) in background — no spinner
     const allRes = [...allUpcoming, ...allPast];
