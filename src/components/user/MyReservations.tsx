@@ -1147,7 +1147,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {/* Row 2: Business */}
           <div className="flex items-center gap-1.5">
             {businessInfo?.logo_url &&
-            <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />
+            <img src={getOptimizedImageUrl(businessInfo.logo_url, 64)} alt="" loading="lazy" decoding="async" className="h-4 w-4 rounded-full object-cover" />
             }
             <span className="text-sm font-medium">{businessInfo?.name}</span>
           </div>
