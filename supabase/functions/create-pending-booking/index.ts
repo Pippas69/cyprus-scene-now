@@ -129,10 +129,11 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 4. If event_id provided, verify it belongs to this business ──
+    let eventName: string | null = null;
     if (body.event_id) {
       const { data: ev, error: evErr } = await adminClient
         .from("events")
-        .select("id, business_id")
+        .select("id, business_id, title")
         .eq("id", body.event_id)
         .maybeSingle();
 
@@ -143,6 +144,7 @@ Deno.serve(async (req: Request) => {
       if (!ev || ev.business_id !== body.business_id) {
         return jsonResponse({ error: "Event not found or not yours" }, 404);
       }
+      eventName = ev.title ?? null;
     }
 
     // ── 5. Pre-check SMS rate limit (avoid orphan booking) ──
