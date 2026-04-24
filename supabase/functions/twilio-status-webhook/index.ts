@@ -203,8 +203,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Always refresh num_segments from the webhook (initial send may have estimated 1)
-    if (numSegments > 0) updates.num_segments = numSegments;
+    // Refresh num_segments from callback only if Twilio actually sent it in the payload
+    if (params["NumSegments"] && numSegments > 0) updates.num_segments = numSegments;
 
     if (errorCode) updates.error_code = errorCode;
     if (errorMessage) updates.error_message = errorMessage;
