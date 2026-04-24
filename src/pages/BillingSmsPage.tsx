@@ -12,8 +12,9 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Separator } from "@/components/ui/separator";
 
 const STRIPE_PK =
-  (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined) ?? "";
-const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null;
+  (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined) ??
+  "pk_live_51SXnhgHTQ1AOHDjnp60RxgrJIjsN0a9UBJwlsnMuyo1VBM7yTp5t17JPbVRe3unBeCY3XcuhHX6J2FMddZtj7Gpd00wWlLicea";
+const stripePromise = loadStripe(STRIPE_PK);
 
 interface Props {
   businessId: string;
