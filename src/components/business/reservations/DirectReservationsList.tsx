@@ -2123,7 +2123,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return (
         <div className="space-y-4 w-full max-w-full">
           <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[700px] table-fixed">
+            <Table className="w-full min-w-[700px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="whitespace-nowrap">{t.name}</TableHead>
