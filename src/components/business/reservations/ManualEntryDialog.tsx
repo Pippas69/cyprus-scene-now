@@ -70,6 +70,7 @@ export type OptimisticEntry =
         source: 'purchase';
         is_account_user: false;
         account_city: null;
+        care_of: string | null;
       };
     }
   | {
