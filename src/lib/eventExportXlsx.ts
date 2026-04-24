@@ -283,7 +283,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     ];
     const resRows = realReservations.map((r) => ({
       [t.name]: r.reservation_name || '',
-      [t.phone]: r.phone_number || '',
+      [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
       [t.minCharge]: cents(r.prepaid_min_charge_cents),
@@ -311,7 +311,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       ];
       const wRows = walkInReservations.map((r) => ({
         [t.name]: r.reservation_name || '',
-        [t.phone]: r.phone_number || '',
+        [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
         [t.walkInPrice]: cents(r.ticket_credit_cents),
@@ -344,7 +344,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     ];
     const resRows = realReservations.map((r) => ({
       [t.name]: r.reservation_name || '',
-      [t.phone]: r.phone_number || '',
+      [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
       [t.minCharge]: cents(r.prepaid_min_charge_cents),
@@ -373,7 +373,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       ];
       const wRows = walkInReservations.map((r) => ({
         [t.name]: r.reservation_name || '',
-        [t.phone]: r.phone_number || '',
+        [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
         [t.walkInPrice]: cents(r.ticket_credit_cents),
