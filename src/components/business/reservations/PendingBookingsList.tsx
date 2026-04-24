@@ -372,15 +372,15 @@ export const PendingBookingsList = ({
                   <TableCell className="whitespace-nowrap">{r.care_of ?? '—'}</TableCell>
                   <TableCell className="whitespace-nowrap">{renderStatus(r.status)}</TableCell>
                   {/* Σημείωση — editable inline */}
-                  <TableCell className="align-top max-w-[220px]">
+                  <TableCell className="align-top min-w-[260px]">
                     {isEditingNote ? (
                       <div className="flex items-start gap-1">
-                        <Input
+                        <Textarea
                           autoFocus
                           value={noteDraft}
                           onChange={(e) => setNoteDraft(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                               e.preventDefault();
                               saveNote(r.id);
                             } else if (e.key === 'Escape') {
@@ -389,7 +389,8 @@ export const PendingBookingsList = ({
                             }
                           }}
                           placeholder={tr.notePlaceholder}
-                          className="h-7 text-xs"
+                          className="min-h-[60px] text-xs w-full min-w-[200px] resize-y"
+                          rows={2}
                           disabled={savingNoteId === r.id}
                         />
                         <Button
@@ -427,7 +428,7 @@ export const PendingBookingsList = ({
                       </button>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="text-xs whitespace-nowrap">
                     {format(new Date(r.expires_at), 'dd MMM HH:mm')}
                   </TableCell>
                   <TableCell>
