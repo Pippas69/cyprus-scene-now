@@ -9,6 +9,7 @@
 //   - Old token is invalidated (overwritten)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { toGsm7Safe } from "../_shared/transliterate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
