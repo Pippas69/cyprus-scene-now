@@ -209,7 +209,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const bookingUrl = `${PUBLIC_BOOKING_BASE_URL}/${pending.token}`;
-    const messageBody = `ΦΟΜΟ: Complete your booking at ${business.name}: ${bookingUrl}`;
+    // GSM-7 safe template (1 segment when within 160 chars):
+    // "[Business Name] reserved your spot for [Event Name]. Complete here: [link]"
+    const safeBusinessName = toGsm7Safe(business.name) || "Business";
+    const safeEventName = toGsm7Safe(eventName ?? "") || "your event";
+    const messageBody = `${safeBusinessName} reserved your spot for ${safeEventName}. Complete here: ${bookingUrl}`;
 
     // ── 7. Dispatch SMS via send-booking-sms (forward caller JWT) ──
     const smsResp = await fetch(
