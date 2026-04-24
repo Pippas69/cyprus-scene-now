@@ -143,10 +143,14 @@ Deno.serve(async (req: Request) => {
 
     if (becomesBillable) {
       updates.is_billable = true;
-      // Default cost: 5 cents (€0.05) per SMS — adjust as needed; Twilio cost varies by destination
+      // Default cost: 5 cents (€0.05) per segment — Twilio bills per segment, so a long
+      // SMS that gets split into 2 parts costs 10 cents.
       updates.cost_cents = 5;
       updates.cost_currency = "EUR";
     }
+
+    // Always refresh num_segments from the webhook (initial send may have estimated 1)
+    if (numSegments > 0) updates.num_segments = numSegments;
 
     if (errorCode) updates.error_code = errorCode;
     if (errorMessage) updates.error_message = errorMessage;
