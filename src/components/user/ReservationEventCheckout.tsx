@@ -307,17 +307,17 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   const [termsAccepted, setTermsAccepted] = useState(false);
   const profileName = useProfileName(currentUserId);
 
-  // Auto-fill ONLY the first guest name with profile name
-  // Reservation name, phone, and email are left empty for the user to fill freely
+  // Auto-fill the first guest name. SMS-link customers get the locked reservation name;
+  // otherwise fall back to the signed-in user's profile name.
   useEffect(() => {
-    if (profileName) {
-      setGuests(prev => {
-        const updated = [...prev];
-        if (updated.length > 0) updated[0] = { ...updated[0], name: profileName };
-        return updated;
-      });
-    }
-  }, [profileName]);
+    const firstName = lockedCustomerData?.customerName || profileName;
+    if (!firstName) return;
+    setGuests(prev => {
+      const updated = [...prev];
+      if (updated.length > 0) updated[0] = { ...updated[0], name: firstName };
+      return updated;
+    });
+  }, [profileName, lockedCustomerData?.customerName]);
 
   // Fetch seating options on open and keep availability fresh while dialog is open
   useEffect(() => {
