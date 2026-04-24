@@ -84,6 +84,7 @@ const tx = {
     seating: 'Θέση',
     careOf: 'Care of',
     notes: 'Σημειώσεις',
+    invitation: 'Πρόσκληση',
     person: 'άτομο',
     persons: 'άτομα',
     dash: '—',
