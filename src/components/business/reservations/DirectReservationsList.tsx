@@ -2467,11 +2467,6 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                                   rawValue={reservation.party_size ? String(reservation.party_size) : ''}
                                   inputType="number"
                                   inputClassName="h-7 text-sm w-20" />
-                                {compCount > 0 && (
-                                  <span className="font-medium text-muted-foreground text-xs">
-                                    {paidCount} paid + {compCount} 
-                                  </span>
-                                )}
                                 <EditableCell
                                   reservationId={reservation.id}
                                   field="guest_city"
