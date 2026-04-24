@@ -52,8 +52,8 @@ const t = {
   el: {
     title: 'Εκκρεμή Links',
     details: 'Στοιχεία',
-    type: 'Τύπος',
-    party: 'Άτομα',
+    info: 'Λεπτομέρειες',
+    people: 'άτομα',
     careOf: 'Care of',
     status: 'Κατάσταση',
     note: 'Σημείωση',
