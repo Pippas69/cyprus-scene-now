@@ -2496,8 +2496,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
 
-                      {/* placeholder to keep structure */}
-                      {false && (
+                      {/* 3. Ελάχιστη Χρέωση - single combined editable */}
                       <TableCell className="align-top whitespace-nowrap">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
