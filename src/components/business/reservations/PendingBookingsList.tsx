@@ -303,7 +303,7 @@ export const PendingBookingsList = ({
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.customer_name ?? '—'}</TableCell>
                   <TableCell className="font-mono text-xs">{r.customer_phone}</TableCell>
-                  <TableCell>{renderType(r.booking_type)}</TableCell>
+                  <TableCell>{renderType(r)}</TableCell>
                   <TableCell>{r.party_size ?? '—'}</TableCell>
                   <TableCell>{r.care_of ?? '—'}</TableCell>
                   <TableCell>{renderStatus(r.status)}</TableCell>
