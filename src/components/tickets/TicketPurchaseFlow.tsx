@@ -408,6 +408,27 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStepIdx]);
 
+  // SMS link: prefill quantity on the first available tier with the business-entered count.
+  // Only runs once per open + when tiers load, and only if no quantity is set yet.
+  const lockedTicketCount = lockedCustomerData?.partySize ?? null;
+  useEffect(() => {
+    if (!open || !lockedTicketCount || lockedTicketCount < 1) return;
+    if (!ticketTiers || ticketTiers.length === 0) return;
+    const hasAnyQty = Object.values(quantities).some((q) => q > 0);
+    if (hasAnyQty) return;
+    const firstAvailable = ticketTiers.find(
+      (t) => t.quantity_total - t.quantity_sold > 0,
+    );
+    if (!firstAvailable) return;
+    const available = firstAvailable.quantity_total - firstAvailable.quantity_sold;
+    const clamped = Math.max(
+      1,
+      Math.min(firstAvailable.max_per_order, Math.min(available, lockedTicketCount)),
+    );
+    setQuantities((prev) => ({ ...prev, [firstAvailable.id]: clamped }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lockedTicketCount, ticketTiers]);
+
   // Compute total tickets for seated vs non-seated
   const seatCount = selectedSeats.length;
   const tierTotalTickets = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
