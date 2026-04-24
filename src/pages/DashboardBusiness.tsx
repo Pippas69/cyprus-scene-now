@@ -478,6 +478,9 @@ const DashboardBusiness = () => {
             </div>
           </header>
 
+          {/* Φάση 6: SMS paused banner */}
+          <SmsPausedBanner businessId={businessId} />
+
           {/* Main Content - with proper mobile padding */}
           <main
             ref={(node) => {
