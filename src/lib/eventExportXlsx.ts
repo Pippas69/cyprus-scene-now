@@ -138,17 +138,16 @@ const formatPhone = (raw: string | null | undefined): string => {
 // Price for a ticket row: shows €X.XX, or "Πρόσκληση"/"Invitation" when the row is
 // an invitation/comp with no price.
 const priceOrInvitation = (
-  amountCents: number | null | undefined,
+  paidCents: number | null | undefined,
+  tierCents: number | null | undefined,
   source: string | null | undefined,
   t: typeof tx['el'],
 ): string => {
   const isInvitation = (source || '').toLowerCase() === 'invitation';
-  if (isInvitation && (!amountCents || amountCents === 0)) return t.invitation;
-  if (!amountCents || amountCents === 0) {
-    // Some free tickets may not be tagged as invitation but still have €0
-    return isInvitation ? t.invitation : '';
-  }
-  return `€${(Math.round(amountCents) / 100).toFixed(2)}`;
+  if (isInvitation) return t.invitation;
+  if (paidCents && paidCents > 0) return `€${(Math.round(paidCents) / 100).toFixed(2)}`;
+  if (tierCents && tierCents > 0) return `€${(Math.round(tierCents) / 100).toFixed(2)}`;
+  return t.invitation;
 };
 
 const sanitizeFileName = (name: string): string =>
@@ -254,11 +253,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
         [t.phone]: formatPhone(o.buyer_phone),
         [t.city]: translateCity(rawCity, ctx.language),
         [t.age]: o.guest_age != null ? String(o.guest_age) : '',
-        [t.price]: priceOrInvitation(
-          (o.subtotal_cents && o.subtotal_cents > 0) ? o.subtotal_cents : (o.tier_price_cents || 0),
-          o.source,
-          t,
-        ),
+        [t.price]: priceOrInvitation(o.subtotal_cents, o.tier_price_cents, o.source, t),
         [t.careOf]: careOfDisplay(o.care_of),
         [t.notes]: o.staff_memo || '',
       };
