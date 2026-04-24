@@ -189,7 +189,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       cancelled: 'Ακυρωμένη',
       checkedIn: 'Check-in',
       noShow: 'No-Show',
-      name: 'Όνομα',
+      name: 'Στοιχεία',
       contact: 'Επικοινωνία',
       details: 'Λεπτομέρειες',
       dateTime: 'Ημ/νία & Ώρα',
@@ -231,7 +231,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       cancelled: 'Cancelled',
       checkedIn: 'Checked In',
       noShow: 'No-Show',
-      name: 'Name',
+      name: 'Details',
       contact: 'Contact',
       details: 'Details',
       dateTime: 'Date & Time',
@@ -279,7 +279,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="cursor-pointer border-0 bg-transparent p-0 m-0 -ml-1.5 text-left text-sm text-muted-foreground hover:text-muted-foreground focus:text-muted-foreground active:text-muted-foreground focus:outline-none whitespace-nowrap"
+            className="cursor-pointer border-0 bg-transparent p-0 m-0 text-left text-xs text-muted-foreground font-mono leading-tight hover:text-muted-foreground focus:text-muted-foreground active:text-muted-foreground focus:outline-none whitespace-nowrap"
           >
             {phone.replace(/^\+357/, '')}
           </button>
@@ -2123,21 +2123,21 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       return (
         <div className="space-y-4 w-full max-w-full">
           <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[700px] table-fixed">
+            <Table className="w-full min-w-[700px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[20%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[14%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[18%]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[14%] px-[5px]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[12%] whitespace-nowrap">Care of</TableHead>
-                  <TableHead className="text-xs w-[22%] text-center">{t.staffMemo}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.name}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.details}</TableHead>
+                  <TableHead className="whitespace-nowrap">{priceColumnLabel}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.status}</TableHead>
+                  <TableHead className="whitespace-nowrap">Care of</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTicketOrders.map((ticket) => (
                   <TableRow key={ticket.ticket_id} className="hover:bg-transparent">
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium align-top whitespace-nowrap">
                       <div className="flex flex-col gap-0.5">
                         {editingTicketName === ticket.ticket_id ? (
                           <div className="flex items-center gap-1">
@@ -2374,16 +2374,16 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
           </Card> :
 
         <div className="rounded-md border w-full overflow-x-auto">
-            <Table className="w-full min-w-[980px] table-fixed">
+            <Table className="w-full min-w-[980px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs w-[18%]">{t.name}</TableHead>
-                  <TableHead className="text-xs w-[12%]">{t.details}</TableHead>
-                  <TableHead className="text-xs w-[16%] pr-4 whitespace-nowrap px-[29px]">{priceColumnLabel}</TableHead>
-                  <TableHead className="text-xs w-[11%] px-0 text-center">{t.seating}</TableHead>
-                  <TableHead className="text-xs w-[11%] px-[40px]">{t.status}</TableHead>
-                  <TableHead className="text-xs w-[10%] px-[64px] whitespace-nowrap">{language === 'el' ? 'Care of' : 'Care of'}</TableHead>
-                  <TableHead className="text-xs w-[22%] px-[50px]">{t.staffMemo}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.name}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.details}</TableHead>
+                  <TableHead className="whitespace-nowrap">{priceColumnLabel}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.seating}</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.status}</TableHead>
+                  <TableHead className="whitespace-nowrap">Care of</TableHead>
+                  <TableHead className="whitespace-nowrap">{t.staffMemo}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2428,7 +2428,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 2. Λεπτομέρειες: Combined "X άτομα (age)" + City */}
-                      <TableCell className="align-top px-[27px]">
+                      <TableCell className="align-top whitespace-nowrap">
                         <div className="flex flex-col gap-0.5">
                           {(() => {
                             const isWalkIn = reservation.source === 'walk_in' && !reservation.seating_type_id;
@@ -2480,7 +2480,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                       </TableCell>
 
                       {/* 3. Ελάχιστη Χρέωση - single combined editable */}
-                      <TableCell className="align-top pr-6 px-[38px]">
+                      <TableCell className="align-top whitespace-nowrap">
                         <div className="flex flex-col items-start gap-1">
                           {(() => {
                             // Invitation source: show "Πρόσκληση" badge only
@@ -2571,8 +2571,8 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 4. Θέση: Seating type + Table assignment (with floor plan button) */}
-                      <TableCell className="align-top pl-2 my-0 mx-0 px-px">
-                        <div className="flex flex-col gap-0.5 text-center mx-0 my-0 py-0 px-[15px]">
+                      <TableCell className="align-top whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
                           <EventSeatingTypeEditCell
                             reservationId={reservation.id}
                             currentSeatingTypeId={reservation.seating_type_id || null}
@@ -2597,13 +2597,13 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                         </div>
                       </TableCell>
                       {/* 5. Κατάσταση */}
-                      <TableCell className="align-top px-[37px]">
+                      <TableCell className="align-top whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
                       {/* 6. Care of — staff member who handled the booking. Default to "ΦOMO" when empty for direct customer bookings. */}
-                      <TableCell className="align-top px-[60px] whitespace-nowrap">
+                      <TableCell className="align-top whitespace-nowrap">
                         <EditableCell
                           reservationId={reservation.id}
                           field="care_of"
@@ -2718,17 +2718,17 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
         </Card> :
 
       <div className="rounded-md border w-full overflow-x-auto">
-          <Table className="w-full min-w-[1050px] table-fixed text-sm">
+          <Table className="w-full min-w-[1050px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[15%]">{t.name}</TableHead>
-                <TableHead className="w-[12%]">{t.dateTime}</TableHead>
-                <TableHead className="w-[13%]">{t.details}</TableHead>
-                <TableHead className="w-[10%]">{t.seating}</TableHead>
-                <TableHead className="w-[10%]">{t.status}</TableHead>
-                <TableHead className="text-xs w-[22%] px-[50px]">{t.staffMemo}</TableHead>
-                <TableHead className="w-[12%]">{t.creation}</TableHead>
-                <TableHead className="w-[16%]">{t.email}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.name}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.dateTime}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.details}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.seating}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.status}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.staffMemo}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.creation}</TableHead>
+                <TableHead className="whitespace-nowrap">{t.email}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
