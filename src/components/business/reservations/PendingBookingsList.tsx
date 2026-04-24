@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RefreshCw, Trash2, Clock, AlertTriangle, CheckCircle2, XCircle, Check, X as XIcon, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
