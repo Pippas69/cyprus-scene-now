@@ -344,36 +344,54 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       const { count } = await supabase.from('floor_plan_zones').select('id', { count: 'exact', head: true }).eq('business_id', businessId);
       setHasFloorPlan((count || 0) > 0);
     });
-    const reservationsChannel = supabase.
-    channel('direct_reservations_changes').
-    on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'reservations' },
-      () => fetchReservations(true)
-    ).
-    subscribe();
+    // Debounced refetch: coalesce bursts of realtime events into a single fetch.
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => fetchReservations(true), 300);
+    };
 
-    const ticketsChannel = supabase.
-    channel('direct_tickets_changes').
-    on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'tickets' },
-      () => fetchReservations(true)
-    ).
-    subscribe();
+    // Server-side filters scope events strictly to this business / selected event,
+    // so we don't refetch when other businesses' rows change.
+    const reservationsFilter = selectedEventId
+      ? `event_id=eq.${selectedEventId}`
+      : `business_id=eq.${businessId}`;
 
-    const reservationGuestsChannel = supabase.
-    channel('direct_reservation_guests_changes').
-    on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'reservation_guests' },
-      () => fetchReservations(true)
-    ).
-    subscribe();
+    const reservationsChannel = supabase
+      .channel(`direct_reservations_changes-${businessId}-${selectedEventId ?? 'all'}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations', filter: reservationsFilter },
+        scheduleRefetch
+      )
+      .subscribe();
+
+    // tickets has no business_id column → filter by event when available.
+    const ticketsChannel = selectedEventId
+      ? supabase
+          .channel(`direct_tickets_changes-${selectedEventId}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'tickets', filter: `event_id=eq.${selectedEventId}` },
+            scheduleRefetch
+          )
+          .subscribe()
+      : null;
+
+    // reservation_guests has no business/event column → keep unfiltered but debounced.
+    const reservationGuestsChannel = supabase
+      .channel(`direct_reservation_guests_changes-${businessId}-${selectedEventId ?? 'all'}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservation_guests' },
+        scheduleRefetch
+      )
+      .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(reservationsChannel);
-      supabase.removeChannel(ticketsChannel);
+      if (ticketsChannel) supabase.removeChannel(ticketsChannel);
       supabase.removeChannel(reservationGuestsChannel);
     };
   }, [businessId, selectedEventId, selectedEventType, forceEventMode]);
