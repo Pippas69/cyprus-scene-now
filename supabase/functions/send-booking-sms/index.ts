@@ -195,6 +195,9 @@ Deno.serve(async (req: Request) => {
 
     twilioSid = twilioJson.sid ?? null;
     twilioStatus = twilioJson.status ?? "queued";
+    // Capture num_segments from initial Twilio response (may also be updated by the
+    // status webhook). Twilio returns it as string in num_segments field.
+    var twilioNumSegments = Math.max(1, parseInt(String(twilioJson.num_segments ?? "1"), 10) || 1);
   } catch (e) {
     console.error("Twilio fetch threw:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
