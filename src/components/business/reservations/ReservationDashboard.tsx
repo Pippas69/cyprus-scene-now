@@ -501,27 +501,44 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
     return () => clearInterval(interval);
   }, [fetchDiningEvents, isDiningBar, isTicketLinked]);
 
-  // Realtime subscription to refresh counts
+  // Realtime subscription to refresh counts (filtered + debounced)
   useEffect(() => {
     if (!isTicketLinked) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchEvents(), 300);
+    };
     const channel = supabase
-      .channel('dashboard_reservation_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchEvents())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchEvents())
+      .channel(`dashboard_reservation_counts-${businessId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `business_id=eq.${businessId}` }, debouncedFetch)
+      // tickets has no business_id; keep table-wide but debounced so a single burst = single refetch
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, debouncedFetch)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [isTicketLinked, fetchEvents]);
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [isTicketLinked, fetchEvents, businessId]);
 
-  // Realtime for dining events
+  // Realtime for dining events (filtered + debounced)
   useEffect(() => {
     if (!isDiningBar || isTicketLinked) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchDiningEvents(), 300);
+    };
     const channel = supabase
-      .channel('dashboard_dining_reservation_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => fetchDiningEvents())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchDiningEvents())
+      .channel(`dashboard_dining_reservation_counts-${businessId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `business_id=eq.${businessId}` }, debouncedFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, debouncedFetch)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [isDiningBar, isTicketLinked, fetchDiningEvents]);
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [isDiningBar, isTicketLinked, fetchDiningEvents, businessId]);
 
   const handleReservationCountChange = useCallback((count: number) => {
     if (!selectedEventId || !isTicketLinked) return;
