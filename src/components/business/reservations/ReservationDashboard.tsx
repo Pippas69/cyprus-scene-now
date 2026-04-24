@@ -1051,6 +1051,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
       {(() => {
         const activeEvent = isTicketLinked ? selectedEvent : (isDiningEventMode ? diningSelectedEvent : null);
         if (!activeEvent) return null;
+        if (!exportSnapshot) return null;
         const twelveHoursAfterEnd = new Date(new Date(activeEvent.end_at).getTime() + 12 * 60 * 60 * 1000);
         const showArchive = new Date() >= twelveHoursAfterEnd;
 
