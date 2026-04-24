@@ -6,6 +6,7 @@ import { toStatementDescriptorSuffix } from "../_shared/transliterate.ts";
 import { checkRateLimit, getClientIP } from "../_shared/rate-limiter.ts";
 import { z, parseBody, flexId, reservationName, optionalString, email, optionalEmail, phone, optionalPhone, positiveInt, nonNegativeInt, priceCents, language, dateString, urlString, optionalUrl, boolDefault, boostTier, durationMode, billingCycle, notificationEventType, ValidationError, validationErrorResponse } from "../_shared/validation.ts";
 import { fetchPricingProfile, calculatePricing, type EventType } from "../_shared/pricing-utils.ts";
+import { loadSmsLockedCustomer } from "../_shared/sms-locked-customer.ts";
 
 const GuestSchema = z.object({ name: safeString(200) }).passthrough();
 const BodySchema = z.object({
@@ -77,6 +78,31 @@ serve(async (req) => {
 
     if (!event_id || !seating_type_id || !party_size || !reservation_name) {
       throw new Error("Missing required fields: event_id, seating_type_id, party_size, reservation_name");
+    }
+
+    // === SMS link enforcement ===
+    // If a pending_booking_token is supplied, the customer arrived via the SMS link
+    // (/r/{token}). The browser's name & phone MUST be ignored — we always use the
+    // values the business owner originally entered. This prevents a tampered client
+    // from submitting different identifying data than what was sent in the SMS.
+    let lockedReservationName = reservation_name as string;
+    let lockedPhoneNumber = (phone_number as string | undefined) ?? "";
+    let smsLockedBookingId: string | null = null;
+    if (pending_booking_token) {
+      const supabaseSvc = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
+      const locked = await loadSmsLockedCustomer(supabaseSvc, pending_booking_token as string);
+      if (!locked) {
+        throw new Error("This SMS booking link has expired or is no longer valid.");
+      }
+      smsLockedBookingId = locked.pendingBookingId;
+      if (locked.customerName) lockedReservationName = locked.customerName;
+      lockedPhoneNumber = locked.customerPhone;
+      console.log("[CHECKOUT] Server-side override applied for SMS booking", {
+        pending_booking_id: smsLockedBookingId,
+      });
     }
 
     // Get event and validate
