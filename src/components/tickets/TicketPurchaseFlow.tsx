@@ -75,6 +75,8 @@ interface TicketPurchaseFlowProps {
   eventDate?: string;
   showInstances?: ShowInstanceOption[];
   businessId?: string;
+  /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
+  pendingBookingToken?: string | null;
 }
 
 const translations = {
@@ -206,6 +208,7 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
   eventDate,
   showInstances,
   businessId,
+  pendingBookingToken,
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -552,6 +555,10 @@ export const TicketPurchaseFlow: React.FC<TicketPurchaseFlowProps> = ({
           age: parseInt(guestAges[idx]) || 0,
         })),
       };
+
+      if (pendingBookingToken) {
+        body.pendingBookingToken = pendingBookingToken;
+      }
 
       // Include selected seat IDs for seated events so backend can mark them sold
       if (hasSeating && selectedSeats.length > 0) {

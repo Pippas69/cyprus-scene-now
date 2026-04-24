@@ -88,6 +88,8 @@ interface KalivaTicketReservationFlowProps {
   ticketTiers: TicketTier[];
   onSuccess?: (orderId: string, isFree: boolean) => void;
   businessId?: string;
+  /** Φάση 4 — when present, server overrides customerName/customerPhone from DB. */
+  pendingBookingToken?: string | null;
 }
 
 const translations = {
@@ -263,6 +265,7 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
   ticketTiers,
   onSuccess,
   businessId,
+  pendingBookingToken,
 }) => {
   const isMobile = useIsMobile();
   const { language } = useLanguage();
@@ -603,6 +606,10 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           age: parseInt(g.age) || 0,
         })),
       };
+
+      if (pendingBookingToken) {
+        body.pendingBookingToken = pendingBookingToken;
+      }
 
       // PR Attribution: attach promoter ref if active
       try {
