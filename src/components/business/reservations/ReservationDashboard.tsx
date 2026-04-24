@@ -1105,21 +1105,27 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
         );
       })()}
 
-      {/* Archive toggle — bottom right */}
-      <div className="flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground gap-1.5"
-          onClick={() => setShowArchived(!showArchived)}
-        >
-          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
-          {showArchived 
-            ? (language === 'el' ? 'Ενεργές' : 'Active')
-            : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
-          }
-        </Button>
-      </div>
+      {/* Archive toggle — bottom right. Hide while event list is still loading. */}
+      {(() => {
+        const inEventMode = isTicketLinked || isDiningEventMode;
+        if (inEventMode && !exportSnapshot) return null;
+        return (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground gap-1.5"
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+              {showArchived
+                ? (language === 'el' ? 'Ενεργές' : 'Active')
+                : (language === 'el' ? 'Αρχειοθετημένα' : 'Archived')
+              }
+            </Button>
+          </div>
+        );
+      })()}
       </>
       )}
 
