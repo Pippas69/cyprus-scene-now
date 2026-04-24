@@ -770,9 +770,12 @@ export const KalivaTicketReservationFlow: React.FC<KalivaTicketReservationFlowPr
           value={reservationName}
           onChange={(e) => setReservationName(e.target.value)}
           placeholder="John Doe"
+          readOnly={hasLockedCustomer && !!lockedCustomerData?.customerName}
+          disabled={hasLockedCustomer && !!lockedCustomerData?.customerName}
           className={cn(
             "h-9 text-sm",
-            reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive"
+            reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && "border-destructive focus-visible:ring-destructive",
+            hasLockedCustomer && !!lockedCustomerData?.customerName && "bg-muted cursor-not-allowed"
           )}
         />
         {reservationName.length > 0 && !LATIN_RESERVATION_NAME_REGEX.test(reservationName) && (
