@@ -244,13 +244,34 @@ export const PendingBookingsList = ({
     );
   };
 
-  const renderType = (b: PendingBookingRow['booking_type']) =>
-    b === 'reservation' ? tr.typeRes : b === 'walk_in' ? tr.typeWi : tr.typeTk;
+  // For reservation bookings, prefer the seating_preference (Table/Sofa/VIP/Bar) the
+  // business owner picked when filling the form. Fall back to the booking-type label
+  // if no seating preference is stored (older rows / ticket / walk-in flows).
+  const renderType = (b: PendingBookingRow) => {
+    if (b.booking_type === 'reservation' && b.seating_preference) {
+      return translateSeatingType(b.seating_preference, language);
+    }
+    return b.booking_type === 'reservation'
+      ? tr.typeRes
+      : b.booking_type === 'walk_in'
+        ? tr.typeWi
+        : tr.typeTk;
+  };
 
   // Only count actionable rows (pending or expired). Hide section entirely when none.
-  const visibleRows = rows.filter(
+  const baseVisible = rows.filter(
     (r) => r.status === 'pending' || r.status === 'link_expired',
   );
+
+  // Apply optional search query — match against customer name OR phone.
+  const visibleRows = useMemo(() => {
+    const q = searchQuery?.trim().toLowerCase();
+    if (!q) return baseVisible;
+    return baseVisible.filter((r) =>
+      (r.customer_name ?? '').toLowerCase().includes(q) ||
+      (r.customer_phone ?? '').toLowerCase().includes(q),
+    );
+  }, [baseVisible, searchQuery]);
 
   if (loading) return null;
   if (visibleRows.length === 0) return null;
