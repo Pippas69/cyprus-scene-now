@@ -240,8 +240,10 @@ export const ReservationEventCheckout: React.FC<ReservationEventCheckoutProps> =
   onSuccess,
   businessId,
   eventType,
+  lockedCustomerData,
 }) => {
   const isHybridEvent = eventType === 'ticket_and_reservation';
+  const hasLockedCustomer = !!(lockedCustomerData && (lockedCustomerData.customerName || lockedCustomerData.customerPhone));
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const t = translations[language];
