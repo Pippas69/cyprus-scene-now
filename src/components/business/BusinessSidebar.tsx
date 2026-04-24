@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid, Megaphone, Receipt } from "lucide-react";
+import { Calendar, Percent, TrendingUp, Settings, Users, CreditCard, Zap, Ticket, LayoutGrid, Megaphone } from "lucide-react";
 import { isPerformanceBusiness } from "@/lib/isClubOrEventBusiness";
 import {
   Sidebar,
@@ -123,7 +123,6 @@ export function BusinessSidebar({ businessCategories, floorPlanEnabled, planSlug
   const businessItems = [
     { title: t.subscription, url: "/dashboard-business/subscription", icon: CreditCard },
     { title: t.boosts, url: "/dashboard-business/boosts", icon: Zap },
-    { title: (t as any).billingSms ?? "Billing & SMS", url: "/dashboard-business/billing-sms", icon: Receipt },
     { title: t.settings, url: "/dashboard-business/settings", icon: Settings },
   ];
 

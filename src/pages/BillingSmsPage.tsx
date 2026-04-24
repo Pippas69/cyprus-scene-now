@@ -9,6 +9,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { CreditCard, AlertTriangle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { Separator } from "@/components/ui/separator";
 
 const STRIPE_PK =
   (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined) ?? "";
@@ -16,6 +17,7 @@ const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null;
 
 interface Props {
   businessId: string;
+  compact?: boolean;
 }
 
 interface PaymentMethod {
@@ -38,7 +40,7 @@ interface BillingAttempt {
   attempted_at: string;
 }
 
-export default function BillingSmsPage({ businessId }: Props) {
+export default function BillingSmsPage({ businessId, compact = false }: Props) {
   const { language } = useLanguage();
   const t = useMemo(() => translations[language], [language]);
   const [loading, setLoading] = useState(true);
@@ -143,6 +145,141 @@ export default function BillingSmsPage({ businessId }: Props) {
     setSetupCustomerId(null);
     await refresh();
   };
+
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        {paused.paused && paused.reason === "payment_failed" && (
+          <Alert variant="destructive" className="py-2">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <AlertTitle className="text-xs sm:text-sm">{t.pausedTitle}</AlertTitle>
+            <AlertDescription className="text-[11px] sm:text-xs">{t.pausedDesc}</AlertDescription>
+          </Alert>
+        )}
+
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+              <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+              {t.title}
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">{t.subtitle}</CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 space-y-4">
+            {/* Card on file */}
+            <div>
+              <p className="text-xs sm:text-sm font-medium mb-2">{t.cardOnFile}</p>
+              {loading ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.loading}
+                </div>
+              ) : pm ? (
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="px-2 py-0.5 rounded border text-[10px] sm:text-xs font-medium uppercase">
+                      {pm.card_brand ?? "card"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs sm:text-sm truncate">•••• {pm.card_last4}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {String(pm.card_exp_month).padStart(2, "0")}/{pm.card_exp_year}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleAddCard}>
+                      {t.update}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleDeleteCard}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-xs text-muted-foreground">{t.noCard}</p>
+                  <Button size="sm" className="h-7 text-xs px-3" onClick={handleAddCard}>{t.addCard}</Button>
+                </div>
+              )}
+
+              {showAddCard && setupClientSecret && stripePromise && (
+                <div className="mt-3 border-t pt-3">
+                  <Elements stripe={stripePromise} options={{ clientSecret: setupClientSecret }}>
+                    <SetupCardForm
+                      businessId={businessId}
+                      customerId={setupCustomerId!}
+                      onDone={onSaveDone}
+                      onCancel={() => setShowAddCard(false)}
+                      language={language}
+                    />
+                  </Elements>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Balance */}
+            <div>
+              <p className="text-xs sm:text-sm font-medium">{t.balance}</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground mb-1">{t.balanceDesc}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl sm:text-2xl font-bold">€{(balance.unbilled_cents / 100).toFixed(2)}</span>
+                <span className="text-[11px] sm:text-xs text-muted-foreground">
+                  ({balance.unbilled_count} SMS)
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t.thresholdInfo}</p>
+            </div>
+
+            <Separator />
+
+            {/* History */}
+            <div>
+              <p className="text-xs sm:text-sm font-medium mb-2">{t.history}</p>
+              {attempts.length === 0 ? (
+                <p className="text-[11px] sm:text-xs text-muted-foreground">{t.noHistory}</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {attempts.map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center justify-between gap-2 p-2 border rounded text-[11px] sm:text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {a.status === "success" ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium">
+                            €{(a.amount_cents / 100).toFixed(2)}{" "}
+                            <span className="text-muted-foreground font-normal">
+                              ({a.sms_count} SMS)
+                            </span>
+                          </p>
+                          <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                            {new Date(a.attempted_at).toLocaleString()} — {a.trigger_type}
+                          </p>
+                          {a.error_message && (
+                            <p className="text-[10px] sm:text-[11px] text-destructive truncate">{a.error_message}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant={a.status === "success" ? "default" : "destructive"} className="text-[10px] px-1.5 py-0 h-4">
+                        {a.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="px-3 sm:px-0 py-4 max-w-4xl mx-auto space-y-4">
