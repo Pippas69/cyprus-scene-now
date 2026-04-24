@@ -952,8 +952,10 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
         {coverImage && (
           <div className="relative w-full aspect-[3/2] overflow-hidden">
             <img
-              src={coverImage}
+              src={getOptimizedImageUrl(coverImage, 800)}
               alt={title || ''}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           </div>
@@ -966,7 +968,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
           {businessInfo && (
             <div className="flex items-center gap-1.5">
               {businessInfo.logo_url && (
-                <img src={businessInfo.logo_url} alt="" className="h-4 w-4 rounded-full object-cover shrink-0" />
+                <img src={getOptimizedImageUrl(businessInfo.logo_url, 64)} alt="" loading="lazy" decoding="async" className="h-4 w-4 rounded-full object-cover shrink-0" />
               )}
               <p className="text-xs text-muted-foreground truncate">{businessInfo.name}</p>
             </div>
