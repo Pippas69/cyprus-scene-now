@@ -2554,12 +2554,12 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
                           {getStatusBadge(reservation)}
                         </div>
                       </TableCell>
-                      {/* 6. Care of — staff member who handled the booking */}
+                      {/* 6. Care of — staff member who handled the booking. Default to "ΦOMO" when empty for direct customer bookings. */}
                       <TableCell className="align-top px-[60px] whitespace-nowrap">
                         <EditableCell
                           reservationId={reservation.id}
                           field="care_of"
-                          displayValue={(reservation as any).care_of || '—'}
+                          displayValue={(reservation as any).care_of || 'ΦOMO'}
                           rawValue={(reservation as any).care_of || ''}
                           inputClassName="h-7 text-sm w-32"
                         />
