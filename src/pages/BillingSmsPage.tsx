@@ -9,6 +9,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { CreditCard, AlertTriangle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { Separator } from "@/components/ui/separator";
 
 const STRIPE_PK =
   (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined) ?? "";
