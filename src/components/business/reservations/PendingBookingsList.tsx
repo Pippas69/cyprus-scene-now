@@ -26,6 +26,7 @@ interface PendingBookingRow {
   customer_name: string | null;
   customer_phone: string;
   party_size: number | null;
+  seating_preference: string | null;
   care_of: string | null;
   notes: string | null;
   status: 'pending' | 'completed' | 'link_expired' | 'cancelled';
