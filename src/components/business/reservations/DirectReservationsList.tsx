@@ -189,7 +189,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       cancelled: 'Ακυρωμένη',
       checkedIn: 'Check-in',
       noShow: 'No-Show',
-      name: 'Όνομα',
+      name: 'Στοιχεία',
       contact: 'Επικοινωνία',
       details: 'Λεπτομέρειες',
       dateTime: 'Ημ/νία & Ώρα',
