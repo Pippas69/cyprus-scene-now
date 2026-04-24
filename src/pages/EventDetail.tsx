@@ -1256,6 +1256,7 @@ export default function EventDetail() {
         eventTitle={event.title}
         ticketTiers={reservationFlowTicketTiers}
         businessId={event.businesses?.id}
+        pendingBookingToken={smsLocked?.token ?? null}
         onSuccess={(orderId, isFree) => {
           setShowKalivaFlow(false);
           if (isFree) {
@@ -1274,6 +1275,7 @@ export default function EventDetail() {
         ticketTiers={walkInTicketTiers}
         showInstances={showInstances.length > 0 ? showInstances : undefined}
         businessId={event.businesses?.id}
+        pendingBookingToken={smsLocked?.token ?? null}
         onSuccess={(orderId, isFree) => {
           setShowTicketFlow(false);
           if (isFree) {
