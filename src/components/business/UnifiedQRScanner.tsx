@@ -684,7 +684,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="font-medium">{scanResult.details.customerName}</span>
                             </div>
                           )}
-                          {scanResult.details.tierName && (
+                          {scanResult.details.tierName && !(scanResult.linkedReservation && scanResult.details.tierName === 'Reservation Entry') && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t.tier}:</span>
                               <span className="font-medium">{scanResult.details.tierName}</span>
@@ -695,7 +695,7 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                               <span className="text-muted-foreground">{language === 'el' ? 'Τύπος:' : 'Type:'}</span>
                               <span className="font-medium text-primary">{language === 'el' ? 'Πρόσκληση' : 'Invitation'}</span>
                             </div>
-                          ) : scanResult.details.tierPrice !== undefined && (
+                          ) : scanResult.details.tierPrice !== undefined && !(scanResult.linkedReservation && scanResult.details.tierName === 'Reservation Entry') && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t.price}:</span>
                               <span className="font-medium">{formatPrice(scanResult.details.tierPrice)}</span>
@@ -708,6 +708,12 @@ export function UnifiedQRScanner({ businessId, language, onScanComplete }: Unifi
                                 <Users className="h-3.5 w-3.5" />
                                 {language === 'el' ? 'Κράτηση ενεργοποιήθηκε' : 'Reservation activated'}
                               </div>
+                              {scanResult.linkedReservation.seatingType && (
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">{t.tier}:</span>
+                                  <span className="font-medium">{scanResult.linkedReservation.seatingType}</span>
+                                </div>
+                              )}
                               <div className="flex justify-between text-xs">
                                 <span className="text-muted-foreground">{language === 'el' ? 'Άτομα:' : 'Party:'}</span>
                                 <span className="font-medium">{scanResult.linkedReservation.partySize}</span>
