@@ -252,6 +252,14 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     return cents(r.prepaid_min_charge_cents);
   };
 
+  // Walk-in price: synthetic walk-ins (from ticket orders) carry the price in
+  // ticket_credit_cents; manual walk-in entries carry it in prepaid_min_charge_cents.
+  const walkInPriceFor = (r: ExportReservationRow): string => {
+    if (r.ticket_credit_cents && r.ticket_credit_cents > 0) return cents(r.ticket_credit_cents);
+    if (r.prepaid_min_charge_cents && r.prepaid_min_charge_cents > 0) return cents(r.prepaid_min_charge_cents);
+    return '';
+  };
+
   // ============================================================
   // TICKET-ONLY EVENT
   // Columns: Όνομα, Τηλέφωνο, Πόλη, Ηλικία, Τιμή, Care of, Σημειώσεις
