@@ -24,6 +24,7 @@ export type SmsLockedCustomer = {
   customerPhone: string;
   partySize: number | null;
   seatingPreference: string | null;
+  notes: string | null;
 };
 
 /**
