@@ -185,6 +185,31 @@ serve(async (req) => {
 
       // Add tickets for new guests (event-based) OR reservation_guests (direct)
       if (res.event_id) {
+        // Resolve the tier_id of the existing tickets for this reservation
+        // so the new tickets inherit the SAME tier (name + price) — critical
+        // for the check-in success dialog to show "Τραπέζι" / correct price
+        // instead of falling back to a different active tier.
+        let inheritedTierId: string | null = hybridTierId;
+        if (!inheritedTierId) {
+          const { data: existingOrder } = await supabase
+            .from("ticket_orders")
+            .select("id")
+            .eq("linked_reservation_id", reservation_id)
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (existingOrder?.id) {
+            const { data: existingTicket } = await supabase
+              .from("tickets")
+              .select("tier_id")
+              .eq("order_id", existingOrder.id)
+              .order("created_at", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            inheritedTierId = existingTicket?.tier_id ?? null;
+          }
+        }
+
         await ensureReservationEventGuestTickets({
           supabaseClient: supabase,
           reservationId: reservation_id,
@@ -195,6 +220,7 @@ serve(async (req) => {
           forceNewOrder: true,
           orderSubtotalCents: 0,
           orderTotalCents: 0,
+          tierIdOverride: inheritedTierId,
         });
       } else {
         // Direct reservation → insert into reservation_guests
