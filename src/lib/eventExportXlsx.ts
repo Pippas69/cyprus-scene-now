@@ -300,7 +300,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
-      [t.minCharge]: cents(r.prepaid_min_charge_cents),
+      [t.minCharge]: minChargeFor(r),
       [t.seating]: formatSeating(
         r.seating_type_id,
         ctx.seatingTypeNames,
