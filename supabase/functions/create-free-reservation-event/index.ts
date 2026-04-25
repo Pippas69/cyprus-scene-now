@@ -146,7 +146,7 @@ serve(async (req) => {
         party_size: safePartySize,
         phone_number: lockedPhoneNumber ?? null,
         preferred_time: event.start_at,
-        special_requests: (special_requests as string | undefined) ?? null,
+        special_requests: ((special_requests as string | undefined)?.trim() || lockedNotes || null),
         seating_type_id: seatingTypeId,
         prepaid_min_charge_cents: 0,
         prepaid_charge_status: "paid",
