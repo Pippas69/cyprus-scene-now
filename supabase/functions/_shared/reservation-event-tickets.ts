@@ -130,6 +130,7 @@ export const ensureReservationEventGuestTickets = async ({
   forceNewOrder = false,
   orderSubtotalCents = 0,
   orderTotalCents = 0,
+  tierIdOverride = null,
 }: {
   supabaseClient: SupabaseClientLike;
   reservationId: string;
@@ -147,6 +148,13 @@ export const ensureReservationEventGuestTickets = async ({
   orderSubtotalCents?: number;
   /** Total (incl. fees) for the new order, used only when forceNewOrder=true. */
   orderTotalCents?: number;
+  /**
+   * Explicit tier_id to assign to the new tickets. Used by add-guests to make
+   * sure new tickets inherit the SAME tier as the original reservation tickets
+   * (so name + price match in the check-in success dialog). When null, falls
+   * back to the legacy auto-pick behaviour for backwards compatibility.
+   */
+  tierIdOverride?: string | null;
 }): Promise<number> => {
   const { data: reservation, error: reservationError } = await supabaseClient
     .from("reservations")
