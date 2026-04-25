@@ -73,7 +73,7 @@ export interface DirectReservationsExportSnapshot {
   cityByReservation: Record<string, string>;
   checkInCounts: Record<string, { used: number; total: number }>;
   compCountByParent: Record<string, number>;
-  displayMinChargeByReservation: Record<string, number>;
+  displayMinChargeByReservation: Record<string, string>;
 }
 
 interface DirectReservationsListProps {
@@ -1415,17 +1415,35 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Emit a data snapshot for parent-side features (e.g. Excel export)
   useEffect(() => {
     if (!onExportDataChange) return;
-    // Pre-compute the displayed minimum charge per reservation using the same logic
-    // as the management UI: prefer the manual override, otherwise the seating tier
-    // for the party size, falling back to stored prepaid_min_charge_cents or
-    // ticket_credit_cents.
-    const displayMinChargeByReservation: Record<string, number> = {};
+    // Pre-compute the displayed minimum charge per reservation as a STRING using
+    // the same logic as the management UI:
+    //  - source = 'invitation'        → "Πρόσκληση"/"Invitation"
+    //  - matched tier in bottle mode  → "1 Premium Bottle" etc.
+    //  - manual entry override        → € amount
+    //  - tier amount / fallback       → € amount
+    const invitationLabel = language === 'el' ? 'Πρόσκληση' : 'Invitation';
+    const displayMinChargeByReservation: Record<string, string> = {};
     for (const r of reservations) {
-      const tierMinCharge = getMinChargeForPartySize(r.seating_type_id, r.party_size || 1);
-      const value = r.is_manual_entry && r.prepaid_min_charge_cents != null
+      if (r.source === 'invitation') {
+        displayMinChargeByReservation[r.id] = invitationLabel;
+        continue;
+      }
+      const matchedTier = getMatchedTierForPartySize(r.seating_type_id, r.party_size || 1);
+      if (matchedTier && checkIsBottleTier(matchedTier as any)) {
+        displayMinChargeByReservation[r.id] = formatBottleLabel(
+          matchedTier.bottle_type as 'bottle' | 'premium_bottle',
+          matchedTier.bottle_count as number,
+          language,
+        );
+        continue;
+      }
+      const tierMinCharge = matchedTier?.prepaid_min_charge_cents ?? null;
+      const valueCents = r.is_manual_entry && r.prepaid_min_charge_cents != null
         ? r.prepaid_min_charge_cents
         : (tierMinCharge ?? r.prepaid_min_charge_cents ?? r.ticket_credit_cents ?? 0);
-      displayMinChargeByReservation[r.id] = value || 0;
+      displayMinChargeByReservation[r.id] = valueCents > 0
+        ? `€${(Math.round(valueCents) / 100).toFixed(2)}`
+        : '';
     }
     onExportDataChange({
       reservations,

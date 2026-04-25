@@ -65,9 +65,11 @@ export interface ExportContext {
   cityByReservation: Record<string, string>;
   checkInCounts: Record<string, { used: number; total: number }>;
   compCountByParent: Record<string, number>;
-  // Pre-resolved minimum charge per reservation, mirroring what the management UI shows.
+  // Pre-resolved minimum charge per reservation as a display STRING, mirroring the
+  // management UI. May be a euro amount ("€100.00"), an invitation label
+  // ("Πρόσκληση"/"Invitation"), or a bottle description ("2 Premium Bottles").
   // Falls back to the row's stored prepaid_min_charge_cents when missing.
-  displayMinChargeByReservation?: Record<string, number>;
+  displayMinChargeByReservation?: Record<string, string>;
 }
 
 const tx = {
@@ -248,13 +250,17 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   const minChargeFor = (r: ExportReservationRow): string => {
     const map = ctx.displayMinChargeByReservation;
     const resolved = map ? map[r.id] : undefined;
-    if (resolved != null) return cents(resolved);
+    if (resolved != null && resolved !== '') return resolved;
+    // Fallback: invitation source → invitation label, else euro amount or empty
+    if ((r.source || '').toLowerCase() === 'invitation') return t.invitation;
     return cents(r.prepaid_min_charge_cents);
   };
 
   // Walk-in price: synthetic walk-ins (from ticket orders) carry the price in
   // ticket_credit_cents; manual walk-in entries carry it in prepaid_min_charge_cents.
+  // For invitation walk-ins, show the invitation label instead of an empty cell.
   const walkInPriceFor = (r: ExportReservationRow): string => {
+    if ((r.source || '').toLowerCase() === 'invitation') return t.invitation;
     if (r.ticket_credit_cents && r.ticket_credit_cents > 0) return cents(r.ticket_credit_cents);
     if (r.prepaid_min_charge_cents && r.prepaid_min_charge_cents > 0) return cents(r.prepaid_min_charge_cents);
     return '';
