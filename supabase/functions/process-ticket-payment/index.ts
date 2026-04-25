@@ -205,23 +205,28 @@ Deno.serve(async (req) => {
     const pendingBookingToken = session.metadata?.pending_booking_token;
     if (pendingBookingToken) {
       try {
-        // Sync care_of from pending_booking → ticket_orders (so it shows in the management table)
+        // Sync care_of + notes from pending_booking → ticket_orders (so it shows in the management table)
         try {
           const { data: pbCareOfRow } = await supabaseClient
             .from("pending_bookings")
-            .select("care_of")
+            .select("care_of, notes")
             .eq("token", pendingBookingToken)
             .maybeSingle();
           const pbCareOfTo = (pbCareOfRow as { care_of?: string | null } | null)?.care_of ?? null;
-          if (pbCareOfTo) {
+          const rawPbNotesTo = (pbCareOfRow as { notes?: string | null } | null)?.notes;
+          const pbNotesTo = rawPbNotesTo && String(rawPbNotesTo).trim() ? String(rawPbNotesTo).trim() : null;
+          const orderUpdate: Record<string, unknown> = {};
+          if (pbCareOfTo) orderUpdate.care_of = pbCareOfTo;
+          if (pbNotesTo) orderUpdate.notes = pbNotesTo;
+          if (Object.keys(orderUpdate).length > 0) {
             await supabaseClient
               .from("ticket_orders")
-              .update({ care_of: pbCareOfTo })
+              .update(orderUpdate)
               .eq("id", orderId);
-            logStep("ticket_orders.care_of synced from pending_booking", { orderId, care_of: pbCareOfTo });
+            logStep("ticket_orders care_of/notes synced from pending_booking", { orderId, ...orderUpdate });
           }
         } catch (careErr) {
-          logStep("ticket_orders.care_of sync error (non-fatal)", { error: careErr instanceof Error ? careErr.message : String(careErr) });
+          logStep("ticket_orders.care_of/notes sync error (non-fatal)", { error: careErr instanceof Error ? careErr.message : String(careErr) });
         }
 
         const { error: pbErr, count: pbCount } = await supabaseClient
@@ -366,18 +371,22 @@ Deno.serve(async (req) => {
           const reservationNameFromMeta = session.metadata?.reservation_name?.trim() || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
-          // If linked to a pending_booking, fetch its care_of so we can persist it on the auto-created reservation
+          // If linked to a pending_booking, fetch its care_of + notes so we can persist them on the auto-created reservation
           let pbCareOfTk: string | null = null;
+          let pbNotesTk: string | null = null;
           if (pendingBookingToken) {
             try {
               const { data: pbRowTk } = await supabaseClient
                 .from("pending_bookings")
-                .select("care_of")
+                .select("care_of, notes")
                 .eq("token", pendingBookingToken)
                 .maybeSingle();
               pbCareOfTk = (pbRowTk as { care_of?: string | null } | null)?.care_of ?? null;
+              const rawPbNotesTk = (pbRowTk as { notes?: string | null } | null)?.notes;
+              pbNotesTk = rawPbNotesTk && String(rawPbNotesTk).trim() ? String(rawPbNotesTk).trim() : null;
             } catch (_e) {
               pbCareOfTk = null;
+              pbNotesTk = null;
             }
           }
 
@@ -398,6 +407,7 @@ Deno.serve(async (req) => {
             qr_code_token: reservationQrToken,
             special_requests:
               specialRequestsFromMeta ||
+              pbNotesTk ||
               `Created from ticket+reservation purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
             seating_type_id: seatingTypeId,
             source: "ticket_auto",

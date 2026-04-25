@@ -66,6 +66,7 @@ serve(async (req) => {
     // from the DB — never trust client-supplied identifying data for SMS-link checkouts.
     let lockedReservationName = reservation_name as string | undefined;
     let lockedPhoneNumber = phone_number as string | undefined;
+    let lockedNotes: string | null = null;
     if (pending_booking_token) {
       const locked = await loadSmsLockedCustomer(supabaseService, pending_booking_token as string);
       if (!locked) {
@@ -73,6 +74,7 @@ serve(async (req) => {
       }
       if (locked.customerName) lockedReservationName = locked.customerName;
       lockedPhoneNumber = locked.customerPhone;
+      lockedNotes = locked.notes;
       console.log("[free-reservation] SMS booking server-side override applied", { pending_booking_id: locked.pendingBookingId });
     }
 
@@ -144,7 +146,7 @@ serve(async (req) => {
         party_size: safePartySize,
         phone_number: lockedPhoneNumber ?? null,
         preferred_time: event.start_at,
-        special_requests: (special_requests as string | undefined) ?? null,
+        special_requests: ((special_requests as string | undefined)?.trim() || lockedNotes || null),
         seating_type_id: seatingTypeId,
         prepaid_min_charge_cents: 0,
         prepaid_charge_status: "paid",

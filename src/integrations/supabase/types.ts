@@ -7051,6 +7051,7 @@ export type Database = {
           event_id: string
           id: string
           linked_reservation_id: string | null
+          notes: string | null
           status: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -7072,6 +7073,7 @@ export type Database = {
           event_id: string
           id?: string
           linked_reservation_id?: string | null
+          notes?: string | null
           status?: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -7093,6 +7095,7 @@ export type Database = {
           event_id?: string
           id?: string
           linked_reservation_id?: string | null
+          notes?: string | null
           status?: Database["public"]["Enums"]["ticket_order_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
