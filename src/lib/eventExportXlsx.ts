@@ -250,7 +250,9 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   const minChargeFor = (r: ExportReservationRow): string => {
     const map = ctx.displayMinChargeByReservation;
     const resolved = map ? map[r.id] : undefined;
-    if (resolved != null) return cents(resolved);
+    if (resolved != null && resolved !== '') return resolved;
+    // Fallback: invitation source → invitation label, else euro amount or empty
+    if ((r.source || '').toLowerCase() === 'invitation') return t.invitation;
     return cents(r.prepaid_min_charge_cents);
   };
 
