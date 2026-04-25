@@ -228,8 +228,11 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   const wb = XLSX.utils.book_new();
 
   // Helper accessors
+  // Match the management UI: guest_city (per-reservation override) wins over
+  // the buyer/account city. This prevents mixing up cities (e.g. Λεμεσός vs Αμμόχωστος)
+  // when the business has manually set a city for a specific guest.
   const getCity = (r: ExportReservationRow): string =>
-    translateCity(ctx.cityByReservation[r.id] || r.guest_city || '', ctx.language);
+    translateCity(r.guest_city || ctx.cityByReservation[r.id] || '', ctx.language);
 
   // Split reservations into "real" reservations and walk-in synthetic rows.
   // Walk-ins are identified by either:
