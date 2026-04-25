@@ -1415,6 +1415,18 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
   // Emit a data snapshot for parent-side features (e.g. Excel export)
   useEffect(() => {
     if (!onExportDataChange) return;
+    // Pre-compute the displayed minimum charge per reservation using the same logic
+    // as the management UI: prefer the manual override, otherwise the seating tier
+    // for the party size, falling back to stored prepaid_min_charge_cents or
+    // ticket_credit_cents.
+    const displayMinChargeByReservation: Record<string, number> = {};
+    for (const r of reservations) {
+      const tierMinCharge = getMinChargeForPartySize(r.seating_type_id, r.party_size || 1);
+      const value = r.is_manual_entry && r.prepaid_min_charge_cents != null
+        ? r.prepaid_min_charge_cents
+        : (tierMinCharge ?? r.prepaid_min_charge_cents ?? r.ticket_credit_cents ?? 0);
+      displayMinChargeByReservation[r.id] = value || 0;
+    }
     onExportDataChange({
       reservations,
       ticketOnlyOrders,
@@ -1424,6 +1436,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
       cityByReservation,
       checkInCounts,
       compCountByParent,
+      displayMinChargeByReservation,
     });
   }, [
     onExportDataChange,
@@ -1435,6 +1448,7 @@ export const DirectReservationsList = ({ businessId, language, refreshNonce, onR
     cityByReservation,
     checkInCounts,
     compCountByParent,
+    seatingTiers,
   ]);
 
   const getStatusBadge = (reservation: DirectReservation) => {
