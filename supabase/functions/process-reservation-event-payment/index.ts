@@ -147,10 +147,11 @@ serve(async (req) => {
       if (legacyReservationId) {
         // If linked to a pending_booking, fetch its care_of so we can persist it on the reservation
         let pbCareOfLegacy: string | null = null;
+        let pbNotesLegacy: string | null = null;
         if (metadata?.pending_booking_id || metadata?.pending_booking_token) {
           const { data: pbRowLegacy } = await supabaseClient
             .from("pending_bookings")
-            .select("care_of")
+            .select("care_of, notes")
             .or(
               metadata?.pending_booking_id
                 ? `id.eq.${metadata.pending_booking_id}`
@@ -158,6 +159,8 @@ serve(async (req) => {
             )
             .maybeSingle();
           pbCareOfLegacy = (pbRowLegacy as { care_of?: string | null } | null)?.care_of ?? null;
+          const rawNotes = (pbRowLegacy as { notes?: string | null } | null)?.notes;
+          pbNotesLegacy = rawNotes && String(rawNotes).trim() ? String(rawNotes).trim() : null;
         }
 
         // OLD FLOW: reservation was pre-created, just update it
@@ -168,6 +171,8 @@ serve(async (req) => {
           stripe_payment_intent_id: paymentIntentId,
         };
         if (pbCareOfLegacy) legacyUpdate.care_of = pbCareOfLegacy;
+        // Only overwrite special_requests if pb.notes exists AND there's no client-supplied value
+        if (pbNotesLegacy && !specialRequests) legacyUpdate.special_requests = pbNotesLegacy;
 
         const { data: updatedRes, error: updateError } = await supabaseClient
           .from("reservations")
