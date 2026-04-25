@@ -371,18 +371,22 @@ Deno.serve(async (req) => {
           const reservationNameFromMeta = session.metadata?.reservation_name?.trim() || null;
           const specialRequestsFromMeta = session.metadata?.special_requests || null;
 
-          // If linked to a pending_booking, fetch its care_of so we can persist it on the auto-created reservation
+          // If linked to a pending_booking, fetch its care_of + notes so we can persist them on the auto-created reservation
           let pbCareOfTk: string | null = null;
+          let pbNotesTk: string | null = null;
           if (pendingBookingToken) {
             try {
               const { data: pbRowTk } = await supabaseClient
                 .from("pending_bookings")
-                .select("care_of")
+                .select("care_of, notes")
                 .eq("token", pendingBookingToken)
                 .maybeSingle();
               pbCareOfTk = (pbRowTk as { care_of?: string | null } | null)?.care_of ?? null;
+              const rawPbNotesTk = (pbRowTk as { notes?: string | null } | null)?.notes;
+              pbNotesTk = rawPbNotesTk && String(rawPbNotesTk).trim() ? String(rawPbNotesTk).trim() : null;
             } catch (_e) {
               pbCareOfTk = null;
+              pbNotesTk = null;
             }
           }
 
@@ -403,6 +407,7 @@ Deno.serve(async (req) => {
             qr_code_token: reservationQrToken,
             special_requests:
               specialRequestsFromMeta ||
+              pbNotesTk ||
               `Created from ticket+reservation purchase (${partySize} tickets, €${(totalTicketCreditCents / 100).toFixed(2)} credit)`,
             seating_type_id: seatingTypeId,
             source: "ticket_auto",
