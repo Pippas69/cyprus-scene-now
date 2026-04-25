@@ -190,6 +190,42 @@ const Signup = () => {
       });
       if (error) {
         if (error.message.includes("already registered")) {
+          // Edge case: user exists but may be unconfirmed (abandoned signup).
+          // Try to resend the verification code → if it succeeds, recover into OTP screen.
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: values.email,
+          });
+          if (!resendError) {
+            // Unconfirmed account → push to OTP screen with a fresh code
+            setOtpEmail(values.email);
+            setRedirectAfterVerify(redirectUrl);
+            setShowOtpScreen(true);
+            toast.success(
+              language === 'el'
+                ? 'Ο λογαριασμός σου υπάρχει αλλά δεν έχει επιβεβαιωθεί. Στείλαμε νέο κωδικό στο email σου.'
+                : "Your account exists but isn't verified. We sent a new code to your email."
+            );
+            return;
+          }
+          const rmsg = (resendError.message || '').toLowerCase();
+          if (rmsg.includes('already confirmed') || rmsg.includes('confirmed')) {
+            toast.error(
+              language === 'el'
+                ? 'Αυτό το email έχει ήδη εγγραφεί. Πήγαινε στο login για να συνδεθείς.'
+                : 'This email is already registered. Please sign in instead.'
+            );
+            navigate(`/login?email=${encodeURIComponent(values.email)}`);
+            return;
+          }
+          if (rmsg.includes('rate limit') || rmsg.includes('rate_limit') || rmsg.includes('too many')) {
+            toast.error(
+              language === 'el'
+                ? 'Πάρα πολλές προσπάθειες. Δοκίμασε ξανά σε λίγα λεπτά.'
+                : 'Too many attempts. Please try again in a few minutes.'
+            );
+            return;
+          }
           toast.error(language === "el" ? "Αυτό το email είναι ήδη καταχωρημένο" : "This email is already registered");
         } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("rate_limit")) {
           const newAttempts = failedAttempts + 1;
