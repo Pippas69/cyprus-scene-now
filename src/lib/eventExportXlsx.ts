@@ -229,16 +229,28 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   const getCity = (r: ExportReservationRow): string =>
     translateCity(ctx.cityByReservation[r.id] || r.guest_city || '', ctx.language);
 
-  // Split reservations into "real" reservations and walk-in synthetic rows
+  // Split reservations into "real" reservations and walk-in synthetic rows.
+  // Walk-ins are identified by either:
+  //  - synthetic ID prefix "walkin-" (orphan/legacy ticket orders shown as walk-ins), or
+  //  - source === 'walk_in' (manual walk-in entry, with or without a seating assignment), or
+  //  - source === 'invitation' with no seating (free invitation rows that show in the list).
   const realReservations: ExportReservationRow[] = [];
   const walkInReservations: ExportReservationRow[] = [];
   for (const r of ctx.reservations) {
     const isWalkInSynthetic =
       r.id?.startsWith('walkin-') ||
-      ((r.source === 'walk_in' || r.source === 'invitation') && !r.seating_type_id);
+      r.source === 'walk_in' ||
+      (r.source === 'invitation' && !r.seating_type_id);
     if (isWalkInSynthetic) walkInReservations.push(r);
     else realReservations.push(r);
   }
+
+  const minChargeFor = (r: ExportReservationRow): string => {
+    const map = ctx.displayMinChargeByReservation;
+    const resolved = map ? map[r.id] : undefined;
+    if (resolved != null) return cents(resolved);
+    return cents(r.prepaid_min_charge_cents);
+  };
 
   // ============================================================
   // TICKET-ONLY EVENT
