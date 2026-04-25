@@ -22,10 +22,15 @@ const translations = {
     noAccount: "Δεν έχετε λογαριασμό;",
     verifyTitle: "Επαλήθευση Email",
     verifyDesc: "Εισάγετε τον κωδικό που στάλθηκε στο email σας",
+    verifyDescRecovery: "Ο λογαριασμός σου δεν έχει επιβεβαιωθεί ακόμα. Στείλαμε νέο κωδικό στο email σου.",
     verify: "Επαλήθευση",
     resend: "Αποστολή ξανά",
     processing: "Επεξεργασία...",
     passwordMin: "Τουλάχιστον 8 χαρακτήρες",
+    unconfirmedSignup: "Ο λογαριασμός σου υπάρχει αλλά δεν έχει επιβεβαιωθεί. Στείλαμε νέο κωδικό στο email σου.",
+    alreadyConfirmed: "Ο λογαριασμός υπάρχει ήδη. Συνδέσου αντί να εγγραφείς.",
+    loginUnconfirmed: "Ο λογαριασμός σου δεν έχει επιβεβαιωθεί ακόμα. Στείλαμε νέο κωδικό στο email σου.",
+    resendRateLimit: "Περίμενε λίγο πριν ζητήσεις νέο κωδικό.",
   },
   en: {
     signupTitle: "Create Account",
@@ -38,10 +43,15 @@ const translations = {
     noAccount: "Don't have an account?",
     verifyTitle: "Verify Email",
     verifyDesc: "Enter the code sent to your email",
+    verifyDescRecovery: "Your account isn't verified yet. We sent a new code to your email.",
     verify: "Verify",
     resend: "Resend",
     processing: "Processing...",
     passwordMin: "At least 8 characters",
+    unconfirmedSignup: "Your account exists but isn't verified. We sent a new code to your email.",
+    alreadyConfirmed: "Account already exists. Please sign in instead.",
+    loginUnconfirmed: "Your account isn't verified yet. We sent a new code to your email.",
+    resendRateLimit: "Please wait a moment before requesting a new code.",
   },
 };
 
@@ -58,6 +68,27 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
+
+  const isAlreadyRegisteredError = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    return m.includes('already registered') || m.includes('already been registered') || m.includes('user already');
+  };
+
+  const isEmailNotConfirmedError = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    return m.includes('email not confirmed') || m.includes('email_not_confirmed') || m.includes('not confirmed');
+  };
+
+  const isAlreadyConfirmedError = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    return m.includes('already confirmed') || m.includes('confirmed');
+  };
+
+  const isRateLimitError = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    return m.includes('rate limit') || m.includes('rate_limit') || m.includes('too many');
+  };
 
   const handleEmailSignup = async () => {
     if (!email || !password) return;
@@ -71,7 +102,36 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
         email: email.trim(),
         password,
       });
-      if (error) throw error;
+      if (error) {
+        // Edge case: user exists but unconfirmed (or fully confirmed)
+        if (isAlreadyRegisteredError(error.message)) {
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: email.trim(),
+          });
+          if (!resendError) {
+            // Unconfirmed account → resend succeeded → go to OTP
+            setIsRecoveryFlow(true);
+            setMode('verify');
+            toast.success(t.unconfirmedSignup);
+            return;
+          }
+          if (isAlreadyConfirmedError(resendError.message)) {
+            // Fully confirmed → push to login
+            setMode('login');
+            toast.error(t.alreadyConfirmed);
+            return;
+          }
+          if (isRateLimitError(resendError.message)) {
+            toast.error(t.resendRateLimit);
+            return;
+          }
+          toast.error(resendError.message);
+          return;
+        }
+        throw error;
+      }
+      setIsRecoveryFlow(false);
       setMode('verify');
       toast.success(language === 'el' ? 'Κωδικός επαλήθευσης στάλθηκε!' : 'Verification code sent!');
     } catch (err: any) {
@@ -89,7 +149,27 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
         email: email.trim(),
         password,
       });
-      if (error) throw error;
+      if (error) {
+        if (isEmailNotConfirmedError(error.message)) {
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: email.trim(),
+          });
+          if (!resendError) {
+            setIsRecoveryFlow(true);
+            setMode('verify');
+            toast.success(t.loginUnconfirmed);
+            return;
+          }
+          if (isRateLimitError(resendError.message)) {
+            toast.error(t.resendRateLimit);
+            return;
+          }
+          toast.error(resendError.message);
+          return;
+        }
+        throw error;
+      }
       onAuthSuccess();
     } catch (err: any) {
       toast.error(err.message || 'Login failed');
@@ -139,7 +219,7 @@ export const InlineAuthGate: React.FC<InlineAuthGateProps> = ({ onAuthSuccess })
       <div className="space-y-4">
         <div className="text-center space-y-1">
           <h3 className="font-semibold text-base">{t.verifyTitle}</h3>
-          <p className="text-xs text-muted-foreground">{t.verifyDesc}</p>
+          <p className="text-xs text-muted-foreground">{isRecoveryFlow ? t.verifyDescRecovery : t.verifyDesc}</p>
           <p className="text-xs font-medium text-primary">{email}</p>
         </div>
 

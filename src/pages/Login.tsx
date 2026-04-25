@@ -9,13 +9,15 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Sun, Moon } from "lucide-react";
+import { ArrowLeft, Sun, Moon, Mail, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
 import { toastTranslations } from "@/translations/toastTranslations";
 import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,6 +29,13 @@ const Login = () => {
   const { language } = useLanguage();
   const t = authTranslations[language];
   const tt = toastTranslations[language];
+
+  // Recovery flow for unconfirmed accounts
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [showVerifyBlock, setShowVerifyBlock] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [resendingCode, setResendingCode] = useState(false);
 
   const loginSchema = z.object({
     email: z.string().trim().email({ message: t.invalidEmail }),
@@ -50,6 +59,16 @@ const Login = () => {
       password: ""
     }
   });
+
+  // Pre-fill email from query param (e.g. when redirected from signup)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const prefillEmail = params.get("email");
+    if (prefillEmail) {
+      form.setValue("email", prefillEmail);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   const performRedirect = async (userId: string) => {
     const { data: profile } = await supabase
@@ -79,6 +98,31 @@ const Login = () => {
     return { path: redirectPath, message: successMessage };
   };
 
+  const triggerResendForUnconfirmed = async (email: string): Promise<boolean> => {
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+    });
+    if (!resendError) return true;
+    const rmsg = (resendError.message || '').toLowerCase();
+    if (rmsg.includes('rate limit') || rmsg.includes('rate_limit') || rmsg.includes('too many')) {
+      toast.error(language === 'el'
+        ? 'Πάρα πολλές προσπάθειες. Δοκίμασε ξανά σε λίγα λεπτά.'
+        : 'Too many attempts. Please try again in a few minutes.');
+      return false;
+    }
+    if (rmsg.includes('already confirmed') || rmsg.includes('confirmed')) {
+      toast.error(language === 'el'
+        ? 'Ο λογαριασμός φαίνεται ήδη επιβεβαιωμένος. Δοκίμασε ξανά να συνδεθείς.'
+        : 'Account already appears confirmed. Please try signing in again.');
+      setShowVerifyBlock(false);
+      setUnconfirmedEmail(null);
+      return false;
+    }
+    toast.error(resendError.message);
+    return false;
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
@@ -90,7 +134,16 @@ const Login = () => {
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast.error(t.wrongCredentials);
-        } else if (error.message.includes("Email not confirmed")) {
+        } else if (
+          error.message.includes("Email not confirmed") ||
+          error.message.toLowerCase().includes("email_not_confirmed") ||
+          error.message.toLowerCase().includes("not confirmed")
+        ) {
+          // Edge case: user signed up but never verified the OTP.
+          // Show inline alert + offer to resend the code, then verify inline.
+          setUnconfirmedEmail(values.email);
+          setShowVerifyBlock(true);
+          setOtpCode("");
           toast.error(t.emailNotConfirmed);
         } else {
           toast.error(error.message);
@@ -123,6 +176,56 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendVerificationCode = async () => {
+    if (!unconfirmedEmail) return;
+    setResendingCode(true);
+    try {
+      const ok = await triggerResendForUnconfirmed(unconfirmedEmail);
+      if (ok) {
+        toast.success(language === 'el'
+          ? 'Στάλθηκε νέος κωδικός επαλήθευσης στο email σου.'
+          : 'A new verification code was sent to your email.');
+      }
+    } finally {
+      setResendingCode(false);
+    }
+  };
+
+  const handleVerifyUnconfirmed = async () => {
+    if (!unconfirmedEmail || otpCode.length < 6) return;
+    setVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: unconfirmedEmail.trim(),
+        token: otpCode,
+        type: 'signup',
+      });
+      if (error) {
+        toast.error(language === 'el'
+          ? 'Λάθος κωδικός επαλήθευσης. Δοκίμασε ξανά.'
+          : 'Wrong verification code. Try again.');
+        setOtpCode("");
+        return;
+      }
+      // verifyOtp creates a session → user is now signed in.
+      if (data.user) {
+        const redirect = await performRedirect(data.user.id);
+        toast.success(redirect.message);
+        navigate(redirect.path);
+      }
+    } catch (_e) {
+      toast.error(language === 'el' ? 'Κάτι πήγε στραβά' : 'Something went wrong');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const cancelVerifyBlock = () => {
+    setShowVerifyBlock(false);
+    setUnconfirmedEmail(null);
+    setOtpCode("");
   };
 
   const handle2FASuccess = () => {
@@ -215,6 +318,75 @@ const Login = () => {
                 } />
 
 
+              {showVerifyBlock && unconfirmedEmail && (
+                <Alert className="border-accent/40 bg-accent/5">
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription className="space-y-3">
+                    <p className="text-sm">
+                      {language === 'el'
+                        ? 'Ο λογαριασμός σου δεν έχει επιβεβαιωθεί ακόμα. Έλεγξε το email σου για τον κωδικό που σου στείλαμε, ή πάτα παρακάτω για να σου στείλουμε νέο.'
+                        : "Your account isn't verified yet. Check your email for the code we sent, or tap below to receive a new one."}
+                    </p>
+                    <p className="text-xs font-medium text-primary">{unconfirmedEmail}</p>
+
+                    <div className="flex justify-center pt-1">
+                      <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleVerifyUnconfirmed}
+                      disabled={verifyingOtp || otpCode.length < 6}
+                      className="w-full"
+                      size="sm"
+                    >
+                      {verifyingOtp ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        {language === 'el' ? 'Επαλήθευση...' : 'Verifying...'}</>
+                      ) : (
+                        language === 'el' ? 'Επαλήθευση κωδικού' : 'Verify code'
+                      )}
+                    </Button>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={resendingCode}
+                        onClick={handleResendVerificationCode}
+                      >
+                        {resendingCode ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                          {language === 'el' ? 'Αποστολή...' : 'Sending...'}</>
+                        ) : (
+                          language === 'el' ? 'Στείλε ξανά κωδικό' : 'Resend code'
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1"
+                        onClick={cancelVerifyBlock}
+                      >
+                        {language === 'el' ? 'Άκυρο' : 'Cancel'}
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Button
                 type="submit"
                 variant="gradient"
@@ -233,15 +405,6 @@ const Login = () => {
                   {t.forgotPassword}
                 </button>
               </div>
-
-              
-
-
-
-
-
-
-
 
               <div className="text-center text-xs sm:text-sm">
                 <span className="text-foreground/80">{t.noAccount}</span>{" "}
