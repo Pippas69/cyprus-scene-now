@@ -55,6 +55,7 @@ export async function loadSmsLockedCustomer(
       customerPhone: row.customer_phone,
       partySize: row.party_size ?? null,
       seatingPreference: row.seating_preference ?? null,
+      notes: (row.notes ?? null) && String(row.notes).trim() ? String(row.notes).trim() : null,
     };
   } catch (e) {
     console.warn("[sms-locked-customer] failed to load locked booking", e);
