@@ -65,6 +65,9 @@ export interface ExportContext {
   cityByReservation: Record<string, string>;
   checkInCounts: Record<string, { used: number; total: number }>;
   compCountByParent: Record<string, number>;
+  // Pre-resolved minimum charge per reservation, mirroring what the management UI shows.
+  // Falls back to the row's stored prepaid_min_charge_cents when missing.
+  displayMinChargeByReservation?: Record<string, number>;
 }
 
 const tx = {
@@ -226,16 +229,36 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
   const getCity = (r: ExportReservationRow): string =>
     translateCity(ctx.cityByReservation[r.id] || r.guest_city || '', ctx.language);
 
-  // Split reservations into "real" reservations and walk-in synthetic rows
+  // Split reservations into "real" reservations and walk-in synthetic rows.
+  // Walk-ins are identified by either:
+  //  - synthetic ID prefix "walkin-" (orphan/legacy ticket orders shown as walk-ins), or
+  //  - source === 'walk_in' (manual walk-in entry, with or without a seating assignment), or
+  //  - source === 'invitation' with no seating (free invitation rows that show in the list).
   const realReservations: ExportReservationRow[] = [];
   const walkInReservations: ExportReservationRow[] = [];
   for (const r of ctx.reservations) {
     const isWalkInSynthetic =
       r.id?.startsWith('walkin-') ||
-      ((r.source === 'walk_in' || r.source === 'invitation') && !r.seating_type_id);
+      r.source === 'walk_in' ||
+      (r.source === 'invitation' && !r.seating_type_id);
     if (isWalkInSynthetic) walkInReservations.push(r);
     else realReservations.push(r);
   }
+
+  const minChargeFor = (r: ExportReservationRow): string => {
+    const map = ctx.displayMinChargeByReservation;
+    const resolved = map ? map[r.id] : undefined;
+    if (resolved != null) return cents(resolved);
+    return cents(r.prepaid_min_charge_cents);
+  };
+
+  // Walk-in price: synthetic walk-ins (from ticket orders) carry the price in
+  // ticket_credit_cents; manual walk-in entries carry it in prepaid_min_charge_cents.
+  const walkInPriceFor = (r: ExportReservationRow): string => {
+    if (r.ticket_credit_cents && r.ticket_credit_cents > 0) return cents(r.ticket_credit_cents);
+    if (r.prepaid_min_charge_cents && r.prepaid_min_charge_cents > 0) return cents(r.prepaid_min_charge_cents);
+    return '';
+  };
 
   // ============================================================
   // TICKET-ONLY EVENT
@@ -285,7 +308,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
-      [t.minCharge]: cents(r.prepaid_min_charge_cents),
+      [t.minCharge]: minChargeFor(r),
       [t.seating]: formatSeating(
         r.seating_type_id,
         ctx.seatingTypeNames,
@@ -313,7 +336,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
         [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
-        [t.walkInPrice]: cents(r.ticket_credit_cents),
+        [t.walkInPrice]: walkInPriceFor(r),
         [t.seating]: t.dash,
         [t.careOf]: careOfDisplay(r.care_of),
         [t.notes]: r.staff_memo || '',
@@ -346,7 +369,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
       [t.phone]: formatPhone(r.phone_number),
       [t.booking]: formatBooking(r.party_size, t),
       [t.city]: getCity(r),
-      [t.minCharge]: cents(r.prepaid_min_charge_cents),
+      [t.minCharge]: minChargeFor(r),
       [t.prepaid]: cents(r.ticket_credit_cents),
       [t.seating]: formatSeating(
         r.seating_type_id,
@@ -375,7 +398,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
         [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
-        [t.walkInPrice]: cents(r.ticket_credit_cents),
+        [t.walkInPrice]: walkInPriceFor(r),
         [t.seating]: t.dash,
         [t.careOf]: careOfDisplay(r.care_of),
         [t.notes]: r.staff_memo || '',

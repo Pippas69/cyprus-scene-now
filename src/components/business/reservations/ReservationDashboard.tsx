@@ -1070,6 +1070,7 @@ export const ReservationDashboard = ({ businessId, language }: ReservationDashbo
             cityByReservation: exportSnapshot.cityByReservation,
             checkInCounts: exportSnapshot.checkInCounts,
             compCountByParent: exportSnapshot.compCountByParent,
+            displayMinChargeByReservation: exportSnapshot.displayMinChargeByReservation,
           });
         };
 
