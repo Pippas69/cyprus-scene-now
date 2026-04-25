@@ -89,6 +89,7 @@ interface ScanResult {
     pricingMode?: 'amount' | 'bottles' | null;
     bottleType?: 'bottle' | 'premium_bottle' | null;
     bottleCount?: number | null;
+    seatingType?: string | null;
   };
 }
 
