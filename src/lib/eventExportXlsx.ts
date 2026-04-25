@@ -65,9 +65,11 @@ export interface ExportContext {
   cityByReservation: Record<string, string>;
   checkInCounts: Record<string, { used: number; total: number }>;
   compCountByParent: Record<string, number>;
-  // Pre-resolved minimum charge per reservation, mirroring what the management UI shows.
+  // Pre-resolved minimum charge per reservation as a display STRING, mirroring the
+  // management UI. May be a euro amount ("€100.00"), an invitation label
+  // ("Πρόσκληση"/"Invitation"), or a bottle description ("2 Premium Bottles").
   // Falls back to the row's stored prepaid_min_charge_cents when missing.
-  displayMinChargeByReservation?: Record<string, number>;
+  displayMinChargeByReservation?: Record<string, string>;
 }
 
 const tx = {
