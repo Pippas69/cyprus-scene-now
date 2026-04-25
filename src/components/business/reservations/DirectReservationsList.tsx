@@ -73,6 +73,7 @@ export interface DirectReservationsExportSnapshot {
   cityByReservation: Record<string, string>;
   checkInCounts: Record<string, { used: number; total: number }>;
   compCountByParent: Record<string, number>;
+  displayMinChargeByReservation: Record<string, number>;
 }
 
 interface DirectReservationsListProps {
