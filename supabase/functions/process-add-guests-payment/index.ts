@@ -139,6 +139,30 @@ serve(async (req) => {
         extraGuests,
       ).slice(0, extraGuests);
 
+      // Resolve the tier_id of the existing reservation tickets so the
+      // new add-guests tickets inherit the SAME ticket_tier (name + price).
+      // Without this, the helper picks the first active tier of the event,
+      // which causes the check-in success dialog to show e.g. "Bar" instead
+      // of "Τραπέζι" for the newly added guests.
+      let inheritedTierId: string | null = null;
+      const { data: existingOrder } = await supabase
+        .from("ticket_orders")
+        .select("id")
+        .eq("linked_reservation_id", reservationId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (existingOrder?.id) {
+        const { data: existingTicket } = await supabase
+          .from("tickets")
+          .select("tier_id")
+          .eq("order_id", existingOrder.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        inheritedTierId = existingTicket?.tier_id ?? null;
+      }
+
       await ensureReservationEventGuestTickets({
         supabaseClient: supabase,
         reservationId,
@@ -149,6 +173,7 @@ serve(async (req) => {
         forceNewOrder: true,
         orderSubtotalCents: extraChargeCents,
         orderTotalCents: extraChargeCents,
+        tierIdOverride: inheritedTierId,
       });
     }
 

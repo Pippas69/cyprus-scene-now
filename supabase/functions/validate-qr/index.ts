@@ -426,6 +426,7 @@ async function handleTicketQR(
         if (linkedResForUi.seating_type_id) {
           // Look up matched tier (with bottle fields) for accurate min charge display
           let matchedTier: any = null;
+          let seatingTypeName: string | null = null;
           try {
             const { data: tiers } = await supabaseAdmin
               .from("seating_type_tiers")
@@ -437,6 +438,13 @@ async function handleTicketQR(
                 ?? [...tiers].reverse().find((t: any) => linkedResForUi.party_size >= t.min_people)
                 ?? tiers[0];
             }
+            // Resolve seating type display name (e.g. "Τραπέζι" / "Bar" / "VIP" / "Sofa")
+            const { data: seatingTypeRow } = await supabaseAdmin
+              .from("seating_types")
+              .select("name")
+              .eq("id", linkedResForUi.seating_type_id)
+              .maybeSingle();
+            seatingTypeName = seatingTypeRow?.name ?? null;
           } catch (tierErr) {
             logStep("Tier lookup error (non-fatal)", { error: tierErr instanceof Error ? tierErr.message : String(tierErr) });
           }
@@ -450,6 +458,7 @@ async function handleTicketQR(
             pricingMode: matchedTier?.pricing_mode ?? 'amount',
             bottleType: matchedTier?.bottle_type ?? null,
             bottleCount: matchedTier?.bottle_count ?? null,
+            seatingType: seatingTypeName,
           };
           logStep("Linked reservation info prepared", linkedReservationInfo);
         } else {
