@@ -259,13 +259,17 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
     return cents(r.prepaid_min_charge_cents);
   };
 
-  // Walk-in price: synthetic walk-ins (from ticket orders) carry the price in
-  // ticket_credit_cents; manual walk-in entries carry it in prepaid_min_charge_cents.
-  // For invitation walk-ins, show the invitation label instead of an empty cell.
+  // Walk-in price rules — must mirror what the business sees in management:
+  //  - Invitation walk-ins → "Πρόσκληση"/"Invitation"
+  //  - Synthetic walk-ins from real ticket orders (id prefix "walkin-") → ticket_credit_cents
+  //  - Manual walk-ins linked to a walk-in ticket tier → ticket_credit_cents
+  //  - Manual walk-ins WITHOUT an explicitly set walk-in price → empty (never
+  //    fall back to prepaid_min_charge_cents, which is reservation min-charge,
+  //    not a walk-in price; that caused phantom €100 values for walk-ins
+  //    that the business never priced).
   const walkInPriceFor = (r: ExportReservationRow): string => {
     if ((r.source || '').toLowerCase() === 'invitation') return t.invitation;
     if (r.ticket_credit_cents && r.ticket_credit_cents > 0) return cents(r.ticket_credit_cents);
-    if (r.prepaid_min_charge_cents && r.prepaid_min_charge_cents > 0) return cents(r.prepaid_min_charge_cents);
     return '';
   };
 
