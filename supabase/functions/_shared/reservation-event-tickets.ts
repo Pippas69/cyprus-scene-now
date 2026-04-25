@@ -184,10 +184,14 @@ export const ensureReservationEventGuestTickets = async ({
     return 0;
   }
 
-  const tierId = await getOrCreateReservationEventTierId({
-    supabaseClient,
-    eventId: reservation.event_id,
-  });
+  // Prefer the explicit override (so add-guests batches inherit the same
+  // ticket_tier — and therefore the same name + price — as the original
+  // reservation tickets). Fall back to the legacy auto-pick when not provided.
+  const tierId = tierIdOverride
+    || await getOrCreateReservationEventTierId({
+      supabaseClient,
+      eventId: reservation.event_id,
+    });
 
   let orderId: string | null = null;
 
