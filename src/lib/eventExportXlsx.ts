@@ -398,7 +398,7 @@ export function exportEventManagementToXlsx(ctx: ExportContext): void {
         [t.phone]: formatPhone(r.phone_number),
         [t.booking]: formatBooking(1, t),
         [t.city]: getCity(r),
-        [t.walkInPrice]: cents(r.ticket_credit_cents),
+        [t.walkInPrice]: walkInPriceFor(r),
         [t.seating]: t.dash,
         [t.careOf]: careOfDisplay(r.care_of),
         [t.notes]: r.staff_memo || '',
