@@ -54,6 +54,7 @@ export default {
 				"stone-gray": "hsl(var(--stone-gray))",
 				midnight: "hsl(var(--midnight))",
 				ocean: "hsl(var(--ocean))",
+				golden: "hsl(var(--golden))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -81,6 +82,8 @@ export default {
         'glow': '0 0 20px hsl(var(--primary) / 0.3)',
         'glow-lg': '0 0 40px hsl(var(--primary) / 0.4)',
         'hover': '0 10px 40px -10px hsl(var(--primary) / 0.2)',
+        'golden': '0 8px 32px -8px hsl(var(--golden) / 0.4)',
+        'golden-lg': '0 0 40px hsl(var(--golden) / 0.35)',
       },
       keyframes: {
         "accordion-down": {

@@ -1,35 +1,41 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Newspaper, MapPin } from "lucide-react";
+import { Calendar, Newspaper, MapPin, ArrowRight, Zap, Star } from "lucide-react";
 import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
 
 interface HeroSectionProps {
   language: "el" | "en";
 }
 
-const featureItems = [
-  {
-    icon: Calendar,
-    labelEl: "Events",
-    labelEn: "Events",
-    path: "/events",
+const copy = {
+  el: {
+    badge: "Η Νο.1 Πλατφόρμα στην Κύπρο",
+    line1: "Μη Χάσεις",
+    line2: "Τίποτα.",
+    sub: "Events, venues και αποκλειστικά deals σε όλη την Κύπρο — όλα σε ένα μέρος.",
+    cta1: "Εξερεύνησε Events",
+    cta2: "Για Επιχειρήσεις",
+    stats: [{ value: "500+", label: "Events" }, { value: "10K+", label: "Χρήστες" }, { value: "200+", label: "Venues" }],
+    liveNow: "Live τώρα",
+    topEvent: "Πάρτι Σαββάτου",
+    featured: "Προτεινόμενο",
   },
-  {
-    icon: Newspaper,
-    labelEl: "Feed",
-    labelEn: "Feed",
-    path: "/feed",
+  en: {
+    badge: "Cyprus's #1 Discovery Platform",
+    line1: "Nothing Gets",
+    line2: "Past You.",
+    sub: "Events, venues and exclusive deals across Cyprus — all in one place.",
+    cta1: "Explore Events",
+    cta2: "For Businesses",
+    stats: [{ value: "500+", label: "Events" }, { value: "10K+", label: "Users" }, { value: "200+", label: "Venues" }],
+    liveNow: "Live now",
+    topEvent: "Saturday Party",
+    featured: "Featured",
   },
-  {
-    icon: MapPin,
-    labelEl: "Map",
-    labelEn: "Map",
-    path: "/map",
-  },
-];
+};
 
-const PhoneMockup = () => {
+const VideoPanel = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -38,36 +44,22 @@ const PhoneMockup = () => {
 
     const playVideo = () => {
       video.muted = true;
-      const playPromise = video.play();
-      if (playPromise) {
-        void playPromise.catch(() => undefined);
-      }
+      const p = video.play();
+      if (p) void p.catch(() => undefined);
     };
 
-    // Lazy-start: only load + play when the video is near the viewport.
-    // This avoids fetching ~3.4MB during initial page load.
     const startLoad = () => {
       if (video.preload !== "auto") {
         video.preload = "auto";
         try { video.load(); } catch { /* noop */ }
       }
-      if (video.readyState >= 2) {
-        playVideo();
-      }
+      if (video.readyState >= 2) playVideo();
     };
 
     let observer: IntersectionObserver | null = null;
     if (typeof IntersectionObserver !== "undefined") {
       observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              startLoad();
-              observer?.disconnect();
-              break;
-            }
-          }
-        },
+        (entries) => { for (const e of entries) if (e.isIntersecting) { startLoad(); observer?.disconnect(); break; } },
         { rootMargin: "200px" }
       );
       observer.observe(video);
@@ -76,180 +68,160 @@ const PhoneMockup = () => {
     }
 
     video.addEventListener("loadeddata", playVideo);
-    return () => {
-      observer?.disconnect();
-      video.removeEventListener("loadeddata", playVideo);
-    };
+    return () => { observer?.disconnect(); video.removeEventListener("loadeddata", playVideo); };
   }, []);
 
   return (
-    <div className="w-[164px] sm:w-[182px] md:w-[204px] lg:w-[224px] xl:w-[236px] shrink-0">
-      <div
-        className="relative rounded-[2rem] sm:rounded-[2.2rem] bg-gradient-to-b from-foreground/30 via-foreground/10 to-foreground/5 p-[4px] ring-1 ring-foreground/10 shadow-2xl shadow-black/30"
-        style={{ aspectRatio: "9/17" }}
-      >
-        <div className="absolute -left-[2px] top-[18%] h-[8%] w-[3px] rounded-l-sm bg-foreground/20" />
-        <div className="absolute -left-[2px] top-[30%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
-        <div className="absolute -left-[2px] top-[44%] h-[12%] w-[3px] rounded-l-sm bg-foreground/20" />
-        <div className="absolute -right-[2px] top-[32%] h-[14%] w-[3px] rounded-r-sm bg-foreground/20" />
-
-        <div className="relative h-full w-full overflow-hidden rounded-[1.8rem] sm:rounded-[2rem] bg-background">
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover brightness-110 contrast-110 saturate-125"
-            src={heroPhoneLoop}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="none"
-          />
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-transparent to-background/10" />
-
-          {/* iOS Status Bar */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-[10%] pt-[6%] text-foreground">
-            <span className="text-[7px] sm:text-[8px] font-semibold leading-none">9:41</span>
-            {/* Dynamic Island */}
-            <div className="h-[8px] sm:h-[10px] w-[22%] rounded-full bg-black" />
-            {/* Signal + WiFi + Battery */}
-            <div className="flex items-center gap-[3px]">
-              <svg className="h-[7px] w-[10px] sm:h-[8px] sm:w-[12px]" viewBox="0 0 17 11" fill="currentColor">
-                <rect x="0" y="7" width="3" height="4" rx="0.5" opacity="0.3"/>
-                <rect x="4.5" y="5" width="3" height="6" rx="0.5" opacity="0.5"/>
-                <rect x="9" y="2.5" width="3" height="8.5" rx="0.5" opacity="0.7"/>
-                <rect x="13.5" y="0" width="3" height="11" rx="0.5"/>
-              </svg>
-              <svg className="h-[7px] w-[10px] sm:h-[8px] sm:w-[11px]" viewBox="0 0 16 12" fill="currentColor">
-                <path d="M8 3.6c1.8 0 3.4.7 4.6 1.9l1.2-1.2C12.2 2.7 10.2 1.8 8 1.8S3.8 2.7 2.2 4.3l1.2 1.2C4.6 4.3 6.2 3.6 8 3.6z" opacity="0.5"/>
-                <path d="M8 6.6c1.1 0 2.1.4 2.9 1.2l1.2-1.2C10.7 5.2 9.4 4.6 8 4.6s-2.7.6-4.1 1.9l1.2 1.2C5.9 7 6.9 6.6 8 6.6z" opacity="0.7"/>
-                <circle cx="8" cy="10" r="1.5"/>
-              </svg>
-              <svg className="h-[7px] w-[14px] sm:h-[8px] sm:w-[16px]" viewBox="0 0 27 13" fill="currentColor">
-                <rect x="0" y="0.5" width="22" height="12" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.2"/>
-                <rect x="23" y="4" width="2.5" height="5" rx="1" opacity="0.4"/>
-                <rect x="1.5" y="2" width="19" height="9" rx="1.5"/>
-              </svg>
-            </div>
-          </div>
-
-          {/* ΦΟΜΟ branding at bottom */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center pb-[8%]">
-            <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-black/60 to-transparent" />
-            <span
-              className="relative font-cinzel text-[9px] sm:text-[11px] font-bold tracking-[0.2em] text-foreground/70"
-            >
-              ΦΟΜΟ
-            </span>
-            <span className="relative font-inter text-[5px] sm:text-[6px] font-light tracking-[0.15em] text-seafoam/50 mt-[1px]">
-              CYPRUS
-            </span>
-          </div>
-
-          {/* Home indicator bar */}
-          <div className="pointer-events-none absolute bottom-[3%] left-1/2 h-[3px] w-[28%] -translate-x-1/2 rounded-full bg-foreground/30 z-20" />
-        </div>
-      </div>
+    <div className="relative w-full h-full">
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        src={heroPhoneLoop}
+        autoPlay muted loop playsInline preload="none"
+      />
+      {/* Gradient overlays for blending */}
+      <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-background/60" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-transparent" />
     </div>
   );
 };
 
 const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
+  const t = copy[language];
 
   return (
-    <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
-      <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-seafoam/[0.06] blur-3xl sm:h-56 sm:w-56" />
-      <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-foreground/[0.04] blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-[8%] left-[24%] h-44 w-44 rounded-full bg-seafoam/[0.05] blur-3xl sm:h-72 sm:w-72" />
+    <section className="relative min-h-screen flex overflow-hidden bg-background">
 
-      <div className="relative z-10">
-        <div className="container mx-auto px-4 pt-20 sm:pt-24 lg:pt-28">
-          <div className="relative mx-auto max-w-5xl">
-            <div className="absolute left-[18%] top-1/2 -z-10 h-44 w-44 -translate-y-1/2 rounded-full bg-seafoam/[0.08] blur-[80px] sm:h-64 sm:w-64" />
-            <div className="absolute right-[18%] top-1/2 -z-10 h-36 w-36 -translate-y-1/2 rounded-full bg-foreground/[0.04] blur-[70px] sm:h-52 sm:w-52" />
+      {/* ── Right half: full-bleed video ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="absolute inset-y-0 right-0 w-full lg:w-[52%] pointer-events-none"
+      >
+        <VideoPanel />
 
-            {/* ΦEAR OF MISSING OUT! heading with glow */}
-            <div className="relative mb-8 sm:mb-10 flex items-center justify-center">
-              {/* Circular seafoam radial glow behind text */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1.5, delay: 0.2 }}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square h-40 sm:h-56 lg:h-64 rounded-full"
-                style={{
-                  background: "radial-gradient(circle, hsl(var(--seafoam) / 0.15) 0%, hsl(var(--seafoam) / 0.06) 40%, transparent 70%)",
-                }}
-              />
-              <motion.h1
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 2, delay: 0.5 }}
-                className="relative font-inter text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-wide text-center text-foreground"
-                style={{
-                  textShadow: "0 0 30px hsl(var(--seafoam) / 0.25), 0 0 60px hsl(var(--seafoam) / 0.1)",
-                }}
-              >
-                ΦEAR OF MISSING OUT!
-              </motion.h1>
+        {/* Floating UI chips on the video — visible on large screens */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
+          className="absolute bottom-32 right-8 hidden lg:flex flex-col gap-2"
+        >
+          {/* Live now pill */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+            <span className="text-white/80 text-xs font-medium">{t.liveNow} · 24 events</span>
+          </div>
+          {/* Featured card chip */}
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-xl">
+            <div className="w-8 h-8 rounded-lg bg-seafoam/20 flex items-center justify-center">
+              <Star className="w-3.5 h-3.5 text-seafoam fill-seafoam/50" />
             </div>
-
-            <div className="flex items-center justify-center gap-6 sm:gap-10 lg:gap-16">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.15 }}
-              >
-                <PhoneMockup />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.25 }}
-                className="flex flex-col items-center gap-6 sm:gap-8"
-              >
-                {featureItems.map((item, index) => (
-                  <motion.button
-                    key={item.labelEn}
-                    onClick={() => navigate(item.path)}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.35 + index * 0.08 }}
-                    className="group flex cursor-pointer flex-col items-center gap-2"
-                  >
-                    <div className="relative h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16">
-                      <svg
-                        className="absolute inset-0 h-full w-full -rotate-45 text-seafoam/50 transition-transform duration-500 group-hover:rotate-0"
-                        viewBox="0 0 80 80"
-                      >
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="37"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeDasharray="58 175"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-
-                      <div className="absolute inset-1.5 flex items-center justify-center rounded-full border border-foreground/10 bg-foreground/5 transition-all duration-300 group-hover:border-seafoam/30 group-hover:bg-seafoam/10">
-                        <item.icon className="h-4 w-4 text-seafoam sm:h-5 sm:w-5" strokeWidth={1.5} />
-                      </div>
-                    </div>
-
-                    <span className="font-inter text-[11px] sm:text-sm font-medium text-foreground/70 transition-colors group-hover:text-foreground">
-                      {language === "el" ? item.labelEl : item.labelEn}
-                    </span>
-                  </motion.button>
-                ))}
-              </motion.div>
+            <div>
+              <p className="text-white/90 text-xs font-semibold">{t.topEvent}</p>
+              <p className="text-white/40 text-[10px]">{t.featured}</p>
             </div>
           </div>
+        </motion.div>
+
+        {/* Nav items floating on video */}
+        <motion.div
+          initial={{ opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="absolute top-1/3 right-6 hidden xl:flex flex-col gap-2"
+        >
+          {[{ icon: Calendar, label: "Events" }, { icon: MapPin, label: "Map" }, { icon: Newspaper, label: "Feed" }].map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-2 px-3 py-2 bg-black/40 backdrop-blur-md border border-white/8 rounded-xl">
+              <Icon className="w-3.5 h-3.5 text-seafoam" />
+              <span className="text-white/65 text-xs">{label}</span>
+            </div>
+          ))}
+        </motion.div>
+      </motion.div>
+
+      {/* ── Left half: copy ── */}
+      <div className="relative z-10 w-full flex items-center">
+        <div className="w-full lg:w-[54%] px-6 sm:px-10 lg:px-16 xl:px-20 pt-28 pb-20 sm:pt-32">
+
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-seafoam/10 border border-seafoam/25 mb-7"
+          >
+            <Zap className="w-3 h-3 text-seafoam fill-seafoam" />
+            <span className="text-seafoam text-xs font-semibold tracking-wider uppercase">{t.badge}</span>
+          </motion.div>
+
+          {/* Heading */}
+          <motion.h1
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.08 }}
+            className="font-urbanist font-black leading-[0.9] tracking-tight text-foreground mb-6"
+            style={{ fontSize: "clamp(3.2rem, 6vw, 5.5rem)" }}
+          >
+            {t.line1}
+            <br />
+            <span className="text-gradient-ocean">{t.line2}</span>
+          </motion.h1>
+
+          {/* Subline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.18 }}
+            className="text-foreground/45 text-base sm:text-lg leading-relaxed mb-9 max-w-sm"
+          >
+            {t.sub}
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.28 }}
+            className="flex flex-col sm:flex-row gap-3 mb-12"
+          >
+            <button
+              onClick={() => navigate("/feed")}
+              className="group flex items-center justify-center gap-2 px-7 py-3.5 bg-seafoam text-aegean font-bold rounded-full hover:bg-seafoam/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-seafoam/20 text-sm sm:text-base"
+            >
+              {t.cta1}
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </button>
+            <button
+              onClick={() => navigate("/for-businesses")}
+              className="flex items-center justify-center gap-2 px-7 py-3.5 border border-white/12 text-foreground/60 font-medium rounded-full hover:border-white/25 hover:text-foreground/90 transition-all duration-200 text-sm sm:text-base"
+            >
+              {t.cta2}
+            </button>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.42 }}
+            className="flex items-center gap-8"
+          >
+            {t.stats.map((s, i) => (
+              <div key={i}>
+                <p className="font-urbanist font-black text-xl text-foreground/85 leading-none">{s.value}</p>
+                <p className="text-foreground/35 text-[11px] mt-1 tracking-wide">{s.label}</p>
+              </div>
+            ))}
+          </motion.div>
         </div>
       </div>
+
+      {/* Bottom fade-to-section */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none z-20" />
     </section>
   );
 };

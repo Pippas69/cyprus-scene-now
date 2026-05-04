@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeSelectChange } from "@/lib/formSafeUpdate";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2, Phone } from "lucide-react";
-import { useTheme } from "next-themes";
+import { MapPin, Heart, ArrowLeft, Store, Sparkles, Clock, GraduationCap, Mail, Loader2, Phone, ArrowRight, Zap, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
 import { authTranslations } from "@/translations/authTranslations";
@@ -25,9 +25,8 @@ import { SuccessCheckmark } from "@/components/ui/success-animation";
 import { useBetaMode } from "@/hooks/useBetaMode";
 import { OceanLoader } from "@/components/ui/ocean-loader";
 import { getCategoriesForUser } from "@/lib/unifiedCategories";
-import { CYPRUS_UNIVERSITIES, getUniversityByDomain, isValidUniversityEmail } from "@/lib/cyprusUniversities";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getCityOptions, translateCity, cyprusCities } from "@/lib/cityTranslations";
+import { CYPRUS_UNIVERSITIES, isValidUniversityEmail } from "@/lib/cyprusUniversities";
+import { getCityOptions } from "@/lib/cityTranslations";
 import { InterestSelectorList } from "@/components/categories/InterestSelectorList";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -37,7 +36,6 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [failedAttempts, setFailedAttempts] = useState(0);
-  const { theme, setTheme } = useTheme();
   const { language } = useLanguage();
   const t = authTranslations[language];
   const tt = toastTranslations[language];
@@ -46,57 +44,27 @@ const Signup = () => {
   const { isBetaMode, isLoading: betaLoading, betaMessage } = useBetaMode();
 
   const signupSchema = z.object({
-    firstName: z.string().trim().min(2, {
-      message: vt.nameRequired
-    }),
-    lastName: z.string().trim().min(2, {
-      message: vt.nameRequired
-    }),
-    age: z.coerce.number().min(15, {
-      message: formatValidationMessage(vt.minValue, { min: 15 })
-    }).max(100),
-    email: z.string().trim().email({
-      message: vt.invalidEmail
-    }),
-    password: z.string().min(8, {
-      message: vt.passwordTooShort
-    }),
-    town: z.string().min(1, {
-      message: vt.selectOption
-    }),
-    phone: z.string().min(1, {
-      message: language === 'el' ? 'Το τηλέφωνο είναι υποχρεωτικό' : 'Phone is required'
-    }).refine((val) => {
-      const digits = val.replace(/\D/g, '').length;
-      return digits >= 8;
-    }, { message: language === 'el' ? 'Μη έγκυρος αριθμός τηλεφώνου' : 'Invalid phone number' }),
-    gender: z.enum(['male', 'female', 'other']).optional(),
+    firstName: z.string().trim().min(2, { message: vt.nameRequired }),
+    lastName: z.string().trim().min(2, { message: vt.nameRequired }),
+    age: z.coerce.number().min(15, { message: formatValidationMessage(vt.minValue, { min: 15 }) }).max(100),
+    email: z.string().trim().email({ message: vt.invalidEmail }),
+    password: z.string().min(8, { message: vt.passwordTooShort }),
+    town: z.string().min(1, { message: vt.selectOption }),
+    phone: z.string().min(1, { message: language === "el" ? "Το τηλέφωνο είναι υποχρεωτικό" : "Phone is required" }).refine(v => v.replace(/\D/g, "").length >= 8, { message: language === "el" ? "Μη έγκυρος αριθμός τηλεφώνου" : "Invalid phone number" }),
+    gender: z.enum(["male", "female", "other"]).optional(),
     preferences: z.array(z.string()).optional(),
     isStudent: z.boolean().optional(),
-    universityEmail: z.string().email().optional().or(z.literal('')),
+    universityEmail: z.string().email().optional().or(z.literal("")),
     selectedUniversity: z.string().optional()
   });
 
   type SignupFormValues = z.infer<typeof signupSchema>;
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      age: undefined,
-      email: "",
-      password: "",
-      town: "",
-      phone: "",
-      gender: undefined,
-      preferences: [],
-      isStudent: false,
-      universityEmail: "",
-      selectedUniversity: ""
-    }
+    defaultValues: { firstName: "", lastName: "", age: undefined, email: "", password: "", town: "", phone: "", gender: undefined, preferences: [], isStudent: false, universityEmail: "", selectedUniversity: "" }
   });
+
   const [passwordLength, setPasswordLength] = useState(0);
-  
   const [isStudent, setIsStudent] = useState(false);
   const [universityEmail, setUniversityEmail] = useState("");
   const [selectedUniversity, setSelectedUniversity] = useState("");
@@ -105,782 +73,416 @@ const Signup = () => {
   const [sendingVerification, setSendingVerification] = useState(false);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
   const [verifyingOtp, setVerifyingOtp] = useState(false);
-  const [redirectAfterVerify, setRedirectAfterVerify] = useState('/feed');
+  const [redirectAfterVerify, setRedirectAfterVerify] = useState("/feed");
 
-  // Validate university email when it changes
   useEffect(() => {
     if (universityEmail && isStudent) {
-      const domain = universityEmail.split('@')[1]?.toLowerCase();
+      const domain = universityEmail.split("@")[1]?.toLowerCase();
       if (domain && selectedUniversity) {
         const matchingUni = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
-        if (matchingUni && domain !== matchingUni.domain) {
-          setStudentEmailError(
-            language === 'el' 
-              ? `Το email πρέπει να είναι @${matchingUni.domain}`
-              : `Email must be @${matchingUni.domain}`
-          );
-        } else if (!isValidUniversityEmail(universityEmail)) {
-          setStudentEmailError(
-            language === 'el' 
-              ? 'Παρακαλώ χρησιμοποιήστε ακαδημαϊκό email'
-              : 'Please use a valid university email'
-          );
-        } else {
-          setStudentEmailError('');
-        }
+        if (matchingUni && domain !== matchingUni.domain) setStudentEmailError(language === "el" ? `Το email πρέπει να είναι @${matchingUni.domain}` : `Email must be @${matchingUni.domain}`);
+        else if (!isValidUniversityEmail(universityEmail)) setStudentEmailError(language === "el" ? "Παρακαλώ χρησιμοποιήστε ακαδημαϊκό email" : "Please use a valid university email");
+        else setStudentEmailError("");
       }
-    } else {
-      setStudentEmailError('');
-    }
+    } else setStudentEmailError("");
   }, [universityEmail, selectedUniversity, isStudent, language]);
 
   const onSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
-      const redirectUrl = searchParams.get('redirect') || '/feed';
-      
-      // Validate student email if they selected student option
+      const redirectUrl = searchParams.get("redirect") || "/feed";
       if (isStudent && universityEmail && selectedUniversity) {
-        if (!isValidUniversityEmail(universityEmail)) {
-          toast.error(language === 'el' ? 'Μη έγκυρο ακαδημαϊκό email' : 'Invalid university email');
-          setIsLoading(false);
-          return;
-        }
+        if (!isValidUniversityEmail(universityEmail)) { toast.error(language === "el" ? "Μη έγκυρο ακαδημαϊκό email" : "Invalid university email"); setIsLoading(false); return; }
       }
-      
-      // For the test email, delete existing user first to allow re-registration
       const TEST_EMAIL = "marinoskoumi04@gmail.com";
       if (values.email.toLowerCase() === TEST_EMAIL) {
-        try {
-          await supabase.functions.invoke('delete-test-user', {
-            body: { email: TEST_EMAIL }
-          });
-        } catch (e) {
-          console.log('Test user cleanup skipped:', e);
-        }
+        try { await supabase.functions.invoke("delete-test-user", { body: { email: TEST_EMAIL } }); } catch {}
       }
-
-      // Phone is already in E.164 format from PhoneInput
-      const fullPhone = values.phone;
-
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}${redirectUrl}`,
-          data: {
-            first_name: values.firstName,
-            last_name: values.lastName,
-            age: values.age,
-            town: values.town,
-            phone: fullPhone,
-            gender: values.gender,
-            preferences: selectedPreferences,
-            is_student: isStudent,
-            university_email: isStudent ? universityEmail : null,
-            selected_university: isStudent ? selectedUniversity : null
-          }
-        }
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email, password: values.password,
+        options: { emailRedirectTo: `${window.location.origin}${redirectUrl}`, data: { first_name: values.firstName, last_name: values.lastName, age: values.age, town: values.town, phone: values.phone, gender: values.gender, preferences: selectedPreferences, is_student: isStudent, university_email: isStudent ? universityEmail : null, selected_university: isStudent ? selectedUniversity : null } }
       });
       if (error) {
         if (error.message.includes("already registered")) {
-          // Edge case: user exists but may be unconfirmed (abandoned signup).
-          // Try to resend the verification code → if it succeeds, recover into OTP screen.
-          const { error: resendError } = await supabase.auth.resend({
-            type: 'signup',
-            email: values.email,
-          });
-          if (!resendError) {
-            // Unconfirmed account → push to OTP screen with a fresh code
-            setOtpEmail(values.email);
-            setRedirectAfterVerify(redirectUrl);
-            setShowOtpScreen(true);
-            toast.success(
-              language === 'el'
-                ? 'Ο λογαριασμός σου υπάρχει αλλά δεν έχει επιβεβαιωθεί. Στείλαμε νέο κωδικό στο email σου.'
-                : "Your account exists but isn't verified. We sent a new code to your email."
-            );
-            return;
-          }
-          const rmsg = (resendError.message || '').toLowerCase();
-          if (rmsg.includes('already confirmed') || rmsg.includes('confirmed')) {
-            toast.error(
-              language === 'el'
-                ? 'Αυτό το email έχει ήδη εγγραφεί. Πήγαινε στο login για να συνδεθείς.'
-                : 'This email is already registered. Please sign in instead.'
-            );
-            navigate(`/login?email=${encodeURIComponent(values.email)}`);
-            return;
-          }
-          if (rmsg.includes('rate limit') || rmsg.includes('rate_limit') || rmsg.includes('too many')) {
-            toast.error(
-              language === 'el'
-                ? 'Πάρα πολλές προσπάθειες. Δοκίμασε ξανά σε λίγα λεπτά.'
-                : 'Too many attempts. Please try again in a few minutes.'
-            );
-            return;
-          }
+          const { error: resendError } = await supabase.auth.resend({ type: "signup", email: values.email });
+          if (!resendError) { setOtpEmail(values.email); setRedirectAfterVerify(redirectUrl); setShowOtpScreen(true); toast.success(language === "el" ? "Στείλαμε νέο κωδικό στο email σου." : "We sent a new code to your email."); return; }
+          const rmsg = (resendError.message || "").toLowerCase();
+          if (rmsg.includes("already confirmed")) { toast.error(language === "el" ? "Αυτό το email έχει ήδη εγγραφεί. Πήγαινε στο login." : "This email is already registered. Please sign in instead."); navigate(`/login?email=${encodeURIComponent(values.email)}`); return; }
+          if (rmsg.includes("rate limit") || rmsg.includes("too many")) { toast.error(language === "el" ? "Πάρα πολλές προσπάθειες." : "Too many attempts. Please try again in a few minutes."); return; }
           toast.error(language === "el" ? "Αυτό το email είναι ήδη καταχωρημένο" : "This email is already registered");
-        } else if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("rate_limit")) {
-          const newAttempts = failedAttempts + 1;
-          setFailedAttempts(newAttempts);
-          if (newAttempts >= 5) {
-            toast.error(language === "el" ? "Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά αργότερα." : "Too many failed attempts. Please try again later.");
-          } else {
-            toast.error(language === "el" ? "Κάτι πήγε στραβά. Δοκιμάστε ξανά." : "Something went wrong. Please try again.");
-          }
-        } else {
-          const newAttempts = failedAttempts + 1;
-          setFailedAttempts(newAttempts);
-          if (newAttempts >= 5 && (error.message.toLowerCase().includes("email") || error.message.toLowerCase().includes("limit"))) {
-            toast.error(language === "el" ? "Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά αργότερα." : "Too many failed attempts. Please try again later.");
-          } else {
-            toast.error(error.message);
-          }
-        }
+        } else if (error.message.toLowerCase().includes("rate limit")) {
+          const newAttempts = failedAttempts + 1; setFailedAttempts(newAttempts);
+          toast.error(newAttempts >= 5 ? (language === "el" ? "Πολλές αποτυχημένες προσπάθειες." : "Too many failed attempts.") : (language === "el" ? "Κάτι πήγε στραβά." : "Something went wrong."));
+        } else { toast.error(error.message); }
         return;
       }
       if (data.user) {
         setFailedAttempts(0);
-        // Ensure demographic/profile fields are persisted immediately (do not rely on triggers)
-        const { error: profileUpsertError } = await supabase
-          .from("profiles")
-          .upsert(
-            {
-              id: data.user.id,
-              first_name: values.firstName,
-              last_name: values.lastName,
-              phone: fullPhone,
-              gender: values.gender ?? null,
-              age: typeof values.age === "number" ? values.age : null,
-              town: values.town,
-              city: values.town,
-            } as any,
-            { onConflict: "id" }
-          );
-
-        if (profileUpsertError) {
-          console.error("Profile upsert error on signup:", profileUpsertError);
-        }
-
-        // If student verification is needed, create the verification record and send email
+        const { error: profileUpsertError } = await supabase.from("profiles").upsert({ id: data.user.id, first_name: values.firstName, last_name: values.lastName, phone: values.phone, gender: values.gender ?? null, age: typeof values.age === "number" ? values.age : null, town: values.town, city: values.town } as any, { onConflict: "id" });
+        if (profileUpsertError) console.error("Profile upsert error:", profileUpsertError);
         if (isStudent && universityEmail && selectedUniversity) {
           const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
           if (universityData) {
             const normalizedEmail = universityEmail.toLowerCase().trim();
-            
-            // Check if this university email is already used by an approved verification
-            const { data: existingApproved } = await supabase
-              .from('student_verifications')
-              .select('id')
-              .eq('university_email', normalizedEmail)
-              .eq('status', 'approved')
-              .maybeSingle();
-            
-            if (existingApproved) {
-              toast.error(language === 'el' 
-                ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
-                : 'This university email is already used by another account'
-              );
-            } else {
-              const { data: verificationData, error: verificationError } = await supabase
-                .from('student_verifications')
-                .insert({
-                  user_id: data.user.id,
-                  university_email: normalizedEmail,
-                  university_name: universityData.name,
-                  university_domain: universityData.domain,
-                  status: 'pending'
-                } as any)
-                .select('id')
-                .single();
-              
-              if (verificationError) {
-                console.error('Student verification insert error:', verificationError);
-                // Check for unique constraint violation
-                if (verificationError.code === '23505') {
-                  toast.error(language === 'el' 
-                    ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
-                    : 'This university email is already used by another account'
-                  );
-                } else {
-                  toast.error(language === 'el' ? 'Αποτυχία δημιουργίας επαλήθευσης φοιτητή' : 'Failed to create student verification');
-                }
-              } else if (verificationData) {
-                // Send verification email (non-blocking for signup success)
+            const { data: existingApproved } = await supabase.from("student_verifications").select("id").eq("university_email", normalizedEmail).eq("status", "approved").maybeSingle();
+            if (existingApproved) toast.error(language === "el" ? "Αυτό το φοιτητικό email χρησιμοποιείται ήδη" : "This university email is already used by another account");
+            else {
+              const { data: verificationData, error: verificationError } = await supabase.from("student_verifications").insert({ user_id: data.user.id, university_email: normalizedEmail, university_name: universityData.name, university_domain: universityData.domain, status: "pending" } as any).select("id").single();
+              if (verificationError) { if (verificationError.code === "23505") toast.error(language === "el" ? "Αυτό το φοιτητικό email χρησιμοποιείται ήδη" : "This university email is already used by another account"); }
+              else if (verificationData) {
                 try {
                   setSendingVerification(true);
-                  const { error: emailError } = await supabase.functions.invoke('send-student-verification-email', {
-                    body: {
-                      verificationId: verificationData.id,
-                      universityEmail: normalizedEmail,
-                      universityName: universityData.name,
-                      userName: `${values.firstName} ${values.lastName}`,
-                    },
-                  });
-
-                  if (emailError) {
-                    console.error('Student verification email error:', emailError);
-                    toast.error(language === 'el' ? 'Δεν στάλθηκε email επαλήθευσης στο πανεπιστήμιο' : 'Verification email was not sent');
-                  } else {
-                    setStudentVerificationSent(true);
-                    toast.success(language === 'el' ? 'Στάλθηκε email επαλήθευσης στο πανεπιστήμιο σου' : 'Verification email sent to your university inbox');
-                  }
-                } finally {
-                  setSendingVerification(false);
-                }
+                  const { error: emailError } = await supabase.functions.invoke("send-student-verification-email", { body: { verificationId: verificationData.id, universityEmail: normalizedEmail, universityName: universityData.name, userName: `${values.firstName} ${values.lastName}` } });
+                  if (!emailError) setStudentVerificationSent(true);
+                } finally { setSendingVerification(false); }
               }
             }
           }
         }
         confetti.trigger();
-        // Show OTP verification screen instead of navigating
-        setOtpEmail(values.email);
-        setRedirectAfterVerify(redirectUrl);
-        setShowOtpScreen(true);
-        toast.success(language === 'el' ? 'Έλεγξε το email σου για τον κωδικό επαλήθευσης' : 'Check your email for the verification code');
+        setOtpEmail(values.email); setRedirectAfterVerify(redirectUrl); setShowOtpScreen(true);
+        toast.success(language === "el" ? "Έλεγξε το email σου για τον κωδικό επαλήθευσης" : "Check your email for the verification code");
       }
-    } catch (error) {
-      toast.error(tt.failed);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { toast.error(tt.failed); } finally { setIsLoading(false); }
   };
 
-  const togglePreference = (category: string) => {
-    setSelectedPreferences(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
-  };
+  const togglePreference = (category: string) => setSelectedPreferences(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]);
 
   const handleVerifyOtp = async () => {
     if (otpCode.length < 6) return;
     setVerifyingOtp(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: otpEmail,
-        token: otpCode,
-        type: 'signup',
-      });
-      if (error) {
-        toast.error(language === 'el' ? 'Λάθος κωδικός επαλήθευσης. Δοκίμασε ξανά.' : 'Wrong verification code. Try again.');
-        setOtpCode('');
-      } else {
-        confetti.trigger();
-        setShowSuccessScreen(true);
-        setTimeout(() => navigate(redirectAfterVerify), 3500);
-      }
-    } catch (e) {
-      toast.error(language === 'el' ? 'Κάτι πήγε στραβά' : 'Something went wrong');
-    } finally {
-      setVerifyingOtp(false);
-    }
+      const { error } = await supabase.auth.verifyOtp({ email: otpEmail, token: otpCode, type: "signup" });
+      if (error) { toast.error(language === "el" ? "Λάθος κωδικός. Δοκίμασε ξανά." : "Wrong verification code. Try again."); setOtpCode(""); }
+      else { confetti.trigger(); setShowSuccessScreen(true); setTimeout(() => navigate(redirectAfterVerify), 3500); }
+    } catch { toast.error(language === "el" ? "Κάτι πήγε στραβά" : "Something went wrong"); }
+    finally { setVerifyingOtp(false); }
   };
 
   const handleResendOtp = async () => {
     setVerifyingOtp(true);
     try {
-      const { error } = await supabase.auth.resend({ type: 'signup', email: otpEmail });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success(language === 'el' ? 'Νέος κωδικός στάλθηκε στο email σου' : 'New code sent to your email');
-      }
-    } finally {
-      setVerifyingOtp(false);
-    }
+      const { error } = await supabase.auth.resend({ type: "signup", email: otpEmail });
+      if (error) toast.error(error.message);
+      else toast.success(language === "el" ? "Νέος κωδικός στάλθηκε" : "New code sent to your email");
+    } finally { setVerifyingOtp(false); }
   };
 
-  // Show loading while checking beta mode
+  const fieldClass = "h-10 rounded-xl bg-white/[0.04] border-white/[0.1] text-white placeholder:text-white/25 focus:border-seafoam/50 text-sm";
+  const labelClass = "text-white/55 text-xs font-medium tracking-wide uppercase";
+
+  // ── Beta loading ──
   if (betaLoading) {
-    return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
-        <OceanLoader size="lg" />
-      </div>
-    );
+    return <div className="min-h-screen bg-background flex items-center justify-center"><OceanLoader size="lg" /></div>;
   }
 
-  // Show Coming Soon if beta mode is enabled
+  // ── Beta mode (coming soon) ──
   if (isBetaMode) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-            <div className="w-full h-full rounded-full bg-gradient-glow" />
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,hsl(var(--primary)/0.2),transparent)]" />
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-md w-full text-center space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm"><ArrowLeft className="w-4 h-4" /></button>
+            <LanguageToggle />
           </div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="max-w-md w-full space-y-8 relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t.back}
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="text-white hover:text-seafoam"
-              >
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          <div className="p-8 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+              <Clock className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+            <h1 className="font-cinzel font-black text-3xl text-white mb-1">ΦΟΜΟ</h1>
+            <h2 className="font-urbanist font-black text-xl text-white mb-3">{language === "el" ? betaMessage.el : betaMessage.en}</h2>
+            <p className="text-white/40 text-sm leading-relaxed mb-6">{language === "el" ? "Ετοιμάζουμε κάτι ξεχωριστό! Η εφαρμογή βρίσκεται σε φάση beta." : "We're preparing something special! The app is currently in beta."}</p>
+            <div className="flex justify-center gap-2 mb-6">
+              {[0, 0.2, 0.4].map((d, i) => <Sparkles key={i} className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: `${d}s` }} />)}
+            </div>
+            <div className="pt-5 border-t border-white/[0.08]">
+              <p className="text-sm text-white/35 mb-3">{language === "el" ? "Είστε επιχείρηση με κωδικό;" : "Are you a business with an invite code?"}</p>
+              <Button variant="outline" onClick={() => navigate("/signup-business")} className="gap-2 border-white/10 text-white/60 hover:text-white hover:border-white/20">
+                <Store className="h-4 w-4" />{language === "el" ? "Εγγραφή Επιχείρησης" : "Business Signup"}
               </Button>
             </div>
           </div>
-
-          <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12 text-center">
-            {/* Logo */}
-            <div className="mb-8">
-              <h1 className="font-cinzel text-5xl font-bold text-primary mb-2">ΦΟΜΟ</h1>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary to-seafoam mx-auto rounded-full" />
-            </div>
-
-            {/* Coming Soon Icon */}
-            <div className="mb-6">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="h-10 w-10 text-primary animate-pulse" />
-              </div>
-            </div>
-
-            {/* Message */}
-            <h2 className="font-cinzel text-3xl font-bold text-foreground mb-4">
-              {language === 'el' ? betaMessage.el : betaMessage.en}
-            </h2>
-            
-            <p className="font-inter text-muted-foreground mb-8 leading-relaxed">
-              {language === 'el' 
-                ? 'Ετοιμάζουμε κάτι ξεχωριστό για εσένα! Η εφαρμογή βρίσκεται σε φάση beta.'
-                : 'We\'re preparing something special for you! The app is currently in beta phase.'
-              }
-            </p>
-
-            {/* Sparkles decoration */}
-            <div className="flex justify-center gap-2 mb-8">
-              <Sparkles className="h-5 w-5 text-primary animate-bounce" style={{ animationDelay: "0s" }} />
-              <Sparkles className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: "0.2s" }} />
-              <Sparkles className="h-5 w-5 text-sunset-coral animate-bounce" style={{ animationDelay: "0.4s" }} />
-            </div>
-
-            {/* Business Signup Link */}
-            <div className="pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-4">
-                {language === 'el' 
-                  ? 'Είστε επιχείρηση με κωδικό πρόσκλησης;'
-                  : 'Are you a business with an invite code?'
-                }
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/signup-business")}
-                className="gap-2"
-              >
-                <Store className="h-4 w-4" />
-                {language === 'el' ? 'Εγγραφή Επιχείρησης' : 'Business Signup'}
-              </Button>
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  // Success Screen after OTP verification
+  // ── Success screen ──
   if (showSuccessScreen) {
     return (
       <>
-        <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={100} />
-        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-              <div className="w-full h-full rounded-full bg-gradient-glow" />
-            </div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          </div>
-          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl text-center">
-            <SuccessCheckmark isVisible={true} size="lg" className="mx-auto" />
-            <h2 className="text-2xl font-bold text-foreground font-cinzel">
-              {language === 'el' ? 'Καλωσόρισες στο ΦΟΜΟ!' : 'Welcome to FOMO!'}
-            </h2>
-            <p className="text-muted-foreground">
-              {language === 'el'
-                ? 'Η εγγραφή σου ολοκληρώθηκε επιτυχώς!'
-                : 'Your registration was completed successfully!'}
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={120} />
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,hsl(var(--seafoam)/0.15),transparent)]" />
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 max-w-sm w-full text-center p-8 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+            <SuccessCheckmark isVisible={true} size="lg" className="mx-auto mb-4" />
+            <h2 className="font-urbanist font-black text-2xl text-white mb-2">{language === "el" ? "Καλωσόρισες στο ΦΟΜΟ!" : "Welcome to FOMO!"}</h2>
+            <p className="text-white/45 text-sm mb-4">{language === "el" ? "Η εγγραφή σου ολοκληρώθηκε επιτυχώς!" : "Your registration was completed successfully!"}</p>
+            <div className="flex items-center justify-center gap-2 text-sm text-white/30">
               <Loader2 className="h-4 w-4 animate-spin" />
-              {language === 'el' ? 'Ανακατεύθυνση...' : 'Redirecting...'}
+              {language === "el" ? "Ανακατεύθυνση..." : "Redirecting..."}
             </div>
-          </div>
+          </motion.div>
         </div>
       </>
     );
   }
 
-  // Regular signup form (when beta mode is disabled)
-  // OTP Verification Screen
+  // ── OTP screen ──
   if (showOtpScreen) {
     return (
       <>
         <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
-        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-              <div className="w-full h-full rounded-full bg-gradient-glow" />
-            </div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          </div>
-          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl">
-            <div className="text-center">
-              <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                {language === 'el' ? 'Επαλήθευση Email' : 'Email Verification'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {language === 'el'
-                  ? `Εισάγετε τον 6ψήφιο κωδικό που στάλθηκε στο ${otpEmail}`
-                  : `Enter the 6-digit code sent to ${otpEmail}`}
-              </p>
-            </div>
-
-            <div className="flex justify-center">
-              <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-
-            <Button
-              variant="gradient"
-              size="lg"
-              className="w-full"
-              disabled={otpCode.length < 6 || verifyingOtp}
-              onClick={handleVerifyOtp}
-            >
-              {verifyingOtp
-                ? (language === 'el' ? 'Επαλήθευση...' : 'Verifying...')
-                : (language === 'el' ? 'Επαλήθευση' : 'Verify')}
-            </Button>
-
-            <div className="text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,hsl(var(--primary)/0.2),transparent)]" />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-sm w-full">
+            <div className="p-8 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-center space-y-5">
+              <div className="w-14 h-14 rounded-full bg-seafoam/10 flex items-center justify-center mx-auto">
+                <Mail className="h-6 w-6 text-seafoam" />
+              </div>
+              <div>
+                <h2 className="font-urbanist font-black text-2xl text-white mb-1">{language === "el" ? "Επαλήθευση Email" : "Email Verification"}</h2>
+                <p className="text-white/40 text-sm">{language === "el" ? `Κωδικός στάλθηκε στο` : `Code sent to`}</p>
+                <p className="text-seafoam text-sm font-mono mt-0.5">{otpEmail}</p>
+              </div>
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                  <InputOTPGroup>{[0,1,2,3,4,5].map(i => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>
+                </InputOTP>
+              </div>
               <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={handleResendOtp}
-                disabled={verifyingOtp}
+                onClick={handleVerifyOtp}
+                disabled={otpCode.length < 6 || verifyingOtp}
+                className="w-full h-11 flex items-center justify-center gap-2 bg-seafoam text-aegean font-bold rounded-xl hover:bg-seafoam/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {language === 'el' ? 'Δεν λάβατε κωδικό; Αποστολή ξανά' : "Didn't receive a code? Resend"}
+                {verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle className="w-4 h-4" /> {language === "el" ? "Επαλήθευση" : "Verify"}</>}
+              </button>
+              <button type="button" className="text-sm text-white/30 hover:text-white/50 transition-colors" onClick={handleResendOtp} disabled={verifyingOtp}>
+                {language === "el" ? "Δεν λάβατε κωδικό; Αποστολή ξανά" : "Didn't receive a code? Resend"}
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </>
     );
   }
 
-  return <>
-    <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
-    <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-          <div className="w-full h-full rounded-full bg-gradient-glow" />
-        </div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{
-        animationDelay: "1s"
-      }} />
-      </div>
-
-      <div className="max-w-2xl w-full space-y-8 relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t.back}
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-white hover:text-seafoam"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
+  // ── Main signup form ──
+  return (
+    <>
+      <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
+      <div className="min-h-screen bg-background">
+        {/* Ambient background */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-20 bg-[radial-gradient(ellipse,hsl(var(--primary)/0.5),transparent)]" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 opacity-15 bg-[radial-gradient(ellipse,hsl(var(--seafoam)/0.6),transparent)]" />
         </div>
 
-        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
+        {/* Sticky top bar */}
+        <div className="sticky top-0 z-20 flex items-center justify-between px-5 sm:px-8 py-4 bg-background/80 backdrop-blur-md border-b border-white/[0.06]">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm">
+            <ArrowLeft className="w-4 h-4" /> {t.back}
+          </button>
+          <span className="font-cinzel font-black text-base text-white tracking-widest">ΦΟΜΟ</span>
+          <LanguageToggle />
+        </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                <FormField control={form.control} name="firstName" render={({
-                field
-              }) => <FormItem>
-                      <FormLabel>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
+        <div className="max-w-xl mx-auto px-5 sm:px-8 py-8 relative z-10">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-8 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-seafoam/10 border border-seafoam/25 mb-4">
+              <Zap className="w-3 h-3 text-seafoam fill-seafoam" />
+              <span className="text-seafoam text-xs font-semibold tracking-wider uppercase">{language === "el" ? "Εγγραφή χρήστη" : "User Signup"}</span>
+            </div>
+            <h1 className="font-urbanist font-black text-4xl sm:text-5xl text-white leading-tight">
+              {language === "el" ? "Ξεκίνα να" : "Start"}
+              <br />
+              <span className="text-gradient-ocean">{language === "el" ? "ανακαλύπτεις." : "discovering."}</span>
+            </h1>
+            <p className="text-white/40 text-sm mt-3">{language === "el" ? "Events, venues & deals σε όλη την Κύπρο — δωρεάν." : "Events, venues & deals across Cyprus — free."}</p>
+          </motion.div>
+
+          {/* Form card */}
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08 }}>
+            <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5 sm:p-7">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {/* Name row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="firstName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
+                        <FormControl><Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className={fieldClass} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="lastName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
+                        <FormControl><Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className={fieldClass} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+
+                  {/* Age */}
+                  <FormField control={form.control} name="age" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
+                      <FormControl><Input type="number" {...field} className={fieldClass} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  {/* Email */}
+                  <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>{t.email}</FormLabel>
+                      <FormControl><Input type="email" placeholder={t.emailPlaceholder} {...field} className={fieldClass} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  {/* Password */}
+                  <FormField control={form.control} name="password" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>{t.password}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
+                        <PasswordInput placeholder={t.passwordPlaceholder} {...field} onChange={e => { field.onChange(e); setPasswordLength(e.target.value.trim().length); }} className={fieldClass} />
                       </FormControl>
                       <FormMessage />
-                    </FormItem>} />
+                    </FormItem>
+                  )} />
 
-                <FormField control={form.control} name="lastName" render={({
-                field
-              }) => <FormItem>
-                      <FormLabel>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
+                  {/* Town */}
+                  <FormField control={form.control} name="town" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={`${labelClass} flex items-center gap-1.5`}><MapPin className="h-3 w-3 text-seafoam" />{language === "el" ? "Πόλη" : "Town"}</FormLabel>
+                      <Select onValueChange={v => safeSelectChange(field.value, v, field.onChange)} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className={fieldClass}>
+                            <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>{getCityOptions(language).map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  {/* Phone */}
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={`${labelClass} flex items-center gap-1.5`}><Phone className="h-3 w-3 text-seafoam" />{language === "el" ? "Τηλέφωνο" : "Phone"}</FormLabel>
                       <FormControl>
-                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
+                        <PhoneInput value={field.value} onChange={field.onChange} language={language} selectClassName={fieldClass} inputClassName={fieldClass} />
                       </FormControl>
                       <FormMessage />
-                    </FormItem>} />
-              </div>
+                    </FormItem>
+                  )} />
 
-              <FormField control={form.control} name="age" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="" {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-
-              <FormField control={form.control} name="email" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{t.email}</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-
-               <FormField control={form.control} name="password" render={({
-               field
-             }) => <FormItem>
-                     <FormLabel>{t.password}</FormLabel>
-                     <FormControl>
-                       <PasswordInput placeholder={t.passwordPlaceholder} {...field} onChange={(e) => { field.onChange(e); setPasswordLength(e.target.value.trim().length); }} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>} />
-
-              <FormField control={form.control} name="town" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {language === "el" ? "Πόλη" : "Town"}
-                    </FormLabel>
-                    <Select 
-                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                      value={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {getCityOptions(language).map(city => <SelectItem key={city.value} value={city.value}>
-                            {city.label}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>} />
-
-              {/* Phone field with international country selector */}
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    {language === "el" ? "Τηλέφωνο" : "Phone"}
-                  </FormLabel>
-                  <FormControl>
-                    <PhoneInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      language={language}
-                      selectClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
-                      inputClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-
-              <FormField control={form.control} name="gender" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
-                    <Select 
-                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                      value={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">
-                          {language === "el" ? "Άνδρας" : "Male"}
-                        </SelectItem>
-                        <SelectItem value="female">
-                          {language === "el" ? "Γυναίκα" : "Female"}
-                        </SelectItem>
-                        <SelectItem value="other">
-                          {language === "el" ? "Άλλο" : "Other"}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>} />
-
-              {/* Category Preferences - list rows (as per mock) */}
-              <div className="space-y-2 sm:space-y-3">
-                <FormLabel className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" />
-                  {language === "el" ? "Τι σας αρέσει;" : "What do you like?"}
-                </FormLabel>
-                <p className="text-sm text-muted-foreground">
-                  {language === "el" ? "Επιλέξτε όσα θέλετε για καλύτερες προτάσεις" : "Select as many as you like for better recommendations"}
-                </p>
-
-                <div className="[&>div]:space-y-1.5 sm:[&>div]:space-y-2">
-                  <InterestSelectorList
-                    categories={getCategoriesForUser(language)}
-                    selectedIds={selectedPreferences}
-                    onToggle={togglePreference}
-                  />
-                </div>
-              </div>
-
-              {/* Student Verification Section */}
-              <div className="space-y-2 sm:space-y-4 p-2.5 sm:p-4 border border-border rounded-xl bg-muted/30">
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <Checkbox 
-                    id="isStudent" 
-                    checked={isStudent} 
-                    onCheckedChange={(checked) => setIsStudent(checked === true)}
-                    className="rounded h-4 w-4" 
-                  />
-                  <label htmlFor="isStudent" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium leading-none cursor-pointer">
-                    <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                    {language === "el" ? "Είμαι φοιτητής/τρια" : "I am a student"}
-                  </label>
-                </div>
-                
-                {isStudent && (
-                  <div className="space-y-2.5 sm:space-y-4 pt-1.5 sm:pt-2 animate-in slide-in-from-top-2">
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {language === "el" 
-                        ? "Επαληθεύστε τη φοιτητική σας ιδιότητα για να λαμβάνετε εκπτώσεις σε επιχειρήσεις."
-                        : "Verify your student status to receive discounts at businesses."
-                      }
-                    </p>
-                    
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <FormLabel className="text-xs sm:text-sm">{language === "el" ? "Πανεπιστήμιο" : "University"}</FormLabel>
-                      <Select 
-                        value={selectedUniversity} 
-                        onValueChange={setSelectedUniversity}
-                      >
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πανεπιστήμιο" : "Select university"} />
-                        </SelectTrigger>
+                  {/* Gender */}
+                  <FormField control={form.control} name="gender" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
+                      <Select onValueChange={v => safeSelectChange(field.value, v, field.onChange)} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger className={fieldClass}>
+                            <SelectValue placeholder={language === "el" ? "Επιλέξτε (προαιρετικό)" : "Select (optional)"} />
+                          </SelectTrigger>
+                        </FormControl>
                         <SelectContent>
-                          {CYPRUS_UNIVERSITIES.map(uni => (
-                            <SelectItem key={uni.domain} value={uni.domain}>
-                              {language === "el" ? uni.nameEl : uni.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="male">{language === "el" ? "Άνδρας" : "Male"}</SelectItem>
+                          <SelectItem value="female">{language === "el" ? "Γυναίκα" : "Female"}</SelectItem>
+                          <SelectItem value="other">{language === "el" ? "Άλλο" : "Other"}</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  {/* Preferences */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Heart className="h-3.5 w-3.5 text-seafoam" />
+                      <span className={labelClass}>{language === "el" ? "Τι σας αρέσει;" : "What do you like?"}</span>
                     </div>
-                    
-                    {selectedUniversity && (
-                      <div className="space-y-1.5 sm:space-y-2 animate-in slide-in-from-top-2">
-                        <FormLabel className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          {language === "el" ? "Ακαδημαϊκό Email" : "University Email"}
-                        </FormLabel>
-                        <Input
-                          type="email"
-                          value={universityEmail}
-                          onChange={(e) => setUniversityEmail(e.target.value)}
-                          placeholder={`example@${selectedUniversity}`}
-                          className="rounded-xl h-8 sm:h-10 text-xs sm:text-sm"
-                        />
-                        {studentEmailError && (
-                          <p className="text-[10px] sm:text-sm text-destructive">{studentEmailError}</p>
-                        )}
-                        {universityEmail && !studentEmailError && isValidUniversityEmail(universityEmail) && (
-                          <div className="border border-green-500 bg-green-50 dark:bg-green-950/20 rounded-lg px-3 py-2">
-                            <p className="text-[10px] sm:text-xs text-green-700 dark:text-green-400 leading-tight">
-                              {language === "el" 
-                                ? "Θα λάβετε email επαλήθευσης στις ρυθμίσεις μετά την εγγραφή."
-                                : "You will receive a verification email in settings after signup."
-                              }
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <p className="text-white/30 text-xs">{language === "el" ? "Επιλέξτε όσα θέλετε για καλύτερες προτάσεις" : "Select as many as you like for better recommendations"}</p>
+                    <div className="[&>div]:space-y-1.5">
+                      <InterestSelectorList categories={getCategoriesForUser(language)} selectedIds={selectedPreferences} onToggle={togglePreference} />
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || passwordLength < 8}>
-                {isLoading ? t.signingUp : t.signupButton}
-              </Button>
+                  {/* Student verification */}
+                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <Checkbox id="isStudent" checked={isStudent} onCheckedChange={checked => setIsStudent(checked === true)} />
+                      <label htmlFor="isStudent" className="flex items-center gap-1.5 text-sm text-white/60 cursor-pointer">
+                        <GraduationCap className="h-3.5 w-3.5 text-seafoam" />
+                        {language === "el" ? "Είμαι φοιτητής/τρια" : "I am a student"}
+                      </label>
+                    </div>
+                    <AnimatePresence>
+                      {isStudent && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-3 overflow-hidden">
+                          <p className="text-white/30 text-xs">{language === "el" ? "Επαληθεύστε τη φοιτητική σας ιδιότητα για εκπτώσεις." : "Verify your student status to receive discounts."}</p>
+                          <Select value={selectedUniversity} onValueChange={setSelectedUniversity}>
+                            <SelectTrigger className={fieldClass}><SelectValue placeholder={language === "el" ? "Επιλέξτε πανεπιστήμιο" : "Select university"} /></SelectTrigger>
+                            <SelectContent>{CYPRUS_UNIVERSITIES.map(uni => <SelectItem key={uni.domain} value={uni.domain}>{language === "el" ? uni.nameEl : uni.name}</SelectItem>)}</SelectContent>
+                          </Select>
+                          {selectedUniversity && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+                              <Input type="email" value={universityEmail} onChange={e => setUniversityEmail(e.target.value)} placeholder={`example@${selectedUniversity}`} className={fieldClass} />
+                              {studentEmailError && <p className="text-xs text-red-400">{studentEmailError}</p>}
+                              {universityEmail && !studentEmailError && isValidUniversityEmail(universityEmail) && (
+                                <p className="text-xs text-emerald-400">{language === "el" ? "Θα λάβετε email επαλήθευσης μετά την εγγραφή." : "You will receive a verification email after signup."}</p>
+                              )}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-              <p className="text-xs text-center text-muted-foreground">
-                {language === "el" ? (
-                  <>Με την εγγραφή σας, αποδέχεστε τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">πολιτική απορρήτου</a>.</>
-                ) : (
-                  <>By signing up, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">privacy policy</a>.</>
-                )}
-              </p>
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={isLoading || passwordLength < 8}
+                    className="w-full h-12 flex items-center justify-center gap-2 bg-seafoam text-aegean font-bold rounded-xl hover:bg-seafoam/90 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-seafoam/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>{t.signupButton} <ArrowRight className="w-4 h-4" /></>}
+                  </button>
 
-              <div className="text-center text-xs sm:text-sm text-muted-foreground">
-                {t.alreadyHaveAccount}{" "}
-                <Link to="/login" className="text-primary hover:underline font-semibold">
-                  {t.loginLink}
+                  <p className="text-xs text-center text-white/25">
+                    {language === "el" ? (
+                      <>Με την εγγραφή σας αποδέχεστε τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam/70 hover:text-seafoam">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam/70 hover:text-seafoam">πολιτική απορρήτου</a>.</>
+                    ) : (
+                      <>By signing up you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam/70 hover:text-seafoam">terms</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam/70 hover:text-seafoam">privacy policy</a>.</>
+                    )}
+                  </p>
+
+                  <div className="text-center text-sm text-white/30">
+                    {t.alreadyHaveAccount}{" "}
+                    <Link to="/login" className="text-seafoam hover:text-seafoam/80 font-semibold transition-colors">{t.loginLink}</Link>
+                  </div>
+                </form>
+              </Form>
+
+              <div className="mt-5 pt-4 border-t border-white/[0.07] text-right">
+                <Link to="/signup-business" className="inline-flex items-center gap-2 text-xs text-white/30 hover:text-white/50 transition-colors">
+                  <Store className="h-3.5 w-3.5" />{t.businessSignupLink}
                 </Link>
               </div>
-            </form>
-          </Form>
-
-          <div className="mt-4 sm:mt-8 text-right">
-            <Link to="/signup-business" className="inline-flex items-center gap-2 text-xs sm:text-sm text-white hover:text-white/80 transition-colors font-medium">
-              <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {t.businessSignupLink}
-            </Link>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </div>
-    </div>
-  </>;
+    </>
+  );
 };
+
 export default Signup;

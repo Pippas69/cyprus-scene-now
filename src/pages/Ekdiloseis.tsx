@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useQuery } from "@tanstack/react-query";
-import { X, Loader2, Heart, Users } from "lucide-react";
+import { X, Heart, Users, Calendar } from "lucide-react";
+import { spring, reducedMotion } from "@/lib/motion";
 import { DateRange } from "react-day-picker";
 import { CompactDateRangeFilter } from "@/components/CompactDateRangeFilter";
 
@@ -35,7 +37,7 @@ async function attachRsvpCounts(events: any[], userId?: string) {
   });
 
   // Fetch user's own RSVP statuses in one query if logged in
-  let userStatusMap = new Map<string, string>();
+  const userStatusMap = new Map<string, string>();
   if (userId) {
     const { data: userRsvps } = await supabase
       .from('rsvps')
@@ -125,8 +127,20 @@ const Ekdiloseis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Premium Filter Bar - Same as Map - Always visible */}
-      <div className="bg-background border-b border-border px-3 py-2 lg:px-4 lg:py-3">
+      {/* Ambient city header */}
+      <div className="relative overflow-hidden px-4 pt-5 pb-4 bg-background">
+        <div className="absolute -top-10 -left-10 w-64 h-64 bg-seafoam/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-aegean/20 rounded-full blur-3xl pointer-events-none" />
+        <p className="relative text-white/35 text-[10px] font-semibold tracking-[0.2em] uppercase mb-1.5">
+          {language === 'el' ? 'Εκδηλώσεις' : 'Events'}{selectedCity ? ` · ${selectedCity}` : ` · ${language === 'el' ? 'Κύπρος' : 'Cyprus'}`}
+        </p>
+        <h1 className="relative font-urbanist font-black text-3xl sm:text-4xl text-white leading-none">
+          {language === 'el' ? 'Τι γίνεται;' : "What's on?"}
+        </h1>
+      </div>
+
+      {/* Sticky Filter Bar */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-white/[0.07] px-3 py-2 lg:px-4 lg:py-3">
         <div className="space-y-2">
           {/* All in one row with horizontal scroll if needed */}
           <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 overflow-x-auto scrollbar-hide">
@@ -259,10 +273,10 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
             </motion.div>
           ))
         ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground text-lg">
-              {language === "el" ? "Δεν υπάρχουν εκδηλώσεις" : "No events found"}
-            </p>
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Calendar className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{language === "el" ? "Δεν υπάρχουν εκδηλώσεις" : "No events found"}</p>
+            <p className="text-sm text-white/35">{language === "el" ? "Δοκίμασε αλλαγή φίλτρων" : "Try adjusting your filters"}</p>
           </div>
         )}
         
@@ -273,20 +287,24 @@ const LimitedExploreView = ({ language, navigate, t, onSignupClick, selectedCity
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="relative backdrop-blur-sm bg-card/90 rounded-3xl shadow-premium p-8 md:p-12 border border-primary/10"
+        className="relative overflow-hidden rounded-3xl border border-white/[0.07] p-8 md:p-14 text-center"
+        style={{ background: 'linear-gradient(135deg, hsl(207 72% 22% / 0.7) 0%, hsl(207 72% 12% / 0.9) 100%)' }}
       >
-        <div className="flex flex-col items-center justify-center text-center">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary font-cinzel mb-3">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-seafoam/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-golden/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col items-center justify-center text-center relative">
+          <p className="text-seafoam text-[10px] font-semibold tracking-[0.25em] uppercase mb-5">ΦΟΜΟ</p>
+          <h2 className="font-urbanist font-black text-3xl md:text-4xl text-white mb-4 leading-tight">
             {t.loginRequired}
           </h2>
-          <p className="text-sm md:text-base lg:text-lg text-muted-foreground max-w-md mb-8">
+          <p className="text-sm text-white/50 max-w-sm mx-auto mb-8">
             {t.loginSubtitle}
           </p>
-
           <motion.button
             onClick={onSignupClick}
-            className="gradient-brand text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl shadow-glow hover:shadow-hover font-semibold text-base md:text-lg transition-all hover:scale-105"
-            whileHover={{ scale: 1.05 }}
+            className="gradient-brand text-white px-8 py-3.5 rounded-2xl font-semibold shadow-glow text-base transition-all"
+            whileHover={reducedMotion ? {} : { scale: 1.04 }}
+            whileTap={reducedMotion ? {} : { scale: 0.97 }}
           >
             {t.joinButton}
           </motion.button>
@@ -542,43 +560,49 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
           <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => setRsvpFilter(prev => prev === 'interested' ? null : 'interested')}
-              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
                 rsvpFilter === 'interested'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/60 hover:bg-muted text-muted-foreground'
+                  ? 'bg-seafoam/15 border-seafoam/40 text-seafoam'
+                  : 'bg-white/[0.04] border-white/[0.07] text-white/60 hover:bg-white/[0.07]'
               }`}
               title={language === 'el' ? 'Ενδιαφέρομαι' : 'Interested'}
             >
-              <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Heart className="h-3 w-3" />
               <span>{rsvpInterestedIds.size}</span>
             </button>
             <button
               onClick={() => setRsvpFilter(prev => prev === 'going' ? null : 'going')}
-              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border ${
                 rsvpFilter === 'going'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/60 hover:bg-muted text-muted-foreground'
+                  ? 'bg-seafoam/15 border-seafoam/40 text-seafoam'
+                  : 'bg-white/[0.04] border-white/[0.07] text-white/60 hover:bg-white/[0.07]'
               }`}
               title={language === 'el' ? 'Θα πάω' : 'Going'}
             >
-              <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Users className="h-3 w-3" />
               <span>{rsvpGoingIds.size}</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* BOOSTED ZONE - No header, just cards with badge */}
+      {/* BOOSTED ZONE — horizontal spotlight row */}
       {hasBoostedFiltered && (
-        <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-urbanist font-black text-xl text-white flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-seafoam inline-block" />
+              {language === 'el' ? 'Προτεινόμενα' : 'Featured'}
+            </h2>
+            <span className="text-[10px] text-white/30 font-medium tracking-wider">
+              {language === 'el' ? 'ΣΥΡΕ →' : 'SWIPE →'}
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory -mx-4 px-4">
             {filteredBoosted.map((event) => (
-              <div
-                key={event.id}
-                className="relative overflow-visible"
-              >
-                <UnifiedEventCard 
-                  language={language} 
+              <div key={event.id} className="w-[260px] sm:w-[300px] flex-shrink-0 snap-start">
+                <UnifiedEventCard
+                  language={language}
                   event={event}
                   isBoosted={true}
                   size="full"
@@ -590,29 +614,45 @@ const FullExploreView = ({ language, user, selectedCity, selectedCategories }: {
       )}
 
       {/* Regular Events List */}
-      <section>
+      <section className="space-y-3">
+        {!showRsvpMode && (
+          <h2 className="font-urbanist font-black text-xl text-white flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-white/25 inline-block" />
+            {language === 'el' ? 'Όλα τα Events' : 'All Events'}
+          </h2>
+        )}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <EventCardSkeleton key={i} />
             ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredRegular && filteredRegular.map((event, index) => (
+        ) : filteredRegular && filteredRegular.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredRegular.map((event, index) => (
               <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03, duration: 0.3 }}
               >
-                <UnifiedEventCard 
-                  language={language} 
+                <UnifiedEventCard
+                  language={language}
                   event={event}
                   size="full"
                 />
               </motion.div>
             ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Calendar className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">
+              {language === 'el' ? 'Δεν βρέθηκαν εκδηλώσεις' : 'No events found'}
+            </p>
+            <p className="text-sm text-white/35">
+              {language === 'el' ? 'Δοκίμασε να αλλάξεις τα φίλτρα' : 'Try adjusting your filters'}
+            </p>
           </div>
         )}
       </section>

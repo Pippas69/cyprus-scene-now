@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Store, CheckCircle, Calendar, Clock, ShoppingBag, AlertCircle, Wallet, History, TrendingDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { spring } from "@/lib/motion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
@@ -64,6 +66,7 @@ export function MyOffers({ userId, language }: MyOffersProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPurchase, setSelectedPurchase] = useState<OfferPurchase | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
+  const [activeOffersTab, setActiveOffersTab] = useState<'active' | 'redeemed' | 'expired'>('active');
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;purchase: OfferPurchase | null;}>({ open: false, purchase: null });
   const [cancellationReason, setCancellationReason] = useState('');
   const queryClient = useQueryClient();
@@ -404,10 +407,17 @@ export function MyOffers({ userId, language }: MyOffersProps) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>);
-
+      <div className="space-y-4">
+        <div className="flex gap-1.5">
+          <Skeleton className="h-9 w-20 rounded-full" />
+          <Skeleton className="h-9 w-28 rounded-full" />
+          <Skeleton className="h-9 w-24 rounded-full" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-52 rounded-2xl" />)}
+        </div>
+      </div>
+    );
   }
 
   const PurchaseCard = ({ purchase, showQR = true }: {purchase: OfferPurchase;showQR?: boolean;}) => {
@@ -473,9 +483,9 @@ export function MyOffers({ userId, language }: MyOffersProps) {
     null;
 
     return (
-      <Card
-        ref={(el) => {if (el) cardRefs.current.set(purchase.id, el);}}
-        className="overflow-hidden relative transition-all duration-300">
+      <div
+        ref={(el) => {if (el) cardRefs.current.set(purchase.id, el as HTMLDivElement);}}
+        className="overflow-hidden relative transition-all duration-300 rounded-2xl bg-white/[0.03] border border-white/[0.07]">
         
         {/* Image section - 3:2 aspect ratio */}
         <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-xl">
@@ -616,88 +626,89 @@ export function MyOffers({ userId, language }: MyOffersProps) {
             }
           </div>
         </div>
-      </Card>);
-
+      </div>
+    );
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto overflow-hidden">
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 text-[11px] sm:text-sm bg-muted/50 p-1 gap-0.5">
-          <TabsTrigger value="active" className="px-1.5 sm:px-3 py-2 gap-0.5">
-            <span className="truncate">{t.active}</span>
-            {activePurchases.length > 0 &&
-            <span className="text-muted-foreground shrink-0">({activePurchases.length})</span>
-            }
-          </TabsTrigger>
-          <TabsTrigger value="redeemed" className="px-1.5 sm:px-3 py-2 gap-0.5">
-            <span className="truncate">{t.redeemed}</span>
-            {redeemedPurchases.length > 0 &&
-            <span className="text-muted-foreground shrink-0">({redeemedPurchases.length})</span>
-            }
-          </TabsTrigger>
-          <TabsTrigger value="expired" className="px-1.5 sm:px-3 py-2 gap-0.5">
-            <span className="truncate">{t.expired}</span>
-            {expiredPurchases.length > 0 &&
-            <span className="text-muted-foreground shrink-0">({expiredPurchases.length})</span>
-            }
-          </TabsTrigger>
-        </TabsList>
+    <div className="w-full max-w-6xl mx-auto overflow-hidden space-y-4">
+      {/* Pill tab bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+        {([
+          { id: 'active' as const, label: t.active, count: activePurchases.length },
+          { id: 'redeemed' as const, label: t.redeemed, count: redeemedPurchases.length },
+          { id: 'expired' as const, label: t.expired, count: expiredPurchases.length },
+        ]).map(({ id, label, count }) => {
+          const isActive = activeOffersTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveOffersTab(id)}
+              className={`relative flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium whitespace-nowrap rounded-full transition-all ${
+                isActive ? 'text-seafoam' : 'text-white/40 hover:text-white/70'
+              }`}
+            >
+              {label}
+              {count > 0 && (
+                <span className={`text-[10px] ${isActive ? 'text-seafoam/60' : 'text-white/25'}`}>({count})</span>
+              )}
+              {isActive && (
+                <motion.div
+                  layoutId="offers-tab-pill"
+                  className="absolute inset-0 rounded-full bg-seafoam/12 border border-seafoam/25 -z-10"
+                  transition={spring.smooth}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="active" className="mt-4">
-          {activePurchases.length === 0 ?
-          <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-sm mb-3">{t.noPurchases}</p>
-                <Button asChild variant="outline" size="sm">
-                  <a href="/offers">{t.browseOffers}</a>
-                </Button>
-              </CardContent>
-            </Card> :
+      {/* Tab content */}
+      {activeOffersTab === 'active' && (
+        activePurchases.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <ShoppingBag className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{t.noPurchases}</p>
+            <p className="text-sm text-white/35">{language === 'el' ? 'Εξερεύνησε τις διαθέσιμες προσφορές' : 'Browse available offers'}</p>
+            <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={() => navigate('/offers')}>
+              {t.browseOffers}
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {activePurchases.map((purchase) => <PurchaseCard key={purchase.id} purchase={purchase} />)}
+          </div>
+        )
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activePurchases.map((purchase) =>
-            <PurchaseCard key={purchase.id} purchase={purchase} />
-            )}
-            </div>
-          }
-        </TabsContent>
+      {activeOffersTab === 'redeemed' && (
+        redeemedPurchases.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <CheckCircle className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{t.noRedeemed}</p>
+            <p className="text-sm text-white/35">{language === 'el' ? 'Τα εξαργυρωμένα θα εμφανιστούν εδώ' : 'Redeemed offers will appear here'}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {redeemedPurchases.map((purchase) => <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />)}
+          </div>
+        )
+      )}
 
-        <TabsContent value="redeemed" className="mt-4">
-          {redeemedPurchases.length === 0 ?
-          <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <CheckCircle className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-sm">{t.noRedeemed}</p>
-              </CardContent>
-            </Card> :
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {redeemedPurchases.map((purchase) =>
-            <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
-            )}
-            </div>
-          }
-        </TabsContent>
-
-        <TabsContent value="expired" className="mt-4">
-          {expiredPurchases.length === 0 ?
-          <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Clock className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-sm">{t.noExpired}</p>
-              </CardContent>
-            </Card> :
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {expiredPurchases.map((purchase) =>
-            <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />
-            )}
-            </div>
-          }
-        </TabsContent>
-      </Tabs>
+      {activeOffersTab === 'expired' && (
+        expiredPurchases.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Clock className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{t.noExpired}</p>
+            <p className="text-sm text-white/35">{language === 'el' ? 'Οι ληγμένες προσφορές θα εμφανιστούν εδώ' : 'Expired offers will appear here'}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {expiredPurchases.map((purchase) => <PurchaseCard key={purchase.id} purchase={purchase} showQR={false} />)}
+          </div>
+        )
+      )}
 
       {/* Transaction History Dialog */}
       {showHistory &&

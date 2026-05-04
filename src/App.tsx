@@ -79,6 +79,7 @@ const ForVisitors = lazy(() => import("./pages/ForVisitors"));
 const ForBusinesses = lazy(() => import("./pages/ForBusinesses"));
 const VerifyStudent = lazy(() => import("./pages/VerifyStudent"));
 const PublicBookingPage = lazy(() => import("./pages/PublicBookingPage"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -176,6 +177,7 @@ function AppContent() {
           
           <Route path="/business/:businessId" element={<BusinessProfile />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
+          <Route path="/profile/:userId" element={<PageTransition><UserProfile /></PageTransition>} />
           <Route path="/r/:token" element={<PublicBookingPage />} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
@@ -200,7 +202,6 @@ const App = () => {
     const MAX_SPLASH_MS = 4500;
     const splashStart = (window as { __fomoSplashStart?: number }).__fomoSplashStart ?? performance.now();
     let timer: number | undefined;
-    let failsafeTimer: number | undefined;
     let removed = false;
 
     const removeSplash = () => {
@@ -224,7 +225,7 @@ const App = () => {
 
     const maxElapsed = performance.now() - splashStart;
     const maxRemaining = Math.max(0, MAX_SPLASH_MS - maxElapsed);
-    failsafeTimer = window.setTimeout(removeSplash, maxRemaining);
+    const failsafeTimer = window.setTimeout(removeSplash, maxRemaining);
 
     return () => {
       if (timer) window.clearTimeout(timer);

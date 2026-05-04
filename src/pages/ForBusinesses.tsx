@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Reveal3D, Card3D, ScrollScale, ParallaxDepth } from "@/components/ui/scroll-3d";
 import { useState } from "react";
 import { 
   TrendingUp, 
@@ -533,24 +534,27 @@ const ForBusinesses = () => {
             {content.features.items.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                viewport={{ once: true }}
+                style={{ perspective: 1000 }}
+                initial={{ opacity: 0, y: 44, rotateX: 16, scale: 0.94 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+                transition={{ duration: 0.65, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                viewport={{ once: true, margin: "-50px" }}
               >
-                <Card className="h-full hover:shadow-lg transition-shadow border-border/50">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-                      <feature.icon className="w-6 h-6 text-accent" />
-                    </div>
-                    <h3 className="font-poppins font-semibold text-lg text-foreground mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                <Card3D>
+                  <Card className="h-full hover:shadow-lg transition-shadow border-border/50">
+                    <CardContent className="p-6">
+                      <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
+                        <feature.icon className="w-6 h-6 text-accent" />
+                      </div>
+                      <h3 className="font-poppins font-semibold text-lg text-foreground mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Card3D>
               </motion.div>
             ))}
           </div>
@@ -561,7 +565,7 @@ const ForBusinesses = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-5xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
+            <Reveal3D direction="left">
               <h2 className="font-cinzel text-3xl md:text-4xl font-bold text-foreground mb-4">
                 {content.analytics.title}
               </h2>
@@ -570,20 +574,31 @@ const ForBusinesses = () => {
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {content.analytics.items.map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex items-center gap-3"
+                  >
                     <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
                       <item.icon className="w-5 h-5 text-accent" />
                     </div>
                     <span className="text-foreground text-sm">{item.text}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
-            <div className="relative hidden md:block">
-              <div className="bg-gradient-to-br from-accent/20 to-primary/20 rounded-2xl p-8 aspect-square flex items-center justify-center">
-                <BarChart3 className="w-32 h-32 text-accent/50" />
+            </Reveal3D>
+            <Reveal3D direction="right" delay={0.15}>
+              <div className="relative hidden md:block">
+                <ParallaxDepth speed={0.08}>
+                  <div className="bg-gradient-to-br from-accent/20 to-primary/20 rounded-2xl p-8 aspect-square flex items-center justify-center">
+                    <BarChart3 className="w-32 h-32 text-accent/50" />
+                  </div>
+                </ParallaxDepth>
               </div>
-            </div>
+            </Reveal3D>
           </div>
         </div>
       </section>

@@ -1,16 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Calendar, MapPin, Users, QrCode, Clock, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Loader2, CalendarX } from 'lucide-react';
 import { el, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { toastTranslations } from '@/translations/toastTranslations';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { getOptimizedImageUrl } from '@/lib/imageLoader';
+import { motion } from 'framer-motion';
+import { spring } from '@/lib/motion';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +27,6 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ReservationQRCard } from './ReservationQRCard';
 import { SuccessQRCard } from '@/components/ui/SuccessQRCard';
@@ -101,6 +103,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   const [pastReservations, setPastReservations] = useState<ReservationData[]>(cachedSnapshot?.past || []);
   const [loading, setLoading] = useState(!cachedSnapshot);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyTab, setHistoryTab] = useState<'past-event' | 'past-direct'>('past-event');
   const [cancelDialog, setCancelDialog] = useState<{open: boolean;reservationId: string | null;}>({
     open: false,
     reservationId: null
@@ -165,6 +168,7 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
       supabase.removeChannel(reservationsChannel);
       supabase.removeChannel(ticketOrdersChannel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
@@ -928,7 +932,17 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-1.5">
+          <Skeleton className="h-9 w-28 rounded-full" />
+          <Skeleton className="h-9 w-36 rounded-full" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-52 rounded-2xl" />)}
+        </div>
+      </div>
+    );
   }
 
   const formatDateTime = (dateStr: string) => {
@@ -956,20 +970,21 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const isBottle = !!bottleInfo;
 
     return (
-      <Card key={reservation.id} className={`overflow-hidden hover:shadow-md transition-shadow ${isPast ? 'opacity-60' : ''}`}>
-        {/* Cover image like MyTickets */}
+      <div key={reservation.id} className={`overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.07] transition-opacity ${isPast ? 'opacity-60' : ''}`}>
+        {/* Cover image */}
         {coverImage && (
-          <div className="relative w-full aspect-[3/2] overflow-hidden">
+          <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-2xl">
             <img
               src={getOptimizedImageUrl(coverImage, 800)}
               alt={title || ''}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/0 to-black/35" />
           </div>
         )}
-        <CardContent className="p-4 space-y-1.5">
+        <div className="p-3 space-y-1.5">
           {/* Title */}
           <h3 className="font-semibold text-sm">{title}</h3>
 
@@ -1133,8 +1148,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
 
@@ -1145,8 +1160,8 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
     const location = reservation.businesses?.address;
 
     return (
-      <Card key={reservation.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
-        <CardContent className="p-4 space-y-0.5">
+      <div key={reservation.id} className={`overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.07] ${isPast ? 'opacity-60' : ''}`}>
+        <div className="p-3 space-y-1.5">
           {/* Row 1: Title + Status */}
           <div className="flex items-center justify-between gap-2 mb-1">
             <h4 className="font-semibold text-base line-clamp-1">{t.tableReservation}</h4>
@@ -1293,9 +1308,9 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
             }
             </div>
           }
-        </CardContent>
-      </Card>);
-
+        </div>
+      </div>
+    );
   };
 
   // Categorize
@@ -1309,102 +1324,131 @@ export const MyReservations = ({ userId, language }: MyReservationsProps) => {
 
   return (
     <div className="space-y-4">
-      <Tabs
-        value={activeReservationsTab}
-        onValueChange={(value) => {
-          const nextTab = value === 'direct' ? 'direct' : 'event';
-          setActiveReservationsTab(nextTab);
-          navigate(`/dashboard-user?tab=reservations&subtab=${nextTab}`, { replace: true });
-        }}
-        className="w-full">
-        <TabsList className="w-full h-auto p-1 sm:p-1.5 bg-muted/40 rounded-xl gap-0.5 sm:gap-1">
-          <TabsTrigger
-            value="event"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            
-            
-            <span className="truncate">{t.eventTab}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {eventReservations.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="direct"
-            className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-3 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            
-            
-            <span className="truncate">{t.directTab}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground bg-muted/80 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
-              {directReservations.length}
-            </span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Pill sub-tab bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+        {([
+          { id: 'event' as const, label: t.eventTab, count: eventReservations.length },
+          { id: 'direct' as const, label: t.directTab, count: directReservations.length },
+        ]).map(({ id, label, count }) => {
+          const isActive = activeReservationsTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => {
+                setActiveReservationsTab(id);
+                navigate(`/dashboard-user?tab=reservations&subtab=${id}`, { replace: true });
+              }}
+              className={`relative flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium whitespace-nowrap rounded-full transition-all ${
+                isActive ? 'text-seafoam' : 'text-white/40 hover:text-white/70'
+              }`}
+            >
+              {label}
+              <span className={`text-[10px] ${isActive ? 'text-seafoam/60' : 'text-white/25'}`}>({count})</span>
+              {isActive && (
+                <motion.div
+                  layoutId="reservations-tab-pill"
+                  className="absolute inset-0 rounded-full bg-seafoam/12 border border-seafoam/25 -z-10"
+                  transition={spring.smooth}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="event" className="mt-4">
-          {eventReservations.length === 0 ?
-          <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
-
+      {/* Tab content */}
+      {activeReservationsTab === 'event' && (
+        eventReservations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <CalendarX className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{t.noEventReservations}</p>
+            <p className="text-sm text-white/35">{language === 'el' ? 'Κάνε κράτηση σε ένα event' : 'Make a reservation at an event'}</p>
+            <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={() => navigate('/events')}>
+              {language === 'el' ? 'Εξερεύνηση Events' : 'Browse Events'}
+            </Button>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {eventReservations.map((r) => renderEventReservationCard(r, false))}
-            </div>
-          }
-        </TabsContent>
-
-        <TabsContent value="direct" className="mt-4">
-          {directReservations.length === 0 ?
-          <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
-
+            {eventReservations.map((r) => renderEventReservationCard(r, false))}
+          </div>
+        )
+      )}
+      {activeReservationsTab === 'direct' && (
+        directReservations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Users className="w-10 h-10 text-white/20" />
+            <p className="font-urbanist font-black text-lg text-white/60">{t.noDirectReservations}</p>
+            <p className="text-sm text-white/35">{language === 'el' ? 'Κάνε κράτηση σε ένα κατάστημα' : 'Make a reservation at a venue'}</p>
+          </div>
+        ) : (
           <div className="grid gap-3">
-              {directReservations.map((r) => renderDirectReservationCard(r, false))}
-            </div>
-          }
-        </TabsContent>
-      </Tabs>
+            {directReservations.map((r) => renderDirectReservationCard(r, false))}
+          </div>
+        )
+      )}
 
       {/* History */}
-      {hasPast &&
-      <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+      {hasPast && (
+        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
           <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
+            <button className="flex items-center justify-between w-full p-3 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] rounded-xl transition-colors text-sm text-white/70">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-white/40" />
                 <span className="font-medium">{t.history} ({pastReservations.length})</span>
               </div>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
             </button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3">
-            <Tabs defaultValue="past-event" className="w-full">
-              <TabsList className="w-full h-auto gap-1 bg-muted/30 p-1 rounded-lg">
-                <TabsTrigger value="past-event" className="flex-1 text-xs px-2 py-1.5">
-                  {t.eventTab} ({pastEventReservations.length})
-                </TabsTrigger>
-                <TabsTrigger value="past-direct" className="flex-1 text-xs px-2 py-1.5">
-                  {t.directTab} ({pastDirectReservations.length})
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="past-event" className="mt-4">
-                {pastEventReservations.length === 0 ?
-              <p className="text-center text-muted-foreground py-6 text-sm">{t.noEventReservations}</p> :
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {pastEventReservations.map((r) => renderEventReservationCard(r, true))}
-                  </div>
-              }
-              </TabsContent>
-              <TabsContent value="past-direct" className="mt-4">
-                {pastDirectReservations.length === 0 ?
-              <p className="text-center text-muted-foreground py-6 text-sm">{t.noDirectReservations}</p> :
-
-              <div className="grid gap-3">
-                    {pastDirectReservations.map((r) => renderDirectReservationCard(r, true))}
-                  </div>
-              }
-              </TabsContent>
-            </Tabs>
+          <CollapsibleContent className="mt-3 space-y-3">
+            {/* History sub-tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+              {([
+                { id: 'past-event' as const, label: t.eventTab, count: pastEventReservations.length },
+                { id: 'past-direct' as const, label: t.directTab, count: pastDirectReservations.length },
+              ]).map(({ id, label, count }) => {
+                const isActive = historyTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setHistoryTab(id)}
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium whitespace-nowrap rounded-full transition-all ${
+                      isActive ? 'text-seafoam' : 'text-white/40 hover:text-white/70'
+                    }`}
+                  >
+                    {label}
+                    <span className={`text-[10px] ${isActive ? 'text-seafoam/60' : 'text-white/25'}`}>({count})</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="history-tab-pill"
+                        className="absolute inset-0 rounded-full bg-seafoam/12 border border-seafoam/25 -z-10"
+                        transition={spring.smooth}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {historyTab === 'past-event' && (
+              pastEventReservations.length === 0 ? (
+                <p className="text-center text-white/40 py-6 text-sm">{t.noEventReservations}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pastEventReservations.map((r) => renderEventReservationCard(r, true))}
+                </div>
+              )
+            )}
+            {historyTab === 'past-direct' && (
+              pastDirectReservations.length === 0 ? (
+                <p className="text-center text-white/40 py-6 text-sm">{t.noDirectReservations}</p>
+              ) : (
+                <div className="grid gap-3">
+                  {pastDirectReservations.map((r) => renderDirectReservationCard(r, true))}
+                </div>
+              )
+            )}
           </CollapsibleContent>
         </Collapsible>
-      }
+      )}
 
       <AlertDialog open={cancelDialog.open} onOpenChange={(open) => { setCancelDialog({ ...cancelDialog, open }); if (!open) setCancellationReason(''); }}>
         <AlertDialogContent>

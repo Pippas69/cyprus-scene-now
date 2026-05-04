@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { Card3D, Reveal3D } from "@/components/ui/scroll-3d";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,34 +92,63 @@ const UpcomingEventsPreview = ({ language }: UpcomingEventsPreviewProps) => {
   if (events.length === 0) return null;
 
   return (
-    <section className="relative py-10 sm:py-14 overflow-hidden bg-background">
-      <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-seafoam/5 rounded-full blur-[150px]" />
+    <section className="relative py-20 sm:py-28 overflow-hidden bg-background">
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-seafoam/4 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
+
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 max-w-5xl mx-auto mb-10 sm:mb-12"
+        >
+          <div>
+            <p className="text-seafoam text-xs font-semibold tracking-widest uppercase mb-2">Live in Cyprus</p>
+            <h2 className="font-urbanist font-black text-3xl sm:text-4xl text-white leading-tight">
+              {content[language].title}
+            </h2>
+            <p className="text-white/40 text-sm mt-2">{content[language].subtitle}</p>
+          </div>
+          <Link
+            to="/feed"
+            className="hidden sm:flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors shrink-0 group"
+          >
+            {content[language].viewAll}
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10 sm:mb-12">
           {events.slice(0, 3).map((event, index) => (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              style={{ perspective: 1000 }}
+              initial={{ opacity: 0, y: 50, rotateX: 14, scale: 0.93 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ delay: index * 0.12, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
               className={index <= 1 ? (index === 1 ? "md:block" : "") : "hidden lg:block"}
             >
-              <UnifiedEventCard event={event} language={language} size={index === 0 ? "mobileFixed" : "full"} className="md:!size-auto" />
+              <Card3D>
+                <UnifiedEventCard event={event} language={language} size={index === 0 ? "mobileFixed" : "full"} className="md:!size-auto" />
+              </Card3D>
             </motion.div>
           ))}
         </div>
 
+        {/* Mobile "view all" */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center"
+          className="text-center sm:hidden"
         >
           <Button
             asChild
-            className="bg-background border border-foreground/10 hover:border-foreground/20 hover:bg-background/80 text-foreground rounded-full px-6 sm:px-8 text-sm sm:text-base"
+            className="bg-background border border-white/10 hover:border-white/20 text-foreground rounded-full px-8"
           >
             <Link to="/feed">
               {content[language].viewAll}

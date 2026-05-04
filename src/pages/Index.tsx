@@ -9,6 +9,7 @@ import FAQSection from "@/components/home/FAQSection";
 import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
 import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
+import StatsSection from "@/components/home/StatsSection";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const Index = () => {
@@ -60,6 +61,7 @@ const Index = () => {
       <PartnerLogoMarquee />
       <FeaturesSection language={language} />
       <UpcomingEventsPreview language={language} />
+      <StatsSection language={language} />
       <FAQSection language={language} />
       <Footer />
     </div>

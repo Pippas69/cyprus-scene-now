@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -397,134 +398,161 @@ const Feed = ({ showNavbar = true }: FeedProps = {}) => {
           )}
         </div>
 
-        {/* Location Dropdown Header - tighter on mobile */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 pt-2 sm:pt-3">
-          <div className="flex items-center mb-1.5 sm:mb-2">
-            <CompactLocationDropdown
-              language={language}
-              selectedCity={selectedCity}
-              onCityChange={setSelectedCity}
-            />
-          </div>
+        {/* ── CINEMATIC HEADER ── full-bleed, massive typography ── */}
+        <div className="relative overflow-hidden w-full pt-7 pb-6 px-4 sm:px-6">
+          {/* Massive ambient glows */}
+          <div className="absolute -top-28 -right-28 w-[420px] h-[420px] bg-seafoam/8 rounded-full blur-[110px] pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-80 h-80 bg-aegean/20 rounded-full blur-[90px] pointer-events-none" />
+
+          <p className="relative text-white/25 text-[10px] font-semibold tracking-[0.28em] uppercase mb-2.5">
+            {language === 'el' ? 'Ανακάλυψε' : 'Discover'} · {selectedCity ? translateCity(selectedCity, language) : (language === 'el' ? 'Κύπρος' : 'Cyprus')}
+          </p>
+          <h1 className="relative font-urbanist font-black leading-[0.9] tracking-tight">
+            <span className="block text-4xl sm:text-5xl md:text-6xl text-white">
+              {language === 'el' ? 'Τι τρέχει' : "What's"}
+            </span>
+            <span className="block text-4xl sm:text-5xl md:text-6xl text-gradient-ocean">
+              {language === 'el' ? 'απόψε;' : 'happening?'}
+            </span>
+          </h1>
         </div>
 
-        {/* PRIORITY 1: Paid content at the very top */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 overflow-x-clip overflow-y-visible">
-          <BoostedContentSection 
-            events={boostedEvents || []} 
-            offers={boostedOffers || []} 
+        {/* Location picker */}
+        <div className="w-full px-4 sm:px-6 pb-3">
+          <CompactLocationDropdown
+            language={language}
+            selectedCity={selectedCity}
+            onCityChange={setSelectedCity}
+          />
+        </div>
+
+        {/* ── BOOSTED CONTENT — full-bleed ── */}
+        <div className="w-full overflow-x-clip overflow-y-visible">
+          <BoostedContentSection
+            events={boostedEvents || []}
+            offers={boostedOffers || []}
             language={language}
             userCity={selectedCity || personalizedData?.profile?.city}
           />
         </div>
 
-        {/* Smart Search Bar */}
+        {/* Smart Search */}
         {showNavbar && (
-          <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-2 sm:mb-3 relative z-30">
+          <div className="w-full px-4 sm:px-6 mt-3 mb-3 relative z-30">
             <SmartSearchBar language={language} onSearch={() => {}} className="max-w-4xl mx-auto" />
           </div>
         )}
 
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3 overflow-hidden">
-          <div className="space-y-3 sm:space-y-4">
-            {/* POSITION #2: Featured Businesses */}
-            {profileBoosts && profileBoosts.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                <BoostedProfilesScroller
-                  profiles={profileBoosts}
-                  language={language}
-                  eventBoostBusinessIds={eventBoostBusinessIds}
-                  offerBoostBusinessIds={offerBoostBusinessIds}
-                />
-              </motion.div>
-            )}
+        {/* Featured business scroller */}
+        {profileBoosts && profileBoosts.length > 0 && (
+          <motion.div
+            className="w-full px-4 sm:px-6 mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <BoostedProfilesScroller
+              profiles={profileBoosts}
+              language={language}
+              eventBoostBusinessIds={eventBoostBusinessIds}
+              offerBoostBusinessIds={offerBoostBusinessIds}
+            />
+          </motion.div>
+        )}
 
-            {/* Filters (categories + student discount) - more compact on mobile */}
-            <div data-filters className="w-full">
-              <div className="flex flex-col gap-1.5 sm:gap-2">
-                <div className="flex items-center gap-2">
-                  <HierarchicalCategoryFilter
-                    language={language}
-                    selectedCategories={selectedCategories}
-                    onCategoryChange={setSelectedCategories}
-                    showStudentDiscounts={showStudentDiscounts}
-                    onToggleStudentDiscounts={() => setShowStudentDiscounts(!showStudentDiscounts)}
-                  />
-                </div>
-
-                {(selectedCategories.length > 0 || selectedCity) && (
-                  <FilterChips
-                    categories={selectedCategories}
-                    quickFilters={[]}
-                    selectedCity={selectedCity}
-                    onRemoveCategory={handleRemoveCategory}
-                    onRemoveQuickFilter={() => {}}
-                    onRemoveCity={handleRemoveCity}
-                    onClearAll={handleClearFilters}
-                    language={language}
-                  />
-                )}
-              </div>
+        {/* Filters */}
+        <div className="w-full px-4 sm:px-6 mb-4" data-filters>
+          <div className="flex flex-col gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
+              <HierarchicalCategoryFilter
+                language={language}
+                selectedCategories={selectedCategories}
+                onCategoryChange={setSelectedCategories}
+                showStudentDiscounts={showStudentDiscounts}
+                onToggleStudentDiscounts={() => setShowStudentDiscounts(!showStudentDiscounts)}
+              />
             </div>
+            {(selectedCategories.length > 0 || selectedCity) && (
+              <FilterChips
+                categories={selectedCategories}
+                quickFilters={[]}
+                selectedCity={selectedCity}
+                onRemoveCategory={handleRemoveCategory}
+                onRemoveQuickFilter={() => {}}
+                onRemoveCity={handleRemoveCity}
+                onClearAll={handleClearFilters}
+                language={language}
+              />
+            )}
+          </div>
+        </div>
 
-            {/* Student Discount results */}
-            {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
-              <motion.div 
-                className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3"
+        {/* ── STUDENT DEALS — full-bleed mosaic ── */}
+        {showStudentDiscounts && studentDiscountBusinesses && studentDiscountBusinesses.length > 0 && (
+          <>
+            <div className="px-4 sm:px-6 mb-3">
+              <h2 className="font-urbanist font-black text-2xl sm:text-3xl text-golden leading-none">
+                {language === 'el' ? 'Φοιτητικές' : 'Student'}
+                <br />
+                <span className="text-golden/70">{language === 'el' ? 'Προσφορές' : 'Deals'}</span>
+              </h2>
+            </div>
+            <div className="w-full">
+              <motion.div
+                className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-0.5"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                {studentDiscountBusinesses.filter((b: any) => (b.student_discount_days?.length ?? 0) > 0).map((business: any, index: number) => (
-                  <motion.div
-                    key={business.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                  >
-                    <Link
-                      to={`/business/${business.id}`}
-                      className="relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-200 group block"
+                {studentDiscountBusinesses
+                  .filter((b: any) => (b.student_discount_days?.length ?? 0) > 0)
+                  .map((business: any, index: number) => (
+                    <motion.div
+                      key={business.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(index * 0.02, 0.5) }}
                     >
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ 
-                          backgroundImage: business.logo_url 
-                            ? `url(${business.logo_url})` 
-                            : undefined,
-                          backgroundColor: !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 sm:px-2 sm:py-1 flex items-center gap-0.5 sm:gap-1">
-                        <GraduationCap className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="text-[9px] sm:text-xs font-semibold">{business.student_discount_percent}%</span>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
-                        <h4 className="text-[10px] sm:text-sm font-semibold text-white line-clamp-2 sm:line-clamp-1 group-hover:text-primary-foreground transition-colors leading-tight">
-                          {business.name}
-                        </h4>
-                        <p className="text-[9px] sm:text-xs text-white/80 mt-0.5">
-                          {translateCity(business.city, language)}
-                        </p>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                      <Link
+                        to={`/business/${business.id}`}
+                        className="relative aspect-square overflow-hidden group block"
+                      >
+                        <div
+                          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                          style={{
+                            backgroundImage: business.logo_url ? `url(${business.logo_url})` : undefined,
+                            backgroundColor: !business.logo_url ? 'hsl(var(--primary) / 0.1)' : undefined,
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute top-1.5 right-1.5 bg-golden text-black rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+                          <GraduationCap className="h-2.5 w-2.5" />
+                          <span className="text-[9px] sm:text-[10px] font-bold">{business.student_discount_percent}%</span>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <h4 className="text-[10px] sm:text-xs font-semibold text-white line-clamp-1 leading-tight">
+                            {business.name}
+                          </h4>
+                          <p className="text-[9px] sm:text-[10px] text-white/60 mt-0.5">
+                            {translateCity(business.city, language)}
+                          </p>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
               </motion.div>
-            )}
+            </div>
+          </>
+        )}
 
-            {/* All businesses from FOMO */}
-            {!showStudentDiscounts && (
-              <BusinessDirectorySection 
-                language={language} 
-                selectedCity={selectedCity} 
-                selectedCategories={selectedCategories}
-                showStudentDiscountBadges={false}
-              />
-            )}
-
-          </div>
-        </div>
+        {/* ── BUSINESS DIRECTORY — full-bleed editorial mosaic ── */}
+        {!showStudentDiscounts && (
+          <BusinessDirectorySection
+            language={language}
+            selectedCity={selectedCity}
+            selectedCategories={selectedCategories}
+            showStudentDiscountBadges={false}
+          />
+        )}
 
         {showScrollTop && (
           <FloatingActionButton

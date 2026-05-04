@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Clock, QrCode, MapPin, Calendar } from 'lucide-react';
+import { ChevronDown, Clock, QrCode, MapPin, Calendar, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
 import { el, enUS } from 'date-fns/locale';
 import { TicketQRDialog } from '@/components/tickets/TicketQRDialog';
@@ -19,6 +20,7 @@ interface MyEventsProps {
 export const MyEvents = ({ userId, language }: MyEventsProps) => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const navigate = useNavigate();
   const dateLocale = language === 'el' ? el : enUS;
 
   // Fetch user's tickets - cached for 5 min so tab switches are instant
@@ -136,7 +138,18 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
 
   const renderTickets = (ticketsList: any[], emptyMessage: string, isPast = false) => {
     if (ticketsList.length === 0) {
-      return <p className="text-center text-muted-foreground py-6 text-sm">{emptyMessage}</p>;
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <Ticket className="w-10 h-10 text-white/20" />
+          <p className="font-urbanist font-black text-lg text-white/60">{emptyMessage}</p>
+          <p className="text-sm text-white/35">{language === 'el' ? 'Εξερεύνησε τα διαθέσιμα events' : 'Browse available events'}</p>
+          {!isPast && (
+            <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={() => navigate('/events')}>
+              {t.browseEvents}
+            </Button>
+          )}
+        </div>
+      );
     }
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -149,7 +162,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
           const statusVariant = isExpiredTicket ? 'secondary' : ticket.status === 'valid' ? 'default' : 'secondary';
 
           return (
-            <Card key={ticket.id} className={`overflow-hidden ${isPast ? 'opacity-60' : ''}`}>
+            <div key={ticket.id} className={`overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.07] ${isPast ? 'opacity-60' : ''}`}>
               {/* Image section - same as event/offer cards */}
               {ticket.events?.cover_image_url && (
                 <div className="relative w-full aspect-[3/2] overflow-hidden rounded-t-xl">
@@ -171,7 +184,7 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
               )}
               
               {/* Content section - below image */}
-              <CardContent className="p-2.5 space-y-1">
+              <div className="p-2.5 space-y-1">
                 <h4 className="font-semibold text-sm line-clamp-1">{ticket.events?.title}</h4>
                 
                 {businessName && (
@@ -250,8 +263,8 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
                     {t.showQR}
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -268,15 +281,15 @@ export const MyEvents = ({ userId, language }: MyEventsProps) => {
       {hasPastTickets && (
         <Collapsible open={showHistory} onOpenChange={setShowHistory}>
           <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full p-3 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors text-sm">
+            <button className="flex items-center justify-between w-full p-3 bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.05] rounded-xl transition-colors text-sm text-white/70">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-white/40" />
                 <span className="font-medium">
                   {t.history} ({pastTickets.length})
                 </span>
               </div>
-              <ChevronDown 
-                className={`h-4 w-4 text-muted-foreground transition-transform ${showHistory ? 'rotate-180' : ''}`}
+              <ChevronDown
+                className={`h-4 w-4 text-white/40 transition-transform ${showHistory ? 'rotate-180' : ''}`}
               />
             </button>
           </CollapsibleTrigger>
