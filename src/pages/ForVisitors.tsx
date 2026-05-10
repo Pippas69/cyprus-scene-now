@@ -1,487 +1,370 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
-  MapPin, 
-  Calendar, 
-  Ticket, 
-  Heart, 
-  Bell, 
+import {
+  Compass,
+  Ticket,
+  Calendar,
+  Gift,
+  QrCode,
+  GraduationCap,
   Sparkles,
   ArrowRight,
-  Users,
-  Clock,
-  Star,
-  Gift,
-  MessageCircle,
-  GraduationCap,
-  Search,
-  QrCode,
-  Share2,
-  Smartphone,
-  Compass,
-  Utensils,
-  Music,
-  PartyPopper
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import InfoNavbar from "@/components/info/InfoNavbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/hooks/useLanguage";
 
+const content = {
+  el: {
+    badge: "Για επισκέπτες",
+    hero: {
+      title: "Ανακάλυψε τι συμβαίνει γύρω σου",
+      subtitle: "Το ΦΟΜΟ είναι ο απόλυτος οδηγός σου για νυχτερινή ζωή, φαγητό και αποκλειστικά events στην Κύπρο.",
+      cta: "Ξεκίνα τώρα",
+      exploreCta: "Εξερεύνησε πρώτα",
+    },
+    features: {
+      eyebrow: "Χαρακτηριστικά",
+      title: "Όλα όσα μπορείς να κάνεις",
+      items: [
+        { icon: Compass, title: "Εξερεύνησε venues & events", description: "Ανακάλυψε εστιατόρια, bars, clubs και events κοντά σου μέσω χάρτη ή feed. Φιλτράρισε ανά κατηγορία, τοποθεσία ή ημερομηνία." },
+        { icon: Calendar, title: "Κρατήσεις τραπεζιών", description: "Κλείσε τραπέζι σε εστιατόριο, bar ή club. Επίλεξε ημερομηνία, ώρα και αριθμό ατόμων σε δευτερόλεπτα." },
+        { icon: Ticket, title: "Εισιτήρια & RSVP", description: "Αγόρασε εισιτήρια για concerts και parties. Δήλωσε συμμετοχή σε events και δες ποιοι πάνε." },
+        { icon: Gift, title: "Αποκλειστικές προσφορές", description: "Βρες μοναδικές εκπτώσεις και deals. Δωρεάν εισιτήρια, εκπτώσεις και πακέτα για εγγεγραμμένους χρήστες." },
+        { icon: QrCode, title: "Εξαργύρωση με QR", description: "Σκάναρε το QR code σου στο venue για να εξαργυρώσεις προσφορές και εισιτήρια αμέσως, χωρίς ταλαιπωρία." },
+        { icon: GraduationCap, title: "Φοιτητικές εκπτώσεις", description: "Ειδικές εκπτώσεις για φοιτητές σε επιλεγμένα venues και events σε όλη την Κύπρο." },
+      ],
+    },
+    howItWorks: {
+      eyebrow: "Διαδικασία",
+      title: "Πώς λειτουργεί",
+      steps: [
+        { step: "01", title: "Δημιούργησε λογαριασμό", description: "Εγγράψου δωρεάν σε λιγότερο από 1 λεπτό. Χρειάζεσαι μόνο email." },
+        { step: "02", title: "Εξερεύνησε", description: "Ανακάλυψε events, προσφορές και venues στον χάρτη ή το feed." },
+        { step: "03", title: "Ζήσε το", description: "Κάνε κρατήσεις, αγόρασε εισιτήρια και εξαργύρωσε προσφορές με QR code." },
+      ],
+    },
+    unlock: {
+      eyebrow: "Εγγραφή",
+      title: "Τι ξεκλειδώνεις με εγγραφή",
+      items: [
+        "Αγορά εισιτηρίων για events",
+        "Κρατήσεις σε εστιατόρια, bars και clubs",
+        "Εξαργύρωση προσφορών με QR code",
+        "Αποθήκευση αγαπημένων events & venues",
+        "Push ειδοποιήσεις για νέα events",
+        "RSVP και συμμετοχή σε events",
+        "Direct messaging με venues",
+        "Φοιτητικές εκπτώσεις",
+      ],
+    },
+    cta: {
+      title: "Έτοιμος να ανακαλύψεις;",
+      subtitle: "Κατέβασε το ΦΟΜΟ και ζήσε κάθε στιγμή.",
+      button: "Εγγράψου δωρεάν",
+      guest: "Εξερεύνησε ως επισκέπτης",
+    },
+  },
+  en: {
+    badge: "For visitors",
+    hero: {
+      title: "Discover what's happening around you",
+      subtitle: "ΦΟΜΟ is your ultimate guide to nightlife, food, and exclusive events in Cyprus.",
+      cta: "Get started",
+      exploreCta: "Explore first",
+    },
+    features: {
+      eyebrow: "Features",
+      title: "Everything you can do",
+      items: [
+        { icon: Compass, title: "Explore venues & events", description: "Discover restaurants, bars, clubs and events near you via the map or feed. Filter by category, location or date." },
+        { icon: Calendar, title: "Table reservations", description: "Book a table at a restaurant, bar or club. Choose date, time and party size in seconds." },
+        { icon: Ticket, title: "Tickets & RSVP", description: "Buy tickets for concerts and parties. Mark your attendance at events and see who else is going." },
+        { icon: Gift, title: "Exclusive offers", description: "Find unique discounts and deals. Free tickets, discounts and bundles for registered users." },
+        { icon: QrCode, title: "QR code redemption", description: "Scan your QR code at the venue to redeem offers and tickets instantly, no hassle." },
+        { icon: GraduationCap, title: "Student discounts", description: "Special discounts for students at selected venues and events across Cyprus." },
+      ],
+    },
+    howItWorks: {
+      eyebrow: "Process",
+      title: "How it works",
+      steps: [
+        { step: "01", title: "Create an account", description: "Sign up for free in less than 1 minute. All you need is an email." },
+        { step: "02", title: "Explore", description: "Discover events, offers and venues on the map or feed." },
+        { step: "03", title: "Live it", description: "Make reservations, buy tickets and redeem offers with your QR code." },
+      ],
+    },
+    unlock: {
+      eyebrow: "Registration",
+      title: "What you unlock with an account",
+      items: [
+        "Buy tickets for events",
+        "Reservations at restaurants, bars and clubs",
+        "Redeem offers with QR code",
+        "Save favorite events & venues",
+        "Push notifications for new events",
+        "RSVP and attend events",
+        "Direct messaging with venues",
+        "Student discounts",
+      ],
+    },
+    cta: {
+      title: "Ready to discover?",
+      subtitle: "Download ΦΟΜΟ and live every moment.",
+      button: "Sign up for free",
+      guest: "Explore as guest",
+    },
+  },
+};
+
 const ForVisitors = () => {
   const { language } = useLanguage();
-
-  const t = {
-    el: {
-      hero: {
-        title: "Ανακάλυψε τι συμβαίνει γύρω σου",
-        subtitle: "Το ΦΟΜΟ είναι ο απόλυτος οδηγός σου για νυχτερινή ζωή, φαγητό και αποκλειστικά events στην Κύπρο.",
-        cta: "Ξεκίνα τώρα",
-        exploreCta: "Εξερεύνησε πρώτα",
-      },
-      features: {
-        title: "Όλα όσα μπορείς να κάνεις",
-        items: [
-          {
-            icon: Compass,
-            title: "Εξερεύνηση Venues & Events",
-            description: "Ανακάλυψε εστιατόρια, bars, clubs και events κοντά σου. Φιλτράρισε ανά κατηγορία, τοποθεσία ή ημερομηνία.",
-          },
-          {
-            icon: MapPin,
-            title: "Διαδραστικός Χάρτης",
-            description: "Δες σε πραγματικό χρόνο τι συμβαίνει γύρω σου στον χάρτη. Venues, events και προσφορές με ένα tap.",
-          },
-          {
-            icon: Ticket,
-            title: "Αγορά Εισιτηρίων",
-            description: "Αγόρασε εισιτήρια online για concerts, parties και events. Ασφαλείς πληρωμές με Stripe.",
-          },
-          {
-            icon: Calendar,
-            title: "Κρατήσεις Τραπεζιών",
-            description: "Κάνε κράτηση σε εστιατόρια, bars και clubs. Επίλεξε ημερομηνία, ώρα, αριθμό ατόμων και θέση.",
-          },
-          {
-            icon: Gift,
-            title: "Αποκλειστικές Προσφορές",
-            description: "Εξαργύρωσε μοναδικές εκπτώσεις και deals. Δωρεάν εισιτήρια, εκπτώσεις, πακέτα και credits.",
-          },
-          {
-            icon: QrCode,
-            title: "QR Code Εξαργύρωση",
-            description: "Σκάναρε το QR code σου στο venue για να εξαργυρώσεις προσφορές και εισιτήρια αμέσως.",
-          },
-          {
-            icon: Heart,
-            title: "Αγαπημένα",
-            description: "Αποθήκευσε τα αγαπημένα σου events, venues και προσφορές για να τα βρίσκεις εύκολα.",
-          },
-          {
-            icon: Bell,
-            title: "Push Ειδοποιήσεις",
-            description: "Μάθε πρώτος για νέα events και προσφορές από venues που ακολουθείς.",
-          },
-          {
-            icon: Users,
-            title: "RSVP σε Events",
-            description: "Δήλωσε συμμετοχή σε events. Δες ποιοι πάνε και ποιοι ενδιαφέρονται.",
-          },
-          {
-            icon: MessageCircle,
-            title: "Direct Messaging",
-            description: "Επικοινώνησε απευθείας με venues για ερωτήσεις, ειδικά αιτήματα ή πληροφορίες.",
-          },
-          {
-            icon: GraduationCap,
-            title: "Φοιτητικές Εκπτώσεις",
-            description: "Αν είσαι φοιτητής, απόλαυσε ειδικές εκπτώσεις σε επιλεγμένα venues και events.",
-          },
-          {
-            icon: Share2,
-            title: "Κοινοποίηση",
-            description: "Μοιράσου events και προσφορές με φίλους μέσω social media ή direct link.",
-          },
-        ],
-      },
-      categories: {
-        title: "Τι θα βρεις στο ΦΟΜΟ",
-        items: [
-          { icon: Utensils, label: "Εστιατόρια" },
-          { icon: Music, label: "Clubs & Bars" },
-          { icon: PartyPopper, label: "Events & Parties" },
-          { icon: Gift, label: "Προσφορές" },
-        ],
-      },
-      howItWorks: {
-        title: "Πώς λειτουργεί",
-        steps: [
-          {
-            step: "1",
-            title: "Δημιούργησε λογαριασμό",
-            description: "Εγγράψου δωρεάν σε λιγότερο από 1 λεπτό.",
-          },
-          {
-            step: "2",
-            title: "Εξερεύνησε",
-            description: "Ανακάλυψε events, προσφορές και venues στον χάρτη ή το feed.",
-          },
-          {
-            step: "3",
-            title: "Ζήσε το",
-            description: "Κάνε κρατήσεις, αγόρασε εισιτήρια και εξαργύρωσε προσφορές με QR code.",
-          },
-        ],
-      },
-      guestMode: {
-        title: "Θέλεις να δεις πρώτα;",
-        description: "Μπορείς να εξερευνήσεις το ΦΟΜΟ χωρίς λογαριασμό. Βέβαια, για κρατήσεις, εισιτήρια και εξαργυρώσεις χρειάζεσαι εγγραφή.",
-        cta: "Εξερεύνηση ως επισκέπτης",
-      },
-      unlock: {
-        title: "Τι ξεκλειδώνεις με εγγραφή",
-        items: [
-          "Αγορά εισιτηρίων για events",
-          "Κρατήσεις σε εστιατόρια, bars και clubs",
-          "Εξαργύρωση προσφορών με QR code",
-          "Αποθήκευση αγαπημένων events & venues",
-          "Push ειδοποιήσεις για νέα events",
-          "RSVP και συμμετοχή σε events",
-          "Direct messaging με venues",
-          "Φοιτητικές εκπτώσεις",
-        ],
-      },
-      cta: {
-        title: "Έτοιμος να ανακαλύψεις;",
-        subtitle: "Κατέβασε το ΦΟΜΟ και ζήσε κάθε στιγμή.",
-        button: "Εγγράψου δωρεάν",
-      },
-    },
-    en: {
-      hero: {
-        title: "Discover what's happening around you",
-        subtitle: "ΦΟΜΟ is your ultimate guide to nightlife, food, and exclusive events in Cyprus.",
-        cta: "Get started",
-        exploreCta: "Explore first",
-      },
-      features: {
-        title: "Everything you can do",
-        items: [
-          {
-            icon: Compass,
-            title: "Explore Venues & Events",
-            description: "Discover restaurants, bars, clubs and events near you. Filter by category, location or date.",
-          },
-          {
-            icon: MapPin,
-            title: "Interactive Map",
-            description: "See what's happening around you in real time on the map. Venues, events and offers with one tap.",
-          },
-          {
-            icon: Ticket,
-            title: "Buy Tickets",
-            description: "Purchase tickets online for concerts, parties and events. Secure payments with Stripe.",
-          },
-          {
-            icon: Calendar,
-            title: "Table Reservations",
-            description: "Book a table at restaurants, bars and clubs. Choose date, time, party size and seating.",
-          },
-          {
-            icon: Gift,
-            title: "Exclusive Offers",
-            description: "Redeem unique discounts and deals. Free tickets, discounts, bundles and credits.",
-          },
-          {
-            icon: QrCode,
-            title: "QR Code Redemption",
-            description: "Scan your QR code at the venue to redeem offers and tickets instantly.",
-          },
-          {
-            icon: Heart,
-            title: "Favorites",
-            description: "Save your favorite events, venues and offers to find them easily.",
-          },
-          {
-            icon: Bell,
-            title: "Push Notifications",
-            description: "Be the first to know about new events and offers from venues you follow.",
-          },
-          {
-            icon: Users,
-            title: "RSVP to Events",
-            description: "Mark your attendance at events. See who's going and who's interested.",
-          },
-          {
-            icon: MessageCircle,
-            title: "Direct Messaging",
-            description: "Contact venues directly for questions, special requests or information.",
-          },
-          {
-            icon: GraduationCap,
-            title: "Student Discounts",
-            description: "If you're a student, enjoy special discounts at selected venues and events.",
-          },
-          {
-            icon: Share2,
-            title: "Share",
-            description: "Share events and offers with friends via social media or direct link.",
-          },
-        ],
-      },
-      categories: {
-        title: "What you'll find on ΦΟΜΟ",
-        items: [
-          { icon: Utensils, label: "Restaurants" },
-          { icon: Music, label: "Clubs & Bars" },
-          { icon: PartyPopper, label: "Events & Parties" },
-          { icon: Gift, label: "Offers" },
-        ],
-      },
-      howItWorks: {
-        title: "How it works",
-        steps: [
-          {
-            step: "1",
-            title: "Create an account",
-            description: "Sign up for free in less than 1 minute.",
-          },
-          {
-            step: "2",
-            title: "Explore",
-            description: "Discover events, offers and venues on the map or feed.",
-          },
-          {
-            step: "3",
-            title: "Live it",
-            description: "Make reservations, buy tickets and redeem offers with QR code.",
-          },
-        ],
-      },
-      guestMode: {
-        title: "Want to see first?",
-        description: "You can explore ΦΟΜΟ without an account. However, for reservations, tickets and redemptions you need to sign up.",
-        cta: "Explore as guest",
-      },
-      unlock: {
-        title: "What you unlock with registration",
-        items: [
-          "Buy tickets for events",
-          "Reservations at restaurants, bars and clubs",
-          "Redeem offers with QR code",
-          "Save favorite events & venues",
-          "Push notifications for new events",
-          "RSVP and attend events",
-          "Direct messaging with venues",
-          "Student discounts",
-        ],
-      },
-      cta: {
-        title: "Ready to discover?",
-        subtitle: "Download ΦΟΜΟ and live every moment.",
-        button: "Sign up for free",
-      },
-    },
-  };
-
-  const content = t[language];
+  const t = content[language];
 
   return (
     <div className="min-h-screen bg-background">
       <InfoNavbar />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-seafoam/5 to-background">
-        <div className="container mx-auto max-w-5xl text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-1.5 bg-seafoam text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full mb-6 text-[11px] sm:text-sm font-medium">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>
-                {language === "el" ? "Για επισκέπτες" : "For visitors"}
-              </span>
-            </div>
-            <h1 className="font-cinzel text-[clamp(1.25rem,5vw,3rem)] font-bold text-seafoam mb-6 tracking-tight">
-              {content.hero.title}
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              {content.hero.subtitle}
-            </p>
-            <div className="flex flex-row gap-3 sm:gap-4 justify-center">
-              <Button asChild className="text-sm sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-4 sm:px-6 h-10 sm:h-11 rounded-xl">
-                <Link to="/signup">{content.hero.cta}</Link>
-              </Button>
-              <Button asChild variant="outline" className="text-sm sm:text-base border-seafoam/40 text-seafoam hover:bg-seafoam/10 px-4 sm:px-6 h-10 sm:h-11 rounded-xl">
-                <Link to="/feed">{content.hero.exploreCta}</Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      {/* ── Hero ───────────────────────────────────────────── */}
+      <section className="relative bg-background overflow-hidden pt-28 sm:pt-32 pb-14 sm:pb-20">
+        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-seafoam/5 rounded-full blur-[160px] pointer-events-none" />
+        <div className="px-6 sm:px-10 lg:px-16 relative z-10">
+          <div className="max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="inline-flex items-center gap-1.5 bg-seafoam/15 text-seafoam border border-seafoam/25 px-3 py-1.5 rounded-full mb-8 text-xs font-medium tracking-wide">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{t.badge}</span>
+              </div>
 
-      {/* Categories Strip */}
-      <section className="py-10 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="font-cinzel text-lg sm:text-xl md:text-2xl font-bold text-center text-foreground mb-8">
-            {content.categories.title}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {content.categories.items.map((cat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background border border-border/50 hover:border-seafoam/30 transition-colors"
+              <h1
+                className="font-urbanist font-black text-white leading-[0.9] tracking-[-0.04em] mb-6"
+                style={{ fontSize: "clamp(2.8rem, 6.5vw, 6rem)" }}
               >
-                <div className="w-10 h-10 bg-seafoam/10 rounded-full flex items-center justify-center">
-                  <cat.icon className="w-5 h-5 text-seafoam" />
-                </div>
-                <span className="text-xs sm:text-sm font-medium text-foreground">{cat.label}</span>
-              </motion.div>
-            ))}
+                {t.hero.title}
+              </h1>
+
+              <p className="font-inter text-white/55 text-lg sm:text-xl max-w-2xl mb-10 leading-relaxed">
+                {t.hero.subtitle}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  asChild
+                  className="bg-seafoam hover:bg-seafoam/90 text-aegean font-semibold rounded-full px-7 h-11"
+                >
+                  <Link to="/signup">{t.hero.cta}</Link>
+                </Button>
+                <Button
+                  asChild
+                  className="bg-transparent border border-white/15 text-white/80 hover:bg-white/5 hover:text-white rounded-full px-7 h-11"
+                >
+                  <Link to="/feed">
+                    {t.hero.exploreCta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid — 12 items */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="font-cinzel text-[clamp(1.25rem,5vw,3rem)] font-bold text-center text-seafoam mb-12">
-            {content.features.title}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {content.features.items.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+      {/* ── Features ───────────────────────────────────────── */}
+      <section className="py-14 sm:py-20 bg-background">
+        <div className="px-6 sm:px-10 lg:px-16">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-10 sm:mb-14">
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="font-inter text-[10px] tracking-[0.24em] text-white/40 uppercase mb-3"
               >
-                <Card className="h-full hover:shadow-lg transition-all duration-300 border-border/50 hover:border-seafoam/20">
-                  <CardContent className="p-5">
-                    <div className="w-10 h-10 bg-seafoam/10 rounded-xl flex items-center justify-center mb-3">
-                      <feature.icon className="w-5 h-5 text-seafoam" />
-                    </div>
-                    <h3 className="font-poppins font-semibold text-sm sm:text-base text-foreground mb-1.5">
+                {t.features.eyebrow}
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="font-urbanist font-black text-white leading-[0.88] tracking-[-0.04em]"
+                style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
+              >
+                {t.features.title}
+              </motion.h2>
+            </div>
+
+            {/* All screen sizes — grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {t.features.items.map((feature, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col gap-5 p-8 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] hover:border-seafoam/25 transition-all duration-300"
+                >
+                  <div className="w-14 h-14 rounded-full bg-seafoam/10 border border-seafoam/20 flex items-center justify-center">
+                    <feature.icon className="w-6 h-6 text-seafoam" />
+                  </div>
+                  <div>
+                    <h3 className="font-urbanist font-bold text-white text-lg sm:text-xl leading-snug mb-2">
                       {feature.title}
                     </h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                    <p className="font-inter text-white/40 text-sm sm:text-[15px] leading-relaxed">
                       {feature.description}
                     </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-center text-foreground mb-12">
-            {content.howItWorks.title}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {content.howItWorks.steps.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
+      {/* ── How It Works ───────────────────────────────────── */}
+      <section className="py-14 sm:py-20 bg-background">
+        <div className="px-6 sm:px-10 lg:px-16">
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-10 sm:mb-14">
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="font-inter text-[10px] tracking-[0.24em] text-white/40 uppercase mb-3"
+              >
+                {t.howItWorks.eyebrow}
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.15 }}
                 viewport={{ once: true }}
-                className="text-center"
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="font-urbanist font-black text-white leading-[0.88] tracking-[-0.04em]"
+                style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
               >
-                <div className="w-14 h-14 bg-seafoam text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  {step.step}
-                </div>
-                <h3 className="font-poppins font-semibold text-base sm:text-lg text-foreground mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  {step.description}
-                </p>
-              </motion.div>
-            ))}
+                {t.howItWorks.title}
+              </motion.h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {t.howItWorks.steps.map((step, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col gap-4 p-8 rounded-2xl bg-white/[0.04] border border-white/[0.08]"
+                >
+                  <span
+                    className="font-urbanist font-black text-seafoam/20 leading-none select-none"
+                    style={{ fontSize: "clamp(4rem, 7vw, 6.5rem)" }}
+                  >
+                    {step.step}
+                  </span>
+                  <div>
+                    <h3 className="font-urbanist font-bold text-white text-xl mb-2">{step.title}</h3>
+                    <p className="font-inter text-white/45 text-sm sm:text-[15px] leading-relaxed">{step.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* What You Unlock */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-3xl">
-          <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-center text-foreground mb-12">
-            {content.unlock.title}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {content.unlock.items.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+      {/* ── What You Unlock ────────────────────────────────── */}
+      <section className="py-14 sm:py-20 bg-background">
+        <div className="px-6 sm:px-10 lg:px-16">
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-10 sm:mb-14">
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="flex items-center gap-3 bg-muted/30 rounded-lg p-3.5 border border-border/50"
+                transition={{ duration: 0.6 }}
+                className="font-inter text-[10px] tracking-[0.24em] text-white/40 uppercase mb-3"
               >
-                <div className="w-7 h-7 bg-seafoam/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Star className="w-3.5 h-3.5 text-seafoam" />
-                </div>
-                <span className="text-foreground text-xs sm:text-sm">{item}</span>
-              </motion.div>
-            ))}
+                {t.unlock.eyebrow}
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="font-urbanist font-black text-white leading-[0.88] tracking-[-0.04em]"
+                style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
+              >
+                {t.unlock.title}
+              </motion.h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {t.unlock.items.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-center gap-4 p-4 sm:p-5 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+                >
+                  <div className="w-8 h-8 rounded-full bg-seafoam/10 border border-seafoam/20 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-4 h-4 text-seafoam" />
+                  </div>
+                  <span className="font-inter text-white/80 text-sm sm:text-[15px]">{item}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Guest Mode */}
-      <section className="py-16 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-2xl text-center">
+      {/* ── Final CTA ──────────────────────────────────────── */}
+      <section className="py-14 sm:py-20 bg-background relative overflow-hidden">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-seafoam/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="px-6 sm:px-10 lg:px-16 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="bg-background rounded-2xl p-6 sm:p-8 border border-border/50"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-5xl mx-auto text-center"
           >
-            <Smartphone className="w-10 h-10 text-seafoam mx-auto mb-4" />
-            <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-foreground mb-3">
-              {content.guestMode.title}
+            <h2
+              className="font-urbanist font-black text-white leading-[0.9] tracking-[-0.04em] mb-4"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 5.5rem)" }}
+            >
+              {t.cta.title}
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base mb-6">
-              {content.guestMode.description}
+            <p className="font-inter text-white/50 text-lg sm:text-xl mb-10 max-w-xl mx-auto">
+              {t.cta.subtitle}
             </p>
-            <Button asChild variant="outline" className="border-seafoam/40 text-seafoam hover:bg-seafoam/10 rounded-xl text-xs sm:text-sm px-4 sm:px-6 h-9 sm:h-10 w-full sm:w-auto">
-              <Link to="/feed">{content.guestMode.cta}</Link>
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-3xl text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
-              {content.cta.title}
-            </h2>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8">
-              {content.cta.subtitle}
-            </p>
-            <Button asChild size="lg" className="text-xs sm:text-base bg-seafoam hover:bg-seafoam/90 text-white px-5 sm:px-8 h-9 sm:h-11 rounded-xl w-full sm:w-auto">
-              <Link to="/signup">{content.cta.button}</Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                asChild
+                className="bg-seafoam hover:bg-seafoam/90 text-aegean font-semibold rounded-full px-8 h-12 text-base"
+              >
+                <Link to="/signup">{t.cta.button}</Link>
+              </Button>
+              <Link
+                to="/feed"
+                className="font-inter text-white/40 hover:text-white/70 text-sm transition-colors flex items-center gap-1.5"
+              >
+                {t.cta.guest}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>

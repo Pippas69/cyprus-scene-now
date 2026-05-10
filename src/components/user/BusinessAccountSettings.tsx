@@ -681,21 +681,21 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
 
       {/* Nav menu */}
       <div className={`lg:w-[248px] lg:flex-shrink-0 ${activeSection ? 'hidden lg:block' : 'block'}`}>
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.04]">
+        <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
-              className={`flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors hover:bg-white/[0.04] ${activeSection === item.id ? 'bg-white/[0.06]' : ''}`}
+              className={`flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors hover:bg-muted/50 ${activeSection === item.id ? 'bg-accent/10' : ''}`}
             >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${activeSection === item.id ? 'bg-[#4ECDC4]/10' : 'bg-white/[0.04]'}`}>
-                <item.icon className={`h-4 w-4 ${activeSection === item.id ? 'text-[#4ECDC4]' : 'text-white/40'}`} />
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${activeSection === item.id ? 'bg-accent/15' : 'bg-muted/50'}`}>
+                <item.icon className={`h-4 w-4 ${activeSection === item.id ? 'text-accent' : 'text-muted-foreground'}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-inter font-medium text-sm text-white">{item.title}</p>
-                <p className="font-inter text-xs text-white/40 mt-0.5">{item.desc}</p>
+                <p className="font-inter font-medium text-sm text-foreground">{item.title}</p>
+                <p className="font-inter text-xs text-muted-foreground mt-0.5">{item.desc}</p>
               </div>
-              <ChevronRight className={`h-4 w-4 flex-shrink-0 ${activeSection === item.id ? 'text-white/30' : 'text-white/15'}`} />
+              <ChevronRight className={`h-4 w-4 flex-shrink-0 ${activeSection === item.id ? 'text-muted-foreground' : 'text-muted-foreground/40'}`} />
             </button>
           ))}
         </div>
@@ -707,7 +707,7 @@ export const BusinessAccountSettings = ({ userId, businessId, language }: Busine
           <div className="space-y-6">
             <button
               onClick={() => setActiveSection(null)}
-              className="lg:hidden flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors"
+              className="lg:hidden flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               {language === 'el' ? 'Πίσω' : 'Back'}

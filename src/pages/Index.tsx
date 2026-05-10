@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import InfoNavbar from "@/components/info/InfoNavbar";
 import HeroSection from "@/components/home/HeroSection";
-import FeaturesSection from "@/components/home/FeaturesSection";
 import FAQSection from "@/components/home/FAQSection";
 import UpcomingEventsPreview from "@/components/home/UpcomingEventsPreview";
 import { supabase } from "@/integrations/supabase/client";
-import PartnerLogoMarquee from "@/components/home/PartnerLogoMarquee";
+import WhyFOMO from "@/components/home/WhyFOMO";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const Index = () => {
@@ -57,8 +56,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <InfoNavbar />
       <HeroSection language={language} />
-      <PartnerLogoMarquee />
-      <FeaturesSection language={language} />
+      <WhyFOMO language={language} />
       <UpcomingEventsPreview language={language} />
       <FAQSection language={language} />
       <Footer />
