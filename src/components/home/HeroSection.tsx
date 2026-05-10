@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Newspaper, MapPin } from "lucide-react";
 import heroPhoneLoop from "@/assets/hero-phone-loop.mp4";
+import TrendingCarousel from "@/components/home/TrendingCarousel";
 
 interface HeroSectionProps {
   language: "el" | "en";
@@ -158,6 +159,7 @@ const HeroSection = ({ language }: HeroSectionProps) => {
   const navigate = useNavigate();
 
   return (
+    <>
     <section className="relative overflow-hidden bg-background pb-10 sm:pb-14">
       <div className="absolute left-[8%] top-[4.5rem] h-40 w-40 rounded-full bg-seafoam/[0.06] blur-3xl sm:h-56 sm:w-56" />
       <div className="absolute right-[10%] top-[12rem] h-44 w-44 rounded-full bg-foreground/[0.04] blur-3xl sm:h-64 sm:w-64" />
@@ -251,6 +253,8 @@ const HeroSection = ({ language }: HeroSectionProps) => {
         </div>
       </div>
     </section>
+    <TrendingCarousel language={language} compact />
+    </>
   );
 };
 

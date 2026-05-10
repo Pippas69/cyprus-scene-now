@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeSelectChange } from "@/lib/formSafeUpdate";
-import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2, Phone } from "lucide-react";
+import { MapPin, Heart, ArrowLeft, Store, Sun, Moon, Sparkles, Clock, GraduationCap, Mail, CheckCircle, Loader2, Phone, User, Calendar, Lock, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -96,7 +96,7 @@ const Signup = () => {
     }
   });
   const [passwordLength, setPasswordLength] = useState(0);
-  
+
   const [isStudent, setIsStudent] = useState(false);
   const [universityEmail, setUniversityEmail] = useState("");
   const [selectedUniversity, setSelectedUniversity] = useState("");
@@ -110,7 +110,6 @@ const Signup = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [redirectAfterVerify, setRedirectAfterVerify] = useState('/feed');
 
-  // Validate university email when it changes
   useEffect(() => {
     if (universityEmail && isStudent) {
       const domain = universityEmail.split('@')[1]?.toLowerCase();
@@ -118,13 +117,13 @@ const Signup = () => {
         const matchingUni = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
         if (matchingUni && domain !== matchingUni.domain) {
           setStudentEmailError(
-            language === 'el' 
+            language === 'el'
               ? `Το email πρέπει να είναι @${matchingUni.domain}`
               : `Email must be @${matchingUni.domain}`
           );
         } else if (!isValidUniversityEmail(universityEmail)) {
           setStudentEmailError(
-            language === 'el' 
+            language === 'el'
               ? 'Παρακαλώ χρησιμοποιήστε ακαδημαϊκό email'
               : 'Please use a valid university email'
           );
@@ -141,8 +140,7 @@ const Signup = () => {
     setIsLoading(true);
     try {
       const redirectUrl = searchParams.get('redirect') || '/feed';
-      
-      // Validate student email if they selected student option
+
       if (isStudent && universityEmail && selectedUniversity) {
         if (!isValidUniversityEmail(universityEmail)) {
           toast.error(language === 'el' ? 'Μη έγκυρο ακαδημαϊκό email' : 'Invalid university email');
@@ -150,8 +148,7 @@ const Signup = () => {
           return;
         }
       }
-      
-      // For the test email, delete existing user first to allow re-registration
+
       const TEST_EMAIL = "marinoskoumi04@gmail.com";
       if (values.email.toLowerCase() === TEST_EMAIL) {
         try {
@@ -163,7 +160,6 @@ const Signup = () => {
         }
       }
 
-      // Phone is already in E.164 format from PhoneInput
       const fullPhone = values.phone;
 
       const {
@@ -190,14 +186,11 @@ const Signup = () => {
       });
       if (error) {
         if (error.message.includes("already registered")) {
-          // Edge case: user exists but may be unconfirmed (abandoned signup).
-          // Try to resend the verification code → if it succeeds, recover into OTP screen.
           const { error: resendError } = await supabase.auth.resend({
             type: 'signup',
             email: values.email,
           });
           if (!resendError) {
-            // Unconfirmed account → push to OTP screen with a fresh code
             setOtpEmail(values.email);
             setRedirectAfterVerify(redirectUrl);
             setShowOtpScreen(true);
@@ -248,7 +241,6 @@ const Signup = () => {
       }
       if (data.user) {
         setFailedAttempts(0);
-        // Ensure demographic/profile fields are persisted immediately (do not rely on triggers)
         const { error: profileUpsertError } = await supabase
           .from("profiles")
           .upsert(
@@ -269,23 +261,21 @@ const Signup = () => {
           console.error("Profile upsert error on signup:", profileUpsertError);
         }
 
-        // If student verification is needed, create the verification record and send email
         if (isStudent && universityEmail && selectedUniversity) {
           const universityData = CYPRUS_UNIVERSITIES.find(u => u.domain === selectedUniversity);
           if (universityData) {
             const normalizedEmail = universityEmail.toLowerCase().trim();
-            
-            // Check if this university email is already used by an approved verification
+
             const { data: existingApproved } = await supabase
               .from('student_verifications')
               .select('id')
               .eq('university_email', normalizedEmail)
               .eq('status', 'approved')
               .maybeSingle();
-            
+
             if (existingApproved) {
-              toast.error(language === 'el' 
-                ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
+              toast.error(language === 'el'
+                ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό'
                 : 'This university email is already used by another account'
               );
             } else {
@@ -300,20 +290,18 @@ const Signup = () => {
                 } as any)
                 .select('id')
                 .single();
-              
+
               if (verificationError) {
                 console.error('Student verification insert error:', verificationError);
-                // Check for unique constraint violation
                 if (verificationError.code === '23505') {
-                  toast.error(language === 'el' 
-                    ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό' 
+                  toast.error(language === 'el'
+                    ? 'Αυτό το φοιτητικό email χρησιμοποιείται ήδη σε άλλο λογαριασμό'
                     : 'This university email is already used by another account'
                   );
                 } else {
                   toast.error(language === 'el' ? 'Αποτυχία δημιουργίας επαλήθευσης φοιτητή' : 'Failed to create student verification');
                 }
               } else if (verificationData) {
-                // Send verification email (non-blocking for signup success)
                 try {
                   setSendingVerification(true);
                   const { error: emailError } = await supabase.functions.invoke('send-student-verification-email', {
@@ -340,7 +328,6 @@ const Signup = () => {
           }
         }
         confetti.trigger();
-        // Show OTP verification screen instead of navigating
         setOtpEmail(values.email);
         setRedirectAfterVerify(redirectUrl);
         setShowOtpScreen(true);
@@ -395,96 +382,58 @@ const Signup = () => {
     }
   };
 
-  // Show loading while checking beta mode
   if (betaLoading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <OceanLoader size="lg" />
       </div>
     );
   }
 
-  // Show Coming Soon if beta mode is enabled
   if (isBetaMode) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-            <div className="w-full h-full rounded-full bg-gradient-glow" />
-          </div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="max-w-md w-full space-y-8 relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t.back}
-            </Button>
-            
+      <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6">
+          <div className="flex items-center justify-between">
+            <button onClick={() => navigate("/")} className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors">
+              <ArrowLeft className="h-4 w-4" /> {t.back}
+            </button>
             <div className="flex items-center gap-2">
               <LanguageToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="text-white hover:text-seafoam"
-              >
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-            </div>
+              </div>
           </div>
 
-          <div className="bg-card rounded-3xl shadow-elegant p-8 md:p-12 text-center">
-            {/* Logo */}
-            <div className="mb-8">
-              <h1 className="font-cinzel text-5xl font-bold text-primary mb-2">ΦΟΜΟ</h1>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary to-seafoam mx-auto rounded-full" />
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 text-center">
+            <h1 className="font-urbanist font-black text-white text-5xl mb-2">ΦΟΜΟ</h1>
+            <div className="w-12 h-0.5 bg-seafoam mx-auto rounded-full mb-8" />
+            <div className="w-16 h-16 bg-seafoam/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="h-8 w-8 text-seafoam animate-pulse" />
             </div>
-
-            {/* Coming Soon Icon */}
-            <div className="mb-6">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="h-10 w-10 text-primary animate-pulse" />
-              </div>
-            </div>
-
-            {/* Message */}
-            <h2 className="font-cinzel text-3xl font-bold text-foreground mb-4">
+            <h2 className="font-urbanist font-black text-white text-2xl mb-3">
               {language === 'el' ? betaMessage.el : betaMessage.en}
             </h2>
-            
-            <p className="font-inter text-muted-foreground mb-8 leading-relaxed">
-              {language === 'el' 
+            <p className="text-white/45 text-sm leading-relaxed mb-8">
+              {language === 'el'
                 ? 'Ετοιμάζουμε κάτι ξεχωριστό για εσένα! Η εφαρμογή βρίσκεται σε φάση beta.'
-                : 'We\'re preparing something special for you! The app is currently in beta phase.'
+                : "We're preparing something special for you! The app is currently in beta phase."
               }
             </p>
-
-            {/* Sparkles decoration */}
-            <div className="flex justify-center gap-2 mb-8">
-              <Sparkles className="h-5 w-5 text-primary animate-bounce" style={{ animationDelay: "0s" }} />
-              <Sparkles className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: "0.2s" }} />
-              <Sparkles className="h-5 w-5 text-sunset-coral animate-bounce" style={{ animationDelay: "0.4s" }} />
+            <div className="flex justify-center gap-3 mb-8">
+              <Sparkles className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: "0s" }} />
+              <Sparkles className="h-5 w-5 text-white/40 animate-bounce" style={{ animationDelay: "0.2s" }} />
+              <Sparkles className="h-5 w-5 text-seafoam animate-bounce" style={{ animationDelay: "0.4s" }} />
             </div>
-
-            {/* Business Signup Link */}
-            <div className="pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-4">
-                {language === 'el' 
-                  ? 'Είστε επιχείρηση με κωδικό πρόσκλησης;'
-                  : 'Are you a business with an invite code?'
-                }
+            <div className="pt-6 border-t border-white/[0.06]">
+              <p className="text-white/40 text-sm mb-4">
+                {language === 'el' ? 'Είστε επιχείρηση με κωδικό πρόσκλησης;' : 'Are you a business with an invite code?'}
               </p>
-              <Button
-                variant="outline"
+              <button
                 onClick={() => navigate("/signup-business")}
-                className="gap-2"
+                className="inline-flex items-center gap-2 bg-white/[0.06] border border-white/[0.08] rounded-full px-5 py-2.5 text-white text-sm hover:bg-white/[0.1] transition-colors"
               >
                 <Store className="h-4 w-4" />
                 {language === 'el' ? 'Εγγραφή Επιχείρησης' : 'Business Signup'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -492,29 +441,20 @@ const Signup = () => {
     );
   }
 
-  // Success Screen after OTP verification
   if (showSuccessScreen) {
     return (
       <>
         <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={100} />
-        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-              <div className="w-full h-full rounded-full bg-gradient-glow" />
-            </div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          </div>
-          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 text-center">
             <SuccessCheckmark isVisible={true} size="lg" className="mx-auto" />
-            <h2 className="text-2xl font-bold text-foreground font-cinzel">
+            <h2 className="font-urbanist font-black text-white text-2xl mt-6 mb-2">
               {language === 'el' ? 'Καλωσόρισες στο ΦΟΜΟ!' : 'Welcome to FOMO!'}
             </h2>
-            <p className="text-muted-foreground">
-              {language === 'el'
-                ? 'Η εγγραφή σου ολοκληρώθηκε επιτυχώς!'
-                : 'Your registration was completed successfully!'}
+            <p className="text-white/50 text-sm">
+              {language === 'el' ? 'Η εγγραφή σου ολοκληρώθηκε επιτυχώς!' : 'Your registration was completed successfully!'}
             </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-sm text-white/30 mt-4">
               <Loader2 className="h-4 w-4 animate-spin" />
               {language === 'el' ? 'Ανακατεύθυνση...' : 'Redirecting...'}
             </div>
@@ -524,66 +464,60 @@ const Signup = () => {
     );
   }
 
-  // Regular signup form (when beta mode is disabled)
-  // OTP Verification Screen
   if (showOtpScreen) {
     return (
       <>
         <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
-        <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-              <div className="w-full h-full rounded-full bg-gradient-glow" />
-            </div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-          </div>
-          <div className="max-w-md w-full space-y-6 relative z-10 bg-card/80 backdrop-blur-xl rounded-2xl p-8 border border-border shadow-xl">
-            <div className="text-center">
-              <Mail className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                {language === 'el' ? 'Επαλήθευση Email' : 'Email Verification'}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {language === 'el'
-                  ? `Εισάγετε τον 6ψήφιο κωδικό που στάλθηκε στο ${otpEmail}`
-                  : `Enter the 6-digit code sent to ${otpEmail}`}
-              </p>
-            </div>
+        <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full">
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-seafoam/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="h-7 w-7 text-seafoam" />
+                </div>
+                <h2 className="font-urbanist font-black text-white text-2xl mb-2">
+                  {language === 'el' ? 'Επαλήθευση Email' : 'Email Verification'}
+                </h2>
+                <p className="text-white/40 text-sm leading-relaxed">
+                  {language === 'el'
+                    ? `Εισάγετε τον 6ψήφιο κωδικό που στάλθηκε στο ${otpEmail}`
+                    : `Enter the 6-digit code sent to ${otpEmail}`}
+                </p>
+              </div>
 
-            <div className="flex justify-center">
-              <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+              <div className="flex justify-center mb-6">
+                <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
 
-            <Button
-              variant="gradient"
-              size="lg"
-              className="w-full"
-              disabled={otpCode.length < 6 || verifyingOtp}
-              onClick={handleVerifyOtp}
-            >
-              {verifyingOtp
-                ? (language === 'el' ? 'Επαλήθευση...' : 'Verifying...')
-                : (language === 'el' ? 'Επαλήθευση' : 'Verify')}
-            </Button>
-
-            <div className="text-center">
               <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={handleResendOtp}
-                disabled={verifyingOtp}
+                onClick={handleVerifyOtp}
+                disabled={otpCode.length < 6 || verifyingOtp}
+                className="w-full h-11 bg-seafoam hover:bg-seafoam/90 text-aegean font-semibold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {language === 'el' ? 'Δεν λάβατε κωδικό; Αποστολή ξανά' : "Didn't receive a code? Resend"}
+                {verifyingOtp
+                  ? (language === 'el' ? 'Επαλήθευση...' : 'Verifying...')
+                  : (language === 'el' ? 'Επαλήθευση' : 'Verify')}
               </button>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  className="text-sm text-white/40 hover:text-white/70 transition-colors"
+                  onClick={handleResendOtp}
+                  disabled={verifyingOtp}
+                >
+                  {language === 'el' ? 'Δεν λάβατε κωδικό; Αποστολή ξανά' : "Didn't receive a code? Resend"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -591,296 +525,234 @@ const Signup = () => {
     );
   }
 
-  return <>
-    <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
-    <div className="min-h-screen gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-          <div className="w-full h-full rounded-full bg-gradient-glow" />
-        </div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/3 w-96 h-96 bg-seafoam/20 rounded-full blur-3xl animate-pulse" style={{
-        animationDelay: "1s"
-      }} />
-      </div>
-
-      <div className="max-w-2xl w-full space-y-8 relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t.back}
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-white hover:text-seafoam"
+  return (
+    <>
+      <Confetti isActive={confetti.isActive} onComplete={confetti.reset} particleCount={80} />
+      <div className="min-h-screen bg-background flex">
+        {/* Left branding panel */}
+        <div className="hidden lg:flex lg:flex-col lg:justify-center lg:w-[400px] xl:w-[460px] flex-shrink-0 relative border-r border-white/[0.06] px-10 xl:px-14">
+          <div className="absolute top-1/2 left-0 w-[360px] h-[360px] bg-seafoam/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2" />
+          <div className="relative z-10">
+            <h1
+              className="font-urbanist font-black leading-none tracking-[-0.05em] mb-4"
+              style={{ fontSize: "clamp(4rem, 6vw, 6.5rem)" }}
             >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
+              <span className="text-[#7EC8F0]">Φ</span><span className="text-white">ΟΜΟ</span>
+            </h1>
+            <p className="font-inter text-white/45 text-base leading-relaxed mb-10">
+              {language === 'el'
+                ? 'Η νυχτερινή ζωή της Κύπρου στα χέρια σου. Ανακάλυψε, κράτα θέση, ζήσε.'
+                : 'Cyprus nightlife at your fingertips. Discover, book, experience.'}
+            </p>
+            <div className="space-y-4">
+              {[
+                { value: '10K+', label: language === 'el' ? 'Ενεργοί χρήστες' : 'Active users' },
+                { value: '500+', label: language === 'el' ? 'Εκδηλώσεις μηνιαίως' : 'Events monthly' },
+                { value: '50K+', label: language === 'el' ? 'Επισκέψεις' : 'Total visits' },
+              ].map(s => (
+                <div key={s.value} className="flex items-center gap-3">
+                  <div className="w-1 h-6 bg-seafoam rounded-full" />
+                  <div>
+                    <div className="font-urbanist font-black text-white text-xl">{s.value}</div>
+                    <div className="text-white/40 text-xs">{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
-                <FormField control={form.control} name="firstName" render={({
-                field
-              }) => <FormItem>
-                      <FormLabel>{language === "el" ? "Όνομα" : "First Name"}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={language === "el" ? "Γιώργος" : "George"} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>} />
-
-                <FormField control={form.control} name="lastName" render={({
-                field
-              }) => <FormItem>
-                      <FormLabel>{language === "el" ? "Επίθετο" : "Last Name"}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={language === "el" ? "Παπαδόπουλος" : "Papadopoulos"} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>} />
+        {/* Right form panel */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-10 pt-5 pb-3 flex-shrink-0">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> {t.back}
+            </button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
               </div>
+          </div>
 
-              <FormField control={form.control} name="age" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{language === "el" ? "Ηλικία" : "Age"}</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="" {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-
-              <FormField control={form.control} name="email" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{t.email}</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder={t.emailPlaceholder} {...field} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-
-               <FormField control={form.control} name="password" render={({
-               field
-             }) => <FormItem>
-                     <FormLabel>{t.password}</FormLabel>
-                     <FormControl>
-                       <PasswordInput placeholder={t.passwordPlaceholder} {...field} onChange={(e) => { field.onChange(e); setPasswordLength(e.target.value.trim().length); }} className="rounded-xl h-8 sm:h-10 text-base sm:text-sm" />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>} />
-
-              <FormField control={form.control} name="town" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {language === "el" ? "Πόλη" : "Town"}
-                    </FormLabel>
-                    <Select 
-                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                      value={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πόλη" : "Select town"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {getCityOptions(language).map(city => <SelectItem key={city.value} value={city.value}>
-                            {city.label}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>} />
-
-              {/* Phone field with international country selector */}
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    {language === "el" ? "Τηλέφωνο" : "Phone"}
-                  </FormLabel>
-                  <FormControl>
-                    <PhoneInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      language={language}
-                      selectClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
-                      inputClassName="rounded-xl h-8 sm:h-10 text-base sm:text-sm"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-
-              <FormField control={form.control} name="gender" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>{language === "el" ? "Φύλο" : "Gender"}</FormLabel>
-                    <Select 
-                      onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} 
-                      value={field.value || ""}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε φύλο (προαιρετικό)" : "Select gender (optional)"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">
-                          {language === "el" ? "Άνδρας" : "Male"}
-                        </SelectItem>
-                        <SelectItem value="female">
-                          {language === "el" ? "Γυναίκα" : "Female"}
-                        </SelectItem>
-                        <SelectItem value="other">
-                          {language === "el" ? "Άλλο" : "Other"}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>} />
-
-              {/* Category Preferences - list rows (as per mock) */}
-              <div className="space-y-2 sm:space-y-3">
-                <FormLabel className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-primary" />
-                  {language === "el" ? "Τι σας αρέσει;" : "What do you like?"}
-                </FormLabel>
-                <p className="text-sm text-muted-foreground">
-                  {language === "el" ? "Επιλέξτε όσα θέλετε για καλύτερες προτάσεις" : "Select as many as you like for better recommendations"}
+          {/* Form content */}
+          <div className="flex-1 px-4 sm:px-6 lg:px-10 py-4 pb-12">
+            <div className="max-w-xl mx-auto lg:mx-0">
+              <div className="mb-6">
+                <h2 className="font-urbanist font-black text-white text-3xl mb-1">
+                  {language === 'el' ? 'Δημιουργία Λογαριασμού' : 'Create Account'}
+                </h2>
+                <p className="text-white/40 text-sm">
+                  {language === 'el' ? 'Γίνε μέλος της κοινότητας' : 'Join the community'}
                 </p>
-
-                <div className="[&>div]:space-y-1.5 sm:[&>div]:space-y-2">
-                  <InterestSelectorList
-                    categories={getCategoriesForUser(language)}
-                    selectedIds={selectedPreferences}
-                    onToggle={togglePreference}
-                  />
-                </div>
               </div>
 
-              {/* Student Verification Section */}
-              <div className="space-y-2 sm:space-y-4 p-2.5 sm:p-4 border border-border rounded-xl bg-muted/30">
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <Checkbox 
-                    id="isStudent" 
-                    checked={isStudent} 
-                    onCheckedChange={(checked) => setIsStudent(checked === true)}
-                    className="rounded h-4 w-4" 
-                  />
-                  <label htmlFor="isStudent" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium leading-none cursor-pointer">
-                    <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                    {language === "el" ? "Είμαι φοιτητής/τρια" : "I am a student"}
-                  </label>
-                </div>
-                
-                {isStudent && (
-                  <div className="space-y-2.5 sm:space-y-4 pt-1.5 sm:pt-2 animate-in slide-in-from-top-2">
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {language === "el" 
-                        ? "Επαληθεύστε τη φοιτητική σας ιδιότητα για να λαμβάνετε εκπτώσεις σε επιχειρήσεις."
-                        : "Verify your student status to receive discounts at businesses."
-                      }
-                    </p>
-                    
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <FormLabel className="text-xs sm:text-sm">{language === "el" ? "Πανεπιστήμιο" : "University"}</FormLabel>
-                      <Select 
-                        value={selectedUniversity} 
-                        onValueChange={setSelectedUniversity}
-                      >
-                        <SelectTrigger className="rounded-xl h-8 sm:h-10 text-base sm:text-sm">
-                          <SelectValue placeholder={language === "el" ? "Επιλέξτε πανεπιστήμιο" : "Select university"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CYPRUS_UNIVERSITIES.map(uni => (
-                            <SelectItem key={uni.domain} value={uni.domain}>
-                              {language === "el" ? uni.nameEl : uni.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-7">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField control={form.control} name="firstName" render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                              <Input placeholder={language === "el" ? "Όνομα" : "First Name"} {...field} className="rounded-xl h-10 pl-10 placeholder:text-white/40" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="lastName" render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                              <Input placeholder={language === "el" ? "Επίθετο" : "Last Name"} {...field} className="rounded-xl h-10 pl-10 placeholder:text-white/40" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
                     </div>
-                    
-                    {selectedUniversity && (
-                      <div className="space-y-1.5 sm:space-y-2 animate-in slide-in-from-top-2">
-                        <FormLabel className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          {language === "el" ? "Ακαδημαϊκό Email" : "University Email"}
-                        </FormLabel>
-                        <Input
-                          type="email"
-                          value={universityEmail}
-                          onChange={(e) => setUniversityEmail(e.target.value)}
-                          placeholder={`example@${selectedUniversity}`}
-                          className="rounded-xl h-8 sm:h-10 text-xs sm:text-sm"
-                        />
-                        {studentEmailError && (
-                          <p className="text-[10px] sm:text-sm text-destructive">{studentEmailError}</p>
-                        )}
-                        {universityEmail && !studentEmailError && isValidUniversityEmail(universityEmail) && (
-                          <div className="border border-green-500 bg-green-50 dark:bg-green-950/20 rounded-lg px-3 py-2">
-                            <p className="text-[10px] sm:text-xs text-green-700 dark:text-green-400 leading-tight">
-                              {language === "el" 
-                                ? "Θα λάβετε email επαλήθευσης στις ρυθμίσεις μετά την εγγραφή."
-                                : "You will receive a verification email in settings after signup."
-                              }
-                            </p>
+
+                    <FormField control={form.control} name="age" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="relative">
+                            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                            <Input type="number" placeholder={language === "el" ? "Ηλικία" : "Age"} {...field} className="rounded-xl h-10 pl-10 placeholder:text-white/40" />
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                            <Input type="email" placeholder={language === "el" ? "Ηλεκτρονικό Ταχυδρομείο" : "Email"} {...field} className="rounded-xl h-10 pl-10 placeholder:text-white/40" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none z-10" />
+                            <PasswordInput
+                              placeholder={t.passwordPlaceholder}
+                              {...field}
+                              onChange={(e) => { field.onChange(e); setPasswordLength(e.target.value.trim().length); }}
+                              className="rounded-xl h-10 pl-10 placeholder:text-white/40"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="town" render={({ field }) => (
+                      <FormItem>
+                        <Select onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger className="rounded-xl h-10">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <MapPin className="h-4 w-4 text-white/25 flex-shrink-0" />
+                                <SelectValue placeholder={language === "el" ? "Πόλη" : "Town"} />
+                              </div>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getCityOptions(language).map(city => (
+                              <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <PhoneInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            language={language}
+                            selectClassName="rounded-xl h-10"
+                            inputClassName="rounded-xl h-10 placeholder:text-white/40"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="gender" render={({ field }) => (
+                      <FormItem>
+                        <Select onValueChange={(v) => safeSelectChange(field.value, v, field.onChange)} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger className="rounded-xl h-10">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Users className="h-4 w-4 text-white/25 flex-shrink-0" />
+                                <SelectValue placeholder={language === "el" ? "Φύλο (προαιρετικό)" : "Gender (optional)"} />
+                              </div>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">{language === "el" ? "Άνδρας" : "Male"}</SelectItem>
+                            <SelectItem value="female">{language === "el" ? "Γυναίκα" : "Female"}</SelectItem>
+                            <SelectItem value="other">{language === "el" ? "Άλλο" : "Other"}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <button
+                      type="submit"
+                      className="w-full h-11 bg-seafoam hover:bg-seafoam/90 text-aegean font-semibold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isLoading || passwordLength < 8}
+                    >
+                      {isLoading ? t.signingUp : t.signupButton}
+                    </button>
+
+                    <p className="text-xs text-center text-white/40">
+                      {language === "el" ? (
+                        <>Με την εγγραφή σας, αποδέχεστε τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">πολιτική απορρήτου</a>.</>
+                      ) : (
+                        <>By signing up, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">privacy policy</a>.</>
+                      )}
+                    </p>
+
+                    <div className="text-center text-sm text-white/40">
+                      {t.alreadyHaveAccount}{" "}
+                      <Link to="/login" className="text-seafoam hover:text-seafoam/80 font-semibold">
+                        {t.loginLink}
+                      </Link>
+                    </div>
+                  </form>
+                </Form>
               </div>
 
-              <Button type="submit" variant="gradient" size="lg" className="w-full h-10 sm:h-12 text-sm sm:text-base" disabled={isLoading || passwordLength < 8}>
-                {isLoading ? t.signingUp : t.signupButton}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                {language === "el" ? (
-                  <>Με την εγγραφή σας, αποδέχεστε τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">πολιτική απορρήτου</a>.</>
-                ) : (
-                  <>By signing up, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">privacy policy</a>.</>
-                )}
-              </p>
-
-              <div className="text-center text-xs sm:text-sm text-muted-foreground">
-                {t.alreadyHaveAccount}{" "}
-                <Link to="/login" className="text-primary hover:underline font-semibold">
-                  {t.loginLink}
+              <div className="mt-5 text-right">
+                <Link to="/signup-business" className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors font-medium">
+                  <Store className="h-4 w-4" />
+                  {t.businessSignupLink}
                 </Link>
               </div>
-            </form>
-          </Form>
-
-          <div className="mt-4 sm:mt-8 text-right">
-            <Link to="/signup-business" className="inline-flex items-center gap-2 text-xs sm:text-sm text-white hover:text-white/80 transition-colors font-medium">
-              <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {t.businessSignupLink}
-            </Link>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </>;
+    </>
+  );
 };
+
 export default Signup;

@@ -18,7 +18,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { toastTranslations } from '@/translations/toastTranslations';
-import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap, Smartphone, Send } from 'lucide-react';
+import { Lock, Bell, Shield, Download, Trash2, User, Heart, MapPin, Save, Sparkles, Clock, CheckCircle, Mail, Settings as SettingsIcon, GraduationCap, Smartphone, Send, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getCategoriesForUser } from '@/lib/unifiedCategories';
 import { getCityOptions, translateCity } from '@/lib/cityTranslations';
@@ -41,17 +41,18 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [is2FALoading, setIs2FALoading] = useState(false);
-  
+
   // Profile state
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-  
+
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  
+  const [activeSection, setActiveSection] = useState<string>('profile');
+
   const tt = toastTranslations[language];
   const categories = getCategoriesForUser(language);
 
@@ -274,7 +275,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
         age: profile.age,
         // Keep city & town in sync. Audience analytics uses city first (then town),
-        // so if we only update town, analytics can appear “stuck” on the old city.
+        // so if we only update town, analytics can appear "stuck" on the old city.
         town: profile.town,
         city: profile.town,
         gender: profile.gender,
@@ -380,7 +381,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
     setIsDeleting(true);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('delete-user-account');
-      
+
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
 
@@ -388,7 +389,7 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
         title: tt.deleted,
         description: language === 'el' ? 'Ο λογαριασμός σας διαγράφηκε οριστικά' : 'Your account has been permanently deleted',
       });
-      
+
       await supabase.auth.signOut();
       navigate('/');
     } catch (error: any) {
@@ -406,388 +407,442 @@ export const UserSettings = ({ userId, language }: UserSettingsProps) => {
     return <div className="flex justify-center p-8">Loading...</div>;
   }
 
+  const navItems = [
+    {
+      id: 'profile',
+      icon: User,
+      title: t.profileSection,
+      desc: language === 'el' ? 'Όνομα, ηλικία, πόλη, ενδιαφέροντα' : 'Name, age, city, interests',
+    },
+    {
+      id: 'notifications',
+      icon: Bell,
+      title: t.notifications,
+      desc: language === 'el' ? 'Push ειδοποιήσεις & υπενθυμίσεις' : 'Push notifications & reminders',
+    },
+    {
+      id: 'promoter',
+      icon: Sparkles,
+      title: 'Promoter & PR',
+      desc: language === 'el' ? 'Ρυθμίσεις promoter' : 'Promoter settings',
+    },
+    {
+      id: 'password',
+      icon: Lock,
+      title: t.passwordManagement,
+      desc: language === 'el' ? 'Αλλαγή κωδικού πρόσβασης' : 'Change your password',
+    },
+    ...(profile?.role !== 'business' ? [{
+      id: '2fa',
+      icon: Shield,
+      title: t.twoFactorAuth,
+      desc: language === 'el' ? 'Επαλήθευση 2 βημάτων' : '2-step verification',
+    }] : []),
+    {
+      id: 'privacy',
+      icon: Shield,
+      title: t.privacy,
+      desc: language === 'el' ? 'Ορατότητα & διαγραφή λογαριασμού' : 'Visibility & account deletion',
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="lg:flex lg:gap-6">
 
-      {/* Profile Details - Matching Signup Form */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <User className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.profileSection}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleProfileUpdate} className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="firstName" className="text-xs sm:text-sm">{t.firstName}</Label>
-                <Input
-                  id="firstName"
-                  value={profile.first_name || ''}
-                  onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
-                />
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="lastName" className="text-xs sm:text-sm">{t.lastName}</Label>
-                <Input
-                  id="lastName"
-                  value={profile.last_name || ''}
-                  onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
-                />
-              </div>
-            </div>
-
-            {/* Age, City, Gender in one row */}
-            <div className="flex items-end gap-4 sm:gap-6">
-              <div className="w-16 sm:w-20 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
-                <NumberInput
-                  value={profile.age || 18}
-                  onChange={(value) => setProfile({ ...profile, age: value })}
-                  min={13}
-                  max={120}
-                  className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full"
-                />
-              </div>
-              <div className="flex-1 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="town" className="text-xs sm:text-sm">{t.town}</Label>
-                <Select
-                  value={profile.town || ''}
-                  onValueChange={(value) => setProfile({ ...profile, town: value })}
-                >
-                  <SelectTrigger id="town" className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full">
-                    <SelectValue placeholder={t.townPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getCityOptions(language).map(city => (
-                      <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 space-y-1.5 sm:space-y-2">
-                <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
-                <Select
-                  value={profile.gender || ''}
-                  onValueChange={(value) => setProfile({ ...profile, gender: value })}
-                >
-                  <SelectTrigger id="gender" className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full">
-                    <SelectValue placeholder={t.genderPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
-                    <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
-                    <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
-              <Input
-                id="email"
-                value={profile.email || ''}
-                disabled
-                className="rounded-xl bg-muted !text-xs h-8 sm:!text-sm sm:h-10"
-              />
-            </div>
-
-            {/* Phone */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
-              <Input
-                id="phone"
-                value={(profile.phone || '').replace(/^\+357\s*/, '')}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
-              />
-            </div>
-
-            {/* Interests - list rows (match Signup mock) */}
-            <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-              <div>
-                <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                  <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  {t.interests}
-                </Label>
-                <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">{t.interestsDescription}</p>
-              </div>
-
-              <InterestSelectorList
-                categories={categories}
-                selectedIds={profile.preferences || []}
-                onToggle={togglePreference}
-              />
-            </div>
-
-            {/* Student Verification Section */}
-            <div className="pt-3 sm:pt-4 border-t">
-              <StudentVerificationSection 
-                userId={userId} 
-                userName={profile.first_name || profile.name || ''}
-              />
-            </div>
-
-            <Button type="submit" disabled={profileLoading} className="mt-3 sm:mt-4 gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10">
-              <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {t.saveProfile}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Notifications - MOVED ABOVE PASSWORD */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Bell className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.notifications}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 sm:space-y-6">
-          {/* Mandatory: Email Confirmations - Always ON */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-0.5 min-w-0 flex-1">
-              <Label className="text-xs sm:text-sm">{t.emailConfirmationsTitle}</Label>
-              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.emailConfirmationsDesc}</p>
-            </div>
-            <Switch
-              checked={true}
-              disabled
-              className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0"
-            />
-          </div>
-          
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-0.5 min-w-0 flex-1">
-              <Label className="text-xs sm:text-sm">{t.mandatoryNotificationsTitle}</Label>
-              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.mandatoryNotificationsDesc}</p>
-            </div>
-            <Switch
-              checked={true}
-              disabled
-              className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0"
-            />
-          </div>
-
-          {/* Push Notifications - always show, no browser warning */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-0.5 flex-1 min-w-0">
-              <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
-                {t.pushNotifications}
-              </Label>
-              <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.pushNotificationsDesc}</p>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              {pushSubscribed && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
-                  onClick={async () => {
-                    setIsSendingTest(true);
-                    try {
-                      const { data, error } = await supabase.functions.invoke('test-push-notification');
-                      if (error) throw error;
-                      toast({
-                        title: language === 'el' ? 'Ειδοποίηση εστάλη!' : 'Notification sent!',
-                        description: language === 'el' ? 'Ελέγξτε τη συσκευή σας' : 'Check your device',
-                      });
-                    } catch (err) {
-                      toast({
-                        title: language === 'el' ? 'Αποτυχία' : 'Failed',
-                        description: err instanceof Error ? err.message : 'Unknown error',
-                        variant: 'destructive',
-                      });
-                    } finally {
-                      setIsSendingTest(false);
-                    }
-                  }}
-                  disabled={isSendingTest}
-                >
-                  <Send className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
-                  {isSendingTest ? t.sendingTest : t.testPush}
-                </Button>
-              )}
-              <Switch
-                checked={pushSubscribed}
-                disabled={pushLoading}
-                onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
-                className="scale-90 sm:scale-100"
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Reminders - start disabled */}
-          <div className="space-y-3 sm:space-y-4">
-            <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              {t.reminders}
-            </h4>
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0 flex-1">
-                <Label htmlFor="event-reminders" className="text-xs sm:text-sm">{t.eventReminders}</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eventRemindersDesc}</p>
-              </div>
-              <Switch
-                id="event-reminders"
-                checked={preferences.notification_event_reminders ?? false}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_event_reminders: checked })
-                }
-                className="scale-90 sm:scale-100 flex-shrink-0"
-              />
-            </div>
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0 flex-1">
-                <Label htmlFor="reservation-reminders" className="text-xs sm:text-sm">{t.reservationReminders}</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.reservationRemindersDesc}</p>
-              </div>
-              <Switch
-                id="reservation-reminders"
-                checked={preferences.notification_reservations ?? false}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_reservations: checked })
-                }
-                className="scale-90 sm:scale-100 flex-shrink-0"
-              />
-            </div>
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0 flex-1">
-                <Label htmlFor="expiring-offers" className="text-xs sm:text-sm">{t.expiringOffers}</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{t.expiringOffersDesc}</p>
-              </div>
-              <Switch
-                id="expiring-offers"
-                checked={preferences.notification_expiring_offers ?? false}
-                onCheckedChange={(checked) =>
-                  updatePreferences({ notification_expiring_offers: checked })
-                }
-                className="scale-90 sm:scale-100 flex-shrink-0"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Promoter / PR — between Notifications and Password */}
-      <PromoterSettingsCard userId={userId} language={language} />
-
-      {/* Password Management - MOVED BELOW NOTIFICATIONS */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Lock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.passwordManagement}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4">
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
-            <PasswordInput
-              id="current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="rounded-xl text-sm"
-            />
-          </div>
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
-            <PasswordInput
-              id="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-xl text-sm"
-            />
-          </div>
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
-            <PasswordInput
-              id="confirm-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-xl text-sm"
-            />
-          </div>
-          <Button 
-            onClick={handlePasswordChange}
-            disabled={isChanging || !currentPassword || !newPassword || !confirmPassword || newPassword.length < 8 || confirmPassword.length < 8}
-            className="text-xs sm:text-sm h-9 sm:h-10"
-          >
-            {t.changePassword}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Two-Factor Authentication - only for regular users, not business accounts */}
-      {profile?.role !== 'business' && (
-        <Card>
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-              {t.twoFactorAuth}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <p className="text-xs sm:text-sm text-muted-foreground">{t.twoFactorDesc}</p>
-              </div>
-              <Switch
-                checked={is2FAEnabled}
-                onCheckedChange={toggle2FA}
-                disabled={is2FALoading}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Privacy & Data */}
-      <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-            {t.privacy}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 sm:space-y-4">
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label htmlFor="profile-visibility" className="text-xs sm:text-sm">{t.profileVisibility}</Label>
-            <Select
-              value={preferences.profile_visibility || 'public'}
-              onValueChange={(value) => updatePreferences({ profile_visibility: value })}
+      {/* Nav menu */}
+      <div className={`lg:w-[248px] lg:flex-shrink-0 ${activeSection ? 'hidden lg:block' : 'block'}`}>
+        <div className="rounded-2xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.04]">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors hover:bg-white/[0.04] ${activeSection === item.id ? 'bg-white/[0.06]' : ''}`}
             >
-              <SelectTrigger id="profile-visibility" className="rounded-xl text-xs sm:text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">{t.public}</SelectItem>
-                <SelectItem value="private">{t.private}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Separator />
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
-            <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
-            <ThreeStepDeleteDialog
-              onConfirmDelete={handleDeleteAccount}
-              isDeleting={isDeleting}
-              isBusiness={false}
-            />
-          </div>
-        </CardContent>
-      </Card>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${activeSection === item.id ? 'bg-[#4ECDC4]/10' : 'bg-white/[0.04]'}`}>
+                <item.icon className={`h-4 w-4 ${activeSection === item.id ? 'text-[#4ECDC4]' : 'text-white/40'}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-inter font-medium text-sm text-white">{item.title}</p>
+                <p className="font-inter text-xs text-white/40 mt-0.5">{item.desc}</p>
+              </div>
+              <ChevronRight className={`h-4 w-4 flex-shrink-0 ${activeSection === item.id ? 'text-white/30' : 'text-white/15'}`} />
+            </button>
+          ))}
+        </div>
+      </div>
 
+      {/* Detail panel */}
+      <div className={`flex-1 min-w-0 ${!activeSection ? 'hidden lg:flex lg:items-center lg:justify-center' : 'block'}`}>
+        {activeSection ? (
+          <div className="space-y-6">
+            <button
+              onClick={() => setActiveSection(null)}
+              className="lg:hidden flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {language === 'el' ? 'Πίσω' : 'Back'}
+            </button>
+
+            {activeSection === 'profile' && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    {t.profileSection}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleProfileUpdate} className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="firstName" className="text-xs sm:text-sm">{t.firstName}</Label>
+                        <Input
+                          id="firstName"
+                          value={profile.first_name || ''}
+                          onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+                          className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
+                        />
+                      </div>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="lastName" className="text-xs sm:text-sm">{t.lastName}</Label>
+                        <Input
+                          id="lastName"
+                          value={profile.last_name || ''}
+                          onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+                          className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-end gap-4 sm:gap-6">
+                      <div className="w-16 sm:w-20 space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="age" className="text-xs sm:text-sm">{t.age}</Label>
+                        <NumberInput
+                          value={profile.age || 18}
+                          onChange={(value) => setProfile({ ...profile, age: value })}
+                          min={13}
+                          max={120}
+                          className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="town" className="text-xs sm:text-sm">{t.town}</Label>
+                        <Select
+                          value={profile.town || ''}
+                          onValueChange={(value) => setProfile({ ...profile, town: value })}
+                        >
+                          <SelectTrigger id="town" className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full">
+                            <SelectValue placeholder={t.townPlaceholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getCityOptions(language).map(city => (
+                              <SelectItem key={city.value} value={city.value} className="text-xs sm:text-sm">{city.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1 space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="gender" className="text-xs sm:text-sm">{t.gender}</Label>
+                        <Select
+                          value={profile.gender || ''}
+                          onValueChange={(value) => setProfile({ ...profile, gender: value })}
+                        >
+                          <SelectTrigger id="gender" className="rounded-xl text-xs h-8 sm:text-sm sm:h-10 w-full">
+                            <SelectValue placeholder={t.genderPlaceholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male" className="text-xs sm:text-sm">{t.male}</SelectItem>
+                            <SelectItem value="female" className="text-xs sm:text-sm">{t.female}</SelectItem>
+                            <SelectItem value="other" className="text-xs sm:text-sm">{t.other}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="email" className="text-xs sm:text-sm">{t.email}</Label>
+                      <Input
+                        id="email"
+                        value={profile.email || ''}
+                        disabled
+                        className="rounded-xl bg-muted !text-xs h-8 sm:!text-sm sm:h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="phone" className="text-xs sm:text-sm">{t.phone}</Label>
+                      <Input
+                        id="phone"
+                        value={(profile.phone || '').replace(/^\+357\s*/, '')}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        className="rounded-xl !text-xs h-8 sm:!text-sm sm:h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+                      <div>
+                        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                          <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                          {t.interests}
+                        </Label>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground mt-1">{t.interestsDescription}</p>
+                      </div>
+                      <InterestSelectorList
+                        categories={categories}
+                        selectedIds={profile.preferences || []}
+                        onToggle={togglePreference}
+                      />
+                    </div>
+
+                    <div className="pt-3 sm:pt-4 border-t">
+                      <StudentVerificationSection
+                        userId={userId}
+                        userName={profile.first_name || profile.name || ''}
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={profileLoading} className="mt-3 sm:mt-4 gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10">
+                      <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {t.saveProfile}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'notifications' && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <Bell className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    {t.notifications}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <Label className="text-xs sm:text-sm">{t.emailConfirmationsTitle}</Label>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.emailConfirmationsDesc}</p>
+                    </div>
+                    <Switch checked={true} disabled className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0" />
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0 flex-1">
+                      <Label className="text-xs sm:text-sm">{t.mandatoryNotificationsTitle}</Label>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.mandatoryNotificationsDesc}</p>
+                    </div>
+                    <Switch checked={true} disabled className="data-[state=checked]:bg-primary cursor-default scale-90 sm:scale-100 flex-shrink-0" />
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                        <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {t.pushNotifications}
+                      </Label>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{t.pushNotificationsDesc}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                      {pushSubscribed && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 sm:h-8 text-[10px] sm:text-xs px-2 sm:px-3"
+                          onClick={async () => {
+                            setIsSendingTest(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke('test-push-notification');
+                              if (error) throw error;
+                              toast({
+                                title: language === 'el' ? 'Ειδοποίηση εστάλη!' : 'Notification sent!',
+                                description: language === 'el' ? 'Ελέγξτε τη συσκευή σας' : 'Check your device',
+                              });
+                            } catch (err) {
+                              toast({
+                                title: language === 'el' ? 'Αποτυχία' : 'Failed',
+                                description: err instanceof Error ? err.message : 'Unknown error',
+                                variant: 'destructive',
+                              });
+                            } finally {
+                              setIsSendingTest(false);
+                            }
+                          }}
+                          disabled={isSendingTest}
+                        >
+                          <Send className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                          {isSendingTest ? t.sendingTest : t.testPush}
+                        </Button>
+                      )}
+                      <Switch
+                        checked={pushSubscribed}
+                        disabled={pushLoading}
+                        onCheckedChange={(checked) => checked ? subscribePush() : unsubscribePush()}
+                        className="scale-90 sm:scale-100"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3 sm:space-y-4">
+                    <h4 className="text-xs sm:text-sm font-semibold text-muted-foreground flex items-center gap-1.5 sm:gap-2">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {t.reminders}
+                    </h4>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <Label htmlFor="event-reminders" className="text-xs sm:text-sm">{t.eventReminders}</Label>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{t.eventRemindersDesc}</p>
+                      </div>
+                      <Switch
+                        id="event-reminders"
+                        checked={preferences.notification_event_reminders ?? false}
+                        onCheckedChange={(checked) => updatePreferences({ notification_event_reminders: checked })}
+                        className="scale-90 sm:scale-100 flex-shrink-0"
+                      />
+                    </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <Label htmlFor="reservation-reminders" className="text-xs sm:text-sm">{t.reservationReminders}</Label>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{t.reservationRemindersDesc}</p>
+                      </div>
+                      <Switch
+                        id="reservation-reminders"
+                        checked={preferences.notification_reservations ?? false}
+                        onCheckedChange={(checked) => updatePreferences({ notification_reservations: checked })}
+                        className="scale-90 sm:scale-100 flex-shrink-0"
+                      />
+                    </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <Label htmlFor="expiring-offers" className="text-xs sm:text-sm">{t.expiringOffers}</Label>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{t.expiringOffersDesc}</p>
+                      </div>
+                      <Switch
+                        id="expiring-offers"
+                        checked={preferences.notification_expiring_offers ?? false}
+                        onCheckedChange={(checked) => updatePreferences({ notification_expiring_offers: checked })}
+                        className="scale-90 sm:scale-100 flex-shrink-0"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'promoter' && (
+              <PromoterSettingsCard userId={userId} language={language} />
+            )}
+
+            {activeSection === 'password' && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    {t.passwordManagement}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="current-password" className="text-xs sm:text-sm">{t.currentPassword}</Label>
+                    <PasswordInput
+                      id="current-password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="rounded-xl text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="new-password" className="text-xs sm:text-sm">{t.newPassword}</Label>
+                    <PasswordInput
+                      id="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="rounded-xl text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t.confirmPassword}</Label>
+                    <PasswordInput
+                      id="confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="rounded-xl text-sm"
+                    />
+                  </div>
+                  <Button
+                    onClick={handlePasswordChange}
+                    disabled={isChanging || !currentPassword || !newPassword || !confirmPassword || newPassword.length < 8 || confirmPassword.length < 8}
+                    className="text-xs sm:text-sm h-9 sm:h-10"
+                  >
+                    {t.changePassword}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === '2fa' && profile?.role !== 'business' && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    {t.twoFactorAuth}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs sm:text-sm text-muted-foreground">{t.twoFactorDesc}</p>
+                    <Switch checked={is2FAEnabled} onCheckedChange={toggle2FA} disabled={is2FALoading} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 'privacy' && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                    <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    {t.privacy}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="profile-visibility" className="text-xs sm:text-sm">{t.profileVisibility}</Label>
+                    <Select
+                      value={preferences.profile_visibility || 'public'}
+                      onValueChange={(value) => updatePreferences({ profile_visibility: value })}
+                    >
+                      <SelectTrigger id="profile-visibility" className="rounded-xl text-xs sm:text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">{t.public}</SelectItem>
+                        <SelectItem value="private">{t.private}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Separator />
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-destructive text-xs sm:text-sm">{t.deleteAccount}</Label>
+                    <p className="text-[10px] sm:text-sm text-muted-foreground">{t.deleteWarning}</p>
+                    <ThreeStepDeleteDialog
+                      onConfirmDelete={handleDeleteAccount}
+                      isDeleting={isDeleting}
+                      isBusiness={false}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <div className="hidden lg:flex items-center justify-center h-48 rounded-2xl border border-white/[0.06] text-white/20 text-sm">
+            {language === 'el' ? 'Επιλέξτε κατηγορία ρυθμίσεων' : 'Select a settings category'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

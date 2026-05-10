@@ -5,7 +5,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Target, MessageCircle, Ticket, Shield, Upload, Key, CheckCircle2, XCircle, Sun, Moon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Target, MessageCircle, Ticket, Shield, Upload, Key, CheckCircle2, XCircle, Sun, Moon, Store, MapPin, Mail, Phone, Globe, Lock, Navigation } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useForm } from "react-hook-form";
@@ -56,7 +57,7 @@ const SignupBusiness = () => {
   });
 
   type FormData = z.infer<typeof formSchema>;
-  
+
   const {
     register,
     handleSubmit,
@@ -77,7 +78,6 @@ const SignupBusiness = () => {
   const city = watch("city");
   const inviteCode = watch("inviteCode");
 
-  // Validate invite code when it changes
   useEffect(() => {
     if (!inviteCode || inviteCode.length < 5) {
       setInviteCodeStatus('idle');
@@ -88,7 +88,7 @@ const SignupBusiness = () => {
     const timeoutId = setTimeout(async () => {
       setInviteCodeStatus('checking');
       const result = await validateInviteCode(inviteCode);
-      
+
       if (result.valid) {
         setInviteCodeStatus('valid');
         setInviteCodeError('');
@@ -109,7 +109,6 @@ const SignupBusiness = () => {
     return () => clearTimeout(timeoutId);
   }, [inviteCode, isBetaMode, language]);
 
-  // Auto-geocode address and city
   useEffect(() => {
     if (!address || !city) {
       setCoordinates(null);
@@ -151,7 +150,6 @@ const SignupBusiness = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    // Validate invite code
     if (!data.inviteCode) {
       toast({
         title: language === 'el' ? "Σφάλμα" : "Error",
@@ -173,7 +171,6 @@ const SignupBusiness = () => {
 
     setIsSubmitting(true);
     try {
-      // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -187,16 +184,15 @@ const SignupBusiness = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Αποτυχία δημιουργίας λογαριασμού");
 
-      // Upload logo if provided
       let logoUrl = null;
       if (logoFile) {
         const compressed = await compressImage(logoFile, 800, 800, 0.9);
         const fileName = `${authData.user.id}/${authData.user.id}-${Date.now()}.jpg`;
-        
+
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('business-logos')
           .upload(fileName, compressed, { contentType: 'image/jpeg' });
-        
+
         if (uploadError) {
           console.error('Logo upload error:', uploadError);
           toast({
@@ -212,9 +208,8 @@ const SignupBusiness = () => {
         }
       }
 
-      // Create business record with geo coordinates if available
       let businessId: string | null = null;
-      
+
       if (coordinates) {
         const { data: businessData, error: businessError } = await supabase.rpc('create_business_with_geo', {
           p_user_id: authData.user.id,
@@ -232,7 +227,6 @@ const SignupBusiness = () => {
         if (businessError) throw businessError;
         businessId = businessData;
       } else {
-        // Fallback to regular insert without geo coordinates
         const { data: businessData, error: businessError } = await supabase.from('businesses').insert({
           user_id: authData.user.id,
           name: data.businessName,
@@ -249,17 +243,15 @@ const SignupBusiness = () => {
         businessId = businessData?.id;
       }
 
-      // Update invite code if used and create beta subscription
       if (data.inviteCode && businessId) {
         const normalizedCode = data.inviteCode.toUpperCase().trim();
-        
-        // First get current uses
+
         const { data: codeData } = await supabase
           .from('beta_invite_codes')
           .select('current_uses')
           .eq('code', normalizedCode)
           .single();
-        
+
         await supabase
           .from('beta_invite_codes')
           .update({
@@ -270,11 +262,10 @@ const SignupBusiness = () => {
           })
           .eq('code', normalizedCode);
 
-        // Auto-assign Growth Plan for beta businesses
         const GROWTH_PLAN_ID = '5bd802c4-0aae-4141-a310-f41492aff7e5';
         const periodStart = new Date();
         const periodEnd = new Date();
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1); // 1 year validity for beta
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
         await supabase.from('business_subscriptions').insert({
           business_id: businessId,
@@ -283,14 +274,13 @@ const SignupBusiness = () => {
           billing_cycle: 'monthly',
           current_period_start: periodStart.toISOString(),
           current_period_end: periodEnd.toISOString(),
-          monthly_budget_remaining_cents: 25000, // €250 Growth plan budget
-          commission_free_offers_remaining: 10,  // Growth plan offers
+          monthly_budget_remaining_cents: 25000,
+          commission_free_offers_remaining: 10,
           beta_tester: true,
-          beta_discount_percent: 20 // 20% discount when they choose a paid plan post-launch
+          beta_discount_percent: 20
         });
       }
 
-      // Send registration confirmation email
       try {
         await supabase.functions.invoke('send-business-notification', {
           body: {
@@ -300,10 +290,9 @@ const SignupBusiness = () => {
           }
         });
       } catch (emailError) {
-        // Silent fail - email notification is not critical
+        // Silent fail
       }
 
-      // Send welcome email (non-blocking)
       try {
         await supabase.functions.invoke('send-transactional-email', {
           body: {
@@ -317,23 +306,21 @@ const SignupBusiness = () => {
         console.error('Welcome email error:', welcomeErr);
       }
 
-      // Show detailed success message
       toast({
         title: language === 'el' ? "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!" : "Registration completed successfully!",
-        description: language === 'el' 
+        description: language === 'el'
           ? "Το αίτημά σας στάλθηκε για έγκριση. Μόλις εγκριθεί από διαχειριστή, θα μπορείτε να συνδεθείτε άμεσα."
           : "Your request was submitted for review. Once approved by an admin, you can log in immediately.",
         duration: 6000,
       });
 
-      // Wait a moment, then redirect to login
       setTimeout(() => {
-        navigate("/login", { 
-          state: { 
+        navigate("/login", {
+          state: {
             message: language === 'el'
               ? "Η εγγραφή ολοκληρώθηκε. Περιμένετε έγκριση διαχειριστή για να ενεργοποιηθεί η πρόσβασή σας."
               : "Registration complete. Please wait for admin approval to activate your access."
-          } 
+          }
         });
       }, 3000);
     } catch (error: any) {
@@ -348,222 +335,335 @@ const SignupBusiness = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-30 blur-3xl">
-          <div className="w-full h-full rounded-full bg-gradient-glow" />
+    <div className="min-h-screen bg-background flex">
+      {/* Left branding panel */}
+      <div className="hidden lg:flex lg:flex-col lg:justify-center lg:w-[400px] xl:w-[460px] flex-shrink-0 relative border-r border-white/[0.06] px-10 xl:px-14">
+        <div className="absolute top-1/2 left-0 w-[360px] h-[360px] bg-seafoam/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2" />
+        <div className="relative z-10">
+          <p className="text-seafoam text-xs font-semibold uppercase tracking-widest mb-3">
+            {language === 'el' ? 'Για Επιχειρήσεις' : 'For Businesses'}
+          </p>
+          <h1
+            className="font-urbanist font-black leading-none tracking-[-0.05em] mb-4"
+            style={{ fontSize: "clamp(4rem, 6vw, 6.5rem)" }}
+          >
+            <span className="text-[#7EC8F0]">Φ</span><span className="text-white">ΟΜΟ</span>
+          </h1>
+          <p className="font-inter text-white/45 text-base leading-relaxed mb-10">
+            {language === 'el'
+              ? 'Φέρε την επιχείρησή σου στην πιο ενεργή νυχτερινή πλατφόρμα της Κύπρου.'
+              : "Put your venue on Cyprus's most active nightlife platform."}
+          </p>
+          <div className="space-y-4">
+            {[
+              { value: '250+', label: language === 'el' ? 'Καταχωρημένα venue' : 'Registered venues' },
+              { value: '€0', label: language === 'el' ? 'Για να ξεκινήσεις' : 'To get started' },
+              { value: '24/7', label: language === 'el' ? 'Analytics σε πραγματικό χρόνο' : 'Real-time analytics' },
+            ].map(s => (
+              <div key={s.value} className="flex items-center gap-3">
+                <div className="w-1 h-6 bg-seafoam rounded-full" />
+                <div>
+                  <div className="font-urbanist font-black text-white text-xl">{s.value}</div>
+                  <div className="text-white/40 text-xs">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-sunset-coral/20 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-white hover:text-seafoam">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+      {/* Right form panel */}
+      <div className="flex-1 flex flex-col overflow-y-auto">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 sm:px-6 lg:px-10 pt-5 pb-3 flex-shrink-0">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
             {language === 'el' ? 'Επιστροφή' : 'Back'}
-          </Button>
+          </button>
           <div className="flex items-center gap-2">
             <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-white hover:text-seafoam"
-            >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
           </div>
         </div>
 
-
-        {/* Main Form */}
-        <div className="bg-card rounded-3xl shadow-elegant p-5 sm:p-8 md:p-12">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-6">
-            {/* Invite Code - Only shown in beta mode */}
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl mb-6">
-              <Label htmlFor="inviteCode" className="flex items-center gap-2 text-primary font-semibold">
-                <Key className="h-4 w-4" />
-                {language === 'el' ? 'Κωδικός Πρόσκλησης *' : 'Invite Code *'}
-              </Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                {language === 'el'
-                  ? 'Εισάγετε τον κωδικό πρόσκλησης που λάβατε για να εγγραφείτε.'
-                  : 'Enter the invite code you received to register.'
-                }
+        {/* Form content */}
+        <div className="flex-1 px-4 sm:px-6 lg:px-10 py-4 pb-12">
+          <div className="max-w-xl mx-auto lg:mx-0">
+            <div className="mb-6">
+              <h2 className="font-urbanist font-black text-white text-3xl mb-1">
+                {language === 'el' ? 'Εγγραφή Επιχείρησης' : 'Business Registration'}
+              </h2>
+              <p className="text-white/40 text-sm">
+                {language === 'el' ? 'Φέρε την επιχείρησή σου στο ΦΟΜΟ' : 'Bring your business to FOMO'}
               </p>
-              <div className="relative">
-                <Input 
-                  id="inviteCode" 
-                  {...register("inviteCode")} 
-                  className="mt-1 uppercase font-mono tracking-wider pr-10 h-8 sm:h-10 text-base sm:text-sm" 
-                  placeholder="ΦΟΜΟ-XXXX-XXXX"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {inviteCodeStatus === 'checking' && (
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-7">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {/* Invite Code */}
+                <div className="p-4 bg-seafoam/5 border border-seafoam/20 rounded-xl">
+                  <Label htmlFor="inviteCode" className="flex items-center gap-2 text-seafoam font-semibold text-sm">
+                    <Key className="h-4 w-4" />
+                    {language === 'el' ? 'Κωδικός Πρόσκλησης *' : 'Invite Code *'}
+                  </Label>
+                  <p className="text-xs text-white/40 mt-1 mb-2">
+                    {language === 'el'
+                      ? 'Εισάγετε τον κωδικό πρόσκλησης που λάβατε για να εγγραφείτε.'
+                      : 'Enter the invite code you received to register.'
+                    }
+                  </p>
+                  <div className="relative">
+                    <Input
+                      id="inviteCode"
+                      {...register("inviteCode")}
+                      className="mt-1 uppercase font-mono tracking-wider pr-10 h-10 rounded-xl"
+                      placeholder="ΦΟΜΟ-XXXX-XXXX"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5">
+                      {inviteCodeStatus === 'checking' && (
+                        <div className="w-4 h-4 border-2 border-seafoam border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {inviteCodeStatus === 'valid' && (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      )}
+                      {inviteCodeStatus === 'invalid' && (
+                        <XCircle className="h-5 w-5 text-destructive" />
+                      )}
+                    </div>
+                  </div>
+                  {errors.inviteCode && <p className="text-sm text-destructive mt-1">{errors.inviteCode.message}</p>}
+                  {inviteCodeStatus === 'invalid' && inviteCodeError && (
+                    <p className="text-sm text-destructive mt-1">{inviteCodeError}</p>
                   )}
                   {inviteCodeStatus === 'valid' && (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  )}
-                  {inviteCodeStatus === 'invalid' && (
-                    <XCircle className="h-5 w-5 text-destructive" />
+                    <p className="text-sm text-green-500 mt-1">
+                      {language === 'el' ? 'Έγκυρος κωδικός!' : 'Valid code!'}
+                    </p>
                   )}
                 </div>
-              </div>
-              {errors.inviteCode && <p className="text-sm text-destructive mt-1">{errors.inviteCode.message}</p>}
-              {inviteCodeStatus === 'invalid' && inviteCodeError && (
-                <p className="text-sm text-destructive mt-1">{inviteCodeError}</p>
-              )}
-              {inviteCodeStatus === 'valid' && (
-                <p className="text-sm text-green-600 mt-1">
-                  {language === 'el' ? 'Έγκυρος κωδικός!' : 'Valid code!'}
-                </p>
-              )}
-            </div>
 
-            {/* Business Name */}
-            <div>
-              <Label htmlFor="businessName">{language === 'el' ? 'Όνομα Επιχείρησης *' : 'Business Name *'}</Label>
-              <Input id="businessName" {...register("businessName")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder={language === 'el' ? 'π.χ. Καφέ Παραλία' : 'e.g. Beach Cafe'} />
-              {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
-            </div>
-
-            {/* Category */}
-            <div>
-              <Label className="mb-2 block">{language === 'el' ? 'Κατηγορίες (Επέλεξε μέχρι 2)' : 'Categories (Select up to 2)'}</Label>
-              <BusinessCategorySelector
-                selectedCategories={selectedCategories}
-                onCategoryChange={handleCategoryChange}
-                language={language}
-                compact
-              />
-              {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-            </div>
-
-            {/* City */}
-            <div>
-              <Label htmlFor="city">{language === 'el' ? 'Τοποθεσία / Πόλη *' : 'Location / City *'}</Label>
-              <select id="city" {...register("city")} className="w-full mt-1 rounded-md border border-input bg-background px-3 h-8 sm:h-10 text-base sm:text-sm">
-                <option value="">{language === 'el' ? 'Επιλέξτε πόλη' : 'Select city'}</option>
-                {getCityOptions(language).map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
-            </div>
-
-            {/* Address */}
-            <div>
-              <Label htmlFor="address">{language === 'el' ? 'Διεύθυνση *' : 'Address *'}</Label>
-              <Input id="address" {...register("address")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder={language === 'el' ? 'π.χ. Λεωφόρος Μακαρίου 25' : 'e.g. 25 Makarios Avenue'} />
-              {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
-            </div>
-
-            {/* Email & Phone */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="email">{language === 'el' ? 'Email Επιχείρησης *' : 'Business Email *'}</Label>
-                <Input id="email" type="email" {...register("email")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="info@business.com" />
-                {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="phone">{language === 'el' ? 'Τηλέφωνο *' : 'Phone *'}</Label>
-                <Input id="phone" {...register("phone")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="99123456" />
-                {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
-              </div>
-            </div>
-
-            {/* Website */}
-            <div>
-              <Label htmlFor="website">{language === 'el' ? 'Ιστοσελίδα' : 'Website'}</Label>
-              <Input id="website" {...register("website")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" placeholder="https://www.business.com" />
-            </div>
-
-            {/* Password */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="password">{language === 'el' ? 'Κωδικός Πρόσβασης *' : 'Password *'}</Label>
-                <PasswordInput id="password" {...register("password")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" />
-                {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">{language === 'el' ? 'Επιβεβαίωση Κωδικού *' : 'Confirm Password *'}</Label>
-                <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1 h-8 sm:h-10 text-base sm:text-sm" />
-                {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label htmlFor="description">{language === 'el' ? 'Περιγραφή (μέχρι 300 χαρακτήρες)' : 'Description (up to 300 characters)'}</Label>
-              <Textarea id="description" {...register("description")} className="mt-1 text-sm" rows={3} placeholder={language === 'el' ? 'Μια σύντομη περιγραφή της επιχείρησής σας...' : 'A brief description of your business...'} />
-              {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
-            </div>
-
-            {/* Logo Upload */}
-            <div>
-              <Label htmlFor="logo">{language === 'el' ? 'Λογότυπο Επιχείρησης (μέχρι 2 MB)' : 'Business Logo (up to 2 MB)'}</Label>
-              <div className="mt-2 flex items-center gap-4">
-                <label className="cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2 border border-input rounded-md hover:bg-accent">
-                    <Upload className="h-4 w-4" />
-                    <span className="text-sm">{logoFile ? logoFile.name : (language === 'el' ? 'Επιλέξτε αρχείο' : 'Choose file')}</span>
+                {/* Business Name */}
+                <div>
+                  <div className="relative">
+                    <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                    <Input
+                      id="businessName"
+                      {...register("businessName")}
+                      className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                      placeholder={language === 'el' ? 'Όνομα Επιχείρησης' : 'Business Name'}
+                    />
                   </div>
-                  <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file && file.size <= 2 * 1024 * 1024) {
-                      setLogoFile(file);
-                    } else if (file) {
-                      toast({
-                        title: language === 'el' ? "Σφάλμα" : "Error",
-                        description: language === 'el' ? "Το αρχείο δεν μπορεί να υπερβαίνει τα 2 MB" : "File cannot exceed 2 MB",
-                        variant: "destructive"
-                      });
+                  {errors.businessName && <p className="text-sm text-destructive mt-1">{errors.businessName.message}</p>}
+                </div>
+
+                {/* Category */}
+                <div>
+                  <Label className="mb-2 block text-sm text-white/70">
+                    {language === 'el' ? 'Κατηγορίες (Επέλεξε μέχρι 2)' : 'Categories (Select up to 2)'}
+                  </Label>
+                  <BusinessCategorySelector
+                    selectedCategories={selectedCategories}
+                    onCategoryChange={handleCategoryChange}
+                    language={language}
+                    compact
+                  />
+                  {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                </div>
+
+                {/* City */}
+                <div>
+                  <Select value={city || ""} onValueChange={(v) => setValue("city", v)}>
+                    <SelectTrigger className="h-10 rounded-xl">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <MapPin className="h-4 w-4 text-white/25 flex-shrink-0" />
+                        <SelectValue placeholder={language === 'el' ? 'Πόλη' : 'City'} />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getCityOptions(language).map(c => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.city && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <div className="relative">
+                    <Navigation className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                    <Input
+                      id="address"
+                      {...register("address")}
+                      className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                      placeholder={language === 'el' ? 'Διεύθυνση' : 'Address'}
+                    />
+                  </div>
+                  {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
+                </div>
+
+                {/* Email & Phone */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                      <Input
+                        id="email"
+                        type="email"
+                        {...register("email")}
+                        className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                        placeholder={language === 'el' ? 'Email Επιχείρησης' : 'Business Email'}
+                      />
+                    </div>
+                    {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+                  </div>
+                  <div>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                      <Input
+                        id="phone"
+                        {...register("phone")}
+                        className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                        placeholder={language === 'el' ? 'Τηλέφωνο' : 'Phone'}
+                      />
+                    </div>
+                    {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
+                  </div>
+                </div>
+
+                {/* Website */}
+                <div>
+                  <div className="relative">
+                    <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                    <Input
+                      id="website"
+                      {...register("website")}
+                      className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                      placeholder={language === 'el' ? 'Ιστοσελίδα (προαιρετικό)' : 'Website (optional)'}
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none z-10" />
+                      <PasswordInput
+                        id="password"
+                        {...register("password")}
+                        className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                        placeholder={language === 'el' ? 'Κωδικός Πρόσβασης' : 'Password'}
+                      />
+                    </div>
+                    {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
+                  </div>
+                  <div>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none z-10" />
+                      <PasswordInput
+                        id="confirmPassword"
+                        {...register("confirmPassword")}
+                        className="h-10 rounded-xl pl-10 placeholder:text-white/40"
+                        placeholder={language === 'el' ? 'Επιβεβαίωση Κωδικού' : 'Confirm Password'}
+                      />
+                    </div>
+                    {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <Textarea
+                    id="description"
+                    {...register("description")}
+                    className="text-sm rounded-xl placeholder:text-white/40"
+                    rows={3}
+                    placeholder={language === 'el' ? 'Περιγραφή επιχείρησης (προαιρετικό, μέχρι 300 χαρακτήρες)' : 'Business description (optional, up to 300 characters)'}
+                  />
+                  {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
+                </div>
+
+                {/* Logo Upload */}
+                <div>
+                  <Label htmlFor="logo" className="text-sm text-white/70">
+                    {language === 'el' ? 'Λογότυπο Επιχείρησης (μέχρι 2 MB)' : 'Business Logo (up to 2 MB)'}
+                  </Label>
+                  <div className="mt-1.5">
+                    <label className="cursor-pointer">
+                      <div className="flex items-center gap-2 px-4 py-2.5 border border-white/[0.08] rounded-xl hover:bg-white/[0.05] transition-colors text-sm text-white/50">
+                        <Upload className="h-4 w-4" />
+                        <span>{logoFile ? logoFile.name : (language === 'el' ? 'Επιλέξτε αρχείο' : 'Choose file')}</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file && file.size <= 2 * 1024 * 1024) {
+                            setLogoFile(file);
+                          } else if (file) {
+                            toast({
+                              title: language === 'el' ? "Σφάλμα" : "Error",
+                              description: language === 'el' ? "Το αρχείο δεν μπορεί να υπερβαίνει τα 2 MB" : "File cannot exceed 2 MB",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Terms */}
+                <div className="flex items-start space-x-2.5">
+                  <Checkbox
+                    id="terms"
+                    checked={watch("termsAccepted")}
+                    onCheckedChange={checked => setValue("termsAccepted", checked as boolean)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="terms" className="text-sm cursor-pointer text-white/60 leading-relaxed">
+                    {language === 'el'
+                      ? <>Συμφωνώ με τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">πολιτική απορρήτου</a> *</>
+                      : <>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-seafoam underline">privacy policy</a> *</>
                     }
-                  }} />
-                </label>
-              </div>
-            </div>
+                  </label>
+                </div>
+                {errors.termsAccepted && <p className="text-sm text-destructive">{errors.termsAccepted.message}</p>}
 
-            {/* Terms */}
-            <div className="flex items-start space-x-2">
-              <Checkbox id="terms" checked={watch("termsAccepted")} onCheckedChange={checked => setValue("termsAccepted", checked as boolean)} />
-              <label htmlFor="terms" className="text-sm cursor-pointer">
-                {language === 'el' 
-                  ? <>Συμφωνώ με τους <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">όρους χρήσης</a> και την <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">πολιτική απορρήτου</a> *</>
-                  : <>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">terms of use</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">privacy policy</a> *</>
-                }
-              </label>
-            </div>
-            {errors.termsAccepted && <p className="text-sm text-destructive">{errors.termsAccepted.message}</p>}
-
-            {/* Submit Button */}
-            <Button 
-              type="submit" 
-              variant="gradient" 
-              size="lg" 
-              className="w-full h-10 sm:h-12 text-sm sm:text-base" 
-              disabled={isSubmitting || (isBetaMode && inviteCodeStatus !== 'valid') || (watch("password") || "").trim().length < 8 || (watch("confirmPassword") || "").trim().length < 8}
-            >
-              {isSubmitting 
-                ? (language === 'el' ? "Εγγραφή..." : "Registering...") 
-                : (language === 'el' ? "Εγγραφή Επιχείρησης" : "Register Business")
-              }
-            </Button>
-          </form>
-
-          {/* Verification Info */}
-          <div className="mt-8 p-4 bg-muted/50 rounded-xl">
-            <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-sm">
-                  {language === 'el' ? 'Διαδικασία Επαλήθευσης' : 'Verification Process'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {language === 'el'
-                    ? 'Μετά την εγγραφή, η επιχείρησή σας θα ελεγχθεί από την ομάδα μας. Θα λάβετε email μόλις η επαλήθευση ολοκληρωθεί.'
-                    : 'After registration, your business will be reviewed by our team. You will receive an email once verification is complete.'
+                {/* Submit */}
+                <button
+                  type="submit"
+                  className="w-full h-11 bg-seafoam hover:bg-seafoam/90 text-aegean font-semibold rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || (isBetaMode && inviteCodeStatus !== 'valid') || (watch("password") || "").trim().length < 8 || (watch("confirmPassword") || "").trim().length < 8}
+                >
+                  {isSubmitting
+                    ? (language === 'el' ? "Εγγραφή..." : "Registering...")
+                    : (language === 'el' ? "Εγγραφή Επιχείρησης" : "Register Business")
                   }
-                </p>
+                </button>
+              </form>
+
+              {/* Verification Info */}
+              <div className="mt-6 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-seafoam mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm text-white/70">
+                      {language === 'el' ? 'Διαδικασία Επαλήθευσης' : 'Verification Process'}
+                    </p>
+                    <p className="text-xs text-white/40 mt-1 leading-relaxed">
+                      {language === 'el'
+                        ? 'Μετά την εγγραφή, η επιχείρησή σας θα ελεγχθεί από την ομάδα μας. Θα λάβετε email μόλις η επαλήθευση ολοκληρωθεί.'
+                        : 'After registration, your business will be reviewed by our team. You will receive an email once verification is complete.'
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
